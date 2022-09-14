@@ -6,8 +6,8 @@ import os
 import torch
 from tqdm import tqdm
 
-from basicsr.archs.ridnet_arch import RIDNet
-from basicsr.utils.img_util import img2tensor, tensor2img
+from traiNNer.archs.ridnet_arch import RIDNet
+from traiNNer.utils.img_util import img2tensor, tensor2img
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

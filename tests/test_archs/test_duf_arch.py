@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from basicsr.archs.duf_arch import DUF, DynamicUpsamplingFilter
+from traiNNer.archs.duf_arch import DUF, DynamicUpsamplingFilter
 
 
 def test_duf():

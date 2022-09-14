@@ -4,8 +4,8 @@ import os
 import torch
 from torchvision import utils
 
-from basicsr.archs.stylegan2_arch import StyleGAN2Generator
-from basicsr.utils import set_random_seed
+from traiNNer.archs.stylegan2_arch import StyleGAN2Generator
+from traiNNer.utils import set_random_seed
 
 
 def generate(args, g_ema, device, mean_latent, randomize_noise):

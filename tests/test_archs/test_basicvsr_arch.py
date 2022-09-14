@@ -1,6 +1,6 @@
 import torch
 
-from basicsr.archs.basicvsr_arch import BasicVSR, ConvResidualBlocks, IconVSR
+from traiNNer.archs.basicvsr_arch import BasicVSR, ConvResidualBlocks, IconVSR
 
 
 def test_basicvsr():

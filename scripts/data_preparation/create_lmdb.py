@@ -1,8 +1,8 @@
 import argparse
 from os import path as osp
 
-from basicsr.utils import scandir
-from basicsr.utils.lmdb_util import make_lmdb_from_imgs
+from traiNNer.utils import scandir
+from traiNNer.utils.lmdb_util import make_lmdb_from_imgs
 
 
 def create_lmdb_for_div2k():

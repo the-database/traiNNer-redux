@@ -3,8 +3,8 @@ import cv2
 import numpy as np
 from os import path as osp
 
-from basicsr.metrics import calculate_psnr, calculate_ssim
-from basicsr.utils import bgr2ycbcr, scandir
+from traiNNer.metrics import calculate_psnr, calculate_ssim
+from traiNNer.utils import bgr2ycbcr, scandir
 
 
 def main(args):

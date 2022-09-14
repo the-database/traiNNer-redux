@@ -1,7 +1,7 @@
 from os import path as osp
 from PIL import Image
 
-from basicsr.utils import scandir
+from traiNNer.utils import scandir
 
 
 def generate_meta_info_div2k():

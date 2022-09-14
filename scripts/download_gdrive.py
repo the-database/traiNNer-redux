@@ -1,6 +1,6 @@
 import argparse
 
-from basicsr.utils.download_util import download_file_from_google_drive
+from traiNNer.utils.download_util import download_file_from_google_drive
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

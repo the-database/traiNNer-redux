@@ -38,8 +38,8 @@ datasets:
   train:
     name: DF2K+OST
     type: PairedImageDataset
-    dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub
-    dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub
+    dataroot_gt: D:\Datasets\nomos2k\hr
+    dataroot_lq: D:\Datasets\nomos2k\lr_jpeg
     io_backend:
       type: disk
 
@@ -114,8 +114,8 @@ network_d:
 # path
 path:
   # use the pre-trained Real-ESRNet model
-  pretrain_network_g: experiments/pretrained_models/RealESRNet_x4plus.pth
-  param_key_g: params_ema
+  # pretrain_network_g: experiments/pretrained_models/RealESRNet_x4plus.pth
+  # param_key_g: params_ema
   strict_load_g: true
   resume_state: ~
 

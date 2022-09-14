@@ -3,7 +3,7 @@ import os
 import torch
 import torchvision.utils
 
-from basicsr.data import build_dataloader, build_dataset
+from traiNNer.data import build_dataloader, build_dataset
 
 
 def main():

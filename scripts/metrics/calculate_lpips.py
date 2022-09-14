@@ -4,7 +4,7 @@ import numpy as np
 import os.path as osp
 from torchvision.transforms.functional import normalize
 
-from basicsr.utils import img2tensor
+from traiNNer.utils import img2tensor
 
 try:
     import lpips
