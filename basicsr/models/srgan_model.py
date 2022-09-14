@@ -61,6 +61,11 @@ class SRGANModel(SRModel):
         else:
             self.cri_perceptual = None
 
+        if train_opt.get('contextual_opt'):
+            self.cri_contextual = build_loss(train_opt['contextual_opt']).to(self.device)
+        else:
+            self.cri_contextual = None
+
         if train_opt.get('gan_opt'):
             self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device)
 
@@ -107,6 +112,11 @@ class SRGANModel(SRModel):
                 if l_g_style is not None:
                     l_g_total += l_g_style
                     loss_dict['l_g_style'] = l_g_style
+            # contextual loss
+            if self.cri_contextual:
+                l_g_contextual = self.cri_contextual(self.output, cx_gt)
+                l_g_total += l_g_contextual
+                loss_dict['l_g_contextual'] = l_g_contextual
             # gan loss
             fake_g_pred = self.net_d(self.output)
             l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
