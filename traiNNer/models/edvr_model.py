@@ -1,5 +1,5 @@
-from traiNNer.utils import get_root_logger
-from traiNNer.utils.registry import MODEL_REGISTRY
+from ..utils import get_root_logger
+from ..utils.registry import MODEL_REGISTRY
 from .video_base_model import VideoBaseModel
 
 

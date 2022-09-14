@@ -8,13 +8,13 @@ import time
 import torch
 from torch.utils import data as data
 
-from traiNNer.data.degradations import circular_lowpass_kernel, random_mixed_kernels
-from traiNNer.data.transforms import augment
-from traiNNer.utils import FileClient, get_root_logger, imfrombytes, img2tensor
-from traiNNer.utils.registry import DATASET_REGISTRY
+from .degradations import circular_lowpass_kernel, random_mixed_kernels
+from .transforms import augment
+from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor
+from ..utils.registry import DATASET_REGISTRY
 
 
-@DATASET_REGISTRY.register(suffix='basicsr')
+@DATASET_REGISTRY.register(suffix='traiNNer')
 class RealESRGANDataset(data.Dataset):
     """Dataset used for Real-ESRGAN model:
     Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.

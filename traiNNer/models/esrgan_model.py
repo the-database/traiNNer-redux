@@ -1,7 +1,7 @@
 import torch
 from collections import OrderedDict
 
-from traiNNer.utils.registry import MODEL_REGISTRY
+from ..utils.registry import MODEL_REGISTRY
 from .srgan_model import SRGANModel
 
 

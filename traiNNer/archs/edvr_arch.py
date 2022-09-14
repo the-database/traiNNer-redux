@@ -2,7 +2,7 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
-from traiNNer.utils.registry import ARCH_REGISTRY
+from ..utils.registry import ARCH_REGISTRY
 from .arch_util import DCNv2Pack, ResidualBlockNoBN, make_layer
 
 

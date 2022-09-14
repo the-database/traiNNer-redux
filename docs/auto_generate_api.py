@@ -48,7 +48,7 @@ def scandir(dir_path, suffix=None, recursive=False, full_path=False):
 with open('../scripts/__init__.py', 'w') as f:
     pass
 
-module_name_list = ['basicsr', 'scripts']
+module_name_list = ['traiNNer', 'scripts']
 for module_name in module_name_list:
     cur_dir = osp.abspath(osp.dirname(__file__))
     output_dir = osp.join(cur_dir, 'api')

@@ -143,7 +143,7 @@ def init_wandb_logger(opt):
     logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
 
 
-def get_root_logger(logger_name='basicsr', log_level=logging.INFO, log_file=None):
+def get_root_logger(logger_name='traiNNer', log_level=logging.INFO, log_file=None):
     """Get the root logger.
 
     The logger will be initialized if it has not been initialized. By default a
@@ -151,7 +151,7 @@ def get_root_logger(logger_name='basicsr', log_level=logging.INFO, log_file=None
     also be added.
 
     Args:
-        logger_name (str): root logger name. Default: 'basicsr'.
+        logger_name (str): root logger name. Default: 'traiNNer'.
         log_file (str | None): The log filename. If specified, a FileHandler
             will be added to the root logger.
         log_level (int): The root logger level. Note that only the process of
@@ -193,21 +193,22 @@ def get_env_info():
     import torch
     import torchvision
 
-    from basicsr.version import __version__
+    # from traiNNer.version import __version__
     msg = r"""
-                ____                _       _____  ____
-               / __ ) ____ _ _____ (_)_____/ ___/ / __ \
-              / __  |/ __ `// ___// // ___/\__ \ / /_/ /
-             / /_/ // /_/ /(__  )/ // /__ ___/ // _, _/
-            /_____/ \__,_//____//_/ \___//____//_/ |_|
+   __             _ _   ___   __                              __
+  / /__________ _(_) | / / | / /__  _____      ________  ____/ /_  ___  __
+ / __/ ___/ __ `/ /  |/ /  |/ / _ \/ ___/_____/ ___/ _ \/ __  / / / / |/_/
+/ /_/ /  / /_/ / / /|  / /|  /  __/ /  /_____/ /  /  __/ /_/ / /_/ />  <
+\__/_/   \__,_/_/_/ |_/_/ |_/\___/_/        /_/   \___/\__,_/\__,_/_/|_|
      ______                   __   __                 __      __
     / ____/____   ____   ____/ /  / /   __  __ _____ / /__   / /
    / / __ / __ \ / __ \ / __  /  / /   / / / // ___// //_/  / /
   / /_/ // /_/ // /_/ // /_/ /  / /___/ /_/ // /__ / /<    /_/
   \____/ \____/ \____/ \____/  /_____/\____/ \___//_/|_|  (_)
     """
-    msg += ('\nVersion Information: '
-            f'\n\tBasicSR: {__version__}'
-            f'\n\tPyTorch: {torch.__version__}'
-            f'\n\tTorchVision: {torchvision.__version__}')
+    msg += (
+        '\nVersion Information: '
+        # f'\n\ttraiNNer: {__version__}'
+        f'\n\tPyTorch: {torch.__version__}'
+        f'\n\tTorchVision: {torchvision.__version__}')
     return msg

@@ -6,11 +6,11 @@ import torch
 from collections import OrderedDict
 from os import path as osp
 
-from traiNNer.archs import build_network
-from traiNNer.losses import build_loss
-from traiNNer.losses.gan_loss import g_path_regularize, r1_penalty
-from traiNNer.utils import imwrite, tensor2img
-from traiNNer.utils.registry import MODEL_REGISTRY
+from ..archs import build_network
+from ..losses import build_loss
+from ..losses.gan_loss import g_path_regularize, r1_penalty
+from ..utils import imwrite, tensor2img
+from ..utils.registry import MODEL_REGISTRY
 from .base_model import BaseModel
 
 

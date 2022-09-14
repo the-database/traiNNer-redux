@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from traiNNer.ops.fused_act import FusedLeakyReLU, fused_leaky_relu
-from traiNNer.utils.registry import ARCH_REGISTRY
+from ..ops.fused_act import FusedLeakyReLU, fused_leaky_relu
+from ..utils.registry import ARCH_REGISTRY
 
 
 class NormStyleCode(nn.Module):
@@ -271,7 +271,7 @@ class ConstantInput(nn.Module):
         return out
 
 
-@ARCH_REGISTRY.register(suffix='basicsr')
+@ARCH_REGISTRY.register(suffix='traiNNer')
 class StyleGAN2GeneratorBilinear(nn.Module):
     """StyleGAN2 Generator.
 

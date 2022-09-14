@@ -4,10 +4,10 @@ from os import path as osp
 from torch import distributed as dist
 from tqdm import tqdm
 
-from traiNNer.metrics import calculate_metric
-from traiNNer.utils import get_root_logger, imwrite, tensor2img
-from traiNNer.utils.dist_util import get_dist_info
-from traiNNer.utils.registry import MODEL_REGISTRY
+from ..metrics import calculate_metric
+from ..utils import get_root_logger, imwrite, tensor2img
+from ..utils.dist_util import get_dist_info
+from ..utils.registry import MODEL_REGISTRY
 from .sr_model import SRModel
 
 

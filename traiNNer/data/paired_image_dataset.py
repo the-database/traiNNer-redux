@@ -1,10 +1,10 @@
 from torch.utils import data as data
 from torchvision.transforms.functional import normalize
 
-from traiNNer.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb, paired_paths_from_meta_info_file
-from traiNNer.data.transforms import augment, paired_random_crop
-from traiNNer.utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
-from traiNNer.utils.registry import DATASET_REGISTRY
+from .data_util import paired_paths_from_folder, paired_paths_from_lmdb, paired_paths_from_meta_info_file
+from .transforms import augment, paired_random_crop
+from ..utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
+from ..utils.registry import DATASET_REGISTRY
 
 
 @DATASET_REGISTRY.register()

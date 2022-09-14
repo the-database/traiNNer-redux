@@ -1,6 +1,6 @@
 import numpy as np
 
-from traiNNer.utils import bgr2ycbcr
+from ..utils import bgr2ycbcr
 
 
 def reorder_image(img, input_order='HWC'):

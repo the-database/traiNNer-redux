@@ -62,7 +62,7 @@ class Registry():
         name = obj.__name__
         self._do_register(name, obj, suffix)
 
-    def get(self, name, suffix='basicsr'):
+    def get(self, name, suffix='traiNNer'):
         ret = self._obj_map.get(name)
         if ret is None:
             ret = self._obj_map.get(name + '_' + suffix)

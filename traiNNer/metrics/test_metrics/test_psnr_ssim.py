@@ -1,9 +1,9 @@
 import cv2
 import torch
 
-from traiNNer.metrics import calculate_psnr, calculate_ssim
-from traiNNer.metrics.psnr_ssim import calculate_psnr_pt, calculate_ssim_pt
-from traiNNer.utils import img2tensor
+from ...metrics import calculate_psnr, calculate_ssim
+from ...metrics.psnr_ssim import calculate_psnr_pt, calculate_ssim_pt
+from ...utils import img2tensor
 
 
 def test(img_path, img_path2, crop_border, test_y_channel=False):

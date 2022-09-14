@@ -2,8 +2,8 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
-from traiNNer.archs.vgg_arch import VGGFeatureExtractor
-from traiNNer.utils.registry import LOSS_REGISTRY
+from ..archs.vgg_arch import VGGFeatureExtractor
+from ..utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
 
 _reduction_modes = ['none', 'mean', 'sum']
@@ -279,12 +279,12 @@ class ContextualLoss(nn.Module):
     https://github.com/S-aiueo32/contextual_loss_pytorch
     https://github.com/z-bingo/Contextual-Loss-PyTorch
 
-    layers_weights: is a dict, e.g., {'conv1_1': 1.0, 'conv3_2': 1.0}
+    layer_weights: is a dict, e.g., {'conv1_1': 1.0, 'conv3_2': 1.0}
     crop_quarter: boolean
     """
 
     def __init__(self,
-                 layers_weights={
+                 layer_weights={
                      "conv3_2": 1.0,
                      "conv4_2": 1.0
                  },
@@ -297,19 +297,19 @@ class ContextualLoss(nn.Module):
                  net: str = 'vgg19',
                  calc_type: str = 'regular',
                  z_norm: bool = False):
-        super(Contextual_Loss, self).__init__()
+        super(ContextualLoss, self).__init__()
         print('Contextual_Loss')
         assert band_width > 0, 'band_width parameter must be positive.'
         assert distance_type in DIS_TYPES,\
             f'select a distance type from {DIS_TYPES}.'
 
-        if layers_weights:
-            layers_weights = alt_layers_names(layers_weights)
-            self.layers_weights = layers_weights
-            listen_list = list(layers_weights.keys())
+        if layer_weights:
+            layer_weights = alt_layers_names(layer_weights)
+            self.layer_weights = layer_weights
+            listen_list = list(layer_weights.keys())
         else:
             listen_list = []
-            self.layers_weights = {}
+            self.layer_weights = {}
 
         self.crop_quarter = crop_quarter
         self.distanceType = distance_type
@@ -341,7 +341,7 @@ class ContextualLoss(nn.Module):
             vgg_gt = self.vgg_model(gt)
             vgg_gt = {k: v.to(device) for k, v in vgg_gt.items()}
 
-            for key in self.layers_weights.keys():
+            for key in self.layer_weights.keys():
                 if self.crop_quarter:
                     vgg_images[key] = self._crop_quarters(vgg_images[key])
                     vgg_gt[key] = self._crop_quarters(vgg_gt[key])
@@ -352,7 +352,7 @@ class ContextualLoss(nn.Module):
                     vgg_gt[key] = self._random_pooling(vgg_gt[key], output_1d_size=self.max_1d_size)
 
                 loss_t = self.calculate_loss(vgg_images[key], vgg_gt[key])
-                loss += loss_t * self.layers_weights[key]
+                loss += loss_t * self.layer_weights[key]
                 # del vgg_images[key], vgg_gt[key]
         # TODO: without VGG it runs, but results are not looking right
         else:

@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from traiNNer.utils.registry import METRIC_REGISTRY
+from ..utils.registry import METRIC_REGISTRY
 from .niqe import calculate_niqe
 from .psnr_ssim import calculate_psnr, calculate_ssim
 

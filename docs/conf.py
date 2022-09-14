@@ -18,9 +18,9 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'BasicSR'
-copyright = '2018-2022, BasicSR'
-author = 'BasicSR'
+project = 'traiNNer'
+copyright = '2018-2022, traiNNer'
+author = 'traiNNer'
 
 # -- General configuration ---------------------------------------------------
 
@@ -61,7 +61,7 @@ master_doc = 'index'
 
 # def run_apidoc(_):
 #     # automatically generate api docs
-#     modules = ['basicsr']
+#     modules = ['traiNNer']
 #     for module in modules:
 #         cur_dir = os.path.abspath(os.path.dirname(__file__))
 #         output_path = os.path.join(cur_dir, 'api')

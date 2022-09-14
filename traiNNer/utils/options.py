@@ -6,8 +6,8 @@ import yaml
 from collections import OrderedDict
 from os import path as osp
 
-from traiNNer.utils import set_random_seed
-from traiNNer.utils.dist_util import get_dist_info, init_dist, master_only
+from . import set_random_seed
+from .dist_util import get_dist_info, init_dist, master_only
 
 
 def ordered_yaml():

@@ -1,8 +1,8 @@
 import torch
 from torch import nn as nn
 
-from traiNNer.archs.arch_util import ResidualBlockNoBN, Upsample, make_layer
-from traiNNer.utils.registry import ARCH_REGISTRY
+from ..archs.arch_util import ResidualBlockNoBN, Upsample, make_layer
+from ..utils.registry import ARCH_REGISTRY
 
 
 @ARCH_REGISTRY.register()

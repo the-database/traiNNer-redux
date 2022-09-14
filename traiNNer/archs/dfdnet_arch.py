@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.spectral_norm import spectral_norm
 
-from traiNNer.utils.registry import ARCH_REGISTRY
+from ..utils.registry import ARCH_REGISTRY
 from .dfdnet_util import AttentionBlock, Blur, MSDilationBlock, UpResBlock, adaptive_instance_normalization
 from .vgg_arch import VGGFeatureExtractor
 

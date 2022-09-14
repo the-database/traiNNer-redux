@@ -3,15 +3,15 @@ import random
 import torch
 from torch.nn import functional as F
 
-from traiNNer.data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
-from traiNNer.data.transforms import paired_random_crop
-from traiNNer.models.sr_model import SRModel
-from traiNNer.utils import DiffJPEG, USMSharp
-from traiNNer.utils.img_process_util import filter2D
-from traiNNer.utils.registry import MODEL_REGISTRY
+from ..data.degradations import random_add_gaussian_noise_pt, random_add_poisson_noise_pt
+from ..data.transforms import paired_random_crop
+from ..models.sr_model import SRModel
+from ..utils import DiffJPEG, USMSharp
+from ..utils.img_process_util import filter2D
+from ..utils.registry import MODEL_REGISTRY
 
 
-@MODEL_REGISTRY.register(suffix='basicsr')
+@MODEL_REGISTRY.register(suffix='traiNNer')
 class RealESRNetModel(SRModel):
     """RealESRNet Model for Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.
 

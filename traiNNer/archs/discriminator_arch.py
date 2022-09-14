@@ -2,7 +2,7 @@ from torch import nn as nn
 from torch.nn import functional as F
 from torch.nn.utils import spectral_norm
 
-from traiNNer.utils.registry import ARCH_REGISTRY
+from ..utils.registry import ARCH_REGISTRY
 
 
 @ARCH_REGISTRY.register()
@@ -87,7 +87,7 @@ class VGGStyleDiscriminator(nn.Module):
         return out
 
 
-@ARCH_REGISTRY.register(suffix='basicsr')
+@ARCH_REGISTRY.register(suffix='traiNNer')
 class UNetDiscriminatorSN(nn.Module):
     """Defines a U-Net discriminator with spectral normalization (SN)
 

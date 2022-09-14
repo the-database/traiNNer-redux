@@ -6,8 +6,8 @@ import torch
 from os import path as osp
 import sys
 
-SCRIPT_DIR = osp.dirname(osp.abspath(__file__))
-sys.path.append(osp.dirname(SCRIPT_DIR))
+# SCRIPT_DIR = osp.dirname(osp.abspath(__file__))
+# sys.path.append(osp.dirname(SCRIPT_DIR))
 
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.data.data_sampler import EnlargedSampler
@@ -114,7 +114,7 @@ def train_pipeline(root_path):
     # WARNING: should not use get_root_logger in the above codes, including the called functions
     # Otherwise the logger will not be properly initialized
     log_file = osp.join(opt['path']['log'], f"train_{opt['name']}_{get_time_str()}.log")
-    logger = get_root_logger(logger_name='basicsr', log_level=logging.INFO, log_file=log_file)
+    logger = get_root_logger(logger_name='traiNNer', log_level=logging.INFO, log_file=log_file)
     logger.info(get_env_info())
     logger.info(dict2str(opt))
     # initialize wandb and tb loggers

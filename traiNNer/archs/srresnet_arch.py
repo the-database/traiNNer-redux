@@ -1,7 +1,7 @@
 from torch import nn as nn
 from torch.nn import functional as F
 
-from traiNNer.utils.registry import ARCH_REGISTRY
+from ..utils.registry import ARCH_REGISTRY
 from .arch_util import ResidualBlockNoBN, default_init_weights, make_layer
 
 

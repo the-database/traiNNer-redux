@@ -494,7 +494,7 @@ class DiffJPEG(nn.Module):
 if __name__ == '__main__':
     import cv2
 
-    from traiNNer.utils import img2tensor, tensor2img
+    from . import img2tensor, tensor2img
 
     img_gt = cv2.imread('test.png') / 255.
 

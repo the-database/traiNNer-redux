@@ -1,10 +1,10 @@
 from torch import nn as nn
 from torch.nn import functional as F
 
-from traiNNer.utils.registry import ARCH_REGISTRY
+from ..utils.registry import ARCH_REGISTRY
 
 
-@ARCH_REGISTRY.register(suffix='basicsr')
+@ARCH_REGISTRY.register(suffix='traiNNer')
 class SRVGGNetCompact(nn.Module):
     """A compact VGG-style network structure for super-resolution.
 

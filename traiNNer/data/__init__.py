@@ -7,10 +7,10 @@ from copy import deepcopy
 from functools import partial
 from os import path as osp
 
-from traiNNer.data.prefetch_dataloader import PrefetchDataLoader
-from traiNNer.utils import get_root_logger, scandir
-from traiNNer.utils.dist_util import get_dist_info
-from traiNNer.utils.registry import DATASET_REGISTRY
+from .prefetch_dataloader import PrefetchDataLoader
+from ..utils import get_root_logger, scandir
+from ..utils.dist_util import get_dist_info
+from ..utils.registry import DATASET_REGISTRY
 
 __all__ = ['build_dataset', 'build_dataloader']
 
@@ -19,7 +19,7 @@ __all__ = ['build_dataset', 'build_dataloader']
 data_folder = osp.dirname(osp.abspath(__file__))
 dataset_filenames = [osp.splitext(osp.basename(v))[0] for v in scandir(data_folder) if v.endswith('_dataset.py')]
 # import all the dataset modules
-_dataset_modules = [importlib.import_module(f'basicsr.data.{file_name}') for file_name in dataset_filenames]
+_dataset_modules = [importlib.import_module(f'traiNNer.data.{file_name}') for file_name in dataset_filenames]
 
 
 def build_dataset(dataset_opt):

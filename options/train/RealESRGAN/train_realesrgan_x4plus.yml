@@ -165,10 +165,9 @@ train:
   # contextual loss
   contextual_opt:
     type: ContextualLoss
-    loss_weight: 0.5
     layer_weights:
-      "conv_3_2": 1
-      "conv_4_2": 1
+      "conv_3_2": 0.5
+      "conv_4_2": 0.5
     max_1d_size: 64
     distance_type: "cosine"
     calc_type: "regular"
