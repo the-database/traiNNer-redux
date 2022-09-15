@@ -179,7 +179,15 @@ train:
     band_width: 0.5
     use_vgg: true,
     net: vgg19
-
+  color_opt:
+    type: ColorLoss
+    criterion: "l1"
+    loss_weight: 1.0
+  avg_opt:
+    type: AverageLoss
+    criterion: "l1"
+    loss_weight: 1.0
+    scale: 4
   # gan loss
   gan_opt:
     type: GANLoss

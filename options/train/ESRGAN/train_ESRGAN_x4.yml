@@ -10,10 +10,8 @@ datasets:
   train:
     name: DIV2K
     type: PairedImageDataset
-    # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub
-    # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub
-    dataroot_gt: D:\Datasets\nomos2k\hr
-    dataroot_lq: D:\Datasets\nomos2k\lr_jpeg
+    dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub
+    dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub
     # (for lmdb)
     # dataroot_gt: datasets/DIV2K/DIV2K_train_HR_sub.lmdb
     # dataroot_lq: datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb
@@ -113,6 +111,15 @@ train:
     band_width: 0.5
     use_vgg: true,
     net: vgg19
+  color_opt:
+    type: ColorLoss
+    criterion: "l1"
+    loss_weight: 1.0
+  avg_opt:
+    type: AverageLoss
+    criterion: "l1"
+    loss_weight: 1.0
+    scale: 4
   gan_opt:
     type: GANLoss
     gan_type: vanilla

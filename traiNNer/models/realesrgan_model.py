@@ -241,6 +241,14 @@ class RealESRGANModel(SRGANModel):
                 l_g_contextual = self.cri_contextual(self.output, cx_gt)
                 l_g_total += l_g_contextual
                 loss_dict['l_g_contextual'] = l_g_contextual
+            if self.cri_color:
+                l_g_color = self.cri_color(self.output, self.gt)
+                l_g_total += l_g_color
+                loss_dict['l_g_color'] = l_g_color
+            if self.cri_avg:
+                l_g_avg = self.cri_avg(self.output, self.gt)
+                l_g_total += l_g_avg
+                loss_dict['l_g_avg'] = l_g_avg
             # gan loss
             fake_g_pred = self.net_d(self.output)
             l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)

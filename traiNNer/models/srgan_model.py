@@ -61,12 +61,20 @@ class SRGANModel(SRModel):
         else:
             self.cri_perceptual = None
 
-        print('MADE IT HERE')
-        print(train_opt.get('contextual_opt'))
         if train_opt.get('contextual_opt'):
             self.cri_contextual = build_loss(train_opt['contextual_opt']).to(self.device)
         else:
             self.cri_contextual = None
+
+        if train_opt.get('color_opt'):
+            self.cri_color = build_loss(train_opt['color_opt']).to(self.device)
+        else:
+            self.cri_color = None
+
+        if train_opt.get('avg_opt'):
+            self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
+        else:
+            self.cri_avg = None
 
         if train_opt.get('gan_opt'):
             self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device)
@@ -119,6 +127,14 @@ class SRGANModel(SRModel):
                 l_g_contextual = self.cri_contextual(self.output, cx_gt)
                 l_g_total += l_g_contextual
                 loss_dict['l_g_contextual'] = l_g_contextual
+            if self.cri_color:
+                l_g_color = self.cri_color(self.output, self.gt)
+                l_g_total += l_g_color
+                loss_dict['l_g_color'] = l_g_color
+            if self.cri_avg:
+                l_g_avg = self.cri_avg(self.output, self.gt)
+                l_g_total += l_g_avg
+                loss_dict['l_g_avg'] = l_g_avg
             # gan loss
             fake_g_pred = self.net_d(self.output)
             l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)

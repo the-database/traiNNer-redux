@@ -5,6 +5,7 @@ from torch.nn import functional as F
 from ..archs.vgg_arch import VGGFeatureExtractor
 from ..utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
+from ..utils.color_util import rgb2ycbcr, ycbcr2rgb
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -251,6 +252,50 @@ class PerceptualLoss(nn.Module):
         features_t = features.transpose(1, 2)
         gram = features.bmm(features_t) / (c * h * w)
         return gram
+
+
+@LOSS_REGISTRY.register()
+class ColorLoss(nn.Module):
+    """Color loss"""
+
+    def __init__(self, criterion='l1', loss_weight=1.0):
+        super(ColorLoss, self).__init__()
+        self.loss_weight = loss_weight
+        self.criterion_type = criterion
+        if self.criterion_type == 'l1':
+            self.criterion = torch.nn.L1Loss()
+        elif self.criterion_type == 'l2':
+            self.criterion = torch.nn.L2loss()
+        else:
+            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        input_uv = rgb2ycbcr(x)
+        target_uv = ycbcr2rgb(y)
+        # Get just the UV channels
+        input_uv = input_uv[:, 1:, :, :]
+        target_uv = target_uv[:, 1:, :, :]
+        return self.criterion(input_uv, target_uv) * self.loss_weight
+
+
+@LOSS_REGISTRY.register()
+class AverageLoss(nn.Module):
+    """Averaging Downscale loss"""
+
+    def __init__(self, criterion='l1', loss_weight=1.0, scale=4):
+        super(AverageLoss, self).__init__()
+        self.ds_f = torch.nn.AvgPool2d(kernel_size=int(scale))
+        self.loss_weight = loss_weight
+        self.criterion_type = criterion
+        if self.criterion_type == 'l1':
+            self.criterion = torch.nn.L1Loss()
+        elif self.criterion_type == 'l2':
+            self.criterion = torch.nn.L2loss()
+        else:
+            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
 
 
 ########################
