@@ -343,7 +343,7 @@ class ContextualLoss(nn.Module):
                  calc_type: str = 'regular',
                  z_norm: bool = False):
         super(ContextualLoss, self).__init__()
-        print('Contextual_Loss')
+
         assert band_width > 0, 'band_width parameter must be positive.'
         assert distance_type in DIS_TYPES,\
             f'select a distance type from {DIS_TYPES}.'
