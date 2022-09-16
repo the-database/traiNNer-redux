@@ -5,7 +5,7 @@ from torch.nn import functional as F
 from ..archs.vgg_arch import VGGFeatureExtractor
 from ..utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
-from ..utils.color_util import rgb2ycbcr, ycbcr2rgb
+from ..utils.color_util import rgb2ycbcr, ycbcr2rgb, rgb2ycbcr_pt
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -270,11 +270,11 @@ class ColorLoss(nn.Module):
             raise NotImplementedError(f'{criterion} criterion has not been supported.')
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        input_uv = rgb2ycbcr(x)
-        target_uv = ycbcr2rgb(y)
+        input_yuv = rgb2ycbcr_pt(x)
+        target_yuv = rgb2ycbcr_pt(y)
         # Get just the UV channels
-        input_uv = input_uv[:, 1:, :, :]
-        target_uv = target_uv[:, 1:, :, :]
+        input_uv = input_yuv[:, 1:, :, :]
+        target_uv = target_yuv[:, 1:, :, :]
         return self.criterion(input_uv, target_uv) * self.loss_weight
 
 
