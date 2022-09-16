@@ -190,7 +190,7 @@ class PerceptualLoss(nn.Module):
         if self.criterion_type == 'l1':
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
-            self.criterion = torch.nn.L2loss()
+            self.criterion = torch.nn.MSELoss()
         elif self.criterion_type == 'fro':
             self.criterion = None
         else:
@@ -265,7 +265,7 @@ class ColorLoss(nn.Module):
         if self.criterion_type == 'l1':
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
-            self.criterion = torch.nn.L2loss()
+            self.criterion = torch.nn.MSELoss()
         else:
             raise NotImplementedError(f'{criterion} criterion has not been supported.')
 
@@ -290,7 +290,7 @@ class AverageLoss(nn.Module):
         if self.criterion_type == 'l1':
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
-            self.criterion = torch.nn.L2loss()
+            self.criterion = torch.nn.MSELoss()
         else:
             raise NotImplementedError(f'{criterion} criterion has not been supported.')
 
@@ -321,7 +321,7 @@ class ContextualLoss(nn.Module):
     Contextual loss for unaligned images (https://arxiv.org/abs/1803.02077)
 
     https://github.com/roimehrez/contextualLoss
-    https://github.com/S-aiueo32/contextual_loss_pytorch
+    https://github.com/S-aiueo32/ContextualLoss_pytorch
     https://github.com/z-bingo/Contextual-Loss-PyTorch
 
     layer_weights: is a dict, e.g., {'conv1_1': 1.0, 'conv3_2': 1.0}
@@ -436,11 +436,11 @@ class ContextualLoss(nn.Module):
             feats = [feats]
 
         N, C, H, W = feats[0].size()
-        feats_sample, indices = Contextual_Loss._random_sampling(feats[0], output_1d_size**2, None)
+        feats_sample, indices = ContextualLoss._random_sampling(feats[0], output_1d_size**2, None)
         res = [feats_sample]
 
         for i in range(1, len(feats)):
-            feats_sample, _ = Contextual_Loss._random_sampling(feats[i], -1, indices)
+            feats_sample, _ = ContextualLoss._random_sampling(feats[i], -1, indices)
             res.append(feats_sample)
 
         res = [feats_sample.view(N, C, output_1d_size, output_1d_size) for feats_sample in res]
@@ -568,20 +568,20 @@ class ContextualLoss(nn.Module):
 
         # spatial loss
         grid = compute_meshgrid(I_features.shape).to(T_features.device)
-        raw_distance = Contextual_Loss._create_using_L2(grid, grid)  # calculate raw distance
-        dist_tilde = Contextual_Loss._calculate_relative_distance(raw_distance)
+        raw_distance = ContextualLoss._create_using_L2(grid, grid)  # calculate raw distance
+        dist_tilde = ContextualLoss._calculate_relative_distance(raw_distance)
         exp_distance = torch.exp((self.b - dist_tilde) / self.band_width)  # Eq(3)
         cx_sp = exp_distance / torch.sum(exp_distance, dim=-1, keepdim=True)  # Eq(4)
 
         # feature loss
         # calculate raw distances
         if self.distanceType == 'l1':
-            raw_distance = Contextual_Loss._create_using_L1(I_features, T_features)
+            raw_distance = ContextualLoss._create_using_L1(I_features, T_features)
         elif self.distanceType == 'l2':
-            raw_distance = Contextual_Loss._create_using_L2(I_features, T_features)
+            raw_distance = ContextualLoss._create_using_L2(I_features, T_features)
         else:  # self.distanceType == 'cosine':
-            raw_distance = Contextual_Loss._create_using_dotP(I_features, T_features)
-        dist_tilde = Contextual_Loss._calculate_relative_distance(raw_distance)
+            raw_distance = ContextualLoss._create_using_dotP(I_features, T_features)
+        dist_tilde = ContextualLoss._calculate_relative_distance(raw_distance)
         exp_distance = torch.exp((self.b - dist_tilde) / self.band_width)  # Eq(3)
         cx_feat = exp_distance / torch.sum(exp_distance, dim=-1, keepdim=True)  # Eq(4)
 
@@ -607,18 +607,18 @@ class ContextualLoss(nn.Module):
 
         # calculate raw distances
         if self.distanceType == 'l1':
-            raw_distance = Contextual_Loss._create_using_L1(I_features, T_features)
+            raw_distance = ContextualLoss._create_using_L1(I_features, T_features)
         elif self.distanceType == 'l2':
-            raw_distance = Contextual_Loss._create_using_L2(I_features, T_features)
+            raw_distance = ContextualLoss._create_using_L2(I_features, T_features)
         else:  # self.distanceType == 'cosine':
-            raw_distance = Contextual_Loss._create_using_dotP(I_features, T_features)
+            raw_distance = ContextualLoss._create_using_dotP(I_features, T_features)
         if torch.sum(torch.isnan(raw_distance)) == torch.numel(raw_distance) or torch.sum(
                 torch.isinf(raw_distance)) == torch.numel(raw_distance):
             print(raw_distance)
             raise ValueError('NaN or Inf in raw_distance')
 
         # normalizing the distances
-        relative_distance = Contextual_Loss._calculate_relative_distance(raw_distance)
+        relative_distance = ContextualLoss._calculate_relative_distance(raw_distance)
         if torch.sum(torch.isnan(relative_distance)) == torch.numel(relative_distance) or torch.sum(
                 torch.isinf(relative_distance)) == torch.numel(relative_distance):
             print(relative_distance)
@@ -642,7 +642,7 @@ class ContextualLoss(nn.Module):
             raise ValueError('NaN or Inf in contextual_sim')
         del exp_distance
 
-        # contextual_loss()
+        # ContextualLoss()
         max_gt_sim = torch.max(torch.max(contextual_sim, dim=1)[0], dim=1)[0]  # Eq(1)
         del contextual_sim
         CS = torch.mean(max_gt_sim, dim=1)

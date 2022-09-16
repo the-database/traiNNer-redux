@@ -194,14 +194,12 @@ class RealESRGANModel(SRGANModel):
         # usm sharpening
         l1_gt = self.gt_usm
         percep_gt = self.gt_usm
-        cx_gt = self.gt_usm
+        cx_gt = self.gt
         gan_gt = self.gt_usm
         if self.opt['l1_gt_usm'] is False:
             l1_gt = self.gt
         if self.opt['percep_gt_usm'] is False:
             percep_gt = self.gt
-        if self.opt['cx_gt_usm'] is False:
-            cx_gt = self.gt
         if self.opt['gan_gt_usm'] is False:
             gan_gt = self.gt
 
@@ -238,7 +236,7 @@ class RealESRGANModel(SRGANModel):
                     loss_dict['l_g_style'] = l_g_style
             # contextual loss
             if self.cri_contextual:
-                l_g_contextual = self.cri_contextual(self.output, cx_gt)
+                l_g_contextual = self.cri_contextual(self.output, self.gt)
                 l_g_total += l_g_contextual
                 loss_dict['l_g_contextual'] = l_g_contextual
             if self.cri_color:
