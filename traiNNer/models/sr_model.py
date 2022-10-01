@@ -68,6 +68,16 @@ class SRModel(BaseModel):
         else:
             self.cri_contextual = None
 
+        if train_opt.get('color_opt'):
+            self.cri_color = build_loss(train_opt['color_opt']).to(self.device)
+        else:
+            self.cri_color = None
+
+        if train_opt.get('avg_opt'):
+            self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
+        else:
+            self.cri_avg = None
+
         if self.cri_pix is None and self.cri_perceptual is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
@@ -116,10 +126,19 @@ class SRModel(BaseModel):
                 l_total += l_style
                 loss_dict['l_style'] = l_style
 
-        if self.cri_contextual:
-            l_contextual = self.cri_contextual(self.output, self.gt)
-            l_total += l_contextual
-            loss_dict['l_contextual'] = l_contextual
+            # contextual loss
+            if self.cri_contextual:
+                l_contextual = self.cri_contextual(self.output, self.gt)
+                l_total += l_contextual
+                loss_dict['l_contextual'] = l_contextual
+            if self.cri_color:
+                l_color = self.cri_color(self.output, self.gt)
+                l_total += l_color
+                loss_dict['l_color'] = l_color
+            if self.cri_avg:
+                l_avg = self.cri_avg(self.output, self.gt)
+                l_total += l_avg
+                loss_dict['l_avg'] = l_avg
 
         l_total.backward()
         self.optimizer_g.step()
