@@ -258,10 +258,11 @@ class PerceptualLoss(nn.Module):
 class ColorLoss(nn.Module):
     """Color loss"""
 
-    def __init__(self, criterion='l1', loss_weight=1.0):
+    def __init__(self, criterion='l1', loss_weight=1.0, scale=4):
         super(ColorLoss, self).__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
+        self.scale = scale
         if self.criterion_type == 'l1':
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
@@ -275,7 +276,9 @@ class ColorLoss(nn.Module):
         # Get just the UV channels
         input_uv = input_yuv[:, 1:, :, :]
         target_uv = target_yuv[:, 1:, :, :]
-        return self.criterion(input_uv, target_uv) * self.loss_weight
+        input_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
+        target_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
+        return self.criterion(input_uv_downscale, target_uv_downscale) * self.loss_weight
 
 
 @LOSS_REGISTRY.register()
