@@ -6,8 +6,8 @@ import torch
 import torchvision.transforms as transforms
 from skimage import io
 
-from basicsr.archs.dfdnet_arch import DFDNet
-from basicsr.utils import imwrite, tensor2img
+from traiNNer.archs.dfdnet_arch import DFDNet
+from traiNNer.utils import imwrite, tensor2img
 
 try:
     from facexlib.utils.face_restoration_helper import FaceRestoreHelper

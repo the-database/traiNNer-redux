@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from basicsr.archs.ecbsr_arch import ECB, ECBSR, SeqConv3x3
+from traiNNer.archs.ecbsr_arch import ECB, ECBSR, SeqConv3x3
 
 
 def test_ecbsr():

@@ -1,6 +1,6 @@
 import torch
 
-from basicsr.models.lr_scheduler import CosineAnnealingRestartLR
+from traiNNer.models.lr_scheduler import CosineAnnealingRestartLR
 
 try:
     import matplotlib as mpl

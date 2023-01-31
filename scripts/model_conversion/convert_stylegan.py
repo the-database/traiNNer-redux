@@ -1,6 +1,6 @@
 import torch
 
-from basicsr.archs.stylegan2_arch import StyleGAN2Discriminator, StyleGAN2Generator
+from traiNNer.archs.stylegan2_arch import StyleGAN2Discriminator, StyleGAN2Generator
 
 
 def convert_net_g(ori_net, crt_net):

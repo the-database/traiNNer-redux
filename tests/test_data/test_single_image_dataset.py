@@ -1,6 +1,6 @@
 import yaml
 
-from basicsr.data.single_image_dataset import SingleImageDataset
+from traiNNer.data.single_image_dataset import SingleImageDataset
 
 
 def test_singleimagedataset():

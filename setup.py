@@ -6,7 +6,7 @@ import os
 import subprocess
 import time
 
-version_file = 'basicsr/version.py'
+version_file = 'traiNNer/version.py'
 
 
 def readme():
@@ -46,7 +46,7 @@ def get_hash():
     # currently ignore this
     # elif os.path.exists(version_file):
     #     try:
-    #         from basicsr.version import __version__
+    #         from traiNNer.version import __version__
     #         sha = __version__.split('+')[-1]
     #     except ImportError:
     #         raise ImportError('Unable to get git version')
@@ -113,7 +113,7 @@ def get_requirements(filename='requirements.txt'):
 
 
 if __name__ == '__main__':
-    cuda_ext = os.getenv('BASICSR_EXT')  # whether compile cuda ext
+    cuda_ext = os.getenv('TRAINNER_EXT')  # whether compile cuda ext
     if cuda_ext == 'True':
         try:
             import torch
@@ -124,17 +124,17 @@ if __name__ == '__main__':
         ext_modules = [
             make_cuda_ext(
                 name='deform_conv_ext',
-                module='basicsr.ops.dcn',
+                module='traiNNer.ops.dcn',
                 sources=['src/deform_conv_ext.cpp'],
                 sources_cuda=['src/deform_conv_cuda.cpp', 'src/deform_conv_cuda_kernel.cu']),
             make_cuda_ext(
                 name='fused_act_ext',
-                module='basicsr.ops.fused_act',
+                module='traiNNer.ops.fused_act',
                 sources=['src/fused_bias_act.cpp'],
                 sources_cuda=['src/fused_bias_act_kernel.cu']),
             make_cuda_ext(
                 name='upfirdn2d_ext',
-                module='basicsr.ops.upfirdn2d',
+                module='traiNNer.ops.upfirdn2d',
                 sources=['src/upfirdn2d.cpp'],
                 sources_cuda=['src/upfirdn2d_kernel.cu']),
         ]
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     write_version_py()
     setup(
-        name='basicsr',
+        name='traiNNer',
         version=get_version(),
         description='Open Source Image and Video Super-Resolution Toolbox',
         long_description=readme(),
