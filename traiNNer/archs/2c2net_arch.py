@@ -208,7 +208,7 @@ class ShortcutBlock(nn.Module):
         return output
 
     def __repr__(self):
-        return "Identity + \n|" + self.__repr__().replace("\n", "\n|")
+        return "ShortcutBlock"
 
 
 def sequential(*args):
