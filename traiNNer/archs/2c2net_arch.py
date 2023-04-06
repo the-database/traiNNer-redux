@@ -5,6 +5,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..utils.registry import ARCH_REGISTRY
+from .arch_util import default_init_weights
+
 
 @ARCH_REGISTRY.register()
 class RRDB2C2Net(nn.Module):
@@ -141,6 +144,8 @@ class ResidualDenseBlock_5C(nn.Module):
             nf,
             act_type=last_act,
         )
+
+        default_init_weights([self.conv1, self.conv2, self.conv3, self.conv4, self.conv5], 0.1)
 
     def forward(self, x):
         x1 = self.conv1(x)
