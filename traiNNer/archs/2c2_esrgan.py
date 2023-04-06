@@ -11,13 +11,21 @@ class RRDB2C2Net(nn.Module):
 
     def __init__(
         self,
-        in_nc,
-        out_nc,
-        nf,
-        nb,
-        upscale=4,
+        num_in_ch,
+        num_out_ch,
+        scale=4,
+        num_feat=64,
+        num_block=23,
+        num_grow_ch=32
         act_type="leakyrelu",
     ):
+        in_nc = num_in_ch
+        out_nc = num_out_ch
+        upscale = scale
+        nf = num_feat
+        nb = num_block
+        gc = num_grow_ch
+
         super(RRDB2C2Net, self).__init__()
         n_upscale = int(math.log(upscale, 2))
 
