@@ -16,7 +16,7 @@ class RRDB2C2Net(nn.Module):
         scale=4,
         num_feat=64,
         num_block=23,
-        num_grow_ch=32
+        num_grow_ch=32,
         act_type="leakyrelu",
     ):
         in_nc = num_in_ch
