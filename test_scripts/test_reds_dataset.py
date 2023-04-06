@@ -21,13 +21,13 @@ def main(mode='folder'):
         opt['dataroot_gt'] = 'datasets/REDS/train_sharp'
         opt['dataroot_lq'] = 'datasets/REDS/train_sharp_bicubic'
         opt['dataroot_flow'] = None
-        opt['meta_info_file'] = 'basicsr/data/meta_info/meta_info_REDS_GT.txt'
+        opt['meta_info_file'] = 'traiNNer/data/meta_info/meta_info_REDS_GT.txt'
         opt['io_backend'] = dict(type='disk')
     elif mode == 'lmdb':
         opt['dataroot_gt'] = 'datasets/REDS/train_sharp_with_val.lmdb'
         opt['dataroot_lq'] = 'datasets/REDS/train_sharp_bicubic_with_val.lmdb'
         opt['dataroot_flow'] = None
-        opt['meta_info_file'] = 'basicsr/data/meta_info/meta_info_REDS_GT.txt'
+        opt['meta_info_file'] = 'traiNNer/data/meta_info/meta_info_REDS_GT.txt'
         opt['io_backend'] = dict(type='lmdb')
 
     opt['val_partition'] = 'REDS4'

@@ -25,7 +25,7 @@ def main(mode='folder'):
     elif mode == 'meta_info_file':
         opt['dataroot_gt'] = 'datasets/DIV2K/DIV2K_train_HR_sub'
         opt['dataroot_lq'] = 'datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub'
-        opt['meta_info_file'] = 'basicsr/data/meta_info/meta_info_DIV2K800sub_GT.txt'  # noqa:E501
+        opt['meta_info_file'] = 'traiNNer/data/meta_info/meta_info_DIV2K800sub_GT.txt'  # noqa:E501
         opt['filename_tmpl'] = '{}'
         opt['io_backend'] = dict(type='disk')
     elif mode == 'lmdb':
