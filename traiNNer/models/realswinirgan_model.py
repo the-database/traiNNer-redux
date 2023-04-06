@@ -2,11 +2,11 @@ import torch
 from torch.nn import functional as F
 
 from ..utils.registry import MODEL_REGISTRY
-from .realesrgan_model import RealSRGANModel
+from .realesrgan_model import RealESRGANModel
 
 
 @MODEL_REGISTRY.register()
-class RealSwinIRGANModel(RealSRGANModel):
+class RealSwinIRGANModel(RealESRGANModel):
 
     def test(self):
         # pad to multiplication of window_size
