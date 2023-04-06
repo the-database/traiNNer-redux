@@ -194,7 +194,6 @@ class RealESRGANModel(SRGANModel):
         # usm sharpening
         l1_gt = self.gt_usm
         percep_gt = self.gt_usm
-        cx_gt = self.gt
         gan_gt = self.gt_usm
         if self.opt['l1_gt_usm'] is False:
             l1_gt = self.gt

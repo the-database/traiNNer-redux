@@ -124,7 +124,7 @@ class SRGANModel(SRModel):
                     loss_dict['l_g_style'] = l_g_style
             # contextual loss
             if self.cri_contextual:
-                l_g_contextual = self.cri_contextual(self.output, cx_gt)
+                l_g_contextual = self.cri_contextual(self.output, self.gt)
                 l_g_total += l_g_contextual
                 loss_dict['l_g_contextual'] = l_g_contextual
             if self.cri_color:
