@@ -3,8 +3,6 @@ from torch.nn import functional as F
 
 from ..utils.registry import ARCH_REGISTRY
 
-from .conv2c2net_arch import conv_block as conv_2c2_block
-
 
 @ARCH_REGISTRY.register(suffix='traiNNer')
 class SRVGGNetCompact(nn.Module):
