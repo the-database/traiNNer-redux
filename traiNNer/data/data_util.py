@@ -218,19 +218,29 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     input_folder, gt_folder = folders
     input_key, gt_key = keys
 
-    input_paths = list(scandir(input_folder))
-    gt_paths = list(scandir(gt_folder))
-    assert len(input_paths) == len(gt_paths), (f'{input_key} and {gt_key} datasets have different number of images: '
-                                               f'{len(input_paths)}, {len(gt_paths)}.')
-    paths = []
-    for gt_path in gt_paths:
-        basename, ext = osp.splitext(osp.basename(gt_path))
-        input_name = f'{filename_tmpl.format(basename)}{ext}'
-        input_path = osp.join(input_folder, input_name)
-        assert input_name in input_paths, f'{input_name} is not in {input_key}_paths.'
-        gt_path = osp.join(gt_folder, gt_path)
-        paths.append(dict([(f'{input_key}_path', input_path), (f'{gt_key}_path', gt_path)]))
-    return paths
+    gt_names = list(scandir(gt_folder))
+    gt_paths = [(f'{gt_key}_path', osp.join(gt_folder, f)) for f in gt_names]
+
+    input_names = list(scandir(input_folder))
+
+    assert len(input_names) == len(gt_names), (f'{input_key} and {gt_key} datasets have different number of images: '
+                                               f'{len(input_names)}, {len(gt_names)}.')
+
+    input_set = set(input_names)
+    gt_set = set(gt_names)
+    missing_from_gt_paths = input_set - gt_set
+    missing_from_input_paths = gt_set - input_set
+    assert len(missing_from_gt_paths) == 0, f'{missing_from_gt_paths} are missing from {gt_key}_paths.'
+    assert len(missing_from_input_paths) == 0, f'{missing_from_input_paths} are missing from {input_key}_paths.'
+
+    if filename_tmpl == '{}':
+        input_paths = [(f'{input_key}_path', osp.join(input_folder, f)) for f in gt_names]
+    else:
+        gt_basename_ext = [osp.splitext(osp.basename(gt_name)) for gt_name in gt_names]
+        input_paths = [(f'{input_key}_path', osp.join(input_folder, f'{filename_tmpl.format(basename)}{ext}')) for
+                       basename, ext in gt_basename_ext]
+
+    return [dict([a, b]) for a, b in zip(input_paths, gt_paths)]
 
 
 def paths_from_folder(folder):
