@@ -332,6 +332,7 @@ class ContextualLoss(nn.Module):
     """
 
     def __init__(self,
+                 loss_weight=1.0,
                  layer_weights={
                      "conv3_2": 1.0,
                      "conv4_2": 1.0
@@ -359,6 +360,7 @@ class ContextualLoss(nn.Module):
             listen_list = []
             self.layer_weights = {}
 
+        self.loss_weight = loss_weight
         self.crop_quarter = crop_quarter
         self.distanceType = distance_type
         self.max_1d_size = max_1d_size
@@ -554,7 +556,7 @@ class ContextualLoss(nn.Module):
 
     def symetric_CX_Loss(self, I_features, T_features):
         loss = (self.calculate_CX_Loss(T_features, I_features) + self.calculate_CX_Loss(I_features, T_features)) / 2
-        return loss  # score
+        return loss*self.loss_weight  # score
 
     def bilateral_CX_Loss(self, I_features, T_features, weight_sp: float = 0.1):
 
@@ -593,7 +595,7 @@ class ContextualLoss(nn.Module):
         k_max_NC, _ = torch.max(cx_combine, dim=2, keepdim=True)
         cx = k_max_NC.mean(dim=1)
         cx_loss = torch.mean(-torch.log(cx + 1e-5))
-        return cx_loss
+        return cx_loss*self.loss_weight
 
     def calculate_CX_Loss(self, I_features, T_features):
         device = I_features.device
@@ -653,4 +655,4 @@ class ContextualLoss(nn.Module):
         if torch.isnan(CX_loss):
             raise ValueError('NaN in computing CX_loss')
 
-        return CX_loss
+        return CX_loss*self.loss_weight

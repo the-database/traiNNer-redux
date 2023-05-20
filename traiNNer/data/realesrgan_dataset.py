@@ -112,7 +112,7 @@ class RealESRGANDataset(data.Dataset):
         # crop or pad to 400
         # TODO: 400 is hard-coded. You may change it accordingly
         h, w = img_gt.shape[0:2]
-        crop_pad_size = 400
+        crop_pad_size = 2048
         # pad
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)
