@@ -1,0 +1,148 @@
+# general settings
+name: SwinIRSmall
+model_type: SwinIRGANModel # Valid options: SwinIRGANModel, SwinIRModel (no GAN Loss), and RealSwinIRGANModel (enables Real-ESRGAN OTF + GAN loss)
+scale: 4
+num_gpu: auto
+manual_seed: 0
+
+# USM the ground-truth #if these are true, it will apply an unsharp mask to the HR images, causing halos on the output
+l1_gt_usm: False
+percep_gt_usm: False
+gan_gt_usm: False
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: DIV2K
+    type: PairedImageDataset
+    dataroot_gt: 
+    dataroot_lq: 
+    #meta_info: basicsr/data/meta_info/meta_info_DIV2K800sub_GT.txt
+    io_backend:
+      type: disk
+
+    gt_size: 128 #during training, it will crop a square of this size from your images, larger is usually better but uses more vram
+    use_hflip: true #randomly flip the images horizontally
+    use_rot: true #randomly rotate the images
+
+    # data loader
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 4
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+# network structures
+network_g:
+  type: SwinIR
+  upscale: 4
+  in_chans: 3
+  img_size: 48
+  window_size: 8
+  img_range: 1.
+  depths: [6, 6, 6, 6]
+  embed_dim: 60
+  num_heads: [6, 6, 6, 6]
+  mlp_ratio: 2
+  upsampler: 'pixelshuffle'
+  resi_connection: '1conv'
+  
+network_d:
+  type: UNetDiscriminatorSN
+  num_in_ch: 3
+  num_feat: 64
+  skip_connection: True
+
+# path
+path:
+  pretrain_network_g: 
+  param_key_g: params_ema
+  strict_load_g: true
+  resume_state: 
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [200000, 400000] #at these iterations it will reduce the learning rate.
+    gamma: 0.5
+
+  total_iter: 400000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 0.8
+    reduction: mean
+
+  # perceptual loss (content and style losses)
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      # before relu
+      "conv1_2": 0.1
+      "conv2_2": 0.1
+      "conv3_4": 2
+      "conv4_4": 2
+      "conv5_4": 2
+    vgg_type: vgg19
+    use_input_norm: true
+    perceptual_weight: !!float 1.0
+    style_weight: 0
+    range_norm: false
+    criterion: l1
+
+  # contextual loss
+  contextual_opt:
+    type: ContextualLoss
+    layer_weights:
+      "conv_3_2": 0.15
+      "conv_4_2": 0.15
+    max_1d_size: 64
+    distance_type: "cosine"
+    calc_type: "regular"
+    z_norm: false
+    crop_quarter: false
+    b: 1.0
+    band_width: 0.5
+    use_vgg: true
+    net: vgg19
+
+  color_opt:
+    type: ColorLoss
+    criterion: "l1"
+    loss_weight: 1
+
+  # gan loss
+  gan_opt:
+    type: GANLoss
+    gan_type: vanilla
+    real_label_val: 1.0
+    fake_label_val: 0.0
+    loss_weight: !!float 1e-1
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 800
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
