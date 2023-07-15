@@ -81,6 +81,12 @@ class SRModel(BaseModel):
         if self.cri_pix is None and self.cri_perceptual is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
+        # setup batch augmentations
+        self.setup_batchaug()
+
+        # setup unshuffle wrapper 
+        self.setup_unshuffle()
+
         # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()
@@ -147,6 +153,25 @@ class SRModel(BaseModel):
 
         if self.ema_decay > 0:
             self.model_ema(decay=self.ema_decay)
+
+        # match HR resolution for batchaugment = cutblur
+        if self.upsample:
+            # TODO: assumes model and process scale == 4x
+            self.var_L = nn.functional.interpolate(
+                self.var_L, scale_factor=self.upsample, mode="nearest")
+
+        # batch (mixup) augmentations
+        if self.mixup:
+            self.real_H, self.var_L = self.batchaugment(self.real_H, self.var_L)
+
+        # network forward, generate SR
+        with self.cast():
+            self.forward()
+
+        # apply mask if batchaug == "cutout"
+        if self.mixup:
+            self.fake_H, self.real_H = self.batchaugment.apply_mask(self.fake_H, self.real_H)
+
 
     def test(self):
         if hasattr(self, 'net_g_ema'):

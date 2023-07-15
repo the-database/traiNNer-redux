@@ -8,6 +8,8 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 from . import lr_scheduler as lr_scheduler
 from ..utils import get_root_logger
 from ..utils.dist_util import master_only
+from ..archs.arch_util import SpaceToDepth
+from ..ops.batchaug import BatchAugment
 
 
 class BaseModel():
@@ -19,6 +21,8 @@ class BaseModel():
         self.is_train = opt['is_train']
         self.schedulers = []
         self.optimizers = []
+        self.batchaugment = None
+        self.unshuffle = None
 
     def feed_data(self, data):
         pass
@@ -391,3 +395,22 @@ class BaseModel():
                 log_dict[name] = value.mean().item()
 
             return log_dict
+
+    def setup_batchaug(self):
+        train_opt = self.opt['train']
+        self.mixup = train_opt.get('mixup')
+        if self.mixup:
+            self.batchaugment = BatchAugment(train_opt)
+            if "cutblur" in self.batchaugment.mixopts:
+                # cutblur needs LR and HR to have the same dimensions (1x)
+                if self.opt["scale"] != 1:
+                    self.upsample = self.opt["scale"]
+            logger.info("Batch augmentations enabled")
+
+    def setup_unshuffle(self):
+        unshuffle_scale = self.opt.get("unshuffle_scale")
+        unshuffle = self.opt.get("use_unshuffle")
+        if unshuffle and unshuffle_scale:
+            self.unshuffle = SpaceToDepth(unshuffle_scale)
+            logger.info("Pixel Unshuffle wrapper enabled. "
+                        f"Scale: {unshuffle_scale}")
