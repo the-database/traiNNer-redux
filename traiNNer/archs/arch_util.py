@@ -201,6 +201,173 @@ def pixel_unshuffle(x, scale):
     x_view = x.view(b, c, h, scale, w, scale)
     return x_view.permute(0, 1, 3, 5, 2, 4).reshape(b, out_channel, h, w)
 
+class DepthToSpace(nn.Module):
+    """ PixelShuffle / DepthToSpace / unsqueeze2d.
+    Rearranges data from depth into blocks of spatial data. This is
+    the reverse transformation of SpaceToDepth. More specifically,
+    this op outputs a copy of the input tensor where values from the
+    depth dimension are moved in spatial blocks to the height and width
+    dimensions.
+
+    Args:
+        block_size (int): indicates the  input block size and how the
+            data is moved. In SR its equivalent to the scale factor.
+        form: select tensorflow ('tf') or pytorch ('pt') style shuffle.
+    """
+    def __init__(self, block_size:int=2, form:str='pt'):
+        super().__init__()
+        self.bs = block_size
+        self.form = form
+
+    def forward(self, x):
+        if self.form == 'tf':
+            return depth_to_space_tf(x, self.bs)
+        return depth_to_space(x, self.bs)
+
+    def extra_repr(self):
+        return f"block_size={self.bs}"
+
+
+def depth_to_space(x, bs:int=2):
+    """ Pixel shuffle (PyTorch).
+    Equivalent to torch.nn.PixelShuffle().
+    Args:
+        x (Tensor): Input tensor (b, c, h, w).
+        bs: block_size, scale factor.
+    Returns:
+        Tensor: tensor after pixel shuffle.
+    """
+    assert bs >= 1 and isinstance(bs, int)
+    if bs == 1:
+        return x
+
+    b, c, h, w = x.size()
+    if c % (bs ** 2) != 0:
+        raise ValueError("The tensor channels must be divisible by "
+                         "(bs ** 2).")
+    new_d = -1  # c // (bs ** 2)
+    new_h = h * bs
+    new_w = w * bs
+
+    # (b, c//bs^2, bs, bs, h, w)
+    x = x.view(b, new_d, bs, bs, h, w)
+    # (b, c//bs^2, h, bs, w, bs)
+    x = x.permute(0, 1, 4, 2, 5, 3).contiguous()
+    # (b, c//bs^2, h * bs, w * bs)
+    return x.view(b, new_d, new_h, new_w)
+
+
+def depth_to_space_tf(x, bs:int=2):
+    """ Pixel shuffle (TensorFlow).
+    Equivalent to:
+        https://www.tensorflow.org/api_docs/python/tf/nn/depth_to_space
+    Args:
+        x (Tensor): Input tensor (b, c, h, w).
+        bs: block_size, scale factor.
+    Returns:
+        Tensor: tensor after pixel shuffle.
+    """
+    assert bs >= 1 and isinstance(bs, int)
+    if bs == 1:
+        return x
+
+    b, c, h, w = x.size()
+    if c % (bs ** 2) != 0:
+        raise ValueError("The tensor channels must be divisible by "
+                         "(bs ** 2).")
+    new_d = -1  # c // (bs ** 2)
+    new_h = h * bs
+    new_w = w * bs
+
+    # (b, bs, bs, c//bs^2, h, w)
+    x = x.view(b, bs, bs, new_d, h, w)
+    # (b, c//bs^2, h, bs, w, bs)
+    x = x.permute(0, 3, 4, 1, 5, 2).contiguous()
+    # (b, c//bs^2, h * bs, w * bs)
+    return x.view(b, new_d, new_h, new_w)
+
+
+class SpaceToDepth(nn.Module):
+    """ PixelUnshuffle / SpaceToDepth / squeeze2d.
+    Rearranges blocks of spatial data, into depth. This operation
+    outputs a copy of the input tensor where values from the height
+    and width dimensions are moved to the depth dimension.
+
+    Args:
+        block_size: indicates the input block size, where
+            non-overlapping blocks of size block_size x block size are
+            rearranged into depth at each location. In SR its equivalent
+            to the downscale factor.
+        form: select tensorflow ('tf') or pytorch ('pt') style unshuffle.
+    """
+    def __init__(self, block_size:int=2, form:str='pt'):
+        super().__init__()
+        self.bs = block_size
+        self.form = form
+
+    def forward(self, x):
+        if self.form == 'tf':
+            return space_to_depth_tf(x, self.bs)
+        return space_to_depth(x, self.bs)
+    
+    def extra_repr(self):
+        return f"block_size={self.bs}"
+
+
+def space_to_depth(x, bs:int=2):
+    """ Pixel unshuffle (PyTorch).
+    This is the inverse of torch.nn.PixelShuffle().
+    Equivalent to nn.PixelUnshuffle().
+    Args:
+        x (Tensor): Input tensor (b, c, h, w).
+        bs: block_size, scale factor.
+    Returns:
+        Tensor: tensor after pixel unshuffle.
+    """
+    assert bs >= 1 and isinstance(bs, int)
+    if bs == 1:
+        return x
+
+    b, c, h, w = x.size()
+    assert h % bs == 0 and w % bs == 0, "{}".format((h, w, bs))
+    new_d = -1  # c * (bs**2)
+    new_h = h // bs
+    new_w = w // bs
+
+    # (b, c, h//bs, bs, w//bs, bs)
+    x = x.view(b, c, new_h, bs, new_w, bs)
+    # (b, c, bs, bs, h//bs, w//bs)
+    x = x.permute(0, 1, 3, 5, 2, 4).contiguous()
+    # (b, c*bs^2, h//bs, w//bs)
+    return x.view(b, new_d, new_h, new_w)
+
+
+def space_to_depth_tf(x, bs:int=2):
+    """ Pixel unshuffle (TensorFlow).
+    Equivalent to:
+        https://www.tensorflow.org/api_docs/python/tf/nn/space_to_depth
+    Args:
+        x (Tensor): Input tensor (b, c, h, w).
+        bs: block_size, scale factor.
+    Returns:
+        Tensor: tensor after pixel unshuffle.
+    """
+    assert bs >= 1 and isinstance(bs, int)
+    if bs == 1:
+        return x
+
+    b, c, h, w = x.size()
+    assert h % bs == 0 and w % bs == 0, "{}".format((h, w, bs))
+    new_d = -1  # c * (bs**2)
+    new_h = h // bs
+    new_w = w // bs
+
+    # (b, c, h//bs, bs, w//bs, bs)
+    x = x.view(b, c, new_h, bs, new_w, bs)
+    # (b, bs, bs, c, h//bs, w//bs)
+    x = x.permute(0, 3, 5, 1, 2, 4).contiguous()
+    # (b, c*bs^2, h//bs, w//bs)
+    return x.view(b, new_d, new_h, new_w)
 
 class DCNv2Pack(ModulatedDeformConvPack):
     """Modulated deformable conv for deformable alignment.
