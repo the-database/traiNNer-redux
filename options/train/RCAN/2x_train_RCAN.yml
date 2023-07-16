@@ -94,6 +94,28 @@ val:
       crop_border: 2
       test_y_channel: false
 
+  # PixelUnshuffle, Mixup, Cutblur
+  # PixelUnshuffle is required for cutblur aug
+  use_unshuffle: false
+  unshuffle_scale: 4 # Ensure this is the same scale as your model
+
+  # Mix of Augmentations
+  mixup: false
+  mixopts: [blend, rgb, mixup, cutmix, cutmixup, cutout, cutblur]
+  mixprob: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  mixalpha: [0.6, 1.0, 1.2, 0.7, 0.7, 0.001, 0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
+  mix_p: 1.2
+
+  # If you only want cutblur, use this:
+  mixup: false
+  mixopts: [cutblur]
+  mixprob: [1.0]
+  mixalpha: [0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
+
 # logging settings
 logger:
   print_freq: 100
