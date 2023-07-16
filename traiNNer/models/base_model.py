@@ -1,6 +1,8 @@
 import os
 import time
 import torch
+import pytorch_optimizer
+
 from collections import OrderedDict
 from copy import deepcopy
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -105,7 +107,19 @@ class BaseModel():
         return net
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
-        if optim_type == 'Adam':
+        if optim_type == 'AdamP':
+            optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
+        elif optim_type == 'Lamb':
+            optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
+        elif optim_type == 'DAdaptAdam':
+            optimizer = pytorch_optimizer.DAdaptAdam(params, lr, **kwargs)
+        elif optim_type == 'DAdaptAdan':
+            optimizer = pytorch_optimizer.DAdaptAdan(params, lr, **kwargs)
+        elif optim_type == 'Prodigy':
+            optimizer = pytorch_optimizer.Prodigy(params, lr, **kwargs)
+        elif optim_type == 'Lion':
+            optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
+        elif optim_type == 'Adam':
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type == 'AdamW':
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
