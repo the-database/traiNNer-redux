@@ -15,8 +15,8 @@ datasets:
   train:
     name: DIV2K
     type: PairedImageDataset
-    dataroot_gt: 
-    dataroot_lq: 
+    dataroot_gt:
+    dataroot_lq:
     #meta_info: basicsr/data/meta_info/meta_info_DIV2K800sub_GT.txt
     io_backend:
       type: disk
@@ -45,7 +45,7 @@ network_g:
   mlp_ratio: 2
   upsampler: 'pixelshuffle'
   resi_connection: '1conv'
-  
+
 network_d:
   type: UNetDiscriminatorSN
   num_in_ch: 3
@@ -54,10 +54,10 @@ network_d:
 
 # path
 path:
-  pretrain_network_g: 
+  pretrain_network_g:
   param_key_g: params_ema
   strict_load_g: true
-  resume_state: 
+  resume_state:
 
 # training settings
 train:
@@ -132,6 +132,28 @@ train:
     real_label_val: 1.0
     fake_label_val: 0.0
     loss_weight: !!float 1e-1
+
+  # PixelUnshuffle, Mixup, Cutblur
+  # PixelUnshuffle is required for cutblur aug
+  use_unshuffle: false
+  unshuffle_scale: 4 # Ensure this is the same scale as your model
+
+  # Mix of Augmentations
+  mixup: false
+  mixopts: [blend, rgb, mixup, cutmix, cutmixup, cutout, cutblur]
+  mixprob: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  mixalpha: [0.6, 1.0, 1.2, 0.7, 0.7, 0.001, 0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
+  mix_p: 1.2
+
+  # If you only want cutblur, use this:
+  mixup: false
+  mixopts: [cutblur]
+  mixprob: [1.0]
+  mixalpha: [0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
 
 # logging settings
 logger:

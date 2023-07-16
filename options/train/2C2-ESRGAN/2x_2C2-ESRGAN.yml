@@ -20,7 +20,7 @@ datasets:
     #meta_info: # Example: 'C:\Users\Me\ESRGAN\Nomos8k\meta.txt'
     io_backend:
       type: disk
-    
+
     gt_size: 128 #during training, it will crop a square of this size from your images, larger is usually better but uses more vram
     use_hflip: true #randomly flip the images horizontally
     use_rot: true #randomly rotate the images
@@ -49,9 +49,9 @@ network_d:
 
 # path
 path:
-  pretrain_network_g: 
+  pretrain_network_g:
   strict_load_g: true
-  resume_state: 
+  resume_state:
 
 # training settings
 train:
@@ -126,6 +126,28 @@ train:
     real_label_val: 1.0
     fake_label_val: 0.0
     loss_weight: !!float 1e-1
+
+  # PixelUnshuffle, Mixup, Cutblur
+  # PixelUnshuffle is required for cutblur aug
+  use_unshuffle: false
+  unshuffle_scale: 4 # Ensure this is the same scale as your model
+
+  # Mix of Augmentations
+  mixup: false
+  mixopts: [blend, rgb, mixup, cutmix, cutmixup, cutout, cutblur]
+  mixprob: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  mixalpha: [0.6, 1.0, 1.2, 0.7, 0.7, 0.001, 0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
+  mix_p: 1.2
+
+  # If you only want cutblur, use this:
+  mixup: false
+  mixopts: [cutblur]
+  mixprob: [1.0]
+  mixalpha: [0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
 
 # logging settings
 logger:

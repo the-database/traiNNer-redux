@@ -37,11 +37,11 @@ datasets:
   train:
     name: test
     type: RealESRGANDataset
-    dataroot_gt: 
-    meta_info: 
+    dataroot_gt:
+    meta_info:
     io_backend:
       type: disk
-      
+
     blur_kernel_size: 21
     kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
     kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
@@ -90,13 +90,13 @@ network_d:
 
 # path
 path:
-  pretrain_network_g: 
+  pretrain_network_g:
   param_key_g: params_ema
   strict_load_g: true
   pretrain_network_d: ~ #path to a pretrained network_d. Its ok to leave empty.
   param_key_d: params
   strict_load_d: true
-  resume_state: 
+  resume_state:
 
 # training settings
 train:
@@ -180,6 +180,28 @@ train:
 
   net_d_iters: 1
   net_d_init_iters: 0
+
+  # PixelUnshuffle, Mixup, Cutblur
+  # PixelUnshuffle is required for cutblur aug
+  use_unshuffle: false
+  unshuffle_scale: 4 # Ensure this is the same scale as your model
+
+  # Mix of Augmentations
+  mixup: false
+  mixopts: [blend, rgb, mixup, cutmix, cutmixup, cutout, cutblur]
+  mixprob: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  mixalpha: [0.6, 1.0, 1.2, 0.7, 0.7, 0.001, 0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
+  mix_p: 1.2
+
+  # If you only want cutblur, use this:
+  mixup: false
+  mixopts: [cutblur]
+  mixprob: [1.0]
+  mixalpha: [0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
 
 # logging settings
 logger:
