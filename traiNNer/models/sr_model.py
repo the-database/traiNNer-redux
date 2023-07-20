@@ -87,6 +87,9 @@ class SRModel(BaseModel):
         # setup unshuffle wrapper 
         self.setup_unshuffle()
 
+        # setup gradient clipping
+        self.setup_gradclip(self.net_g)
+
         # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()

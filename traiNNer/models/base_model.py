@@ -426,3 +426,62 @@ class BaseModel():
             self.unshuffle = SpaceToDepth(unshuffle_scale)
             logger.info("Pixel Unshuffle wrapper enabled. "
                         f"Scale: {unshuffle_scale}")
+
+    # Adapted from:
+    #   https://github.com/victorca25/traiNNer/blob/master/codes/models/base_model.py
+    #
+
+
+    def setup_gradclip(self, clip_nets):
+        train_opt = self.opt["train"]
+        grad_clip = train_opt.get("grad_clip")
+        if grad_clip:
+            grad_clip = grad_clip.lower()
+            if grad_clip == "value":
+                self.grad_clip = nn.utils.clip_grad_value_
+            else:
+                self.grad_clip = nn.utils.clip_grad_norm_
+            self.grad_clip_value = train_opt.get(
+                "grad_clip_value", 0.1)
+            self.clip_nets = clip_nets
+            logger.info(f"{grad_clip} gradient clip enabled. "
+                        f"Clip value: {self.grad_clip_value}.")
+
+    def calc_gradnorm(self, net):
+        """Auxiliary function to calculate a network gradient norm."""
+
+        total_norm = 0
+        for p in net.parameters():
+            if p.grad is not None:
+                param_norm = p.grad.data.norm(2)
+                total_norm += param_norm.item() ** 2
+        total_norm = total_norm ** (1. / 2)
+        return total_norm
+
+    def get_auto_norm(self, clip_percentile=10):
+        """Automatically calculate the norm for gradient clipping."""
+
+        grad_norm = 0
+        for nets in self.clip_nets:
+            grad_norm += self.calc_gradnorm(nets)
+        grad_norm /= len(self.clip_nets)
+        self.grad_history.append(grad_norm)
+
+        grad_clip_value = torch.quantile(
+            torch.FloatTensor(self.grad_history),
+            clip_percentile/100)
+        
+        return grad_clip_value
+
+    def apply_gradclip(self):
+        """Apply gradient clipping."""
+
+        if self.grad_clip is not None:
+            if self.grad_clip_value == 'auto':
+                grad_clip_value = self.get_auto_norm()
+            else:
+                grad_clip_value = self.grad_clip_value
+
+            for net in self.clip_nets:
+                self.grad_clip(
+                    net.parameters(), grad_clip_value)
