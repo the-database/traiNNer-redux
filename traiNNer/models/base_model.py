@@ -111,10 +111,6 @@ class BaseModel():
             optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
         elif optim_type == 'Lamb':
             optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
-        elif optim_type == 'DAdaptAdam':
-            optimizer = pytorch_optimizer.DAdaptAdam(params, lr, **kwargs)
-        elif optim_type == 'DAdaptAdan':
-            optimizer = pytorch_optimizer.DAdaptAdan(params, lr, **kwargs)
         elif optim_type == 'Prodigy':
             optimizer = pytorch_optimizer.Prodigy(params, lr, **kwargs)
         elif optim_type == 'Lion':
