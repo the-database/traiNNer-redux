@@ -88,7 +88,7 @@ class SRModel(BaseModel):
         self.setup_unshuffle()
 
         # setup gradient clipping
-        self.setup_gradclip(self.net_g)
+        self.setup_gradclip(self.net_g, self.net_d)
 
         logger = get_root_logger()
 
