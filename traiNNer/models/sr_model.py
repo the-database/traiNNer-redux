@@ -90,6 +90,8 @@ class SRModel(BaseModel):
         # setup gradient clipping
         self.setup_gradclip(self.net_g)
 
+        logger = get_root_logger()
+
         # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()

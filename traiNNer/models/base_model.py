@@ -427,61 +427,45 @@ class BaseModel():
             logger.info("Pixel Unshuffle wrapper enabled. "
                         f"Scale: {unshuffle_scale}")
 
-    # Adapted from:
-    #   https://github.com/victorca25/traiNNer/blob/master/codes/models/base_model.py
-    #
-
+    # Gradient Clipping
 
     def setup_gradclip(self, clip_nets):
-        train_opt = self.opt["train"]
-        grad_clip = train_opt.get("grad_clip")
-        if grad_clip:
-            grad_clip = grad_clip.lower()
-            if grad_clip == "value":
-                self.grad_clip = nn.utils.clip_grad_value_
-            else:
-                self.grad_clip = nn.utils.clip_grad_norm_
-            self.grad_clip_value = train_opt.get(
-                "grad_clip_value", 0.1)
+        train_opt = self.opt['train']
+        logger = get_root_logger()
+        grad_clip = train_opt.get('grad_clip', False)
+        if grad_clip is True:
+            self.grad_clip = adaptive_clip_grad 
             self.clip_nets = clip_nets
-            logger.info(f"{grad_clip} gradient clip enabled. "
-                        f"Clip value: {self.grad_clip_value}.")
+            logger.info(f'{grad_clip} gradient clip enabled.')
 
-    def calc_gradnorm(self, net):
-        """Auxiliary function to calculate a network gradient norm."""
+    # Adapted from:
+    #   https://github.com/huggingface/pytorch-image-models/blob/main/timm/utils/agc.py
 
-        total_norm = 0
-        for p in net.parameters():
-            if p.grad is not None:
-                param_norm = p.grad.data.norm(2)
-                total_norm += param_norm.item() ** 2
-        total_norm = total_norm ** (1. / 2)
-        return total_norm
+    def unitwise_norm(x, norm_type=2.0):
+        if x.ndim <= 1:
+            return x.norm(norm_type)
+        else:
+        # works for nn.ConvNd and nn,Linear where output dim is first in the kernel/weight tensor
+        # might need special cases for other weights (possibly MHA) where this may not be true
+            return x.norm(norm_type, dim=tuple(range(1, x.ndim)), keepdim=True)
 
-    def get_auto_norm(self, clip_percentile=10):
-        """Automatically calculate the norm for gradient clipping."""
-
-        grad_norm = 0
-        for nets in self.clip_nets:
-            grad_norm += self.calc_gradnorm(nets)
-        grad_norm /= len(self.clip_nets)
-        self.grad_history.append(grad_norm)
-
-        grad_clip_value = torch.quantile(
-            torch.FloatTensor(self.grad_history),
-            clip_percentile/100)
-        
-        return grad_clip_value
+    def adaptive_clip_grad(parameters, clip_factor=0.01, eps=1e-3, norm_type=2.0):
+        if isinstance(parameters, torch.Tensor):
+            parameters = [parameters]
+        for p in parameters:
+            if p.grad is None:
+                continue
+        p_data = p.detach()
+        g_data = p.grad.detach()
+        max_norm = unitwise_norm(p_data, norm_type=norm_type).clamp_(min=eps).mul_(clip_factor)
+        grad_norm = unitwise_norm(g_data, norm_type=norm_type)
+        clipped_grad = g_data * (max_norm / grad_norm.clamp(min=1e-6))
+        new_grads = torch.where(grad_norm < max_norm, g_data, clipped_grad)
+        p.grad.detach().copy_(new_grads)
 
     def apply_gradclip(self):
         """Apply gradient clipping."""
 
         if self.grad_clip is not None:
-            if self.grad_clip_value == 'auto':
-                grad_clip_value = self.get_auto_norm()
-            else:
-                grad_clip_value = self.grad_clip_value
-
             for net in self.clip_nets:
-                self.grad_clip(
-                    net.parameters(), grad_clip_value)
+                self.grad_clip(net.parameters())
