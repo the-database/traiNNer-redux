@@ -117,6 +117,8 @@ class BaseModel():
             optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
         elif optim_type == 'Tiger':
             optimizer = pytorch_optimizer.Tiger(params, lr, **kwargs)
+        elif optim_type == 'Adan':
+            optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
         elif optim_type == 'Adam':
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type == 'AdamW':
