@@ -1,6 +1,8 @@
 import os
 import time
 import torch
+import pytorch_optimizer
+
 from collections import OrderedDict
 from copy import deepcopy
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -8,6 +10,8 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 from . import lr_scheduler as lr_scheduler
 from ..utils import get_root_logger
 from ..utils.dist_util import master_only
+from ..archs.arch_util import SpaceToDepth
+from ..ops.batchaug import BatchAugment
 
 
 class BaseModel():
@@ -19,6 +23,8 @@ class BaseModel():
         self.is_train = opt['is_train']
         self.schedulers = []
         self.optimizers = []
+        self.batchaugment = None
+        self.unshuffle = None
 
     def feed_data(self, data):
         pass
@@ -101,7 +107,19 @@ class BaseModel():
         return net
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
-        if optim_type == 'Adam':
+        if optim_type == 'AdamP':
+            optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
+        elif optim_type == 'Lamb':
+            optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
+        elif optim_type == 'DAdaptAdam':
+            optimizer = pytorch_optimizer.DAdaptAdam(params, lr, **kwargs)
+        elif optim_type == 'DAdaptAdan':
+            optimizer = pytorch_optimizer.DAdaptAdan(params, lr, **kwargs)
+        elif optim_type == 'Prodigy':
+            optimizer = pytorch_optimizer.Prodigy(params, lr, **kwargs)
+        elif optim_type == 'Lion':
+            optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
+        elif optim_type == 'Adam':
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type == 'AdamW':
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
@@ -300,6 +318,7 @@ class BaseModel():
         logger = get_root_logger()
         net = self.get_bare_model(net)
         load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
+        param_key=self.opt['path'].get('param_key_g', None)
         if param_key is not None:
             if param_key not in load_net and 'params' in load_net:
                 param_key = 'params'
@@ -390,3 +409,22 @@ class BaseModel():
                 log_dict[name] = value.mean().item()
 
             return log_dict
+
+    def setup_batchaug(self):
+        train_opt = self.opt['train']
+        self.mixup = train_opt.get('mixup')
+        if self.mixup:
+            self.batchaugment = BatchAugment(train_opt)
+            if "cutblur" in self.batchaugment.mixopts:
+                # cutblur needs LR and HR to have the same dimensions (1x)
+                if self.opt["scale"] != 1:
+                    self.upsample = self.opt["scale"]
+            logger.info("Batch augmentations enabled")
+
+    def setup_unshuffle(self):
+        unshuffle_scale = self.opt.get("unshuffle_scale")
+        unshuffle = self.opt.get("use_unshuffle")
+        if unshuffle and unshuffle_scale:
+            self.unshuffle = SpaceToDepth(unshuffle_scale)
+            logger.info("Pixel Unshuffle wrapper enabled. "
+                        f"Scale: {unshuffle_scale}")

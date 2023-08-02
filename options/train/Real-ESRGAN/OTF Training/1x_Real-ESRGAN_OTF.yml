@@ -1,0 +1,206 @@
+# general settings
+name: Real-ESRGAN
+model_type: RealESRGANModel
+scale: 1
+num_gpu: auto
+manual_seed: 0
+high_order_degradation: True
+
+# ----------------- options for synthesizing training data in RealESRGANModel ----------------- #
+# USM the ground-truth
+l1_gt_usm: True
+percep_gt_usm: True
+gan_gt_usm: False
+
+# the first degradation process
+resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
+resize_range: [0.15, 1.5]
+gaussian_noise_prob: 0.5
+noise_range: [1, 30]
+poisson_scale_range: [0.05, 3]
+gray_noise_prob: 0.4
+jpeg_range: [30, 95]
+
+# the second degradation process
+second_blur_prob: 0.8
+resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
+resize_range2: [0.3, 1.2]
+gaussian_noise_prob2: 0.5
+noise_range2: [1, 25]
+poisson_scale_range2: [0.05, 2.5]
+gray_noise_prob2: 0.4
+jpeg_range2: [30, 95]
+
+gt_size: 48
+queue_size: 180
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: DIV2K
+    type: RealESRGANDataset
+    dataroot_gt: # Example: 'C:\Users\Me\Pictures\Nomos8k\nomos8k'
+    meta_info: # Example: 'C:\Users\Me\ESRGAN\Nomos8k\meta.txt'
+    io_backend:
+      type: disk
+
+    blur_kernel_size: 21
+    kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob: 0.1
+    blur_sigma: [0.2, 3]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 21
+    kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob2: 0.1
+    blur_sigma2: [0.2, 1.5]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0.8
+
+    gt_size: 48 #during training, it will crop a square of this size from your images, larger is usually better but uses more vram
+    use_hflip: true #randomly flip the images horizontally
+    use_rot: true #randomly rotate the images
+
+    # data loader
+    use_shuffle: true
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 4
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+# network structures
+network_g:
+  type: RRDBNet
+  scale: 1
+  num_in_ch: 3
+  num_out_ch: 3
+  num_feat: 64
+  num_block: 23
+  num_grow_ch: 32
+
+network_d:
+  type: UNetDiscriminatorSN
+  num_in_ch: 3
+  num_feat: 64
+  skip_connection: True
+
+# path
+path:
+  pretrain_network_g:
+  strict_load_g: true
+  resume_state:
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [200000, 400000] #at these iterations it will reduce the learning rate.
+    gamma: 0.5
+
+  total_iter: 400000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 0.8
+    reduction: mean
+
+  # perceptual loss (content and style losses)
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      # before relu
+      "conv1_2": 0.1
+      "conv2_2": 0.1
+      "conv3_4": 2
+      "conv4_4": 2
+      "conv5_4": 2
+    vgg_type: vgg19
+    use_input_norm: true
+    perceptual_weight: !!float 1.0
+    style_weight: 0
+    range_norm: false
+    criterion: l1
+
+  # contextual loss
+  contextual_opt:
+    type: ContextualLoss
+    layer_weights:
+      "conv_3_2": 0.15
+      "conv_4_2": 0.15
+    max_1d_size: 64
+    distance_type: "cosine"
+    calc_type: "regular"
+    z_norm: false
+    crop_quarter: false
+    b: 1.0
+    band_width: 0.5
+    use_vgg: true
+    net: vgg19
+
+  color_opt:
+    type: ColorLoss
+    criterion: "l1"
+    loss_weight: 1
+
+  # gan loss
+  gan_opt:
+    type: GANLoss
+    gan_type: vanilla
+    real_label_val: 1.0
+    fake_label_val: 0.0
+    loss_weight: !!float 1e-1
+
+  # PixelUnshuffle, Mixup, Cutblur
+  # PixelUnshuffle is required for cutblur aug
+  use_unshuffle: false
+  unshuffle_scale: 4 # Ensure this is the same scale as your model
+
+  # Mix of Augmentations
+  mixup: false
+  mixopts: [blend, rgb, mixup, cutmix, cutmixup, cutout, cutblur]
+  mixprob: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  mixalpha: [0.6, 1.0, 1.2, 0.7, 0.7, 0.001, 0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
+  mix_p: 1.2
+
+  # If you only want cutblur, use this:
+  mixup: false
+  mixopts: [cutblur]
+  mixprob: [1.0]
+  mixalpha: [0.7]
+  aux_mixprob: 1.0
+  aux_mixalpha: 1.2
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 800
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
