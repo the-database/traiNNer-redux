@@ -111,14 +111,14 @@ class BaseModel():
             optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
         elif optim_type == 'Lamb':
             optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
-        elif optim_type == 'DAdaptAdam':
-            optimizer = pytorch_optimizer.DAdaptAdam(params, lr, **kwargs)
-        elif optim_type == 'DAdaptAdan':
-            optimizer = pytorch_optimizer.DAdaptAdan(params, lr, **kwargs)
         elif optim_type == 'Prodigy':
             optimizer = pytorch_optimizer.Prodigy(params, lr, **kwargs)
         elif optim_type == 'Lion':
             optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
+        elif optim_type == 'Tiger':
+            optimizer = pytorch_optimizer.Tiger(params, lr, **kwargs)
+        elif optim_type == 'Adan':
+            optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
         elif optim_type == 'Adam':
             optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type == 'AdamW':
@@ -428,3 +428,46 @@ class BaseModel():
             self.unshuffle = SpaceToDepth(unshuffle_scale)
             logger.info("Pixel Unshuffle wrapper enabled. "
                         f"Scale: {unshuffle_scale}")
+
+    # Gradient Clipping
+
+    def setup_gradclip(self, clip_nets):
+        train_opt = self.opt['train']
+        logger = get_root_logger()
+        grad_clip = train_opt.get('grad_clip', False)
+        if grad_clip is True:
+            self.grad_clip = adaptive_clip_grad 
+            self.clip_nets = clip_nets
+            logger.info(f'{grad_clip} gradient clip enabled.')
+
+    # Adapted from:
+    #   https://github.com/huggingface/pytorch-image-models/blob/main/timm/utils/agc.py
+
+    def unitwise_norm(x, norm_type=2.0):
+        if x.ndim <= 1:
+            return x.norm(norm_type)
+        else:
+        # works for nn.ConvNd and nn,Linear where output dim is first in the kernel/weight tensor
+        # might need special cases for other weights (possibly MHA) where this may not be true
+            return x.norm(norm_type, dim=tuple(range(1, x.ndim)), keepdim=True)
+
+    def adaptive_clip_grad(parameters, clip_factor=0.01, eps=1e-3, norm_type=2.0):
+        if isinstance(parameters, torch.Tensor):
+            parameters = [parameters]
+        for p in parameters:
+            if p.grad is None:
+                continue
+        p_data = p.detach()
+        g_data = p.grad.detach()
+        max_norm = unitwise_norm(p_data, norm_type=norm_type).clamp_(min=eps).mul_(clip_factor)
+        grad_norm = unitwise_norm(g_data, norm_type=norm_type)
+        clipped_grad = g_data * (max_norm / grad_norm.clamp(min=1e-6))
+        new_grads = torch.where(grad_norm < max_norm, g_data, clipped_grad)
+        p.grad.detach().copy_(new_grads)
+
+    def apply_gradclip(self):
+        """Apply gradient clipping."""
+
+        if self.grad_clip is not None:
+            for net in self.clip_nets:
+                self.grad_clip(net.parameters())
