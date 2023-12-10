@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import torch
+import torch.nn as nn
 from collections import OrderedDict
 from torch.nn import functional as F
 
@@ -25,7 +26,7 @@ class RealESRGANModel(SRGANModel):
     def __init__(self, opt):
         super(RealESRGANModel, self).__init__(opt)
         self.jpeger = DiffJPEG(differentiable=False).cuda()  # simulate JPEG compression artifacts
-        self.usm_sharpener = USMSharp().cuda()  # do usm sharpening
+        self.usm_sharpener = USMSharp(50).cuda()  # do usm sharpening
         self.queue_size = opt.get('queue_size', 180)
 
     @torch.no_grad()
@@ -69,10 +70,20 @@ class RealESRGANModel(SRGANModel):
     def feed_data(self, data):
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images.
         """
-        if self.is_train and self.opt.get('high_order_degradation', True):
+
+        use_otf = 'grain' not in data['gt_path'] and np.random.uniform() < self.opt['dataroot_lq_prob']
+
+        if self.is_train and self.opt.get('high_order_degradation', True) and use_otf:
+            # print('otf')
+            # usm_sharpener = USMSharp(random.randint(1, 50)).cuda()  # 4x sd2. 2x sd30, 2x sd31. 4x sd3. 4x sd35
+            # usm_sharpener = USMSharp(random.randint(1, 25)).cuda() # 2x sd29. 2x sd32. 2x sd34?
+            usm_sharpener = USMSharp(50).cuda()  # 4x sd36. 4x swinir hd v3, 4x swinir hd v7
+            # usm_sharpener_25 = USMSharp(25).cuda() # 4x swinir hd v10
+            # usm_sharpener = USMSharp(25).cuda() # 4x swinir hd v5
+
             # training data synthesis
             self.gt = data['gt'].to(self.device)
-            self.gt_usm = self.usm_sharpener(self.gt)
+            self.gt_usm = usm_sharpener(self.gt)
 
             self.kernel1 = data['kernel1'].to(self.device)
             self.kernel2 = data['kernel2'].to(self.device)
@@ -81,8 +92,26 @@ class RealESRGANModel(SRGANModel):
             ori_h, ori_w = self.gt.size()[2:4]
 
             # ----------------------- The first degradation process ----------------------- #
+            # 4x swinir hd v7 - usm darken mod
+            # out = torch.min(self.gt_usm, self.gt)
+
+            # 4x swinir hd v8 - more accurate usm mod
+            # thick_lines = ThickLines().cuda()
+            # out = thick_lines(self.gt)
+
+            # 4x swinir hd v9 - blend thick lines and usm 50% each
+            # thick_lines = ThickLines().cuda()
+            # out = (thick_lines(self.gt) + self.gt_usm) / 2
+
+            # 4x swinir hd v10 - add usm 25 halos to v8 (thick lines)
+            # thick_lines = ThickLines().cuda()
+            # v8 = thick_lines(self.gt)
+            # out = torch.max(v8, usm_sharpener_25(self.gt))
+
+            out = self.gt_usm
+
             # blur
-            out = filter2D(self.gt_usm, self.kernel1)
+            out = filter2D(out, self.kernel1)
             # random resize
             updown_type = random.choices(['up', 'down', 'keep'], self.opt['resize_prob'])[0]
             if updown_type == 'up':
@@ -175,14 +204,15 @@ class RealESRGANModel(SRGANModel):
             # training pair pool
             self._dequeue_and_enqueue()
             # sharpen self.gt again, as we have changed the self.gt with self._dequeue_and_enqueue
-            self.gt_usm = self.usm_sharpener(self.gt)
+            self.gt_usm = usm_sharpener(self.gt)
             self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
         else:
+            # print('paired')
             # for paired training or validation
             self.lq = data['lq'].to(self.device)
-            if 'gt' in data:
-                self.gt = data['gt'].to(self.device)
-                self.gt_usm = self.usm_sharpener(self.gt)
+            if 'gt_paired' in data:
+                self.gt = data['gt_paired'].to(self.device)
+                self.gt_usm = None  # usm_sharpener(self.gt)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation
@@ -278,3 +308,23 @@ class RealESRGANModel(SRGANModel):
             self.model_ema(decay=self.ema_decay)
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
+
+
+class ThickLines(nn.Module):
+    def __init__(self, kernel_size=3):
+        super(ThickLines, self).__init__()
+        self.kernel_size = kernel_size
+
+    def forward(self, original):
+        # Calculate the padding needed for the convolution
+        pad = self.kernel_size // 2
+
+        # Apply a max pooling operation with the same kernel size to both images
+        min_original = -F.max_pool2d(-original, self.kernel_size, padding=pad, stride=1)
+        avg_original = original * 3 / 4 + min_original * 1 / 4
+
+        return avg_original
+
+    def blend(self, original, usm):
+        input = torch.cat((original, usm), dim=1)
+        return self.conv(input)

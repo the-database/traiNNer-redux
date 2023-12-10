@@ -419,13 +419,16 @@ class BaseModel():
                 # cutblur needs LR and HR to have the same dimensions (1x)
                 if self.opt["scale"] != 1:
                     self.upsample = self.opt["scale"]
+            logger = get_root_logger()
             logger.info("Batch augmentations enabled")
 
     def setup_unshuffle(self):
-        unshuffle_scale = self.opt.get("unshuffle_scale")
-        unshuffle = self.opt.get("use_unshuffle")
+        train_opt = self.opt['train']
+        unshuffle_scale = train_opt.get("unshuffle_scale")
+        unshuffle = train_opt.get("use_unshuffle")
         if unshuffle and unshuffle_scale:
             self.unshuffle = SpaceToDepth(unshuffle_scale)
+            logger = get_root_logger()
             logger.info("Pixel Unshuffle wrapper enabled. "
                         f"Scale: {unshuffle_scale}")
 
@@ -438,6 +441,7 @@ class BaseModel():
         if grad_clip is True:
             self.grad_clip = adaptive_clip_grad 
             self.clip_nets = clip_nets
+            logger = get_root_logger()
             logger.info(f'{grad_clip} gradient clip enabled.')
 
     # Adapted from:

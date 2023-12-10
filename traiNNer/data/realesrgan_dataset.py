@@ -7,11 +7,13 @@ import random
 import time
 import torch
 from torch.utils import data as data
+from torchvision.transforms.functional import normalize
 
 from .degradations import circular_lowpass_kernel, random_mixed_kernels
-from .transforms import augment
+from .transforms import augment, paired_random_crop
 from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor
 from ..utils.registry import DATASET_REGISTRY
+from .data_util import paired_paths_from_folder
 
 
 @DATASET_REGISTRY.register(suffix='traiNNer')
@@ -39,6 +41,10 @@ class RealESRGANDataset(data.Dataset):
         self.file_client = None
         self.io_backend_opt = opt['io_backend']
         self.gt_folder = opt['dataroot_gt']
+        self.lq_folder = opt['dataroot_lq']
+        self.filename_tmpl = opt['filename_tmpl'] if 'filename_tmpl' in opt else '{}'
+        self.mean = opt['mean'] if 'mean' in opt else None
+        self.std = opt['std'] if 'std' in opt else None
 
         # file client (lmdb io backend)
         if self.io_backend_opt['type'] == 'lmdb':
@@ -47,13 +53,15 @@ class RealESRGANDataset(data.Dataset):
             if not self.gt_folder.endswith('.lmdb'):
                 raise ValueError(f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}")
             with open(osp.join(self.gt_folder, 'meta_info.txt')) as fin:
-                self.paths = [line.split('.')[0] for line in fin]
-        else:
+                self.paths = [line.rsplit('.', 1)[0] for line in fin]
+        elif 'meta_info' in self.opt and self.opt['meta_info'] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
             with open(self.opt['meta_info']) as fin:
-                paths = [line.strip().split(' ')[0] for line in fin]
+                paths = [line.strip().rsplit(' ', 1)[0] for line in fin]
                 self.paths = [os.path.join(self.gt_folder, v) for v in paths]
+        else:
+            self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], ['lq', 'gt'], self.filename_tmpl)
 
         # blur settings for the first degradation
         self.blur_kernel_size = opt['blur_kernel_size']
@@ -76,18 +84,51 @@ class RealESRGANDataset(data.Dataset):
         # a final sinc filter
         self.final_sinc_prob = opt['final_sinc_prob']
 
-        self.kernel_range = [2 * v + 1 for v in range(3, 11)]  # kernel size ranges from 7 to 21
+        self.kernel_range = [2 * v + 1 for v in range(3, 11)]  # kernel size ranges from 7 to 21. 4x SD2. 2x SD30, 2x SD31. 4x SD3
+        # self.kernel_range = [2 * v + 1 for v in range(1, 8)]  # kernel size ranges from 3 to 15. 2x SD16, 2x SD29
+        # self.kernel_range = [2 * v + 1 for v in range(2, 9)]  # kernel size ranges from 5 to 17. 2x SD32, 2x SD 34. 4x swinir v8
         # TODO: kernel range is now hard-coded, should be in the configure file
         self.pulse_tensor = torch.zeros(21, 21).float()  # convolving with pulse tensor brings no blurry effect
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index):
+
         if self.file_client is None:
             self.file_client = FileClient(self.io_backend_opt.pop('type'), **self.io_backend_opt)
 
+        scale = self.opt['scale']
+
+        # Load gt and lq images. Dimension order: HWC; channel order: BGR;
+        # image range: [0, 1], float32.
+        gt_path = self.paths[index]['gt_path']
+
+        img_bytes = self.file_client.get(gt_path, 'gt')
+        img_gt_paired = imfrombytes(img_bytes, float32=True)
+        lq_path = self.paths[index]['lq_path']
+        img_bytes = self.file_client.get(lq_path, 'lq')
+        img_lq = imfrombytes(img_bytes, float32=True)
+
+        # augmentation for training
+        if self.opt['phase'] == 'train':
+            gt_size = self.opt['gt_size']
+            # random crop
+            img_gt_paired, img_lq = paired_random_crop(img_gt_paired, img_lq, gt_size, scale, gt_path)
+            # flip, rotation
+            img_gt_paired, img_lq = augment([img_gt_paired, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
+
+        # BGR to RGB, HWC to CHW, numpy to tensor
+        img_gt_paired, img_lq = img2tensor([img_gt_paired, img_lq], bgr2rgb=True, float32=True)
+        # normalize
+        if self.mean is not None or self.std is not None:
+            normalize(img_lq, self.mean, self.std, inplace=True)
+            normalize(img_gt_paired, self.mean, self.std, inplace=True)
+
+        # return {'lq': img_lq, 'gt': img_gt, 'lq_path': lq_path, 'gt_path': gt_path}
+
         # -------------------------------- Load gt images -------------------------------- #
         # Shape: (h, w, c); channel order: BGR; image range: [0, 1], float32.
-        gt_path = self.paths[index]
+        gt_path = self.paths[index]['gt_path']
+
         # avoid errors caused by high latency in reading files
         retry = 3
         while retry > 0:
@@ -186,7 +227,8 @@ class RealESRGANDataset(data.Dataset):
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
-        return_d = {'gt': img_gt, 'kernel1': kernel, 'kernel2': kernel2, 'sinc_kernel': sinc_kernel, 'gt_path': gt_path}
+        return_d = {'gt': img_gt, 'gt_paired': img_gt_paired, 'lq': img_lq, 'kernel1': kernel, 'kernel2': kernel2, 'sinc_kernel': sinc_kernel,
+                    'gt_path': gt_path, 'lq_path': lq_path}
         return return_d
 
     def __len__(self):
