@@ -1,0 +1,207 @@
+# general settings
+name: 4x_SwinIR_Medium_MixedOTF_6040
+model_type: RealSwinIRGANModel
+scale: 4 #the scale size of the model
+num_gpu: auto
+manual_seed: 0
+
+l1_gt_usm: False
+percep_gt_usm: False
+gan_gt_usm: False
+
+dataroot_lq_prob: 0.6 # probability of using paired LQ instead of OTF
+
+resize_prob: [0.2, 0.7, 0.1]
+resize_range: [0.15, 1.5]
+#gaussian_noise_prob: 0.05
+gaussian_noise_prob: 0
+#noise_range: [1, 3]
+noise_range: [0, 0]
+#poisson_scale_range: [0.05, 0.5]
+poisson_scale_range: [0, 0]
+#gray_noise_prob: 0.1
+gray_noise_prob: 0
+jpeg_range: [75, 95]
+
+second_blur_prob: 0.8
+resize_prob2: [0.3, 0.4, 0.3]
+resize_range2: [0.3, 1.2]
+#gaussian_noise_prob2: 0.03
+gaussian_noise_prob2: 0
+#noise_range2: [1, 2]
+noise_range2: [0, 0]
+#poisson_scale_range2: [0.05, 0.5]
+poisson_scale_range2: [0, 0]
+#gray_noise_prob2: 0.05
+gray_noise_prob2: 0
+jpeg_range2: [75, 95]
+
+gt_size: 256
+queue_size: 180
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: PairedDataset
+    type: RealESRGANDataset
+    dataroot_gt: G:\example\hr
+    dataroot_lq: G:\example\lr
+    #meta_info: C:\traiNNer-redux\traiNNer\data\meta_info\dataset.txt
+    io_backend:
+      type: disk
+
+    blur_kernel_size: 12
+    kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob: 0
+    blur_sigma: [0.2, 2]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 12
+    kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob2: 0
+    blur_sigma2: [0.2, 1]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0
+
+    gt_size: 256
+    use_hflip: True
+    use_rot: True
+
+    use_shuffle: true
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 9
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+# network structures
+network_g:
+  type: SwinIR
+  upscale: 4
+  in_chans: 3
+  img_size: 64
+  window_size: 8
+  img_range: 1.
+  depths: [6, 6, 6, 6, 6, 6]
+  embed_dim: 60
+  num_heads: [6, 6, 6, 6, 6, 6]
+  mlp_ratio: 2
+  upsampler: 'pixelshuffle'
+  resi_connection: '1conv'
+
+network_d:
+  type: UNetDiscriminatorSN
+  num_in_ch: 3
+  num_feat: 64
+  skip_connection: True
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params_ema
+  strict_load_g: true
+  pretrain_network_d: ~ #path to a pretrained network_d. Its ok to leave empty.
+  param_key_d: params
+  strict_load_d: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [400000]
+    gamma: 0.5
+
+  total_iter: 400000
+  warmup_iter: -1
+
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      'conv1_2': 0.1
+      'conv2_2': 0.1
+      'conv3_4': 1
+      'conv4_4': 1
+      'conv5_4': 1
+    vgg_type: vgg19
+    use_input_norm: true
+    perceptual_weight: !!float 1e-1
+    style_weight: 0
+    range_norm: false
+    criterion: l1
+  gan_opt:
+    type: GANLoss
+    gan_type: vanilla
+    real_label_val: 1.0
+    fake_label_val: 0.0
+    loss_weight: !!float 1e-1
+  contextual_opt:
+    type: ContextualLoss
+    layer_weights:
+      "conv_3_2": 0.15
+      "conv_4_2": 0.15
+    max_1d_size: 64
+    distance_type: "cosine"
+    calc_type: "regular"
+    z_norm: false
+    crop_quarter: false
+    b: 1.0
+    band_width: 0.5
+    use_vgg: true
+    net: vgg19
+  color_opt:
+    type: ColorLoss
+    criterion: "l1"
+    loss_weight: 1.0
+
+  net_d_iters: 1
+  net_d_init_iters: 0
+
+# Uncomment these for validation. Only uncomment if you have specified path to validation images above.
+# validation settings
+# val:
+#   val_freq: 5000
+#   save_img: True
+
+#   metrics:
+#     psnr: # metric name
+#       type: calculate_psnr
+#       crop_border: 4
+#       test_y_channel: false
+#     ssim:
+#       type: calculate_ssim
+#       crop_border: 4
+#       test_y_channel: false      
+
+# logging settings
+logger:
+  print_freq: 100 # print an update after this many iterations
+  save_checkpoint_freq: 5000 # save a checkpoint and perform validation after this many iterations
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
