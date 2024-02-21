@@ -191,6 +191,8 @@ class PerceptualLoss(nn.Module):
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
             self.criterion = torch.nn.MSELoss()
+        elif self.criterion_type == 'charbonnier':
+            self.criterion = charbonnier_loss
         elif self.criterion_type == 'fro':
             self.criterion = None
         else:
@@ -267,6 +269,8 @@ class ColorLoss(nn.Module):
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
             self.criterion = torch.nn.MSELoss()
+        elif self.criterion_type == 'charbonnier':
+            self.criterion = charbonnier_loss
         else:
             raise NotImplementedError(f'{criterion} criterion has not been supported.')
 
