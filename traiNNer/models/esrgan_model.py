@@ -46,6 +46,10 @@ class ESRGANModel(SRGANModel):
                 l_g_avg = self.cri_avg(self.output, self.gt)
                 l_g_total += l_g_avg
                 loss_dict['l_g_avg'] = l_g_avg
+            if self.cri_bicubic:
+                l_g_bicubic = self.cri_bicubic(self.output, self.gt)
+                l_g_total += l_g_bicubic
+                loss_dict['l_g_bicubic'] = l_g_bicubic
             # gan loss (relativistic gan)
             real_d_pred = self.net_d(self.gt).detach()
             fake_g_pred = self.net_d(self.output)

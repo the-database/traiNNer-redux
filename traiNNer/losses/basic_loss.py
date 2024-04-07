@@ -1,6 +1,7 @@
 import torch
 from torch import nn as nn
 from torch.nn import functional as F
+import torchvision
 
 from ..archs.vgg_arch import VGGFeatureExtractor
 from ..utils.registry import LOSS_REGISTRY
@@ -298,6 +299,33 @@ class AverageLoss(nn.Module):
             self.criterion = torch.nn.L1Loss()
         elif self.criterion_type == 'l2':
             self.criterion = torch.nn.MSELoss()
+        else:
+            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
+
+
+@LOSS_REGISTRY.register()
+class BicubicLoss(nn.Module):
+    """Bicubic Downscale loss"""
+
+    def __init__(self, criterion='l1', loss_weight=1.0, scale=4):
+        super(BicubicLoss, self).__init__()
+        self.scale = scale
+        self.ds_f = lambda x: torch.nn.Sequential(
+            torchvision.transforms.v2.Resize([x.shape[2] // self.scale, x.shape[3] // self.scale],
+                                             torchvision.transforms.InterpolationMode.BICUBIC),
+            torchvision.transforms.v2.GaussianBlur([5, 5], [.5, .5])
+        )
+        self.loss_weight = loss_weight
+        self.criterion_type = criterion
+        if self.criterion_type == 'l1':
+            self.criterion = torch.nn.L1Loss()
+        elif self.criterion_type == 'l2':
+            self.criterion = torch.nn.MSELoss()
+        elif self.criterion_type == 'charbonnier':
+            self.criterion = charbonnier_loss
         else:
             raise NotImplementedError(f'{criterion} criterion has not been supported.')
 

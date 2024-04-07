@@ -78,6 +78,11 @@ class SRModel(BaseModel):
         else:
             self.cri_avg = None
 
+        if train_opt.get('bicubic_opt'):
+            self.cri_bicubic = build_loss(train_opt['bicubic_opt']).to(self.device)
+        else:
+            self.cri_bicubic = None
+
         if self.cri_pix is None and self.cri_perceptual is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
@@ -136,20 +141,23 @@ class SRModel(BaseModel):
             if l_style is not None:
                 l_total += l_style
                 loss_dict['l_style'] = l_style
-
-            # contextual loss
-            if self.cri_contextual:
-                l_contextual = self.cri_contextual(self.output, self.gt)
-                l_total += l_contextual
-                loss_dict['l_contextual'] = l_contextual
-            if self.cri_color:
-                l_color = self.cri_color(self.output, self.gt)
-                l_total += l_color
-                loss_dict['l_color'] = l_color
-            if self.cri_avg:
-                l_avg = self.cri_avg(self.output, self.gt)
-                l_total += l_avg
-                loss_dict['l_avg'] = l_avg
+        # contextual loss
+        if self.cri_contextual:
+            l_contextual = self.cri_contextual(self.output, self.gt)
+            l_total += l_contextual
+            loss_dict['l_contextual'] = l_contextual
+        if self.cri_color:
+            l_color = self.cri_color(self.output, self.gt)
+            l_total += l_color
+            loss_dict['l_color'] = l_color
+        if self.cri_avg:
+            l_avg = self.cri_avg(self.output, self.gt)
+            l_total += l_avg
+            loss_dict['l_avg'] = l_avg
+        if self.cri_bicubic:
+            l_bicubic = self.cri_bicubic(self.output, self.gt)
+            l_total += l_bicubic
+            loss_dict['l_bicubic'] = l_bicubic
 
         l_total.backward()
         self.optimizer_g.step()
