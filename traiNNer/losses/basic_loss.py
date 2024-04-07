@@ -1,7 +1,8 @@
 import torch
 from torch import nn as nn
 from torch.nn import functional as F
-import torchvision
+from torchvision.transforms import InterpolationMode
+from torchvision.transforms import v2
 
 from ..archs.vgg_arch import VGGFeatureExtractor
 from ..utils.registry import LOSS_REGISTRY
@@ -314,9 +315,9 @@ class BicubicLoss(nn.Module):
         super(BicubicLoss, self).__init__()
         self.scale = scale
         self.ds_f = lambda x: torch.nn.Sequential(
-            torchvision.transforms.v2.Resize([x.shape[2] // self.scale, x.shape[3] // self.scale],
-                                             torchvision.transforms.InterpolationMode.BICUBIC),
-            torchvision.transforms.v2.GaussianBlur([5, 5], [.5, .5])
+            v2.Resize([x.shape[2] // self.scale, x.shape[3] // self.scale],
+                                             InterpolationMode.BICUBIC),
+            v2.GaussianBlur([5, 5], [.5, .5])
         )
         self.loss_weight = loss_weight
         self.criterion_type = criterion
