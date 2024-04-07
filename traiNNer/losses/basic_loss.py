@@ -316,9 +316,9 @@ class BicubicLoss(nn.Module):
         self.scale = scale
         self.ds_f = lambda x: torch.nn.Sequential(
             v2.Resize([x.shape[2] // self.scale, x.shape[3] // self.scale],
-                                             InterpolationMode.BICUBIC),
+                                            InterpolationMode.BICUBIC),
             v2.GaussianBlur([5, 5], [.5, .5])
-        )
+        )(x)
         self.loss_weight = loss_weight
         self.criterion_type = criterion
         if self.criterion_type == 'l1':
