@@ -902,58 +902,6 @@ class MSSIMLoss(nn.Module):
         return ssim, cs
 
 
-def ssim(
-    x,
-    y,
-    *,
-    window_size=11,
-    in_channels=1,
-    sigma=1.5,
-    K1=0.01,
-    K2=0.03,
-    L=1,
-    keep_batch_dim=False,
-    return_log=False,
-    return_msssim=False,
-    padding=None,
-    ensemble_kernel=True,
-):
-    """Calculate the mean SSIM (MSSIM) between two 4D tensors.
-
-    Args:
-        x (Tensor): 4d tensor
-        y (Tensor): 4d tensor
-        window_size (int, optional): The window size of the gaussian filter. Defaults to 11.
-        in_channels (int, optional): The number of channels of the 4d tensor. Defaults to False.
-        sigma (float, optional): The sigma of the gaussian filter. Defaults to 1.5.
-        K1 (float, optional): K1 of MSSIM. Defaults to 0.01.
-        K2 (float, optional): K2 of MSSIM. Defaults to 0.03.
-        L (int, optional): The dynamic range of the pixel values (255 for 8-bit grayscale images). Defaults to 1.
-        keep_batch_dim (bool, optional): Whether to keep the batch dim. Defaults to False.
-        return_log (bool, optional): Whether to return the logarithmic form. Defaults to False.
-        return_msssim (bool, optional): Whether to return the MS-SSIM score. Defaults to False, which will return the original MSSIM score.
-        padding (int, optional): The padding of the gaussian filter. Defaults to None. If it is set to None, the filter will use window_size//2 as the padding. Another common setting is 0.
-        ensemble_kernel (bool, optional): Whether to fuse the two cascaded 1d kernel into a 2d kernel. Defaults to True.
-
-    Returns:
-        Tensor: MSSIM or MS-SSIM
-    """
-    ssim_obj = SSIM(
-        window_size=window_size,
-        in_channels=in_channels,
-        sigma=sigma,
-        K1=K1,
-        K2=K2,
-        L=L,
-        keep_batch_dim=keep_batch_dim,
-        return_log=return_log,
-        return_msssim=return_msssim,
-        padding=padding,
-        ensemble_kernel=ensemble_kernel,
-    ).to(device=x.device)
-    return ssim_obj(x, y)
-
-
 ####################################
 # MSSIM Loss from neosr
 # https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
