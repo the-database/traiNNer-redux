@@ -51,6 +51,11 @@ class SRGANModel(SRModel):
         else:
             self.cri_pix = None
 
+        if train_opt.get('mssim_opt'):
+            self.cri_mssim = build_loss(train_opt['mssim_opt']).to(self.device)
+        else:
+            self.cri_mssim = None
+
         if train_opt.get('ldl_opt'):
             self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device)
         else:

@@ -58,6 +58,11 @@ class SRModel(BaseModel):
         else:
             self.cri_pix = None
 
+        if train_opt.get('mssim_opt'):
+            self.cri_mssim = build_loss(train_opt['mssim_opt']).to(self.device)
+        else:
+            self.cri_mssim = None
+
         if train_opt.get('perceptual_opt'):
             self.cri_perceptual = build_loss(train_opt['perceptual_opt']).to(self.device)
         else:
