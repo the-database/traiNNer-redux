@@ -765,6 +765,7 @@ class MSSIMLoss(nn.Module):
         return_msssim=False,
         padding=None,
         ensemble_kernel=True,
+        loss_weight=1.0,
     ):
         """Calculate the mean SSIM (MSSIM) between two 4D tensors.
 
@@ -816,6 +817,7 @@ class MSSIMLoss(nn.Module):
         self.keep_batch_dim = keep_batch_dim
         self.return_log = return_log
         self.return_msssim = return_msssim
+        self.loss_weight = loss_weight
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -844,9 +846,9 @@ class MSSIMLoss(nn.Module):
             y = y.type_as(self.gaussian_filter.gaussian_window)
 
         if self.return_msssim:
-            return self.msssim(x, y)
+            return self.loss_weight * self.msssim(x, y)
         else:
-            return self.ssim(x, y)
+            return self.loss_weight * self.ssim(x, y)
 
     def ssim(self, x, y):
         ssim, _ = self._ssim(x, y)
