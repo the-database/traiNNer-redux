@@ -19,6 +19,10 @@ This BasicSR project is released under the Apache 2.0 license.
   - The arch implementation of Omnisr is from [Omnisr](https://github.com/Francis0625/Omni-SR). The LICENSE of Omnisr is [Apache License 2.0]. The LICENSE is included as [LICENSE_Omnisr](LICENSE/LICENSE_Omnisr).
 - [DAT](https://github.com/zhengchen1999/dat)
   - The arch implementation of DAT is from [DAT](https://github.com/zhengchen1999/dat). The LICENSE is [Apache License 2.0](https://github.com/zhengchen1999/DAT/blob/main/LICENSE).
+- [SPAN](https://github.com/hongyuanyu/SPAN)					
+  - The arch implementation of SPAN is from [SPAN](https://github.com/hongyuanyu/SPAN) with modifications by [neosr](https://github.com/muslll/neosr). The LICENSE is [Apache 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt).
+- [PLKSR](https://github.com/dslisleedh/PLKSR)
+  - The arch implementation of PLKSR is from [PLKSR](https://github.com/dslisleedh/PLKSR) with modifications by [neosr](https://github.com/muslll/neosr). The LICENSE is [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE).
 
 ## References
 
