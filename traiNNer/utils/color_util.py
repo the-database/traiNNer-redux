@@ -214,15 +214,17 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
     if not isinstance(img, torch.Tensor):
         raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
 
-    if len(img.shape) < 3 or img.shape[-3] != 3:
+    if len(img.shape) < 3 or (img.shape[-3] != 3 and img.shape[-3] != 1):
         raise ValueError(
-            f"Input size must have a shape of (*, 3, H, W). Got {img.shape}"
+            f"Input size must have a shape of (*, 3, H, W) or (*, 1, H, W). Got {img.shape}"
         )
 
     out_img = img.permute(0, 2, 3, 1).clamp(1e-12, 1)
     out_img = torch.where(out_img <= 0.04045, out_img / 12.92,
                           torch.pow((torch.clamp(out_img, 0.04045) + 0.055) / 1.055, 2.4))
-    out_img = out_img @ torch.tensor([0.2126, 0.7152, 0.0722]).to(img)
+    if img.shape[-3] == 3:
+        out_img = out_img @ torch.tensor([0.2126, 0.7152, 0.0722]).to(img)
+
     out_img = torch.where(out_img <= (216 / 24389), out_img * (out_img * (24389 / 27)),
                           torch.pow(out_img, (1 / 3)) * 116 - 16)
     out_img = torch.clamp((out_img / 100), 0, 1)
