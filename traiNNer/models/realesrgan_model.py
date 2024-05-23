@@ -242,6 +242,10 @@ class RealESRGANModel(SRGANModel):
                 l_g_color = self.cri_color(self.output, self.gt)
                 l_g_total += l_g_color
                 loss_dict['l_g_color'] = l_g_color
+            if self.cri_luma:
+                l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_total += l_g_luma
+                loss_dict['l_g_luma'] = l_g_luma
             if self.cri_avg:
                 l_g_avg = self.cri_avg(self.output, self.gt)
                 l_g_total += l_g_avg

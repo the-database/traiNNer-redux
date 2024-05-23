@@ -78,6 +78,11 @@ class SRModel(BaseModel):
         else:
             self.cri_color = None
 
+        if train_opt.get('luma_opt'):
+            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device)
+        else:
+            self.cri_luma = None
+
         if train_opt.get('avg_opt'):
             self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
         else:
@@ -155,6 +160,10 @@ class SRModel(BaseModel):
             l_color = self.cri_color(self.output, self.gt)
             l_total += l_color
             loss_dict['l_color'] = l_color
+        if self.cri_luma:
+            l_luma = self.cri_luma(self.output, self.gt)
+            l_total += l_luma
+            loss_dict['l_luma'] = l_luma
         if self.cri_avg:
             l_avg = self.cri_avg(self.output, self.gt)
             l_total += l_avg

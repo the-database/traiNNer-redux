@@ -76,6 +76,11 @@ class SRGANModel(SRModel):
         else:
             self.cri_color = None
 
+        if train_opt.get('luma_opt'):
+            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device)
+        else:
+            self.cri_luma = None
+
         if train_opt.get('avg_opt'):
             self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
         else:
