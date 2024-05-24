@@ -128,6 +128,10 @@ class SRGANModel(SRModel):
                 l_g_pix = self.cri_pix(self.output, self.gt)
                 l_g_total += l_g_pix
                 loss_dict['l_g_pix'] = l_g_pix
+            if self.cri_mssim:
+                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_total += l_g_mssim
+                loss_dict['l_g_mssim'] = l_g_mssim
             # perceptual loss
             if self.cri_perceptual:
                 l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
@@ -146,6 +150,10 @@ class SRGANModel(SRModel):
                 l_g_color = self.cri_color(self.output, self.gt)
                 l_g_total += l_g_color
                 loss_dict['l_g_color'] = l_g_color
+            if self.cri_luma:
+                l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_total += l_g_luma
+                loss_dict['l_g_luma'] = l_g_luma
             if self.cri_avg:
                 l_g_avg = self.cri_avg(self.output, self.gt)
                 l_g_total += l_g_avg

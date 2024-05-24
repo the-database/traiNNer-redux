@@ -219,6 +219,10 @@ class RealESRGANModel(SRGANModel):
                 l_g_pix = self.cri_pix(self.output, l1_gt)
                 l_g_total += l_g_pix
                 loss_dict['l_g_pix'] = l_g_pix
+            if self.cri_mssim:
+                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_total += l_g_mssim
+                loss_dict['l_g_mssim'] = l_g_mssim
             if self.cri_ldl:
                 pixel_weight = get_refined_artifact_map(self.gt, self.output, self.output_ema, 7)
                 l_g_ldl = self.cri_ldl(torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))

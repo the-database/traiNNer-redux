@@ -93,17 +93,17 @@ class SRModel(BaseModel):
         else:
             self.cri_bicubic = None
 
-        if self.cri_pix is None and self.cri_perceptual is None:
+        if self.cri_pix is None and self.cri_perceptual is None and self.cri_mssim is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
         # setup batch augmentations
-        self.setup_batchaug()
-
-        # setup unshuffle wrapper 
-        self.setup_unshuffle()
-
-        # setup gradient clipping
-        self.setup_gradclip(self.net_g, self.net_d)
+        # self.setup_batchaug()
+        #
+        # # setup unshuffle wrapper
+        # self.setup_unshuffle()
+        #
+        # # setup gradient clipping
+        # self.setup_gradclip(self.net_g, self.net_d)
 
         logger = get_root_logger()
 
@@ -141,7 +141,10 @@ class SRModel(BaseModel):
             l_pix = self.cri_pix(self.output, self.gt)
             l_total += l_pix
             loss_dict['l_pix'] = l_pix
-
+        if self.cri_mssim:
+            l_mssim = self.cri_mssim(self.output, self.gt)
+            l_total += l_mssim
+            loss_dict['l_g_mssim'] = l_mssim
         # perceptual loss
         if self.cri_perceptual:
             l_percep, l_style = self.cri_perceptual(self.output, self.gt)
