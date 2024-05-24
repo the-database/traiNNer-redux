@@ -185,22 +185,22 @@ class SRModel(BaseModel):
             self.model_ema(decay=self.ema_decay)
 
         # match HR resolution for batchaugment = cutblur
-        if self.upsample:
-            # TODO: assumes model and process scale == 4x
-            self.var_L = nn.functional.interpolate(
-                self.var_L, scale_factor=self.upsample, mode="nearest")
-
-        # batch (mixup) augmentations
-        if self.mixup:
-            self.real_H, self.var_L = self.batchaugment(self.real_H, self.var_L)
-
-        # network forward, generate SR
-        with self.cast():
-            self.forward()
-
-        # apply mask if batchaug == "cutout"
-        if self.mixup:
-            self.fake_H, self.real_H = self.batchaugment.apply_mask(self.fake_H, self.real_H)
+        # if self.upsample:
+        #     # TODO: assumes model and process scale == 4x
+        #     self.var_L = nn.functional.interpolate(
+        #         self.var_L, scale_factor=self.upsample, mode="nearest")
+        #
+        # # batch (mixup) augmentations
+        # if self.mixup:
+        #     self.real_H, self.var_L = self.batchaugment(self.real_H, self.var_L)
+        #
+        # # network forward, generate SR
+        # with self.cast():
+        #     self.forward()
+        #
+        # # apply mask if batchaug == "cutout"
+        # if self.mixup:
+        #     self.fake_H, self.real_H = self.batchaugment.apply_mask(self.fake_H, self.real_H)
 
 
     def test(self):
