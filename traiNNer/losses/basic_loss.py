@@ -1072,7 +1072,7 @@ class MSSIMNeoLoss(nn.Module):
 
         # clip values
         if self.clip:
-            ssim = torch.clamp(ssim, 0.003921, 0.996078)
-            cs = torch.clamp(cs, 0.003921, 0.996078)
+            ssim = torch.clamp(ssim, 0, 1)
+            cs = torch.clamp(cs, 0, 1)
 
         return ssim, cs
