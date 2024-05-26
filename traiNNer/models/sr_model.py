@@ -78,6 +78,11 @@ class SRModel(BaseModel):
         else:
             self.cri_color = None
 
+        if train_opt.get('luma_opt'):
+            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device)
+        else:
+            self.cri_luma = None
+
         if train_opt.get('avg_opt'):
             self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
         else:
@@ -88,17 +93,17 @@ class SRModel(BaseModel):
         else:
             self.cri_bicubic = None
 
-        if self.cri_pix is None and self.cri_perceptual is None:
+        if self.cri_pix is None and self.cri_perceptual is None and self.cri_mssim is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
         # setup batch augmentations
-        self.setup_batchaug()
-
-        # setup unshuffle wrapper 
-        self.setup_unshuffle()
-
-        # setup gradient clipping
-        self.setup_gradclip(self.net_g, self.net_d)
+        # self.setup_batchaug()
+        #
+        # # setup unshuffle wrapper
+        # self.setup_unshuffle()
+        #
+        # # setup gradient clipping
+        # self.setup_gradclip(self.net_g, self.net_d)
 
         logger = get_root_logger()
 
@@ -136,7 +141,10 @@ class SRModel(BaseModel):
             l_pix = self.cri_pix(self.output, self.gt)
             l_total += l_pix
             loss_dict['l_pix'] = l_pix
-
+        if self.cri_mssim:
+            l_mssim = self.cri_mssim(self.output, self.gt)
+            l_total += l_mssim
+            loss_dict['l_g_mssim'] = l_mssim
         # perceptual loss
         if self.cri_perceptual:
             l_percep, l_style = self.cri_perceptual(self.output, self.gt)
@@ -155,6 +163,10 @@ class SRModel(BaseModel):
             l_color = self.cri_color(self.output, self.gt)
             l_total += l_color
             loss_dict['l_color'] = l_color
+        if self.cri_luma:
+            l_luma = self.cri_luma(self.output, self.gt)
+            l_total += l_luma
+            loss_dict['l_luma'] = l_luma
         if self.cri_avg:
             l_avg = self.cri_avg(self.output, self.gt)
             l_total += l_avg
@@ -173,22 +185,22 @@ class SRModel(BaseModel):
             self.model_ema(decay=self.ema_decay)
 
         # match HR resolution for batchaugment = cutblur
-        if self.upsample:
-            # TODO: assumes model and process scale == 4x
-            self.var_L = nn.functional.interpolate(
-                self.var_L, scale_factor=self.upsample, mode="nearest")
-
-        # batch (mixup) augmentations
-        if self.mixup:
-            self.real_H, self.var_L = self.batchaugment(self.real_H, self.var_L)
-
-        # network forward, generate SR
-        with self.cast():
-            self.forward()
-
-        # apply mask if batchaug == "cutout"
-        if self.mixup:
-            self.fake_H, self.real_H = self.batchaugment.apply_mask(self.fake_H, self.real_H)
+        # if self.upsample:
+        #     # TODO: assumes model and process scale == 4x
+        #     self.var_L = nn.functional.interpolate(
+        #         self.var_L, scale_factor=self.upsample, mode="nearest")
+        #
+        # # batch (mixup) augmentations
+        # if self.mixup:
+        #     self.real_H, self.var_L = self.batchaugment(self.real_H, self.var_L)
+        #
+        # # network forward, generate SR
+        # with self.cast():
+        #     self.forward()
+        #
+        # # apply mask if batchaug == "cutout"
+        # if self.mixup:
+        #     self.fake_H, self.real_H = self.batchaugment.apply_mask(self.fake_H, self.real_H)
 
 
     def test(self):

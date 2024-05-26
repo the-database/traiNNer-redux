@@ -9,7 +9,7 @@ from torchvision.transforms import v2
 from ..archs.vgg_arch import VGGFeatureExtractor
 from ..utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
-from ..utils.color_util import rgb2ycbcr, ycbcr2rgb, rgb2ycbcr_pt
+from ..utils.color_util import rgb2ycbcr, ycbcr2rgb, rgb2ycbcr_pt, rgb_to_luma
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -334,6 +334,33 @@ class BicubicLoss(nn.Module):
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
+
+
+@LOSS_REGISTRY.register()
+class LumaLoss(nn.Module):
+    def __init__(self, criterion="l1", loss_weight=1.0) -> None:
+        super(LumaLoss, self).__init__()
+        self.loss_weight = loss_weight
+        self.criterion_type = criterion
+
+        if self.criterion_type == "l1":
+            self.criterion = nn.L1Loss()
+        elif self.criterion_type == "l2":
+            self.criterion = nn.MSELoss()
+        elif self.criterion_type == "charbonnier":
+            self.criterion = charbonnier_loss
+        else:
+            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        x_luma = rgb_to_luma(x)
+        y_luma = rgb_to_luma(y)
+        if torch.isnan(x_luma).any() or torch.isnan(y_luma).any():
+            raise ValueError("NaN values found in luminance conversion.")
+        loss = self.criterion(x_luma, y_luma) * self.loss_weight
+        if torch.isnan(loss).any():
+            raise ValueError("NaN values found in loss computation.")
+        return loss
 
 
 ########################

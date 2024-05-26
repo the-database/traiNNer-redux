@@ -76,6 +76,11 @@ class SRGANModel(SRModel):
         else:
             self.cri_color = None
 
+        if train_opt.get('luma_opt'):
+            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device)
+        else:
+            self.cri_luma = None
+
         if train_opt.get('avg_opt'):
             self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
         else:
@@ -123,6 +128,10 @@ class SRGANModel(SRModel):
                 l_g_pix = self.cri_pix(self.output, self.gt)
                 l_g_total += l_g_pix
                 loss_dict['l_g_pix'] = l_g_pix
+            if self.cri_mssim:
+                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_total += l_g_mssim
+                loss_dict['l_g_mssim'] = l_g_mssim
             # perceptual loss
             if self.cri_perceptual:
                 l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
@@ -141,6 +150,10 @@ class SRGANModel(SRModel):
                 l_g_color = self.cri_color(self.output, self.gt)
                 l_g_total += l_g_color
                 loss_dict['l_g_color'] = l_g_color
+            if self.cri_luma:
+                l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_total += l_g_luma
+                loss_dict['l_g_luma'] = l_g_luma
             if self.cri_avg:
                 l_g_avg = self.cri_avg(self.output, self.gt)
                 l_g_total += l_g_avg
