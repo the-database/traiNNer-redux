@@ -1055,6 +1055,10 @@ class MSSIMNeoLoss(nn.Module):
         return self.loss_weight * loss
 
     def msssim(self, x, y):
+
+        x = x.clamp(1e-12, 1)
+        y = y.clamp(1e-12, 1)
+
         ms_components = []
         for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
             ssim, cs = self._ssim(x, y)
@@ -1075,7 +1079,8 @@ class MSSIMNeoLoss(nn.Module):
         if self.cosim:
             similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
             cosine_term = (1 - similarity(x, y)).mean()
-            msssim = msssim - self.cosim_lambda * cosine_term
+            msssim -= self.cosim_lambda * cosine_term
+            msssim = torch.clamp(msssim, 0, 1)
 
 
         return msssim
