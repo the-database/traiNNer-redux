@@ -1029,6 +1029,7 @@ class MSSIMNeoLoss(nn.Module):
         self.cosim = cosim
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
+        self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
 
         self.gaussian_filter = GaussianFilter2DNeo(
             window_size=window_size,
@@ -1077,8 +1078,7 @@ class MSSIMNeoLoss(nn.Module):
 
         # cosine similarity
         if self.cosim:
-            similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-            cosine_term = (1 - similarity(x, y)).mean()
+            cosine_term = (1 - torch.round(self.similarity(x, y), decimals=6)).mean().clamp(0, 1)
             msssim -= self.cosim_lambda * cosine_term
             msssim = torch.clamp(msssim, 0, 1)
 
