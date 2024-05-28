@@ -1078,7 +1078,7 @@ class MSSIMNeoLoss(nn.Module):
 
         # cosine similarity
         if self.cosim:
-            cosine_term = (1 - torch.round(self.similarity(x, y), decimals=6)).mean().clamp(0, 1)
+            cosine_term = (1 - torch.round(self.similarity(x, y), decimals=20)).mean().clamp(0, 1)
             msssim -= self.cosim_lambda * cosine_term
             msssim = torch.clamp(msssim, 0, 1)
 
