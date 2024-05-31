@@ -68,6 +68,11 @@ class SRModel(BaseModel):
         else:
             self.cri_perceptual = None
 
+        if train_opt.get('dists_opt'):
+            self.cri_dists = build_loss(train_opt['dists_opt']).to(self.device)
+        else:
+            self.cri_dists = None
+
         if train_opt.get('contextual_opt'):
             self.cri_contextual = build_loss(train_opt['contextual_opt']).to(self.device)
         else:
@@ -154,6 +159,11 @@ class SRModel(BaseModel):
             if l_style is not None:
                 l_total += l_style
                 loss_dict['l_style'] = l_style
+        # dists loss
+        if self.cri_dists:
+            l_dists = self.cri_dists(self.output, self.gt)
+            l_total += l_dists
+            loss_dict['l_dists'] = l_dists
         # contextual loss
         if self.cri_contextual:
             l_contextual = self.cri_contextual(self.output, self.gt)

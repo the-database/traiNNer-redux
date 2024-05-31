@@ -34,6 +34,11 @@ class ESRGANModel(SRGANModel):
                 if l_g_style is not None:
                     l_g_total += l_g_style
                     loss_dict['l_g_style'] = l_g_style
+            # dists loss
+            if self.cri_dists:
+                l_g_dists = self.cri_dists(self.output, self.gt)
+                l_g_total += l_g_dists
+                loss_dict['l_g_dists'] = l_g_dists
             if self.cri_contextual:
                 l_g_contextual = self.cri_contextual(self.output, self.gt)
                 l_g_total += l_g_contextual
