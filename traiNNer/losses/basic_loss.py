@@ -1208,11 +1208,13 @@ class DISTSLoss(nn.Module):
         self.alpha.data.normal_(0.1, 0.01)
         self.beta.data.normal_(0.1, 0.01)
 
+        weights_path = osp.join(osp.dirname(osp.abspath(__file__)), r"dists_weights.pt")
+
         if load_weights:
-            if osp.exists("traiNNer-redux/losses/dists_weights.pth"):
-                weights = torch.load("traiNNer-redux/losses/dists_weights.pth")
+            if osp.exists(weights_path):
+                weights = torch.load(weights_path)
             else:
-                weights = None
+                raise FileNotFoundError(weights_path)
 
             self.alpha.data = weights["alpha"]
             self.beta.data = weights["beta"]
