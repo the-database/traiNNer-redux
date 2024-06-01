@@ -335,13 +335,7 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
     lam = rng.uniform(0.2, alpha)
     bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
 
-    if rng.uniform() < 0.5:
-        # cutblur inside
-        img_lq[:, :, bbx1:bbx2, bby1:bby2] = img_gt[:, :, bbx1:bbx2, bby1:bby2]
-    else:
-        # cutblur outside
-        img_lq_aug = img_gt.clone()
-        img_lq_aug[:, :, bbx1:bbx2, bby1:bby2] = img_lq[:, :, bbx1:bbx2, bby1:bby2]
-        img_lq = img_lq_aug
+    # cutblur inside
+    img_lq[:, :, bbx1:bbx2, bby1:bby2] = img_gt[:, :, bbx1:bbx2, bby1:bby2]
 
     return img_gt, img_lq
