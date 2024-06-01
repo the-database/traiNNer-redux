@@ -412,7 +412,7 @@ class BaseModel():
 
     def setup_batchaug(self):
         train_opt = self.opt['train']
-        self.use_moa = train_opt.get('use_moa')
+        self.use_moa = train_opt.get('use_moa', False)
         logger = get_root_logger()
         if self.use_moa:
             self.batchaugment = BatchAugment(train_opt)

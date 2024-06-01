@@ -99,6 +99,9 @@ class SRGANModel(SRModel):
         if train_opt.get('gan_opt'):
             self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device)
 
+        # setup batch augmentations
+        self.setup_batchaug()
+
         self.net_d_iters = train_opt.get('net_d_iters', 1)
         self.net_d_init_iters = train_opt.get('net_d_init_iters', 0)
 
