@@ -184,6 +184,10 @@ class RealESRGANModel(SRGANModel):
                 self.gt = data['gt'].to(self.device)
                 self.gt_usm = self.usm_sharpener(self.gt)
 
+                # moa
+                if self.is_train and self.use_moa is not None:
+                    self.gt, self.lq = self.batchaugment(self.gt, self.lq)
+
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         # do not use the synthetic process during validation
         self.is_train = False

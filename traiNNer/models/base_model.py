@@ -318,7 +318,7 @@ class BaseModel():
         logger = get_root_logger()
         net = self.get_bare_model(net)
         load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
-        param_key=self.opt['path'].get('param_key_g', None)
+        param_key = self.opt['path'].get('param_key_g', None)
         if param_key is not None:
             if param_key not in load_net and 'params' in load_net:
                 param_key = 'params'
@@ -413,30 +413,18 @@ class BaseModel():
     def setup_batchaug(self):
         train_opt = self.opt['train']
         self.mixup = train_opt.get('mixup')
+        logger = get_root_logger()
         if self.mixup:
             self.batchaugment = BatchAugment(train_opt)
-            if "cutblur" in self.batchaugment.mixopts:
-                # cutblur needs LR and HR to have the same dimensions (1x)
-                if self.opt["scale"] != 1:
-                    self.upsample = self.opt["scale"]
             logger.info("Batch augmentations enabled")
 
-    def setup_unshuffle(self):
-        unshuffle_scale = self.opt.get("unshuffle_scale")
-        unshuffle = self.opt.get("use_unshuffle")
-        if unshuffle and unshuffle_scale:
-            self.unshuffle = SpaceToDepth(unshuffle_scale)
-            logger.info("Pixel Unshuffle wrapper enabled. "
-                        f"Scale: {unshuffle_scale}")
-
     # Gradient Clipping
-
     def setup_gradclip(self, clip_nets):
         train_opt = self.opt['train']
         logger = get_root_logger()
         grad_clip = train_opt.get('grad_clip', False)
         if grad_clip is True:
-            self.grad_clip = adaptive_clip_grad 
+            self.grad_clip = adaptive_clip_grad
             self.clip_nets = clip_nets
             logger.info(f'{grad_clip} gradient clip enabled.')
 
@@ -447,8 +435,8 @@ class BaseModel():
         if x.ndim <= 1:
             return x.norm(norm_type)
         else:
-        # works for nn.ConvNd and nn,Linear where output dim is first in the kernel/weight tensor
-        # might need special cases for other weights (possibly MHA) where this may not be true
+            # works for nn.ConvNd and nn,Linear where output dim is first in the kernel/weight tensor
+            # might need special cases for other weights (possibly MHA) where this may not be true
             return x.norm(norm_type, dim=tuple(range(1, x.ndim)), keepdim=True)
 
     def adaptive_clip_grad(parameters, clip_factor=0.01, eps=1e-3, norm_type=2.0):

@@ -135,6 +135,10 @@ class SRModel(BaseModel):
         if 'gt' in data:
             self.gt = data['gt'].to(self.device)
 
+            # moa
+            if self.is_train and self.use_moa is not None:
+                self.gt, self.lq = self.batchaugment(self.gt, self.lq)
+
     def optimize_parameters(self, current_iter):
         self.optimizer_g.zero_grad()
         self.output = self.net_g(self.lq)
@@ -193,24 +197,6 @@ class SRModel(BaseModel):
 
         if self.ema_decay > 0:
             self.model_ema(decay=self.ema_decay)
-
-        # match HR resolution for batchaugment = cutblur
-        # if self.upsample:
-        #     # TODO: assumes model and process scale == 4x
-        #     self.var_L = nn.functional.interpolate(
-        #         self.var_L, scale_factor=self.upsample, mode="nearest")
-        #
-        # # batch (mixup) augmentations
-        # if self.mixup:
-        #     self.real_H, self.var_L = self.batchaugment(self.real_H, self.var_L)
-        #
-        # # network forward, generate SR
-        # with self.cast():
-        #     self.forward()
-        #
-        # # apply mask if batchaug == "cutout"
-        # if self.mixup:
-        #     self.fake_H, self.real_H = self.batchaugment.apply_mask(self.fake_H, self.real_H)
 
 
     def test(self):
