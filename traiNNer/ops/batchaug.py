@@ -25,7 +25,7 @@ class BatchAugment:
             img1: the target image.
             img2: the input image.
         """
-        return BatchAug(img1, img2, self.moa_augs, self.scale, self.moa_probs, self.debug)
+        return BatchAug(img1, img2, self.scale, self.moa_augs, self.moa_probs, self.debug)
 
 
 def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
