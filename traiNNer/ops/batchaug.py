@@ -59,7 +59,7 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
 
     idx = random.choices(range(len(augs)), weights=probs)[0]
     aug = augs[idx]
-    print("BatchAug", aug)
+    
     if aug == "none":
         return img_gt, img_lq
 
