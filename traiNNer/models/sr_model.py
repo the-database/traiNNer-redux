@@ -102,11 +102,8 @@ class SRModel(BaseModel):
             raise ValueError('Both pixel and perceptual losses are None.')
 
         # setup batch augmentations
-        # self.setup_batchaug()
-        #
-        # # setup unshuffle wrapper
-        # self.setup_unshuffle()
-        #
+        self.setup_batchaug()
+
         # # setup gradient clipping
         # self.setup_gradclip(self.net_g, self.net_d)
 
