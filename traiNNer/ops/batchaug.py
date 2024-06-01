@@ -16,6 +16,8 @@ class BatchAugment:
             "moa_augs", ["none", "mixup", "cutmix", "resizemix"])  # , "cutblur"]
         self.moa_probs = train_opt.get(
             "moa_probs", [0.4, 0.084, 0.084, 0.084, 0.348])  # , 1.0]
+        self.scale = train_opt.get("scale", 4)
+        self.debug = train_opt.get("moa_debug", False)
 
     def __call__(self, img1, img2):
         """Apply the configured augmentations.
@@ -23,10 +25,10 @@ class BatchAugment:
             img1: the target image.
             img2: the input image.
         """
-        return BatchAug(img1, img2, self.moa_augs, self.moa_probs)
+        return BatchAug(img1, img2, self.moa_augs, self.scale, self.moa_probs, self.debug)
 
 
-def BatchAug(img_gt, img_lq, scale, augs, probs):
+def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
     """ Mixture of Batch Augmentations (MoA)
     Randomly selects single augmentation from the augmentation pool
     and applies it to the batch.
@@ -39,8 +41,6 @@ def BatchAug(img_gt, img_lq, scale, augs, probs):
     https://github.com/hysts/pytorch_cutmix/blob/master/cutmix.py
     https://github.com/clovaai/cutblur/blob/master/augments.py
     """
-
-    debug = False
 
     if debug:
         i = 1
