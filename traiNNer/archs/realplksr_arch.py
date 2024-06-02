@@ -51,12 +51,12 @@ class EA(nn.Module):
 
 class PLKBlock(nn.Module):
     def __init__(
-        self,
-        dim: int,
-        kernel_size: int,
-        split_ratio: float,
-        norm_groups: int,
-        use_ea: bool = True,
+            self,
+            dim: int,
+            kernel_size: int,
+            split_ratio: float,
+            norm_groups: int,
+            use_ea: bool = True,
     ):
         super().__init__()
 
@@ -109,6 +109,7 @@ class realplksr(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
+        upconv: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -118,25 +119,41 @@ class realplksr(nn.Module):
 
         self.feats = nn.Sequential(
             *[nn.Conv2d(3, dim, 3, 1, 1)]
-            + [
-                PLKBlock(dim, kernel_size, split_ratio, norm_groups, use_ea)
-                for _ in range(n_blocks)
-            ]
-            + [nn.Dropout2d(dropout)]
-            + [nn.Conv2d(dim, 3 * scale**2, 3, 1, 1)]
+             + [
+                 PLKBlock(dim, kernel_size, split_ratio, norm_groups, use_ea)
+                 for _ in range(n_blocks)
+             ]
+             + [nn.Dropout2d(dropout)]
+             + [nn.Conv2d(dim, 3 * scale ** 2, 3, 1, 1)]
         )
         trunc_normal_(self.feats[0].weight, std=0.02)
         trunc_normal_(self.feats[-1].weight, std=0.02)
 
         self.repeat_op = partial(
-            torch.repeat_interleave, repeats=scale**2, dim=1
+            torch.repeat_interleave, repeats=scale ** 2, dim=1
         )
 
         self.to_img = nn.PixelShuffle(scale)
+        self.upconv = upconv
+        if upconv:
+            self.conv_before_upsample = nn.Sequential(
+                nn.Conv2d(3 * scale ** 2, n_blocks, 3, 1, 1), nn.LeakyReLU(inplace=True))
+            self.conv_up1 = nn.Conv2d(n_blocks, n_blocks, 3, 1, 1)
+            self.conv_up2 = nn.Conv2d(n_blocks, n_blocks, 3, 1, 1)
+            self.conv_hr = nn.Conv2d(n_blocks, n_blocks, 3, 1, 1)
+            self.conv_last = nn.Conv2d(n_blocks, 3, 3, 1, 1)
+            self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
-        return self.to_img(x)
+        if self.upconv:
+            x = self.conv_before_upsample(x)
+            x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
+            x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
+            x = self.conv_last(self.lrelu(self.conv_hr(x)))
+        else:
+            x = self.to_img(x)
+        return x
 
 
 @ARCH_REGISTRY.register()
