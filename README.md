@@ -1,4 +1,4 @@
-A community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) that adds experimental features.
+A community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and [traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) that adds experimental features.
 
 - Adds OmniSR network support.
 - Adds Contextual Loss, Color Loss, Averaging Downscale Loss
