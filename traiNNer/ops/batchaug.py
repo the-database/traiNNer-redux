@@ -65,14 +65,16 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
     if aug == "none":
         return img_gt, img_lq
 
-    if "cutmix" in aug:
+    if "cutmix" == aug:
         img_gt, img_lq = cutmix(img_gt, img_lq, scale)
-    elif "mixup" in aug:
+    elif "mixup" == aug:
         img_gt, img_lq = mixup(img_gt, img_lq, scale)
-    elif "resizemix" in aug:
+    elif "resizemix" == aug:
         img_gt, img_lq = resizemix(img_gt, img_lq, scale)
-    elif "cutblur" in aug:
+    elif "cutblur" == aug:
         img_gt, img_lq = cutblur(img_gt, img_lq, scale)
+    elif "downup" == aug:
+        img_gt, img_lq = downup(img_gt, img_lq)
     else:
         raise ValueError("{} is not invalid.".format(aug))
 
@@ -343,5 +345,39 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
     img_lq[:, :, bbx1 // scale:bbx2 // scale, bby1 // scale:bby2 // scale] = F.interpolate(
         img_gt[:, :, bbx1:bbx2, bby1:bby2], scale_factor=1 / scale,
         mode="bicubic", antialias=True)
+
+    return img_gt, img_lq
+
+
+def downup(img_gt, img_lq, scope=(0.5, 0.9)):
+    sampling_opts = [
+        ("bicubic", True),
+        ("bilinear", True),
+        ("nearest-exact", False)
+    ]
+
+    down_sample = random.choice(sampling_opts)
+    up_sample = random.choice(sampling_opts)
+
+    # don't allow nearest for both
+    if down_sample[0] == sampling_opts[2][0] and up_sample[0] == sampling_opts[2][0]:
+        if rng.random() > 0.5:
+            # change up sample
+            while up_sample[0] == sampling_opts[2][0]:
+                up_sample = random.choice(sampling_opts)
+        else:
+            # change down sample
+            while down_sample[0] == sampling_opts[2][0]:
+                down_sample = random.choice(sampling_opts)
+
+    scale_factor = rng.uniform(scope[0], scope[1])
+    img_lq_base_size = img_lq.shape
+
+    # downscale
+    img_lq = F.interpolate(img_lq, size=(list(np.round(np.array(img_lq_base_size[2:]) * scale_factor).astype(int))),
+                           mode=down_sample[0], antialias=down_sample[1])
+
+    # upscale back to original res
+    img_lq = F.interpolate(img_lq, size=img_lq_base_size[2:], mode=up_sample[0], antialias=up_sample[1])
 
     return img_gt, img_lq
