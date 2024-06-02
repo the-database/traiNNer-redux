@@ -44,11 +44,13 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
 
     if debug:
         i = 1
-        while os.path.exists(rf'./augout/{i:06d}_preauglq.png'):
+        moa_debug_path = "./moa_debug"
+        os.makedirs(moa_debug_path, exist_ok=True)
+        while os.path.exists(rf'./moa_debug/{i:06d}_preauglq.png'):
             i += 1
 
-        torchvision.utils.save_image(img_lq, rf'./augout/{i:06d}_preauglq.png', padding=0)
-        torchvision.utils.save_image(img_gt, rf'./augout/{i:06d}_preauggt.png', padding=0)
+        torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_preauglq.png'), padding=0)
+        torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_preauggt.png'), padding=0)
 
     if len(augs) != len(probs):
         msg = "Length of 'augmentation' and aug_prob don't match!"
@@ -59,7 +61,7 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
 
     idx = random.choices(range(len(augs)), weights=probs)[0]
     aug = augs[idx]
-    
+
     if aug == "none":
         return img_gt, img_lq
 
@@ -75,8 +77,10 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
         raise ValueError("{} is not invalid.".format(aug))
 
     if debug:
-        torchvision.utils.save_image(img_lq, rf'./augout/{i:06d}_postaug_{aug}_lqfinal.png', padding=0)
-        torchvision.utils.save_image(img_gt, rf'./augout/{i:06d}_postaug_{aug}_gtfinal.png', padding=0)
+        torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_lqfinal.png'),
+                                     padding=0)
+        torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_gtfinal.png'),
+                                     padding=0)
 
     return img_gt, img_lq
 
