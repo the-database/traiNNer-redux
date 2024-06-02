@@ -63,24 +63,16 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
     if aug == "none":
         return img_gt, img_lq
 
-    # match resolutions
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="bicubic")
-
     if "cutmix" in aug:
         img_gt, img_lq = cutmix(img_gt, img_lq, scale)
     elif "mixup" in aug:
-        img_gt, img_lq = mixup(img_gt, img_lq)
+        img_gt, img_lq = mixup(img_gt, img_lq, scale)
     elif "resizemix" in aug:
         img_gt, img_lq = resizemix(img_gt, img_lq, scale)
     elif "cutblur" in aug:
         img_gt, img_lq = cutblur(img_gt, img_lq, scale)
     else:
         raise ValueError("{} is not invalid.".format(aug))
-
-    # back to original resolution
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="bicubic")
 
     if debug:
         torchvision.utils.save_image(img_lq, rf'./augout/{i:06d}_postaug_{aug}_lqfinal.png', padding=0)
@@ -90,7 +82,7 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
 
 
 @torch.no_grad()
-def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):
+def mixup(img_gt, img_lq, scale, alpha_min=0.4, alpha_max=0.6):
     r"""MixUp augmentation.
 
     "Mixup: Beyond Empirical Risk Minimization (https://arxiv.org/abs/1710.09412)".
@@ -103,18 +95,15 @@ def mixup(img_gt, img_lq, alpha_min=0.4, alpha_max=0.6):
         alpha_min/max (float): The given min/max mixing ratio.
     """
 
-    if img_gt.size() != img_lq.size():
-        msg = "img_gt and img_lq have to be the same resolution."
-        raise ValueError(msg)
-
     lam = rng.uniform(alpha_min, alpha_max)
 
     # mixup process
     rand_index = torch.randperm(img_gt.size(0))
-    img_ = img_gt[rand_index]
+    _img_gt = img_gt[rand_index]
+    _img_lq = img_lq[rand_index]
 
-    img_gt = lam * img_gt + (1 - lam) * img_
-    img_lq = lam * img_lq + (1 - lam) * img_
+    img_gt = lam * img_gt + (1 - lam) * _img_gt
+    img_lq = lam * img_lq + (1 - lam) * _img_lq
 
     return img_gt, img_lq
 
@@ -154,6 +143,9 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
         alpha (float): The given maximum mixing ratio.
     """
 
+    if scale > 1:
+        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest-exact")
+
     if img_gt.size() != img_lq.size():
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
@@ -189,6 +181,9 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
     img_gt[:, :, bbx1:bbx2, bby1:bby2] = img_gt_[:, :, bbx1:bbx2, bby1:bby2]
     img_lq[:, :, bbx1:bbx2, bby1:bby2] = img_lq_[:, :, bbx1:bbx2, bby1:bby2]
 
+    if scale > 1:
+        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest-exact")
+
     return img_gt, img_lq
 
 
@@ -204,6 +199,8 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
             Assumes same size.
         scope (float): The given maximum mixing ratio.
     """
+    if scale > 1:
+        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest-exact")
 
     if img_gt.size() != img_lq.size():
         msg = "img_gt and img_lq have to be the same resolution."
@@ -253,6 +250,9 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
     # mix
     img_gt[:, :, bby1:bby2, bbx1:bbx2] = img_gt_resize
     img_lq[:, :, bby1:bby2, bbx1:bbx2] = img_lq_resize
+
+    if scale > 1:
+        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest-exact")
 
     return img_gt, img_lq
 
@@ -308,7 +308,7 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
             Assumes same size.
         alpha (float): The given max mixing ratio.
     """
-    if img_gt.size() != img_lq.size():
+    if img_gt.size()[3] // scale != img_lq.size()[3] or img_gt.size()[2] // scale != img_lq.size()[2]:
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
@@ -336,6 +336,8 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
     bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
 
     # cutblur inside
-    img_lq[:, :, bbx1:bbx2, bby1:bby2] = img_gt[:, :, bbx1:bbx2, bby1:bby2]
+    img_lq[:, :, bbx1 // scale:bbx2 // scale, bby1 // scale:bby2 // scale] = F.interpolate(
+        img_gt[:, :, bbx1:bbx2, bby1:bby2], scale_factor=1 / scale,
+        mode="bicubic", antialias=True)
 
     return img_gt, img_lq
