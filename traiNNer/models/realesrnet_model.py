@@ -183,7 +183,7 @@ class RealESRNetModel(SRModel):
                 self.gt_usm = self.usm_sharpener(self.gt)
 
                 # moa
-                if self.is_train and self.use_moa is not None:
+                if self.is_train and self.use_moa:
                     self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):

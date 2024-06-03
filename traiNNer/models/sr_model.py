@@ -133,7 +133,7 @@ class SRModel(BaseModel):
             self.gt = data['gt'].to(self.device)
 
             # moa
-            if self.is_train and self.use_moa is not None:
+            if self.is_train and self.use_moa:
                 self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter):
