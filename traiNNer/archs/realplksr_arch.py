@@ -93,6 +93,43 @@ class PLKBlock(nn.Module):
         return x + x_skip
 
 
+class UpConv(nn.Module):
+    def __init__(self, scale: int, n_blocks: int):
+        super().__init__()
+        self.conv_before_upsample = nn.Sequential(
+            nn.Conv2d(3 * scale ** 2, n_blocks, 3, 1, 1),
+            nn.LeakyReLU(inplace=True)
+        )
+
+        if scale == 4:
+            self.upsample = nn.Sequential(
+                nn.Upsample(scale_factor=2, mode='nearest'),
+                nn.Conv2d(n_blocks, n_blocks, 3, 1, 1),
+                nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                nn.Upsample(scale_factor=2, mode='nearest'),
+                nn.Conv2d(n_blocks, n_blocks, 3, 1, 1),
+                nn.LeakyReLU(negative_slope=0.2, inplace=True)
+            )
+        else:
+            self.upsample = nn.Sequential(
+                nn.Upsample(scale_factor=scale, mode='nearest'),
+                nn.Conv2d(n_blocks, n_blocks, 3, 1, 1),
+                nn.LeakyReLU(negative_slope=0.2, inplace=True)
+            )
+
+        self.conv_hr = nn.Conv2d(n_blocks, n_blocks, 3, 1, 1)
+        self.conv_last = nn.Conv2d(n_blocks, 3, 3, 1, 1)
+        self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.conv_before_upsample(x)
+        x = self.upsample(x)
+        x = self.lrelu(self.conv_hr(x))
+        x = self.conv_last(x)
+
+        return x
+
+
 @ARCH_REGISTRY.register()
 class realplksr(nn.Module):
     """Partial Large Kernel CNNs for Efficient Super-Resolution:
@@ -100,17 +137,17 @@ class realplksr(nn.Module):
     """
 
     def __init__(
-        self,
-        dim: int = 64,
-        n_blocks: int = 28,
-        scale: int = 4,
-        kernel_size: int = 17,
-        split_ratio: float = 0.25,
-        use_ea: bool = True,
-        norm_groups: int = 4,
-        dropout: float = 0,
-        upconv: bool = False,
-        **kwargs,
+            self,
+            dim: int = 64,
+            n_blocks: int = 28,
+            scale: int = 4,
+            kernel_size: int = 17,
+            split_ratio: float = 0.25,
+            use_ea: bool = True,
+            norm_groups: int = 4,
+            dropout: float = 0,
+            upconv: bool = False,
+            **kwargs,
     ):
         super().__init__()
 
@@ -133,27 +170,14 @@ class realplksr(nn.Module):
             torch.repeat_interleave, repeats=scale ** 2, dim=1
         )
 
-        self.to_img = nn.PixelShuffle(scale)
-        self.upconv = upconv
-        if upconv:
-            self.conv_before_upsample = nn.Sequential(
-                nn.Conv2d(3 * scale ** 2, n_blocks, 3, 1, 1), nn.LeakyReLU(inplace=True))
-            self.conv_up1 = nn.Conv2d(n_blocks, n_blocks, 3, 1, 1)
-            self.conv_up2 = nn.Conv2d(n_blocks, n_blocks, 3, 1, 1)
-            self.conv_hr = nn.Conv2d(n_blocks, n_blocks, 3, 1, 1)
-            self.conv_last = nn.Conv2d(n_blocks, 3, 3, 1, 1)
-            self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
+        if upconv and scale != 1:
+            self.to_img = UpConv(scale, n_blocks)
+        else:
+            self.to_img = nn.PixelShuffle(scale)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
-        if self.upconv:
-            x = self.conv_before_upsample(x)
-            x = self.lrelu(self.conv_up1(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
-            x = self.lrelu(self.conv_up2(torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')))
-            x = self.conv_last(self.lrelu(self.conv_hr(x)))
-        else:
-            x = self.to_img(x)
-        return x
+        return self.to_img(x)
 
 
 @ARCH_REGISTRY.register()
