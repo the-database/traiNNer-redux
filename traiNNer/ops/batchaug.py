@@ -395,9 +395,6 @@ def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
         ("nearest-exact", False)
     ]
 
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest-exact")
-
     def rand_bbox(size, scale, lam):
         """generate random box by lam (scale)"""
         W = size[2] // scale
@@ -419,7 +416,7 @@ def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
 
         bb = (bbx1, bby1, bbx2, bby2)
 
-        return (bbi * scale for bbi in bb)
+        return tuple(bbi * scale for bbi in bb)
 
     img_gt_base_size = img_gt.shape
     img_lq_base_size = img_lq.shape
@@ -427,11 +424,14 @@ def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
     lam = rng.uniform(scope[0], scope[1])
 
     # random box
-    bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
+    gt_bbox = rand_bbox(img_gt.size(), scale, lam)
+    gt_bbx1, gt_bby1, gt_bbx2, gt_bby2 = gt_bbox
+    lq_bbox = tuple(bbi // 4 for bbi in gt_bbox)
+    lq_bbx1, lq_bby1, lq_bbx2, lq_bby2 = lq_bbox
 
     # crop to random box
-    img_gt = img_gt[:, :, bbx1:bbx2, bby1:bby2]
-    img_lq = img_lq[:, :, bbx1:bbx2, bby1:bby2]
+    img_gt = img_gt[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2]
+    img_lq = img_lq[:, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2]
 
     assert img_gt.shape[2] == img_gt.shape[3], f"Expected crop to be square, got shape {img_gt}"
 
@@ -445,8 +445,5 @@ def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
     # upscale cropped LQ to original size
     img_lq = F.interpolate(img_lq, size=img_lq_base_size[2:],
                            mode=lq_up_sample[0], antialias=lq_up_sample[1])
-
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest-exact")
 
     return img_gt, img_lq
