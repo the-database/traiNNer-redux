@@ -405,14 +405,17 @@ def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
         cut_w = int(W * lam)
         cut_h = int(H * lam)
 
-        # uniform
-        cx = rng.integers(cut_w // 2, W)
-        cy = rng.integers(cut_h // 2, H)
+        pad_w = cut_w // 2
+        pad_h = cut_h // 2
 
-        bbx1 = cx - cut_w // 2
-        bby1 = cy - cut_h // 2
-        bbx2 = cx + cut_w // 2
-        bby2 = cy + cut_h // 2
+        # uniform
+        cx = rng.integers(pad_w, W - pad_w)
+        cy = rng.integers(pad_h, H - pad_w)
+
+        bbx1 = cx - pad_w
+        bby1 = cy - pad_h
+        bbx2 = cx + pad_w
+        bby2 = cy + pad_h
 
         bb = (bbx1, bby1, bbx2, bby2)
 
@@ -429,6 +432,8 @@ def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
     # crop to random box
     img_gt = img_gt[:, :, bbx1:bbx2, bby1:bby2]
     img_lq = img_lq[:, :, bbx1:bbx2, bby1:bby2]
+
+    assert img_gt.shape[2] == img_gt.shape[3], f"Expected crop to be square, got shape {img_gt}"
 
     gt_up_sample = sampling_opts[0]  # bicubic
     lq_up_sample = random.choice(sampling_opts)
