@@ -18,6 +18,7 @@ class BatchAugment:
             "moa_probs", [0.4, 0.084, 0.084, 0.084, 0.348])  # , 1.0]
         self.scale = train_opt.get("scale", 4)
         self.debug = train_opt.get("moa_debug", False)
+        self.debug_limit = train_opt.get("moa_debug_limit", 0)
 
     def __call__(self, img1, img2):
         """Apply the configured augmentations.
@@ -25,10 +26,10 @@ class BatchAugment:
             img1: the target image.
             img2: the input image.
         """
-        return BatchAug(img1, img2, self.scale, self.moa_augs, self.moa_probs, self.debug)
+        return BatchAug(img1, img2, self.scale, self.moa_augs, self.moa_probs, self.debug, self.debug_limit)
 
 
-def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
+def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
     """ Mixture of Batch Augmentations (MoA)
     Randomly selects single augmentation from the augmentation pool
     and applies it to the batch.
@@ -49,8 +50,9 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
         while os.path.exists(rf'./moa_debug/{i:06d}_preauglq.png'):
             i += 1
 
-        torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_preauglq.png'), padding=0)
-        torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_preauggt.png'), padding=0)
+        if i <= debug_limit or debug_limit == 0:
+            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_preauglq.png'), padding=0)
+            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_preauggt.png'), padding=0)
 
     if len(augs) != len(probs):
         msg = "Length of 'augmentation' and aug_prob don't match!"
@@ -75,14 +77,17 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug):
         img_gt, img_lq = cutblur(img_gt, img_lq, scale)
     elif "downup" == aug:
         img_gt, img_lq = downup(img_gt, img_lq)
+    elif "up" == aug:
+        img_gt, img_lq = up(img_gt, img_lq, scale)
     else:
         raise ValueError("{} is not invalid.".format(aug))
 
     if debug:
-        torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_lqfinal.png'),
-                                     padding=0)
-        torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_gtfinal.png'),
-                                     padding=0)
+        if i <= debug_limit:
+            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_lqfinal.png'),
+                                         padding=0)
+            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_gtfinal.png'),
+                                         padding=0)
 
     return img_gt, img_lq
 
@@ -379,5 +384,64 @@ def downup(img_gt, img_lq, scope=(0.5, 0.9)):
 
     # upscale back to original res
     img_lq = F.interpolate(img_lq, size=img_lq_base_size[2:], mode=up_sample[0], antialias=up_sample[1])
+
+    return img_gt, img_lq
+
+
+def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
+    sampling_opts = [
+        ("bicubic", True),
+        ("bilinear", True),
+        ("nearest-exact", False)
+    ]
+
+    if scale > 1:
+        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest-exact")
+
+    def rand_bbox(size, scale, lam):
+        """generate random box by lam (scale)"""
+        W = size[2] // scale
+        H = size[3] // scale
+        cut_w = int(W * lam)
+        cut_h = int(H * lam)
+
+        # uniform
+        cx = rng.integers(cut_w // 2, W)
+        cy = rng.integers(cut_h // 2, H)
+
+        bbx1 = cx - cut_w // 2
+        bby1 = cy - cut_h // 2
+        bbx2 = cx + cut_w // 2
+        bby2 = cy + cut_h // 2
+
+        bb = (bbx1, bby1, bbx2, bby2)
+
+        return (bbi * scale for bbi in bb)
+
+    img_gt_base_size = img_gt.shape
+    img_lq_base_size = img_lq.shape
+
+    lam = rng.uniform(scope[0], scope[1])
+
+    # random box
+    bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
+
+    # crop to random box
+    img_gt = img_gt[:, :, bbx1:bbx2, bby1:bby2]
+    img_lq = img_lq[:, :, bbx1:bbx2, bby1:bby2]
+
+    gt_up_sample = sampling_opts[0]  # bicubic
+    lq_up_sample = random.choice(sampling_opts)
+
+    # upscale cropped HQ to original size
+    img_gt = F.interpolate(img_gt, size=img_gt_base_size[2:],
+                           mode=gt_up_sample[0], antialias=gt_up_sample[1])
+
+    # upscale cropped LQ to original size
+    img_lq = F.interpolate(img_lq, size=img_lq_base_size[2:],
+                           mode=lq_up_sample[0], antialias=lq_up_sample[1])
+
+    if scale > 1:
+        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest-exact")
 
     return img_gt, img_lq
