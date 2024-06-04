@@ -154,10 +154,7 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
         alpha (float): The given maximum mixing ratio.
     """
 
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest-exact")
-
-    if img_gt.size() != img_lq.size():
+    if img_gt.size()[3] != img_lq.size()[3] * scale or img_gt.size()[2] != img_lq.size()[2] * scale:
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
@@ -180,7 +177,7 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
 
         bb = (bbx1, bby1, bbx2, bby2)
 
-        return (bbi * scale for bbi in bb)
+        return tuple(bbi * scale for bbi in bb)
 
     lam = rng.uniform(0, alpha)
     rand_index = torch.randperm(img_gt.size(0))
@@ -188,12 +185,17 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
     # mixup process
     img_gt_ = img_gt[rand_index]
     img_lq_ = img_lq[rand_index]
-    bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
-    img_gt[:, :, bbx1:bbx2, bby1:bby2] = img_gt_[:, :, bbx1:bbx2, bby1:bby2]
-    img_lq[:, :, bbx1:bbx2, bby1:bby2] = img_lq_[:, :, bbx1:bbx2, bby1:bby2]
 
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest-exact")
+    # bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
+
+    # random box
+    gt_bbox = rand_bbox(img_gt.size(), scale, lam)
+    gt_bbx1, gt_bby1, gt_bbx2, gt_bby2 = gt_bbox
+    lq_bbox = tuple(bbi // 4 for bbi in gt_bbox)
+    lq_bbx1, lq_bby1, lq_bbx2, lq_bby2 = lq_bbox
+
+    img_gt[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2] = img_gt_[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2]
+    img_lq[:, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2] = img_lq_[:, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2]
 
     return img_gt, img_lq
 
@@ -210,10 +212,8 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
             Assumes same size.
         scope (float): The given maximum mixing ratio.
     """
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=scale, mode="nearest-exact")
 
-    if img_gt.size() != img_lq.size():
+    if img_gt.size()[3] != img_lq.size()[3] * scale or img_gt.size()[2] != img_lq.size()[2] * scale:
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
@@ -235,7 +235,7 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
 
         bb = (bbx1, bby1, bbx2, bby2)
 
-        return (bbi * scale for bbi in bb)
+        return tuple(bbi * scale for bbi in bb)
 
     # index
     rand_index = torch.randperm(img_gt.size(0))
@@ -248,22 +248,24 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
     tao = rng.uniform(scope[0], scope[1])
 
     # random box
-    bbx1, bby1, bbx2, bby2 = rand_bbox_tao(img_gt.size(), scale, tao)
+    # bbx1, bby1, bbx2, bby2 = rand_bbox_tao(img_gt.size(), scale, tao)
+
+    gt_bbox = rand_bbox_tao(img_gt.size(), scale, tao)
+    gt_bbx1, gt_bby1, gt_bbx2, gt_bby2 = gt_bbox
+    lq_bbox = tuple(bbi // 4 for bbi in gt_bbox)
+    lq_bbx1, lq_bby1, lq_bbx2, lq_bby2 = lq_bbox
 
     # resize
     img_gt_resize = F.interpolate(
-        img_gt_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic"
+        img_gt_resize, (gt_bby2 - gt_bby1, gt_bbx2 - gt_bbx1), mode="bicubic", antialias=True
     )
     img_lq_resize = F.interpolate(
-        img_lq_resize, (bby2 - bby1, bbx2 - bbx1), mode="bicubic"
+        img_lq_resize, (lq_bby2 - lq_bby1, lq_bbx2 - lq_bbx1), mode="bicubic", antialias=True
     )
 
     # mix
-    img_gt[:, :, bby1:bby2, bbx1:bbx2] = img_gt_resize
-    img_lq[:, :, bby1:bby2, bbx1:bbx2] = img_lq_resize
-
-    if scale > 1:
-        img_lq = F.interpolate(img_lq, scale_factor=1 / scale, mode="nearest-exact")
+    img_gt[:, :, gt_bby1:gt_bby2, gt_bbx1:gt_bbx2] = img_gt_resize
+    img_lq[:, :, lq_bby1:lq_bby2, lq_bbx1:lq_bbx2] = img_lq_resize
 
     return img_gt, img_lq
 
@@ -319,7 +321,7 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
             Assumes same size.
         alpha (float): The given max mixing ratio.
     """
-    if img_gt.size()[3] // scale != img_lq.size()[3] or img_gt.size()[2] // scale != img_lq.size()[2]:
+    if img_gt.size()[3] != img_lq.size()[3] * scale or img_gt.size()[2] != img_lq.size()[2] * scale:
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
