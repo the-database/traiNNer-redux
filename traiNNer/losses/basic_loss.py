@@ -29,7 +29,7 @@ def mse_loss(pred, target):
 
 @weighted_loss
 def charbonnier_loss(pred, target, eps=1e-12):
-    return torch.sqrt((pred - target)**2 + eps)
+    return torch.sqrt((pred - target) ** 2 + eps)
 
 
 @LOSS_REGISTRY.register()
@@ -321,7 +321,7 @@ class BicubicLoss(nn.Module):
         self.scale = scale
         self.ds_f = lambda x: torch.nn.Sequential(
             v2.Resize([x.shape[2] // self.scale, x.shape[3] // self.scale],
-                                            InterpolationMode.BICUBIC),
+                      InterpolationMode.BICUBIC),
             v2.GaussianBlur([5, 5], [.5, .5])
         )(x)
         self.loss_weight = loss_weight
@@ -414,7 +414,7 @@ class ContextualLoss(nn.Module):
         super(ContextualLoss, self).__init__()
 
         assert band_width > 0, 'band_width parameter must be positive.'
-        assert distance_type in DIS_TYPES,\
+        assert distance_type in DIS_TYPES, \
             f'select a distance type from {DIS_TYPES}.'
 
         if layer_weights:
@@ -447,7 +447,7 @@ class ContextualLoss(nn.Module):
         device = images.device
 
         if hasattr(self, 'vgg_model'):
-            assert images.shape[1] == 3 and gt.shape[1] == 3,\
+            assert images.shape[1] == 3 and gt.shape[1] == 3, \
                 'VGG model takes 3 channel images.'
 
             loss = 0
@@ -462,7 +462,7 @@ class ContextualLoss(nn.Module):
                     vgg_gt[key] = self._crop_quarters(vgg_gt[key])
 
                 N, C, H, W = vgg_images[key].size()
-                if H * W > self.max_1d_size**2:
+                if H * W > self.max_1d_size ** 2:
                     vgg_images[key] = self._random_pooling(vgg_images[key], output_1d_size=self.max_1d_size)
                     vgg_gt[key] = self._random_pooling(vgg_gt[key], output_1d_size=self.max_1d_size)
 
@@ -476,7 +476,7 @@ class ContextualLoss(nn.Module):
                 gt = self._crop_quarters(gt)
 
             N, C, H, W = images.size()
-            if H * W > self.max_1d_size**2:
+            if H * W > self.max_1d_size ** 2:
                 images = self._random_pooling(images, output_1d_size=self.max_1d_size)
                 gt = self._random_pooling(gt, output_1d_size=self.max_1d_size)
 
@@ -506,7 +506,7 @@ class ContextualLoss(nn.Module):
             feats = [feats]
 
         N, C, H, W = feats[0].size()
-        feats_sample, indices = ContextualLoss._random_sampling(feats[0], output_1d_size**2, None)
+        feats_sample, indices = ContextualLoss._random_sampling(feats[0], output_1d_size ** 2, None)
         res = [feats_sample]
 
         for i in range(1, len(feats)):
@@ -621,7 +621,7 @@ class ContextualLoss(nn.Module):
 
     def symetric_CX_Loss(self, I_features, T_features):
         loss = (self.calculate_CX_Loss(T_features, I_features) + self.calculate_CX_Loss(I_features, T_features)) / 2
-        return loss*self.loss_weight  # score
+        return loss * self.loss_weight  # score
 
     def bilateral_CX_Loss(self, I_features, T_features, weight_sp: float = 0.1):
 
@@ -660,7 +660,7 @@ class ContextualLoss(nn.Module):
         k_max_NC, _ = torch.max(cx_combine, dim=2, keepdim=True)
         cx = k_max_NC.mean(dim=1)
         cx_loss = torch.mean(-torch.log(cx + 1e-5))
-        return cx_loss*self.loss_weight
+        return cx_loss * self.loss_weight
 
     def calculate_CX_Loss(self, I_features, T_features):
         device = I_features.device
@@ -720,7 +720,7 @@ class ContextualLoss(nn.Module):
         if torch.isnan(CX_loss):
             raise ValueError('NaN in computing CX_loss')
 
-        return CX_loss*self.loss_weight
+        return CX_loss * self.loss_weight
 
 
 #############################################################
@@ -779,23 +779,24 @@ class GaussianFilter2D(nn.Module):
                     )
         return x
 
+
 @LOSS_REGISTRY.register()
 class MSSIMLoss(nn.Module):
     def __init__(
-        self,
-        window_size=11,
-        in_channels=3,
-        sigma=1.5,
-        *,
-        K1=0.01,
-        K2=0.03,
-        L=1,
-        keep_batch_dim=False,
-        return_log=False,
-        return_msssim=False,
-        padding=None,
-        ensemble_kernel=True,
-        loss_weight=1.0,
+            self,
+            window_size=11,
+            in_channels=3,
+            sigma=1.5,
+            *,
+            K1=0.01,
+            K2=0.03,
+            L=1,
+            keep_batch_dim=False,
+            return_log=False,
+            return_msssim=False,
+            padding=None,
+            ensemble_kernel=True,
+            loss_weight=1.0,
     ):
         """Calculate the mean SSIM (MSSIM) between two 4D tensors.
 
@@ -966,7 +967,7 @@ class GaussianFilter2DNeo(nn.Module):
     def _get_gaussian_window1d(self):
         sigma2 = self.sigma * self.sigma
         x = torch.arange(-(self.window_size // 2), self.window_size // 2 + 1)
-        w = torch.exp(-0.5 * x**2 / sigma2)
+        w = torch.exp(-0.5 * x ** 2 / sigma2)
         w = w / w.sum()
         return w.reshape(1, 1, 1, self.window_size)
 
@@ -990,18 +991,18 @@ class GaussianFilter2DNeo(nn.Module):
 @LOSS_REGISTRY.register()
 class MSSIMNeoLoss(nn.Module):
     def __init__(
-        self,
-        window_size=11,
-        in_channels=3,
-        sigma=1.5,
-        K1=0.01,
-        K2=0.03,
-        L=1,
-        padding=None,
-        clip=True,
-        cosim=True,
-        cosim_lambda=5,
-        loss_weight=1.0,
+            self,
+            window_size=11,
+            in_channels=3,
+            sigma=1.5,
+            K1=0.01,
+            K2=0.03,
+            L=1,
+            padding=None,
+            clip=True,
+            cosim=True,
+            cosim_lambda=5,
+            loss_weight=1.0,
     ):
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -1059,9 +1060,17 @@ class MSSIMNeoLoss(nn.Module):
         return self.loss_weight * loss
 
     def msssim(self, x, y):
+        x = x.clamp(0, 1)
+        y = y.clamp(0, 1)
 
-        x = x.clamp(1e-12, 1)
-        y = y.clamp(1e-12, 1)
+        # cosine similarity
+        if self.cosim:
+            similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
+
+            x255 = torch.round(x * 255).clamp(1e-12, 255)
+            y255 = torch.round(y * 255).clamp(1e-12, 255)
+
+            cosine_term = (1 - similarity(x255, y255)).mean()
 
         ms_components = []
         for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
@@ -1070,21 +1079,18 @@ class MSSIMNeoLoss(nn.Module):
             cs = cs.mean()
 
             if i == 4:
-                ms_components.append(ssim**w)
+                ms_components.append(ssim ** w)
             else:
-                ms_components.append(cs**w)
+                ms_components.append(cs ** w)
                 padding = [s % 2 for s in x.shape[2:]]  # spatial padding
                 x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
 
         msssim = math.prod(ms_components)  # equ 7 in ref2
 
-        # cosine similarity
         if self.cosim:
-            cosine_term = (1 - torch.round(self.similarity(x, y), decimals=20)).mean().clamp(0, 1)
             msssim -= self.cosim_lambda * cosine_term
             msssim = torch.clamp(msssim, 0, 1)
-
 
         return msssim
 
@@ -1190,7 +1196,7 @@ class DISTSLoss(nn.Module):
 
         for param in self.parameters():
             param.requires_grad = False
-            
+
         self.register_buffer(
             "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1)
         )
