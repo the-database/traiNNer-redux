@@ -13,6 +13,7 @@ from ..archs.vgg_arch import VGGFeatureExtractor
 from ..utils.registry import LOSS_REGISTRY
 from .loss_util import weighted_loss
 from ..utils.color_util import rgb2ycbcr, ycbcr2rgb, rgb2ycbcr_pt, rgb_to_luma
+from ..utils.hsluv import rgb_to_hsluv
 
 _reduction_modes = ['none', 'mean', 'sum']
 
@@ -1271,3 +1272,44 @@ class DISTSLoss(nn.Module):
             out = 1 - (dist1 + dist2).squeeze()
 
         return out
+
+
+@LOSS_REGISTRY.register()
+class HSLuvLoss(nn.Module):
+    def __init__(self, criterion="l1", loss_weight=1.0) -> None:
+        super(HSLuvLoss, self).__init__()
+        self.loss_weight = loss_weight
+        self.criterion_type = criterion
+
+        if self.criterion_type == "l1":
+            self.criterion = nn.L1Loss()
+        elif self.criterion_type == "l2":
+            self.criterion = nn.MSELoss()
+        elif self.criterion_type == "charbonnier":
+            self.criterion = charbonnier_loss
+        else:
+            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        x_hsluv = rgb_to_hsluv(x)
+        y_hsluv = rgb_to_hsluv(y)
+
+        # hue: 0 to 360. normalize
+        x_hue = x_hsluv[:, 0, :, :] / 360
+        y_hue = y_hsluv[:, 0, :, :] / 360
+
+        # saturation: 0 to 100. normalize
+        x_saturation = x_hsluv[:, 1, :, :] / 100
+        y_saturation = y_hsluv[:, 1, :, :] / 100
+
+        # lightness: 0 to 100. normalize
+        x_lightness = x_hsluv[:, 2, :, :] / 100
+        y_lightness = y_hsluv[:, 2, :, :] / 100
+
+        # find the shortest distance between angles on a circle. TODO: this is l1, implement other criteria
+        # scale by saturation
+        hue_loss = torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue)) * y_saturation * 1 / 3
+        saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
+        lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
+
+        return (hue_loss + saturation_loss + lightness_loss) * self.loss_weight
