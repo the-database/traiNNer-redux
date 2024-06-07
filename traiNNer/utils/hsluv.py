@@ -36,7 +36,7 @@ def hsluv_to_lch(h, s, l):
 
 
 def lch_to_hsluv(l, c, h):
-    _hx_max = _max_chroma_for_lh(l, h)
+    _hx_max = torch.clamp(_max_chroma_for_lh(l, h), 1e-12)
     s = c / _hx_max * 100
 
     s = torch.where((l > 100 - 1e-5) | (l < 1e-8), 0, s)  # was: l > 100 - 1e-7
@@ -52,7 +52,7 @@ def _distance_line_from_origin(line):
 
 
 def _length_of_ray_until_intersect(theta, line):
-    return line['intercept'] / (torch.sin(theta) - line['slope'] * torch.cos(theta))
+    return line['intercept'] / torch.clamp(torch.sin(theta) - line['slope'] * torch.cos(theta), 1e-12)
 
 
 def _get_bounds(l):
