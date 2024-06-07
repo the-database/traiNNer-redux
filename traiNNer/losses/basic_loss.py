@@ -359,11 +359,7 @@ class LumaLoss(nn.Module):
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         x_luma = rgb_to_luma(x)
         y_luma = rgb_to_luma(y)
-        if torch.isnan(x_luma).any() or torch.isnan(y_luma).any():
-            raise ValueError("NaN values found in luminance conversion.")
         loss = self.criterion(x_luma, y_luma) * self.loss_weight
-        if torch.isnan(loss).any():
-            raise ValueError("NaN values found in loss computation.")
         return loss
 
 
@@ -1308,7 +1304,7 @@ class HSLuvLoss(nn.Module):
 
         # find the shortest distance between angles on a circle. TODO: this is l1, implement other criteria
         # scale by saturation
-        hue_loss = torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue)) * y_saturation * 1 / 3
+        hue_loss = torch.mean(torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue))) * 1 / 3
         saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
         lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
 
