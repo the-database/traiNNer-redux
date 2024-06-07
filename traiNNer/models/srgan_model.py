@@ -86,6 +86,11 @@ class SRGANModel(SRModel):
         else:
             self.cri_luma = None
 
+        if train_opt.get('hsluv_opt'):
+            self.cri_hsluv = build_loss(train_opt['hsluv_opt']).to(self.device)
+        else:
+            self.cri_hsluv = None
+
         if train_opt.get('avg_opt'):
             self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
         else:
@@ -167,6 +172,10 @@ class SRGANModel(SRModel):
                 l_g_luma = self.cri_luma(self.output, self.gt)
                 l_g_total += l_g_luma
                 loss_dict['l_g_luma'] = l_g_luma
+            if self.cri_hsluv:
+                l_g_hsluv = self.cri_hsluv(self.output, self.gt)
+                l_g_total += l_g_hsluv
+                loss_dict['l_g_hsluv'] = l_g_hsluv
             if self.cri_avg:
                 l_g_avg = self.cri_avg(self.output, self.gt)
                 l_g_total += l_g_avg
