@@ -28,8 +28,7 @@ def f_inv(t):
 
 
 def hsluv_to_lch(h, s, l):
-    l = torch.where(l > 99.9999999, torch.full_like(l, 100), l)
-    l = torch.where(l < 0.00000001, torch.full_like(l, 0), l)
+    l = torch.clamp(l, 0, 100)
     max_chroma = _max_chroma_for_lh(l, h)
     c = max_chroma * s / 100
     return torch.stack([l, c, h], dim=-1)
@@ -40,8 +39,7 @@ def lch_to_hsluv(l, c, h):
     s = c / _hx_max * 100
 
     s = torch.where((l > 100 - 1e-5) | (l < 1e-8), 0, s)  # was: l > 100 - 1e-7
-    l = torch.where(l > 100 - 1e-5, 100, l)
-    l = torch.where(l < 1e-8, 0, l)
+    l = torch.clamp(l, 0, 100)
 
     return torch.stack([h, torch.clamp(s, 0, 100), l], dim=-1)
 
