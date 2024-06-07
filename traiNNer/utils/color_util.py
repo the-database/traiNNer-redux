@@ -221,7 +221,7 @@ def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
 
     out_img = img.permute(0, 2, 3, 1).clamp(1e-12, 1)
     out_img = torch.where(out_img <= 0.04045, out_img / 12.92,
-                          torch.pow((torch.clamp(out_img, 0.04045) + 0.055) / 1.055, 2.4))
+                          torch.pow((out_img + 0.055) / 1.055, 2.4))
     if img.shape[-3] == 3:
         out_img = out_img @ torch.tensor([0.2126, 0.7152, 0.0722]).to(img)
 
