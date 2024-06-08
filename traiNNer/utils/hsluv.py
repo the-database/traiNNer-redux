@@ -54,29 +54,20 @@ def _length_of_ray_until_intersect(theta, line):
 
 
 def _get_bounds(l):
-    l = l.unsqueeze(-1)
+    result = []
     sub1 = ((l + 16) ** 3) / 1560896
     sub2 = torch.where(sub1 > _epsilon, sub1, l / _kappa)
-
-    m = torch.tensor(_m).to(l)
-
-    m1 = m[:, 0]
-    m2 = m[:, 1]
-    m3 = m[:, 2]
-
-    top1 = 284517 * m1 - 94839 * m3
-    top2 = 838422 * m3 + 769860 * m2 + 731718 * m1
-    bottom = 632260 * m3 - 126452 * m2
-
-    slopes = top1.unsqueeze(0) / bottom.unsqueeze(0)
-    intercepts = top2.unsqueeze(0) * l * sub2 - 769860 * l
-    slopes_t = top1.unsqueeze(0) / (bottom.unsqueeze(0) + 126452)
-    intercepts_t = top2.unsqueeze(0) * l * sub2 - 769860 * l
-
-    slopes = torch.cat((slopes, slopes_t), dim=-1)
-    intercepts = torch.cat((intercepts, intercepts_t), dim=-1)
-
-    return slopes, intercepts
+    mt = torch.tensor(_m).to(l)
+    for c in range(3):
+        m1, m2, m3 = mt[c]
+        for t in range(2):
+            top1 = (284517 * m1 - 94839 * m3) * sub2
+            top2 = (838422 * m3 + 769860 * m2 + 731718 * m1) * l * sub2 - (769860 * t) * l
+            bottom = torch.clamp((632260 * m3 - 126452 * m2) * sub2 + 126452 * t, 1e-12)
+            slope = top1 / bottom
+            intercept = top2 / bottom
+            result.append({'slope': slope, 'intercept': intercept})
+    return result
 
 
 def _max_safe_chroma_for_l(l):
@@ -87,10 +78,14 @@ def _max_safe_chroma_for_l(l):
 
 def _max_chroma_for_lh(l, h):
     hrad = torch.deg2rad(h)
-    slopes, intercepts = _get_bounds(l)
-    lengths = intercepts / torch.clamp(torch.sin(hrad).unsqueeze(-1) - slopes * torch.cos(hrad).unsqueeze(-1), 1e-12)
-    non_negative_lengths = torch.where(lengths >= 0, lengths, float('inf'))
-    return non_negative_lengths.min(dim=-1).values
+    bounds = _get_bounds(l)
+    lengths = [_length_of_ray_until_intersect(hrad, bound) for bound in bounds]
+    lengths = torch.stack(lengths)
+
+    # Mask out negative lengths
+    non_negative_lengths = torch.where(lengths >= 0, lengths, torch.max(lengths).to(l))
+
+    return non_negative_lengths.min(dim=0).values
 
 
 def lch_to_xyz(lch):
