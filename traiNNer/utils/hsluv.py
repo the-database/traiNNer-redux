@@ -5,12 +5,12 @@ modified to support float32 precision.
 import torch
 
 _m = [[3.240969941904521, -1.537383177570093, -0.498610760293],
-                   [-0.96924363628087, 1.87596750150772, 0.041555057407175],
-                   [0.055630079696993, -0.20397695888897, 1.056971514242878]]
+      [-0.96924363628087, 1.87596750150772, 0.041555057407175],
+      [0.055630079696993, -0.20397695888897, 1.056971514242878]]
 
 _m_inv = [[0.41239079926595, 0.35758433938387, 0.18048078840183],
-                       [0.21263900587151, 0.71516867876775, 0.072192315360733],
-                       [0.019330818715591, 0.11919477979462, 0.95053215224966]]
+          [0.21263900587151, 0.71516867876775, 0.072192315360733],
+          [0.019330818715591, 0.11919477979462, 0.95053215224966]]
 
 _ref_y = 1.0
 _ref_u = 0.19783000664283
@@ -23,17 +23,6 @@ def _y_to_l(y):
     return torch.where(y > _epsilon, 116 * torch.pow(y / _ref_y, 1 / 3) - 16, y / _ref_y * _kappa)
 
 
-def f_inv(t):
-    return torch.where(t > 6 / 29, torch.pow(t, 3), 3 * (6 / 29) ** 2 * (t - 4 / 29))
-
-
-def hsluv_to_lch(h, s, l):
-    l = torch.clamp(l, 0, 100)
-    max_chroma = _max_chroma_for_lh(l, h)
-    c = max_chroma * s / 100
-    return torch.stack([l, c, h], dim=-1)
-
-
 def lch_to_hsluv(l, c, h):
     _hx_max = torch.clamp(_max_chroma_for_lh(l, h), 1e-12)
     s = c / _hx_max * 100
@@ -44,39 +33,39 @@ def lch_to_hsluv(l, c, h):
     return torch.stack([h, torch.clamp(s, 0, 100), l], dim=-1)
 
 
-def _length_of_ray_until_intersect(theta, slopes, intercepts):
-    denominator = (torch.sin(theta).unsqueeze(-1) - slopes * torch.cos(theta).unsqueeze(-1))
-    clamped_denominator = torch.clamp(torch.abs(denominator), 1e-12) * torch.sign(denominator)
-    return intercepts / clamped_denominator
-
-
 def _get_bounds(l):
-    l = l.unsqueeze(-1)  # Add dimension for broadcasting
+    l = l.unsqueeze(-1)
     sub1 = ((l + 16) ** 3) / 1560896
     sub2 = torch.where(sub1 > _epsilon, sub1, l / _kappa)
-    mt = torch.tensor(_m).to(l.device)
 
-    top1 = (284517 * mt[:, 0] - 94839 * mt[:, 2]).unsqueeze(0).unsqueeze(-1) * sub2.unsqueeze(-1)
-    top2 = (838422 * mt[:, 2] + 769860 * mt[:, 1] + 731718 * mt[:, 0]).unsqueeze(0).unsqueeze(-1) * l * sub2.unsqueeze(
-        -1) - (769860 * torch.arange(2, device=l.device).view(1, 1, -1)) * l
-    bottom = (632260 * mt[:, 2] - 126452 * mt[:, 1]).unsqueeze(0).unsqueeze(-1) * sub2.unsqueeze(
-        -1) + 126452 * torch.arange(2, device=l.device).view(1, 1, -1)
+    m = torch.tensor(_m).to(l)
 
-    slopes = top1 / bottom
-    intercepts = top2 / bottom
+    m1 = m[:, 0]
+    m2 = m[:, 1]
+    m3 = m[:, 2]
 
-    return {'slope': slopes.view(l.shape[0], -1), 'intercept': intercepts.view(l.shape[0], -1)}
+    top1 = 284517 * m1 - 94839 * m3
+    top2 = 838422 * m3 + 769860 * m2 + 731718 * m1
+    bottom = 632260 * m3 - 126452 * m2
+
+    slopes = top1.unsqueeze(0) / bottom.unsqueeze(0)
+    intercepts = top2.unsqueeze(0) * l * sub2 - 769860 * l
+    slopes_t = top1.unsqueeze(0) / (bottom.unsqueeze(0) + 126452)
+    intercepts_t = top2.unsqueeze(0) * l * sub2 - 769860 * l
+
+    slopes = torch.cat((slopes, slopes_t), dim=-1)
+    intercepts = torch.cat((intercepts, intercepts_t), dim=-1)
+
+    return slopes, intercepts
 
 
 def _max_chroma_for_lh(l, h):
     hrad = torch.deg2rad(h)
-    bounds = _get_bounds(l)
-
-    lengths = _length_of_ray_until_intersect(hrad.unsqueeze(-1), bounds['slope'], bounds['intercept'])
-    lengths = lengths.view(l.shape[0], -1)
-
-    non_negative_lengths = torch.where(lengths >= 0, lengths, torch.max(lengths, dim=-1, keepdim=True)[0])
-
+    slopes, intercepts = _get_bounds(l)
+    denominator = (torch.sin(hrad).unsqueeze(-1) - slopes * torch.cos(hrad).unsqueeze(-1))
+    clamped_denominator = torch.clamp(torch.abs(denominator), 1e-12) * torch.sign(denominator)
+    lengths = intercepts / clamped_denominator
+    non_negative_lengths = torch.where(lengths >= 0, lengths, torch.max(lengths))
     return non_negative_lengths.min(dim=-1).values
 
 
