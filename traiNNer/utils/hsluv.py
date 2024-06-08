@@ -88,7 +88,7 @@ def _max_safe_chroma_for_l(l):
 def _max_chroma_for_lh(l, h):
     hrad = torch.deg2rad(h)
     slopes, intercepts = _get_bounds(l)
-    lengths = intercepts / (torch.sin(hrad).unsqueeze(-1) - slopes * torch.cos(hrad).unsqueeze(-1))
+    lengths = intercepts / torch.clamp(torch.sin(hrad).unsqueeze(-1) - slopes * torch.cos(hrad).unsqueeze(-1), 1e-12)
     non_negative_lengths = torch.where(lengths >= 0, lengths, float('inf'))
     return non_negative_lengths.min(dim=-1).values
 
