@@ -38,71 +38,46 @@ def lch_to_hsluv(l, c, h):
     _hx_max = torch.clamp(_max_chroma_for_lh(l, h), 1e-12)
     s = c / _hx_max * 100
 
-    s = torch.where((l > 100 - 1e-5) | (l < 1e-8), 0, s)  # was: l > 100 - 1e-7
+    s = torch.where((l > 100 - 1e-5) | (l < 1e-8), 0, s)
     l = torch.clamp(l, 0, 100)
 
     return torch.stack([h, torch.clamp(s, 0, 100), l], dim=-1)
 
 
-def _distance_line_from_origin(line):
-    v = line['slope'] ** 2 + 1
-    return torch.abs(line['intercept']) / torch.sqrt(v)
-
-
-def _length_of_ray_until_intersect(theta, line):
-    return line['intercept'] / torch.clamp(torch.sin(theta) - line['slope'] * torch.cos(theta), 1e-12)
+def _length_of_ray_until_intersect(theta, slopes, intercepts):
+    denominator = (torch.sin(theta).unsqueeze(-1) - slopes * torch.cos(theta).unsqueeze(-1))
+    clamped_denominator = torch.clamp(torch.abs(denominator), 1e-12) * torch.sign(denominator)
+    return intercepts / clamped_denominator
 
 
 def _get_bounds(l):
-    result = []
+    l = l.unsqueeze(-1)  # Add dimension for broadcasting
     sub1 = ((l + 16) ** 3) / 1560896
     sub2 = torch.where(sub1 > _epsilon, sub1, l / _kappa)
-    mt = torch.tensor(_m).to(l)
-    for c in range(3):
-        m1, m2, m3 = mt[c]
-        for t in range(2):
-            top1 = (284517 * m1 - 94839 * m3) * sub2
-            top2 = (838422 * m3 + 769860 * m2 + 731718 * m1) * l * sub2 - (769860 * t) * l
-            bottom = torch.clamp((632260 * m3 - 126452 * m2) * sub2 + 126452 * t, 1e-12)
-            slope = top1 / bottom
-            intercept = top2 / bottom
-            result.append({'slope': slope, 'intercept': intercept})
-    return result
+    mt = torch.tensor(_m).to(l.device)
 
+    top1 = (284517 * mt[:, 0] - 94839 * mt[:, 2]).unsqueeze(0).unsqueeze(-1) * sub2.unsqueeze(-1)
+    top2 = (838422 * mt[:, 2] + 769860 * mt[:, 1] + 731718 * mt[:, 0]).unsqueeze(0).unsqueeze(-1) * l * sub2.unsqueeze(
+        -1) - (769860 * torch.arange(2, device=l.device).view(1, 1, -1)) * l
+    bottom = (632260 * mt[:, 2] - 126452 * mt[:, 1]).unsqueeze(0).unsqueeze(-1) * sub2.unsqueeze(
+        -1) + 126452 * torch.arange(2, device=l.device).view(1, 1, -1)
 
-def _max_safe_chroma_for_l(l):
-    bounds = _get_bounds(l)
-    distances = [_distance_line_from_origin(bound) for bound in bounds]
-    return torch.stack(distances).min(dim=0).values
+    slopes = top1 / bottom
+    intercepts = top2 / bottom
+
+    return {'slope': slopes.view(l.shape[0], -1), 'intercept': intercepts.view(l.shape[0], -1)}
 
 
 def _max_chroma_for_lh(l, h):
     hrad = torch.deg2rad(h)
     bounds = _get_bounds(l)
-    lengths = [_length_of_ray_until_intersect(hrad, bound) for bound in bounds]
-    lengths = torch.stack(lengths)
 
-    # Mask out negative lengths
-    non_negative_lengths = torch.where(lengths >= 0, lengths, torch.max(lengths).to(l))
+    lengths = _length_of_ray_until_intersect(hrad.unsqueeze(-1), bounds['slope'], bounds['intercept'])
+    lengths = lengths.view(l.shape[0], -1)
 
-    return non_negative_lengths.min(dim=0).values
+    non_negative_lengths = torch.where(lengths >= 0, lengths, torch.max(lengths, dim=-1, keepdim=True)[0])
 
-
-def lch_to_xyz(lch):
-    l = lch[..., 0]
-    c = lch[..., 1]
-    h = lch[..., 2] * torch.pi / 180
-    u = torch.cos(h) * c
-    v = torch.sin(h) * c
-    y = (l + 16) / 116
-    x = y + u / 13 * (52 * y - 23)
-    z = y - v / 13 * (31 * y - 21)
-    return torch.stack([x, y, z], dim=-1)
-
-
-def xyz_to_rgb(xyz):
-    rgb = torch.matmul(xyz, torch.tensor(_m).to(xyz).transpose(0, 1))
-    return rgb
+    return non_negative_lengths.min(dim=-1).values
 
 
 def rgb_to_xyz(rgb):
@@ -145,18 +120,6 @@ def luv_to_lch(luv):
     # use midpoint as threshold
     h = torch.where(c < 0.028972067, 0, h)  # was: c < 1e-8 for float64
     return torch.stack([l, c, h], dim=-1)
-
-
-# untested
-# def hsluv_to_rgb(hsluv_tensor):
-#     hsluv_tensor = hsluv_tensor.permute(0, 2, 3, 1)
-#     h = hsluv_tensor[..., 0]
-#     s = hsluv_tensor[..., 1]
-#     l = hsluv_tensor[..., 2]
-#     lch = hsluv_to_lch(h, s, l)
-#     xyz = lch_to_xyz(lch)
-#     rgb = xyz_to_rgb(xyz)
-#     return rgb.clamp(0, 1).permute(0, 3, 1, 2)
 
 
 def rgb_to_hsluv(rgb_tensor):
