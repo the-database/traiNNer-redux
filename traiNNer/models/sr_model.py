@@ -184,9 +184,9 @@ class SRModel(BaseModel):
             l_total += l_luma
             loss_dict['l_luma'] = l_luma
         if self.cri_hsluv:
-            l_g_hsluv = self.cri_hsluv(self.output, self.gt)
-            l_g_total += l_g_hsluv
-            loss_dict['l_g_hsluv'] = l_g_hsluv
+            l_hsluv = self.cri_hsluv(self.output, self.gt)
+            l_total += l_hsluv
+            loss_dict['l_g_hsluv'] = l_hsluv
         if self.cri_avg:
             l_avg = self.cri_avg(self.output, self.gt)
             l_total += l_avg
