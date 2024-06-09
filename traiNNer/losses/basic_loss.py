@@ -1295,16 +1295,23 @@ class HSLuvLoss(nn.Module):
         y_hue = y_hsluv[:, 0, :, :] / 360
 
         # saturation: 0 to 100. normalize
-        x_saturation = x_hsluv[:, 1, :, :] / 100
-        y_saturation = y_hsluv[:, 1, :, :] / 100
+        x_saturation = torch.round(x_hsluv[:, 1, :, :], decimals=20) / 100
+        y_saturation = torch.round(y_hsluv[:, 1, :, :], decimals=20) / 100
 
         # lightness: 0 to 100. normalize
         x_lightness = x_hsluv[:, 2, :, :] / 100
         y_lightness = y_hsluv[:, 2, :, :] / 100
 
         # find the shortest distance between angles on a circle. TODO: this is l1, implement other criteria
-        # scale by saturation
-        hue_loss = torch.mean(torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue))) * 1 / 3
+        hue_diff = torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue))
+        # hue diff between two grayscale colors is 0
+        # hue_diff = torch.where((x_saturation < 1e-5) & (y_saturation < 1e-5), 0, hue_diff)
+        # hue diff between grayscale and non-grayscale is maximum
+        # hue_diff = torch.where(
+        #     ((x_saturation < 1e-5) & (y_saturation > 1e-5)) | ((x_saturation > 1e-5) & (y_saturation < 1e-5)), 1,
+        #     hue_diff)
+
+        hue_loss = torch.mean(hue_diff) * 1 / 3
         saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
         lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
 
