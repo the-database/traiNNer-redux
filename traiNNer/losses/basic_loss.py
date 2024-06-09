@@ -1309,10 +1309,10 @@ class HSLuvLoss(nn.Module):
         hue_diff = torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue)) * 2
         # hue diff between two grayscale colors is 0
         hue_diff = torch.where((x_saturation < eps) & (y_saturation < eps), 0, hue_diff)
-        # hue diff between grayscale and non-grayscale is maximum
+        # hue diff between grayscale and non-grayscale is maximum, scaled by max saturation
         hue_diff = torch.where(
-            ((x_saturation < eps) & (y_saturation > eps)) | ((x_saturation > eps) & (y_saturation < eps)), 1,
-            hue_diff)
+            ((x_saturation < eps) & (y_saturation > eps)) | ((x_saturation > eps) & (y_saturation < eps)),
+            torch.max(x_saturation, y_saturation), hue_diff)
         # hue diff between black or white is 0
         hue_diff = torch.where((x_lightness < eps) & (y_lightness < eps), 0, hue_diff)
         hue_diff = torch.where((x_lightness > 1 - eps) & (y_lightness > eps - 1), 0, hue_diff)
@@ -1321,4 +1321,4 @@ class HSLuvLoss(nn.Module):
         saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
         lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
 
-        return (torch.mean(hue_diff)) * self.loss_weight
+        return (hue_loss + saturation_loss + lightness_loss) * self.loss_weight
