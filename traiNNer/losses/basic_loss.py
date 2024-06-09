@@ -1290,6 +1290,8 @@ class HSLuvLoss(nn.Module):
         x_hsluv = rgb_to_hsluv(x)
         y_hsluv = rgb_to_hsluv(y)
 
+        eps = .1
+
         # hue: 0 to 360. normalize
         x_hue = x_hsluv[:, 0, :, :] / 360
         y_hue = y_hsluv[:, 0, :, :] / 360
@@ -1303,16 +1305,20 @@ class HSLuvLoss(nn.Module):
         y_lightness = y_hsluv[:, 2, :, :] / 100
 
         # find the shortest distance between angles on a circle. TODO: this is l1, implement other criteria
-        hue_diff = torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue))
+        # since the max distance is 0.5, multiply by 2 to normalize
+        hue_diff = torch.min(torch.abs(x_hue - y_hue), 1 - torch.abs(x_hue - y_hue)) * 2
         # hue diff between two grayscale colors is 0
-        # hue_diff = torch.where((x_saturation < 1e-5) & (y_saturation < 1e-5), 0, hue_diff)
+        hue_diff = torch.where((x_saturation < eps) & (y_saturation < eps), 0, hue_diff)
         # hue diff between grayscale and non-grayscale is maximum
-        # hue_diff = torch.where(
-        #     ((x_saturation < 1e-5) & (y_saturation > 1e-5)) | ((x_saturation > 1e-5) & (y_saturation < 1e-5)), 1,
-        #     hue_diff)
+        hue_diff = torch.where(
+            ((x_saturation < eps) & (y_saturation > eps)) | ((x_saturation > eps) & (y_saturation < eps)), 1,
+            hue_diff)
+        # hue diff between black or white is 0
+        hue_diff = torch.where((x_lightness < eps) & (y_lightness < eps), 0, hue_diff)
+        hue_diff = torch.where((x_lightness > 1 - eps) & (y_lightness > eps - 1), 0, hue_diff)
 
         hue_loss = torch.mean(hue_diff) * 1 / 3
         saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
         lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
 
-        return (hue_loss + saturation_loss + lightness_loss) * self.loss_weight
+        return (torch.mean(hue_diff)) * self.loss_weight
