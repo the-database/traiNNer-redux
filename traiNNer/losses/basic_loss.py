@@ -190,7 +190,7 @@ class PerceptualLoss(nn.Module):
         self.perceptual_weight = perceptual_weight
         self.style_weight = style_weight
 
-        if self.normalize_layer_weights:
+        if normalize_layer_weights:
             layer_weights_sum = sum(layer_weights.values())
             for k, v in layer_weights.items():
                 layer_weights[k] = v / layer_weights_sum
