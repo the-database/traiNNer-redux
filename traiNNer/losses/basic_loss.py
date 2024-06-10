@@ -1159,10 +1159,11 @@ class DISTSLoss(nn.Module):
             Default: False.
     """
 
-    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, **kwargs):
+    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, use_input_norm=True, **kwargs):
         super(DISTSLoss, self).__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
+        self.use_input_norm = use_input_norm
 
         vgg_pretrained_features = models.vgg16(weights="DEFAULT").features
         self.stage1 = torch.nn.Sequential()
@@ -1188,12 +1189,13 @@ class DISTSLoss(nn.Module):
         for param in self.parameters():
             param.requires_grad = False
 
-        self.register_buffer(
-            "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1)
-        )
-        self.register_buffer(
-            "std", torch.tensor([0.229, 0.224, 0.225]).view(1, -1, 1, 1)
-        )
+        if use_input_norm:
+            self.register_buffer(
+                "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1)
+            )
+            self.register_buffer(
+                "std", torch.tensor([0.229, 0.224, 0.225]).view(1, -1, 1, 1)
+            )
 
         self.chns = [3, 64, 128, 256, 512, 512]
         self.register_parameter(
@@ -1222,7 +1224,7 @@ class DISTSLoss(nn.Module):
                 self.beta.data = self.beta.data.cuda()
 
     def forward_once(self, x):
-        h = (x - self.mean) / self.std
+        h = (x - self.mean) / self.std if self.use_input_norm else x
         h = self.stage1(h)
         h_relu1_2 = h
         h = self.stage2(h)
