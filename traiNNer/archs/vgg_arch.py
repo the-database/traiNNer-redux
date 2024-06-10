@@ -4,6 +4,7 @@ from collections import OrderedDict
 from torch import nn as nn
 from torchvision.models import vgg as vgg
 from torchvision.models import VGG19_Weights
+from torchvision.transforms.functional import center_crop
 
 from ..utils.registry import ARCH_REGISTRY
 
@@ -83,12 +84,14 @@ class VGGFeatureExtractor(nn.Module):
                  range_norm=False,
                  requires_grad=False,
                  remove_pooling=False,
+                 crop_input=False,
                  pooling_stride=2):
         super(VGGFeatureExtractor, self).__init__()
 
         self.layer_name_list = layer_name_list
         self.use_input_norm = use_input_norm
         self.range_norm = range_norm
+        self.crop_input = crop_input
 
         self.names = NAMES[vgg_type.replace('_bn', '')]
         if 'bn' in vgg_type:
@@ -148,6 +151,11 @@ class VGGFeatureExtractor(nn.Module):
         Returns:
             Tensor: Forward results.
         """
+
+        if self.crop_input:
+            # vgg19 crop size
+            x = center_crop(x, [224])
+
         if self.range_norm:
             x = (x + 1) / 2
         if self.use_input_norm:

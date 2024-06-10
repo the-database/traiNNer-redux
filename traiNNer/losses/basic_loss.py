@@ -181,18 +181,27 @@ class PerceptualLoss(nn.Module):
                  vgg_type='vgg19',
                  use_input_norm=True,
                  range_norm=False,
+                 normalize_layer_weights=False,
+                 crop_input=False,
                  perceptual_weight=1.0,
                  style_weight=0.,
                  criterion='l1'):
         super(PerceptualLoss, self).__init__()
         self.perceptual_weight = perceptual_weight
         self.style_weight = style_weight
+
+        if self.normalize_layer_weights:
+            layer_weights_sum = sum(layer_weights.values())
+            for k, v in layer_weights.items():
+                layer_weights[k] = v / layer_weights_sum
+
         self.layer_weights = layer_weights
         self.vgg = VGGFeatureExtractor(
             layer_name_list=list(layer_weights.keys()),
             vgg_type=vgg_type,
             use_input_norm=use_input_norm,
-            range_norm=range_norm)
+            range_norm=range_norm,
+            crop_input=crop_input)
 
         self.criterion_type = criterion
         if self.criterion_type == 'l1':
