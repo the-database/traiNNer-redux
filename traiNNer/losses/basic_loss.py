@@ -7,6 +7,7 @@ from torch import nn as nn
 from torch.nn import functional as F
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms import v2
+import  torchvision.transforms.functional as tf
 from torchvision import models
 
 from ..archs.vgg_arch import VGGFeatureExtractor
@@ -1170,11 +1171,12 @@ class DISTSLoss(nn.Module):
             Default: False.
     """
 
-    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, use_input_norm=True, **kwargs):
+    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, use_input_norm=True, resize_input=False, **kwargs):
         super(DISTSLoss, self).__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
         self.use_input_norm = use_input_norm
+        self.resize_input = resize_input
 
         vgg_pretrained_features = models.vgg16(weights="DEFAULT").features
         self.stage1 = torch.nn.Sequential()
@@ -1235,7 +1237,14 @@ class DISTSLoss(nn.Module):
                 self.beta.data = self.beta.data.cuda()
 
     def forward_once(self, x):
-        h = (x - self.mean) / self.std if self.use_input_norm else x
+        if self.resize_input:
+            h = tf.resize(x, [256], interpolation=tf.InterpolationMode.BICUBIC, antialias=True)
+        else:
+            h = x
+            
+        if self.use_input_norm:
+            h = (h - self.mean) / self.std
+
         h = self.stage1(h)
         h_relu1_2 = h
         h = self.stage2(h)
