@@ -86,8 +86,8 @@ def rgb_to_xyz(rgb):
 
 def xyz_to_luv(xyz):
     x = xyz[..., 0]
-    y = xyz[..., 1]
-    z = xyz[..., 2]
+    y = xyz[..., 1].clamp(1e-12)
+    z = xyz[..., 2].clamp(1e-12)
 
     l = _y_to_l(y)
 
