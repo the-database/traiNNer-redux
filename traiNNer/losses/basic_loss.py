@@ -183,6 +183,7 @@ class PerceptualLoss(nn.Module):
                  range_norm=False,
                  normalize_layer_weights=False,
                  crop_input=False,
+                 resize_input=False,
                  perceptual_weight=1.0,
                  style_weight=0.,
                  criterion='l1'):
@@ -201,7 +202,8 @@ class PerceptualLoss(nn.Module):
             vgg_type=vgg_type,
             use_input_norm=use_input_norm,
             range_norm=range_norm,
-            crop_input=crop_input)
+            crop_input=crop_input,
+            resize_input=resize_input)
 
         self.criterion_type = criterion
         if self.criterion_type == 'l1':

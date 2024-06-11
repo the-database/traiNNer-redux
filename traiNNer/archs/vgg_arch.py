@@ -4,10 +4,12 @@ from collections import OrderedDict
 from torch import nn as nn
 from torchvision.models import vgg as vgg
 from torchvision.models import VGG19_Weights
-from torchvision.transforms.functional import center_crop
+from torchvision.transforms.functional import center_crop, resize, InterpolationMode
 
 from ..utils.registry import ARCH_REGISTRY
 
+VGG19_PATCH_SIZE = 256
+VGG19_CROP_SIZE = 224
 VGG_PRETRAIN_PATH = 'experiments/pretrained_models/vgg19-dcbb9e9d.pth'
 NAMES = {
     'vgg11': [
@@ -85,6 +87,7 @@ class VGGFeatureExtractor(nn.Module):
                  requires_grad=False,
                  remove_pooling=False,
                  crop_input=False,
+                 resize_input=False,
                  pooling_stride=2):
         super(VGGFeatureExtractor, self).__init__()
 
@@ -92,6 +95,7 @@ class VGGFeatureExtractor(nn.Module):
         self.use_input_norm = use_input_norm
         self.range_norm = range_norm
         self.crop_input = crop_input
+        self.resize_input = resize_input
 
         self.names = NAMES[vgg_type.replace('_bn', '')]
         if 'bn' in vgg_type:
@@ -152,9 +156,15 @@ class VGGFeatureExtractor(nn.Module):
             Tensor: Forward results.
         """
 
+        if self.resize_input:
+            # vgg19 patch size
+            # skip resize if dimensions already match
+            if x.shape[2] != VGG19_PATCH_SIZE or x.shape[3] != VGG19_PATCH_SIZE:
+                x = resize(x, [VGG19_PATCH_SIZE], interpolation=InterpolationMode.BICUBIC, antialias=True)
+
         if self.crop_input:
             # vgg19 crop size
-            x = center_crop(x, [224])
+            x = center_crop(x, [VGG19_CROP_SIZE])
 
         if self.range_norm:
             x = (x + 1) / 2
