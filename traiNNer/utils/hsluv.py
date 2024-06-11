@@ -86,8 +86,8 @@ def rgb_to_xyz(rgb):
 
 def xyz_to_luv(xyz):
     x = xyz[..., 0]
-    y = xyz[..., 1].clamp(1e-12)
-    z = xyz[..., 2].clamp(1e-12)
+    y = xyz[..., 1]
+    z = xyz[..., 2]
 
     l = _y_to_l(y)
 
@@ -107,8 +107,8 @@ def xyz_to_luv(xyz):
 
 def luv_to_lch(luv):
     l = luv[..., 0]
-    u = luv[..., 1]
-    v = luv[..., 2]
+    u = luv[..., 1].clamp(1e-12)
+    v = luv[..., 2].clamp(1e-12)
     c = torch.sqrt(u ** 2 + v ** 2)
     h = torch.atan2(v, u) * 180 / torch.pi
     h = torch.where(h < 0, h + 360, h)
