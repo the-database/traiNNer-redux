@@ -107,10 +107,19 @@ def xyz_to_luv(xyz):
 
 def luv_to_lch(luv):
     l = luv[..., 0]
-    u = luv[..., 1].clamp(1e-12)
-    v = luv[..., 2].clamp(1e-12)
-    c = torch.sqrt(u ** 2 + v ** 2)
-    h = torch.atan2(v, u) * 180 / torch.pi
+
+    u = luv[..., 1]
+    u_eps = torch.full_like(u, 1e-12)
+    u_eps = torch.where(u >= 0, u_eps, -u_eps)
+    clamped_u = torch.where(u == 0, u_eps, u)
+
+    v = luv[..., 2]
+    v_eps = torch.full_like(v, 1e-12)
+    v_eps = torch.where(v >= 0, v_eps, -v_eps)
+    clamped_v = torch.where(v == 0, v_eps, v)
+
+    c = torch.sqrt(clamped_u ** 2 + clamped_v ** 2)
+    h = torch.atan2(clamped_v, clamped_u) * 180 / torch.pi
     h = torch.where(h < 0, h + 360, h)
     # max c among valid grayscale in float32: 6.69640576234087347984e-05
     # min c among valid barely saturated colors in float32: 0.028972066058486234
