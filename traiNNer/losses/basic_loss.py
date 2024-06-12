@@ -17,6 +17,7 @@ from ..utils.color_util import rgb2ycbcr, ycbcr2rgb, rgb2ycbcr_pt, rgb_to_luma
 from ..utils.hsluv import rgb_to_hsluv
 
 _reduction_modes = ['none', 'mean', 'sum']
+VGG_PATCH_SIZE = 256
 
 
 @weighted_loss
@@ -1238,8 +1239,9 @@ class DISTSLoss(nn.Module):
                 self.beta.data = self.beta.data.cuda()
 
     def forward_once(self, x):
-        if self.resize_input:
-            h = tf.resize(x, [256], interpolation=tf.InterpolationMode.BICUBIC, antialias=True)
+        if self.resize_input and x.shape[2] != VGG_PATCH_SIZE or x.shape[3] != VGG_PATCH_SIZE:
+            # skip resize if dimensions already match
+            h = tf.resize(x, [VGG_PATCH_SIZE], interpolation=tf.InterpolationMode.BICUBIC, antialias=True)
         else:
             h = x
 
@@ -1399,7 +1401,9 @@ class ADISTSLoss(torch.nn.Module):
     def forward_once(self, x):
 
         if self.resize_input:
-            h = tf.resize(x, [256], interpolation=tf.InterpolationMode.BICUBIC, antialias=True)
+            # skip resize if dimensions already match
+            if x.shape[2] != VGG_PATCH_SIZE or x.shape[3] != VGG_PATCH_SIZE:
+                h = tf.resize(x, [VGG_PATCH_SIZE], interpolation=tf.InterpolationMode.BICUBIC, antialias=True)
         else:
             h = x
 
