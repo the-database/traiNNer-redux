@@ -1364,8 +1364,9 @@ class ADISTSLoss(torch.nn.Module):
                                  groups=feats[k].shape[1]) - x_mean ** 2
                 h, w = x_mean.shape[2], x_mean.shape[3]
                 gamma = torch.mean(x_var / (x_mean + c0), dim=1, keepdim=True)
-                ps = 1 / (1 + torch.exp(
-                    -(gamma - gamma.mean(dim=(2, 3), keepdim=True)) / (gamma.std(dim=(2, 3), keepdim=True) + c0)))
+                exponent = -(gamma - gamma.mean(dim=(2, 3), keepdim=True)) / (gamma.std(dim=(2, 3), keepdim=True) + c0)
+                exponent = torch.clamp(exponent, None, 50)
+                ps = 1 / (1 + torch.exp(exponent))
                 ps_min, _ = ps.flatten(2).min(dim=-1, keepdim=True)
                 ps_max, _ = ps.flatten(2).max(dim=-1, keepdim=True)
                 ps = (ps - ps_min.unsqueeze(-1)) / (ps_max.unsqueeze(-1) - ps_min.unsqueeze(-1) + c0)
