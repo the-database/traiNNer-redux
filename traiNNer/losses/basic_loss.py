@@ -953,12 +953,13 @@ class DISTSLoss(nn.Module):
     """
 
     def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, use_input_norm=True, resize_input=False,
-                 **kwargs):
+                 clip_min=0, **kwargs):
         super(DISTSLoss, self).__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
         self.use_input_norm = use_input_norm
         self.resize_input = resize_input
+        self.clip_min = clip_min
 
         vgg_pretrained_features = models.vgg16(weights="DEFAULT").features
         self.stage1 = torch.nn.Sequential()
@@ -1067,8 +1068,7 @@ class DISTSLoss(nn.Module):
             dist2 = dist2 + (beta[k] * S2).sum(1, keepdim=True)
 
         if self.as_loss:
-            out = 1 - (dist1 + dist2).mean()
-            out *= self.loss_weight
+            out = torch.clamp(1 - (dist1 + dist2).mean(), self.clip_min) * self.loss_weight
         else:
             out = 1 - (dist1 + dist2).squeeze()
 
@@ -1214,6 +1214,7 @@ class ADISTSLoss(torch.nn.Module):
         weight = weight / (weight.sum(dim=1, keepdim=True) + c0)
         return weight * c
 
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x, y):
         assert x.shape == y.shape
 
