@@ -1482,7 +1482,7 @@ class ADISTSLoss(torch.nn.Module):
             pt = 1 - ps
             D_map = (pt * T + ps * S) * weight_list[k].unsqueeze(3)
             D = D + D_map.mean([2, 3]).sum(1)
-        return 1 - D.mean() * self.loss_weight
+        return (1 - D.mean()) * self.loss_weight
 
 
 @LOSS_REGISTRY.register()
