@@ -15,7 +15,8 @@ from traiNNer.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
 from traiNNer.models import build_model
 from traiNNer.utils import (AvgTimer, MessageLogger, check_resume, get_env_info, get_root_logger, get_time_str,
                             init_tb_logger, init_wandb_logger, make_exp_dirs, mkdir_and_rename, scandir)
-from traiNNer.utils.options import copy_opt_file, dict2str, parse_options
+from traiNNer.utils.options import copy_opt_file, dict2str
+from traiNNer.utils.config import Config
 
 
 def init_tb_loggers(opt):
@@ -93,8 +94,9 @@ def load_resume_state(opt):
 
 
 def train_pipeline(root_path):
+    # torch.autograd.set_detect_anomaly(True)
     # parse options, set distributed setting, set random seed
-    opt, args = parse_options(root_path, is_train=True)
+    opt, args = Config.load_config(root_path, is_train=True)
     opt['root_path'] = root_path
 
     torch.backends.cudnn.benchmark = True

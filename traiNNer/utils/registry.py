@@ -1,6 +1,5 @@
 # Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py  # noqa: E501
 
-
 class Registry():
     """
     The registry that provides name -> object mapping, to support third-party
@@ -52,17 +51,18 @@ class Registry():
         if obj is None:
             # used as a decorator
             def deco(func_or_class):
-                name = func_or_class.__name__
+                name = func_or_class.__name__.lower()
                 self._do_register(name, func_or_class, suffix)
                 return func_or_class
 
             return deco
 
         # used as a function call
-        name = obj.__name__
+        name = obj.__name__.lower()
         self._do_register(name, obj, suffix)
 
     def get(self, name, suffix='traiNNer'):
+        name = name.lower()
         ret = self._obj_map.get(name)
         if ret is None:
             ret = self._obj_map.get(name + '_' + suffix)
@@ -72,7 +72,7 @@ class Registry():
         return ret
 
     def __contains__(self, name):
-        return name in self._obj_map
+        return name.lower() in self._obj_map
 
     def __iter__(self):
         return iter(self._obj_map.items())
@@ -83,6 +83,7 @@ class Registry():
 
 DATASET_REGISTRY = Registry('dataset')
 ARCH_REGISTRY = Registry('arch')
+SPANDREL_REGISTRY = Registry('spandrel')
 MODEL_REGISTRY = Registry('model')
 LOSS_REGISTRY = Registry('loss')
 METRIC_REGISTRY = Registry('metric')
