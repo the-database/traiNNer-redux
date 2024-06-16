@@ -25,6 +25,7 @@ class BaseModel():
         self.schedulers = []
         self.optimizers = []
         self.batchaugment = None
+        self.log_dict = {}
         self.loss_samples = 0
         self.model_loader = ModelLoader()
 
