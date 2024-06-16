@@ -181,6 +181,8 @@ class SRModel(BaseModel):
 
     def optimize_parameters(self, current_iter):
 
+        # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
+
         # optimize net_g
         if self.net_d is not None:
             for p in self.net_d.parameters():
