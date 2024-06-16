@@ -3,16 +3,14 @@ from collections import OrderedDict
 from os import path as osp
 from tqdm import tqdm
 
-from ..archs import build_network
-from ..losses import build_loss
-from ..losses.loss_util import get_refined_artifact_map
-from ..metrics import calculate_metric
-from ..utils import get_root_logger, imwrite, tensor2img
-from ..utils.registry import MODEL_REGISTRY
-from .base_model import BaseModel
+from traiNNer.archs import build_network
+from traiNNer.losses import build_loss
+from traiNNer.losses.loss_util import get_refined_artifact_map
+from traiNNer.metrics import calculate_metric
+from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.models.base_model import BaseModel
 
 
-@MODEL_REGISTRY.register()
 class SRModel(BaseModel):
     """Base SR model for single image super-resolution."""
 
@@ -140,7 +138,7 @@ class SRModel(BaseModel):
         if not (all_enabled or all_disabled):
             raise ValueError(
                 "GAN loss (gan_opt), discriminator network (network_d), and discriminator optimizer (optim_d) "
-                "must all be enabled or all be disabled.")
+                "must be all enabled or all disabled.")
 
         # setup batch augmentations
         self.setup_batchaug()
