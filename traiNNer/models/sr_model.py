@@ -53,9 +53,10 @@ class SRModel(BaseModel):
 
         train_opt = self.opt['train']
 
+        logger = get_root_logger()
+
         self.ema_decay = train_opt.get('ema_decay', 0)
         if self.ema_decay > 0:
-            logger = get_root_logger()
             logger.info(f'Use Exponential Moving Average with decay: {self.ema_decay}')
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
@@ -70,75 +71,107 @@ class SRModel(BaseModel):
             self.net_g_ema.eval()
 
         # define losses
-        if train_opt.get('pixel_opt'):
-            self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device)
+        pixel_opt = train_opt.get('pixel_opt')
+        if pixel_opt:
+            if pixel_opt.get('loss_weight', 0) > 0:
+                self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device)
         else:
             self.cri_pix = None
 
-        if train_opt.get('mssim_opt'):
-            self.cri_mssim = build_loss(train_opt['mssim_opt']).to(self.device)
+        mssim_opt = train_opt.get('mssim_opt')
+        if mssim_opt:
+            if mssim_opt.get('loss_weight', 0) > 0:
+                self.cri_mssim = build_loss(train_opt['mssim_opt']).to(self.device)
         else:
             self.cri_mssim = None
 
-        if train_opt.get('ldl_opt'):
-            self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device)
+        ldl_opt = train_opt.get('ldl_opt')
+        if ldl_opt:
+            if ldl_opt.get('loss_weight', 0) > 0:
+                self.cri_ldl = build_loss(train_opt['ldl_opt']).to(self.device)
         else:
             self.cri_ldl = None
 
-        if train_opt.get('perceptual_opt'):
-            self.cri_perceptual = build_loss(train_opt['perceptual_opt']).to(self.device)
+        perceptual_opt = train_opt.get('perceptual_opt')
+        if perceptual_opt:
+            if perceptual_opt.get('perceptual_weight', 0) > 0:
+                self.cri_perceptual = build_loss(train_opt['perceptual_opt']).to(self.device)
         else:
             self.cri_perceptual = None
 
-        if train_opt.get('dists_opt'):
-            self.cri_dists = build_loss(train_opt['dists_opt']).to(self.device)
+        dists_opt = train_opt.get('dists_opt')
+        if dists_opt:
+            if dists_opt.get('loss_weight', 0) > 0:
+                self.cri_dists = build_loss(train_opt['dists_opt']).to(self.device)
         else:
             self.cri_dists = None
 
-        if train_opt.get('contextual_opt'):
-            self.cri_contextual = build_loss(train_opt['contextual_opt']).to(self.device)
+        contextual_opt = train_opt.get('contextual_opt')
+        if contextual_opt:
+            if contextual_opt.get('loss_weight', 0) > 0:
+                self.cri_contextual = build_loss(train_opt['contextual_opt']).to(self.device)
         else:
             self.cri_contextual = None
 
-        if train_opt.get('color_opt'):
-            self.cri_color = build_loss(train_opt['color_opt']).to(self.device)
+        color_opt = train_opt.get('color_opt')
+        if color_opt:
+            if color_opt.get('loss_weight', 0) > 0:
+                self.cri_color = build_loss(train_opt['color_opt']).to(self.device)
         else:
             self.cri_color = None
 
-        if train_opt.get('luma_opt'):
-            self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device)
+        luma_opt = train_opt.get('luma_opt')
+        if luma_opt:
+            if luma_opt.get('loss_weight', 0) > 0:
+                self.cri_luma = build_loss(train_opt['luma_opt']).to(self.device)
         else:
             self.cri_luma = None
 
-        if train_opt.get('hsluv_opt'):
-            self.cri_hsluv = build_loss(train_opt['hsluv_opt']).to(self.device)
+        hsluv_opt = train_opt.get('hsluv_opt')
+        if hsluv_opt:
+            if hsluv_opt.get('loss_weight', 0) > 0:
+                self.cri_hsluv = build_loss(train_opt['hsluv_opt']).to(self.device)
         else:
             self.cri_hsluv = None
 
-        if train_opt.get('avg_opt'):
-            self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
+        avg_opt = train_opt.get('avg_opt')
+        if avg_opt:
+            if avg_opt.get('loss_weight', 0) > 0:
+                self.cri_avg = build_loss(train_opt['avg_opt']).to(self.device)
         else:
             self.cri_avg = None
 
-        if train_opt.get('bicubic_opt'):
-            self.cri_bicubic = build_loss(train_opt['bicubic_opt']).to(self.device)
+        bicubic_opt = train_opt.get('bicubic_opt')
+        if bicubic_opt:
+            if bicubic_opt.get('loss_weight', 0) > 0:
+                self.cri_bicubic = build_loss(train_opt['bicubic_opt']).to(self.device)
         else:
             self.cri_bicubic = None
 
-        if train_opt.get('gan_opt'):
-            self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device)
+        gan_opt = train_opt.get('gan_opt')
+        if gan_opt:
+            if gan_opt.get('loss_weight', 0) > 0:
+                # validate discriminator network and discriminator optimizer are defined
+                if not self.net_d:
+                    raise ValueError(
+                        "GAN loss requires discriminator network (network_d). Define network_d or disable GAN loss.")
+
+                if "optim_d" not in self.opt["train"]:
+                    raise ValueError(
+                        "GAN loss requires discriminator optimizer (optim_d). Define optim_d or disable GAN loss.")
+
+                self.cri_gan = build_loss(train_opt['gan_opt']).to(self.device)
         else:
             self.cri_gan = None
 
-        # GAN loss, network_d, optim_d must be all enabled, or all disabled
-        gan_components = [self.cri_gan, self.net_d, self.opt["train"].get("optim_d", None)]
-        all_enabled = all(gan_components)
-        all_disabled = all(component is None for component in gan_components)
+            # warn that discriminator network / optimizer won't be used if enabled
+            if self.net_d:
+                logger.warning(
+                    "Discriminator network (network_d) is defined but GAN loss is disabled. Discriminator network will have no effect.")
 
-        if not (all_enabled or all_disabled):
-            raise ValueError(
-                "GAN loss (gan_opt), discriminator network (network_d), and discriminator optimizer (optim_d) "
-                "must be all enabled or all disabled.")
+            if "optim_d" in self.opt["train"]:
+                logger.warning(
+                    "Discriminator optimizer (optim_d) is defined but GAN loss is disabled. Discriminator optimizer will have no effect.")
 
         # setup batch augmentations
         self.setup_batchaug()
