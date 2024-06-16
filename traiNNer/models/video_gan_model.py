@@ -1,10 +1,10 @@
 from ..utils.registry import MODEL_REGISTRY
-from .srgan_model import SRGANModel
+from .sr_model import SRModel
 from .video_base_model import VideoBaseModel
 
 
 @MODEL_REGISTRY.register()
-class VideoGANModel(SRGANModel, VideoBaseModel):
+class VideoGANModel(SRModel, VideoBaseModel):
     """Video GAN model.
 
     Use multiple inheritance.

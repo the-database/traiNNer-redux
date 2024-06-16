@@ -2,7 +2,7 @@ import torch
 from torch.nn import functional as F
 
 from ..utils.registry import MODEL_REGISTRY
-from .srgan_model import SRModel
+from .sr_model import SRModel
 
 
 @MODEL_REGISTRY.register()
