@@ -4,6 +4,8 @@ from os import path as osp
 
 from ..utils import get_root_logger, scandir
 from ..utils.registry import MODEL_REGISTRY
+from .realesrgan_model import RealESRGANModel
+from .sr_model import SRModel
 
 __all__ = ['build_model']
 
@@ -24,7 +26,12 @@ def build_model(opt):
     """
     print(opt)
     opt = deepcopy(opt)
-    model = MODEL_REGISTRY.get(opt['model_type'])(opt)
+
+    if opt['high_order_degradation']:
+        model = RealESRGANModel(opt)
+    else:
+        model = SRModel(opt)
+
     logger = get_root_logger()
     logger.info(f'Model [{model.__class__.__name__}] is created.')
     return model

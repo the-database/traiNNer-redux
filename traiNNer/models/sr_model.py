@@ -132,6 +132,16 @@ class SRModel(BaseModel):
         else:
             self.cri_gan = None
 
+        # GAN loss, network_d, optim_d must be all enabled, or all disabled
+        gan_components = [self.cri_gan, self.net_d, self.opt["train"].get("optim_d", None)]
+        all_enabled = all(gan_components)
+        all_disabled = all(component is None for component in gan_components)
+
+        if not (all_enabled or all_disabled):
+            raise ValueError(
+                "GAN loss (gan_opt), discriminator network (network_d), and discriminator optimizer (optim_d) "
+                "must all be enabled or all be disabled.")
+
         # setup batch augmentations
         self.setup_batchaug()
 
@@ -155,6 +165,12 @@ class SRModel(BaseModel):
         optim_type = train_opt['optim_g'].pop('type')
         self.optimizer_g = self.get_optimizer(optim_type, optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
+
+        # optimizer d
+        if self.net_d is not None:
+            optim_type = train_opt['optim_d'].pop('type')
+            self.optimizer_d = self.get_optimizer(optim_type, self.net_d.parameters(), **train_opt['optim_d'])
+            self.optimizers.append(self.optimizer_d)
 
     def feed_data(self, data):
         self.lq = data['lq'].to(self.device)
@@ -210,48 +226,60 @@ class SRModel(BaseModel):
             l_g_contextual = self.cri_contextual(self.output, self.gt)
             l_g_total += l_g_contextual
             loss_dict['l_g_contextual'] = l_g_contextual
+        # color loss
         if self.cri_color:
             l_g_color = self.cri_color(self.output, self.gt)
             l_g_total += l_g_color
             loss_dict['l_g_color'] = l_g_color
+        # luma loss
         if self.cri_luma:
             l_g_luma = self.cri_luma(self.output, self.gt)
             l_g_total += l_g_luma
             loss_dict['l_g_luma'] = l_g_luma
+        # hsluv loss
         if self.cri_hsluv:
             l_g_hsluv = self.cri_hsluv(self.output, self.gt)
             l_g_total += l_g_hsluv
             loss_dict['l_g_hsluv'] = l_g_hsluv
+        # avg loss
         if self.cri_avg:
             l_g_avg = self.cri_avg(self.output, self.gt)
             l_g_total += l_g_avg
             loss_dict['l_g_avg'] = l_g_avg
+        # bicubic loss
         if self.cri_bicubic:
             l_g_bicubic = self.cri_bicubic(self.output, self.gt)
             l_g_total += l_g_bicubic
             loss_dict['l_g_bicubic'] = l_g_bicubic
+        # gan loss
+        if self.cri_gan:
+            fake_g_pred = self.net_d(self.output)
+            l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+            l_g_total += l_g_gan
+            loss_dict['l_g_gan'] = l_g_gan
 
         l_g_total.backward()
         self.optimizer_g.step()
 
-        # optimize net_d
-        for p in self.net_d.parameters():
-            p.requires_grad = True
+        if self.net_d is not None:
+            # optimize net_d
+            for p in self.net_d.parameters():
+                p.requires_grad = True
 
-        self.optimizer_d.zero_grad()
-        # real
-        real_d_pred = self.net_d(self.gt)
-        l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-        loss_dict['l_d_real'] = l_d_real
-        loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
-        l_d_real.backward()
-        # fake
-        fake_d_pred = self.net_d(self.output.detach().clone())  # clone for pt1.9
-        l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-        loss_dict['l_d_fake'] = l_d_fake
-        loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
-        l_d_fake.backward()
-        self.optimizer_d.step()
+            self.optimizer_d.zero_grad()
+            # real
+            real_d_pred = self.net_d(self.gt)
+            l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
+            loss_dict['l_d_real'] = l_d_real
+            loss_dict['out_d_real'] = torch.mean(real_d_pred.detach())
+            l_d_real.backward()
+            # fake
+            fake_d_pred = self.net_d(self.output.detach().clone())  # clone for pt1.9
+            l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
+            loss_dict['l_d_fake'] = l_d_fake
+            loss_dict['out_d_fake'] = torch.mean(fake_d_pred.detach())
+            l_d_fake.backward()
+            self.optimizer_d.step()
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
@@ -274,6 +302,9 @@ class SRModel(BaseModel):
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+
+        self.is_train = False
+
         dataset_name = dataloader.dataset.opt['name']
         with_metrics = self.opt['val'].get('metrics') is not None
         use_pbar = self.opt['val'].get('pbar', False)
@@ -339,6 +370,8 @@ class SRModel(BaseModel):
                 self._update_best_metric_result(dataset_name, metric, self.metric_results[metric], current_iter)
 
             self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
+
+        self.is_train = True
 
     def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger):
         log_str = f'Validation {dataset_name}\n'
