@@ -4,7 +4,7 @@ import math
 from torch import nn as nn
 from torch.nn import functional as F
 
-from ..utils.registry import LOSS_REGISTRY
+from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 ####################################

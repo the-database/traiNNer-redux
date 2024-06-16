@@ -4,10 +4,10 @@ from torch.nn import functional as F
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms import v2
 
-from ..utils.registry import LOSS_REGISTRY
-from .loss_util import weighted_loss
-from ..utils.color_util import rgb2ycbcr_pt, rgb_to_luma
-from ..utils.hsluv import rgb_to_hsluv
+from traiNNer.losses.loss_util import weighted_loss
+from traiNNer.utils.registry import LOSS_REGISTRY
+from traiNNer.utils.color_util import rgb2ycbcr_pt, rgb_to_luma
+from traiNNer.utils.hsluv import rgb_to_hsluv
 
 _reduction_modes = ['none', 'mean', 'sum']
 VGG_PATCH_SIZE = 256

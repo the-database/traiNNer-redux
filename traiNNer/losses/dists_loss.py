@@ -7,8 +7,8 @@ from torch.nn import functional as F
 import torchvision.transforms.functional as tf
 from torchvision import models
 
-from ..utils.registry import LOSS_REGISTRY
-from .perceptual_loss import VGG_PATCH_SIZE
+from traiNNer.utils.registry import LOSS_REGISTRY
+from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
 
 
 ###################################################

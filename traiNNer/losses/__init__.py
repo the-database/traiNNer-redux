@@ -2,8 +2,8 @@ import importlib
 from copy import deepcopy
 from os import path as osp
 
-from ..utils import get_root_logger, scandir
-from ..utils.registry import LOSS_REGISTRY
+from traiNNer.utils import get_root_logger, scandir
+from traiNNer.utils.registry import LOSS_REGISTRY
 from .gan_loss import g_path_regularize, gradient_penalty_loss, r1_penalty
 
 __all__ = ['build_loss', 'gradient_penalty_loss', 'r1_penalty', 'g_path_regularize']
