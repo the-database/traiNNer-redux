@@ -143,9 +143,6 @@ class SRModel(BaseModel):
         # setup batch augmentations
         self.setup_batchaug()
 
-        # setup gradient clipping
-        # self.setup_gradclip(self.net_g, self.net_d)
-
         # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()
