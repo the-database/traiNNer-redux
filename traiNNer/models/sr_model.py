@@ -221,6 +221,9 @@ class SRModel(BaseModel):
         self.optimizer_g.zero_grad()
         self.output = self.net_g(self.lq)
 
+        n_samples = self.gt.shape[0]
+        self.loss_samples += n_samples
+
         l_g_total = 0
         loss_dict = OrderedDict()
         # pixel loss
@@ -311,7 +314,9 @@ class SRModel(BaseModel):
             l_d_fake.backward()
             self.optimizer_d.step()
 
-        self.log_dict = self.reduce_loss_dict(loss_dict)
+        for key, value in loss_dict.items():
+            val = value if type(value) is float else value.item()
+            self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
         if self.ema_decay > 0:
             self.model_ema(decay=self.ema_decay)

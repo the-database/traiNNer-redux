@@ -25,7 +25,7 @@ class BaseModel():
         self.schedulers = []
         self.optimizers = []
         self.batchaugment = None
-        self.unshuffle = None
+        self.loss_samples = 0
         self.model_loader = ModelLoader()
 
     def feed_data(self, data):
@@ -90,7 +90,11 @@ class BaseModel():
             net_g_ema_params[k].data.mul_(decay).add_(net_g_params[k].data, alpha=1 - decay)
 
     def get_current_log(self):
-        return self.log_dict
+        return {k: v / self.loss_samples for k, v in self.log_dict.items()}
+
+    def reset_current_log(self):
+        self.log_dict = {}
+        self.loss_samples = 0
 
     def model_to_device(self, net):
         """Model to device. It also warps models with DistributedDataParallel
