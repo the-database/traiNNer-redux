@@ -18,3 +18,7 @@ class Config:
             raise RuntimeError("Config has not been loaded. Call load_config first.")
 
         return cls._config, cls._args
+
+    @classmethod
+    def get_scale(cls):
+        return cls.get_config()[0]['scale']

@@ -5,11 +5,9 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 @SPANDREL_REGISTRY.register()
 def esrgan(**kwargs):
-    opts, _ = Config.get_config()
-    return RRDBNet(scale=opts['scale'], **kwargs)
+    return RRDBNet(scale=Config.get_scale(), **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def esrganlite(**kwargs):
-    opts, _ = Config.get_config()
-    return RRDBNet(scale=opts['scale'], num_filters=32, num_blocks=12, **kwargs)
+def esrgan_lite(**kwargs):
+    return RRDBNet(scale=Config.get_scale(), num_filters=32, num_blocks=12, **kwargs)
