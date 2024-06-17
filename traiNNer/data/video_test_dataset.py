@@ -49,11 +49,19 @@ class VideoTestDataset(data.Dataset):
         self.opt = opt
         self.cache_data = opt["cache_data"]
         self.gt_root, self.lq_root = opt["dataroot_gt"], opt["dataroot_lq"]
-        self.data_info = {"lq_path": [], "gt_path": [], "folder": [], "idx": [], "border": []}
+        self.data_info = {
+            "lq_path": [],
+            "gt_path": [],
+            "folder": [],
+            "idx": [],
+            "border": [],
+        }
         # file client (io backend)
         self.file_client = None
         self.io_backend_opt = opt["io_backend"]
-        assert self.io_backend_opt["type"] != "lmdb", "No need to use lmdb during validation/test."
+        assert (
+            self.io_backend_opt["type"] != "lmdb"
+        ), "No need to use lmdb during validation/test."
 
         logger = get_root_logger()
         logger.info(f'Generate data info for VideoTestDataset - {opt["name"]}')
@@ -68,15 +76,19 @@ class VideoTestDataset(data.Dataset):
             subfolders_gt = sorted(glob.glob(osp.join(self.gt_root, "*")))
 
         if opt["name"].lower() in ["vid4", "reds4", "redsofficial"]:
-            for subfolder_lq, subfolder_gt in zip(subfolders_lq, subfolders_gt, strict=False):
+            for subfolder_lq, subfolder_gt in zip(
+                subfolders_lq, subfolders_gt, strict=False
+            ):
                 # get frame list for lq and gt
                 subfolder_name = osp.basename(subfolder_lq)
                 img_paths_lq = sorted(scandir(subfolder_lq, full_path=True))
                 img_paths_gt = sorted(scandir(subfolder_gt, full_path=True))
 
                 max_idx = len(img_paths_lq)
-                assert max_idx == len(img_paths_gt), (f"Different number of images in lq ({max_idx})"
-                                                      f" and gt folders ({len(img_paths_gt)})")
+                assert max_idx == len(img_paths_gt), (
+                    f"Different number of images in lq ({max_idx})"
+                    f" and gt folders ({len(img_paths_gt)})"
+                )
 
                 self.data_info["lq_path"].extend(img_paths_lq)
                 self.data_info["gt_path"].extend(img_paths_gt)
@@ -107,7 +119,9 @@ class VideoTestDataset(data.Dataset):
         border = self.data_info["border"][index]
         lq_path = self.data_info["lq_path"][index]
 
-        select_idx = generate_frame_indices(idx, max_idx, self.opt["num_frame"], padding=self.opt["padding"])
+        select_idx = generate_frame_indices(
+            idx, max_idx, self.opt["num_frame"], padding=self.opt["padding"]
+        )
 
         if self.cache_data:
             imgs_lq = self.imgs_lq[folder].index_select(0, torch.LongTensor(select_idx))
@@ -124,7 +138,7 @@ class VideoTestDataset(data.Dataset):
             "folder": folder,  # folder name
             "idx": self.data_info["idx"][index],  # e.g., 0/99
             "border": border,  # 1 for border, 0 for non-border
-            "lq_path": lq_path  # center frame
+            "lq_path": lq_path,  # center frame
         }
 
     def __len__(self):
@@ -156,15 +170,27 @@ class VideoTestVimeo90KDataset(data.Dataset):
         self.opt = opt
         self.cache_data = opt["cache_data"]
         if self.cache_data:
-            raise NotImplementedError("cache_data in Vimeo90K-Test dataset is not implemented.")
+            raise NotImplementedError(
+                "cache_data in Vimeo90K-Test dataset is not implemented."
+            )
         self.gt_root, self.lq_root = opt["dataroot_gt"], opt["dataroot_lq"]
-        self.data_info = {"lq_path": [], "gt_path": [], "folder": [], "idx": [], "border": []}
-        neighbor_list = [i + (9 - opt["num_frame"]) // 2 for i in range(opt["num_frame"])]
+        self.data_info = {
+            "lq_path": [],
+            "gt_path": [],
+            "folder": [],
+            "idx": [],
+            "border": [],
+        }
+        neighbor_list = [
+            i + (9 - opt["num_frame"]) // 2 for i in range(opt["num_frame"])
+        ]
 
         # file client (io backend)
         self.file_client = None
         self.io_backend_opt = opt["io_backend"]
-        assert self.io_backend_opt["type"] != "lmdb", "No need to use lmdb during validation/test."
+        assert (
+            self.io_backend_opt["type"] != "lmdb"
+        ), "No need to use lmdb during validation/test."
 
         logger = get_root_logger()
         logger.info(f'Generate data info for VideoTestDataset - {opt["name"]}')
@@ -173,7 +199,9 @@ class VideoTestVimeo90KDataset(data.Dataset):
         for idx, subfolder in enumerate(subfolders):
             gt_path = osp.join(self.gt_root, subfolder, "im4.png")
             self.data_info["gt_path"].append(gt_path)
-            lq_paths = [osp.join(self.lq_root, subfolder, f"im{i}.png") for i in neighbor_list]
+            lq_paths = [
+                osp.join(self.lq_root, subfolder, f"im{i}.png") for i in neighbor_list
+            ]
             self.data_info["lq_path"].append(lq_paths)
             self.data_info["folder"].append("vimeo90k")
             self.data_info["idx"].append(f"{idx}/{len(subfolders)}")
@@ -192,7 +220,7 @@ class VideoTestVimeo90KDataset(data.Dataset):
             "folder": self.data_info["folder"][index],  # folder name
             "idx": self.data_info["idx"][index],  # e.g., 0/843
             "border": self.data_info["border"][index],  # 0 for non-border
-            "lq_path": lq_path[self.opt["num_frame"] // 2]  # center frame
+            "lq_path": lq_path[self.opt["num_frame"] // 2],  # center frame
         }
 
     def __len__(self):
@@ -201,7 +229,7 @@ class VideoTestVimeo90KDataset(data.Dataset):
 
 @DATASET_REGISTRY.register()
 class VideoTestDUFDataset(VideoTestDataset):
-    """ Video test dataset for DUF dataset.
+    """Video test dataset for DUF dataset.
 
     Args:
         opt (dict): Config for train dataset. Most of keys are the same as VideoTestDataset.
@@ -217,26 +245,42 @@ class VideoTestDUFDataset(VideoTestDataset):
         border = self.data_info["border"][index]
         lq_path = self.data_info["lq_path"][index]
 
-        select_idx = generate_frame_indices(idx, max_idx, self.opt["num_frame"], padding=self.opt["padding"])
+        select_idx = generate_frame_indices(
+            idx, max_idx, self.opt["num_frame"], padding=self.opt["padding"]
+        )
 
         if self.cache_data:
             if self.opt["use_duf_downsampling"]:
                 # read imgs_gt to generate low-resolution frames
-                imgs_lq = self.imgs_gt[folder].index_select(0, torch.LongTensor(select_idx))
-                imgs_lq = duf_downsample(imgs_lq, kernel_size=13, scale=self.opt["scale"])
+                imgs_lq = self.imgs_gt[folder].index_select(
+                    0, torch.LongTensor(select_idx)
+                )
+                imgs_lq = duf_downsample(
+                    imgs_lq, kernel_size=13, scale=self.opt["scale"]
+                )
             else:
-                imgs_lq = self.imgs_lq[folder].index_select(0, torch.LongTensor(select_idx))
+                imgs_lq = self.imgs_lq[folder].index_select(
+                    0, torch.LongTensor(select_idx)
+                )
             img_gt = self.imgs_gt[folder][idx]
         else:
             if self.opt["use_duf_downsampling"]:
                 img_paths_lq = [self.imgs_gt[folder][i] for i in select_idx]
                 # read imgs_gt to generate low-resolution frames
-                imgs_lq = read_img_seq(img_paths_lq, require_mod_crop=True, scale=self.opt["scale"])
-                imgs_lq = duf_downsample(imgs_lq, kernel_size=13, scale=self.opt["scale"])
+                imgs_lq = read_img_seq(
+                    img_paths_lq, require_mod_crop=True, scale=self.opt["scale"]
+                )
+                imgs_lq = duf_downsample(
+                    imgs_lq, kernel_size=13, scale=self.opt["scale"]
+                )
             else:
                 img_paths_lq = [self.imgs_lq[folder][i] for i in select_idx]
                 imgs_lq = read_img_seq(img_paths_lq)
-            img_gt = read_img_seq([self.imgs_gt[folder][idx]], require_mod_crop=True, scale=self.opt["scale"])
+            img_gt = read_img_seq(
+                [self.imgs_gt[folder][idx]],
+                require_mod_crop=True,
+                scale=self.opt["scale"],
+            )
             img_gt.squeeze_(0)
 
         return {
@@ -245,7 +289,7 @@ class VideoTestDUFDataset(VideoTestDataset):
             "folder": folder,  # folder name
             "idx": self.data_info["idx"][index],  # e.g., 0/99
             "border": border,  # 1 for border, 0 for non-border
-            "lq_path": lq_path  # center frame
+            "lq_path": lq_path,  # center frame
         }
 
 

@@ -58,5 +58,5 @@ __all__ = [
     "USMSharp",
     "usm_sharp",
     # options
-    "yaml_load"
+    "yaml_load",
 ]

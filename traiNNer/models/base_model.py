@@ -56,7 +56,10 @@ class BaseModel:
 
     def _initialize_best_metric_results(self, dataset_name):
         """Initialize the best metric results dict for recording the best metric value and iteration."""
-        if hasattr(self, "best_metric_results") and dataset_name in self.best_metric_results:
+        if (
+            hasattr(self, "best_metric_results")
+            and dataset_name in self.best_metric_results
+        ):
             return
         elif not hasattr(self, "best_metric_results"):
             self.best_metric_results = {}
@@ -85,7 +88,9 @@ class BaseModel:
         net_g_ema_params = dict(self.net_g_ema.named_parameters())
 
         for k in net_g_ema_params.keys():
-            net_g_ema_params[k].data.mul_(decay).add_(net_g_params[k].data, alpha=1 - decay)
+            net_g_ema_params[k].data.mul_(decay).add_(
+                net_g_params[k].data, alpha=1 - decay
+            )
 
     def get_current_log(self):
         return {k: v / self.loss_samples for k, v in self.log_dict.items()}
@@ -105,7 +110,10 @@ class BaseModel:
         if self.opt["dist"]:
             find_unused_parameters = self.opt.get("find_unused_parameters", False)
             net = DistributedDataParallel(
-                net, device_ids=[torch.cuda.current_device()], find_unused_parameters=find_unused_parameters)
+                net,
+                device_ids=[torch.cuda.current_device()],
+                find_unused_parameters=find_unused_parameters,
+            )
         elif self.opt["num_gpu"] > 1:
             net = DataParallel(net)
         return net
@@ -147,12 +155,20 @@ class BaseModel:
         scheduler_type = train_opt["scheduler"].pop("type")
         if scheduler_type in ["MultiStepLR", "MultiStepRestartLR"]:
             for optimizer in self.optimizers:
-                self.schedulers.append(lr_scheduler.MultiStepRestartLR(optimizer, **train_opt["scheduler"]))
+                self.schedulers.append(
+                    lr_scheduler.MultiStepRestartLR(optimizer, **train_opt["scheduler"])
+                )
         elif scheduler_type == "CosineAnnealingRestartLR":
             for optimizer in self.optimizers:
-                self.schedulers.append(lr_scheduler.CosineAnnealingRestartLR(optimizer, **train_opt["scheduler"]))
+                self.schedulers.append(
+                    lr_scheduler.CosineAnnealingRestartLR(
+                        optimizer, **train_opt["scheduler"]
+                    )
+                )
         else:
-            raise NotImplementedError(f"Scheduler {scheduler_type} is not implemented yet.")
+            raise NotImplementedError(
+                f"Scheduler {scheduler_type} is not implemented yet."
+            )
 
     def get_bare_model(self, net):
         """Get bare model, especially under wrapping with
@@ -193,8 +209,7 @@ class BaseModel:
                 param_group["lr"] = lr
 
     def _get_init_lr(self):
-        """Get the initial lr, which is set by the scheduler.
-        """
+        """Get the initial lr, which is set by the scheduler."""
         init_lr_groups_l = []
         for optimizer in self.optimizers:
             init_lr_groups_l.append([v["initial_lr"] for v in optimizer.param_groups])
@@ -244,7 +259,9 @@ class BaseModel:
 
         net = net if isinstance(net, list) else [net]
         param_key = param_key if isinstance(param_key, list) else [param_key]
-        assert len(net) == len(param_key), "The lengths of net and param_key should be the same."
+        assert len(net) == len(
+            param_key
+        ), "The lengths of net and param_key should be the same."
 
         save_dict = {}
         for net_, param_key_ in zip(net, param_key, strict=False):
@@ -263,7 +280,9 @@ class BaseModel:
                 torch.save(save_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
-                logger.warning(f"Save model error: {e}, remaining retry times: {retry - 1}")
+                logger.warning(
+                    f"Save model error: {e}, remaining retry times: {retry - 1}"
+                )
                 time.sleep(1)
             else:
                 break
@@ -304,8 +323,10 @@ class BaseModel:
             common_keys = crt_net_keys & load_net_keys
             for k in common_keys:
                 if crt_net[k].size() != load_net[k].size():
-                    logger.warning(f"Size different, ignore [{k}]: crt_net: "
-                                   f"{crt_net[k].shape}; load_net: {load_net[k].shape}")
+                    logger.warning(
+                        f"Size different, ignore [{k}]: crt_net: "
+                        f"{crt_net[k].shape}; load_net: {load_net[k].shape}"
+                    )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
     def load_network_spandrel(self, net, load_path, strict=True):
@@ -313,7 +334,9 @@ class BaseModel:
             logger = get_root_logger()
             load_net = self.model_loader.load_from_file(load_path)
             net.load_state_dict(load_net.model.state_dict(), strict=strict)
-            logger.info(f"Loading {net.__class__.__name__} model from {load_path}, with spandrel.")
+            logger.info(
+                f"Loading {net.__class__.__name__} model from {load_path}, with spandrel."
+            )
             return True
         except Exception as e:
             print(e)
@@ -341,7 +364,9 @@ class BaseModel:
                     param_key = "params"
                     logger.info("Loading: params_ema does not exist, use params.")
                 load_net = load_net[param_key]
-            logger.info(f"Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].")
+            logger.info(
+                f"Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}]."
+            )
             # remove unnecessary 'module.'
             for k, v in deepcopy(load_net).items():
                 if k.startswith("module."):
@@ -361,7 +386,12 @@ class BaseModel:
             current_iter (int): Current iteration.
         """
         if current_iter != -1:
-            state = {"epoch": epoch, "iter": current_iter, "optimizers": [], "schedulers": []}
+            state = {
+                "epoch": epoch,
+                "iter": current_iter,
+                "optimizers": [],
+                "schedulers": [],
+            }
             for o in self.optimizers:
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
@@ -376,7 +406,9 @@ class BaseModel:
                     torch.save(state, save_path)
                 except Exception as e:
                     logger = get_root_logger()
-                    logger.warning(f"Save training state error: {e}, remaining retry times: {retry - 1}")
+                    logger.warning(
+                        f"Save training state error: {e}, remaining retry times: {retry - 1}"
+                    )
                     time.sleep(1)
                 else:
                     break
@@ -394,8 +426,12 @@ class BaseModel:
         """
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
-        assert len(resume_optimizers) == len(self.optimizers), "Wrong lengths of optimizers"
-        assert len(resume_schedulers) == len(self.schedulers), "Wrong lengths of schedulers"
+        assert len(resume_optimizers) == len(
+            self.optimizers
+        ), "Wrong lengths of optimizers"
+        assert len(resume_schedulers) == len(
+            self.schedulers
+        ), "Wrong lengths of schedulers"
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):

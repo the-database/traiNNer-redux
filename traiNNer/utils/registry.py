@@ -1,5 +1,6 @@
 # Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
+
 class Registry:
     """
     The registry that provides name -> object mapping, to support third-party
@@ -38,8 +39,10 @@ class Registry:
         if isinstance(suffix, str):
             name = name + "_" + suffix
 
-        assert (name not in self._obj_map), (f"An object named '{name}' was already registered "
-                                             f"in '{self._name}' registry!")
+        assert name not in self._obj_map, (
+            f"An object named '{name}' was already registered "
+            f"in '{self._name}' registry!"
+        )
         self._obj_map[name] = obj
 
     def register(self, obj=None, suffix=None):
@@ -68,7 +71,9 @@ class Registry:
             ret = self._obj_map.get(name + "_" + suffix)
             print(f"Name {name} is not found, use name: {name}_{suffix}!")
         if ret is None:
-            raise KeyError(f"No object named '{name}' found in '{self._name}' registry!")
+            raise KeyError(
+                f"No object named '{name}' found in '{self._name}' registry!"
+            )
         return ret
 
     def __contains__(self, name):

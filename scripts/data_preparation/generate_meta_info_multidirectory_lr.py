@@ -13,14 +13,21 @@ def get_lr_hr_pair(hr_folder, lr_folder):
     for hr_file in hr_files:
         base_name, _ = os.path.splitext(hr_file)
         if base_name + ".png" in lr_files:
-            lr_hr_pairs.append((os.path.join(hr_folder, hr_file), os.path.join(lr_folder, base_name + ".png")))
+            lr_hr_pairs.append(
+                (
+                    os.path.join(hr_folder, hr_file),
+                    os.path.join(lr_folder, base_name + ".png"),
+                )
+            )
 
     return lr_hr_pairs
+
 
 def save_meta_info(meta_info_file, lr_hr_pairs):
     with open(meta_info_file, "w") as f:
         for lr, hr in lr_hr_pairs:
             f.write(f"{lr}, {hr}\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

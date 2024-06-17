@@ -19,7 +19,16 @@ class SRVGGNetCompactMod(nn.Module):
         act_type (str): Activation type, options: 'relu', 'prelu', 'leakyrelu'. Default: prelu.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=4, act_type="prelu", conv2x2=False):
+    def __init__(
+        self,
+        num_in_ch=3,
+        num_out_ch=3,
+        num_feat=64,
+        num_conv=16,
+        upscale=4,
+        act_type="prelu",
+        conv2x2=False,
+    ):
         super().__init__()
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch
@@ -29,13 +38,18 @@ class SRVGGNetCompactMod(nn.Module):
         self.act_type = act_type
         self.conv2x2 = conv2x2
 
-        def compact_conv_block(in_channels, out_channels, kernel_size=3, stride=1, padding=1):
+        def compact_conv_block(
+            in_channels, out_channels, kernel_size=3, stride=1, padding=1
+        ):
             if self.conv2x2:
                 return nn.Sequential(
                     nn.Conv2d(in_channels, out_channels, kernel_size=2, padding=1),
-                    nn.Conv2d(out_channels, out_channels, kernel_size=2, padding=0))
+                    nn.Conv2d(out_channels, out_channels, kernel_size=2, padding=0),
+                )
             else:
-                return nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+                return nn.Conv2d(
+                    in_channels, out_channels, kernel_size, stride, padding
+                )
 
         self.body = nn.ModuleList()
         # the first conv
@@ -62,7 +76,9 @@ class SRVGGNetCompactMod(nn.Module):
             self.body.append(activation)
 
         # the last conv
-        self.body.append(compact_conv_block(num_feat, num_out_ch * upscale * upscale, 3, 1, 1))
+        self.body.append(
+            compact_conv_block(num_feat, num_out_ch * upscale * upscale, 3, 1, 1)
+        )
         # upsample
         self.upsampler = nn.PixelShuffle(upscale)
 

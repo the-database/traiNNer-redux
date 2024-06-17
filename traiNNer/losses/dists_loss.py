@@ -14,6 +14,7 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 # https://github.com/dingkeyan93/DISTS/blob/master/DISTS_pytorch/DISTS_pt.py
 ###################################################
 
+
 class L2pooling(nn.Module):
     def __init__(self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0):
         super().__init__()
@@ -32,7 +33,7 @@ class L2pooling(nn.Module):
             self.filter = self.filter.cuda()
 
     def forward(self, input):
-        input = input ** 2
+        input = input**2
         out = F.conv2d(
             input,
             self.filter,
@@ -57,8 +58,16 @@ class DISTSLoss(nn.Module):
             Default: False.
     """
 
-    def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, use_input_norm=True, resize_input=False,
-                 clip_min=0, **kwargs):
+    def __init__(
+        self,
+        as_loss=True,
+        loss_weight=1.0,
+        load_weights=True,
+        use_input_norm=True,
+        resize_input=False,
+        clip_min=0,
+        **kwargs,
+    ):
         super().__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
@@ -125,9 +134,18 @@ class DISTSLoss(nn.Module):
                 self.beta.data = self.beta.data.cuda()
 
     def forward_once(self, x):
-        if self.resize_input and x.shape[2] != VGG_PATCH_SIZE or x.shape[3] != VGG_PATCH_SIZE:
+        if (
+            self.resize_input
+            and x.shape[2] != VGG_PATCH_SIZE
+            or x.shape[3] != VGG_PATCH_SIZE
+        ):
             # skip resize if dimensions already match
-            h = tf.resize(x, [VGG_PATCH_SIZE], interpolation=tf.InterpolationMode.BICUBIC, antialias=True)
+            h = tf.resize(
+                x,
+                [VGG_PATCH_SIZE],
+                interpolation=tf.InterpolationMode.BICUBIC,
+                antialias=True,
+            )
         else:
             h = x
 
@@ -161,7 +179,7 @@ class DISTSLoss(nn.Module):
         for k in range(len(self.chns)):
             x_mean = feats0[k].mean([2, 3], keepdim=True)
             y_mean = feats1[k].mean([2, 3], keepdim=True)
-            S1 = (2 * x_mean * y_mean + c1) / (x_mean ** 2 + y_mean ** 2 + c1)
+            S1 = (2 * x_mean * y_mean + c1) / (x_mean**2 + y_mean**2 + c1)
             dist1 = dist1 + (alpha[k] * S1).sum(1, keepdim=True)
 
             x_var = ((feats0[k] - x_mean) ** 2).mean([2, 3], keepdim=True)
@@ -173,7 +191,10 @@ class DISTSLoss(nn.Module):
             dist2 = dist2 + (beta[k] * S2).sum(1, keepdim=True)
 
         if self.as_loss:
-            out = torch.clamp(1 - (dist1 + dist2).mean(), self.clip_min) * self.loss_weight
+            out = (
+                torch.clamp(1 - (dist1 + dist2).mean(), self.clip_min)
+                * self.loss_weight
+            )
         else:
             out = 1 - (dist1 + dist2).squeeze()
 

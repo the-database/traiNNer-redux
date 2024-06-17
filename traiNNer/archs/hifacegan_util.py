@@ -12,7 +12,6 @@ from torch.nn.utils import spectral_norm
 
 
 class SPADE(nn.Module):
-
     def __init__(self, config_text, norm_nc, label_nc):
         super().__init__()
 
@@ -24,23 +23,32 @@ class SPADE(nn.Module):
         if param_free_norm_type == "instance":
             self.param_free_norm = nn.InstanceNorm2d(norm_nc)
         elif param_free_norm_type == "syncbatch":
-            print('SyncBatchNorm is currently not supported under single-GPU mode, switch to "instance" instead')
+            print(
+                'SyncBatchNorm is currently not supported under single-GPU mode, switch to "instance" instead'
+            )
             self.param_free_norm = nn.InstanceNorm2d(norm_nc)
         elif param_free_norm_type == "batch":
             self.param_free_norm = nn.BatchNorm2d(norm_nc, affine=False)
         else:
-            raise ValueError(f"{param_free_norm_type} is not a recognized param-free norm type in SPADE")
+            raise ValueError(
+                f"{param_free_norm_type} is not a recognized param-free norm type in SPADE"
+            )
 
         # The dimension of the intermediate embedding space. Yes, hardcoded.
         nhidden = 128 if norm_nc > 128 else norm_nc
 
         pw = ks // 2
-        self.mlp_shared = nn.Sequential(nn.Conv2d(label_nc, nhidden, kernel_size=ks, padding=pw), nn.ReLU())
-        self.mlp_gamma = nn.Conv2d(nhidden, norm_nc, kernel_size=ks, padding=pw, bias=False)
-        self.mlp_beta = nn.Conv2d(nhidden, norm_nc, kernel_size=ks, padding=pw, bias=False)
+        self.mlp_shared = nn.Sequential(
+            nn.Conv2d(label_nc, nhidden, kernel_size=ks, padding=pw), nn.ReLU()
+        )
+        self.mlp_gamma = nn.Conv2d(
+            nhidden, norm_nc, kernel_size=ks, padding=pw, bias=False
+        )
+        self.mlp_beta = nn.Conv2d(
+            nhidden, norm_nc, kernel_size=ks, padding=pw, bias=False
+        )
 
     def forward(self, x, segmap):
-
         # Part 1. generate parameter-free normalized activations
         normalized = self.param_free_norm(x)
 
@@ -69,7 +77,7 @@ class SPADEResnetBlock(nn.Module):
     def __init__(self, fin, fout, norm_g="spectralspadesyncbatch3x3", semantic_nc=3):
         super().__init__()
         # Attributes
-        self.learned_shortcut = (fin != fout)
+        self.learned_shortcut = fin != fout
         fmiddle = min(fin, fout)
 
         # create conv layers
@@ -113,10 +121,9 @@ class SPADEResnetBlock(nn.Module):
 
 
 class BaseNetwork(nn.Module):
-    """ A basis for hifacegan archs with custom initialization """
+    """A basis for hifacegan archs with custom initialization"""
 
     def init_weights(self, init_type="normal", gain=0.02):
-
         def init_func(m):
             classname = m.__class__.__name__
             if classname.find("BatchNorm2d") != -1:
@@ -124,7 +131,9 @@ class BaseNetwork(nn.Module):
                     init.normal_(m.weight.data, 1.0, gain)
                 if hasattr(m, "bias") and m.bias is not None:
                     init.constant_(m.bias.data, 0.0)
-            elif hasattr(m, "weight") and (classname.find("Conv") != -1 or classname.find("Linear") != -1):
+            elif hasattr(m, "weight") and (
+                classname.find("Conv") != -1 or classname.find("Linear") != -1
+            ):
                 if init_type == "normal":
                     init.normal_(m.weight.data, 0.0, gain)
                 elif init_type == "xavier":
@@ -138,7 +147,9 @@ class BaseNetwork(nn.Module):
                 elif init_type == "none":  # uses pytorch's default init method
                     m.reset_parameters()
                 else:
-                    raise NotImplementedError(f"initialization method [{init_type}] is not implemented")
+                    raise NotImplementedError(
+                        f"initialization method [{init_type}] is not implemented"
+                    )
                 if hasattr(m, "bias") and m.bias is not None:
                     init.constant_(m.bias.data, 0.0)
 
@@ -155,7 +166,9 @@ class BaseNetwork(nn.Module):
 
 def lip2d(x, logit, kernel=3, stride=2, padding=1):
     weight = logit.exp()
-    return F.avg_pool2d(x * weight, kernel, stride, padding) / F.avg_pool2d(weight, kernel, stride, padding)
+    return F.avg_pool2d(x * weight, kernel, stride, padding) / F.avg_pool2d(
+        weight, kernel, stride, padding
+    )
 
 
 class SoftGate(nn.Module):
@@ -166,12 +179,13 @@ class SoftGate(nn.Module):
 
 
 class SimplifiedLIP(nn.Module):
-
     def __init__(self, channels):
         super().__init__()
         self.logit = nn.Sequential(
-            nn.Conv2d(channels, channels, 3, padding=1, bias=False), nn.InstanceNorm2d(channels, affine=True),
-            SoftGate())
+            nn.Conv2d(channels, channels, 3, padding=1, bias=False),
+            nn.InstanceNorm2d(channels, affine=True),
+            SoftGate(),
+        )
 
     def init_layer(self):
         self.logit[0].weight.data.fill_(0.0)
@@ -228,7 +242,7 @@ def get_nonspade_norm_layer(norm_type="instance"):
         nonlocal norm_type
         if norm_type.startswith("spectral"):
             layer = spectral_norm(layer)
-            subnorm_type = norm_type[len("spectral"):]
+            subnorm_type = norm_type[len("spectral") :]
 
         if subnorm_type == "none" or len(subnorm_type) == 0:
             return layer
@@ -242,7 +256,9 @@ def get_nonspade_norm_layer(norm_type="instance"):
         if subnorm_type == "batch":
             norm_layer = nn.BatchNorm2d(get_out_channel(layer), affine=True)
         elif subnorm_type == "sync_batch":
-            print('SyncBatchNorm is currently not supported under single-GPU mode, switch to "instance" instead')
+            print(
+                'SyncBatchNorm is currently not supported under single-GPU mode, switch to "instance" instead'
+            )
             # norm_layer = SynchronizedBatchNorm2d(
             #    get_out_channel(layer), affine=True)
             norm_layer = nn.InstanceNorm2d(get_out_channel(layer), affine=False)

@@ -26,7 +26,12 @@ class SRModel(BaseModel):
         load_path = self.opt["path"].get("pretrain_network_g", None)
         if load_path is not None:
             param_key = self.opt["path"].get("param_key_g", None)
-            self.load_network(self.net_g, load_path, self.opt["path"].get("strict_load_g", True), param_key)
+            self.load_network(
+                self.net_g,
+                load_path,
+                self.opt["path"].get("strict_load_g", True),
+                param_key,
+            )
 
         # define network net_d
         self.net_d = None
@@ -40,13 +45,17 @@ class SRModel(BaseModel):
             load_path = self.opt["path"].get("pretrain_network_d", None)
             if load_path is not None:
                 param_key = self.opt["path"].get("param_key_d", "params")
-                self.load_network(self.net_d, load_path, self.opt["path"].get("strict_load_d", True), param_key)
+                self.load_network(
+                    self.net_d,
+                    load_path,
+                    self.opt["path"].get("strict_load_d", True),
+                    param_key,
+                )
 
         if self.is_train:
             self.init_training_settings()
 
     def init_training_settings(self):
-
         self.net_g.train()
         if self.net_d is not None:
             self.net_d.train()
@@ -65,7 +74,12 @@ class SRModel(BaseModel):
             # load pretrained model
             load_path = self.opt["path"].get("pretrain_network_g", None)
             if load_path is not None:
-                self.load_network(self.net_g_ema, load_path, self.opt["path"].get("strict_load_g", True), "params_ema")
+                self.load_network(
+                    self.net_g_ema,
+                    load_path,
+                    self.opt["path"].get("strict_load_g", True),
+                    "params_ema",
+                )
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
@@ -95,7 +109,9 @@ class SRModel(BaseModel):
         perceptual_opt = train_opt.get("perceptual_opt")
         if perceptual_opt:
             if perceptual_opt.get("perceptual_weight", 0) > 0:
-                self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(self.device)
+                self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
+                    self.device
+                )
         else:
             self.cri_perceptual = None
 
@@ -109,7 +125,9 @@ class SRModel(BaseModel):
         contextual_opt = train_opt.get("contextual_opt")
         if contextual_opt:
             if contextual_opt.get("loss_weight", 0) > 0:
-                self.cri_contextual = build_loss(train_opt["contextual_opt"]).to(self.device)
+                self.cri_contextual = build_loss(train_opt["contextual_opt"]).to(
+                    self.device
+                )
         else:
             self.cri_contextual = None
 
@@ -154,11 +172,13 @@ class SRModel(BaseModel):
                 # validate discriminator network and discriminator optimizer are defined
                 if not self.net_d:
                     raise ValueError(
-                        "GAN loss requires discriminator network (network_d). Define network_d or disable GAN loss.")
+                        "GAN loss requires discriminator network (network_d). Define network_d or disable GAN loss."
+                    )
 
                 if "optim_d" not in self.opt["train"]:
                     raise ValueError(
-                        "GAN loss requires discriminator optimizer (optim_d). Define optim_d or disable GAN loss.")
+                        "GAN loss requires discriminator optimizer (optim_d). Define optim_d or disable GAN loss."
+                    )
 
                 self.cri_gan = build_loss(train_opt["gan_opt"]).to(self.device)
         else:
@@ -167,11 +187,13 @@ class SRModel(BaseModel):
             # warn that discriminator network / optimizer won't be used if enabled
             if self.net_d:
                 logger.warning(
-                    "Discriminator network (network_d) is defined but GAN loss is disabled. Discriminator network will have no effect.")
+                    "Discriminator network (network_d) is defined but GAN loss is disabled. Discriminator network will have no effect."
+                )
 
             if "optim_d" in self.opt["train"]:
                 logger.warning(
-                    "Discriminator optimizer (optim_d) is defined but GAN loss is disabled. Discriminator optimizer will have no effect.")
+                    "Discriminator optimizer (optim_d) is defined but GAN loss is disabled. Discriminator optimizer will have no effect."
+                )
 
         # setup batch augmentations
         self.setup_batchaug()
@@ -191,13 +213,17 @@ class SRModel(BaseModel):
                 logger.warning(f"Params {k} will not be optimized.")
 
         optim_type = train_opt["optim_g"].pop("type")
-        self.optimizer_g = self.get_optimizer(optim_type, optim_params, **train_opt["optim_g"])
+        self.optimizer_g = self.get_optimizer(
+            optim_type, optim_params, **train_opt["optim_g"]
+        )
         self.optimizers.append(self.optimizer_g)
 
         # optimizer d
         if self.net_d is not None:
             optim_type = train_opt["optim_d"].pop("type")
-            self.optimizer_d = self.get_optimizer(optim_type, self.net_d.parameters(), **train_opt["optim_d"])
+            self.optimizer_d = self.get_optimizer(
+                optim_type, self.net_d.parameters(), **train_opt["optim_d"]
+            )
             self.optimizers.append(self.optimizer_d)
 
     def feed_data(self, data):
@@ -210,7 +236,6 @@ class SRModel(BaseModel):
                 self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter):
-
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         # optimize net_g
@@ -236,8 +261,12 @@ class SRModel(BaseModel):
             l_g_total += l_g_mssim
             loss_dict["l_g_mssim"] = l_g_mssim
         if self.cri_ldl:
-            pixel_weight = get_refined_artifact_map(self.gt, self.output, self.net_g_ema(self.lq), 7)
-            l_g_ldl = self.cri_ldl(torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt))
+            pixel_weight = get_refined_artifact_map(
+                self.gt, self.output, self.net_g_ema(self.lq), 7
+            )
+            l_g_ldl = self.cri_ldl(
+                torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt)
+            )
             l_g_total += l_g_ldl
             loss_dict["l_g_ldl"] = l_g_ldl
         # perceptual loss
@@ -337,7 +366,6 @@ class SRModel(BaseModel):
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
-
         self.is_train = False
 
         dataset_name = dataloader.dataset.opt["name"]
@@ -346,7 +374,9 @@ class SRModel(BaseModel):
 
         if with_metrics:
             if not hasattr(self, "metric_results"):  # only execute in the first run
-                self.metric_results = {metric: 0 for metric in self.opt["val"]["metrics"].keys()}
+                self.metric_results = {
+                    metric: 0 for metric in self.opt["val"]["metrics"].keys()
+                }
             # initialize the best metric results for each dataset_name (supporting multiple validation datasets)
             self._initialize_best_metric_results(dataset_name)
         # zero self.metric_results
@@ -377,14 +407,23 @@ class SRModel(BaseModel):
 
             if save_img:
                 if self.opt["is_train"]:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], img_name,
-                                             f"{img_name}_{current_iter}.png")
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        img_name,
+                        f"{img_name}_{current_iter}.png",
+                    )
                 elif self.opt["val"]["suffix"]:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name,
-                                             f'{img_name}_{self.opt["val"]["suffix"]}.png')
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        dataset_name,
+                        f'{img_name}_{self.opt["val"]["suffix"]}.png',
+                    )
                 else:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name,
-                                             f'{img_name}_{self.opt["name"]}.png')
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        dataset_name,
+                        f'{img_name}_{self.opt["name"]}.png',
+                    )
                 imwrite(sr_img, save_img_path)
 
             if with_metrics:
@@ -399,9 +438,11 @@ class SRModel(BaseModel):
 
         if with_metrics:
             for metric in self.metric_results.keys():
-                self.metric_results[metric] /= (idx + 1)
+                self.metric_results[metric] /= idx + 1
                 # update the best metric result
-                self._update_best_metric_result(dataset_name, metric, self.metric_results[metric], current_iter)
+                self._update_best_metric_result(
+                    dataset_name, metric, self.metric_results[metric], current_iter
+                )
 
             self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
 
@@ -412,15 +453,19 @@ class SRModel(BaseModel):
         for metric, value in self.metric_results.items():
             log_str += f"\t # {metric}: {value:.4f}"
             if hasattr(self, "best_metric_results"):
-                log_str += (f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
-                            f'{self.best_metric_results[dataset_name][metric]["iter"]} iter')
+                log_str += (
+                    f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
+                    f'{self.best_metric_results[dataset_name][metric]["iter"]} iter'
+                )
             log_str += "\n"
 
         logger = get_root_logger()
         logger.info(log_str)
         if tb_logger:
             for metric, value in self.metric_results.items():
-                tb_logger.add_scalar(f"metrics/{dataset_name}/{metric}", value, current_iter)
+                tb_logger.add_scalar(
+                    f"metrics/{dataset_name}/{metric}", value, current_iter
+                )
 
     def get_current_visuals(self):
         out_dict = OrderedDict()
@@ -432,7 +477,12 @@ class SRModel(BaseModel):
 
     def save(self, epoch, current_iter):
         if hasattr(self, "net_g_ema"):
-            self.save_network([self.net_g, self.net_g_ema], "net_g", current_iter, param_key=["params", "params_ema"])
+            self.save_network(
+                [self.net_g, self.net_g_ema],
+                "net_g",
+                current_iter,
+                param_key=["params", "params_ema"],
+            )
         else:
             self.save_network(self.net_g, "net_g", current_iter)
 

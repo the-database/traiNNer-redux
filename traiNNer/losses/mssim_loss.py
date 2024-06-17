@@ -10,6 +10,7 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 # https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
 ####################################
 
+
 class GaussianFilter2D(nn.Module):
     def __init__(self, window_size=11, in_channels=3, sigma=1.5, padding=None):
         """2D Gaussian Filer
@@ -37,7 +38,7 @@ class GaussianFilter2D(nn.Module):
     def _get_gaussian_window1d(self):
         sigma2 = self.sigma * self.sigma
         x = torch.arange(-(self.window_size // 2), self.window_size // 2 + 1)
-        w = torch.exp(-0.5 * x ** 2 / sigma2)
+        w = torch.exp(-0.5 * x**2 / sigma2)
         w = w / w.sum()
         return w.reshape(1, 1, 1, self.window_size)
 
@@ -61,17 +62,17 @@ class GaussianFilter2D(nn.Module):
 @LOSS_REGISTRY.register()
 class MSSIMLoss(nn.Module):
     def __init__(
-            self,
-            window_size=11,
-            in_channels=3,
-            sigma=1.5,
-            K1=0.01,
-            K2=0.03,
-            L=1,
-            padding=None,
-            cosim=True,
-            cosim_lambda=5,
-            loss_weight=1.0,
+        self,
+        window_size=11,
+        in_channels=3,
+        sigma=1.5,
+        K1=0.01,
+        K2=0.03,
+        L=1,
+        padding=None,
+        cosim=True,
+        cosim_lambda=5,
+        loss_weight=1.0,
     ):
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -141,9 +142,9 @@ class MSSIMLoss(nn.Module):
             cs = cs.mean()
 
             if i == 4:
-                ms_components.append(ssim ** w)
+                ms_components.append(ssim**w)
             else:
-                ms_components.append(cs ** w)
+                ms_components.append(cs**w)
                 padding = [s % 2 for s in x.shape[2:]]  # spatial padding
                 x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)

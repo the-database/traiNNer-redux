@@ -13,7 +13,9 @@ def download_dataset(dataset, file_ids):
     for file_name, file_id in file_ids.items():
         save_path = osp.abspath(osp.join(save_path_root, file_name))
         if osp.exists(save_path):
-            user_response = input(f"{file_name} already exist. Do you want to cover it? Y/N\n")
+            user_response = input(
+                f"{file_name} already exist. Do you want to cover it? Y/N\n"
+            )
             if user_response.lower() == "y":
                 print(f"Covering {file_name} to {save_path}")
                 download_file_from_google_drive(file_id, save_path)
@@ -30,6 +32,7 @@ def download_dataset(dataset, file_ids):
             extracted_path = save_path.replace(".zip", "")
             print(f"Extract {save_path} to {extracted_path}")
             import zipfile
+
             with zipfile.ZipFile(save_path, "r") as zip_ref:
                 zip_ref.extractall(extracted_path)
 
@@ -38,6 +41,7 @@ def download_dataset(dataset, file_ids):
             if osp.isdir(subfolder):
                 print(f"Move {subfolder} to {extracted_path}")
                 import shutil
+
                 for path in glob.glob(osp.join(subfolder, "*")):
                     shutil.move(path, extracted_path)
                 shutil.rmtree(subfolder)
@@ -49,8 +53,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "dataset",
         type=str,
-        help=("Options: 'Set5', 'Set14'. "
-              "Set to 'all' if you want to download all the dataset."))
+        help=(
+            "Options: 'Set5', 'Set14'. "
+            "Set to 'all' if you want to download all the dataset."
+        ),
+    )
     args = parser.parse_args()
 
     file_ids = {
@@ -60,7 +67,7 @@ if __name__ == "__main__":
         },
         "Set14": {
             "Set14.zip": "1vsw07sV8wGrRQ8UARe2fO5jjgy9QJy_E",
-        }
+        },
     }
 
     if args.dataset == "all":

@@ -10,7 +10,6 @@ from .arch_util import default_init_weights
 
 @ARCH_REGISTRY.register()
 class RRDB2C2Net(nn.Module):
-
     def __init__(
         self,
         num_in_ch,
@@ -31,10 +30,13 @@ class RRDB2C2Net(nn.Module):
         n_upscale = int(math.log(upscale, 2))
 
         fea_conv = conv_block(in_nc, nf, act_type=None)
-        rb_blocks = [RRDB(
-            nf,
-            act_type=act_type,
-        ) for _ in range(nb)]
+        rb_blocks = [
+            RRDB(
+                nf,
+                act_type=act_type,
+            )
+            for _ in range(nb)
+        ]
         LR_conv = conv_block(
             nf,
             nf,
@@ -57,7 +59,7 @@ class RRDB2C2Net(nn.Module):
         x = self.model(x)
 
         if (
-                outm == "scaltanh"
+            outm == "scaltanh"
         ):  # limit output range to [-1,1] range with tanh and rescale to [0,1] Idea from: https://githucom/goldhuang/SRGAN-PyTorch/blob/master/model.py
             return (torch.tanh(x) + 1.0) / 2.0
         elif outm == "tanh":  # limit output to [-1,1] range
@@ -107,7 +109,6 @@ class RRDB(nn.Module):
 
 
 class ResidualDenseBlock_5C(nn.Module):
-
     def __init__(
         self,
         nf=64,
@@ -143,7 +144,9 @@ class ResidualDenseBlock_5C(nn.Module):
             act_type=last_act,
         )
 
-        default_init_weights([self.conv1, self.conv2, self.conv3, self.conv4, self.conv5], 0.1)
+        default_init_weights(
+            [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5], 0.1
+        )
 
     def forward(self, x):
         x1 = self.conv1(x)
@@ -237,7 +240,9 @@ def upconv_block(
         - from: nn.ConvTranspose2d(in_nc, out_nc, kernel_size=4, stride=2, padding=1)
         - to: upconv_block(in_nc, out_nc,kernel_size=3, stride=1, act_type=None)
     """
-    upscale_factor = ((1, upscale_factor, upscale_factor) if convtype == "Conv3D" else upscale_factor)
+    upscale_factor = (
+        (1, upscale_factor, upscale_factor) if convtype == "Conv3D" else upscale_factor
+    )
     upsample = Upsample(scale_factor=upscale_factor, mode=mode)
     conv = conv_block(
         in_nc,
@@ -267,7 +272,9 @@ class Upsample(nn.Module):
             ``'linear'``, ``'bilinear'``, or ``'trilinear'``. Default: ``False``
     """
 
-    def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None):
+    def __init__(
+        self, size=None, scale_factor=None, mode="nearest", align_corners=None
+    ):
         super().__init__()
         if isinstance(scale_factor, tuple):
             self.scale_factor = tuple(float(factor) for factor in scale_factor)

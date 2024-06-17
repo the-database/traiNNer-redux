@@ -11,7 +11,6 @@ from .video_recurrent_model import VideoRecurrentModel
 
 @MODEL_REGISTRY.register()
 class VideoRecurrentGANModel(VideoRecurrentModel):
-
     def init_training_settings(self):
         train_opt = self.opt["train"]
 
@@ -26,7 +25,12 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
             # load pretrained model
             load_path = self.opt["path"].get("pretrain_network_g", None)
             if load_path is not None:
-                self.load_network(self.net_g_ema, load_path, self.opt["path"].get("strict_load_g", True), "params_ema")
+                self.load_network(
+                    self.net_g_ema,
+                    load_path,
+                    self.opt["path"].get("strict_load_g", True),
+                    "params_ema",
+                )
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
@@ -40,7 +44,12 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
         load_path = self.opt["path"].get("pretrain_network_d", None)
         if load_path is not None:
             param_key = self.opt["path"].get("param_key_d", "params")
-            self.load_network(self.net_d, load_path, self.opt["path"].get("strict_load_d", True), param_key)
+            self.load_network(
+                self.net_d,
+                load_path,
+                self.opt["path"].get("strict_load_d", True),
+                param_key,
+            )
 
         self.net_g.train()
         self.net_d.train()
@@ -52,7 +61,9 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
             self.cri_pix = None
 
         if train_opt.get("perceptual_opt"):
-            self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(self.device)
+            self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
+                self.device
+            )
         else:
             self.cri_perceptual = None
 
@@ -80,23 +91,24 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
             optim_params = [
                 {  # add flow params first
                     "params": flow_params,
-                    "lr": train_opt["lr_flow"]
+                    "lr": train_opt["lr_flow"],
                 },
-                {
-                    "params": normal_params,
-                    "lr": train_opt["optim_g"]["lr"]
-                },
+                {"params": normal_params, "lr": train_opt["optim_g"]["lr"]},
             ]
         else:
             optim_params = self.net_g.parameters()
 
         # optimizer g
         optim_type = train_opt["optim_g"].pop("type")
-        self.optimizer_g = self.get_optimizer(optim_type, optim_params, **train_opt["optim_g"])
+        self.optimizer_g = self.get_optimizer(
+            optim_type, optim_params, **train_opt["optim_g"]
+        )
         self.optimizers.append(self.optimizer_g)
         # optimizer d
         optim_type = train_opt["optim_d"].pop("type")
-        self.optimizer_d = self.get_optimizer(optim_type, self.net_d.parameters(), **train_opt["optim_d"])
+        self.optimizer_d = self.get_optimizer(
+            optim_type, self.net_d.parameters(), **train_opt["optim_d"]
+        )
         self.optimizers.append(self.optimizer_d)
 
     def optimize_parameters(self, current_iter):
@@ -107,7 +119,9 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
 
         if self.fix_flow_iter:
             if current_iter == 1:
-                logger.info(f"Fix flow network and feature extractor for {self.fix_flow_iter} iters.")
+                logger.info(
+                    f"Fix flow network and feature extractor for {self.fix_flow_iter} iters."
+                )
                 for name, param in self.net_g.named_parameters():
                     if "spynet" in name or "edvr" in name:
                         param.requires_grad_(False)
@@ -122,7 +136,10 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
 
         l_g_total = 0
         loss_dict = OrderedDict()
-        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
+        if (
+            current_iter % self.net_d_iters == 0
+            and current_iter > self.net_d_init_iters
+        ):
             # pixel loss
             if self.cri_pix:
                 l_g_pix = self.cri_pix(self.output, self.gt)
@@ -130,7 +147,9 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
                 loss_dict["l_g_pix"] = l_g_pix
             # perceptual loss
             if self.cri_perceptual:
-                l_g_percep, l_g_style = self.cri_perceptual(self.output.view(-1, c, h, w), self.gt.view(-1, c, h, w))
+                l_g_percep, l_g_style = self.cri_perceptual(
+                    self.output.view(-1, c, h, w), self.gt.view(-1, c, h, w)
+                )
                 if l_g_percep is not None:
                     l_g_total += l_g_percep
                     loss_dict["l_g_percep"] = l_g_percep
@@ -174,7 +193,12 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
 
     def save(self, epoch, current_iter):
         if self.ema_decay > 0:
-            self.save_network([self.net_g, self.net_g_ema], "net_g", current_iter, param_key=["params", "params_ema"])
+            self.save_network(
+                [self.net_g, self.net_g_ema],
+                "net_g",
+                current_iter,
+                param_key=["params", "params_ema"],
+            )
         else:
             self.save_network(self.net_g, "net_g", current_iter)
         self.save_network(self.net_d, "net_d", current_iter)

@@ -20,7 +20,9 @@ def convert_net_g(ori_net, crt_net):
                 ori_k = crt_k.replace("style_conv1", "conv1")
         # style conv
         elif "style_convs" in crt_k:
-            ori_k = crt_k.replace("style_convs", "convs").replace("modulated_conv", "conv")
+            ori_k = crt_k.replace("style_convs", "convs").replace(
+                "modulated_conv", "conv"
+            )
             if crt_v.shape == torch.Size([1]):
                 ori_k = ori_k.replace(".weight", ".noise.weight")
         # to_rgb1
@@ -36,9 +38,11 @@ def convert_net_g(ori_net, crt_net):
 
         # replace
         if crt_net[crt_k].size() != ori_net[ori_k].size():
-            raise ValueError("Wrong tensor size: \n"
-                             f"crt_net: {crt_net[crt_k].size()}\n"
-                             f"ori_net: {ori_net[ori_k].size()}")
+            raise ValueError(
+                "Wrong tensor size: \n"
+                f"crt_net: {crt_net[crt_k].size()}\n"
+                f"ori_net: {ori_net[ori_k].size()}"
+            )
         else:
             crt_net[crt_k] = ori_net[ori_k]
 
@@ -56,9 +60,11 @@ def convert_net_d(ori_net, crt_net):
 
         # replace
         if crt_net[crt_k].size() != ori_net[ori_k].size():
-            raise ValueError("Wrong tensor size: \n"
-                             f"crt_net: {crt_net[crt_k].size()}\n"
-                             f"ori_net: {ori_net[ori_k].size()}")
+            raise ValueError(
+                "Wrong tensor size: \n"
+                f"crt_net: {crt_net[crt_k].size()}\n"
+                f"ori_net: {ori_net[ori_k].size()}"
+            )
         else:
             crt_net[crt_k] = ori_net[ori_k]
     return crt_net
@@ -69,17 +75,24 @@ if __name__ == "__main__":
 
     # configuration
     ori_net = torch.load("experiments/pretrained_models/stylegan2-ffhq.pth")
-    save_path_g = "experiments/pretrained_models/stylegan2_ffhq_config_f_1024_official.pth"
+    save_path_g = (
+        "experiments/pretrained_models/stylegan2_ffhq_config_f_1024_official.pth"
+    )
     save_path_d = "experiments/pretrained_models/stylegan2_ffhq_config_f_1024_discriminator_official.pth"
     out_size = 1024
     channel_multiplier = 1
 
     # convert generator
-    crt_net = StyleGAN2Generator(out_size, num_style_feat=512, num_mlp=8, channel_multiplier=channel_multiplier)
+    crt_net = StyleGAN2Generator(
+        out_size, num_style_feat=512, num_mlp=8, channel_multiplier=channel_multiplier
+    )
     crt_net = crt_net.state_dict()
 
     crt_net_params_ema = convert_net_g(ori_net["g_ema"], crt_net)
-    torch.save({"params_ema": crt_net_params_ema, "latent_avg": ori_net["latent_avg"]}, save_path_g)
+    torch.save(
+        {"params_ema": crt_net_params_ema, "latent_avg": ori_net["latent_avg"]},
+        save_path_g,
+    )
 
     # convert discriminator
     crt_net = StyleGAN2Discriminator(out_size, channel_multiplier=channel_multiplier)

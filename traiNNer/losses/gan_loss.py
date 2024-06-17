@@ -19,7 +19,9 @@ class GANLoss(nn.Module):
             for discriminators.
     """
 
-    def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
+    def __init__(
+        self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0
+    ):
         super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
@@ -82,7 +84,7 @@ class GANLoss(nn.Module):
 
         if self.gan_type in ["wgan", "wgan_softplus"]:
             return target_is_real
-        target_val = (self.real_label_val if target_is_real else self.fake_label_val)
+        target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
     def forward(self, input, target_is_real, is_disc=False):
@@ -117,7 +119,9 @@ class MultiScaleGANLoss(GANLoss):
     MultiScaleGANLoss accepts a list of predictions
     """
 
-    def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
+    def __init__(
+        self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0
+    ):
         super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
 
     def forward(self, input, target_is_real, is_disc=False):
@@ -141,23 +145,29 @@ class MultiScaleGANLoss(GANLoss):
 
 def r1_penalty(real_pred, real_img):
     """R1 regularization for discriminator. The core idea is to
-        penalize the gradient on real data alone: when the
-        generator distribution produces the true data distribution
-        and the discriminator is equal to 0 on the data manifold, the
-        gradient penalty ensures that the discriminator cannot create
-        a non-zero gradient orthogonal to the data manifold without
-        suffering a loss in the GAN game.
+    penalize the gradient on real data alone: when the
+    generator distribution produces the true data distribution
+    and the discriminator is equal to 0 on the data manifold, the
+    gradient penalty ensures that the discriminator cannot create
+    a non-zero gradient orthogonal to the data manifold without
+    suffering a loss in the GAN game.
 
-        Reference: Eq. 9 in Which training methods for GANs do actually converge.
-        """
-    grad_real = autograd.grad(outputs=real_pred.sum(), inputs=real_img, create_graph=True)[0]
+    Reference: Eq. 9 in Which training methods for GANs do actually converge.
+    """
+    grad_real = autograd.grad(
+        outputs=real_pred.sum(), inputs=real_img, create_graph=True
+    )[0]
     grad_penalty = grad_real.pow(2).view(grad_real.shape[0], -1).sum(1).mean()
     return grad_penalty
 
 
 def g_path_regularize(fake_img, latents, mean_path_length, decay=0.01):
-    noise = torch.randn_like(fake_img) / math.sqrt(fake_img.shape[2] * fake_img.shape[3])
-    grad = autograd.grad(outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True)[0]
+    noise = torch.randn_like(fake_img) / math.sqrt(
+        fake_img.shape[2] * fake_img.shape[3]
+    )
+    grad = autograd.grad(
+        outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True
+    )[0]
     path_lengths = torch.sqrt(grad.pow(2).sum(2).mean(1))
 
     path_mean = mean_path_length + decay * (path_lengths.mean() - mean_path_length)
@@ -184,7 +194,7 @@ def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
     alpha = real_data.new_tensor(torch.rand(batch_size, 1, 1, 1))
 
     # interpolate between real_data and fake_data
-    interpolates = alpha * real_data + (1. - alpha) * fake_data
+    interpolates = alpha * real_data + (1.0 - alpha) * fake_data
     interpolates = autograd.Variable(interpolates, requires_grad=True)
 
     disc_interpolates = discriminator(interpolates)
@@ -194,12 +204,13 @@ def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
         grad_outputs=torch.ones_like(disc_interpolates),
         create_graph=True,
         retain_graph=True,
-        only_inputs=True)[0]
+        only_inputs=True,
+    )[0]
 
     if weight is not None:
         gradients = gradients * weight
 
-    gradients_penalty = ((gradients.norm(2, dim=1) - 1)**2).mean()
+    gradients_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
     if weight is not None:
         gradients_penalty /= torch.mean(weight)
 

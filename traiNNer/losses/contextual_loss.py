@@ -34,25 +34,26 @@ class ContextualLoss(nn.Module):
     crop_quarter: boolean
     """
 
-    def __init__(self,
-                 loss_weight=1.0,
-                 layer_weights=None,
-                 crop_quarter: bool = False,
-                 max_1d_size: int = 100,
-                 distance_type: str = "cosine",
-                 b=1.0,
-                 band_width=0.5,
-                 use_vgg: bool = True,
-                 net: str = "vgg19",
-                 calc_type: str = "regular",
-                 z_norm: bool = False):
+    def __init__(
+        self,
+        loss_weight=1.0,
+        layer_weights=None,
+        crop_quarter: bool = False,
+        max_1d_size: int = 100,
+        distance_type: str = "cosine",
+        b=1.0,
+        band_width=0.5,
+        use_vgg: bool = True,
+        net: str = "vgg19",
+        calc_type: str = "regular",
+        z_norm: bool = False,
+    ):
         if layer_weights is None:
             layer_weights = {"conv3_2": 1.0, "conv4_2": 1.0}
         super().__init__()
 
         assert band_width > 0, "band_width parameter must be positive."
-        assert distance_type in DIS_TYPES, \
-            f"select a distance type from {DIS_TYPES}."
+        assert distance_type in DIS_TYPES, f"select a distance type from {DIS_TYPES}."
 
         if layer_weights:
             layer_weights = alt_layers_names(layer_weights)
@@ -71,7 +72,11 @@ class ContextualLoss(nn.Module):
 
         if use_vgg:
             self.vgg_model = VGGFeatureExtractor(
-                layer_name_list=listen_list, vgg_type=net, use_input_norm=z_norm, range_norm=z_norm)
+                layer_name_list=listen_list,
+                vgg_type=net,
+                use_input_norm=z_norm,
+                range_norm=z_norm,
+            )
 
         if calc_type == "bilateral":
             self.calculate_loss = self.bilateral_CX_Loss
@@ -84,8 +89,9 @@ class ContextualLoss(nn.Module):
         device = images.device
 
         if hasattr(self, "vgg_model"):
-            assert images.shape[1] == 3 and gt.shape[1] == 3, \
-                "VGG model takes 3 channel images."
+            assert (
+                images.shape[1] == 3 and gt.shape[1] == 3
+            ), "VGG model takes 3 channel images."
 
             loss = 0
             vgg_images = self.vgg_model(images)
@@ -99,9 +105,13 @@ class ContextualLoss(nn.Module):
                     vgg_gt[key] = self._crop_quarters(vgg_gt[key])
 
                 N, C, H, W = vgg_images[key].size()
-                if H * W > self.max_1d_size ** 2:
-                    vgg_images[key] = self._random_pooling(vgg_images[key], output_1d_size=self.max_1d_size)
-                    vgg_gt[key] = self._random_pooling(vgg_gt[key], output_1d_size=self.max_1d_size)
+                if H * W > self.max_1d_size**2:
+                    vgg_images[key] = self._random_pooling(
+                        vgg_images[key], output_1d_size=self.max_1d_size
+                    )
+                    vgg_gt[key] = self._random_pooling(
+                        vgg_gt[key], output_1d_size=self.max_1d_size
+                    )
 
                 loss_t = self.calculate_loss(vgg_images[key], vgg_gt[key])
                 loss += loss_t * self.layer_weights[key]
@@ -113,7 +123,7 @@ class ContextualLoss(nn.Module):
                 gt = self._crop_quarters(gt)
 
             N, C, H, W = images.size()
-            if H * W > self.max_1d_size ** 2:
+            if H * W > self.max_1d_size**2:
                 images = self._random_pooling(images, output_1d_size=self.max_1d_size)
                 gt = self._random_pooling(gt, output_1d_size=self.max_1d_size)
 
@@ -128,7 +138,9 @@ class ContextualLoss(nn.Module):
         device = tensor.device
         if indices is None:
             indices = torch.randperm(S)[:n].contiguous().type_as(tensor).long()
-            indices = indices.clamp(indices.min(), tensor.shape[-1] - 1)  # max = indices.max()-1
+            indices = indices.clamp(
+                indices.min(), tensor.shape[-1] - 1
+            )  # max = indices.max()-1
             indices = indices.view(1, 1, -1).expand(N, C, -1)
         indices = indices.to(device)
 
@@ -143,14 +155,19 @@ class ContextualLoss(nn.Module):
             feats = [feats]
 
         N, C, H, W = feats[0].size()
-        feats_sample, indices = ContextualLoss._random_sampling(feats[0], output_1d_size ** 2, None)
+        feats_sample, indices = ContextualLoss._random_sampling(
+            feats[0], output_1d_size**2, None
+        )
         res = [feats_sample]
 
         for i in range(1, len(feats)):
             feats_sample, _ = ContextualLoss._random_sampling(feats[i], -1, indices)
             res.append(feats_sample)
 
-        res = [feats_sample.view(N, C, output_1d_size, output_1d_size) for feats_sample in res]
+        res = [
+            feats_sample.view(N, C, output_1d_size, output_1d_size)
+            for feats_sample in res
+        ]
 
         if single_input:
             return res[0]
@@ -160,10 +177,10 @@ class ContextualLoss(nn.Module):
     def _crop_quarters(feature_tensor):
         N, fC, fH, fW = feature_tensor.size()
         quarters_list = []
-        quarters_list.append(feature_tensor[..., 0:round(fH / 2), 0:round(fW / 2)])
-        quarters_list.append(feature_tensor[..., 0:round(fH / 2), round(fW / 2):])
-        quarters_list.append(feature_tensor[..., round(fH / 2):, 0:round(fW / 2)])
-        quarters_list.append(feature_tensor[..., round(fH / 2):, round(fW / 2):])
+        quarters_list.append(feature_tensor[..., 0 : round(fH / 2), 0 : round(fW / 2)])
+        quarters_list.append(feature_tensor[..., 0 : round(fH / 2), round(fW / 2) :])
+        quarters_list.append(feature_tensor[..., round(fH / 2) :, 0 : round(fW / 2)])
+        quarters_list.append(feature_tensor[..., round(fH / 2) :, round(fW / 2) :])
 
         feature_tensor = torch.cat(quarters_list, dim=0)
         return feature_tensor
@@ -187,7 +204,12 @@ class ContextualLoss(nn.Module):
         # raw_distance
         raw_distance = []
         for i in range(N):
-            Ivec, Tvec, s_I, s_T = Ivecs[i, ...], Tvecs[i, ...], square_I[i, ...], square_T[i, ...]
+            Ivec, Tvec, s_I, s_T = (
+                Ivecs[i, ...],
+                Tvecs[i, ...],
+                square_I[i, ...],
+                square_T[i, ...],
+            )
             # matrix multiplication
             AB = Ivec.permute(1, 0) @ Tvec
             dist = s_I.view(-1, 1) + s_T.view(1, -1) - 2 * AB
@@ -207,7 +229,11 @@ class ContextualLoss(nn.Module):
         raw_distance = []
         for i in range(N):
             Ivec, Tvec = Ivecs[i, ...], Tvecs[i, ...]
-            dist = torch.sum(torch.abs(Ivec.view(C, -1, 1) - Tvec.view(C, 1, -1)), dim=0, keepdim=False)
+            dist = torch.sum(
+                torch.abs(Ivec.view(C, -1, 1) - Tvec.view(C, 1, -1)),
+                dim=0,
+                keepdim=False,
+            )
             raw_distance.append(dist.view(1, H, W, H * W))
         raw_distance = torch.cat(raw_distance, dim=0)
         return raw_distance
@@ -230,8 +256,9 @@ class ContextualLoss(nn.Module):
         # work seperatly for each example in dim 1
         for i in range(N):
             # channel-wise vectorization
-            T_features_i = T_features[i].view(1, 1, C, H * W).permute(3, 2, 0,
-                                                                      1).contiguous()  # 1CHW --> 11CP, with P=H*W
+            T_features_i = (
+                T_features[i].view(1, 1, C, H * W).permute(3, 2, 0, 1).contiguous()
+            )  # 1CHW --> 11CP, with P=H*W
             I_features_i = I_features[i].unsqueeze(0)
             dist = F.conv2d(I_features_i, T_features_i).permute(0, 2, 3, 1).contiguous()
             # cosine_dist.append(dist) # back to 1CHW
@@ -257,11 +284,13 @@ class ContextualLoss(nn.Module):
         return relative_dist
 
     def symetric_CX_Loss(self, I_features, T_features):
-        loss = (self.calculate_CX_Loss(T_features, I_features) + self.calculate_CX_Loss(I_features, T_features)) / 2
+        loss = (
+            self.calculate_CX_Loss(T_features, I_features)
+            + self.calculate_CX_Loss(I_features, T_features)
+        ) / 2
         return loss * self.loss_weight  # score
 
     def bilateral_CX_Loss(self, I_features, T_features, weight_sp: float = 0.1):
-
         def compute_meshgrid(shape):
             N, C, H, W = shape
             rows = torch.arange(0, H, dtype=torch.float32) / (H + 1)
@@ -275,7 +304,9 @@ class ContextualLoss(nn.Module):
 
         # spatial loss
         grid = compute_meshgrid(I_features.shape).to(T_features.device)
-        raw_distance = ContextualLoss._create_using_L2(grid, grid)  # calculate raw distance
+        raw_distance = ContextualLoss._create_using_L2(
+            grid, grid
+        )  # calculate raw distance
         dist_tilde = ContextualLoss._calculate_relative_distance(raw_distance)
         exp_distance = torch.exp((self.b - dist_tilde) / self.band_width)  # Eq(3)
         cx_sp = exp_distance / torch.sum(exp_distance, dim=-1, keepdim=True)  # Eq(4)
@@ -293,7 +324,7 @@ class ContextualLoss(nn.Module):
         cx_feat = exp_distance / torch.sum(exp_distance, dim=-1, keepdim=True)  # Eq(4)
 
         # combined loss
-        cx_combine = (1. - weight_sp) * cx_feat + weight_sp * cx_sp
+        cx_combine = (1.0 - weight_sp) * cx_feat + weight_sp * cx_sp
         k_max_NC, _ = torch.max(cx_combine, dim=2, keepdim=True)
         cx = k_max_NC.mean(dim=1)
         cx_loss = torch.mean(-torch.log(cx + 1e-5))
@@ -304,11 +335,13 @@ class ContextualLoss(nn.Module):
         T_features = T_features.to(device)
 
         if torch.sum(torch.isnan(I_features)) == torch.numel(I_features) or torch.sum(
-                torch.isinf(I_features)) == torch.numel(I_features):
+            torch.isinf(I_features)
+        ) == torch.numel(I_features):
             print(I_features)
             raise ValueError("NaN or Inf in I_features")
         if torch.sum(torch.isnan(T_features)) == torch.numel(T_features) or torch.sum(
-                torch.isinf(T_features)) == torch.numel(T_features):
+            torch.isinf(T_features)
+        ) == torch.numel(T_features):
             print(T_features)
             raise ValueError("NaN or Inf in T_features")
 
@@ -319,32 +352,42 @@ class ContextualLoss(nn.Module):
             raw_distance = ContextualLoss._create_using_L2(I_features, T_features)
         else:  # self.distanceType == 'cosine':
             raw_distance = ContextualLoss._create_using_dotP(I_features, T_features)
-        if torch.sum(torch.isnan(raw_distance)) == torch.numel(raw_distance) or torch.sum(
-                torch.isinf(raw_distance)) == torch.numel(raw_distance):
+        if torch.sum(torch.isnan(raw_distance)) == torch.numel(
+            raw_distance
+        ) or torch.sum(torch.isinf(raw_distance)) == torch.numel(raw_distance):
             print(raw_distance)
             raise ValueError("NaN or Inf in raw_distance")
 
         # normalizing the distances
         relative_distance = ContextualLoss._calculate_relative_distance(raw_distance)
-        if torch.sum(torch.isnan(relative_distance)) == torch.numel(relative_distance) or torch.sum(
-                torch.isinf(relative_distance)) == torch.numel(relative_distance):
+        if torch.sum(torch.isnan(relative_distance)) == torch.numel(
+            relative_distance
+        ) or torch.sum(torch.isinf(relative_distance)) == torch.numel(
+            relative_distance
+        ):
             print(relative_distance)
             raise ValueError("NaN or Inf in relative_distance")
         del raw_distance
 
         # compute_sim()
         # where h>0 is a band-width parameter
-        exp_distance = torch.exp((self.b - relative_distance) / self.band_width)  # Eq(3)
-        if torch.sum(torch.isnan(exp_distance)) == torch.numel(exp_distance) or torch.sum(
-                torch.isinf(exp_distance)) == torch.numel(exp_distance):
+        exp_distance = torch.exp(
+            (self.b - relative_distance) / self.band_width
+        )  # Eq(3)
+        if torch.sum(torch.isnan(exp_distance)) == torch.numel(
+            exp_distance
+        ) or torch.sum(torch.isinf(exp_distance)) == torch.numel(exp_distance):
             print(exp_distance)
             raise ValueError("NaN or Inf in exp_distance")
         del relative_distance
 
         # Similarity
-        contextual_sim = exp_distance / torch.sum(exp_distance, dim=-1, keepdim=True)  # Eq(4)
-        if torch.sum(torch.isnan(contextual_sim)) == torch.numel(contextual_sim) or torch.sum(
-                torch.isinf(contextual_sim)) == torch.numel(contextual_sim):
+        contextual_sim = exp_distance / torch.sum(
+            exp_distance, dim=-1, keepdim=True
+        )  # Eq(4)
+        if torch.sum(torch.isnan(contextual_sim)) == torch.numel(
+            contextual_sim
+        ) or torch.sum(torch.isinf(contextual_sim)) == torch.numel(contextual_sim):
             print(contextual_sim)
             raise ValueError("NaN or Inf in contextual_sim")
         del exp_distance

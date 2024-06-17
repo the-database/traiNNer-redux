@@ -13,16 +13,12 @@ mpl.use("Agg")
 
 def main():
     optim_params = [
-        {
-            "params": [torch.zeros(3, 64, 3, 3)],
-            "lr": 4e-4
-        },
-        {
-            "params": [torch.zeros(3, 64, 3, 3)],
-            "lr": 2e-4
-        },
+        {"params": [torch.zeros(3, 64, 3, 3)], "lr": 4e-4},
+        {"params": [torch.zeros(3, 64, 3, 3)], "lr": 2e-4},
     ]
-    optimizer = torch.optim.Adam(optim_params, lr=2e-4, weight_decay=0, betas=(0.9, 0.99))
+    optimizer = torch.optim.Adam(
+        optim_params, lr=2e-4, weight_decay=0, betas=(0.9, 0.99)
+    )
 
     period = [50000, 100000, 150000, 150000, 150000]
     restart_weights = [1, 1, 0.5, 1, 0.5]

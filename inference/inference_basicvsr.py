@@ -23,10 +23,20 @@ def inference(imgs, imgnames, model, save_path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", type=str, default="experiments/pretrained_models/BasicVSR_REDS4.pth")
     parser.add_argument(
-        "--input_path", type=str, default="datasets/REDS4/sharp_bicubic/000", help="input test image folder")
-    parser.add_argument("--save_path", type=str, default="results/BasicVSR", help="save image path")
+        "--model_path",
+        type=str,
+        default="experiments/pretrained_models/BasicVSR_REDS4.pth",
+    )
+    parser.add_argument(
+        "--input_path",
+        type=str,
+        default="datasets/REDS4/sharp_bicubic/000",
+        help="input test image folder",
+    )
+    parser.add_argument(
+        "--save_path", type=str, default="results/BasicVSR", help="save image path"
+    )
     parser.add_argument("--interval", type=int, default=15, help="interval size")
     args = parser.parse_args()
 
@@ -48,7 +58,9 @@ def main():
         video_name = os.path.splitext(os.path.split(args.input_path)[-1])[0]
         input_path = os.path.join("./BasicVSR_tmp", video_name)
         os.makedirs(os.path.join("./BasicVSR_tmp", video_name), exist_ok=True)
-        os.system(f"ffmpeg -i {args.input_path} -qscale:v 1 -qmin 1 -qmax 1 -vsync 0  {input_path} /frame%08d.png")
+        os.system(
+            f"ffmpeg -i {args.input_path} -qscale:v 1 -qmin 1 -qmax 1 -vsync 0  {input_path} /frame%08d.png"
+        )
 
     # load data and inference
     imgs_list = sorted(glob.glob(os.path.join(input_path, "*")))
@@ -60,7 +72,9 @@ def main():
     else:
         for idx in range(0, num_imgs, args.interval):
             interval = min(args.interval, num_imgs - idx)
-            imgs, imgnames = read_img_seq(imgs_list[idx:idx + interval], return_imgname=True)
+            imgs, imgnames = read_img_seq(
+                imgs_list[idx : idx + interval], return_imgname=True
+            )
             imgs = imgs.unsqueeze(0).to(device)
             inference(imgs, imgnames, model, args.save_path)
 

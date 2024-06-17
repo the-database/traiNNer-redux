@@ -132,9 +132,12 @@ val:
         "dataroot_lq": "tests/data/lq",
         "io_backend": {"type": "disk"},
         "scale": 4,
-        "phase": "val"}
+        "phase": "val",
+    }
     dataset = PairedImageDataset(dataset_opt)
-    dataloader = torch.utils.data.DataLoader(dataset=dataset, batch_size=1, shuffle=False, num_workers=0)
+    dataloader = torch.utils.data.DataLoader(
+        dataset=dataset, batch_size=1, shuffle=False, num_workers=0
+    )
     assert model.is_train is True
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt["path"]["visualization"] = tmpdir

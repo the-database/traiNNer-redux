@@ -14,7 +14,6 @@ from .video_base_model import VideoBaseModel
 
 @MODEL_REGISTRY.register()
 class VideoRecurrentModel(VideoBaseModel):
-
     def __init__(self, opt):
         super().__init__(opt)
         if self.is_train:
@@ -38,23 +37,24 @@ class VideoRecurrentModel(VideoBaseModel):
             optim_params = [
                 {  # add normal params first
                     "params": normal_params,
-                    "lr": train_opt["optim_g"]["lr"]
+                    "lr": train_opt["optim_g"]["lr"],
                 },
-                {
-                    "params": flow_params,
-                    "lr": train_opt["optim_g"]["lr"] * flow_lr_mul
-                },
+                {"params": flow_params, "lr": train_opt["optim_g"]["lr"] * flow_lr_mul},
             ]
 
         optim_type = train_opt["optim_g"].pop("type")
-        self.optimizer_g = self.get_optimizer(optim_type, optim_params, **train_opt["optim_g"])
+        self.optimizer_g = self.get_optimizer(
+            optim_type, optim_params, **train_opt["optim_g"]
+        )
         self.optimizers.append(self.optimizer_g)
 
     def optimize_parameters(self, current_iter):
         if self.fix_flow_iter:
             logger = get_root_logger()
             if current_iter == 1:
-                logger.info(f"Fix flow network and feature extractor for {self.fix_flow_iter} iters.")
+                logger.info(
+                    f"Fix flow network and feature extractor for {self.fix_flow_iter} iters."
+                )
                 for name, param in self.net_g.named_parameters():
                     if "spynet" in name or "edvr" in name:
                         param.requires_grad_(False)
@@ -79,7 +79,11 @@ class VideoRecurrentModel(VideoBaseModel):
                 num_frame_each_folder = Counter(dataset.data_info["folder"])
                 for folder, num_frame in num_frame_each_folder.items():
                     self.metric_results[folder] = torch.zeros(
-                        num_frame, len(self.opt["val"]["metrics"]), dtype=torch.float32, device="cuda")
+                        num_frame,
+                        len(self.opt["val"]["metrics"]),
+                        dtype=torch.float32,
+                        device="cuda",
+                    )
             # initialize the best metric results
             self._initialize_best_metric_results(dataset_name)
         # zero self.metric_results
@@ -135,22 +139,34 @@ class VideoRecurrentModel(VideoBaseModel):
 
                     if save_img:
                         if self.opt["is_train"]:
-                            raise NotImplementedError("saving image is not supported during training.")
+                            raise NotImplementedError(
+                                "saving image is not supported during training."
+                            )
                         elif self.center_frame_only:  # vimeo-90k
                             clip_ = val_data["lq_path"].split("/")[-3]
                             seq_ = val_data["lq_path"].split("/")[-2]
                             name_ = f"{clip_}_{seq_}"
-                            img_path = osp.join(self.opt["path"]["visualization"], dataset_name, folder,
-                                                f"{name_}_{self.opt['name']}.png")
+                            img_path = osp.join(
+                                self.opt["path"]["visualization"],
+                                dataset_name,
+                                folder,
+                                f"{name_}_{self.opt['name']}.png",
+                            )
                         else:  # others
-                            img_path = osp.join(self.opt["path"]["visualization"], dataset_name, folder,
-                                                f"{idx:08d}_{self.opt['name']}.png")
+                            img_path = osp.join(
+                                self.opt["path"]["visualization"],
+                                dataset_name,
+                                folder,
+                                f"{idx:08d}_{self.opt['name']}.png",
+                            )
                             # image name only for REDS dataset
                         imwrite(result_img, img_path)
 
                     # calculate metrics
                     if with_metrics:
-                        for metric_idx, opt_ in enumerate(self.opt["val"]["metrics"].values()):
+                        for metric_idx, opt_ in enumerate(
+                            self.opt["val"]["metrics"].values()
+                        ):
                             result = calculate_metric(metric_data, opt_)
                             self.metric_results[folder][idx, metric_idx] += result
 
@@ -171,7 +187,9 @@ class VideoRecurrentModel(VideoBaseModel):
                 dist.barrier()
 
             if rank == 0:
-                self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
+                self._log_validation_metric_values(
+                    current_iter, dataset_name, tb_logger
+                )
 
     def test(self):
         n = self.lq.size(1)

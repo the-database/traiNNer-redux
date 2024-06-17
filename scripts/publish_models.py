@@ -13,8 +13,10 @@ def update_sha(paths):
         net = torch.load(path, map_location=torch.device("cpu"))
         basename = osp.basename(path)
         if "params" not in net and "params_ema" not in net:
-            user_response = input(f'WARN: Model {basename} does not have "params"/"params_ema" key. '
-                                  'Do you still want to continue? Y/N\n')
+            user_response = input(
+                f'WARN: Model {basename} does not have "params"/"params_ema" key. '
+                "Do you still want to continue? Y/N\n"
+            )
             if user_response.lower() == "y":
                 pass
             elif user_response.lower() == "n":
@@ -59,6 +61,8 @@ def convert_to_backward_compatible_models(paths):
 
 
 if __name__ == "__main__":
-    paths = glob.glob("experiments/pretrained_models/*.pth") + glob.glob("experiments/pretrained_models/**/*.pth")
+    paths = glob.glob("experiments/pretrained_models/*.pth") + glob.glob(
+        "experiments/pretrained_models/**/*.pth"
+    )
     convert_to_backward_compatible_models(paths)
     update_sha(paths)

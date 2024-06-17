@@ -53,7 +53,9 @@ class RealESRGANPairedDataset(data.Dataset):
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = [self.lq_folder, self.gt_folder]
             self.io_backend_opt["client_keys"] = ["lq", "gt"]
-            self.paths = paired_paths_from_lmdb([self.lq_folder, self.gt_folder], ["lq", "gt"])
+            self.paths = paired_paths_from_lmdb(
+                [self.lq_folder, self.gt_folder], ["lq", "gt"]
+            )
         elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
@@ -69,11 +71,15 @@ class RealESRGANPairedDataset(data.Dataset):
             # disk backend
             # it will scan the whole folder to get meta info
             # it will be time-consuming for folders with too many files. It is recommended using an extra meta txt file
-            self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl)
+            self.paths = paired_paths_from_folder(
+                [self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl
+            )
 
     def __getitem__(self, index):
         if self.file_client is None:
-            self.file_client = FileClient(self.io_backend_opt.pop("type"), **self.io_backend_opt)
+            self.file_client = FileClient(
+                self.io_backend_opt.pop("type"), **self.io_backend_opt
+            )
 
         scale = self.opt["scale"]
 
@@ -92,7 +98,9 @@ class RealESRGANPairedDataset(data.Dataset):
             # random crop
             img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
             # flip, rotation
-            img_gt, img_lq = augment([img_gt, img_lq], self.opt["use_hflip"], self.opt["use_rot"])
+            img_gt, img_lq = augment(
+                [img_gt, img_lq], self.opt["use_hflip"], self.opt["use_rot"]
+            )
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt, img_lq = img2tensor([img_gt, img_lq], bgr2rgb=True, float32=True)

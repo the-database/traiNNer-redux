@@ -28,32 +28,73 @@ class DenseBlocksTemporalReduce(nn.Module):
             momentum = 0.1
 
         self.temporal_reduce1 = nn.Sequential(
-            nn.BatchNorm3d(num_feat, eps=eps, momentum=momentum), nn.ReLU(inplace=True),
-            nn.Conv3d(num_feat, num_feat, (1, 1, 1), stride=(1, 1, 1), padding=(0, 0, 0), bias=True),
-            nn.BatchNorm3d(num_feat, eps=eps, momentum=momentum), nn.ReLU(inplace=True),
-            nn.Conv3d(num_feat, num_grow_ch, (3, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1), bias=True))
-
-        self.temporal_reduce2 = nn.Sequential(
-            nn.BatchNorm3d(num_feat + num_grow_ch, eps=eps, momentum=momentum), nn.ReLU(inplace=True),
-            nn.Conv3d(
-                num_feat + num_grow_ch,
-                num_feat + num_grow_ch, (1, 1, 1),
-                stride=(1, 1, 1),
-                padding=(0, 0, 0),
-                bias=True), nn.BatchNorm3d(num_feat + num_grow_ch, eps=eps, momentum=momentum), nn.ReLU(inplace=True),
-            nn.Conv3d(num_feat + num_grow_ch, num_grow_ch, (3, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1), bias=True))
-
-        self.temporal_reduce3 = nn.Sequential(
-            nn.BatchNorm3d(num_feat + 2 * num_grow_ch, eps=eps, momentum=momentum), nn.ReLU(inplace=True),
-            nn.Conv3d(
-                num_feat + 2 * num_grow_ch,
-                num_feat + 2 * num_grow_ch, (1, 1, 1),
-                stride=(1, 1, 1),
-                padding=(0, 0, 0),
-                bias=True), nn.BatchNorm3d(num_feat + 2 * num_grow_ch, eps=eps, momentum=momentum),
+            nn.BatchNorm3d(num_feat, eps=eps, momentum=momentum),
             nn.ReLU(inplace=True),
             nn.Conv3d(
-                num_feat + 2 * num_grow_ch, num_grow_ch, (3, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1), bias=True))
+                num_feat,
+                num_feat,
+                (1, 1, 1),
+                stride=(1, 1, 1),
+                padding=(0, 0, 0),
+                bias=True,
+            ),
+            nn.BatchNorm3d(num_feat, eps=eps, momentum=momentum),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(
+                num_feat,
+                num_grow_ch,
+                (3, 3, 3),
+                stride=(1, 1, 1),
+                padding=(0, 1, 1),
+                bias=True,
+            ),
+        )
+
+        self.temporal_reduce2 = nn.Sequential(
+            nn.BatchNorm3d(num_feat + num_grow_ch, eps=eps, momentum=momentum),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(
+                num_feat + num_grow_ch,
+                num_feat + num_grow_ch,
+                (1, 1, 1),
+                stride=(1, 1, 1),
+                padding=(0, 0, 0),
+                bias=True,
+            ),
+            nn.BatchNorm3d(num_feat + num_grow_ch, eps=eps, momentum=momentum),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(
+                num_feat + num_grow_ch,
+                num_grow_ch,
+                (3, 3, 3),
+                stride=(1, 1, 1),
+                padding=(0, 1, 1),
+                bias=True,
+            ),
+        )
+
+        self.temporal_reduce3 = nn.Sequential(
+            nn.BatchNorm3d(num_feat + 2 * num_grow_ch, eps=eps, momentum=momentum),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(
+                num_feat + 2 * num_grow_ch,
+                num_feat + 2 * num_grow_ch,
+                (1, 1, 1),
+                stride=(1, 1, 1),
+                padding=(0, 0, 0),
+                bias=True,
+            ),
+            nn.BatchNorm3d(num_feat + 2 * num_grow_ch, eps=eps, momentum=momentum),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(
+                num_feat + 2 * num_grow_ch,
+                num_grow_ch,
+                (3, 3, 3),
+                stride=(1, 1, 1),
+                padding=(0, 1, 1),
+                bias=True,
+            ),
+        )
 
     def forward(self, x):
         """
@@ -76,7 +117,7 @@ class DenseBlocksTemporalReduce(nn.Module):
 
 
 class DenseBlocks(nn.Module):
-    """ A concatenation of N dense blocks.
+    """A concatenation of N dense blocks.
 
     Args:
         num_feat (int): Number of channels in the blocks. Default: 64.
@@ -89,7 +130,9 @@ class DenseBlocks(nn.Module):
             Set to false if you want to train from scratch. Default: False.
     """
 
-    def __init__(self, num_block, num_feat=64, num_grow_ch=16, adapt_official_weights=False):
+    def __init__(
+        self, num_block, num_feat=64, num_grow_ch=16, adapt_official_weights=False
+    ):
         super().__init__()
         if adapt_official_weights:
             eps = 1e-3
@@ -102,20 +145,32 @@ class DenseBlocks(nn.Module):
         for i in range(num_block):
             self.dense_blocks.append(
                 nn.Sequential(
-                    nn.BatchNorm3d(num_feat + i * num_grow_ch, eps=eps, momentum=momentum), nn.ReLU(inplace=True),
-                    nn.Conv3d(
-                        num_feat + i * num_grow_ch,
-                        num_feat + i * num_grow_ch, (1, 1, 1),
-                        stride=(1, 1, 1),
-                        padding=(0, 0, 0),
-                        bias=True), nn.BatchNorm3d(num_feat + i * num_grow_ch, eps=eps, momentum=momentum),
+                    nn.BatchNorm3d(
+                        num_feat + i * num_grow_ch, eps=eps, momentum=momentum
+                    ),
                     nn.ReLU(inplace=True),
                     nn.Conv3d(
                         num_feat + i * num_grow_ch,
-                        num_grow_ch, (3, 3, 3),
+                        num_feat + i * num_grow_ch,
+                        (1, 1, 1),
+                        stride=(1, 1, 1),
+                        padding=(0, 0, 0),
+                        bias=True,
+                    ),
+                    nn.BatchNorm3d(
+                        num_feat + i * num_grow_ch, eps=eps, momentum=momentum
+                    ),
+                    nn.ReLU(inplace=True),
+                    nn.Conv3d(
+                        num_feat + i * num_grow_ch,
+                        num_grow_ch,
+                        (3, 3, 3),
                         stride=(1, 1, 1),
                         padding=(1, 1, 1),
-                        bias=True)))
+                        bias=True,
+                    ),
+                )
+            )
 
     def forward(self, x):
         """
@@ -145,14 +200,22 @@ class DynamicUpsamplingFilter(nn.Module):
     def __init__(self, filter_size=(5, 5)):
         super().__init__()
         if not isinstance(filter_size, tuple):
-            raise TypeError(f"The type of filter_size must be tuple, but got type{filter_size}")
+            raise TypeError(
+                f"The type of filter_size must be tuple, but got type{filter_size}"
+            )
         if len(filter_size) != 2:
-            raise ValueError(f"The length of filter size must be 2, but got {len(filter_size)}.")
+            raise ValueError(
+                f"The length of filter size must be 2, but got {len(filter_size)}."
+            )
         # generate a local expansion filter, similar to im2col
         self.filter_size = filter_size
         filter_prod = np.prod(filter_size)
-        expansion_filter = torch.eye(int(filter_prod)).view(filter_prod, 1, *filter_size)  # (kh*kw, 1, kh, kw)
-        self.expansion_filter = expansion_filter.repeat(3, 1, 1, 1)  # repeat for all the 3 channels
+        expansion_filter = torch.eye(int(filter_prod)).view(
+            filter_prod, 1, *filter_size
+        )  # (kh*kw, 1, kh, kw)
+        self.expansion_filter = expansion_filter.repeat(
+            3, 1, 1, 1
+        )  # repeat for all the 3 channels
 
     def forward(self, x, filters):
         """Forward function for DynamicUpsamplingFilter.
@@ -170,10 +233,14 @@ class DynamicUpsamplingFilter(nn.Module):
         n, filter_prod, upsampling_square, h, w = filters.size()
         kh, kw = self.filter_size
         expanded_input = F.conv2d(
-            x, self.expansion_filter.to(x), padding=(kh // 2, kw // 2), groups=3)  # (n, 3*filter_prod, h, w)
-        expanded_input = expanded_input.view(n, 3, filter_prod, h, w).permute(0, 3, 4, 1,
-                                                                              2)  # (n, h, w, 3, filter_prod)
-        filters = filters.permute(0, 3, 4, 1, 2)  # (n, h, w, filter_prod, upsampling_square]
+            x, self.expansion_filter.to(x), padding=(kh // 2, kw // 2), groups=3
+        )  # (n, 3*filter_prod, h, w)
+        expanded_input = expanded_input.view(n, 3, filter_prod, h, w).permute(
+            0, 3, 4, 1, 2
+        )  # (n, h, w, 3, filter_prod)
+        filters = filters.permute(
+            0, 3, 4, 1, 2
+        )  # (n, h, w, filter_prod, upsampling_square]
         out = torch.matmul(expanded_input, filters)  # (n, h, w, 3, upsampling_square)
         return out.permute(0, 3, 4, 1, 2).view(n, 3 * upsampling_square, h, w)
 
@@ -211,7 +278,9 @@ class DUF(nn.Module):
             eps = 1e-05
             momentum = 0.1
 
-        self.conv3d1 = nn.Conv3d(3, 64, (1, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1), bias=True)
+        self.conv3d1 = nn.Conv3d(
+            3, 64, (1, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1), bias=True
+        )
         self.dynamic_filter = DynamicUpsamplingFilter((5, 5))
 
         if num_layer == 16:
@@ -224,23 +293,50 @@ class DUF(nn.Module):
             num_block = 21
             num_grow_ch = 16
         else:
-            raise ValueError(f"Only supported (16, 28, 52) layers, but got {num_layer}.")
+            raise ValueError(
+                f"Only supported (16, 28, 52) layers, but got {num_layer}."
+            )
 
         self.dense_block1 = DenseBlocks(
-            num_block=num_block, num_feat=64, num_grow_ch=num_grow_ch,
-            adapt_official_weights=adapt_official_weights)  # T = 7
+            num_block=num_block,
+            num_feat=64,
+            num_grow_ch=num_grow_ch,
+            adapt_official_weights=adapt_official_weights,
+        )  # T = 7
         self.dense_block2 = DenseBlocksTemporalReduce(
-            64 + num_grow_ch * num_block, num_grow_ch, adapt_official_weights=adapt_official_weights)  # T = 1
+            64 + num_grow_ch * num_block,
+            num_grow_ch,
+            adapt_official_weights=adapt_official_weights,
+        )  # T = 1
         channels = 64 + num_grow_ch * num_block + num_grow_ch * 3
         self.bn3d2 = nn.BatchNorm3d(channels, eps=eps, momentum=momentum)
-        self.conv3d2 = nn.Conv3d(channels, 256, (1, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1), bias=True)
+        self.conv3d2 = nn.Conv3d(
+            channels, 256, (1, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1), bias=True
+        )
 
-        self.conv3d_r1 = nn.Conv3d(256, 256, (1, 1, 1), stride=(1, 1, 1), padding=(0, 0, 0), bias=True)
-        self.conv3d_r2 = nn.Conv3d(256, 3 * (scale**2), (1, 1, 1), stride=(1, 1, 1), padding=(0, 0, 0), bias=True)
+        self.conv3d_r1 = nn.Conv3d(
+            256, 256, (1, 1, 1), stride=(1, 1, 1), padding=(0, 0, 0), bias=True
+        )
+        self.conv3d_r2 = nn.Conv3d(
+            256,
+            3 * (scale**2),
+            (1, 1, 1),
+            stride=(1, 1, 1),
+            padding=(0, 0, 0),
+            bias=True,
+        )
 
-        self.conv3d_f1 = nn.Conv3d(256, 512, (1, 1, 1), stride=(1, 1, 1), padding=(0, 0, 0), bias=True)
+        self.conv3d_f1 = nn.Conv3d(
+            256, 512, (1, 1, 1), stride=(1, 1, 1), padding=(0, 0, 0), bias=True
+        )
         self.conv3d_f2 = nn.Conv3d(
-            512, 1 * 5 * 5 * (scale**2), (1, 1, 1), stride=(1, 1, 1), padding=(0, 0, 0), bias=True)
+            512,
+            1 * 5 * 5 * (scale**2),
+            (1, 1, 1),
+            stride=(1, 1, 1),
+            padding=(0, 0, 0),
+            bias=True,
+        )
 
     def forward(self, x):
         """

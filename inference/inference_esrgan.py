@@ -13,16 +13,24 @@ def main():
     parser.add_argument(
         "--model_path",
         type=str,
-        default=
-        "experiments/pretrained_models/ESRGAN/ESRGAN_SRx4_DF2KOST_official-ff704c30.pth"
+        default="experiments/pretrained_models/ESRGAN/ESRGAN_SRx4_DF2KOST_official-ff704c30.pth",
     )
-    parser.add_argument("--input", type=str, default="datasets/Set14/LRbicx4", help="input test image folder")
-    parser.add_argument("--output", type=str, default="results/ESRGAN", help="output folder")
+    parser.add_argument(
+        "--input",
+        type=str,
+        default="datasets/Set14/LRbicx4",
+        help="input test image folder",
+    )
+    parser.add_argument(
+        "--output", type=str, default="results/ESRGAN", help="output folder"
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # set up model
-    model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32)
+    model = RRDBNet(
+        num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32
+    )
     model.load_state_dict(torch.load(args.model_path)["params"], strict=True)
     model.eval()
     model = model.to(device)
@@ -32,7 +40,7 @@ def main():
         imgname = os.path.splitext(os.path.basename(path))[0]
         print("Testing", idx, imgname)
         # read image
-        img = cv2.imread(path, cv2.IMREAD_COLOR).astype(np.float32) / 255.
+        img = cv2.imread(path, cv2.IMREAD_COLOR).astype(np.float32) / 255.0
         img = torch.from_numpy(np.transpose(img[:, :, [2, 1, 0]], (2, 0, 1))).float()
         img = img.unsqueeze(0).to(device)
         # inference

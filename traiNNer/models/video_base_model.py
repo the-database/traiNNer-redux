@@ -31,7 +31,11 @@ class VideoBaseModel(SRModel):
                 num_frame_each_folder = Counter(dataset.data_info["folder"])
                 for folder, num_frame in num_frame_each_folder.items():
                     self.metric_results[folder] = torch.zeros(
-                        num_frame, len(self.opt["val"]["metrics"]), dtype=torch.float32, device="cuda")
+                        num_frame,
+                        len(self.opt["val"]["metrics"]),
+                        dtype=torch.float32,
+                        device="cuda",
+                    )
             # initialize the best metric results
             self._initialize_best_metric_results(dataset_name)
         # zero self.metric_results
@@ -69,7 +73,9 @@ class VideoBaseModel(SRModel):
 
             if save_img:
                 if self.opt["is_train"]:
-                    raise NotImplementedError("saving image is not supported during training.")
+                    raise NotImplementedError(
+                        "saving image is not supported during training."
+                    )
                 else:
                     if "vimeo" in dataset_name.lower():  # vimeo90k dataset
                         split_result = lq_path.split("/")
@@ -78,11 +84,19 @@ class VideoBaseModel(SRModel):
                         img_name = osp.splitext(osp.basename(lq_path))[0]
 
                     if self.opt["val"]["suffix"]:
-                        save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name, folder,
-                                                 f'{img_name}_{self.opt["val"]["suffix"]}.png')
+                        save_img_path = osp.join(
+                            self.opt["path"]["visualization"],
+                            dataset_name,
+                            folder,
+                            f'{img_name}_{self.opt["val"]["suffix"]}.png',
+                        )
                     else:
-                        save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name, folder,
-                                                 f'{img_name}_{self.opt["name"]}.png')
+                        save_img_path = osp.join(
+                            self.opt["path"]["visualization"],
+                            dataset_name,
+                            folder,
+                            f'{img_name}_{self.opt["name"]}.png',
+                        )
                 imwrite(result_img, save_img_path)
 
             if with_metrics:
@@ -95,7 +109,9 @@ class VideoBaseModel(SRModel):
             if rank == 0:
                 for _ in range(world_size):
                     pbar.update(1)
-                    pbar.set_description(f"Test {folder}: {int(frame_idx) + world_size}/{max_idx}")
+                    pbar.set_description(
+                        f"Test {folder}: {int(frame_idx) + world_size}/{max_idx}"
+                    )
         if rank == 0:
             pbar.close()
 
@@ -109,7 +125,9 @@ class VideoBaseModel(SRModel):
                 pass  # assume use one gpu in non-dist testing
 
             if rank == 0:
-                self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
+                self._log_validation_metric_values(
+                    current_iter, dataset_name, tb_logger
+                )
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         logger = get_root_logger()
@@ -139,7 +157,9 @@ class VideoBaseModel(SRModel):
         for metric in total_avg_results.keys():
             total_avg_results[metric] /= len(metric_results_avg)
             # update the best metric result
-            self._update_best_metric_result(dataset_name, metric, total_avg_results[metric], current_iter)
+            self._update_best_metric_result(
+                dataset_name, metric, total_avg_results[metric], current_iter
+            )
 
         # ------------------------------------------ log the metric ------------------------------------------ #
         log_str = f"Validation {dataset_name}\n"
@@ -148,8 +168,10 @@ class VideoBaseModel(SRModel):
             for folder, tensor in metric_results_avg.items():
                 log_str += f"\t # {folder}: {tensor[metric_idx].item():.4f}"
             if hasattr(self, "best_metric_results"):
-                log_str += (f'\n\t    Best: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
-                            f'{self.best_metric_results[dataset_name][metric]["iter"]} iter')
+                log_str += (
+                    f'\n\t    Best: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
+                    f'{self.best_metric_results[dataset_name][metric]["iter"]} iter'
+                )
             log_str += "\n"
 
         logger = get_root_logger()
@@ -158,4 +180,8 @@ class VideoBaseModel(SRModel):
             for metric_idx, (metric, value) in enumerate(total_avg_results.items()):
                 tb_logger.add_scalar(f"metrics/{metric}", value, current_iter)
                 for folder, tensor in metric_results_avg.items():
-                    tb_logger.add_scalar(f"metrics/{metric}/{folder}", tensor[metric_idx].item(), current_iter)
+                    tb_logger.add_scalar(
+                        f"metrics/{metric}/{folder}",
+                        tensor[metric_idx].item(),
+                        current_iter,
+                    )

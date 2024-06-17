@@ -22,7 +22,9 @@ def flowread(flow_path, quantize=False, concat_axis=0, *args, **kwargs):
         assert concat_axis in [0, 1]
         cat_flow = cv2.imread(flow_path, cv2.IMREAD_UNCHANGED)
         if cat_flow.ndim != 2:
-            raise OSError(f"{flow_path} is not a valid quantized flow file, its dimension is {cat_flow.ndim}.")
+            raise OSError(
+                f"{flow_path} is not a valid quantized flow file, its dimension is {cat_flow.ndim}."
+            )
         assert cat_flow.shape[concat_axis] % 2 == 0
         dx, dy = np.split(cat_flow, 2, axis=concat_axis)
         flow = dequantize_flow(dx, dy, *args, **kwargs)
@@ -34,7 +36,9 @@ def flowread(flow_path, quantize=False, concat_axis=0, *args, **kwargs):
                 raise OSError(f"Invalid flow file: {flow_path}")
             else:
                 if header != "PIEH":
-                    raise OSError(f"Invalid flow file: {flow_path}, header does not contain PIEH")
+                    raise OSError(
+                        f"Invalid flow file: {flow_path}, header does not contain PIEH"
+                    )
 
             w = np.fromfile(f, np.int32, 1).squeeze()
             h = np.fromfile(f, np.int32, 1).squeeze()
@@ -140,10 +144,14 @@ def quantize(arr, min_val, max_val, levels, dtype=np.int64):
     if not (isinstance(levels, int) and levels > 1):
         raise ValueError(f"levels must be a positive integer, but got {levels}")
     if min_val >= max_val:
-        raise ValueError(f"min_val ({min_val}) must be smaller than max_val ({max_val})")
+        raise ValueError(
+            f"min_val ({min_val}) must be smaller than max_val ({max_val})"
+        )
 
     arr = np.clip(arr, min_val, max_val) - min_val
-    quantized_arr = np.minimum(np.floor(levels * arr / (max_val - min_val)).astype(dtype), levels - 1)
+    quantized_arr = np.minimum(
+        np.floor(levels * arr / (max_val - min_val)).astype(dtype), levels - 1
+    )
 
     return quantized_arr
 
@@ -164,7 +172,9 @@ def dequantize(arr, min_val, max_val, levels, dtype=np.float64):
     if not (isinstance(levels, int) and levels > 1):
         raise ValueError(f"levels must be a positive integer, but got {levels}")
     if min_val >= max_val:
-        raise ValueError(f"min_val ({min_val}) must be smaller than max_val ({max_val})")
+        raise ValueError(
+            f"min_val ({min_val}) must be smaller than max_val ({max_val})"
+        )
 
     dequantized_arr = (arr + 0.5).astype(dtype) * (max_val - min_val) / levels + min_val
 

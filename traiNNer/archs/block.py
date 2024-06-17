@@ -14,22 +14,51 @@ from torch.nn.modules.utils import _pair, _single
 # Basic blocks
 ####################
 
+
 class DeformConv2d(nn.Module):
     """
     A Custom Deformable Convolution layer that acts similarly to a regular Conv2d layer.
     """
-    def __init__(self, in_nc, out_nc, kernel_size=3, stride=1, padding=1, dilation=1, groups=1, bias=True):
+
+    def __init__(
+        self,
+        in_nc,
+        out_nc,
+        kernel_size=3,
+        stride=1,
+        padding=1,
+        dilation=1,
+        groups=1,
+        bias=True,
+    ):
         super().__init__()
 
-        self.conv_offset = nn.Conv2d(in_nc, 2 * (kernel_size**2), kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
+        self.conv_offset = nn.Conv2d(
+            in_nc,
+            2 * (kernel_size**2),
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            bias=bias,
+        )
         self.conv_offset.weight.data.zero_()
         self.conv_offset.bias.data.zero_()
 
-        self.dcn_conv = O.DeformConv2d(in_nc, out_nc, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
+        self.dcn_conv = O.DeformConv2d(
+            in_nc,
+            out_nc,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias,
+        )
 
     def forward(self, x):
         offset = self.conv_offset(x)
         return self.dcn_conv(x, offset=offset)
+
 
 class ModulatedDeformConv(nn.Module):
     """A Modulated Deformable Conv layer.
@@ -44,7 +73,19 @@ class ModulatedDeformConv(nn.Module):
         deformable_groups (int): Number of offset groups.
         bias (bool or str): Same as nn.Conv2d.
     """
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, deformable_groups=1, bias=True):
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        deformable_groups=1,
+        bias=True,
+    ):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -60,8 +101,8 @@ class ModulatedDeformConv(nn.Module):
         self.output_padding = _single(0)
 
         self.weight = nn.Parameter(
-            torch.Tensor(out_channels, in_channels // groups,
-                         *self.kernel_size))
+            torch.Tensor(out_channels, in_channels // groups, *self.kernel_size)
+        )
         if bias:
             self.bias = nn.Parameter(torch.Tensor(out_channels))
         else:
@@ -72,7 +113,7 @@ class ModulatedDeformConv(nn.Module):
         n = self.in_channels
         for k in self.kernel_size:
             n *= k
-        stdv = 1. / math.sqrt(n)
+        stdv = 1.0 / math.sqrt(n)
         self.weight.data.uniform_(-stdv, stdv)
         if self.bias is not None:
             self.bias.data.zero_()
@@ -83,7 +124,23 @@ class ModulatedDeformConv(nn.Module):
         dil_h, dil_w = _pair(self.dilation)
         _, n_in_channels, _, _ = x.shape
         n_weight_grps = n_in_channels // self.weight.shape[1]
-        return torch.ops.torchvision.deform_conv2d(x, self.weight, offset, mask, self.bias, stride_h, stride_w, pad_h, pad_w, dil_h, dil_w, n_weight_grps, self.deformable_groups, True)
+        return torch.ops.torchvision.deform_conv2d(
+            x,
+            self.weight,
+            offset,
+            mask,
+            self.bias,
+            stride_h,
+            stride_w,
+            pad_h,
+            pad_w,
+            dil_h,
+            dil_w,
+            n_weight_grps,
+            self.deformable_groups,
+            True,
+        )
+
 
 class ModulatedDeformConvPack(ModulatedDeformConv):
     """A ModulatedDeformable Conv Encapsulation that acts as normal Conv layers.
@@ -106,8 +163,15 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.conv_offset = nn.Conv2d(self.in_channels, self.deformable_groups * 3 * self.kernel_size[0] * self.kernel_size[1], kernel_size=self.kernel_size,
-            stride=_pair(self.stride), padding=_pair(self.padding), dilation=_pair(self.dilation), bias=True)
+        self.conv_offset = nn.Conv2d(
+            self.in_channels,
+            self.deformable_groups * 3 * self.kernel_size[0] * self.kernel_size[1],
+            kernel_size=self.kernel_size,
+            stride=_pair(self.stride),
+            padding=_pair(self.padding),
+            dilation=_pair(self.dilation),
+            bias=True,
+        )
         self.init_weights()
 
     def init_weights(self):
@@ -127,7 +191,23 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
         dil_h, dil_w = _pair(self.dilation)
         _, n_in_channels, _, _ = x.shape
         n_weight_grps = n_in_channels // self.weight.shape[1]
-        return torch.ops.torchvision.deform_conv2d(x, self.weight, offset, mask, self.bias, stride_h, stride_w, pad_h, pad_w, dil_h, dil_w, n_weight_grps, self.deformable_groups, True)
+        return torch.ops.torchvision.deform_conv2d(
+            x,
+            self.weight,
+            offset,
+            mask,
+            self.bias,
+            stride_h,
+            stride_w,
+            pad_h,
+            pad_w,
+            dil_h,
+            dil_w,
+            n_weight_grps,
+            self.deformable_groups,
+            True,
+        )
+
 
 class DCNv2Pack(ModulatedDeformConvPack):
     """Modulated deformable conv for deformable alignment.
@@ -155,8 +235,22 @@ class DCNv2Pack(ModulatedDeformConvPack):
         dil_h, dil_w = _pair(self.dilation)
         _, n_in_channels, _, _ = x.shape
         n_weight_grps = n_in_channels // self.weight.shape[1]
-        return torch.ops.torchvision.deform_conv2d(x, self.weight, offset, mask, self.bias, stride_h, stride_w, pad_h, pad_w, dil_h, dil_w, n_weight_grps, self.deformable_groups, True)
-
+        return torch.ops.torchvision.deform_conv2d(
+            x,
+            self.weight,
+            offset,
+            mask,
+            self.bias,
+            stride_h,
+            stride_w,
+            pad_h,
+            pad_w,
+            dil_h,
+            dil_w,
+            n_weight_grps,
+            self.deformable_groups,
+            True,
+        )
 
 
 ###############################################################################
@@ -169,9 +263,9 @@ class DCNv2Pack(ModulatedDeformConvPack):
 # Source: https://github.com/NVIDIA/partialconv/blob/master/models/partialconv2d.py
 ###############################################################################
 
+
 class PartialConv2d(nn.Conv2d):
     def __init__(self, *args, **kwargs):
-
         # whether the mask is multi-channel or not
         if "multi_channel" in kwargs:
             self.multi_channel = kwargs["multi_channel"]
@@ -188,11 +282,22 @@ class PartialConv2d(nn.Conv2d):
         super().__init__(*args, **kwargs)
 
         if self.multi_channel:
-            self.weight_maskUpdater = torch.ones(self.out_channels, self.in_channels, self.kernel_size[0], self.kernel_size[1])
+            self.weight_maskUpdater = torch.ones(
+                self.out_channels,
+                self.in_channels,
+                self.kernel_size[0],
+                self.kernel_size[1],
+            )
         else:
-            self.weight_maskUpdater = torch.ones(1, 1, self.kernel_size[0], self.kernel_size[1])
+            self.weight_maskUpdater = torch.ones(
+                1, 1, self.kernel_size[0], self.kernel_size[1]
+            )
 
-        self.slide_winsize = self.weight_maskUpdater.shape[1] * self.weight_maskUpdater.shape[2] * self.weight_maskUpdater.shape[3]
+        self.slide_winsize = (
+            self.weight_maskUpdater.shape[1]
+            * self.weight_maskUpdater.shape[2]
+            * self.weight_maskUpdater.shape[3]
+        )
 
         self.last_size = (None, None, None, None)
         self.update_mask = None
@@ -210,16 +315,31 @@ class PartialConv2d(nn.Conv2d):
                 if mask_in is None:
                     # if mask is not provided, create a mask
                     if self.multi_channel:
-                        mask = torch.ones(input.data.shape[0], input.data.shape[1], input.data.shape[2], input.data.shape[3]).to(input)
+                        mask = torch.ones(
+                            input.data.shape[0],
+                            input.data.shape[1],
+                            input.data.shape[2],
+                            input.data.shape[3],
+                        ).to(input)
                     else:
-                        mask = torch.ones(1, 1, input.data.shape[2], input.data.shape[3]).to(input)
+                        mask = torch.ones(
+                            1, 1, input.data.shape[2], input.data.shape[3]
+                        ).to(input)
                 else:
                     mask = mask_in
 
-                self.update_mask = F.conv2d(mask, self.weight_maskUpdater, bias=None, stride=self.stride, padding=self.padding, dilation=self.dilation, groups=1)
+                self.update_mask = F.conv2d(
+                    mask,
+                    self.weight_maskUpdater,
+                    bias=None,
+                    stride=self.stride,
+                    padding=self.padding,
+                    dilation=self.dilation,
+                    groups=1,
+                )
 
-                self.mask_ratio = self.slide_winsize/(self.update_mask + 1e-8)
-                #make sure the value of self.mask_ratio for the entries in the interior (no need for padding) have value 1. If not, you replace with the line below.
+                self.mask_ratio = self.slide_winsize / (self.update_mask + 1e-8)
+                # make sure the value of self.mask_ratio for the entries in the interior (no need for padding) have value 1. If not, you replace with the line below.
                 # self.mask_ratio = torch.max(self.update_mask)/(self.update_mask + 1e-8)
                 self.update_mask = torch.clamp(self.update_mask, 0, 1)
                 self.mask_ratio = torch.mul(self.mask_ratio, self.update_mask)
@@ -228,7 +348,9 @@ class PartialConv2d(nn.Conv2d):
         #     self.update_mask.to(input)
         #     self.mask_ratio.to(input)
 
-        raw_out = super().forward(torch.mul(input, mask) if mask_in is not None else input)
+        raw_out = super().forward(
+            torch.mul(input, mask) if mask_in is not None else input
+        )
 
         if self.bias is not None:
             bias_view = self.bias.view(1, self.out_channels, 1, 1)
@@ -237,11 +359,11 @@ class PartialConv2d(nn.Conv2d):
         else:
             output = torch.mul(raw_out, self.mask_ratio)
 
-
         if self.return_mask:
             return output, self.update_mask
         else:
             return output
+
 
 # Swish activation funtion
 def swish_func(x, beta=1.0, inplace=False):
@@ -265,15 +387,15 @@ def swish_func(x, beta=1.0, inplace=False):
     if inplace:
         # In-place implementation, may consume less GPU memory:
         result = x.clone()
-        torch.sigmoid_(beta*x)
+        torch.sigmoid_(beta * x)
         x *= result
         return x
     # Normal out-of-place implementation:
     return x * torch.sigmoid(beta * x)
 
+
 # Swish module
 class Swish(nn.Module):
-
     __constants__ = ["beta", "slope", "inplace"]
 
     def __init__(self, beta=1.0, slope=1.67653251702, inplace=False):
@@ -287,10 +409,12 @@ class Swish(nn.Module):
         self.inplace = inplace
         # self.beta = beta # user-defined beta parameter, non-trainable
         # self.beta = beta * torch.nn.Parameter(torch.ones(1)) # learnable beta parameter, create a tensor out of beta
-        self.beta = torch.nn.Parameter(torch.tensor(beta)) # learnable beta parameter, create a tensor out of beta
-        self.beta.requiresGrad = True # set requiresGrad to true to make it trainable
+        self.beta = torch.nn.Parameter(
+            torch.tensor(beta)
+        )  # learnable beta parameter, create a tensor out of beta
+        self.beta.requiresGrad = True  # set requiresGrad to true to make it trainable
 
-        self.slope = slope / 2 # user-defined "slope", non-trainable
+        self.slope = slope / 2  # user-defined "slope", non-trainable
         # self.slope = slope * torch.nn.Parameter(torch.ones(1)) # learnable slope parameter, create a tensor out of slope
         # self.slope = torch.nn.Parameter(torch.tensor(slope)) # learnable slope parameter, create a tensor out of slope
         # self.slope.requiresGrad = True # set requiresGrad to true to true to make it trainable
@@ -356,14 +480,16 @@ def norm(norm_type, nc):
     # elif norm_type == 'layer':
     #     return lambda num_features: nn.GroupNorm(1, num_features)
     elif norm_type == "none":
-        def norm_layer(x): return Identity()
+
+        def norm_layer(x):
+            return Identity()
     else:
         raise NotImplementedError(f"normalization layer [{norm_type:s}] is not found")
     return layer
 
 
 def add_spectral_norm(module, use_spectral_norm=False):
-    """ Add spectral norm to any module passed if use_spectral_norm = True,
+    """Add spectral norm to any module passed if use_spectral_norm = True,
     else, returns the original module without change
     """
     if use_spectral_norm:
@@ -440,9 +566,21 @@ def sequential(*args):
     return nn.Sequential(*modules)
 
 
-def conv_block(in_nc, out_nc, kernel_size, stride=1, dilation=1, groups=1,
-    bias=True, pad_type="zero", norm_type=None, act_type="relu", mode="CNA",
-    convtype="Conv2D", spectral_norm=False):
+def conv_block(
+    in_nc,
+    out_nc,
+    kernel_size,
+    stride=1,
+    dilation=1,
+    groups=1,
+    bias=True,
+    pad_type="zero",
+    norm_type=None,
+    act_type="relu",
+    mode="CNA",
+    convtype="Conv2D",
+    spectral_norm=False,
+):
     """
     Conv layer with padding, normalization, activation
     mode: CNA --> Conv -> Norm -> Act
@@ -453,19 +591,51 @@ def conv_block(in_nc, out_nc, kernel_size, stride=1, dilation=1, groups=1,
     p = pad(pad_type, padding) if pad_type and pad_type != "zero" else None
     padding = padding if pad_type == "zero" else 0
 
-    if convtype=="PartialConv2D":
-        c = PartialConv2d(in_nc, out_nc, kernel_size=kernel_size, stride=stride,
-            padding=padding, dilation=dilation, bias=bias, groups=groups)
-    elif convtype=="DeformConv2D":
-        c = DeformConv2d(in_nc, out_nc, kernel_size=kernel_size, stride=stride,
-            padding=padding, dilation=dilation, bias=bias, groups=groups)
-    elif convtype=="Conv3D":
-        c = nn.Conv3d(in_nc, out_nc, kernel_size=kernel_size, stride=stride,
-            padding=padding, dilation=dilation, bias=bias, groups=groups)
+    if convtype == "PartialConv2D":
+        c = PartialConv2d(
+            in_nc,
+            out_nc,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            bias=bias,
+            groups=groups,
+        )
+    elif convtype == "DeformConv2D":
+        c = DeformConv2d(
+            in_nc,
+            out_nc,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            bias=bias,
+            groups=groups,
+        )
+    elif convtype == "Conv3D":
+        c = nn.Conv3d(
+            in_nc,
+            out_nc,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            bias=bias,
+            groups=groups,
+        )
     else:
         # default case is standard 'Conv2D':
-        c = nn.Conv2d(in_nc, out_nc, kernel_size=kernel_size, stride=stride,
-            padding=padding, dilation=dilation, bias=bias, groups=groups)  # normal conv2d
+        c = nn.Conv2d(
+            in_nc,
+            out_nc,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            bias=bias,
+            groups=groups,
+        )  # normal conv2d
 
     if spectral_norm:
         c = nn.utils.spectral_norm(c)
@@ -500,21 +670,24 @@ def make_layer(basic_block, num_basic_block, **kwarg):
 
 
 class Mean(nn.Module):
-  def __init__(self, dim: list, keepdim=False):
-    super().__init__()
-    self.dim = dim
-    self.keepdim = keepdim
+    def __init__(self, dim: list, keepdim=False):
+        super().__init__()
+        self.dim = dim
+        self.keepdim = keepdim
 
-  def forward(self, x):
-    return torch.mean(x, self.dim, self.keepdim)
+    def forward(self, x):
+        return torch.mean(x, self.dim, self.keepdim)
 
 
 ####################
 # initialize modules
 ####################
 
+
 @torch.no_grad()
-def default_init_weights(module_list, init_type="kaiming", scale=1, bias_fill=0, **kwargs):
+def default_init_weights(
+    module_list, init_type="kaiming", scale=1, bias_fill=0, **kwargs
+):
     """Initialize network weights.
     Args:
         module_list (list[nn.Module] | nn.Module): Modules to be initialized.
@@ -544,13 +717,15 @@ def default_init_weights(module_list, init_type="kaiming", scale=1, bias_fill=0,
             elif init_type == "orthogonal":
                 weights_init_orthogonal(m, bias_fill=bias_fill)
             else:
-                raise NotImplementedError(f"initialization method [{init_type:s}] not implemented")
-
+                raise NotImplementedError(
+                    f"initialization method [{init_type:s}] not implemented"
+                )
 
 
 ####################
 # Scaling
 ####################
+
 
 class Upsample(nn.Module):
     r"""Upsamples a given multi-channel 1D (temporal), 2D (spatial) or 3D (volumetric) data.
@@ -570,7 +745,9 @@ class Upsample(nn.Module):
             ``'linear'``, ``'bilinear'``, or ``'trilinear'``. Default: ``False``
     """
 
-    def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None):
+    def __init__(
+        self, size=None, scale_factor=None, mode="nearest", align_corners=None
+    ):
         super().__init__()
         if isinstance(scale_factor, tuple):
             self.scale_factor = tuple(float(factor) for factor in scale_factor)
@@ -583,8 +760,12 @@ class Upsample(nn.Module):
 
     def forward(self, x):
         return nn.functional.interpolate(
-            x, size=self.size, scale_factor=self.scale_factor,
-            mode=self.mode, align_corners=self.align_corners)
+            x,
+            size=self.size,
+            scale_factor=self.scale_factor,
+            mode=self.mode,
+            align_corners=self.align_corners,
+        )
         # return self.interp(x, size=self.size,
         #     scale_factor=self.scale_factor, mode=self.mode,
         #     align_corners=self.align_corners)
@@ -598,15 +779,33 @@ class Upsample(nn.Module):
         return info
 
 
-def pixelshuffle_block(in_nc, out_nc, upscale_factor=2,
-    kernel_size=3, stride=1, bias=True, pad_type="zero",
-    norm_type=None, act_type="relu", convtype="Conv2D"):
-    """ Pixel shuffle layer.
+def pixelshuffle_block(
+    in_nc,
+    out_nc,
+    upscale_factor=2,
+    kernel_size=3,
+    stride=1,
+    bias=True,
+    pad_type="zero",
+    norm_type=None,
+    act_type="relu",
+    convtype="Conv2D",
+):
+    """Pixel shuffle layer.
     (Real-Time Single Image and Video Super-Resolution Using an
     Efficient Sub-Pixel Convolutional Neural Network, CVPR17).
     """
-    conv = conv_block(in_nc, out_nc * (upscale_factor ** 2), kernel_size, stride, bias=bias,
-                        pad_type=pad_type, norm_type=None, act_type=None, convtype=convtype)
+    conv = conv_block(
+        in_nc,
+        out_nc * (upscale_factor**2),
+        kernel_size,
+        stride,
+        bias=bias,
+        pad_type=pad_type,
+        norm_type=None,
+        act_type=None,
+        convtype=convtype,
+    )
     pixel_shuffle = nn.PixelShuffle(upscale_factor)
 
     n = norm(norm_type, out_nc) if norm_type else None
@@ -614,25 +813,45 @@ def pixelshuffle_block(in_nc, out_nc, upscale_factor=2,
     return sequential(conv, pixel_shuffle, n, a)
 
 
-def upconv_block(in_nc, out_nc, upscale_factor=2, kernel_size=3,
-    stride=1, bias=True, pad_type="zero", norm_type=None,
-    act_type="relu", mode="nearest", convtype="Conv2D"):
-    """ Upconv layer described in
+def upconv_block(
+    in_nc,
+    out_nc,
+    upscale_factor=2,
+    kernel_size=3,
+    stride=1,
+    bias=True,
+    pad_type="zero",
+    norm_type=None,
+    act_type="relu",
+    mode="nearest",
+    convtype="Conv2D",
+):
+    """Upconv layer described in
     https://distill.pub/2016/deconv-checkerboard/.
     Example to replace deconvolutions:
         - from: nn.ConvTranspose2d(in_nc, out_nc, kernel_size=4, stride=2, padding=1)
         - to: upconv_block(in_nc, out_nc,kernel_size=3, stride=1, act_type=None)
     """
-    upscale_factor = (1, upscale_factor, upscale_factor) if convtype == "Conv3D" else upscale_factor
+    upscale_factor = (
+        (1, upscale_factor, upscale_factor) if convtype == "Conv3D" else upscale_factor
+    )
     upsample = Upsample(scale_factor=upscale_factor, mode=mode)
-    conv = conv_block(in_nc, out_nc, kernel_size, stride, bias=bias,
-        pad_type=pad_type, norm_type=norm_type, act_type=act_type,
-        convtype=convtype)
+    conv = conv_block(
+        in_nc,
+        out_nc,
+        kernel_size,
+        stride,
+        bias=bias,
+        pad_type=pad_type,
+        norm_type=norm_type,
+        act_type=act_type,
+        convtype=convtype,
+    )
     return sequential(upsample, conv)
 
 
 class DepthToSpace(nn.Module):
-    """ PixelShuffle / DepthToSpace / unsqueeze2d.
+    """PixelShuffle / DepthToSpace / unsqueeze2d.
     Rearranges data from depth into blocks of spatial data. This is
     the reverse transformation of SpaceToDepth. More specifically,
     this op outputs a copy of the input tensor where values from the
@@ -643,7 +862,8 @@ class DepthToSpace(nn.Module):
             data is moved. In SR its equivalent to the scale factor.
         form: select tensorflow ('tf') or pytorch ('pt') style shuffle.
     """
-    def __init__(self, block_size:int=2, form:str="pt"):
+
+    def __init__(self, block_size: int = 2, form: str = "pt"):
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -657,8 +877,8 @@ class DepthToSpace(nn.Module):
         return f"block_size={self.bs}"
 
 
-def depth_to_space(x, bs:int=2):
-    """ Pixel shuffle (PyTorch).
+def depth_to_space(x, bs: int = 2):
+    """Pixel shuffle (PyTorch).
     Equivalent to torch.nn.PixelShuffle().
     Args:
         x (Tensor): Input tensor (b, c, h, w).
@@ -671,9 +891,8 @@ def depth_to_space(x, bs:int=2):
         return x
 
     b, c, h, w = x.size()
-    if c % (bs ** 2) != 0:
-        raise ValueError("The tensor channels must be divisible by "
-                         "(bs ** 2).")
+    if c % (bs**2) != 0:
+        raise ValueError("The tensor channels must be divisible by " "(bs ** 2).")
     new_d = -1  # c // (bs ** 2)
     new_h = h * bs
     new_w = w * bs
@@ -686,8 +905,8 @@ def depth_to_space(x, bs:int=2):
     return x.view(b, new_d, new_h, new_w)
 
 
-def depth_to_space_tf(x, bs:int=2):
-    """ Pixel shuffle (TensorFlow).
+def depth_to_space_tf(x, bs: int = 2):
+    """Pixel shuffle (TensorFlow).
     Equivalent to:
         https://www.tensorflow.org/api_docs/python/tf/nn/depth_to_space
     Args:
@@ -701,9 +920,8 @@ def depth_to_space_tf(x, bs:int=2):
         return x
 
     b, c, h, w = x.size()
-    if c % (bs ** 2) != 0:
-        raise ValueError("The tensor channels must be divisible by "
-                         "(bs ** 2).")
+    if c % (bs**2) != 0:
+        raise ValueError("The tensor channels must be divisible by " "(bs ** 2).")
     new_d = -1  # c // (bs ** 2)
     new_h = h * bs
     new_w = w * bs
@@ -717,7 +935,7 @@ def depth_to_space_tf(x, bs:int=2):
 
 
 class SpaceToDepth(nn.Module):
-    """ PixelUnshuffle / SpaceToDepth / squeeze2d.
+    """PixelUnshuffle / SpaceToDepth / squeeze2d.
     Rearranges blocks of spatial data, into depth. This operation
     outputs a copy of the input tensor where values from the height
     and width dimensions are moved to the depth dimension.
@@ -728,7 +946,8 @@ class SpaceToDepth(nn.Module):
             to the downscale factor.
         form: select tensorflow ('tf') or pytorch ('pt') style unshuffle.
     """
-    def __init__(self, block_size:int=2, form:str="pt"):
+
+    def __init__(self, block_size: int = 2, form: str = "pt"):
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -742,8 +961,8 @@ class SpaceToDepth(nn.Module):
         return f"block_size={self.bs}"
 
 
-def space_to_depth(x, bs:int=2):
-    """ Pixel unshuffle (PyTorch).
+def space_to_depth(x, bs: int = 2):
+    """Pixel unshuffle (PyTorch).
     This is the inverse of torch.nn.PixelShuffle().
     Equivalent to nn.PixelUnshuffle().
     Args:
@@ -770,8 +989,8 @@ def space_to_depth(x, bs:int=2):
     return x.view(b, new_d, new_h, new_w)
 
 
-def space_to_depth_tf(x, bs:int=2):
-    """ Pixel unshuffle (TensorFlow).
+def space_to_depth_tf(x, bs: int = 2):
+    """Pixel unshuffle (TensorFlow).
     Equivalent to:
         https://www.tensorflow.org/api_docs/python/tf/nn/space_to_depth
     Args:
@@ -801,13 +1020,22 @@ def space_to_depth_tf(x, bs:int=2):
 # PPON
 def conv_layer(in_channels, out_channels, kernel_size, stride=1, dilation=1, groups=1):
     padding = int((kernel_size - 1) / 2) * dilation
-    return nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding=padding, bias=True, dilation=dilation, groups=groups)
-
+    return nn.Conv2d(
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride,
+        padding=padding,
+        bias=True,
+        dilation=dilation,
+        groups=groups,
+    )
 
 
 ####################
 # ESRGANplus
 ####################
+
 
 class GaussianNoise(nn.Module):
     def __init__(self, sigma=0.1, is_relative_detach=False):
@@ -818,10 +1046,13 @@ class GaussianNoise(nn.Module):
 
     def forward(self, x):
         if self.training and self.sigma != 0:
-            scale = self.sigma * x.detach() if self.is_relative_detach else self.sigma * x
+            scale = (
+                self.sigma * x.detach() if self.is_relative_detach else self.sigma * x
+            )
             sampled_noise = self.noise.repeat(*x.size()).normal_() * scale
             x = x + sampled_noise
         return x
+
 
 def conv1x1(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
@@ -836,8 +1067,16 @@ class minibatch_std_concat_layer(nn.Module):
         if "group" in self.averaging:
             self.n = int(self.averaging[5:])
         else:
-            assert self.averaging in ["all", "flat", "spatial", "none", "gpool"], "Invalid averaging mode".format()
-        self.adjusted_std = lambda x, **kwargs: torch.sqrt(torch.mean((x - torch.mean(x, **kwargs)) ** 2, **kwargs) + 1e-8)
+            assert self.averaging in [
+                "all",
+                "flat",
+                "spatial",
+                "none",
+                "gpool",
+            ], "Invalid averaging mode".format()
+        self.adjusted_std = lambda x, **kwargs: torch.sqrt(
+            torch.mean((x - torch.mean(x, **kwargs)) ** 2, **kwargs) + 1e-8
+        )
 
     def forward(self, x):
         shape = list(x.size())
@@ -848,18 +1087,24 @@ class minibatch_std_concat_layer(nn.Module):
             vals = torch.mean(vals, dim=1, keepdim=True)
         elif self.averaging == "spatial":
             if len(shape) == 4:
-                vals = mean(vals, axis=[2,3], keepdim=True)             # torch.mean(torch.mean(vals, 2, keepdim=True), 3, keepdim=True)
+                vals = mean(
+                    vals, axis=[2, 3], keepdim=True
+                )  # torch.mean(torch.mean(vals, 2, keepdim=True), 3, keepdim=True)
         elif self.averaging == "none":
             target_shape = [target_shape[0], *list(target_shape[1:])]
         elif self.averaging == "gpool":
             if len(shape) == 4:
-                vals = mean(x, [0,2,3], keepdim=True)                   # torch.mean(torch.mean(torch.mean(x, 2, keepdim=True), 3, keepdim=True), 0, keepdim=True)
+                vals = mean(
+                    x, [0, 2, 3], keepdim=True
+                )  # torch.mean(torch.mean(torch.mean(x, 2, keepdim=True), 3, keepdim=True), 0, keepdim=True)
         elif self.averaging == "flat":
             target_shape[1] = 1
             vals = torch.FloatTensor([self.adjusted_std(x)])
-        else:                                                           # self.averaging == 'group'
+        else:  # self.averaging == 'group'
             target_shape[1] = self.n
-            vals = vals.view(self.n, self.shape[1]/self.n, self.shape[2], self.shape[3])
+            vals = vals.view(
+                self.n, self.shape[1] / self.n, self.shape[2], self.shape[3]
+            )
             vals = mean(vals, axis=0, keepdim=True).view(1, self.n, 1, 1)
         vals = vals.expand(*target_shape)
         return torch.cat([x, vals], 1)
@@ -869,21 +1114,29 @@ class minibatch_std_concat_layer(nn.Module):
 # Useful blocks
 ####################
 
+
 class SelfAttentionBlock(nn.Module):
     """
-        Implementation of Self attention Block according to paper
-        'Self-Attention Generative Adversarial Networks'
-        (https://arxiv.org/abs/1805.08318)
-        Flexible Self Attention (FSA) layer according to paper
-        Efficient Super Resolution For Large-Scale Images Using
-            Attentional GAN (https://arxiv.org/pdf/1812.04821.pdf)
-            The FSA layer borrows the self attention layer from SAGAN,
-            and wraps it with a max-pooling layer to reduce the size
-            of the feature maps and enable large-size images to fit in memory.
-        Used in Generator and Discriminator Networks.
+    Implementation of Self attention Block according to paper
+    'Self-Attention Generative Adversarial Networks'
+    (https://arxiv.org/abs/1805.08318)
+    Flexible Self Attention (FSA) layer according to paper
+    Efficient Super Resolution For Large-Scale Images Using
+        Attentional GAN (https://arxiv.org/pdf/1812.04821.pdf)
+        The FSA layer borrows the self attention layer from SAGAN,
+        and wraps it with a max-pooling layer to reduce the size
+        of the feature maps and enable large-size images to fit in memory.
+    Used in Generator and Discriminator Networks.
     """
 
-    def __init__(self, in_dim, max_pool=False, poolsize = 4, spectral_norm=False, ret_attention=False): #in_dim = in_feature_maps
+    def __init__(
+        self,
+        in_dim,
+        max_pool=False,
+        poolsize=4,
+        spectral_norm=False,
+        ret_attention=False,
+    ):  # in_dim = in_feature_maps
         super().__init__()
 
         self.in_dim = in_dim
@@ -892,10 +1145,12 @@ class SelfAttentionBlock(nn.Module):
         self.ret_attention = ret_attention
 
         if self.max_pool:
-            self.pooled = nn.MaxPool2d(kernel_size=self.poolsize, stride=self.poolsize) #kernel_size=4, stride=4
+            self.pooled = nn.MaxPool2d(
+                kernel_size=self.poolsize, stride=self.poolsize
+            )  # kernel_size=4, stride=4
             # Note: can test using strided convolutions instead of MaxPool2d! :
-            #upsample_block_num = int(math.log(scale_factor, 2))
-            #self.pooled = nn.Conv2d .... strided conv
+            # upsample_block_num = int(math.log(scale_factor, 2))
+            # self.pooled = nn.Conv2d .... strided conv
             # upsample_o = [UpconvBlock(in_channels=in_dim, out_channels=in_dim, upscale_factor=2, mode='bilinear', act_type='leakyrelu') for _ in range(upsample_block_num)]
             ## upsample_o.append(nn.Conv2d(nf, in_nc, kernel_size=9, stride=1, padding=4))
             ## self.upsample_o = nn.Sequential(*upsample_o)
@@ -903,28 +1158,34 @@ class SelfAttentionBlock(nn.Module):
             # self.upsample_o = B.Upsample(scale_factor=self.poolsize, mode='bilinear', align_corners=False)
 
         self.conv_f = add_spectral_norm(
-            nn.Conv1d(in_channels=in_dim, out_channels=in_dim//8,
-                kernel_size=1, padding=0),
-            use_spectral_norm=spectral_norm)  # query_conv
+            nn.Conv1d(
+                in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1, padding=0
+            ),
+            use_spectral_norm=spectral_norm,
+        )  # query_conv
         self.conv_g = add_spectral_norm(
-            nn.Conv1d(in_channels=in_dim, out_channels=in_dim//8,
-                kernel_size=1, padding=0),
-            use_spectral_norm=spectral_norm)  # key_conv
+            nn.Conv1d(
+                in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1, padding=0
+            ),
+            use_spectral_norm=spectral_norm,
+        )  # key_conv
         self.conv_h = add_spectral_norm(
-            nn.Conv1d(in_channels=in_dim, out_channels=in_dim,
-                kernel_size=1, padding=0),
-            use_spectral_norm=spectral_norm)  # value_conv
+            nn.Conv1d(
+                in_channels=in_dim, out_channels=in_dim, kernel_size=1, padding=0
+            ),
+            use_spectral_norm=spectral_norm,
+        )  # value_conv
 
-        self.gamma = nn.Parameter(torch.zeros(1)) # Trainable interpolation parameter
-        self.softmax  = nn.Softmax(dim = -1)
+        self.gamma = nn.Parameter(torch.zeros(1))  # Trainable interpolation parameter
+        self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self,input):
+    def forward(self, input):
         """
-            inputs :
-                input : input feature maps( B X C X W X H)
-            returns :
-                out : self attention value + input feature
-                attention: B X N X N (N is Width*Height)
+        inputs :
+            input : input feature maps( B X C X W X H)
+        returns :
+            out : self attention value + input feature
+            attention: B X N X N (N is Width*Height)
         """
 
         if self.max_pool:  # Downscale with Max Pool
@@ -946,18 +1207,20 @@ class SelfAttentionBlock(nn.Module):
         # beta #attention # BX (N) X (N)
         attention = self.softmax(s)
 
-        out = torch.bmm(h, attention.permute(0,2,1))
+        out = torch.bmm(h, attention.permute(0, 2, 1))
         out = out.view(batch_size, C, width, height)
 
         if self.max_pool:
             # Upscale to original size
             # out = self.upsample_o(out)
             out = Upsample(
-                size=(input.shape[2],input.shape[3]),
-                mode="bicubic", align_corners=False)(out)
+                size=(input.shape[2], input.shape[3]),
+                mode="bicubic",
+                align_corners=False,
+            )(out)
 
         # add original input
-        out = self.gamma*out + input
+        out = self.gamma * out + input
 
         if self.ret_attention:
             return out, attention

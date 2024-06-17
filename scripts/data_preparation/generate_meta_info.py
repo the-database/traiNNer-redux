@@ -5,8 +5,7 @@ from traiNNer.utils import scandir
 
 
 def generate_meta_info_div2k():
-    """Generate meta info for DIV2K dataset.
-    """
+    """Generate meta info for DIV2K dataset."""
 
     gt_folder = "datasets/DIV2K/DIV2K_train_HR_sub/"
     meta_info_txt = "traiNNer/data/meta_info/meta_info_DIV2K800sub_GT.txt"

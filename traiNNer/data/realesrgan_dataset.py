@@ -46,7 +46,9 @@ class RealESRGANDataset(data.Dataset):
             self.io_backend_opt["db_paths"] = [self.gt_folder]
             self.io_backend_opt["client_keys"] = ["gt"]
             if not self.gt_folder.endswith(".lmdb"):
-                raise ValueError(f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}")
+                raise ValueError(
+                    f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
+                )
             with open(osp.join(self.gt_folder, "meta_info.txt")) as fin:
                 self.paths = [line.split(".")[0] for line in fin]
         else:
@@ -61,7 +63,9 @@ class RealESRGANDataset(data.Dataset):
         self.kernel_list = opt["kernel_list"]
         self.kernel_prob = opt["kernel_prob"]  # a list for each kernel probability
         self.blur_sigma = opt["blur_sigma"]
-        self.betag_range = opt["betag_range"]  # betag used in generalized Gaussian blur kernels
+        self.betag_range = opt[
+            "betag_range"
+        ]  # betag used in generalized Gaussian blur kernels
         self.betap_range = opt["betap_range"]  # betap used in plateau blur kernels
         self.sinc_prob = opt["sinc_prob"]  # the probability for sinc filters
 
@@ -77,14 +81,20 @@ class RealESRGANDataset(data.Dataset):
         # a final sinc filter
         self.final_sinc_prob = opt["final_sinc_prob"]
 
-        self.kernel_range = [2 * v + 1 for v in range(3, 11)]  # kernel size ranges from 7 to 21
+        self.kernel_range = [
+            2 * v + 1 for v in range(3, 11)
+        ]  # kernel size ranges from 7 to 21
         # TODO: kernel range is now hard-coded, should be in the configure file
-        self.pulse_tensor = torch.zeros(21, 21).float()  # convolving with pulse tensor brings no blurry effect
+        self.pulse_tensor = torch.zeros(
+            21, 21
+        ).float()  # convolving with pulse tensor brings no blurry effect
         self.pulse_tensor[10, 10] = 1
 
     def __getitem__(self, index):
         if self.file_client is None:
-            self.file_client = FileClient(self.io_backend_opt.pop("type"), **self.io_backend_opt)
+            self.file_client = FileClient(
+                self.io_backend_opt.pop("type"), **self.io_backend_opt
+            )
 
         # -------------------------------- Load gt images -------------------------------- #
         # Shape: (h, w, c); channel order: BGR; image range: [0, 1], float32.
@@ -96,7 +106,9 @@ class RealESRGANDataset(data.Dataset):
                 img_bytes = self.file_client.get(gt_path, "gt")
             except OSError as e:
                 logger = get_root_logger()
-                logger.warning(f"File client error: {e}, remaining retry times: {retry - 1}")
+                logger.warning(
+                    f"File client error: {e}, remaining retry times: {retry - 1}"
+                )
                 # change another file to read
                 index = random.randint(0, self.__len__())
                 gt_path = self.paths[index]
@@ -118,14 +130,16 @@ class RealESRGANDataset(data.Dataset):
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)
             pad_w = max(0, crop_pad_size - w)
-            img_gt = cv2.copyMakeBorder(img_gt, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT_101)
+            img_gt = cv2.copyMakeBorder(
+                img_gt, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT_101
+            )
         # crop
         if img_gt.shape[0] > crop_pad_size or img_gt.shape[1] > crop_pad_size:
             h, w = img_gt.shape[0:2]
             # randomly choose top and left coordinates
             top = random.randint(0, h - crop_pad_size)
             left = random.randint(0, w - crop_pad_size)
-            img_gt = img_gt[top:top + crop_pad_size, left:left + crop_pad_size, ...]
+            img_gt = img_gt[top : top + crop_pad_size, left : left + crop_pad_size, ...]
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
@@ -142,10 +156,12 @@ class RealESRGANDataset(data.Dataset):
                 self.kernel_prob,
                 kernel_size,
                 self.blur_sigma,
-                self.blur_sigma, [-math.pi, math.pi],
+                self.blur_sigma,
+                [-math.pi, math.pi],
                 self.betag_range,
                 self.betap_range,
-                noise_range=None)
+                noise_range=None,
+            )
         # pad kernel
         pad_size = (21 - kernel_size) // 2
         kernel = np.pad(kernel, ((pad_size, pad_size), (pad_size, pad_size)))
@@ -164,10 +180,12 @@ class RealESRGANDataset(data.Dataset):
                 self.kernel_prob2,
                 kernel_size,
                 self.blur_sigma2,
-                self.blur_sigma2, [-math.pi, math.pi],
+                self.blur_sigma2,
+                [-math.pi, math.pi],
                 self.betag_range2,
                 self.betap_range2,
-                noise_range=None)
+                noise_range=None,
+            )
 
         # pad kernel
         pad_size = (21 - kernel_size) // 2
@@ -187,7 +205,13 @@ class RealESRGANDataset(data.Dataset):
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
-        return_d = {"gt": img_gt, "kernel1": kernel, "kernel2": kernel2, "sinc_kernel": sinc_kernel, "gt_path": gt_path}
+        return_d = {
+            "gt": img_gt,
+            "kernel1": kernel,
+            "kernel2": kernel2,
+            "sinc_kernel": sinc_kernel,
+            "gt_path": gt_path,
+        }
         return return_d
 
     def __len__(self):

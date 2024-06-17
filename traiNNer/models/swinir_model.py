@@ -7,7 +7,6 @@ from .sr_model import SRModel
 
 @MODEL_REGISTRY.register()
 class SwinIRModel(SRModel):
-
     def test(self):
         # pad to multiplication of window_size
         window_size = self.opt["network_g"]["window_size"]
@@ -30,4 +29,6 @@ class SwinIRModel(SRModel):
             self.net_g.train()
 
         _, _, h, w = self.output.size()
-        self.output = self.output[:, :, 0:h - mod_pad_h * scale, 0:w - mod_pad_w * scale]
+        self.output = self.output[
+            :, :, 0 : h - mod_pad_h * scale, 0 : w - mod_pad_w * scale
+        ]

@@ -10,9 +10,13 @@ def compact(**kwargs):
 
 @SPANDREL_REGISTRY.register()
 def ultracompact(**kwargs):
-    return SRVGGNetCompact(upscale=Config.get_scale(), num_feat=64, num_conv=8, **kwargs)
+    return SRVGGNetCompact(
+        upscale=Config.get_scale(), num_feat=64, num_conv=8, **kwargs
+    )
 
 
 @SPANDREL_REGISTRY.register()
 def superultracompact(**kwargs):
-    return SRVGGNetCompact(upscale=Config.get_scale(), num_feat=24, num_conv=8, **kwargs)
+    return SRVGGNetCompact(
+        upscale=Config.get_scale(), num_feat=24, num_conv=8, **kwargs
+    )

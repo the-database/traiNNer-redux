@@ -14,9 +14,11 @@ rng = np.random.default_rng()
 class BatchAugment:
     def __init__(self, train_opt):
         self.moa_augs = train_opt.get(
-            "moa_augs", ["none", "mixup", "cutmix", "resizemix"])  # , "cutblur"]
+            "moa_augs", ["none", "mixup", "cutmix", "resizemix"]
+        )  # , "cutblur"]
         self.moa_probs = train_opt.get(
-            "moa_probs", [0.4, 0.084, 0.084, 0.084, 0.348])  # , 1.0]
+            "moa_probs", [0.4, 0.084, 0.084, 0.084, 0.348]
+        )  # , 1.0]
         self.scale = train_opt.get("scale", 4)
         self.debug = train_opt.get("moa_debug", False)
         self.debug_limit = train_opt.get("moa_debug_limit", 0)
@@ -27,11 +29,19 @@ class BatchAugment:
             img1: the target image.
             img2: the input image.
         """
-        return BatchAug(img1, img2, self.scale, self.moa_augs, self.moa_probs, self.debug, self.debug_limit)
+        return BatchAug(
+            img1,
+            img2,
+            self.scale,
+            self.moa_augs,
+            self.moa_probs,
+            self.debug,
+            self.debug_limit,
+        )
 
 
 def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
-    """ Mixture of Batch Augmentations (MoA)
+    """Mixture of Batch Augmentations (MoA)
     Randomly selects single augmentation from the augmentation pool
     and applies it to the batch.
     Note: most of these augmentations require batch size > 1
@@ -52,8 +62,12 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
             i += 1
 
         if i <= debug_limit or debug_limit == 0:
-            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f"{i:06d}_preauglq.png"), padding=0)
-            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f"{i:06d}_preauggt.png"), padding=0)
+            torchvision.utils.save_image(
+                img_lq, os.path.join(moa_debug_path, f"{i:06d}_preauglq.png"), padding=0
+            )
+            torchvision.utils.save_image(
+                img_gt, os.path.join(moa_debug_path, f"{i:06d}_preauggt.png"), padding=0
+            )
 
     if len(augs) != len(probs):
         msg = "Length of 'augmentation' and aug_prob don't match!"
@@ -85,10 +99,16 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
 
     if debug:
         if i <= debug_limit:
-            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_lqfinal.png"),
-                                         padding=0)
-            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_gtfinal.png"),
-                                         padding=0)
+            torchvision.utils.save_image(
+                img_lq,
+                os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_lqfinal.png"),
+                padding=0,
+            )
+            torchvision.utils.save_image(
+                img_gt,
+                os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_gtfinal.png"),
+                padding=0,
+            )
 
     return img_gt, img_lq
 
@@ -136,8 +156,13 @@ def _cutmix(img2, prob=1.0, alpha=1.0):
     r_index = torch.randperm(img2.size(0)).to(img2.device)
 
     return {
-        "r_index": r_index, "ch": ch, "cw": cw,
-        "tcy": tcy, "tcx": tcx, "fcy": fcy, "fcx": fcx,
+        "r_index": r_index,
+        "ch": ch,
+        "cw": cw,
+        "tcy": tcy,
+        "tcx": tcx,
+        "fcy": fcy,
+        "fcx": fcx,
     }
 
 
@@ -155,7 +180,10 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
         alpha (float): The given maximum mixing ratio.
     """
 
-    if img_gt.size()[3] != img_lq.size()[3] * scale or img_gt.size()[2] != img_lq.size()[2] * scale:
+    if (
+        img_gt.size()[3] != img_lq.size()[3] * scale
+        or img_gt.size()[2] != img_lq.size()[2] * scale
+    ):
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
@@ -195,8 +223,12 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
     lq_bbox = tuple(bbi // 4 for bbi in gt_bbox)
     lq_bbx1, lq_bby1, lq_bbx2, lq_bby2 = lq_bbox
 
-    img_gt[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2] = img_gt_[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2]
-    img_lq[:, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2] = img_lq_[:, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2]
+    img_gt[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2] = img_gt_[
+        :, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2
+    ]
+    img_lq[:, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2] = img_lq_[
+        :, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2
+    ]
 
     return img_gt, img_lq
 
@@ -214,7 +246,10 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
         scope (float): The given maximum mixing ratio.
     """
 
-    if img_gt.size()[3] != img_lq.size()[3] * scale or img_gt.size()[2] != img_lq.size()[2] * scale:
+    if (
+        img_gt.size()[3] != img_lq.size()[3] * scale
+        or img_gt.size()[2] != img_lq.size()[2] * scale
+    ):
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
@@ -258,10 +293,16 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
 
     # resize
     img_gt_resize = F.interpolate(
-        img_gt_resize, (gt_bby2 - gt_bby1, gt_bbx2 - gt_bbx1), mode="bicubic", antialias=True
+        img_gt_resize,
+        (gt_bby2 - gt_bby1, gt_bbx2 - gt_bbx1),
+        mode="bicubic",
+        antialias=True,
     )
     img_lq_resize = F.interpolate(
-        img_lq_resize, (lq_bby2 - lq_bby1, lq_bbx2 - lq_bbx1), mode="bicubic", antialias=True
+        img_lq_resize,
+        (lq_bby2 - lq_bby1, lq_bbx2 - lq_bbx1),
+        mode="bicubic",
+        antialias=True,
     )
 
     # mix
@@ -322,7 +363,10 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
             Assumes same size.
         alpha (float): The given max mixing ratio.
     """
-    if img_gt.size()[3] != img_lq.size()[3] * scale or img_gt.size()[2] != img_lq.size()[2] * scale:
+    if (
+        img_gt.size()[3] != img_lq.size()[3] * scale
+        or img_gt.size()[2] != img_lq.size()[2] * scale
+    ):
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
@@ -350,19 +394,20 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
     bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
 
     # cutblur inside
-    img_lq[:, :, bbx1 // scale:bbx2 // scale, bby1 // scale:bby2 // scale] = F.interpolate(
-        img_gt[:, :, bbx1:bbx2, bby1:bby2], scale_factor=1 / scale,
-        mode="bicubic", antialias=True)
+    img_lq[:, :, bbx1 // scale : bbx2 // scale, bby1 // scale : bby2 // scale] = (
+        F.interpolate(
+            img_gt[:, :, bbx1:bbx2, bby1:bby2],
+            scale_factor=1 / scale,
+            mode="bicubic",
+            antialias=True,
+        )
+    )
 
     return img_gt, img_lq
 
 
 def downup(img_gt, img_lq, scope=(0.5, 0.9)):
-    sampling_opts = [
-        ("bicubic", True),
-        ("bilinear", True),
-        ("nearest-exact", False)
-    ]
+    sampling_opts = [("bicubic", True), ("bilinear", True), ("nearest-exact", False)]
 
     down_sample = random.choice(sampling_opts)
     up_sample = random.choice(sampling_opts)
@@ -382,21 +427,25 @@ def downup(img_gt, img_lq, scope=(0.5, 0.9)):
     img_lq_base_size = img_lq.shape
 
     # downscale
-    img_lq = F.interpolate(img_lq, size=(list(np.round(np.array(img_lq_base_size[2:]) * scale_factor).astype(int))),
-                           mode=down_sample[0], antialias=down_sample[1])
+    img_lq = F.interpolate(
+        img_lq,
+        size=(
+            list(np.round(np.array(img_lq_base_size[2:]) * scale_factor).astype(int))
+        ),
+        mode=down_sample[0],
+        antialias=down_sample[1],
+    )
 
     # upscale back to original res
-    img_lq = F.interpolate(img_lq, size=img_lq_base_size[2:], mode=up_sample[0], antialias=up_sample[1])
+    img_lq = F.interpolate(
+        img_lq, size=img_lq_base_size[2:], mode=up_sample[0], antialias=up_sample[1]
+    )
 
     return img_gt, img_lq
 
 
 def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
-    sampling_opts = [
-        ("bicubic", True),
-        ("bilinear", True),
-        ("nearest-exact", False)
-    ]
+    sampling_opts = [("bicubic", True), ("bilinear", True), ("nearest-exact", False)]
 
     def rand_bbox(size, scale, lam):
         """generate random box by lam (scale)"""
@@ -436,17 +485,27 @@ def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
     img_gt = img_gt[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2]
     img_lq = img_lq[:, :, lq_bbx1:lq_bbx2, lq_bby1:lq_bby2]
 
-    assert img_gt.shape[2] == img_gt.shape[3], f"Expected crop to be square, got shape {img_gt}"
+    assert (
+        img_gt.shape[2] == img_gt.shape[3]
+    ), f"Expected crop to be square, got shape {img_gt}"
 
     gt_up_sample = sampling_opts[0]  # bicubic
     lq_up_sample = random.choice(sampling_opts)
 
     # upscale cropped HQ to original size
-    img_gt = F.interpolate(img_gt, size=img_gt_base_size[2:],
-                           mode=gt_up_sample[0], antialias=gt_up_sample[1])
+    img_gt = F.interpolate(
+        img_gt,
+        size=img_gt_base_size[2:],
+        mode=gt_up_sample[0],
+        antialias=gt_up_sample[1],
+    )
 
     # upscale cropped LQ to original size
-    img_lq = F.interpolate(img_lq, size=img_lq_base_size[2:],
-                           mode=lq_up_sample[0], antialias=lq_up_sample[1])
+    img_lq = F.interpolate(
+        img_lq,
+        size=img_lq_base_size[2:],
+        mode=lq_up_sample[0],
+        antialias=lq_up_sample[1],
+    )
 
     return img_gt, img_lq

@@ -39,7 +39,9 @@ class L1Loss(nn.Module):
     def __init__(self, loss_weight=1.0, reduction="mean"):
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
-            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -51,7 +53,9 @@ class L1Loss(nn.Module):
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
-        return self.loss_weight * l1_loss(pred, target, weight, reduction=self.reduction)
+        return self.loss_weight * l1_loss(
+            pred, target, weight, reduction=self.reduction
+        )
 
 
 @LOSS_REGISTRY.register()
@@ -67,7 +71,9 @@ class MSELoss(nn.Module):
     def __init__(self, loss_weight=1.0, reduction="mean"):
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
-            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -79,7 +85,9 @@ class MSELoss(nn.Module):
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
-        return self.loss_weight * mse_loss(pred, target, weight, reduction=self.reduction)
+        return self.loss_weight * mse_loss(
+            pred, target, weight, reduction=self.reduction
+        )
 
 
 @LOSS_REGISTRY.register()
@@ -100,7 +108,9 @@ class CharbonnierLoss(nn.Module):
     def __init__(self, loss_weight=1.0, reduction="mean", eps=1e-12):
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
-            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -113,7 +123,9 @@ class CharbonnierLoss(nn.Module):
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
-        return self.loss_weight * charbonnier_loss(pred, target, weight, eps=self.eps, reduction=self.reduction)
+        return self.loss_weight * charbonnier_loss(
+            pred, target, weight, eps=self.eps, reduction=self.reduction
+        )
 
 
 @LOSS_REGISTRY.register()
@@ -126,7 +138,9 @@ class WeightedTVLoss(L1Loss):
 
     def __init__(self, loss_weight=1.0, reduction="mean"):
         if reduction not in ["mean", "sum"]:
-            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: mean | sum")
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. Supported ones are: mean | sum"
+            )
         super().__init__(loss_weight=loss_weight, reduction=reduction)
 
     def forward(self, pred, weight=None):
@@ -171,7 +185,9 @@ class ColorLoss(nn.Module):
         target_uv = target_yuv[:, 1:, :, :]
         input_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
         target_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
-        return self.criterion(input_uv_downscale, target_uv_downscale) * self.loss_weight
+        return (
+            self.criterion(input_uv_downscale, target_uv_downscale) * self.loss_weight
+        )
 
 
 @LOSS_REGISTRY.register()
@@ -202,9 +218,11 @@ class BicubicLoss(nn.Module):
         super().__init__()
         self.scale = scale
         self.ds_f = lambda x: torch.nn.Sequential(
-            v2.Resize([x.shape[2] // self.scale, x.shape[3] // self.scale],
-                      InterpolationMode.BICUBIC),
-            v2.GaussianBlur([5, 5], [.5, .5])
+            v2.Resize(
+                [x.shape[2] // self.scale, x.shape[3] // self.scale],
+                InterpolationMode.BICUBIC,
+            ),
+            v2.GaussianBlur([5, 5], [0.5, 0.5]),
         )(x)
         self.loss_weight = loss_weight
         self.criterion_type = criterion
@@ -264,7 +282,7 @@ class HSLuvLoss(nn.Module):
         x_hsluv = rgb_to_hsluv(x)
         y_hsluv = rgb_to_hsluv(y)
 
-        eps = .1
+        eps = 0.1
 
         # hue: 0 to 360. normalize
         x_hue = x_hsluv[:, 0, :, :] / 360
@@ -285,11 +303,16 @@ class HSLuvLoss(nn.Module):
         hue_diff = torch.where((x_saturation < eps) & (y_saturation < eps), 0, hue_diff)
         # hue diff between grayscale and non-grayscale is maximum, scaled by max saturation
         hue_diff = torch.where(
-            ((x_saturation < eps) & (y_saturation > eps)) | ((x_saturation > eps) & (y_saturation < eps)),
-            torch.max(x_saturation, y_saturation), hue_diff)
+            ((x_saturation < eps) & (y_saturation > eps))
+            | ((x_saturation > eps) & (y_saturation < eps)),
+            torch.max(x_saturation, y_saturation),
+            hue_diff,
+        )
         # hue diff between black or white is 0
         hue_diff = torch.where((x_lightness < eps) & (y_lightness < eps), 0, hue_diff)
-        hue_diff = torch.where((x_lightness > 1 - eps) & (y_lightness > eps - 1), 0, hue_diff)
+        hue_diff = torch.where(
+            (x_lightness > 1 - eps) & (y_lightness > eps - 1), 0, hue_diff
+        )
 
         hue_loss = torch.mean(hue_diff) * 1 / 3
         saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3

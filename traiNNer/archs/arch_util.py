@@ -107,11 +107,15 @@ class Upsample(nn.Sequential):
             m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
             m.append(nn.PixelShuffle(3))
         else:
-            raise ValueError(f"scale {scale} is not supported. Supported scales: 2^n and 3.")
+            raise ValueError(
+                f"scale {scale} is not supported. Supported scales: 2^n and 3."
+            )
         super().__init__(*m)
 
 
-def flow_warp(x, flow, interp_mode="bilinear", padding_mode="zeros", align_corners=True):
+def flow_warp(
+    x, flow, interp_mode="bilinear", padding_mode="zeros", align_corners=True
+):
     """Warp an image or feature map with optical flow.
 
     Args:
@@ -130,7 +134,9 @@ def flow_warp(x, flow, interp_mode="bilinear", padding_mode="zeros", align_corne
     assert x.size()[-2:] == flow.size()[1:3]
     _, _, h, w = x.size()
     # create mesh grid
-    grid_y, grid_x = torch.meshgrid(torch.arange(0, h).type_as(x), torch.arange(0, w).type_as(x))
+    grid_y, grid_x = torch.meshgrid(
+        torch.arange(0, h).type_as(x), torch.arange(0, w).type_as(x)
+    )
     grid = torch.stack((grid_x, grid_y), 2).float()  # W(x), H(y), 2
     grid.requires_grad = False
 
@@ -139,7 +145,13 @@ def flow_warp(x, flow, interp_mode="bilinear", padding_mode="zeros", align_corne
     vgrid_x = 2.0 * vgrid[:, :, :, 0] / max(w - 1, 1) - 1.0
     vgrid_y = 2.0 * vgrid[:, :, :, 1] / max(h - 1, 1) - 1.0
     vgrid_scaled = torch.stack((vgrid_x, vgrid_y), dim=3)
-    output = F.grid_sample(x, vgrid_scaled, mode=interp_mode, padding_mode=padding_mode, align_corners=align_corners)
+    output = F.grid_sample(
+        x,
+        vgrid_scaled,
+        mode=interp_mode,
+        padding_mode=padding_mode,
+        align_corners=align_corners,
+    )
 
     # TODO, what if align_corners=False
     return output
@@ -171,7 +183,9 @@ def resize_flow(flow, size_type, sizes, interp_mode="bilinear", align_corners=Fa
     elif size_type == "shape":
         output_h, output_w = sizes[0], sizes[1]
     else:
-        raise ValueError(f"Size type should be ratio or shape, but got type {size_type}.")
+        raise ValueError(
+            f"Size type should be ratio or shape, but got type {size_type}."
+        )
 
     input_flow = flow.clone()
     ratio_h = output_h / flow_h
@@ -179,13 +193,17 @@ def resize_flow(flow, size_type, sizes, interp_mode="bilinear", align_corners=Fa
     input_flow[:, 0, :, :] *= ratio_w
     input_flow[:, 1, :, :] *= ratio_h
     resized_flow = F.interpolate(
-        input=input_flow, size=(output_h, output_w), mode=interp_mode, align_corners=align_corners)
+        input=input_flow,
+        size=(output_h, output_w),
+        mode=interp_mode,
+        align_corners=align_corners,
+    )
     return resized_flow
 
 
 # TODO: may write a cpp file
 def pixel_unshuffle(x, scale):
-    """ Pixel unshuffle.
+    """Pixel unshuffle.
 
     Args:
         x (Tensor): Input feature with shape (b, c, hh, hw).
@@ -202,8 +220,9 @@ def pixel_unshuffle(x, scale):
     x_view = x.view(b, c, h, scale, w, scale)
     return x_view.permute(0, 1, 3, 5, 2, 4).reshape(b, out_channel, h, w)
 
+
 class DepthToSpace(nn.Module):
-    """ PixelShuffle / DepthToSpace / unsqueeze2d.
+    """PixelShuffle / DepthToSpace / unsqueeze2d.
     Rearranges data from depth into blocks of spatial data. This is
     the reverse transformation of SpaceToDepth. More specifically,
     this op outputs a copy of the input tensor where values from the
@@ -215,7 +234,8 @@ class DepthToSpace(nn.Module):
             data is moved. In SR its equivalent to the scale factor.
         form: select tensorflow ('tf') or pytorch ('pt') style shuffle.
     """
-    def __init__(self, block_size:int=2, form:str="pt"):
+
+    def __init__(self, block_size: int = 2, form: str = "pt"):
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -229,8 +249,8 @@ class DepthToSpace(nn.Module):
         return f"block_size={self.bs}"
 
 
-def depth_to_space(x, bs:int=2):
-    """ Pixel shuffle (PyTorch).
+def depth_to_space(x, bs: int = 2):
+    """Pixel shuffle (PyTorch).
     Equivalent to torch.nn.PixelShuffle().
     Args:
         x (Tensor): Input tensor (b, c, h, w).
@@ -243,9 +263,8 @@ def depth_to_space(x, bs:int=2):
         return x
 
     b, c, h, w = x.size()
-    if c % (bs ** 2) != 0:
-        raise ValueError("The tensor channels must be divisible by "
-                         "(bs ** 2).")
+    if c % (bs**2) != 0:
+        raise ValueError("The tensor channels must be divisible by " "(bs ** 2).")
     new_d = -1  # c // (bs ** 2)
     new_h = h * bs
     new_w = w * bs
@@ -258,8 +277,8 @@ def depth_to_space(x, bs:int=2):
     return x.view(b, new_d, new_h, new_w)
 
 
-def depth_to_space_tf(x, bs:int=2):
-    """ Pixel shuffle (TensorFlow).
+def depth_to_space_tf(x, bs: int = 2):
+    """Pixel shuffle (TensorFlow).
     Equivalent to:
         https://www.tensorflow.org/api_docs/python/tf/nn/depth_to_space
     Args:
@@ -273,9 +292,8 @@ def depth_to_space_tf(x, bs:int=2):
         return x
 
     b, c, h, w = x.size()
-    if c % (bs ** 2) != 0:
-        raise ValueError("The tensor channels must be divisible by "
-                         "(bs ** 2).")
+    if c % (bs**2) != 0:
+        raise ValueError("The tensor channels must be divisible by " "(bs ** 2).")
     new_d = -1  # c // (bs ** 2)
     new_h = h * bs
     new_w = w * bs
@@ -289,7 +307,7 @@ def depth_to_space_tf(x, bs:int=2):
 
 
 class SpaceToDepth(nn.Module):
-    """ PixelUnshuffle / SpaceToDepth / squeeze2d.
+    """PixelUnshuffle / SpaceToDepth / squeeze2d.
     Rearranges blocks of spatial data, into depth. This operation
     outputs a copy of the input tensor where values from the height
     and width dimensions are moved to the depth dimension.
@@ -301,7 +319,8 @@ class SpaceToDepth(nn.Module):
             to the downscale factor.
         form: select tensorflow ('tf') or pytorch ('pt') style unshuffle.
     """
-    def __init__(self, block_size:int=2, form:str="pt"):
+
+    def __init__(self, block_size: int = 2, form: str = "pt"):
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -315,8 +334,8 @@ class SpaceToDepth(nn.Module):
         return f"block_size={self.bs}"
 
 
-def space_to_depth(x, bs:int=2):
-    """ Pixel unshuffle (PyTorch).
+def space_to_depth(x, bs: int = 2):
+    """Pixel unshuffle (PyTorch).
     This is the inverse of torch.nn.PixelShuffle().
     Equivalent to nn.PixelUnshuffle().
     Args:
@@ -343,8 +362,8 @@ def space_to_depth(x, bs:int=2):
     return x.view(b, new_d, new_h, new_w)
 
 
-def space_to_depth_tf(x, bs:int=2):
-    """ Pixel unshuffle (TensorFlow).
+def space_to_depth_tf(x, bs: int = 2):
+    """Pixel unshuffle (TensorFlow).
     Equivalent to:
         https://www.tensorflow.org/api_docs/python/tf/nn/space_to_depth
     Args:
@@ -370,6 +389,7 @@ def space_to_depth_tf(x, bs:int=2):
     # (b, c*bs^2, h//bs, w//bs)
     return x.view(b, new_d, new_h, new_w)
 
+
 class DCNv2Pack(ModulatedDeformConvPack):
     """Modulated deformable conv for deformable alignment.
 
@@ -392,11 +412,29 @@ class DCNv2Pack(ModulatedDeformConvPack):
             logger.warning(f"Offset abs mean is {offset_absmean}, larger than 50.")
 
         if LooseVersion(torchvision.__version__) >= LooseVersion("0.9.0"):
-            return torchvision.ops.deform_conv2d(x, offset, self.weight, self.bias, self.stride, self.padding,
-                                                 self.dilation, mask)
+            return torchvision.ops.deform_conv2d(
+                x,
+                offset,
+                self.weight,
+                self.bias,
+                self.stride,
+                self.padding,
+                self.dilation,
+                mask,
+            )
         else:
-            return modulated_deform_conv(x, offset, mask, self.weight, self.bias, self.stride, self.padding,
-                                         self.dilation, self.groups, self.deformable_groups)
+            return modulated_deform_conv(
+                x,
+                offset,
+                mask,
+                self.weight,
+                self.bias,
+                self.stride,
+                self.padding,
+                self.dilation,
+                self.groups,
+                self.deformable_groups,
+            )
 
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
@@ -405,13 +443,14 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     # Method based on https://people.sc.fsu.edu/~jburkardt/presentations/truncated_normal.pdf
     def norm_cdf(x):
         # Computes standard normal cumulative distribution function
-        return (1. + math.erf(x / math.sqrt(2.))) / 2.
+        return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
 
     if (mean < a - 2 * std) or (mean > b + 2 * std):
         warnings.warn(
             "mean is more than 2 std from [a, b] in nn.init.trunc_normal_. "
             "The distribution of values may be incorrect.",
-            stacklevel=2)
+            stacklevel=2,
+        )
 
     with torch.no_grad():
         # Values are generated by using a truncated uniform distribution and
@@ -429,7 +468,7 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
         tensor.erfinv_()
 
         # Transform to proper mean, std
-        tensor.mul_(std * math.sqrt(2.))
+        tensor.mul_(std * math.sqrt(2.0))
         tensor.add_(mean)
 
         # Clamp to ensure it's in the proper range
@@ -437,7 +476,7 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
         return tensor
 
 
-def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
+def trunc_normal_(tensor, mean=0.0, std=1.0, a=-2.0, b=2.0):
     r"""Fills the input Tensor with values drawn from a truncated
     normal distribution.
 
@@ -465,7 +504,6 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
 
 # From PyTorch
 def _ntuple(n):
-
     def parse(x):
         if isinstance(x, collections.abc.Iterable):
             return x

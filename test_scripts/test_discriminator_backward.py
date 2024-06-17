@@ -6,7 +6,6 @@ from torch import nn
 
 
 class ToyDiscriminator(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.conv0 = nn.Conv2d(3, 4, 3, 1, 1, bias=True)

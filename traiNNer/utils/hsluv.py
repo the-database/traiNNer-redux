@@ -4,13 +4,17 @@ modified to support float32 precision.
 
 import torch
 
-_m = [[3.240969941904521, -1.537383177570093, -0.498610760293],
-      [-0.96924363628087, 1.87596750150772, 0.041555057407175],
-      [0.055630079696993, -0.20397695888897, 1.056971514242878]]
+_m = [
+    [3.240969941904521, -1.537383177570093, -0.498610760293],
+    [-0.96924363628087, 1.87596750150772, 0.041555057407175],
+    [0.055630079696993, -0.20397695888897, 1.056971514242878],
+]
 
-_m_inv = [[0.41239079926595, 0.35758433938387, 0.18048078840183],
-          [0.21263900587151, 0.71516867876775, 0.072192315360733],
-          [0.019330818715591, 0.11919477979462, 0.95053215224966]]
+_m_inv = [
+    [0.41239079926595, 0.35758433938387, 0.18048078840183],
+    [0.21263900587151, 0.71516867876775, 0.072192315360733],
+    [0.019330818715591, 0.11919477979462, 0.95053215224966],
+]
 
 _ref_y = 1.0
 _ref_u = 0.19783000664283
@@ -20,7 +24,9 @@ _epsilon = 0.0088564516
 
 
 def _y_to_l(y):
-    return torch.where(y > _epsilon, 116 * torch.pow(y / _ref_y, 1 / 3) - 16, y / _ref_y * _kappa)
+    return torch.where(
+        y > _epsilon, 116 * torch.pow(y / _ref_y, 1 / 3) - 16, y / _ref_y * _kappa
+    )
 
 
 def hsluv_to_lch(h, s, l):
@@ -41,7 +47,7 @@ def lch_to_hsluv(l, c, h):
 
 
 def _length_of_ray_until_intersect(theta, line):
-    denominator = (torch.sin(theta) - line["slope"] * torch.cos(theta))
+    denominator = torch.sin(theta) - line["slope"] * torch.cos(theta)
     clamped_denominator = torch.where(torch.abs(denominator) < 1e-5, 1e-12, denominator)
     # assert not torch.isnan(line['intercept'] / clamped_denominator).any()
     return line["intercept"] / clamped_denominator
@@ -56,7 +62,9 @@ def _get_bounds(l):
         m1, m2, m3 = mt[c]
         for t in range(2):
             top1 = (284517 * m1 - 94839 * m3) * sub2
-            top2 = (838422 * m3 + 769860 * m2 + 731718 * m1) * l * sub2 - (769860 * t) * l
+            top2 = (838422 * m3 + 769860 * m2 + 731718 * m1) * l * sub2 - (
+                769860 * t
+            ) * l
             bottom = (632260 * m3 - 126452 * m2) * sub2 + 126452 * t
             slope = top1 / bottom
             intercept = top2 / bottom
@@ -78,8 +86,9 @@ def _max_chroma_for_lh(l, h):
 
 
 def rgb_to_xyz(rgb):
-    rgbl = torch.where(rgb <= 0.04045, rgb / 12.92,
-                       torch.pow((rgb + 0.055) / 1.055, 2.4))
+    rgbl = torch.where(
+        rgb <= 0.04045, rgb / 12.92, torch.pow((rgb + 0.055) / 1.055, 2.4)
+    )
     xyz = torch.matmul(rgbl, torch.tensor(_m_inv).to(rgbl).transpose(0, 1))
     return xyz
 
@@ -118,7 +127,7 @@ def luv_to_lch(luv):
     v_eps = torch.where(v >= 0, v_eps, -v_eps)
     clamped_v = torch.where(v == 0, v_eps, v)
 
-    c = torch.sqrt(clamped_u ** 2 + clamped_v ** 2)
+    c = torch.sqrt(clamped_u**2 + clamped_v**2)
     h = torch.atan2(clamped_v, clamped_u) * 180 / torch.pi
     h = torch.where(h < 0, h + 360, h)
     # max c among valid grayscale in float32: 6.69640576234087347984e-05

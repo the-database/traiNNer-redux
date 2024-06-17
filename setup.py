@@ -16,7 +16,6 @@ def readme():
 
 
 def get_git_hash():
-
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
         env = {}
@@ -66,7 +65,9 @@ version_info = ({})
     sha = get_hash()
     with open("VERSION") as f:
         SHORT_VERSION = f.read().strip()
-    VERSION_INFO = ", ".join([x if x.isdigit() else f'"{x}"' for x in SHORT_VERSION.split(".")])
+    VERSION_INFO = ", ".join(
+        [x if x.isdigit() else f'"{x}"' for x in SHORT_VERSION.split(".")]
+    )
 
     version_file_str = content.format(time.asctime(), SHORT_VERSION, sha, VERSION_INFO)
     with open(version_file, "w") as f:
@@ -102,7 +103,8 @@ def make_cuda_ext(name, module, sources, sources_cuda=None):
         name=f"{module}.{name}",
         sources=[os.path.join(*module.split("."), p) for p in sources],
         define_macros=define_macros,
-        extra_compile_args=extra_compile_args)
+        extra_compile_args=extra_compile_args,
+    )
 
 
 def get_requirements(filename="requirements.txt"):
@@ -123,24 +125,32 @@ if __name__ == "__main__":
                 CUDAExtension,
             )
         except ImportError:
-            raise ImportError("Unable to import torch - torch is needed to build cuda extensions")
+            raise ImportError(
+                "Unable to import torch - torch is needed to build cuda extensions"
+            )
 
         ext_modules = [
             make_cuda_ext(
                 name="deform_conv_ext",
                 module="traiNNer.ops.dcn",
                 sources=["src/deform_conv_ext.cpp"],
-                sources_cuda=["src/deform_conv_cuda.cpp", "src/deform_conv_cuda_kernel.cu"]),
+                sources_cuda=[
+                    "src/deform_conv_cuda.cpp",
+                    "src/deform_conv_cuda_kernel.cu",
+                ],
+            ),
             make_cuda_ext(
                 name="fused_act_ext",
                 module="traiNNer.ops.fused_act",
                 sources=["src/fused_bias_act.cpp"],
-                sources_cuda=["src/fused_bias_act_kernel.cu"]),
+                sources_cuda=["src/fused_bias_act_kernel.cu"],
+            ),
             make_cuda_ext(
                 name="upfirdn2d_ext",
                 module="traiNNer.ops.upfirdn2d",
                 sources=["src/upfirdn2d.cpp"],
-                sources_cuda=["src/upfirdn2d_kernel.cu"]),
+                sources_cuda=["src/upfirdn2d_kernel.cu"],
+            ),
         ]
         setup_kwargs = {"cmdclass": {"build_ext": BuildExtension}}
     else:
@@ -159,7 +169,16 @@ if __name__ == "__main__":
         keywords="computer vision, restoration, super resolution",
         url="https://github.com/xinntao/BasicSR",
         include_package_data=True,
-        packages=find_packages(exclude=("options", "datasets", "experiments", "results", "tb_logger", "wandb")),
+        packages=find_packages(
+            exclude=(
+                "options",
+                "datasets",
+                "experiments",
+                "results",
+                "tb_logger",
+                "wandb",
+            )
+        ),
         classifiers=[
             "Development Status :: 4 - Beta",
             "License :: OSI Approved :: Apache Software License",
@@ -173,4 +192,5 @@ if __name__ == "__main__":
         install_requires=get_requirements(),
         ext_modules=ext_modules,
         zip_safe=False,
-        **setup_kwargs)
+        **setup_kwargs,
+    )

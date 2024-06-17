@@ -7,7 +7,9 @@ import numpy as np
 from traiNNer.utils.lmdb_util import LmdbMaker
 
 
-def convert_celeba_tfrecords(tf_file, log_resolution, save_root, save_type="img", compress_level=1):
+def convert_celeba_tfrecords(
+    tf_file, log_resolution, save_root, save_type="img", compress_level=1
+):
     """Convert CelebA tfrecords to images or lmdb files.
 
     Args:
@@ -55,7 +57,9 @@ def convert_celeba_tfrecords(tf_file, log_resolution, save_root, save_type="img"
             if save_type == "img":
                 cv2.imwrite(os.path.join(save_path, f"{idx:08d}.png"), img)
             elif save_type == "lmdb":
-                _, img_byte = cv2.imencode(".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level])
+                _, img_byte = cv2.imencode(
+                    ".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level]
+                )
                 key = f"{idx:08d}/r{log_resolution:02d}"
                 lmdb_maker.put(img_byte, key, (h, w, c))
 
@@ -66,7 +70,9 @@ def convert_celeba_tfrecords(tf_file, log_resolution, save_root, save_type="img"
         lmdb_maker.close()
 
 
-def convert_ffhq_tfrecords(tf_file, log_resolution, save_root, save_type="img", compress_level=1):
+def convert_ffhq_tfrecords(
+    tf_file, log_resolution, save_root, save_type="img", compress_level=1
+):
     """Convert FFHQ tfrecords to images or lmdb files.
 
     Args:
@@ -105,7 +111,9 @@ def convert_ffhq_tfrecords(tf_file, log_resolution, save_root, save_type="img", 
             if save_type == "img":
                 cv2.imwrite(os.path.join(save_path, f"{idx:08d}.png"), img)
             elif save_type == "lmdb":
-                _, img_byte = cv2.imencode(".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level])
+                _, img_byte = cv2.imencode(
+                    ".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level]
+                )
                 key = f"{idx:08d}/r{log_resolution:02d}"
                 lmdb_maker.put(img_byte, key, (h, w, c))
 
@@ -116,7 +124,9 @@ def convert_ffhq_tfrecords(tf_file, log_resolution, save_root, save_type="img", 
         lmdb_maker.close()
 
 
-def make_ffhq_lmdb_from_imgs(folder_path, log_resolution, save_root, save_type="lmdb", compress_level=1):
+def make_ffhq_lmdb_from_imgs(
+    folder_path, log_resolution, save_root, save_type="lmdb", compress_level=1
+):
     """Make FFHQ lmdb from images.
 
     Args:
@@ -142,7 +152,9 @@ def make_ffhq_lmdb_from_imgs(folder_path, log_resolution, save_root, save_type="
         h, w, c = img.shape
 
         if save_type == "lmdb":
-            _, img_byte = cv2.imencode(".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level])
+            _, img_byte = cv2.imencode(
+                ".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level]
+            )
             key = f"{idx:08d}/r{log_resolution:02d}"
             lmdb_maker.put(img_byte, key, (h, w, c))
 
@@ -159,7 +171,11 @@ if __name__ == "__main__":
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--dataset", type=str, default="ffhq", help="Dataset name. Options: 'ffhq' | 'celeba'. Default: 'ffhq'.")
+        "--dataset",
+        type=str,
+        default="ffhq",
+        help="Dataset name. Options: 'ffhq' | 'celeba'. Default: 'ffhq'.",
+    )
     parser.add_argument(
         "--tf_file",
         type=str,
@@ -169,13 +185,26 @@ if __name__ == "__main__":
             "Put quotes around the wildcard argument to prevent the shell "
             "from expanding it."
             "Example: 'datasets/celeba/celeba_tfrecords/validation/validation-r08-s-*-of-*.tfrecords'"
-        ))
-    parser.add_argument("--log_resolution", type=int, default=10, help="Log scale of resolution.")
-    parser.add_argument("--save_root", type=str, default="datasets/ffhq/", help="Save root path.")
+        ),
+    )
     parser.add_argument(
-        "--save_type", type=str, default="img", help="Save type. Options: 'img' | 'lmdb'. Default: 'img'.")
+        "--log_resolution", type=int, default=10, help="Log scale of resolution."
+    )
     parser.add_argument(
-        "--compress_level", type=int, default=1, help="Compress level when encoding images. Default: 1.")
+        "--save_root", type=str, default="datasets/ffhq/", help="Save root path."
+    )
+    parser.add_argument(
+        "--save_type",
+        type=str,
+        default="img",
+        help="Save type. Options: 'img' | 'lmdb'. Default: 'img'.",
+    )
+    parser.add_argument(
+        "--compress_level",
+        type=int,
+        default=1,
+        help="Compress level when encoding images. Default: 1.",
+    )
     args = parser.parse_args()
 
     try:
@@ -189,11 +218,13 @@ if __name__ == "__main__":
             args.log_resolution,
             args.save_root,
             save_type=args.save_type,
-            compress_level=args.compress_level)
+            compress_level=args.compress_level,
+        )
     else:
         convert_celeba_tfrecords(
             args.tf_file,
             args.log_resolution,
             args.save_root,
             save_type=args.save_type,
-            compress_level=args.compress_level)
+            compress_level=args.compress_level,
+        )

@@ -17,11 +17,18 @@ def calculate_fid_folder():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("folder", type=str, help="Path to the folder.")
-    parser.add_argument("--fid_stats", type=str, help="Path to the dataset fid statistics.")
+    parser.add_argument(
+        "--fid_stats", type=str, help="Path to the dataset fid statistics."
+    )
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--num_sample", type=int, default=50000)
     parser.add_argument("--num_workers", type=int, default=4)
-    parser.add_argument("--backend", type=str, default="disk", help="io backend for dataset. Option: disk, lmdb")
+    parser.add_argument(
+        "--backend",
+        type=str,
+        default="disk",
+        help="io backend for dataset. Option: disk, lmdb",
+    )
     args = parser.parse_args()
 
     # inception model
@@ -44,7 +51,8 @@ def calculate_fid_folder():
         shuffle=False,
         num_workers=args.num_workers,
         sampler=None,
-        drop_last=False)
+        drop_last=False,
+    )
     args.num_sample = min(args.num_sample, len(dataset))
     total_batch = math.ceil(args.num_sample / args.batch_size)
 
@@ -55,11 +63,15 @@ def calculate_fid_folder():
             else:
                 yield data["lq"]
 
-    features = extract_inception_features(data_generator(data_loader, total_batch), inception, total_batch, device)
+    features = extract_inception_features(
+        data_generator(data_loader, total_batch), inception, total_batch, device
+    )
     features = features.numpy()
     total_len = features.shape[0]
-    features = features[:args.num_sample]
-    print(f"Extracted {total_len} features, use the first {features.shape[0]} features to calculate stats.")
+    features = features[: args.num_sample]
+    print(
+        f"Extracted {total_len} features, use the first {features.shape[0]} features to calculate stats."
+    )
 
     sample_mean = np.mean(features, 0)
     sample_cov = np.cov(features, rowvar=False)

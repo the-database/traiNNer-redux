@@ -31,7 +31,9 @@ class MSRResNet(nn.Module):
 
         # upsampling
         if self.upscale in [2, 3]:
-            self.upconv1 = nn.Conv2d(num_feat, num_feat * self.upscale * self.upscale, 3, 1, 1)
+            self.upconv1 = nn.Conv2d(
+                num_feat, num_feat * self.upscale * self.upscale, 3, 1, 1
+            )
             self.pixel_shuffle = nn.PixelShuffle(self.upscale)
         elif self.upscale == 4:
             self.upconv1 = nn.Conv2d(num_feat, num_feat * 4, 3, 1, 1)
@@ -45,7 +47,9 @@ class MSRResNet(nn.Module):
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
         # initialization
-        default_init_weights([self.conv_first, self.upconv1, self.conv_hr, self.conv_last], 0.1)
+        default_init_weights(
+            [self.conv_first, self.upconv1, self.conv_hr, self.conv_last], 0.1
+        )
         if self.upscale == 4:
             default_init_weights(self.upconv2, 0.1)
 
@@ -60,6 +64,8 @@ class MSRResNet(nn.Module):
             out = self.lrelu(self.pixel_shuffle(self.upconv1(out)))
 
         out = self.conv_last(self.lrelu(self.conv_hr(out)))
-        base = F.interpolate(x, scale_factor=self.upscale, mode="bilinear", align_corners=False)
+        base = F.interpolate(
+            x, scale_factor=self.upscale, mode="bilinear", align_corners=False
+        )
         out += base
         return out

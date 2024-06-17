@@ -17,8 +17,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_path",
         type=str,
-        default=
-        "experiments/pretrained_models/RIDNet/RIDNet.pth")
+        default="experiments/pretrained_models/RIDNet/RIDNet.pth",
+    )
     args = parser.parse_args()
     if args.test_path.endswith("/"):  # solve when path ends with /
         args.test_path = args.test_path[:-1]
@@ -47,5 +47,7 @@ if __name__ == "__main__":
             output = net(img)
         # save image
         output = tensor2img(output, rgb2bgr=True, out_type=np.uint8, min_max=(0, 255))
-        save_img_path = os.path.join(result_root, f"{img_name}_x{args.noise_g}_RIDNet.png")
+        save_img_path = os.path.join(
+            result_root, f"{img_name}_x{args.noise_g}_RIDNet.png"
+        )
         cv2.imwrite(save_img_path, output)

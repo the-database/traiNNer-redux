@@ -11,7 +11,6 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 class Downsample(nn.Module):
-
     def __init__(self, filter_size=5, stride=2, channels=None, pad_off=0):
         super().__init__()
         self.padding = (filter_size - 2) // 2
@@ -20,18 +19,25 @@ class Downsample(nn.Module):
         a = np.hanning(filter_size)[1:-1]
         g = torch.Tensor(a[:, None] * a[None, :])
         g = g / torch.sum(g)
-        self.register_buffer("filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1)))
+        self.register_buffer(
+            "filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1))
+        )
 
     def forward(self, input):
-        input = input ** 2
-        out = F.conv2d(input, self.filter, stride=self.stride, padding=self.padding, groups=input.shape[1])
+        input = input**2
+        out = F.conv2d(
+            input,
+            self.filter,
+            stride=self.stride,
+            padding=self.padding,
+            groups=input.shape[1],
+        )
         return (out + 1e-12).sqrt()
 
 
 @LOSS_REGISTRY.register()
 # https://github.com/dingkeyan93/A-DISTS
 class ADISTSLoss(torch.nn.Module):
-
     def __init__(self, window_size=21, resize_input=False, loss_weight=1.0):
         super().__init__()
         self.resize_input = resize_input
@@ -60,14 +66,20 @@ class ADISTSLoss(torch.nn.Module):
         for param in self.parameters():
             param.requires_grad = False
 
-        self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1))
-        self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, -1, 1, 1))
+        self.register_buffer(
+            "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1)
+        )
+        self.register_buffer(
+            "std", torch.tensor([0.229, 0.224, 0.225]).view(1, -1, 1, 1)
+        )
 
         self.chns = [3, 64, 128, 256, 512, 512]
         self.windows = nn.ParameterList()
         self.window_size = window_size
         for k in range(len(self.chns)):
-            self.windows.append(self.create_window(self.window_size, self.window_size / 3, self.chns[k]))
+            self.windows.append(
+                self.create_window(self.window_size, self.window_size / 3, self.chns[k])
+            )
 
     def compute_prob(self, feats):
         ps_list = []
@@ -77,35 +89,63 @@ class ADISTSLoss(torch.nn.Module):
         c0 = 1e-12
         for k in range(len(feats) - 1, -1, -1):
             try:
-                x_mean = F.conv2d(pad(feats[k]), self.windows[k], stride=1, padding=0, groups=feats[k].shape[1])
-                x_var = F.conv2d(pad(feats[k] ** 2), self.windows[k], stride=1, padding=0,
-                                 groups=feats[k].shape[1]) - x_mean ** 2
+                x_mean = F.conv2d(
+                    pad(feats[k]),
+                    self.windows[k],
+                    stride=1,
+                    padding=0,
+                    groups=feats[k].shape[1],
+                )
+                x_var = (
+                    F.conv2d(
+                        pad(feats[k] ** 2),
+                        self.windows[k],
+                        stride=1,
+                        padding=0,
+                        groups=feats[k].shape[1],
+                    )
+                    - x_mean**2
+                )
                 h, w = x_mean.shape[2], x_mean.shape[3]
                 gamma = torch.mean(x_var / (x_mean + c0), dim=1, keepdim=True)
-                exponent = -(gamma - gamma.mean(dim=(2, 3), keepdim=True)) / (gamma.std(dim=(2, 3), keepdim=True) + c0)
+                exponent = -(gamma - gamma.mean(dim=(2, 3), keepdim=True)) / (
+                    gamma.std(dim=(2, 3), keepdim=True) + c0
+                )
                 exponent = torch.clamp(exponent, None, 50)
                 ps = 1 / (1 + torch.exp(exponent))
                 ps_min, _ = ps.flatten(2).min(dim=-1, keepdim=True)
                 ps_max, _ = ps.flatten(2).max(dim=-1, keepdim=True)
-                ps = (ps - ps_min.unsqueeze(-1)) / (ps_max.unsqueeze(-1) - ps_min.unsqueeze(-1) + c0)
-                ps_prod = ps * F.interpolate(ps_prod, size=(h, w), mode="bilinear", align_corners=True)
+                ps = (ps - ps_min.unsqueeze(-1)) / (
+                    ps_max.unsqueeze(-1) - ps_min.unsqueeze(-1) + c0
+                )
+                ps_prod = ps * F.interpolate(
+                    ps_prod, size=(h, w), mode="bilinear", align_corners=True
+                )
                 psd_min, _ = ps_prod.flatten(2).min(dim=-1, keepdim=True)
                 psd_max, _ = ps_prod.flatten(2).max(dim=-1, keepdim=True)
-                ps_prod = (ps_prod - psd_min.unsqueeze(-1)) / (psd_max.unsqueeze(-1) - psd_min.unsqueeze(-1) + c0)
+                ps_prod = (ps_prod - psd_min.unsqueeze(-1)) / (
+                    psd_max.unsqueeze(-1) - psd_min.unsqueeze(-1) + c0
+                )
             except:
                 x_mean = feats[k].mean([2, 3], keepdim=True)
                 x_var = ((feats[k] - x_mean) ** 2).mean([2, 3], keepdim=True)
                 h, w = x_mean.shape[2], x_mean.shape[3]
                 gamma = torch.mean(x_var / (x_mean + c0), dim=1, keepdim=True)
                 ps = 1 / (1 + torch.exp(-gamma))
-                ps_prod = ps * F.interpolate(ps_prod, size=(h, w), mode="bilinear", align_corners=True)
+                ps_prod = ps * F.interpolate(
+                    ps_prod, size=(h, w), mode="bilinear", align_corners=True
+                )
 
             ps_list.append(ps_prod)
         return ps_list[::-1]
 
     def gaussian(self, window_size, sigma):
         gauss = torch.Tensor(
-            [math.exp(-(x - window_size // 2) ** 2 / float(2 * sigma ** 2)) for x in range(window_size)])
+            [
+                math.exp(-((x - window_size // 2) ** 2) / float(2 * sigma**2))
+                for x in range(window_size)
+            ]
+        )
         return gauss / gauss.sum()
 
     def create_window(self, window_size, window_sigma, channel):
@@ -115,11 +155,15 @@ class ADISTSLoss(torch.nn.Module):
         return nn.Parameter(window, requires_grad=False)
 
     def forward_once(self, x):
-
         if self.resize_input:
             # skip resize if dimensions already match
             if x.shape[2] != VGG_PATCH_SIZE or x.shape[3] != VGG_PATCH_SIZE:
-                h = tf.resize(x, [VGG_PATCH_SIZE], interpolation=tf.InterpolationMode.BICUBIC, antialias=True)
+                h = tf.resize(
+                    x,
+                    [VGG_PATCH_SIZE],
+                    interpolation=tf.InterpolationMode.BICUBIC,
+                    antialias=True,
+                )
         else:
             h = x
 
@@ -168,8 +212,12 @@ class ADISTSLoss(torch.nn.Module):
 
         weight = weight / weight.sum(dim=(1, 2), keepdim=True)
         weight_mean = weight.mean(dim=(1, 2), keepdim=True)
-        weight_std = torch.sqrt(((weight - weight_mean) ** 2).mean(dim=(1, 2), keepdim=True))
-        weight = weight.clamp(min=weight_mean - 0.5 * weight_std, max=weight_mean + 0.5 * weight_std)
+        weight_std = torch.sqrt(
+            ((weight - weight_mean) ** 2).mean(dim=(1, 2), keepdim=True)
+        )
+        weight = weight.clamp(
+            min=weight_mean - 0.5 * weight_std, max=weight_mean + 0.5 * weight_std
+        )
         weight = weight / weight.sum(dim=(1, 2), keepdim=True)
         weight_list = torch.split(weight, self.chns, dim=1)
 
@@ -177,14 +225,50 @@ class ADISTSLoss(torch.nn.Module):
             feat_x = F.normalize(feats_x[k], dim=(2, 3))
             feat_y = F.normalize(feats_y[k], dim=(2, 3))
             try:
-                x_mean = F.conv2d(pad(feat_x), self.windows[k], stride=1, padding=0, groups=self.chns[k])
-                y_mean = F.conv2d(pad(feat_y), self.windows[k], stride=1, padding=0, groups=self.chns[k])
-                x_var = F.conv2d(pad(feat_x ** 2), self.windows[k], stride=1, padding=0,
-                                 groups=self.chns[k]) - x_mean ** 2
-                y_var = F.conv2d(pad(feat_y ** 2), self.windows[k], stride=1, padding=0,
-                                 groups=self.chns[k]) - y_mean ** 2
-                xy_cov = F.conv2d(pad(feat_x * feat_y), self.windows[k], stride=1, padding=0, groups=self.chns[k]) \
-                         - x_mean * y_mean
+                x_mean = F.conv2d(
+                    pad(feat_x),
+                    self.windows[k],
+                    stride=1,
+                    padding=0,
+                    groups=self.chns[k],
+                )
+                y_mean = F.conv2d(
+                    pad(feat_y),
+                    self.windows[k],
+                    stride=1,
+                    padding=0,
+                    groups=self.chns[k],
+                )
+                x_var = (
+                    F.conv2d(
+                        pad(feat_x**2),
+                        self.windows[k],
+                        stride=1,
+                        padding=0,
+                        groups=self.chns[k],
+                    )
+                    - x_mean**2
+                )
+                y_var = (
+                    F.conv2d(
+                        pad(feat_y**2),
+                        self.windows[k],
+                        stride=1,
+                        padding=0,
+                        groups=self.chns[k],
+                    )
+                    - y_mean**2
+                )
+                xy_cov = (
+                    F.conv2d(
+                        pad(feat_x * feat_y),
+                        self.windows[k],
+                        stride=1,
+                        padding=0,
+                        groups=self.chns[k],
+                    )
+                    - x_mean * y_mean
+                )
             except:
                 x_mean = feat_x.mean([2, 3], keepdim=True)
                 y_mean = feat_y.mean([2, 3], keepdim=True)
@@ -192,7 +276,7 @@ class ADISTSLoss(torch.nn.Module):
                 y_var = ((feat_y - y_mean) ** 2).mean([2, 3], keepdim=True)
                 xy_cov = (feat_x * feat_y).mean([2, 3], keepdim=True) - x_mean * y_mean
 
-            T = (2 * x_mean * y_mean + 1e-6) / (x_mean ** 2 + y_mean ** 2 + 1e-6)
+            T = (2 * x_mean * y_mean + 1e-6) / (x_mean**2 + y_mean**2 + 1e-6)
             S = (2 * xy_cov + 1e-6) / (x_var + y_var + 1e-6)
 
             ps = ps_x[k].expand(x_mean.shape[0], x_mean.shape[1], -1, -1)

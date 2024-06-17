@@ -75,7 +75,9 @@ class Vimeo90KDataset(data.Dataset):
             self.io_backend_opt["client_keys"] = ["lq", "gt"]
 
         # indices of input images
-        self.neighbor_list = [i + (9 - opt["num_frame"]) // 2 for i in range(opt["num_frame"])]
+        self.neighbor_list = [
+            i + (9 - opt["num_frame"]) // 2 for i in range(opt["num_frame"])
+        ]
 
         # temporal augmentation configs
         self.random_reverse = opt["random_reverse"]
@@ -84,7 +86,9 @@ class Vimeo90KDataset(data.Dataset):
 
     def __getitem__(self, index):
         if self.file_client is None:
-            self.file_client = FileClient(self.io_backend_opt.pop("type"), **self.io_backend_opt)
+            self.file_client = FileClient(
+                self.io_backend_opt.pop("type"), **self.io_backend_opt
+            )
 
         # random reverse
         if self.random_reverse and random.random() < 0.5:
@@ -115,7 +119,9 @@ class Vimeo90KDataset(data.Dataset):
             img_lqs.append(img_lq)
 
         # randomly crop
-        img_gt, img_lqs = paired_random_crop(img_gt, img_lqs, gt_size, scale, img_gt_path)
+        img_gt, img_lqs = paired_random_crop(
+            img_gt, img_lqs, gt_size, scale, img_gt_path
+        )
 
         # augmentation - flip, rotate
         img_lqs.append(img_gt)
@@ -136,7 +142,6 @@ class Vimeo90KDataset(data.Dataset):
 
 @DATASET_REGISTRY.register()
 class Vimeo90KRecurrentDataset(Vimeo90KDataset):
-
     def __init__(self, opt):
         super().__init__(opt)
 
@@ -145,7 +150,9 @@ class Vimeo90KRecurrentDataset(Vimeo90KDataset):
 
     def __getitem__(self, index):
         if self.file_client is None:
-            self.file_client = FileClient(self.io_backend_opt.pop("type"), **self.io_backend_opt)
+            self.file_client = FileClient(
+                self.io_backend_opt.pop("type"), **self.io_backend_opt
+            )
 
         # random reverse
         if self.random_reverse and random.random() < 0.5:
@@ -177,7 +184,9 @@ class Vimeo90KRecurrentDataset(Vimeo90KDataset):
             img_gts.append(img_gt)
 
         # randomly crop
-        img_gts, img_lqs = paired_random_crop(img_gts, img_lqs, gt_size, scale, img_gt_path)
+        img_gts, img_lqs = paired_random_crop(
+            img_gts, img_lqs, gt_size, scale, img_gt_path
+        )
 
         # augmentation - flip, rotate
         img_lqs.extend(img_gts)

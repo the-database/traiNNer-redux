@@ -4,11 +4,12 @@ from traiNNer.archs.vgg_arch import NAMES
 
 
 def convert_net(ori_net, crt_net):
-
     for crt_k, _ in crt_net.items():
         # vgg feature extractor
         if "vgg_extractor" in crt_k:
-            ori_k = crt_k.replace("vgg_extractor", "VggExtract").replace("vgg_net", "model")
+            ori_k = crt_k.replace("vgg_extractor", "VggExtract").replace(
+                "vgg_net", "model"
+            )
             if "mean" in crt_k:
                 ori_k = ori_k.replace("mean", "RGB_mean")
             elif "std" in crt_k:
@@ -35,7 +36,9 @@ def convert_net(ori_net, crt_net):
                 _, _, c, d, e = crt_k.split(".")
                 ori_k = f"MSDilate.conv{int(c)+1}.{d}.{e}"
             else:
-                ori_k = crt_k.replace("multi_scale_dilation.conv_fusion", "MSDilate.convi")
+                ori_k = crt_k.replace(
+                    "multi_scale_dilation.conv_fusion", "MSDilate.convi"
+                )
 
         elif crt_k.startswith("upsample"):
             ori_k = crt_k.replace("upsample", "up")
@@ -52,9 +55,11 @@ def convert_net(ori_net, crt_net):
 
         # replace
         if crt_net[crt_k].size() != ori_net[ori_k].size():
-            raise ValueError("Wrong tensor size: \n"
-                             f"crt_net: {crt_net[crt_k].size()}\n"
-                             f"ori_net: {ori_net[ori_k].size()}")
+            raise ValueError(
+                "Wrong tensor size: \n"
+                f"crt_net: {crt_net[crt_k].size()}\n"
+                f"ori_net: {ori_net[ori_k].size()}"
+            )
         else:
             crt_net[crt_k] = ori_net[ori_k]
 
@@ -62,12 +67,17 @@ def convert_net(ori_net, crt_net):
 
 
 if __name__ == "__main__":
-    ori_net = torch.load("experiments/pretrained_models/DFDNet/DFDNet_official_original.pth")
-    dfd_net = DFDNet(64, dict_path="experiments/pretrained_models/DFDNet/DFDNet_dict_512.pth")
+    ori_net = torch.load(
+        "experiments/pretrained_models/DFDNet/DFDNet_official_original.pth"
+    )
+    dfd_net = DFDNet(
+        64, dict_path="experiments/pretrained_models/DFDNet/DFDNet_dict_512.pth"
+    )
     crt_net = dfd_net.state_dict()
     crt_net_params = convert_net(ori_net, crt_net)
 
     torch.save(
         {"params": crt_net_params},
         "experiments/pretrained_models/DFDNet/DFDNet_official.pth",
-        _use_new_zipfile_serialization=False)
+        _use_new_zipfile_serialization=False,
+    )

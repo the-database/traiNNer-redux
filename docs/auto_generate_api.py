@@ -61,7 +61,9 @@ for module_name in module_name_list:
         if path in ["__init__.py", "version.py"]:
             continue
 
-        path = f"{module_name}." + path.replace("\\", "/").replace("/", ".").replace(".py", ".rst")
+        path = f"{module_name}." + path.replace("\\", "/").replace("/", ".").replace(
+            ".py", ".rst"
+        )
 
         # create .rst file
         output_rst = osp.join(output_dir, path)

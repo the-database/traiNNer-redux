@@ -19,13 +19,17 @@ def main(mode="folder"):
     opt["type"] = "Vimeo90KDataset"
     if mode == "folder":
         opt["dataroot_gt"] = "datasets/vimeo90k/vimeo_septuplet/sequences"
-        opt['dataroot_lq'] = 'datasets/vimeo90k/vimeo_septuplet_matlabLRx4/sequences'  # noqa E501
-        opt['meta_info_file'] = 'traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt'  # noqa E501
+        opt["dataroot_lq"] = "datasets/vimeo90k/vimeo_septuplet_matlabLRx4/sequences"  # noqa E501
+        opt["meta_info_file"] = (
+            "traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt"  # noqa E501
+        )
         opt["io_backend"] = {"type": "disk"}
     elif mode == "lmdb":
         opt["dataroot_gt"] = "datasets/vimeo90k/vimeo90k_train_GT_only4th.lmdb"
         opt["dataroot_lq"] = "datasets/vimeo90k/vimeo90k_train_LR7frames.lmdb"
-        opt['meta_info_file'] = 'traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt'  # noqa E501
+        opt["meta_info_file"] = (
+            "traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt"  # noqa E501
+        )
         opt["io_backend"] = {"type": "lmdb"}
 
     opt["num_frame"] = 7
@@ -43,7 +47,9 @@ def main(mode="folder"):
     os.makedirs("tmp", exist_ok=True)
 
     dataset = build_dataset(opt)
-    data_loader = build_dataloader(dataset, opt, num_gpu=0, dist=opt["dist"], sampler=None)
+    data_loader = build_dataloader(
+        dataset, opt, num_gpu=0, dist=opt["dist"], sampler=None
+    )
 
     nrow = int(math.sqrt(opt["batch_size_per_gpu"]))
     padding = 2 if opt["phase"] == "train" else 0
@@ -60,8 +66,15 @@ def main(mode="folder"):
         print(key)
         for j in range(opt["num_frame"]):
             torchvision.utils.save_image(
-                lq[:, j, :, :, :], f"tmp/lq_{i:03d}_frame{j}.png", nrow=nrow, padding=padding, normalize=False)
-        torchvision.utils.save_image(gt, f"tmp/gt_{i:03d}.png", nrow=nrow, padding=padding, normalize=False)
+                lq[:, j, :, :, :],
+                f"tmp/lq_{i:03d}_frame{j}.png",
+                nrow=nrow,
+                padding=padding,
+                normalize=False,
+            )
+        torchvision.utils.save_image(
+            gt, f"tmp/gt_{i:03d}.png", nrow=nrow, padding=padding, normalize=False
+        )
 
 
 if __name__ == "__main__":

@@ -17,7 +17,9 @@ def calculate_stylegan2_fid():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("ckpt", type=str, help="Path to the stylegan2 checkpoint.")
-    parser.add_argument("fid_stats", type=str, help="Path to the dataset fid statistics.")
+    parser.add_argument(
+        "fid_stats", type=str, help="Path to the dataset fid statistics."
+    )
     parser.add_argument("--size", type=int, default=256)
     parser.add_argument("--channel_multiplier", type=int, default=2)
     parser.add_argument("--batch_size", type=int, default=64)
@@ -32,7 +34,8 @@ def calculate_stylegan2_fid():
         num_style_feat=512,
         num_mlp=8,
         channel_multiplier=args.channel_multiplier,
-        resample_kernel=(1, 3, 3, 1))
+        resample_kernel=(1, 3, 3, 1),
+    )
     generator.load_state_dict(torch.load(args.ckpt)["params_ema"])
     generator = nn.DataParallel(generator).eval().to(device)
 
@@ -51,14 +54,22 @@ def calculate_stylegan2_fid():
         for _ in range(total_batch):
             with torch.no_grad():
                 latent = torch.randn(args.batch_size, 512, device=device)
-                samples, _ = generator([latent], truncation=args.truncation, truncation_latent=truncation_latent)
+                samples, _ = generator(
+                    [latent],
+                    truncation=args.truncation,
+                    truncation_latent=truncation_latent,
+                )
             yield samples
 
-    features = extract_inception_features(sample_generator(total_batch), inception, total_batch, device)
+    features = extract_inception_features(
+        sample_generator(total_batch), inception, total_batch, device
+    )
     features = features.numpy()
     total_len = features.shape[0]
-    features = features[:args.num_sample]
-    print(f"Extracted {total_len} features, use the first {features.shape[0]} features to calculate stats.")
+    features = features[: args.num_sample]
+    print(
+        f"Extracted {total_len} features, use the first {features.shape[0]} features to calculate stats."
+    )
     sample_mean = np.mean(features, 0)
     sample_cov = np.cov(features, rowvar=False)
 

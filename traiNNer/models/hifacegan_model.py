@@ -20,7 +20,6 @@ class HiFaceGANModel(SRModel):
     """
 
     def init_training_settings(self):
-
         train_opt = self.opt["train"]
         self.ema_decay = train_opt.get("ema_decay", 0)
         if self.ema_decay > 0:
@@ -40,12 +39,16 @@ class HiFaceGANModel(SRModel):
             self.cri_pix = None
 
         if train_opt.get("perceptual_opt"):
-            self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(self.device)
+            self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
+                self.device
+            )
         else:
             self.cri_perceptual = None
 
         if train_opt.get("feature_matching_opt"):
-            self.cri_feat = build_loss(train_opt["feature_matching_opt"]).to(self.device)
+            self.cri_feat = build_loss(train_opt["feature_matching_opt"]).to(
+                self.device
+            )
         else:
             self.cri_feat = None
 
@@ -65,11 +68,15 @@ class HiFaceGANModel(SRModel):
         train_opt = self.opt["train"]
         # optimizer g
         optim_type = train_opt["optim_g"].pop("type")
-        self.optimizer_g = self.get_optimizer(optim_type, self.net_g.parameters(), **train_opt["optim_g"])
+        self.optimizer_g = self.get_optimizer(
+            optim_type, self.net_g.parameters(), **train_opt["optim_g"]
+        )
         self.optimizers.append(self.optimizer_g)
         # optimizer d
         optim_type = train_opt["optim_d"].pop("type")
-        self.optimizer_d = self.get_optimizer(optim_type, self.net_d.parameters(), **train_opt["optim_d"])
+        self.optimizer_d = self.get_optimizer(
+            optim_type, self.net_d.parameters(), **train_opt["optim_d"]
+        )
         self.optimizers.append(self.optimizer_d)
 
     def discriminate(self, input_lq, output, ground_truth):
@@ -106,11 +113,11 @@ class HiFaceGANModel(SRModel):
             fake = []
             real = []
             for p in pred:
-                fake.append([tensor[:tensor.size(0) // 2] for tensor in p])
-                real.append([tensor[tensor.size(0) // 2:] for tensor in p])
+                fake.append([tensor[: tensor.size(0) // 2] for tensor in p])
+                real.append([tensor[tensor.size(0) // 2 :] for tensor in p])
         else:
-            fake = pred[:pred.size(0) // 2]
-            real = pred[pred.size(0) // 2:]
+            fake = pred[: pred.size(0) // 2]
+            real = pred[pred.size(0) // 2 :]
 
         return fake, real
 
@@ -125,7 +132,10 @@ class HiFaceGANModel(SRModel):
         l_g_total = 0
         loss_dict = OrderedDict()
 
-        if (current_iter % self.net_d_iters == 0 and current_iter > self.net_d_init_iters):
+        if (
+            current_iter % self.net_d_iters == 0
+            and current_iter > self.net_d_init_iters
+        ):
             # pixel loss
             if self.cri_pix:
                 l_g_pix = self.cri_pix(self.output, self.gt)
@@ -210,8 +220,10 @@ class HiFaceGANModel(SRModel):
         if self.opt["dist"]:
             self.dist_validation(dataloader, current_iter, tb_logger, save_img)
         else:
-            print("In HiFaceGANModel: The new metrics package is under development." +
-                  "Using super method now (Only PSNR & SSIM are supported)")
+            print(
+                "In HiFaceGANModel: The new metrics package is under development."
+                + "Using super method now (Only PSNR & SSIM are supported)"
+            )
             super().nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
@@ -254,14 +266,23 @@ class HiFaceGANModel(SRModel):
 
             if save_img:
                 if self.opt["is_train"]:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], img_name,
-                                             f"{img_name}_{current_iter}.png")
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        img_name,
+                        f"{img_name}_{current_iter}.png",
+                    )
                 elif self.opt["val"]["suffix"]:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name,
-                                             f'{img_name}_{self.opt["val"]["suffix"]}.png')
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        dataset_name,
+                        f'{img_name}_{self.opt["val"]["suffix"]}.png',
+                    )
                 else:
-                    save_img_path = osp.join(self.opt["path"]["visualization"], dataset_name,
-                                             f'{img_name}_{self.opt["name"]}.png')
+                    save_img_path = osp.join(
+                        self.opt["path"]["visualization"],
+                        dataset_name,
+                        f'{img_name}_{self.opt["name"]}.png',
+                    )
 
                 imwrite(tensor2img(visuals["result"]), save_img_path)
 
@@ -276,7 +297,9 @@ class HiFaceGANModel(SRModel):
             for name, opt_ in self.opt["val"]["metrics"].items():
                 # The new metric caller automatically returns mean value
                 # FIXME: ERROR: calculate_metric only supports two arguments. Now the codes cannot be successfully run
-                self.metric_results[name] = calculate_metric({"sr_pack": sr_pack, "gt_pack": gt_pack}, opt_)
+                self.metric_results[name] = calculate_metric(
+                    {"sr_pack": sr_pack, "gt_pack": gt_pack}, opt_
+                )
             self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
 
     def save(self, epoch, current_iter):

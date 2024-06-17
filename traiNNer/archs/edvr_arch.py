@@ -39,7 +39,9 @@ class PCDAlignment(nn.Module):
             else:
                 self.offset_conv2[level] = nn.Conv2d(num_feat * 2, num_feat, 3, 1, 1)
                 self.offset_conv3[level] = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
-            self.dcn_pack[level] = DCNv2Pack(num_feat, num_feat, 3, padding=1, deformable_groups=deformable_groups)
+            self.dcn_pack[level] = DCNv2Pack(
+                num_feat, num_feat, 3, padding=1, deformable_groups=deformable_groups
+            )
 
             if i < 3:
                 self.feat_conv[level] = nn.Conv2d(num_feat * 2, num_feat, 3, 1, 1)
@@ -47,9 +49,13 @@ class PCDAlignment(nn.Module):
         # Cascading dcn
         self.cas_offset_conv1 = nn.Conv2d(num_feat * 2, num_feat, 3, 1, 1)
         self.cas_offset_conv2 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
-        self.cas_dcnpack = DCNv2Pack(num_feat, num_feat, 3, padding=1, deformable_groups=deformable_groups)
+        self.cas_dcnpack = DCNv2Pack(
+            num_feat, num_feat, 3, padding=1, deformable_groups=deformable_groups
+        )
 
-        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
+        self.upsample = nn.Upsample(
+            scale_factor=2, mode="bilinear", align_corners=False
+        )
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
     def forward(self, nbr_feat_l, ref_feat_l):
@@ -75,7 +81,11 @@ class PCDAlignment(nn.Module):
             if i == 3:
                 offset = self.lrelu(self.offset_conv2[level](offset))
             else:
-                offset = self.lrelu(self.offset_conv2[level](torch.cat([offset, upsampled_offset], dim=1)))
+                offset = self.lrelu(
+                    self.offset_conv2[level](
+                        torch.cat([offset, upsampled_offset], dim=1)
+                    )
+                )
                 offset = self.lrelu(self.offset_conv3[level](offset))
 
             feat = self.dcn_pack[level](nbr_feat_l[i - 1], offset)
@@ -92,7 +102,9 @@ class PCDAlignment(nn.Module):
 
         # Cascading
         offset = torch.cat([feat, ref_feat_l[0]], dim=1)
-        offset = self.lrelu(self.cas_offset_conv2(self.lrelu(self.cas_offset_conv1(offset))))
+        offset = self.lrelu(
+            self.cas_offset_conv2(self.lrelu(self.cas_offset_conv1(offset)))
+        )
         feat = self.lrelu(self.cas_dcnpack(feat, offset))
         return feat
 
@@ -135,7 +147,9 @@ class TSAFusion(nn.Module):
         self.spatial_attn_add2 = nn.Conv2d(num_feat, num_feat, 1)
 
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
+        self.upsample = nn.Upsample(
+            scale_factor=2, mode="bilinear", align_corners=False
+        )
 
     def forward(self, aligned_feat):
         """
@@ -147,7 +161,9 @@ class TSAFusion(nn.Module):
         """
         b, t, c, h, w = aligned_feat.size()
         # temporal attention
-        embedding_ref = self.temporal_attn1(aligned_feat[:, self.center_frame_idx, :, :, :].clone())
+        embedding_ref = self.temporal_attn1(
+            aligned_feat[:, self.center_frame_idx, :, :, :].clone()
+        )
         embedding = self.temporal_attn2(aligned_feat.view(-1, c, h, w))
         embedding = embedding.view(b, t, -1, h, w)  # (b, t, c, h, w)
 
@@ -173,7 +189,9 @@ class TSAFusion(nn.Module):
         attn_level = self.lrelu(self.spatial_attn_l1(attn))
         attn_max = self.max_pool(attn_level)
         attn_avg = self.avg_pool(attn_level)
-        attn_level = self.lrelu(self.spatial_attn_l2(torch.cat([attn_max, attn_avg], dim=1)))
+        attn_level = self.lrelu(
+            self.spatial_attn_l2(torch.cat([attn_max, attn_avg], dim=1))
+        )
         attn_level = self.lrelu(self.spatial_attn_l3(attn_level))
         attn_level = self.upsample(attn_level)
 
@@ -215,9 +233,13 @@ class PredeblurModule(nn.Module):
         self.resblock_l3 = ResidualBlockNoBN(num_feat=num_feat)
         self.resblock_l2_1 = ResidualBlockNoBN(num_feat=num_feat)
         self.resblock_l2_2 = ResidualBlockNoBN(num_feat=num_feat)
-        self.resblock_l1 = nn.ModuleList([ResidualBlockNoBN(num_feat=num_feat) for i in range(5)])
+        self.resblock_l1 = nn.ModuleList(
+            [ResidualBlockNoBN(num_feat=num_feat) for i in range(5)]
+        )
 
-        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
+        self.upsample = nn.Upsample(
+            scale_factor=2, mode="bilinear", align_corners=False
+        )
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
     def forward(self, x):
@@ -268,18 +290,20 @@ class EDVR(nn.Module):
         with_tsa (bool): Whether has TSA module. Default: True.
     """
 
-    def __init__(self,
-                 num_in_ch=3,
-                 num_out_ch=3,
-                 num_feat=64,
-                 num_frame=5,
-                 deformable_groups=8,
-                 num_extract_block=5,
-                 num_reconstruct_block=10,
-                 center_frame_idx=None,
-                 hr_in=False,
-                 with_predeblur=False,
-                 with_tsa=True):
+    def __init__(
+        self,
+        num_in_ch=3,
+        num_out_ch=3,
+        num_feat=64,
+        num_frame=5,
+        deformable_groups=8,
+        num_extract_block=5,
+        num_reconstruct_block=10,
+        center_frame_idx=None,
+        hr_in=False,
+        with_predeblur=False,
+        with_tsa=True,
+    ):
         super().__init__()
         if center_frame_idx is None:
             self.center_frame_idx = num_frame // 2
@@ -297,21 +321,31 @@ class EDVR(nn.Module):
             self.conv_first = nn.Conv2d(num_in_ch, num_feat, 3, 1, 1)
 
         # extract pyramid features
-        self.feature_extraction = make_layer(ResidualBlockNoBN, num_extract_block, num_feat=num_feat)
+        self.feature_extraction = make_layer(
+            ResidualBlockNoBN, num_extract_block, num_feat=num_feat
+        )
         self.conv_l2_1 = nn.Conv2d(num_feat, num_feat, 3, 2, 1)
         self.conv_l2_2 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
         self.conv_l3_1 = nn.Conv2d(num_feat, num_feat, 3, 2, 1)
         self.conv_l3_2 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
 
         # pcd and tsa module
-        self.pcd_align = PCDAlignment(num_feat=num_feat, deformable_groups=deformable_groups)
+        self.pcd_align = PCDAlignment(
+            num_feat=num_feat, deformable_groups=deformable_groups
+        )
         if self.with_tsa:
-            self.fusion = TSAFusion(num_feat=num_feat, num_frame=num_frame, center_frame_idx=self.center_frame_idx)
+            self.fusion = TSAFusion(
+                num_feat=num_feat,
+                num_frame=num_frame,
+                center_frame_idx=self.center_frame_idx,
+            )
         else:
             self.fusion = nn.Conv2d(num_frame * num_feat, num_feat, 1, 1)
 
         # reconstruction
-        self.reconstruction = make_layer(ResidualBlockNoBN, num_reconstruct_block, num_feat=num_feat)
+        self.reconstruction = make_layer(
+            ResidualBlockNoBN, num_reconstruct_block, num_feat=num_feat
+        )
         # upsample
         self.upconv1 = nn.Conv2d(num_feat, num_feat * 4, 3, 1, 1)
         self.upconv2 = nn.Conv2d(num_feat, 64 * 4, 3, 1, 1)
@@ -325,9 +359,13 @@ class EDVR(nn.Module):
     def forward(self, x):
         b, t, c, h, w = x.size()
         if self.hr_in:
-            assert h % 16 == 0 and w % 16 == 0, ("The height and width must be multiple of 16.")
+            assert (
+                h % 16 == 0 and w % 16 == 0
+            ), "The height and width must be multiple of 16."
         else:
-            assert h % 4 == 0 and w % 4 == 0, ("The height and width must be multiple of 4.")
+            assert (
+                h % 4 == 0 and w % 4 == 0
+            ), "The height and width must be multiple of 4."
 
         x_center = x[:, self.center_frame_idx, :, :, :].contiguous()
 
@@ -354,13 +392,16 @@ class EDVR(nn.Module):
 
         # PCD alignment
         ref_feat_l = [  # reference feature list
-            feat_l1[:, self.center_frame_idx, :, :, :].clone(), feat_l2[:, self.center_frame_idx, :, :, :].clone(),
-            feat_l3[:, self.center_frame_idx, :, :, :].clone()
+            feat_l1[:, self.center_frame_idx, :, :, :].clone(),
+            feat_l2[:, self.center_frame_idx, :, :, :].clone(),
+            feat_l3[:, self.center_frame_idx, :, :, :].clone(),
         ]
         aligned_feat = []
         for i in range(t):
             nbr_feat_l = [  # neighboring feature list
-                feat_l1[:, i, :, :, :].clone(), feat_l2[:, i, :, :, :].clone(), feat_l3[:, i, :, :, :].clone()
+                feat_l1[:, i, :, :, :].clone(),
+                feat_l2[:, i, :, :, :].clone(),
+                feat_l3[:, i, :, :, :].clone(),
             ]
             aligned_feat.append(self.pcd_align(nbr_feat_l, ref_feat_l))
         aligned_feat = torch.stack(aligned_feat, dim=1)  # (b, t, c, h, w)
@@ -377,6 +418,8 @@ class EDVR(nn.Module):
         if self.hr_in:
             base = x_center
         else:
-            base = F.interpolate(x_center, scale_factor=4, mode="bilinear", align_corners=False)
+            base = F.interpolate(
+                x_center, scale_factor=4, mode="bilinear", align_corners=False
+            )
         out += base
         return out
