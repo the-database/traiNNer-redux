@@ -1,7 +1,7 @@
 # Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
 
-from collections.abc import Callable, dict_keys
+from collections.abc import Callable, ItemsView, Iterator, KeysView
 
 
 class Registry:
@@ -50,7 +50,9 @@ class Registry:
         )
         self._obj_map[name] = obj
 
-    def register(self, obj: Callable | type | None = None, suffix: str | None = None) -> None:
+    def register(
+        self, obj: Callable | type | None = None, suffix: str | None = None
+    ) -> None:
         """
         Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not.
@@ -58,7 +60,7 @@ class Registry:
         """
         if obj is None:
             # used as a decorator
-            def deco(func_or_class: Callable | type):
+            def deco(func_or_class: Callable | type) -> Callable | type:
                 name = func_or_class.__name__.lower()
                 self._do_register(name, func_or_class, suffix)
                 return func_or_class
@@ -84,10 +86,10 @@ class Registry:
     def __contains__(self, name: str) -> bool:
         return name.lower() in self._obj_map
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ItemsView[str, Callable | type]]:
         return iter(self._obj_map.items())
 
-    def keys(self) -> dict_keys:
+    def keys(self) -> KeysView[str]:
         return self._obj_map.keys()
 
 
