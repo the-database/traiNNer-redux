@@ -6,7 +6,6 @@ from torch import SymInt, nn
 from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils.registry import LOSS_REGISTRY
 
-
 ####################################
 # Modified MSSIM Loss with cosine similarity from neosr
 # https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
@@ -15,11 +14,11 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 class GaussianFilter2D(nn.Module):
     def __init__(
-            self,
-            window_size: int = 11,
-            in_channels: int = 3,
-            sigma: float = 1.5,
-            padding: int | SymInt | Sequence[int | SymInt] = None,
+        self,
+        window_size: int = 11,
+        in_channels: int = 3,
+        sigma: float = 1.5,
+        padding: int | SymInt | Sequence[int | SymInt] = None,
     ) -> None:
         """2D Gaussian Filer
 
@@ -46,7 +45,7 @@ class GaussianFilter2D(nn.Module):
     def _get_gaussian_window1d(self) -> torch.Tensor:
         sigma2 = self.sigma * self.sigma
         x = torch.arange(-(self.window_size // 2), self.window_size // 2 + 1)
-        w = torch.exp(-0.5 * x ** 2 / sigma2)
+        w = torch.exp(-0.5 * x**2 / sigma2)
         w = w / w.sum()
         return w.reshape(1, 1, 1, self.window_size)
 
@@ -100,15 +99,15 @@ class GaussianFilter2D(nn.Module):
 @LOSS_REGISTRY.register()
 class MSSIMLoss(nn.Module):
     def __init__(
-            self,
-            window_size: int = 11,
-            in_channels: int = 3,
-            sigma: float = 1.5,
-            k1: float = 0.01,
-            k2: float = 0.03,
-            l: int = 1,
-            padding: int | SymInt | Sequence[int | SymInt] = None,
-            loss_weight: float = 1.0,
+        self,
+        window_size: int = 11,
+        in_channels: int = 3,
+        sigma: float = 1.5,
+        k1: float = 0.01,
+        k2: float = 0.03,
+        l: int = 1,
+        padding: int | SymInt | Sequence[int | SymInt] = None,
+        loss_weight: float = 1.0,
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -170,9 +169,9 @@ class MSSIMLoss(nn.Module):
             cs = cs.mean()
 
             if i == 4:
-                ms_components.append(ssim ** w)
+                ms_components.append(ssim**w)
             else:
-                ms_components.append(cs ** w)
+                ms_components.append(cs**w)
                 padding = [s % 2 for s in x.shape[2:]]  # spatial padding
                 x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
@@ -182,9 +181,8 @@ class MSSIMLoss(nn.Module):
         return msssim
 
     def _ssim(
-            self, x: torch.Tensor, y: torch.Tensor
+        self, x: torch.Tensor, y: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-
         mu_x = self.gaussian_filter(x)  # equ 14
         mu_y = self.gaussian_filter(y)  # equ 14
         sigma2_x = self.gaussian_filter(x * x) - mu_x * mu_x  # equ 15

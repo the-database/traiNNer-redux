@@ -183,7 +183,6 @@ class SRModel(BaseModel):
                 self.cri_gan = build_loss(train_opt["gan_opt"]).to(self.device)
 
         if not self.cri_gan:
-
             # warn that discriminator network / optimizer won't be used if enabled
             if self.net_d:
                 logger.warning(
@@ -372,21 +371,21 @@ class SRModel(BaseModel):
             self.net_g.train()
 
     def dist_validation(
-            self,
-            dataloader: DataLoader,
-            current_iter: int,
-            tb_logger: SummaryWriter,
-            save_img: bool,
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
     ) -> None:
         if self.opt["rank"] == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(
-            self,
-            dataloader: DataLoader,
-            current_iter: int,
-            tb_logger: SummaryWriter,
-            save_img: bool,
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
     ) -> None:
         self.is_train = False
 
@@ -471,7 +470,7 @@ class SRModel(BaseModel):
         self.is_train = True
 
     def _log_validation_metric_values(
-            self, current_iter: int, dataset_name: str, tb_logger: SummaryWriter
+        self, current_iter: int, dataset_name: str, tb_logger: SummaryWriter
     ) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():

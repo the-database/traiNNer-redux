@@ -1,17 +1,14 @@
-import math
-from collections.abc import Sequence
 
 import torch
-from torch import SymInt, nn
-from torch.nn import functional as F  # noqa: N812
+from torch import nn
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 @LOSS_REGISTRY.register()
 class RGBCosineSimilarityLoss(nn.Module):
     def __init__(
-            self,
-            loss_weight: float = 1.0,
+        self,
+        loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
 
@@ -32,4 +29,6 @@ class RGBCosineSimilarityLoss(nn.Module):
 
     def cosim(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         # TODO test without rounding
-        return torch.round(self.similarity(x.clamp(1e-12, 1), y.clamp(1e-12, 1)), decimals=20).mean()
+        return torch.round(
+            self.similarity(x.clamp(1e-12, 1), y.clamp(1e-12, 1)), decimals=20
+        ).mean()
