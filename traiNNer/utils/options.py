@@ -2,7 +2,9 @@ import argparse
 import os
 import random
 from collections import OrderedDict
+from collections.abc import Mapping
 from os import path as osp
+from typing import Any
 
 import torch
 import yaml
@@ -10,25 +12,26 @@ import yaml
 from . import set_random_seed
 from .dist_util import get_dist_info, init_dist, master_only
 
+try:
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Dumper, Loader
 
-def ordered_yaml():
+
+def ordered_yaml() -> tuple[Loader, Dumper]:
     """Support OrderedDict for yaml.
 
     Returns:
         tuple: yaml Loader and Dumper.
     """
-    try:
-        from yaml import CDumper as Dumper
-        from yaml import CLoader as Loader
-    except ImportError:
-        from yaml import Dumper, Loader
 
     _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
 
     def dict_representer(dumper, data):
         return dumper.represent_dict(data.items())
 
-    def dict_constructor(loader, node):
+    def dict_constructor(loader, node) -> OrderedDict:
         return OrderedDict(loader.construct_pairs(node))
 
     Dumper.add_representer(OrderedDict, dict_representer)
@@ -36,7 +39,7 @@ def ordered_yaml():
     return Loader, Dumper
 
 
-def yaml_load(f):
+def yaml_load(f) -> Mapping[str, Any]:
     """Load yaml file or string.
 
     Args:
@@ -52,7 +55,7 @@ def yaml_load(f):
         return yaml.load(f, Loader=ordered_yaml()[0])
 
 
-def dict2str(opt, indent_level=1):
+def dict2str(opt: Mapping[str, Any], indent_level: int = 1) -> str:
     """dict to string for printing options.
 
     Args:
@@ -73,7 +76,7 @@ def dict2str(opt, indent_level=1):
     return msg
 
 
-def _postprocess_yml_value(value):
+def _postprocess_yml_value(value: str) -> None | bool | float | int | list[Any] | str:
     # None
     if value == "~" or value.lower() == "none":
         return None
@@ -97,7 +100,9 @@ def _postprocess_yml_value(value):
     return value
 
 
-def parse_options(root_path, is_train=True):
+def parse_options(
+    root_path: str, is_train: bool = True
+) -> tuple[Mapping[str, Any], argparse.Namespace]:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-opt", type=str, required=True, help="Path to option YAML file."
