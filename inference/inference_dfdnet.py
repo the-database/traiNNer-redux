@@ -14,7 +14,7 @@ try:
 except ImportError:
     print("Please install facexlib: pip install facexlib")
 
-# TODO： need to modify, as we have updated the FaceRestorationHelper
+# TODO: need to modify, as we have updated the FaceRestorationHelper
 
 
 def get_part_location(landmarks):

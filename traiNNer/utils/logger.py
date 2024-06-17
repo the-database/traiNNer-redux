@@ -1,6 +1,11 @@
 import datetime
 import logging
 import time
+from collections.abc import Mapping
+from logging import Logger
+from typing import Any
+
+from torch.utils.tensorboard import SummaryWriter
 
 from .dist_util import get_dist_info, master_only
 
@@ -8,7 +13,7 @@ initialized_logger = {}
 
 
 class AvgTimer:
-    def __init__(self, window=200) -> None:
+    def __init__(self, window: int = 200) -> None:
         self.window = window  # average window
         self.current_time = 0
         self.total_time = 0
@@ -34,10 +39,10 @@ class AvgTimer:
 
         self.tic = time.time()
 
-    def get_current_time(self):
+    def get_current_time(self) -> float:
         return self.current_time
 
-    def get_avg_time(self):
+    def get_avg_time(self) -> float:
         return self.avg_time
 
 
@@ -51,10 +56,15 @@ class MessageLogger:
             train (dict): Contains 'total_iter' (int) for total iters.
             use_tb_logger (bool): Use tensorboard logger.
         start_iter (int): Start iter. Default: 1.
-        tb_logger (obj:`tb_logger`): Tensorboard logger. Default： None.
+        tb_logger (obj:`tb_logger`): Tensorboard logger. Default: None.
     """
 
-    def __init__(self, opt, start_iter=1, tb_logger=None) -> None:
+    def __init__(
+        self,
+        opt: Mapping[str, Any],
+        start_iter: int = 1,
+        tb_logger: SummaryWriter | None = None,
+    ) -> None:
         self.exp_name = opt["name"]
         self.interval = opt["logger"]["print_freq"]
         self.start_iter = start_iter
@@ -116,15 +126,13 @@ class MessageLogger:
 
 
 @master_only
-def init_tb_logger(log_dir):
-    from torch.utils.tensorboard import SummaryWriter
-
+def init_tb_logger(log_dir) -> SummaryWriter:
     tb_logger = SummaryWriter(log_dir=log_dir)
     return tb_logger
 
 
 @master_only
-def init_wandb_logger(opt) -> None:
+def init_wandb_logger(opt: Mapping[str, Any]) -> None:
     """We now only use wandb to sync tensorboard log."""
     import wandb
 
@@ -152,7 +160,9 @@ def init_wandb_logger(opt) -> None:
     logger.info(f"Use wandb logger with id={wandb_id}; project={project}.")
 
 
-def get_root_logger(logger_name="traiNNer", log_level=logging.INFO, log_file=None):
+def get_root_logger(
+    logger_name: str = "traiNNer", log_level: int = logging.INFO, log_file=None
+) -> Logger:
     """Get the root logger.
 
     The logger will be initialized if it has not been initialized. By default a
@@ -194,7 +204,7 @@ def get_root_logger(logger_name="traiNNer", log_level=logging.INFO, log_file=Non
     return logger
 
 
-def get_env_info():
+def get_env_info() -> str:
     """Get environment information.
 
     Currently, only log the software version.

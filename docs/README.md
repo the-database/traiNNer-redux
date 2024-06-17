@@ -24,7 +24,7 @@ make html
 
 rst 语法参考: https://3vshej.cn/rstSyntax/
 
-着重几个点：
+着重几个点:
 
 ```rst
 - 空行
