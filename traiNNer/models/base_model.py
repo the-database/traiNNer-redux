@@ -1,27 +1,26 @@
 import os
 import time
-import torch
-import pytorch_optimizer
-from spandrel import ModelLoader
-
 from collections import OrderedDict
 from copy import deepcopy
+
+import pytorch_optimizer
+import torch
+from spandrel import ModelLoader
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
-from . import lr_scheduler as lr_scheduler
+from ..ops.batchaug import BatchAugment
 from ..utils import get_root_logger
 from ..utils.dist_util import master_only
-from ..archs.arch_util import SpaceToDepth
-from ..ops.batchaug import BatchAugment
+from . import lr_scheduler
 
 
-class BaseModel():
+class BaseModel:
     """Base model."""
 
     def __init__(self, opt):
         self.opt = opt
-        self.device = torch.device('cuda' if opt['num_gpu'] != 0 else 'cpu')
-        self.is_train = opt['is_train']
+        self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
+        self.is_train = opt["is_train"]
         self.schedulers = []
         self.optimizers = []
         self.batchaugment = None
@@ -40,7 +39,6 @@ class BaseModel():
 
     def save(self, epoch, current_iter):
         """Save networks and training state."""
-        pass
 
     def validation(self, dataloader, current_iter, tb_logger, save_img=False):
         """Validation function.
@@ -51,35 +49,34 @@ class BaseModel():
             tb_logger (tensorboard logger): Tensorboard logger.
             save_img (bool): Whether to save images. Default: False.
         """
-        if self.opt['dist']:
+        if self.opt["dist"]:
             self.dist_validation(dataloader, current_iter, tb_logger, save_img)
         else:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def _initialize_best_metric_results(self, dataset_name):
         """Initialize the best metric results dict for recording the best metric value and iteration."""
-        if hasattr(self, 'best_metric_results') and dataset_name in self.best_metric_results:
+        if hasattr(self, "best_metric_results") and dataset_name in self.best_metric_results:
             return
-        elif not hasattr(self, 'best_metric_results'):
-            self.best_metric_results = dict()
+        elif not hasattr(self, "best_metric_results"):
+            self.best_metric_results = {}
 
         # add a dataset record
-        record = dict()
-        for metric, content in self.opt['val']['metrics'].items():
-            better = content.get('better', 'higher')
-            init_val = float('-inf') if better == 'higher' else float('inf')
-            record[metric] = dict(better=better, val=init_val, iter=-1)
+        record = {}
+        for metric, content in self.opt["val"]["metrics"].items():
+            better = content.get("better", "higher")
+            init_val = float("-inf") if better == "higher" else float("inf")
+            record[metric] = {"better": better, "val": init_val, "iter": -1}
         self.best_metric_results[dataset_name] = record
 
     def _update_best_metric_result(self, dataset_name, metric, val, current_iter):
-        if self.best_metric_results[dataset_name][metric]['better'] == 'higher':
-            if val >= self.best_metric_results[dataset_name][metric]['val']:
-                self.best_metric_results[dataset_name][metric]['val'] = val
-                self.best_metric_results[dataset_name][metric]['iter'] = current_iter
-        else:
-            if val <= self.best_metric_results[dataset_name][metric]['val']:
-                self.best_metric_results[dataset_name][metric]['val'] = val
-                self.best_metric_results[dataset_name][metric]['iter'] = current_iter
+        if self.best_metric_results[dataset_name][metric]["better"] == "higher":
+            if val >= self.best_metric_results[dataset_name][metric]["val"]:
+                self.best_metric_results[dataset_name][metric]["val"] = val
+                self.best_metric_results[dataset_name][metric]["iter"] = current_iter
+        elif val <= self.best_metric_results[dataset_name][metric]["val"]:
+            self.best_metric_results[dataset_name][metric]["val"] = val
+            self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
     def model_ema(self, decay=0.999):
         net_g = self.get_bare_model(self.net_g)
@@ -105,63 +102,63 @@ class BaseModel():
             net (nn.Module)
         """
         net = net.to(self.device)
-        if self.opt['dist']:
-            find_unused_parameters = self.opt.get('find_unused_parameters', False)
+        if self.opt["dist"]:
+            find_unused_parameters = self.opt.get("find_unused_parameters", False)
             net = DistributedDataParallel(
                 net, device_ids=[torch.cuda.current_device()], find_unused_parameters=find_unused_parameters)
-        elif self.opt['num_gpu'] > 1:
+        elif self.opt["num_gpu"] > 1:
             net = DataParallel(net)
         return net
 
     def get_optimizer(self, optim_type, params, lr, **kwargs):
-        if optim_type == 'AdamP':
+        if optim_type == "AdamP":
             optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
-        elif optim_type == 'Lamb':
+        elif optim_type == "Lamb":
             optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
-        elif optim_type == 'Prodigy':
+        elif optim_type == "Prodigy":
             optimizer = pytorch_optimizer.Prodigy(params, lr, **kwargs)
-        elif optim_type == 'Lion':
+        elif optim_type == "Lion":
             optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
-        elif optim_type == 'Tiger':
+        elif optim_type == "Tiger":
             optimizer = pytorch_optimizer.Tiger(params, lr, **kwargs)
-        elif optim_type == 'Adan':
+        elif optim_type == "Adan":
             optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
-        elif optim_type == 'Adam':
+        elif optim_type == "Adam":
             optimizer = torch.optim.Adam(params, lr, **kwargs)
-        elif optim_type == 'AdamW':
+        elif optim_type == "AdamW":
             optimizer = torch.optim.AdamW(params, lr, **kwargs)
-        elif optim_type == 'Adamax':
+        elif optim_type == "Adamax":
             optimizer = torch.optim.Adamax(params, lr, **kwargs)
-        elif optim_type == 'SGD':
+        elif optim_type == "SGD":
             optimizer = torch.optim.SGD(params, lr, **kwargs)
-        elif optim_type == 'ASGD':
+        elif optim_type == "ASGD":
             optimizer = torch.optim.ASGD(params, lr, **kwargs)
-        elif optim_type == 'RMSprop':
+        elif optim_type == "RMSprop":
             optimizer = torch.optim.RMSprop(params, lr, **kwargs)
-        elif optim_type == 'Rprop':
+        elif optim_type == "Rprop":
             optimizer = torch.optim.Rprop(params, lr, **kwargs)
         else:
-            raise NotImplementedError(f'optimizer {optim_type} is not supported yet.')
+            raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
         return optimizer
 
     def setup_schedulers(self):
         """Set up schedulers."""
-        train_opt = self.opt['train']
-        scheduler_type = train_opt['scheduler'].pop('type')
-        if scheduler_type in ['MultiStepLR', 'MultiStepRestartLR']:
+        train_opt = self.opt["train"]
+        scheduler_type = train_opt["scheduler"].pop("type")
+        if scheduler_type in ["MultiStepLR", "MultiStepRestartLR"]:
             for optimizer in self.optimizers:
-                self.schedulers.append(lr_scheduler.MultiStepRestartLR(optimizer, **train_opt['scheduler']))
-        elif scheduler_type == 'CosineAnnealingRestartLR':
+                self.schedulers.append(lr_scheduler.MultiStepRestartLR(optimizer, **train_opt["scheduler"]))
+        elif scheduler_type == "CosineAnnealingRestartLR":
             for optimizer in self.optimizers:
-                self.schedulers.append(lr_scheduler.CosineAnnealingRestartLR(optimizer, **train_opt['scheduler']))
+                self.schedulers.append(lr_scheduler.CosineAnnealingRestartLR(optimizer, **train_opt["scheduler"]))
         else:
-            raise NotImplementedError(f'Scheduler {scheduler_type} is not implemented yet.')
+            raise NotImplementedError(f"Scheduler {scheduler_type} is not implemented yet.")
 
     def get_bare_model(self, net):
         """Get bare model, especially under wrapping with
         DistributedDataParallel or DataParallel.
         """
-        if isinstance(net, (DataParallel, DistributedDataParallel)):
+        if isinstance(net, DataParallel | DistributedDataParallel):
             net = net.module
         return net
 
@@ -172,17 +169,17 @@ class BaseModel():
         Args:
             net (nn.Module)
         """
-        if isinstance(net, (DataParallel, DistributedDataParallel)):
-            net_cls_str = f'{net.__class__.__name__} - {net.module.__class__.__name__}'
+        if isinstance(net, DataParallel | DistributedDataParallel):
+            net_cls_str = f"{net.__class__.__name__} - {net.module.__class__.__name__}"
         else:
-            net_cls_str = f'{net.__class__.__name__}'
+            net_cls_str = f"{net.__class__.__name__}"
 
         net = self.get_bare_model(net)
         net_str = str(net)
-        net_params = sum(map(lambda x: x.numel(), net.parameters()))
+        net_params = sum(x.numel() for x in net.parameters())
 
         logger = get_root_logger()
-        logger.info(f'Network: {net_cls_str}, with parameters: {net_params:,d}')
+        logger.info(f"Network: {net_cls_str}, with parameters: {net_params:,d}")
         logger.info(net_str)
 
     def _set_lr(self, lr_groups_l):
@@ -191,16 +188,16 @@ class BaseModel():
         Args:
             lr_groups_l (list): List for lr_groups, each for an optimizer.
         """
-        for optimizer, lr_groups in zip(self.optimizers, lr_groups_l):
-            for param_group, lr in zip(optimizer.param_groups, lr_groups):
-                param_group['lr'] = lr
+        for optimizer, lr_groups in zip(self.optimizers, lr_groups_l, strict=False):
+            for param_group, lr in zip(optimizer.param_groups, lr_groups, strict=False):
+                param_group["lr"] = lr
 
     def _get_init_lr(self):
         """Get the initial lr, which is set by the scheduler.
         """
         init_lr_groups_l = []
         for optimizer in self.optimizers:
-            init_lr_groups_l.append([v['initial_lr'] for v in optimizer.param_groups])
+            init_lr_groups_l.append([v["initial_lr"] for v in optimizer.param_groups])
         return init_lr_groups_l
 
     def update_learning_rate(self, current_iter, warmup_iter=-1):
@@ -227,10 +224,10 @@ class BaseModel():
             self._set_lr(warm_up_lr_l)
 
     def get_current_learning_rate(self):
-        return [param_group['lr'] for param_group in self.optimizers[0].param_groups]
+        return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
     @master_only
-    def save_network(self, net, net_label, current_iter, param_key='params'):
+    def save_network(self, net, net_label, current_iter, param_key="params"):
         """Save networks.
 
         Args:
@@ -241,20 +238,20 @@ class BaseModel():
                 Default: 'params'.
         """
         if current_iter == -1:
-            current_iter = 'latest'
-        save_filename = f'{net_label}_{current_iter}.pth'
-        save_path = os.path.join(self.opt['path']['models'], save_filename)
+            current_iter = "latest"
+        save_filename = f"{net_label}_{current_iter}.pth"
+        save_path = os.path.join(self.opt["path"]["models"], save_filename)
 
         net = net if isinstance(net, list) else [net]
         param_key = param_key if isinstance(param_key, list) else [param_key]
-        assert len(net) == len(param_key), 'The lengths of net and param_key should be the same.'
+        assert len(net) == len(param_key), "The lengths of net and param_key should be the same."
 
         save_dict = {}
-        for net_, param_key_ in zip(net, param_key):
+        for net_, param_key_ in zip(net, param_key, strict=False):
             net_ = self.get_bare_model(net_)
             state_dict = net_.state_dict()
             for key, param in state_dict.items():
-                if key.startswith('module.'):  # remove unnecessary 'module.'
+                if key.startswith("module."):  # remove unnecessary 'module.'
                     key = key[7:]
                 state_dict[key] = param.cpu()
             save_dict[param_key_] = state_dict
@@ -266,14 +263,14 @@ class BaseModel():
                 torch.save(save_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
-                logger.warning(f'Save model error: {e}, remaining retry times: {retry - 1}')
+                logger.warning(f"Save model error: {e}, remaining retry times: {retry - 1}")
                 time.sleep(1)
             else:
                 break
             finally:
                 retry -= 1
         if retry == 0:
-            logger.warning(f'Still cannot save {save_path}. Just ignore it.')
+            logger.warning(f"Still cannot save {save_path}. Just ignore it.")
             # raise IOError(f'Cannot save {save_path}.')
 
     def _print_different_keys_loading(self, crt_net, load_net, strict=True):
@@ -295,34 +292,34 @@ class BaseModel():
 
         logger = get_root_logger()
         if crt_net_keys != load_net_keys:
-            logger.warning('Current net - loaded net:')
-            for v in sorted(list(crt_net_keys - load_net_keys)):
-                logger.warning(f'  {v}')
-            logger.warning('Loaded net - current net:')
-            for v in sorted(list(load_net_keys - crt_net_keys)):
-                logger.warning(f'  {v}')
+            logger.warning("Current net - loaded net:")
+            for v in sorted(crt_net_keys - load_net_keys):
+                logger.warning(f"  {v}")
+            logger.warning("Loaded net - current net:")
+            for v in sorted(load_net_keys - crt_net_keys):
+                logger.warning(f"  {v}")
 
         # check the size for the same keys
         if not strict:
             common_keys = crt_net_keys & load_net_keys
             for k in common_keys:
                 if crt_net[k].size() != load_net[k].size():
-                    logger.warning(f'Size different, ignore [{k}]: crt_net: '
-                                   f'{crt_net[k].shape}; load_net: {load_net[k].shape}')
-                    load_net[k + '.ignore'] = load_net.pop(k)
+                    logger.warning(f"Size different, ignore [{k}]: crt_net: "
+                                   f"{crt_net[k].shape}; load_net: {load_net[k].shape}")
+                    load_net[k + ".ignore"] = load_net.pop(k)
 
     def load_network_spandrel(self, net, load_path, strict=True):
         try:
             logger = get_root_logger()
             load_net = self.model_loader.load_from_file(load_path)
             net.load_state_dict(load_net.model.state_dict(), strict=strict)
-            logger.info(f'Loading {net.__class__.__name__} model from {load_path}, with spandrel.')
+            logger.info(f"Loading {net.__class__.__name__} model from {load_path}, with spandrel.")
             return True
         except Exception as e:
             print(e)
             return False
 
-    def load_network(self, net, load_path, strict=True, param_key='params'):
+    def load_network(self, net, load_path, strict=True, param_key="params"):
         """Load network.
 
         Args:
@@ -338,16 +335,16 @@ class BaseModel():
             logger = get_root_logger()
             net = self.get_bare_model(net)
             load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
-            param_key = self.opt['path'].get('param_key_g', None)
+            param_key = self.opt["path"].get("param_key_g", None)
             if param_key is not None:
-                if param_key not in load_net and 'params' in load_net:
-                    param_key = 'params'
-                    logger.info('Loading: params_ema does not exist, use params.')
+                if param_key not in load_net and "params" in load_net:
+                    param_key = "params"
+                    logger.info("Loading: params_ema does not exist, use params.")
                 load_net = load_net[param_key]
-            logger.info(f'Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].')
+            logger.info(f"Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].")
             # remove unnecessary 'module.'
             for k, v in deepcopy(load_net).items():
-                if k.startswith('module.'):
+                if k.startswith("module."):
                     load_net[k[7:]] = v
                     load_net.pop(k)
             self._print_different_keys_loading(net, load_net, strict)
@@ -364,13 +361,13 @@ class BaseModel():
             current_iter (int): Current iteration.
         """
         if current_iter != -1:
-            state = {'epoch': epoch, 'iter': current_iter, 'optimizers': [], 'schedulers': []}
+            state = {"epoch": epoch, "iter": current_iter, "optimizers": [], "schedulers": []}
             for o in self.optimizers:
-                state['optimizers'].append(o.state_dict())
+                state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
-                state['schedulers'].append(s.state_dict())
-            save_filename = f'{current_iter}.state'
-            save_path = os.path.join(self.opt['path']['training_states'], save_filename)
+                state["schedulers"].append(s.state_dict())
+            save_filename = f"{current_iter}.state"
+            save_path = os.path.join(self.opt["path"]["training_states"], save_filename)
 
             # avoid occasional writing errors
             retry = 3
@@ -379,14 +376,14 @@ class BaseModel():
                     torch.save(state, save_path)
                 except Exception as e:
                     logger = get_root_logger()
-                    logger.warning(f'Save training state error: {e}, remaining retry times: {retry - 1}')
+                    logger.warning(f"Save training state error: {e}, remaining retry times: {retry - 1}")
                     time.sleep(1)
                 else:
                     break
                 finally:
                     retry -= 1
             if retry == 0:
-                logger.warning(f'Still cannot save {save_path}. Just ignore it.')
+                logger.warning(f"Still cannot save {save_path}. Just ignore it.")
                 # raise IOError(f'Cannot save {save_path}.')
 
     def resume_training(self, resume_state):
@@ -395,10 +392,10 @@ class BaseModel():
         Args:
             resume_state (dict): Resume state.
         """
-        resume_optimizers = resume_state['optimizers']
-        resume_schedulers = resume_state['schedulers']
-        assert len(resume_optimizers) == len(self.optimizers), 'Wrong lengths of optimizers'
-        assert len(resume_schedulers) == len(self.schedulers), 'Wrong lengths of schedulers'
+        resume_optimizers = resume_state["optimizers"]
+        resume_schedulers = resume_state["schedulers"]
+        assert len(resume_optimizers) == len(self.optimizers), "Wrong lengths of optimizers"
+        assert len(resume_schedulers) == len(self.schedulers), "Wrong lengths of schedulers"
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):
@@ -413,7 +410,7 @@ class BaseModel():
             loss_dict (OrderedDict): Loss dict.
         """
         with torch.no_grad():
-            if self.opt['dist']:
+            if self.opt["dist"]:
                 keys = []
                 losses = []
                 for name, value in loss_dict.items():
@@ -421,9 +418,9 @@ class BaseModel():
                     losses.append(value)
                 losses = torch.stack(losses, 0)
                 torch.distributed.reduce(losses, dst=0)
-                if self.opt['rank'] == 0:
-                    losses /= self.opt['world_size']
-                loss_dict = {key: loss for key, loss in zip(keys, losses)}
+                if self.opt["rank"] == 0:
+                    losses /= self.opt["world_size"]
+                loss_dict = dict(zip(keys, losses, strict=False))
 
             log_dict = OrderedDict()
             for name, value in loss_dict.items():
@@ -432,8 +429,8 @@ class BaseModel():
             return log_dict
 
     def setup_batchaug(self):
-        train_opt = self.opt['train']
-        self.use_moa = train_opt.get('use_moa', False)
+        train_opt = self.opt["train"]
+        self.use_moa = train_opt.get("use_moa", False)
         logger = get_root_logger()
         if self.use_moa:
             self.batchaugment = BatchAugment(train_opt)

@@ -14,9 +14,9 @@ def filter2D(img, kernel):
     k = kernel.size(-1)
     b, c, h, w = img.size()
     if k % 2 == 1:
-        img = F.pad(img, (k // 2, k // 2, k // 2, k // 2), mode='reflect')
+        img = F.pad(img, (k // 2, k // 2, k // 2, k // 2), mode="reflect")
     else:
-        raise ValueError('Wrong kernel size')
+        raise ValueError("Wrong kernel size")
 
     ph, pw = img.size()[-2:]
 
@@ -52,7 +52,7 @@ def usm_sharp(img, weight=0.5, radius=50, threshold=10):
     blur = cv2.GaussianBlur(img, (radius, radius), 0)
     residual = img - blur
     mask = np.abs(residual) * 255 > threshold
-    mask = mask.astype('float32')
+    mask = mask.astype("float32")
     soft_mask = cv2.GaussianBlur(mask, (radius, radius), 0)
 
     sharp = img + weight * residual
@@ -63,13 +63,13 @@ def usm_sharp(img, weight=0.5, radius=50, threshold=10):
 class USMSharp(torch.nn.Module):
 
     def __init__(self, radius=50, sigma=0):
-        super(USMSharp, self).__init__()
+        super().__init__()
         if radius % 2 == 0:
             radius += 1
         self.radius = radius
         kernel = cv2.getGaussianKernel(radius, sigma)
         kernel = torch.FloatTensor(np.dot(kernel, kernel.transpose())).unsqueeze_(0)
-        self.register_buffer('kernel', kernel)
+        self.register_buffer("kernel", kernel)
 
     def forward(self, img, weight=0.5, threshold=10):
         blur = filter2D(img, self.kernel)

@@ -16,8 +16,8 @@ def atd(in_chans=3,
         convffn_kernel_size=5,
         img_range=1.,
         mlp_ratio=2,
-        upsampler='pixelshuffle',
-        resi_connection='1conv',
+        upsampler="pixelshuffle",
+        resi_connection="1conv",
         use_checkpoint=True,
         **kwargs):
 
@@ -55,7 +55,7 @@ def atd_light(**kwargs):
                convffn_kernel_size=7,
                img_range=1.,
                mlp_ratio=1,
-               upsampler='pixelshuffledirect',
-               resi_connection='1conv',
+               upsampler="pixelshuffledirect",
+               resi_connection="1conv",
                use_checkpoint=False,
                **kwargs)

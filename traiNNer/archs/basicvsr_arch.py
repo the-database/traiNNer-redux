@@ -1,5 +1,5 @@
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from ..utils.registry import ARCH_REGISTRY
@@ -75,7 +75,7 @@ class BasicVSR(nn.Module):
 
         # forward branch
         feat_prop = torch.zeros_like(feat_prop)
-        for i in range(0, n):
+        for i in range(n):
             x_i = x[:, i, :, :, :]
             if i > 0:
                 flow = flows_forward[:, i - 1, :, :, :]
@@ -91,7 +91,7 @@ class BasicVSR(nn.Module):
             out = self.lrelu(self.pixel_shuffle(self.upconv2(out)))
             out = self.lrelu(self.conv_hr(out))
             out = self.conv_last(out)
-            base = F.interpolate(x_i, scale_factor=4, mode='bilinear', align_corners=False)
+            base = F.interpolate(x_i, scale_factor=4, mode="bilinear", align_corners=False)
             out += base
             out_l[i] = out
 
@@ -185,7 +185,7 @@ class IconVSR(nn.Module):
 
         # padding
         x = x.view(-1, c, h, w)
-        x = F.pad(x, [0, pad_w, 0, pad_h], mode='reflect')
+        x = F.pad(x, [0, pad_w, 0, pad_h], mode="reflect")
 
         return x.view(n, t, c, h + pad_h, w + pad_w)
 
@@ -244,7 +244,7 @@ class IconVSR(nn.Module):
 
         # forward branch
         feat_prop = torch.zeros_like(feat_prop)
-        for i in range(0, n):
+        for i in range(n):
             x_i = x[:, i, :, :, :]
             if i > 0:
                 flow = flows_forward[:, i - 1, :, :, :]
@@ -261,7 +261,7 @@ class IconVSR(nn.Module):
             out = self.lrelu(self.pixel_shuffle(self.upconv2(out)))
             out = self.lrelu(self.conv_hr(out))
             out = self.conv_last(out)
-            base = F.interpolate(x_i, scale_factor=4, mode='bilinear', align_corners=False)
+            base = F.interpolate(x_i, scale_factor=4, mode="bilinear", align_corners=False)
             out += base
             out_l[i] = out
 
@@ -279,7 +279,7 @@ class EDVRFeatureExtractor(nn.Module):
 
     def __init__(self, num_input_frame, num_feat, load_path):
 
-        super(EDVRFeatureExtractor, self).__init__()
+        super().__init__()
 
         self.center_frame_idx = num_input_frame // 2
 
@@ -299,7 +299,7 @@ class EDVRFeatureExtractor(nn.Module):
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
         if load_path:
-            self.load_state_dict(torch.load(load_path, map_location=lambda storage, loc: storage)['params'])
+            self.load_state_dict(torch.load(load_path, map_location=lambda storage, loc: storage)["params"])
 
     def forward(self, x):
         b, n, c, h, w = x.size()

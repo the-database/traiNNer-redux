@@ -41,10 +41,10 @@ def lch_to_hsluv(l, c, h):
 
 
 def _length_of_ray_until_intersect(theta, line):
-    denominator = (torch.sin(theta) - line['slope'] * torch.cos(theta))
+    denominator = (torch.sin(theta) - line["slope"] * torch.cos(theta))
     clamped_denominator = torch.where(torch.abs(denominator) < 1e-5, 1e-12, denominator)
     # assert not torch.isnan(line['intercept'] / clamped_denominator).any()
-    return line['intercept'] / clamped_denominator
+    return line["intercept"] / clamped_denominator
 
 
 def _get_bounds(l):
@@ -60,7 +60,7 @@ def _get_bounds(l):
             bottom = (632260 * m3 - 126452 * m2) * sub2 + 126452 * t
             slope = top1 / bottom
             intercept = top2 / bottom
-            result.append({'slope': slope, 'intercept': intercept})
+            result.append({"slope": slope, "intercept": intercept})
     return result
 
 

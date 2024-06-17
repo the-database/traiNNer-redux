@@ -16,19 +16,19 @@ def regroup_reds_dataset(train_path, val_path):
         val_path (str): Path to the validation folder.
     """
     # move the validation data to the train folder
-    val_folders = glob.glob(os.path.join(val_path, '*'))
+    val_folders = glob.glob(os.path.join(val_path, "*"))
     for folder in val_folders:
-        new_folder_idx = int(folder.split('/')[-1]) + 240
-        os.system(f'cp -r {folder} {os.path.join(train_path, str(new_folder_idx))}')
+        new_folder_idx = int(folder.split("/")[-1]) + 240
+        os.system(f"cp -r {folder} {os.path.join(train_path, str(new_folder_idx))}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # train_sharp
-    train_path = 'datasets/REDS/train_sharp'
-    val_path = 'datasets/REDS/val_sharp'
+    train_path = "datasets/REDS/train_sharp"
+    val_path = "datasets/REDS/val_sharp"
     regroup_reds_dataset(train_path, val_path)
 
     # train_sharp_bicubic
-    train_path = 'datasets/REDS/train_sharp_bicubic/X4'
-    val_path = 'datasets/REDS/val_sharp_bicubic/X4'
+    train_path = "datasets/REDS/train_sharp_bicubic/X4"
+    val_path = "datasets/REDS/val_sharp_bicubic/X4"
     regroup_reds_dataset(train_path, val_path)

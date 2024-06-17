@@ -1,37 +1,35 @@
-from pathlib import Path
 
 import math
-import functools
 
 import torch
-import torch.nn as nn
-from . import block as B
+from torch import nn
 
 from ..utils.registry import ARCH_REGISTRY
+from . import block as B
 
 
 @ARCH_REGISTRY.register()
 class old_RRDBNet(nn.Module):
     def __init__(self, in_nc=3, out_nc=3, nf=64, nb=24, nr=3, gc=32, upscale=4, norm_type=None,
-                act_type='leakyrelu', mode='CNA', upsample_mode='upconv', convtype='Conv2D',
+                act_type="leakyrelu", mode="CNA", upsample_mode="upconv", convtype="Conv2D",
                 finalact=None, gaussian_noise=False, plus=False, **kwargs):
-        super(old_RRDBNet, self).__init__()
+        super().__init__()
         n_upscale = int(math.log(upscale, 2))
         if upscale == 3:
             n_upscale = 1
 
         fea_conv = B.conv_block(in_nc, nf, kernel_size=3, norm_type=None, act_type=None, convtype=convtype)
-        rb_blocks = [RRDB(nf, nr, kernel_size=3, gc=32, stride=1, bias=1, pad_type='zero', \
-            norm_type=norm_type, act_type=act_type, mode='CNA', convtype=convtype, \
+        rb_blocks = [RRDB(nf, nr, kernel_size=3, gc=32, stride=1, bias=1, pad_type="zero", \
+            norm_type=norm_type, act_type=act_type, mode="CNA", convtype=convtype, \
             gaussian_noise=gaussian_noise, plus=plus) for _ in range(nb)]
         LR_conv = B.conv_block(nf, nf, kernel_size=3, norm_type=norm_type, act_type=None, mode=mode, convtype=convtype)
 
-        if upsample_mode == 'upconv':
+        if upsample_mode == "upconv":
             upsample_block = B.upconv_block
-        elif upsample_mode == 'pixelshuffle':
+        elif upsample_mode == "pixelshuffle":
             upsample_block = B.pixelshuffle_block
         else:
-            raise NotImplementedError('upsample mode [{:s}] is not found'.format(upsample_mode))
+            raise NotImplementedError(f"upsample mode [{upsample_mode:s}] is not found")
         if upscale == 3:
             upsampler = upsample_block(nf, nf, 3, act_type=act_type, convtype=convtype)
         else:
@@ -48,27 +46,27 @@ class old_RRDBNet(nn.Module):
     def forward(self, x, outm=None):
         x = self.model(x)
 
-        if outm=='scaltanh': # limit output range to [-1,1] range with tanh and rescale to [0,1] Idea from: https://github.com/goldhuang/SRGAN-PyTorch/blob/master/model.py
+        if outm=="scaltanh": # limit output range to [-1,1] range with tanh and rescale to [0,1] Idea from: https://github.com/goldhuang/SRGAN-PyTorch/blob/master/model.py
             return(torch.tanh(x) + 1.0) / 2.0
-        elif outm=='tanh': # limit output to [-1,1] range
+        elif outm=="tanh": # limit output to [-1,1] range
             return torch.tanh(x)
-        elif outm=='sigmoid': # limit output to [0,1] range
+        elif outm=="sigmoid": # limit output to [0,1] range
             return torch.sigmoid(x)
-        elif outm=='clamp':
+        elif outm=="clamp":
             return torch.clamp(x, min=0.0, max=1.0)
         else: #Default, no cap for the output
             return x
 
 class RRDB(nn.Module):
-    '''
+    """
     Residual in Residual Dense Block
     (ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks)
-    '''
+    """
 
-    def __init__(self, nf, nr=3, kernel_size=3, gc=32, stride=1, bias=1, pad_type='zero', \
-            norm_type=None, act_type='leakyrelu', mode='CNA', convtype='Conv2D', \
+    def __init__(self, nf, nr=3, kernel_size=3, gc=32, stride=1, bias=1, pad_type="zero", \
+            norm_type=None, act_type="leakyrelu", mode="CNA", convtype="Conv2D", \
             spectral_norm=False, gaussian_noise=False, plus=False):
-        super(RRDB, self).__init__()
+        super().__init__()
         # This is for backwards compatibility with existing models
         if nr == 3:
             self.RDB1 = ResidualDenseBlock_5C(nf, kernel_size, gc, stride, bias, pad_type, \
@@ -87,7 +85,7 @@ class RRDB(nn.Module):
             self.RDBs = nn.Sequential(*RDB_list)
 
     def forward(self, x):
-        if hasattr(self, 'RDB1'):
+        if hasattr(self, "RDB1"):
             out = self.RDB1(x)
             out = self.RDB2(out)
             out = self.RDB3(out)
@@ -103,24 +101,24 @@ class ResidualDenseBlock_5C(nn.Module):
     Modified options that can be used:
         - "Partial Convolution based Padding" arXiv:1811.11718
         - "Spectral normalization" arXiv:1802.05957
-        - "ICASSP 2020 - ESRGAN+ : Further Improving ESRGAN" N. C. 
+        - "ICASSP 2020 - ESRGAN+ : Further Improving ESRGAN" N. C.
             {Rakotonirina} and A. {Rasoanaivo}
-    
+
     Args:
         nf (int): Channel number of intermediate features (num_feat).
-        gc (int): Channels for each growth (num_grow_ch: growth channel, 
+        gc (int): Channels for each growth (num_grow_ch: growth channel,
             i.e. intermediate channels).
         convtype (str): the type of convolution to use. Default: 'Conv2D'
-        gaussian_noise (bool): enable the ESRGAN+ gaussian noise (no new 
+        gaussian_noise (bool): enable the ESRGAN+ gaussian noise (no new
             trainable parameters)
-        plus (bool): enable the additional residual paths from ESRGAN+ 
+        plus (bool): enable the additional residual paths from ESRGAN+
             (adds trainable parameters)
     '''
 
-    def __init__(self, nf=64, kernel_size=3, gc=32, stride=1, bias=1, pad_type='zero', \
-            norm_type=None, act_type='leakyrelu', mode='CNA', convtype='Conv2D', \
+    def __init__(self, nf=64, kernel_size=3, gc=32, stride=1, bias=1, pad_type="zero", \
+            norm_type=None, act_type="leakyrelu", mode="CNA", convtype="Conv2D", \
             spectral_norm=False, gaussian_noise=False, plus=False):
-        super(ResidualDenseBlock_5C, self).__init__()
+        super().__init__()
 
         ## +
         self.noise = B.GaussianNoise() if gaussian_noise else None
@@ -139,7 +137,7 @@ class ResidualDenseBlock_5C(nn.Module):
         self.conv4 = B.conv_block(nf+3*gc, gc, kernel_size, stride, bias=bias, pad_type=pad_type, \
             norm_type=norm_type, act_type=act_type, mode=mode, convtype=convtype, \
             spectral_norm=spectral_norm)
-        if mode == 'CNA':
+        if mode == "CNA":
             last_act = None
         else:
             last_act = act_type

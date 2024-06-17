@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torch.autograd import Function
 from torch.nn.utils.spectral_norm import spectral_norm
 
@@ -63,7 +63,7 @@ def calc_mean_std(feat, eps=1e-5):
             divide-by-zero. Default: 1e-5.
     """
     size = feat.size()
-    assert len(size) == 4, 'The input feature should be 4D tensor.'
+    assert len(size) == 4, "The input feature should be 4D tensor."
     n, c = size[:2]
     feat_var = feat.view(n, c, -1).var(dim=2) + eps
     feat_std = feat_var.sqrt().view(n, c, 1, 1)
@@ -124,7 +124,7 @@ class MSDilationBlock(nn.Module):
     """Multi-scale dilation block."""
 
     def __init__(self, in_channels, kernel_size=3, dilation=(1, 1, 1, 1), bias=True):
-        super(MSDilationBlock, self).__init__()
+        super().__init__()
 
         self.conv_blocks = nn.ModuleList()
         for i in range(4):
@@ -150,7 +150,7 @@ class MSDilationBlock(nn.Module):
 class UpResBlock(nn.Module):
 
     def __init__(self, in_channel):
-        super(UpResBlock, self).__init__()
+        super().__init__()
         self.body = nn.Sequential(
             nn.Conv2d(in_channel, in_channel, 3, 1, 1),
             nn.LeakyReLU(0.2, True),

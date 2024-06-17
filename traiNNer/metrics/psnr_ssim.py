@@ -9,7 +9,7 @@ from ..utils.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register()
-def calculate_psnr(img, img2, crop_border, input_order='HWC', test_y_channel=False, **kwargs):
+def calculate_psnr(img, img2, crop_border, input_order="HWC", test_y_channel=False, **kwargs):
     """Calculate PSNR (Peak Signal-to-Noise Ratio).
 
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
@@ -25,8 +25,8 @@ def calculate_psnr(img, img2, crop_border, input_order='HWC', test_y_channel=Fal
         float: PSNR result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
-    if input_order not in ['HWC', 'CHW']:
+    assert img.shape == img2.shape, (f"Image shapes are different: {img.shape}, {img2.shape}.")
+    if input_order not in ["HWC", "CHW"]:
         raise ValueError(f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
@@ -44,7 +44,7 @@ def calculate_psnr(img, img2, crop_border, input_order='HWC', test_y_channel=Fal
 
     mse = np.mean((img - img2)**2)
     if mse == 0:
-        return float('inf')
+        return float("inf")
     return 10. * np.log10(255. * 255. / mse)
 
 
@@ -64,7 +64,7 @@ def calculate_psnr_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
         float: PSNR result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+    assert img.shape == img2.shape, (f"Image shapes are different: {img.shape}, {img2.shape}.")
 
     if crop_border != 0:
         img = img[:, :, crop_border:-crop_border, crop_border:-crop_border]
@@ -82,7 +82,7 @@ def calculate_psnr_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
 
 
 @METRIC_REGISTRY.register()
-def calculate_ssim(img, img2, crop_border, input_order='HWC', test_y_channel=False, **kwargs):
+def calculate_ssim(img, img2, crop_border, input_order="HWC", test_y_channel=False, **kwargs):
     """Calculate SSIM (structural similarity).
 
     ``Paper: Image quality assessment: From error visibility to structural similarity``
@@ -105,8 +105,8 @@ def calculate_ssim(img, img2, crop_border, input_order='HWC', test_y_channel=Fal
         float: SSIM result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
-    if input_order not in ['HWC', 'CHW']:
+    assert img.shape == img2.shape, (f"Image shapes are different: {img.shape}, {img2.shape}.")
+    if input_order not in ["HWC", "CHW"]:
         raise ValueError(f'Wrong input_order {input_order}. Supported input_orders are "HWC" and "CHW"')
     img = reorder_image(img, input_order=input_order)
     img2 = reorder_image(img2, input_order=input_order)
@@ -150,7 +150,7 @@ def calculate_ssim_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
         float: SSIM result.
     """
 
-    assert img.shape == img2.shape, (f'Image shapes are different: {img.shape}, {img2.shape}.')
+    assert img.shape == img2.shape, (f"Image shapes are different: {img.shape}, {img2.shape}.")
 
     if crop_border != 0:
         img = img[:, :, crop_border:-crop_border, crop_border:-crop_border]

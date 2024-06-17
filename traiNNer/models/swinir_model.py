@@ -10,16 +10,16 @@ class SwinIRModel(SRModel):
 
     def test(self):
         # pad to multiplication of window_size
-        window_size = self.opt['network_g']['window_size']
-        scale = self.opt.get('scale', 1)
+        window_size = self.opt["network_g"]["window_size"]
+        scale = self.opt.get("scale", 1)
         mod_pad_h, mod_pad_w = 0, 0
         _, _, h, w = self.lq.size()
         if h % window_size != 0:
             mod_pad_h = window_size - h % window_size
         if w % window_size != 0:
             mod_pad_w = window_size - w % window_size
-        img = F.pad(self.lq, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
-        if hasattr(self, 'net_g_ema'):
+        img = F.pad(self.lq, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+        if hasattr(self, "net_g_ema"):
             self.net_g_ema.eval()
             with torch.no_grad():
                 self.output = self.net_g_ema(img)

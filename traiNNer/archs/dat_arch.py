@@ -12,7 +12,7 @@ def dat(in_chans=3,
         embed_dim=180,
         num_heads=(6, 6, 6, 6, 6, 6),
         expansion_factor=4,
-        resi_connection='1conv',
+        resi_connection="1conv",
         **kwargs):
     return DAT(upscale=Config.get_scale(),
                in_chans=in_chans,
@@ -31,4 +31,4 @@ def dat(in_chans=3,
 def dat_2(**kwargs):
     return DAT(upscale=Config.get_scale(), in_chans=3, img_size=64, img_range=1., split_size=[8, 32],
                depth=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6], expansion_factor=2,
-               resi_connection='1conv', **kwargs)
+               resi_connection="1conv", **kwargs)

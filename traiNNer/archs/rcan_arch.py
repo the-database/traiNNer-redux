@@ -1,5 +1,5 @@
 import torch
-from torch import nn as nn
+from torch import nn
 
 from ..utils.registry import ARCH_REGISTRY
 from .arch_util import Upsample, make_layer
@@ -14,7 +14,7 @@ class ChannelAttention(nn.Module):
     """
 
     def __init__(self, num_feat, squeeze_factor=16):
-        super(ChannelAttention, self).__init__()
+        super().__init__()
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1), nn.Conv2d(num_feat, num_feat // squeeze_factor, 1, padding=0),
             nn.ReLU(inplace=True), nn.Conv2d(num_feat // squeeze_factor, num_feat, 1, padding=0), nn.Sigmoid())
@@ -34,7 +34,7 @@ class RCAB(nn.Module):
     """
 
     def __init__(self, num_feat, squeeze_factor=16, res_scale=1):
-        super(RCAB, self).__init__()
+        super().__init__()
         self.res_scale = res_scale
 
         self.rcab = nn.Sequential(
@@ -57,7 +57,7 @@ class ResidualGroup(nn.Module):
     """
 
     def __init__(self, num_feat, num_block, squeeze_factor=16, res_scale=1):
-        super(ResidualGroup, self).__init__()
+        super().__init__()
 
         self.residual_group = make_layer(
             RCAB, num_block, num_feat=num_feat, squeeze_factor=squeeze_factor, res_scale=res_scale)
@@ -104,7 +104,7 @@ class RCAN(nn.Module):
                  res_scale=1,
                  img_range=255.,
                  rgb_mean=(0.4488, 0.4371, 0.4040)):
-        super(RCAN, self).__init__()
+        super().__init__()
 
         self.img_range = img_range
         self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)

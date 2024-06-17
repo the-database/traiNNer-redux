@@ -1,17 +1,18 @@
-# Modified from https://github.com/mseitzer/pytorch-fid/blob/master/pytorch_fid/inception.py # noqa: E501
+# Modified from https://github.com/mseitzer/pytorch-fid/blob/master/pytorch_fid/inception.py
 # For FID metric
 
 import os
+
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torch.utils.model_zoo import load_url
 from torchvision import models
 
 # Inception weights ported to Pytorch from
 # http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz
-FID_WEIGHTS_URL = 'https://github.com/mseitzer/pytorch-fid/releases/download/fid_weights/pt_inception-2015-12-05-6726825d.pth'  # noqa: E501
-LOCAL_FID_WEIGHTS = 'experiments/pretrained_models/pt_inception-2015-12-05-6726825d.pth'  # noqa: E501
+FID_WEIGHTS_URL = "https://github.com/mseitzer/pytorch-fid/releases/download/fid_weights/pt_inception-2015-12-05-6726825d.pth"
+LOCAL_FID_WEIGHTS = "experiments/pretrained_models/pt_inception-2015-12-05-6726825d.pth"
 
 
 class InceptionV3(nn.Module):
@@ -64,14 +65,14 @@ class InceptionV3(nn.Module):
                 strongly advised to set this parameter to true to get
                 comparable results. Default: True.
         """
-        super(InceptionV3, self).__init__()
+        super().__init__()
 
         self.resize_input = resize_input
         self.normalize_input = normalize_input
         self.output_blocks = sorted(output_blocks)
         self.last_needed_block = max(output_blocks)
 
-        assert self.last_needed_block <= 3, ('Last possible output block index is 3')
+        assert self.last_needed_block <= 3, ("Last possible output block index is 3")
 
         self.blocks = nn.ModuleList()
 
@@ -136,7 +137,7 @@ class InceptionV3(nn.Module):
         output = []
 
         if self.resize_input:
-            x = F.interpolate(x, size=(299, 299), mode='bilinear', align_corners=False)
+            x = F.interpolate(x, size=(299, 299), mode="bilinear", align_corners=False)
 
         if self.normalize_input:
             x = 2 * x - 1  # Scale from range (0, 1) to range (-1, 1)
@@ -190,7 +191,7 @@ class FIDInceptionA(models.inception.InceptionA):
     """InceptionA block patched for FID computation"""
 
     def __init__(self, in_channels, pool_features):
-        super(FIDInceptionA, self).__init__(in_channels, pool_features)
+        super().__init__(in_channels, pool_features)
 
     def forward(self, x):
         branch1x1 = self.branch1x1(x)
@@ -215,7 +216,7 @@ class FIDInceptionC(models.inception.InceptionC):
     """InceptionC block patched for FID computation"""
 
     def __init__(self, in_channels, channels_7x7):
-        super(FIDInceptionC, self).__init__(in_channels, channels_7x7)
+        super().__init__(in_channels, channels_7x7)
 
     def forward(self, x):
         branch1x1 = self.branch1x1(x)
@@ -243,7 +244,7 @@ class FIDInceptionE_1(models.inception.InceptionE):
     """First InceptionE block patched for FID computation"""
 
     def __init__(self, in_channels):
-        super(FIDInceptionE_1, self).__init__(in_channels)
+        super().__init__(in_channels)
 
     def forward(self, x):
         branch1x1 = self.branch1x1(x)
@@ -276,7 +277,7 @@ class FIDInceptionE_2(models.inception.InceptionE):
     """Second InceptionE block patched for FID computation"""
 
     def __init__(self, in_channels):
-        super(FIDInceptionE_2, self).__init__(in_channels)
+        super().__init__(in_channels)
 
     def forward(self, x):
         branch1x1 = self.branch1x1(x)

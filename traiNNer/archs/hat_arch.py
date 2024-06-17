@@ -22,8 +22,8 @@ def hat_l(**kwargs):
                embed_dim=180,
                num_heads=[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
                mlp_ratio=2,
-               upsampler='pixelshuffle',
-               resi_connection='1conv',
+               upsampler="pixelshuffle",
+               resi_connection="1conv",
                **kwargs)
 
 
@@ -41,8 +41,8 @@ def hat_m(**kwargs):
                embed_dim=180,
                num_heads=[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
                mlp_ratio=2,
-               upsampler='pixelshuffle',
-               resi_connection='1conv',
+               upsampler="pixelshuffle",
+               resi_connection="1conv",
                **kwargs)
 
 
@@ -61,6 +61,6 @@ def hat_s(**kwargs):
                embed_dim=180,
                num_heads=[6, 6, 6, 6, 6, 6],
                mlp_ratio=2,
-               upsampler='pixelshuffle',
-               resi_connection='1conv',
+               upsampler="pixelshuffle",
+               resi_connection="1conv",
                **kwargs)

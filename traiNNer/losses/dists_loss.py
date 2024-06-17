@@ -1,15 +1,13 @@
+from os import path as osp
+
 import numpy as np
 import torch
-import math
-from os import path as osp
-from torch import nn as nn
-from torch.nn import functional as F
 import torchvision.transforms.functional as tf
+from torch import nn
+from torch.nn import functional as F
 from torchvision import models
-
-from traiNNer.utils.registry import LOSS_REGISTRY
 from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
-
+from traiNNer.utils.registry import LOSS_REGISTRY
 
 ###################################################
 # DISTS loss
@@ -18,7 +16,7 @@ from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
 
 class L2pooling(nn.Module):
     def __init__(self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0):
-        super(L2pooling, self).__init__()
+        super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
         self.channels = channels
@@ -61,7 +59,7 @@ class DISTSLoss(nn.Module):
 
     def __init__(self, as_loss=True, loss_weight=1.0, load_weights=True, use_input_norm=True, resize_input=False,
                  clip_min=0, **kwargs):
-        super(DISTSLoss, self).__init__()
+        super().__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
         self.use_input_norm = use_input_norm

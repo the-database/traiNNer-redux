@@ -1,9 +1,8 @@
 import math
-import torch
-from torch import autograd as autograd
-from torch import nn as nn
-from torch.nn import functional as F
 
+import torch
+from torch import autograd, nn
+from torch.nn import functional as F
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 
@@ -21,24 +20,24 @@ class GANLoss(nn.Module):
     """
 
     def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
-        super(GANLoss, self).__init__()
+        super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
 
-        if self.gan_type == 'vanilla':
+        if self.gan_type == "vanilla":
             self.loss = nn.BCEWithLogitsLoss()
-        elif self.gan_type == 'lsgan':
+        elif self.gan_type == "lsgan":
             self.loss = nn.MSELoss()
-        elif self.gan_type == 'wgan':
+        elif self.gan_type == "wgan":
             self.loss = self._wgan_loss
-        elif self.gan_type == 'wgan_softplus':
+        elif self.gan_type == "wgan_softplus":
             self.loss = self._wgan_softplus_loss
-        elif self.gan_type == 'hinge':
+        elif self.gan_type == "hinge":
             self.loss = nn.ReLU()
         else:
-            raise NotImplementedError(f'GAN type {self.gan_type} is not implemented.')
+            raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
     def _wgan_loss(self, input, target):
         """wgan loss.
@@ -81,7 +80,7 @@ class GANLoss(nn.Module):
                 return Tensor.
         """
 
-        if self.gan_type in ['wgan', 'wgan_softplus']:
+        if self.gan_type in ["wgan", "wgan_softplus"]:
             return target_is_real
         target_val = (self.real_label_val if target_is_real else self.fake_label_val)
         return input.new_ones(input.size()) * target_val
@@ -99,7 +98,7 @@ class GANLoss(nn.Module):
             Tensor: GAN loss value.
         """
         target_label = self.get_target_label(input, target_is_real)
-        if self.gan_type == 'hinge':
+        if self.gan_type == "hinge":
             if is_disc:  # for discriminators in hinge-gan
                 input = -input if target_is_real else input
                 loss = self.loss(1 + input).mean()
@@ -119,7 +118,7 @@ class MultiScaleGANLoss(GANLoss):
     """
 
     def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
-        super(MultiScaleGANLoss, self).__init__(gan_type, real_label_val, fake_label_val, loss_weight)
+        super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
 
     def forward(self, input, target_is_real, is_disc=False):
         """

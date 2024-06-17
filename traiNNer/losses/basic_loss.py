@@ -1,26 +1,24 @@
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
-from torchvision.transforms import InterpolationMode
-from torchvision.transforms import v2
-
+from torchvision.transforms import InterpolationMode, v2
 from traiNNer.losses.loss_util import weighted_loss
-from traiNNer.utils.registry import LOSS_REGISTRY
 from traiNNer.utils.color_util import rgb2ycbcr_pt, rgb_to_luma
 from traiNNer.utils.hsluv import rgb_to_hsluv
+from traiNNer.utils.registry import LOSS_REGISTRY
 
-_reduction_modes = ['none', 'mean', 'sum']
+_reduction_modes = ["none", "mean", "sum"]
 VGG_PATCH_SIZE = 256
 
 
 @weighted_loss
 def l1_loss(pred, target):
-    return F.l1_loss(pred, target, reduction='none')
+    return F.l1_loss(pred, target, reduction="none")
 
 
 @weighted_loss
 def mse_loss(pred, target):
-    return F.mse_loss(pred, target, reduction='none')
+    return F.mse_loss(pred, target, reduction="none")
 
 
 @weighted_loss
@@ -38,10 +36,10 @@ class L1Loss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean'):
-        super(L1Loss, self).__init__()
-        if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
+    def __init__(self, loss_weight=1.0, reduction="mean"):
+        super().__init__()
+        if reduction not in ["none", "mean", "sum"]:
+            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -66,10 +64,10 @@ class MSELoss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean'):
-        super(MSELoss, self).__init__()
-        if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
+    def __init__(self, loss_weight=1.0, reduction="mean"):
+        super().__init__()
+        if reduction not in ["none", "mean", "sum"]:
+            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -99,10 +97,10 @@ class CharbonnierLoss(nn.Module):
         eps (float): A value used to control the curvature near zero. Default: 1e-12.
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean', eps=1e-12):
-        super(CharbonnierLoss, self).__init__()
-        if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}')
+    def __init__(self, loss_weight=1.0, reduction="mean", eps=1e-12):
+        super().__init__()
+        if reduction not in ["none", "mean", "sum"]:
+            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}")
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -126,10 +124,10 @@ class WeightedTVLoss(L1Loss):
         loss_weight (float): Loss weight. Default: 1.0.
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean'):
-        if reduction not in ['mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. Supported ones are: mean | sum')
-        super(WeightedTVLoss, self).__init__(loss_weight=loss_weight, reduction=reduction)
+    def __init__(self, loss_weight=1.0, reduction="mean"):
+        if reduction not in ["mean", "sum"]:
+            raise ValueError(f"Unsupported reduction mode: {reduction}. Supported ones are: mean | sum")
+        super().__init__(loss_weight=loss_weight, reduction=reduction)
 
     def forward(self, pred, weight=None):
         if weight is None:
@@ -151,19 +149,19 @@ class WeightedTVLoss(L1Loss):
 class ColorLoss(nn.Module):
     """Color loss"""
 
-    def __init__(self, criterion='l1', loss_weight=1.0, scale=4):
-        super(ColorLoss, self).__init__()
+    def __init__(self, criterion="l1", loss_weight=1.0, scale=4):
+        super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
         self.scale = scale
-        if self.criterion_type == 'l1':
+        if self.criterion_type == "l1":
             self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == 'l2':
+        elif self.criterion_type == "l2":
             self.criterion = torch.nn.MSELoss()
-        elif self.criterion_type == 'charbonnier':
+        elif self.criterion_type == "charbonnier":
             self.criterion = charbonnier_loss
         else:
-            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+            raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         input_yuv = rgb2ycbcr_pt(x)
@@ -180,17 +178,17 @@ class ColorLoss(nn.Module):
 class AverageLoss(nn.Module):
     """Averaging Downscale loss"""
 
-    def __init__(self, criterion='l1', loss_weight=1.0, scale=4):
-        super(AverageLoss, self).__init__()
+    def __init__(self, criterion="l1", loss_weight=1.0, scale=4):
+        super().__init__()
         self.ds_f = torch.nn.AvgPool2d(kernel_size=int(scale))
         self.loss_weight = loss_weight
         self.criterion_type = criterion
-        if self.criterion_type == 'l1':
+        if self.criterion_type == "l1":
             self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == 'l2':
+        elif self.criterion_type == "l2":
             self.criterion = torch.nn.MSELoss()
         else:
-            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+            raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
@@ -200,8 +198,8 @@ class AverageLoss(nn.Module):
 class BicubicLoss(nn.Module):
     """Bicubic Downscale loss"""
 
-    def __init__(self, criterion='l1', loss_weight=1.0, scale=4):
-        super(BicubicLoss, self).__init__()
+    def __init__(self, criterion="l1", loss_weight=1.0, scale=4):
+        super().__init__()
         self.scale = scale
         self.ds_f = lambda x: torch.nn.Sequential(
             v2.Resize([x.shape[2] // self.scale, x.shape[3] // self.scale],
@@ -210,14 +208,14 @@ class BicubicLoss(nn.Module):
         )(x)
         self.loss_weight = loss_weight
         self.criterion_type = criterion
-        if self.criterion_type == 'l1':
+        if self.criterion_type == "l1":
             self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == 'l2':
+        elif self.criterion_type == "l2":
             self.criterion = torch.nn.MSELoss()
-        elif self.criterion_type == 'charbonnier':
+        elif self.criterion_type == "charbonnier":
             self.criterion = charbonnier_loss
         else:
-            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+            raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
@@ -226,7 +224,7 @@ class BicubicLoss(nn.Module):
 @LOSS_REGISTRY.register()
 class LumaLoss(nn.Module):
     def __init__(self, criterion="l1", loss_weight=1.0) -> None:
-        super(LumaLoss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
 
@@ -249,7 +247,7 @@ class LumaLoss(nn.Module):
 @LOSS_REGISTRY.register()
 class HSLuvLoss(nn.Module):
     def __init__(self, criterion="l1", loss_weight=1.0) -> None:
-        super(HSLuvLoss, self).__init__()
+        super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
 

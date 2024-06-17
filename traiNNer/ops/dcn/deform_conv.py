@@ -1,22 +1,23 @@
 import math
 import os
+
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
 from torch.nn import functional as F
 from torch.nn.modules.utils import _pair, _single
 
-BASICSR_JIT = os.getenv('BASICSR_JIT')
-if BASICSR_JIT == 'True':
+BASICSR_JIT = os.getenv("BASICSR_JIT")
+if BASICSR_JIT == "True":
     from torch.utils.cpp_extension import load
     module_path = os.path.dirname(__file__)
     deform_conv_ext = load(
-        'deform_conv',
+        "deform_conv",
         sources=[
-            os.path.join(module_path, 'src', 'deform_conv_ext.cpp'),
-            os.path.join(module_path, 'src', 'deform_conv_cuda.cpp'),
-            os.path.join(module_path, 'src', 'deform_conv_cuda_kernel.cu'),
+            os.path.join(module_path, "src", "deform_conv_ext.cpp"),
+            os.path.join(module_path, "src", "deform_conv_cuda.cpp"),
+            os.path.join(module_path, "src", "deform_conv_cuda_kernel.cu"),
         ],
     )
 else:
@@ -44,7 +45,7 @@ class DeformConvFunction(Function):
                 deformable_groups=1,
                 im2col_step=64):
         if input is not None and input.dim() != 4:
-            raise ValueError(f'Expected 4D tensor as input, got {input.dim()}D tensor instead.')
+            raise ValueError(f"Expected 4D tensor as input, got {input.dim()}D tensor instead.")
         ctx.stride = _pair(stride)
         ctx.padding = _pair(padding)
         ctx.dilation = _pair(dilation)
@@ -62,7 +63,7 @@ class DeformConvFunction(Function):
             raise NotImplementedError
         else:
             cur_im2col_step = min(ctx.im2col_step, input.shape[0])
-            assert (input.shape[0] % cur_im2col_step) == 0, 'im2col step must divide batchsize'
+            assert (input.shape[0] % cur_im2col_step) == 0, "im2col step must divide batchsize"
             deform_conv_ext.deform_conv_forward(input, weight,
                                                 offset, output, ctx.bufs_[0], ctx.bufs_[1], weight.size(3),
                                                 weight.size(2), ctx.stride[1], ctx.stride[0], ctx.padding[1],
@@ -81,7 +82,7 @@ class DeformConvFunction(Function):
             raise NotImplementedError
         else:
             cur_im2col_step = min(ctx.im2col_step, input.shape[0])
-            assert (input.shape[0] % cur_im2col_step) == 0, 'im2col step must divide batchsize'
+            assert (input.shape[0] % cur_im2col_step) == 0, "im2col step must divide batchsize"
 
             if ctx.needs_input_grad[0] or ctx.needs_input_grad[1]:
                 grad_input = torch.zeros_like(input)
@@ -113,7 +114,7 @@ class DeformConvFunction(Function):
             kernel = dilation[d] * (weight.size(d + 2) - 1) + 1
             stride_ = stride[d]
             output_size += ((in_size + (2 * pad) - kernel) // stride_ + 1, )
-        if not all(map(lambda s: s > 0, output_size)):
+        if not all(s > 0 for s in output_size):
             raise ValueError(f'convolution input is too small (output would be {"x".join(map(str, output_size))})')
         return output_size
 
@@ -200,11 +201,11 @@ class DeformConv(nn.Module):
                  groups=1,
                  deformable_groups=1,
                  bias=False):
-        super(DeformConv, self).__init__()
+        super().__init__()
 
         assert not bias
-        assert in_channels % groups == 0, f'in_channels {in_channels} is not divisible by groups {groups}'
-        assert out_channels % groups == 0, f'out_channels {out_channels} is not divisible by groups {groups}'
+        assert in_channels % groups == 0, f"in_channels {in_channels} is not divisible by groups {groups}"
+        assert out_channels % groups == 0, f"out_channels {out_channels} is not divisible by groups {groups}"
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -236,8 +237,8 @@ class DeformConv(nn.Module):
         if input_pad:
             pad_h = max(self.kernel_size[0] - x.size(2), 0)
             pad_w = max(self.kernel_size[1] - x.size(3), 0)
-            x = F.pad(x, (0, pad_w, 0, pad_h), 'constant', 0).contiguous()
-            offset = F.pad(offset, (0, pad_w, 0, pad_h), 'constant', 0).contiguous()
+            x = F.pad(x, (0, pad_w, 0, pad_h), "constant", 0).contiguous()
+            offset = F.pad(offset, (0, pad_w, 0, pad_h), "constant", 0).contiguous()
         out = deform_conv(x, offset, self.weight, self.stride, self.padding, self.dilation, self.groups,
                           self.deformable_groups)
         if input_pad:
@@ -264,7 +265,7 @@ class DeformConvPack(DeformConv):
     _version = 2
 
     def __init__(self, *args, **kwargs):
-        super(DeformConvPack, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.conv_offset = nn.Conv2d(
             self.in_channels,
@@ -298,7 +299,7 @@ class ModulatedDeformConv(nn.Module):
                  groups=1,
                  deformable_groups=1,
                  bias=True):
-        super(ModulatedDeformConv, self).__init__()
+        super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = _pair(kernel_size)
@@ -316,7 +317,7 @@ class ModulatedDeformConv(nn.Module):
         if bias:
             self.bias = nn.Parameter(torch.Tensor(out_channels))
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         self.init_weights()
 
     def init_weights(self):
@@ -352,7 +353,7 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
     _version = 2
 
     def __init__(self, *args, **kwargs):
-        super(ModulatedDeformConvPack, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.conv_offset = nn.Conv2d(
             self.in_channels,
@@ -365,8 +366,8 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
         self.init_weights()
 
     def init_weights(self):
-        super(ModulatedDeformConvPack, self).init_weights()
-        if hasattr(self, 'conv_offset'):
+        super().init_weights()
+        if hasattr(self, "conv_offset"):
             self.conv_offset.weight.data.zero_()
             self.conv_offset.bias.data.zero_()
 

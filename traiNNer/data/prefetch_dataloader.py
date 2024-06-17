@@ -1,5 +1,6 @@
 import queue as Queue
 import threading
+
 import torch
 from torch.utils.data import DataLoader
 
@@ -52,13 +53,13 @@ class PrefetchDataLoader(DataLoader):
 
     def __init__(self, num_prefetch_queue, **kwargs):
         self.num_prefetch_queue = num_prefetch_queue
-        super(PrefetchDataLoader, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __iter__(self):
         return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
 
 
-class CPUPrefetcher():
+class CPUPrefetcher:
     """CPU prefetcher.
 
     Args:
@@ -79,7 +80,7 @@ class CPUPrefetcher():
         self.loader = iter(self.ori_loader)
 
 
-class CUDAPrefetcher():
+class CUDAPrefetcher:
     """CUDA prefetcher.
 
     Reference: https://github.com/NVIDIA/apex/issues/304#
@@ -96,7 +97,7 @@ class CUDAPrefetcher():
         self.loader = iter(loader)
         self.opt = opt
         self.stream = torch.cuda.Stream()
-        self.device = torch.device('cuda' if opt['num_gpu'] != 0 else 'cpu')
+        self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
         self.preload()
 
     def preload(self):

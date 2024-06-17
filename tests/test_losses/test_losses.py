@@ -24,20 +24,20 @@ class TestLosses:
 
     eps = 1e-5  # torch.finfo(torch.float32).eps
 
-    @pytest.mark.parametrize('loss_class', [L1Loss, MSELoss, CharbonnierLoss])
+    @pytest.mark.parametrize("loss_class", [L1Loss, MSELoss, CharbonnierLoss])
     def test_pixellosses(self, loss_class):
         """Test loss: pixel losses"""
 
         pred = torch.rand((1, 3, 4, 4), dtype=torch.float32)
         target = torch.rand((1, 3, 4, 4), dtype=torch.float32)
-        loss = loss_class(loss_weight=1.0, reduction='mean')
+        loss = loss_class(loss_weight=1.0, reduction="mean")
         out = loss(pred, target, weight=None)
         assert isinstance(out, torch.Tensor)
         assert out.shape == torch.Size([])
 
         # -------------------- test with other reduction -------------------- #
         # reduction = none
-        loss = loss_class(loss_weight=1.0, reduction='none')
+        loss = loss_class(loss_weight=1.0, reduction="none")
         out = loss(pred, target, weight=None)
         assert isinstance(out, torch.Tensor)
         assert out.shape == (1, 3, 4, 4)
@@ -48,20 +48,20 @@ class TestLosses:
         assert out.shape == (1, 3, 4, 4)
 
         # reduction = sum
-        loss = loss_class(loss_weight=1.0, reduction='sum')
+        loss = loss_class(loss_weight=1.0, reduction="sum")
         out = loss(pred, target, weight=None)
         assert isinstance(out, torch.Tensor)
         assert out.shape == torch.Size([])
 
         # -------------------- test unsupported loss reduction -------------------- #
         with pytest.raises(ValueError):
-            loss_class(loss_weight=1.0, reduction='unknown')
+            loss_class(loss_weight=1.0, reduction="unknown")
 
     def test_weightedtvloss(self):
         """Test loss: WeightedTVLoss"""
 
         pred = torch.rand((1, 3, 4, 4), dtype=torch.float32)
-        loss = WeightedTVLoss(loss_weight=1.0, reduction='mean')
+        loss = WeightedTVLoss(loss_weight=1.0, reduction="mean")
         out = loss(pred, weight=None)
         assert isinstance(out, torch.Tensor)
         assert out.shape == torch.Size([])
@@ -73,7 +73,7 @@ class TestLosses:
         assert out.shape == torch.Size([])
 
         # -------------------- test reduction = sum-------------------- #
-        loss = WeightedTVLoss(loss_weight=1.0, reduction='sum')
+        loss = WeightedTVLoss(loss_weight=1.0, reduction="sum")
         out = loss(pred, weight=None)
         assert isinstance(out, torch.Tensor)
         assert out.shape == torch.Size([])
@@ -86,9 +86,9 @@ class TestLosses:
 
         # -------------------- test unsupported loss reduction -------------------- #
         with pytest.raises(ValueError):
-            WeightedTVLoss(loss_weight=1.0, reduction='unknown')
+            WeightedTVLoss(loss_weight=1.0, reduction="unknown")
         with pytest.raises(ValueError):
-            WeightedTVLoss(loss_weight=1.0, reduction='none')
+            WeightedTVLoss(loss_weight=1.0, reduction="none")
 
     @pytest.mark.parametrize("loss_fn",
                              [mssim_neo_loss, l1_loss, luma_loss, mse_loss, charbonnier_loss, perceptual_loss,

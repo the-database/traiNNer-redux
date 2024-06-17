@@ -1,10 +1,15 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from ..utils.registry import ARCH_REGISTRY
-from .hifacegan_util import BaseNetwork, LIPEncoder, SPADEResnetBlock, get_nonspade_norm_layer
+from .hifacegan_util import (
+    BaseNetwork,
+    LIPEncoder,
+    SPADEResnetBlock,
+    get_nonspade_norm_layer,
+)
 
 
 class SPADEGenerator(BaseNetwork):
@@ -16,7 +21,7 @@ class SPADEGenerator(BaseNetwork):
                  use_vae=False,
                  z_dim=256,
                  crop_size=512,
-                 norm_g='spectralspadesyncbatch3x3',
+                 norm_g="spectralspadesyncbatch3x3",
                  is_train=True,
                  init_train_phase=3):  # progressive training disabled
         super().__init__()
@@ -93,7 +98,7 @@ class SPADEGenerator(BaseNetwork):
 
         return x
 
-    def mixed_guidance_forward(self, input_x, seg=None, n=0, mode='progressive'):
+    def mixed_guidance_forward(self, input_x, seg=None, n=0, mode="progressive"):
         """
         A helper class for subspace visualization. Input and seg are different images.
         For the first n levels (including encoder) we use input, for the rest we use seg.
@@ -111,14 +116,14 @@ class SPADEGenerator(BaseNetwork):
         else:
             phase = len(self.to_rgbs)
 
-        if mode == 'progressive':
+        if mode == "progressive":
             n = max(min(n, 4 + phase), 0)
             guide_list = [input_x] * n + [seg] * (4 + phase - n)
-        elif mode == 'one_plug':
+        elif mode == "one_plug":
             n = max(min(n, 4 + phase - 1), 0)
             guide_list = [seg] * (4 + phase)
             guide_list[n] = input_x
-        elif mode == 'one_ablate':
+        elif mode == "one_ablate":
             if n > 3 + phase:
                 return self.forward(input_x)
             guide_list = [input_x] * (4 + phase)
@@ -154,7 +159,7 @@ class HiFaceGAN(SPADEGenerator):
                  use_vae=False,
                  z_dim=256,
                  crop_size=512,
-                 norm_g='spectralspadesyncbatch3x3',
+                 norm_g="spectralspadesyncbatch3x3",
                  is_train=True,
                  init_train_phase=3):
         super().__init__(num_in_ch, num_feat, use_vae, z_dim, crop_size, norm_g, is_train, init_train_phase)
@@ -192,7 +197,7 @@ class HiFaceGANDiscriminator(BaseNetwork):
                  num_d=2,
                  n_layers_d=4,
                  num_feat=64,
-                 norm_d='spectralinstance',
+                 norm_d="spectralinstance",
                  keep_features=True):
         super().__init__()
         self.num_d = num_d
@@ -203,7 +208,7 @@ class HiFaceGANDiscriminator(BaseNetwork):
 
         for i in range(num_d):
             subnet_d = NLayerDiscriminator(input_nc, n_layers_d, num_feat, norm_d, keep_features)
-            self.add_module(f'discriminator_{i}', subnet_d)
+            self.add_module(f"discriminator_{i}", subnet_d)
 
     def downsample(self, x):
         return F.avg_pool2d(x, kernel_size=3, stride=2, padding=[1, 1], count_include_pad=False)
@@ -246,7 +251,7 @@ class NLayerDiscriminator(BaseNetwork):
 
         # We divide the layers into groups to extract intermediate layer outputs
         for n in range(len(sequence)):
-            self.add_module('model' + str(n), nn.Sequential(*sequence[n]))
+            self.add_module("model" + str(n), nn.Sequential(*sequence[n]))
 
     def forward(self, x):
         results = [x]

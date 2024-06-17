@@ -1,4 +1,9 @@
-from spandrel.architectures.RealCUGAN import UpCunet2x, UpCunet2x_fast, UpCunet3x, UpCunet4x
+from spandrel.architectures.RealCUGAN import (
+    UpCunet2x,
+    UpCunet2x_fast,
+    UpCunet3x,
+    UpCunet4x,
+)
 from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 

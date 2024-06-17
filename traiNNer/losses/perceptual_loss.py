@@ -1,9 +1,8 @@
 import torch
-from torch import nn as nn
-
+from torch import nn
 from traiNNer.archs.vgg_arch import VGGFeatureExtractor
-from traiNNer.utils.registry import LOSS_REGISTRY
 from traiNNer.losses.basic_loss import charbonnier_loss
+from traiNNer.utils.registry import LOSS_REGISTRY
 
 VGG_PATCH_SIZE = 256
 
@@ -34,7 +33,7 @@ class PerceptualLoss(nn.Module):
 
     def __init__(self,
                  layer_weights,
-                 vgg_type='vgg19',
+                 vgg_type="vgg19",
                  use_input_norm=True,
                  range_norm=False,
                  normalize_layer_weights=False,
@@ -42,8 +41,8 @@ class PerceptualLoss(nn.Module):
                  resize_input=False,
                  perceptual_weight=1.0,
                  style_weight=0.,
-                 criterion='l1'):
-        super(PerceptualLoss, self).__init__()
+                 criterion="l1"):
+        super().__init__()
         self.perceptual_weight = perceptual_weight
         self.style_weight = style_weight
 
@@ -62,16 +61,16 @@ class PerceptualLoss(nn.Module):
             resize_input=resize_input)
 
         self.criterion_type = criterion
-        if self.criterion_type == 'l1':
+        if self.criterion_type == "l1":
             self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == 'l2':
+        elif self.criterion_type == "l2":
             self.criterion = torch.nn.MSELoss()
-        elif self.criterion_type == 'charbonnier':
+        elif self.criterion_type == "charbonnier":
             self.criterion = charbonnier_loss
-        elif self.criterion_type == 'fro':
+        elif self.criterion_type == "fro":
             self.criterion = None
         else:
-            raise NotImplementedError(f'{criterion} criterion has not been supported.')
+            raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
     def forward(self, x, gt):
         """Forward function.
@@ -91,8 +90,8 @@ class PerceptualLoss(nn.Module):
         if self.perceptual_weight > 0:
             percep_loss = 0
             for k in x_features.keys():
-                if self.criterion_type == 'fro':
-                    percep_loss += torch.norm(x_features[k] - gt_features[k], p='fro') * self.layer_weights[k]
+                if self.criterion_type == "fro":
+                    percep_loss += torch.norm(x_features[k] - gt_features[k], p="fro") * self.layer_weights[k]
                 else:
                     percep_loss += self.criterion(x_features[k], gt_features[k]) * self.layer_weights[k]
             percep_loss *= self.perceptual_weight
@@ -103,9 +102,9 @@ class PerceptualLoss(nn.Module):
         if self.style_weight > 0:
             style_loss = 0
             for k in x_features.keys():
-                if self.criterion_type == 'fro':
+                if self.criterion_type == "fro":
                     style_loss += torch.norm(
-                        self._gram_mat(x_features[k]) - self._gram_mat(gt_features[k]), p='fro') * self.layer_weights[k]
+                        self._gram_mat(x_features[k]) - self._gram_mat(gt_features[k]), p="fro") * self.layer_weights[k]
                 else:
                     style_loss += self.criterion(self._gram_mat(x_features[k]), self._gram_mat(
                         gt_features[k])) * self.layer_weights[k]

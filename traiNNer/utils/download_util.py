@@ -1,9 +1,10 @@
 import math
 import os
+from urllib.parse import urlparse
+
 import requests
 from torch.hub import download_url_to_file, get_dir
 from tqdm import tqdm
-from urllib.parse import urlparse
 
 from .misc import sizeof_fmt
 
@@ -19,19 +20,19 @@ def download_file_from_google_drive(file_id, save_path):
     """
 
     session = requests.Session()
-    URL = 'https://docs.google.com/uc?export=download'
-    params = {'id': file_id}
+    URL = "https://docs.google.com/uc?export=download"
+    params = {"id": file_id}
 
     response = session.get(URL, params=params, stream=True)
     token = get_confirm_token(response)
     if token:
-        params['confirm'] = token
+        params["confirm"] = token
         response = session.get(URL, params=params, stream=True)
 
     # get file size
-    response_file_size = session.get(URL, params=params, stream=True, headers={'Range': 'bytes=0-2'})
-    if 'Content-Range' in response_file_size.headers:
-        file_size = int(response_file_size.headers['Content-Range'].split('/')[1])
+    response_file_size = session.get(URL, params=params, stream=True, headers={"Range": "bytes=0-2"})
+    if "Content-Range" in response_file_size.headers:
+        file_size = int(response_file_size.headers["Content-Range"].split("/")[1])
     else:
         file_size = None
 
@@ -40,26 +41,26 @@ def download_file_from_google_drive(file_id, save_path):
 
 def get_confirm_token(response):
     for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
+        if key.startswith("download_warning"):
             return value
     return None
 
 
 def save_response_content(response, destination, file_size=None, chunk_size=32768):
     if file_size is not None:
-        pbar = tqdm(total=math.ceil(file_size / chunk_size), unit='chunk')
+        pbar = tqdm(total=math.ceil(file_size / chunk_size), unit="chunk")
 
         readable_file_size = sizeof_fmt(file_size)
     else:
         pbar = None
 
-    with open(destination, 'wb') as f:
+    with open(destination, "wb") as f:
         downloaded_size = 0
         for chunk in response.iter_content(chunk_size):
             downloaded_size += chunk_size
             if pbar is not None:
                 pbar.update(1)
-                pbar.set_description(f'Download {sizeof_fmt(downloaded_size)} / {readable_file_size}')
+                pbar.set_description(f"Download {sizeof_fmt(downloaded_size)} / {readable_file_size}")
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
         if pbar is not None:
@@ -83,7 +84,7 @@ def load_file_from_url(url, model_dir=None, progress=True, file_name=None):
     """
     if model_dir is None:  # use the pytorch hub_dir
         hub_dir = get_dir()
-        model_dir = os.path.join(hub_dir, 'checkpoints')
+        model_dir = os.path.join(hub_dir, "checkpoints")
 
     os.makedirs(model_dir, exist_ok=True)
 

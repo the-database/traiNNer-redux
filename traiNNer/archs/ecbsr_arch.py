@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from ..utils.registry import ARCH_REGISTRY
 
@@ -20,12 +20,12 @@ class SeqConv3x3(nn.Module):
     """
 
     def __init__(self, seq_type, in_channels, out_channels, depth_multiplier=1):
-        super(SeqConv3x3, self).__init__()
+        super().__init__()
         self.seq_type = seq_type
         self.in_channels = in_channels
         self.out_channels = out_channels
 
-        if self.seq_type == 'conv1x1-conv3x3':
+        if self.seq_type == "conv1x1-conv3x3":
             self.mid_planes = int(out_channels * depth_multiplier)
             conv0 = torch.nn.Conv2d(self.in_channels, self.mid_planes, kernel_size=1, padding=0)
             self.k0 = conv0.weight
@@ -35,7 +35,7 @@ class SeqConv3x3(nn.Module):
             self.k1 = conv1.weight
             self.b1 = conv1.bias
 
-        elif self.seq_type == 'conv1x1-sobelx':
+        elif self.seq_type == "conv1x1-sobelx":
             conv0 = torch.nn.Conv2d(self.in_channels, self.out_channels, kernel_size=1, padding=0)
             self.k0 = conv0.weight
             self.b0 = conv0.bias
@@ -57,7 +57,7 @@ class SeqConv3x3(nn.Module):
                 self.mask[i, 0, 2, 2] = -1.0
             self.mask = nn.Parameter(data=self.mask, requires_grad=False)
 
-        elif self.seq_type == 'conv1x1-sobely':
+        elif self.seq_type == "conv1x1-sobely":
             conv0 = torch.nn.Conv2d(self.in_channels, self.out_channels, kernel_size=1, padding=0)
             self.k0 = conv0.weight
             self.b0 = conv0.bias
@@ -79,7 +79,7 @@ class SeqConv3x3(nn.Module):
                 self.mask[i, 0, 2, 2] = -1.0
             self.mask = nn.Parameter(data=self.mask, requires_grad=False)
 
-        elif self.seq_type == 'conv1x1-laplacian':
+        elif self.seq_type == "conv1x1-laplacian":
             conv0 = torch.nn.Conv2d(self.in_channels, self.out_channels, kernel_size=1, padding=0)
             self.k0 = conv0.weight
             self.b0 = conv0.bias
@@ -100,14 +100,14 @@ class SeqConv3x3(nn.Module):
                 self.mask[i, 0, 1, 1] = -4.0
             self.mask = nn.Parameter(data=self.mask, requires_grad=False)
         else:
-            raise ValueError('The type of seqconv is not supported!')
+            raise ValueError("The type of seqconv is not supported!")
 
     def forward(self, x):
-        if self.seq_type == 'conv1x1-conv3x3':
+        if self.seq_type == "conv1x1-conv3x3":
             # conv-1x1
             y0 = F.conv2d(input=x, weight=self.k0, bias=self.b0, stride=1)
             # explicitly padding with bias
-            y0 = F.pad(y0, (1, 1, 1, 1), 'constant', 0)
+            y0 = F.pad(y0, (1, 1, 1, 1), "constant", 0)
             b0_pad = self.b0.view(1, -1, 1, 1)
             y0[:, :, 0:1, :] = b0_pad
             y0[:, :, -1:, :] = b0_pad
@@ -118,7 +118,7 @@ class SeqConv3x3(nn.Module):
         else:
             y0 = F.conv2d(input=x, weight=self.k0, bias=self.b0, stride=1)
             # explicitly padding with bias
-            y0 = F.pad(y0, (1, 1, 1, 1), 'constant', 0)
+            y0 = F.pad(y0, (1, 1, 1, 1), "constant", 0)
             b0_pad = self.b0.view(1, -1, 1, 1)
             y0[:, :, 0:1, :] = b0_pad
             y0[:, :, -1:, :] = b0_pad
@@ -133,7 +133,7 @@ class SeqConv3x3(nn.Module):
         if device < 0:
             device = None
 
-        if self.seq_type == 'conv1x1-conv3x3':
+        if self.seq_type == "conv1x1-conv3x3":
             # re-param conv kernel
             rep_weight = F.conv2d(input=self.k1, weight=self.k0.permute(1, 0, 2, 3))
             # re-param conv bias
@@ -167,8 +167,8 @@ class ECB(nn.Module):
         with_idt (bool): Whether to use identity connection. Default: False.
     """
 
-    def __init__(self, in_channels, out_channels, depth_multiplier, act_type='prelu', with_idt=False):
-        super(ECB, self).__init__()
+    def __init__(self, in_channels, out_channels, depth_multiplier, act_type="prelu", with_idt=False):
+        super().__init__()
 
         self.depth_multiplier = depth_multiplier
         self.in_channels = in_channels
@@ -181,23 +181,23 @@ class ECB(nn.Module):
             self.with_idt = False
 
         self.conv3x3 = torch.nn.Conv2d(self.in_channels, self.out_channels, kernel_size=3, padding=1)
-        self.conv1x1_3x3 = SeqConv3x3('conv1x1-conv3x3', self.in_channels, self.out_channels, self.depth_multiplier)
-        self.conv1x1_sbx = SeqConv3x3('conv1x1-sobelx', self.in_channels, self.out_channels)
-        self.conv1x1_sby = SeqConv3x3('conv1x1-sobely', self.in_channels, self.out_channels)
-        self.conv1x1_lpl = SeqConv3x3('conv1x1-laplacian', self.in_channels, self.out_channels)
+        self.conv1x1_3x3 = SeqConv3x3("conv1x1-conv3x3", self.in_channels, self.out_channels, self.depth_multiplier)
+        self.conv1x1_sbx = SeqConv3x3("conv1x1-sobelx", self.in_channels, self.out_channels)
+        self.conv1x1_sby = SeqConv3x3("conv1x1-sobely", self.in_channels, self.out_channels)
+        self.conv1x1_lpl = SeqConv3x3("conv1x1-laplacian", self.in_channels, self.out_channels)
 
-        if self.act_type == 'prelu':
+        if self.act_type == "prelu":
             self.act = nn.PReLU(num_parameters=self.out_channels)
-        elif self.act_type == 'relu':
+        elif self.act_type == "relu":
             self.act = nn.ReLU(inplace=True)
-        elif self.act_type == 'rrelu':
+        elif self.act_type == "rrelu":
             self.act = nn.RReLU(lower=-0.05, upper=0.05)
-        elif self.act_type == 'softplus':
+        elif self.act_type == "softplus":
             self.act = nn.Softplus()
-        elif self.act_type == 'linear':
+        elif self.act_type == "linear":
             pass
         else:
-            raise ValueError('The type of activation if not support!')
+            raise ValueError("The type of activation if not support!")
 
     def forward(self, x):
         if self.training:
@@ -207,7 +207,7 @@ class ECB(nn.Module):
         else:
             rep_weight, rep_bias = self.rep_params()
             y = F.conv2d(input=x, weight=rep_weight, bias=rep_bias, stride=1, padding=1)
-        if self.act_type != 'linear':
+        if self.act_type != "linear":
             y = self.act(y)
         return y
 
@@ -250,7 +250,7 @@ class ECBSR(nn.Module):
     """
 
     def __init__(self, num_in_ch, num_out_ch, num_block, num_channel, with_idt, act_type, scale):
-        super(ECBSR, self).__init__()
+        super().__init__()
         self.num_in_ch = num_in_ch
         self.scale = scale
 
@@ -259,7 +259,7 @@ class ECBSR(nn.Module):
         for _ in range(num_block):
             backbone += [ECB(num_channel, num_channel, depth_multiplier=2.0, act_type=act_type, with_idt=with_idt)]
         backbone += [
-            ECB(num_channel, num_out_ch * scale * scale, depth_multiplier=2.0, act_type='linear', with_idt=with_idt)
+            ECB(num_channel, num_out_ch * scale * scale, depth_multiplier=2.0, act_type="linear", with_idt=with_idt)
         ]
 
         self.backbone = nn.Sequential(*backbone)

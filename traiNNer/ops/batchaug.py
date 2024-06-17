@@ -1,11 +1,12 @@
 # Code from: https://github.com/victorca25/traiNNer/blob/master/codes/dataops/batchaug.py
 
+import os
 import random
+
 import numpy as np
 import torch
-from torch.nn import functional as F
 import torchvision
-import os
+from torch.nn import functional as F
 
 rng = np.random.default_rng()
 
@@ -47,12 +48,12 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
         i = 1
         moa_debug_path = "./moa_debug"
         os.makedirs(moa_debug_path, exist_ok=True)
-        while os.path.exists(rf'./moa_debug/{i:06d}_preauglq.png'):
+        while os.path.exists(rf"./moa_debug/{i:06d}_preauglq.png"):
             i += 1
 
         if i <= debug_limit or debug_limit == 0:
-            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_preauglq.png'), padding=0)
-            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_preauggt.png'), padding=0)
+            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f"{i:06d}_preauglq.png"), padding=0)
+            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f"{i:06d}_preauggt.png"), padding=0)
 
     if len(augs) != len(probs):
         msg = "Length of 'augmentation' and aug_prob don't match!"
@@ -80,13 +81,13 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
     elif "up" == aug:
         img_gt, img_lq = up(img_gt, img_lq, scale)
     else:
-        raise ValueError("{} is not invalid.".format(aug))
+        raise ValueError(f"{aug} is not invalid.")
 
     if debug:
         if i <= debug_limit:
-            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_lqfinal.png'),
+            torchvision.utils.save_image(img_lq, os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_lqfinal.png"),
                                          padding=0)
-            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f'{i:06d}_postaug_{aug}_gtfinal.png'),
+            torchvision.utils.save_image(img_gt, os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_gtfinal.png"),
                                          padding=0)
 
     return img_gt, img_lq
@@ -127,7 +128,7 @@ def _cutmix(img2, prob=1.0, alpha=1.0):
     cut_ratio = np.random.randn() * 0.01 + alpha
 
     h, w = img2.shape[2:]
-    ch, cw = np.int(h * cut_ratio), np.int(w * cut_ratio)
+    ch, cw = int(h * cut_ratio), int(w * cut_ratio)
 
     fcy = np.random.randint(0, h - ch + 1)
     fcx = np.random.randint(0, w - cw + 1)

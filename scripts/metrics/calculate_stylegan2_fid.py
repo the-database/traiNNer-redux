@@ -1,25 +1,29 @@
 import argparse
 import math
+
 import numpy as np
 import torch
 from torch import nn
-
 from traiNNer.archs.stylegan2_arch import StyleGAN2Generator
-from traiNNer.metrics.fid import calculate_fid, extract_inception_features, load_patched_inception_v3
+from traiNNer.metrics.fid import (
+    calculate_fid,
+    extract_inception_features,
+    load_patched_inception_v3,
+)
 
 
 def calculate_stylegan2_fid():
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('ckpt', type=str, help='Path to the stylegan2 checkpoint.')
-    parser.add_argument('fid_stats', type=str, help='Path to the dataset fid statistics.')
-    parser.add_argument('--size', type=int, default=256)
-    parser.add_argument('--channel_multiplier', type=int, default=2)
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--num_sample', type=int, default=50000)
-    parser.add_argument('--truncation', type=float, default=1)
-    parser.add_argument('--truncation_mean', type=int, default=4096)
+    parser.add_argument("ckpt", type=str, help="Path to the stylegan2 checkpoint.")
+    parser.add_argument("fid_stats", type=str, help="Path to the dataset fid statistics.")
+    parser.add_argument("--size", type=int, default=256)
+    parser.add_argument("--channel_multiplier", type=int, default=2)
+    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--num_sample", type=int, default=50000)
+    parser.add_argument("--truncation", type=float, default=1)
+    parser.add_argument("--truncation_mean", type=int, default=4096)
     args = parser.parse_args()
 
     # create stylegan2 model
@@ -29,7 +33,7 @@ def calculate_stylegan2_fid():
         num_mlp=8,
         channel_multiplier=args.channel_multiplier,
         resample_kernel=(1, 3, 3, 1))
-    generator.load_state_dict(torch.load(args.ckpt)['params_ema'])
+    generator.load_state_dict(torch.load(args.ckpt)["params_ema"])
     generator = nn.DataParallel(generator).eval().to(device)
 
     if args.truncation < 1:
@@ -54,19 +58,19 @@ def calculate_stylegan2_fid():
     features = features.numpy()
     total_len = features.shape[0]
     features = features[:args.num_sample]
-    print(f'Extracted {total_len} features, use the first {features.shape[0]} features to calculate stats.')
+    print(f"Extracted {total_len} features, use the first {features.shape[0]} features to calculate stats.")
     sample_mean = np.mean(features, 0)
     sample_cov = np.cov(features, rowvar=False)
 
     # load the dataset stats
     stats = torch.load(args.fid_stats)
-    real_mean = stats['mean']
-    real_cov = stats['cov']
+    real_mean = stats["mean"]
+    real_cov = stats["cov"]
 
     # calculate FID metric
     fid = calculate_fid(sample_mean, sample_cov, real_mean, real_cov)
-    print('fid:', fid)
+    print("fid:", fid)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     calculate_stylegan2_fid()

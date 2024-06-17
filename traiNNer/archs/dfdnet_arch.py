@@ -1,11 +1,17 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torch.nn.utils.spectral_norm import spectral_norm
 
 from ..utils.registry import ARCH_REGISTRY
-from .dfdnet_util import AttentionBlock, Blur, MSDilationBlock, UpResBlock, adaptive_instance_normalization
+from .dfdnet_util import (
+    AttentionBlock,
+    Blur,
+    MSDilationBlock,
+    UpResBlock,
+    adaptive_instance_normalization,
+)
 from .vgg_arch import VGGFeatureExtractor
 
 
@@ -20,7 +26,7 @@ class SFTUpBlock(nn.Module):
     """
 
     def __init__(self, in_channel, out_channel, kernel_size=3, padding=1):
-        super(SFTUpBlock, self).__init__()
+        super().__init__()
         self.conv1 = nn.Sequential(
             Blur(in_channel),
             spectral_norm(nn.Conv2d(in_channel, out_channel, kernel_size, padding=padding)),
@@ -28,7 +34,7 @@ class SFTUpBlock(nn.Module):
             # The official codes use two LeakyReLU here, so 0.04 for equivalent
         )
         self.convup = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
+            nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False),
             spectral_norm(nn.Conv2d(out_channel, out_channel, kernel_size, padding=padding)),
             nn.LeakyReLU(0.2, True),
         )
@@ -66,11 +72,11 @@ class DFDNet(nn.Module):
 
     def __init__(self, num_feat, dict_path):
         super().__init__()
-        self.parts = ['left_eye', 'right_eye', 'nose', 'mouth']
+        self.parts = ["left_eye", "right_eye", "nose", "mouth"]
         # part_sizes: [80, 80, 50, 110]
         channel_sizes = [128, 256, 512, 512]
         self.feature_sizes = np.array([256, 128, 64, 32])
-        self.vgg_layers = ['relu2_2', 'relu3_4', 'relu4_4', 'conv5_4']
+        self.vgg_layers = ["relu2_2", "relu3_4", "relu4_4", "conv5_4"]
         self.flag_dict_device = False
 
         # dict
@@ -79,7 +85,7 @@ class DFDNet(nn.Module):
         # vgg face extractor
         self.vgg_extractor = VGGFeatureExtractor(
             layer_name_list=self.vgg_layers,
-            vgg_type='vgg19',
+            vgg_type="vgg19",
             use_input_norm=True,
             range_norm=True,
             requires_grad=False)
@@ -88,7 +94,7 @@ class DFDNet(nn.Module):
         self.attn_blocks = nn.ModuleDict()
         for idx, feat_size in enumerate(self.feature_sizes):
             for name in self.parts:
-                self.attn_blocks[f'{name}_{feat_size}'] = AttentionBlock(channel_sizes[idx])
+                self.attn_blocks[f"{name}_{feat_size}"] = AttentionBlock(channel_sizes[idx])
 
         # multi scale dilation block
         self.multi_scale_dilation = MSDilationBlock(num_feat * 8, dilation=[4, 3, 2, 1])
@@ -107,7 +113,7 @@ class DFDNet(nn.Module):
         # get the original vgg features
         part_feat = vgg_feat[:, :, location[1]:location[3], location[0]:location[2]].clone()
         # resize original vgg features
-        part_resize_feat = F.interpolate(part_feat, dict_feat.size()[2:4], mode='bilinear', align_corners=False)
+        part_resize_feat = F.interpolate(part_feat, dict_feat.size()[2:4], mode="bilinear", align_corners=False)
         # use adaptive instance normalization to adjust color and illuminations
         dict_feat = adaptive_instance_normalization(dict_feat, part_resize_feat)
         # get similarity scores
@@ -117,7 +123,7 @@ class DFDNet(nn.Module):
         select_idx = torch.argmax(similarity_score)
         swap_feat = F.interpolate(dict_feat[select_idx:select_idx + 1], part_feat.size()[2:4])
         # attention
-        attn = self.attn_blocks[f'{part_name}_' + str(f_size)](swap_feat - part_feat)
+        attn = self.attn_blocks[f"{part_name}_" + str(f_size)](swap_feat - part_feat)
         attn_feat = attn * swap_feat
         # update features
         updated_feat[:, :, location[1]:location[3], location[0]:location[2]] = attn_feat + part_feat
@@ -144,8 +150,8 @@ class DFDNet(nn.Module):
         # update vggface features using the dictionary for each part
         updated_vgg_features = []
         batch = 0  # only supports testing with batch size = 0
-        for vgg_layer, f_size in zip(self.vgg_layers, self.feature_sizes):
-            dict_features = self.dict[f'{f_size}']
+        for vgg_layer, f_size in zip(self.vgg_layers, self.feature_sizes, strict=False):
+            dict_features = self.dict[f"{f_size}"]
             vgg_feat = vgg_features[vgg_layer]
             updated_feat = vgg_feat.clone()
 
@@ -157,7 +163,7 @@ class DFDNet(nn.Module):
 
             updated_vgg_features.append(updated_feat)
 
-        vgg_feat_dilation = self.multi_scale_dilation(vgg_features['conv5_4'])
+        vgg_feat_dilation = self.multi_scale_dilation(vgg_features["conv5_4"])
         # use updated vgg features to modulate the upsampled features with
         # SFT (Spatial Feature Transform) scaling and shifting manner.
         upsampled_feat = self.upsample0(vgg_feat_dilation, updated_vgg_features[3])

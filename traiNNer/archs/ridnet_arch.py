@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from ..utils.registry import ARCH_REGISTRY
 from .arch_util import ResidualBlockNoBN, make_layer
@@ -19,7 +19,7 @@ class MeanShift(nn.Conv2d):
     """
 
     def __init__(self, rgb_range, rgb_mean, rgb_std, sign=-1, requires_grad=True):
-        super(MeanShift, self).__init__(3, 3, kernel_size=1)
+        super().__init__(3, 3, kernel_size=1)
         std = torch.Tensor(rgb_std)
         self.weight.data = torch.eye(3).view(3, 3, 1, 1)
         self.weight.data.div_(std.view(3, 1, 1, 1))
@@ -35,7 +35,7 @@ class EResidualBlockNoBN(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels):
-        super(EResidualBlockNoBN, self).__init__()
+        super().__init__()
 
         self.body = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),
@@ -63,7 +63,7 @@ class MergeRun(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1):
-        super(MergeRun, self).__init__()
+        super().__init__()
 
         self.dilation1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding), nn.ReLU(inplace=True),
@@ -93,7 +93,7 @@ class ChannelAttention(nn.Module):
     """
 
     def __init__(self, mid_channels, squeeze_factor=16):
-        super(ChannelAttention, self).__init__()
+        super().__init__()
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1), nn.Conv2d(mid_channels, mid_channels // squeeze_factor, 1, padding=0),
             nn.ReLU(inplace=True), nn.Conv2d(mid_channels // squeeze_factor, mid_channels, 1, padding=0), nn.Sigmoid())
@@ -117,7 +117,7 @@ class EAM(nn.Module):
     """
 
     def __init__(self, in_channels, mid_channels, out_channels):
-        super(EAM, self).__init__()
+        super().__init__()
 
         self.merge = MergeRun(in_channels, mid_channels)
         self.block1 = ResidualBlockNoBN(mid_channels)
@@ -159,7 +159,7 @@ class RIDNet(nn.Module):
                  img_range=255.,
                  rgb_mean=(0.4488, 0.4371, 0.4040),
                  rgb_std=(1.0, 1.0, 1.0)):
-        super(RIDNet, self).__init__()
+        super().__init__()
 
         self.sub_mean = MeanShift(img_range, rgb_mean, rgb_std)
         self.add_mean = MeanShift(img_range, rgb_mean, rgb_std, 1)

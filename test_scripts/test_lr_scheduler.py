@@ -1,5 +1,4 @@
 import torch
-
 from traiNNer.models.lr_scheduler import CosineAnnealingRestartLR
 
 try:
@@ -7,20 +6,20 @@ try:
     from matplotlib import pyplot as plt
     from matplotlib import ticker as mtick
 except ImportError:
-    print('Please install matplotlib.')
+    print("Please install matplotlib.")
 
-mpl.use('Agg')
+mpl.use("Agg")
 
 
 def main():
     optim_params = [
         {
-            'params': [torch.zeros(3, 64, 3, 3)],
-            'lr': 4e-4
+            "params": [torch.zeros(3, 64, 3, 3)],
+            "lr": 4e-4
         },
         {
-            'params': [torch.zeros(3, 64, 3, 3)],
-            'lr': 2e-4
+            "params": [torch.zeros(3, 64, 3, 3)],
+            "lr": 2e-4
         },
     ]
     optimizer = torch.optim.Adam(optim_params, lr=2e-4, weight_decay=0, betas=(0.9, 0.99))
@@ -42,26 +41,26 @@ def main():
     for i in range(total_iter):
         optimizer.step()
         scheduler.step()
-        lr_l[i] = optimizer.param_groups[0]['lr']
-        lr_l2[i] = optimizer.param_groups[1]['lr']
+        lr_l[i] = optimizer.param_groups[0]["lr"]
+        lr_l2[i] = optimizer.param_groups[1]["lr"]
 
-    mpl.style.use('default')
+    mpl.style.use("default")
 
     plt.figure(1)
     plt.subplot(111)
-    plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-    plt.title('Cosine Annealing Restart Learning Rate Scheme', fontsize=16, color='k')
-    plt.plot(list(range(total_iter)), lr_l, linewidth=1.5, label='learning rate 1')
-    plt.plot(list(range(total_iter)), lr_l2, linewidth=1.5, label='learning rate 2')
-    plt.legend(loc='upper right', shadow=False)
+    plt.ticklabel_format(style="sci", axis="x", scilimits=(0, 0))
+    plt.title("Cosine Annealing Restart Learning Rate Scheme", fontsize=16, color="k")
+    plt.plot(list(range(total_iter)), lr_l, linewidth=1.5, label="learning rate 1")
+    plt.plot(list(range(total_iter)), lr_l2, linewidth=1.5, label="learning rate 2")
+    plt.legend(loc="upper right", shadow=False)
     ax = plt.gca()
-    ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.1e'))
+    ax.yaxis.set_major_formatter(mtick.FormatStrFormatter("%.1e"))
 
-    ax.set_ylabel('Learning Rate')
-    ax.set_xlabel('Iteration')
+    ax.set_ylabel("Learning Rate")
+    ax.set_xlabel("Iteration")
     fig = plt.gcf()
-    fig.savefig('test_lr_scheduler.png')
+    fig.savefig("test_lr_scheduler.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

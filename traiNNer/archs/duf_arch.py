@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from ..utils.registry import ARCH_REGISTRY
@@ -19,7 +19,7 @@ class DenseBlocksTemporalReduce(nn.Module):
     """
 
     def __init__(self, num_feat=64, num_grow_ch=32, adapt_official_weights=False):
-        super(DenseBlocksTemporalReduce, self).__init__()
+        super().__init__()
         if adapt_official_weights:
             eps = 1e-3
             momentum = 1e-3
@@ -90,7 +90,7 @@ class DenseBlocks(nn.Module):
     """
 
     def __init__(self, num_block, num_feat=64, num_grow_ch=16, adapt_official_weights=False):
-        super(DenseBlocks, self).__init__()
+        super().__init__()
         if adapt_official_weights:
             eps = 1e-3
             momentum = 1e-3
@@ -99,7 +99,7 @@ class DenseBlocks(nn.Module):
             momentum = 0.1
 
         self.dense_blocks = nn.ModuleList()
-        for i in range(0, num_block):
+        for i in range(num_block):
             self.dense_blocks.append(
                 nn.Sequential(
                     nn.BatchNorm3d(num_feat + i * num_grow_ch, eps=eps, momentum=momentum), nn.ReLU(inplace=True),
@@ -125,7 +125,7 @@ class DenseBlocks(nn.Module):
         Returns:
             Tensor: Output with shape (b, num_feat + num_block * num_grow_ch, t, h, w).
         """
-        for i in range(0, len(self.dense_blocks)):
+        for i in range(len(self.dense_blocks)):
             y = self.dense_blocks[i](x)
             x = torch.cat((x, y), 1)
         return x
@@ -143,11 +143,11 @@ class DynamicUpsamplingFilter(nn.Module):
     """
 
     def __init__(self, filter_size=(5, 5)):
-        super(DynamicUpsamplingFilter, self).__init__()
+        super().__init__()
         if not isinstance(filter_size, tuple):
-            raise TypeError(f'The type of filter_size must be tuple, but got type{filter_size}')
+            raise TypeError(f"The type of filter_size must be tuple, but got type{filter_size}")
         if len(filter_size) != 2:
-            raise ValueError(f'The length of filter size must be 2, but got {len(filter_size)}.')
+            raise ValueError(f"The length of filter size must be 2, but got {len(filter_size)}.")
         # generate a local expansion filter, similar to im2col
         self.filter_size = filter_size
         filter_prod = np.prod(filter_size)
@@ -202,7 +202,7 @@ class DUF(nn.Module):
     """
 
     def __init__(self, scale=4, num_layer=52, adapt_official_weights=False):
-        super(DUF, self).__init__()
+        super().__init__()
         self.scale = scale
         if adapt_official_weights:
             eps = 1e-3
@@ -224,7 +224,7 @@ class DUF(nn.Module):
             num_block = 21
             num_grow_ch = 16
         else:
-            raise ValueError(f'Only supported (16, 28, 52) layers, but got {num_layer}.')
+            raise ValueError(f"Only supported (16, 28, 52) layers, but got {num_layer}.")
 
         self.dense_block1 = DenseBlocks(
             num_block=num_block, num_feat=64, num_grow_ch=num_grow_ch,

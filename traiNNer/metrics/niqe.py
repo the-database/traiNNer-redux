@@ -1,7 +1,8 @@
-import cv2
 import math
-import numpy as np
 import os
+
+import cv2
+import numpy as np
 from scipy.ndimage import convolve
 from scipy.special import gamma
 
@@ -95,7 +96,7 @@ def niqe(img, mu_pris_param, cov_pris_param, gaussian_window, block_size_h=96, b
         block_size_w (int): Width of the blocks in to which image is divided.
             Default: 96 (the official recommended value).
     """
-    assert img.ndim == 2, ('Input image must be a gray or Y (of YCbCr) image with shape (h, w).')
+    assert img.ndim == 2, ("Input image must be a gray or Y (of YCbCr) image with shape (h, w).")
     # crop image
     h, w = img.shape
     num_block_h = math.floor(h / block_size_h)
@@ -104,8 +105,8 @@ def niqe(img, mu_pris_param, cov_pris_param, gaussian_window, block_size_h=96, b
 
     distparam = []  # dist param is actually the multiscale features
     for scale in (1, 2):  # perform on two scales (1, 2)
-        mu = convolve(img, gaussian_window, mode='nearest')
-        sigma = np.sqrt(np.abs(convolve(np.square(img), gaussian_window, mode='nearest') - np.square(mu)))
+        mu = convolve(img, gaussian_window, mode="nearest")
+        sigma = np.sqrt(np.abs(convolve(np.square(img), gaussian_window, mode="nearest") - np.square(mu)))
         # normalize, as in Eq. 1 in the paper
         img_nomalized = (img - mu) / (sigma + 1)
 
@@ -134,7 +135,7 @@ def niqe(img, mu_pris_param, cov_pris_param, gaussian_window, block_size_h=96, b
     # compute niqe quality, Eq. 10 in the paper
     invcov_param = np.linalg.pinv((cov_pris_param + cov_distparam) / 2)
     quality = np.matmul(
-        np.matmul((mu_pris_param - mu_distparam), invcov_param), np.transpose((mu_pris_param - mu_distparam)))
+        np.matmul((mu_pris_param - mu_distparam), invcov_param), np.transpose(mu_pris_param - mu_distparam))
 
     quality = np.sqrt(quality)
     quality = float(np.squeeze(quality))
@@ -142,7 +143,7 @@ def niqe(img, mu_pris_param, cov_pris_param, gaussian_window, block_size_h=96, b
 
 
 @METRIC_REGISTRY.register()
-def calculate_niqe(img, crop_border, input_order='HWC', convert_to='y', **kwargs):
+def calculate_niqe(img, crop_border, input_order="HWC", convert_to="y", **kwargs):
     """Calculate NIQE (Natural Image Quality Evaluator) metric.
 
     ``Paper: Making a "Completely Blind" Image Quality Analyzer``
@@ -174,17 +175,17 @@ def calculate_niqe(img, crop_border, input_order='HWC', convert_to='y', **kwargs
     """
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
     # we use the official params estimated from the pristine dataset.
-    niqe_pris_params = np.load(os.path.join(ROOT_DIR, 'niqe_pris_params.npz'))
-    mu_pris_param = niqe_pris_params['mu_pris_param']
-    cov_pris_param = niqe_pris_params['cov_pris_param']
-    gaussian_window = niqe_pris_params['gaussian_window']
+    niqe_pris_params = np.load(os.path.join(ROOT_DIR, "niqe_pris_params.npz"))
+    mu_pris_param = niqe_pris_params["mu_pris_param"]
+    cov_pris_param = niqe_pris_params["cov_pris_param"]
+    gaussian_window = niqe_pris_params["gaussian_window"]
 
     img = img.astype(np.float32)
-    if input_order != 'HW':
+    if input_order != "HW":
         img = reorder_image(img, input_order=input_order)
-        if convert_to == 'y':
+        if convert_to == "y":
             img = to_y_channel(img)
-        elif convert_to == 'gray':
+        elif convert_to == "gray":
             img = cv2.cvtColor(img / 255., cv2.COLOR_BGR2GRAY) * 255.
         img = np.squeeze(img)
 

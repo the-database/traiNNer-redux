@@ -4,7 +4,7 @@ from ..utils.registry import METRIC_REGISTRY
 from .niqe import calculate_niqe
 from .psnr_ssim import calculate_psnr, calculate_ssim
 
-__all__ = ['calculate_psnr', 'calculate_ssim', 'calculate_niqe']
+__all__ = ["calculate_psnr", "calculate_ssim", "calculate_niqe"]
 
 
 def calculate_metric(data, opt):
@@ -15,6 +15,6 @@ def calculate_metric(data, opt):
             type (str): Model type.
     """
     opt = deepcopy(opt)
-    metric_type = opt.pop('type')
+    metric_type = opt.pop("type")
     metric = METRIC_REGISTRY.get(metric_type)(**data, **opt)
     return metric

@@ -1,5 +1,6 @@
-import os
 import argparse
+import os
+
 
 def get_lr_hr_pair(hr_folder, lr_folder):
     hr_files = os.listdir(hr_folder)
@@ -19,7 +20,7 @@ def get_lr_hr_pair(hr_folder, lr_folder):
 def save_meta_info(meta_info_file, lr_hr_pairs):
     with open(meta_info_file, "w") as f:
         for lr, hr in lr_hr_pairs:
-            f.write("{}, {}\n".format(lr, hr))
+            f.write(f"{lr}, {hr}\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

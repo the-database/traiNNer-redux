@@ -1,5 +1,5 @@
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from ..utils.registry import ARCH_REGISTRY
@@ -14,7 +14,7 @@ class BasicModule(nn.Module):
     """
 
     def __init__(self):
-        super(BasicModule, self).__init__()
+        super().__init__()
         self.basic_module = nn.Sequential(
             nn.Conv2d(in_channels=8, out_channels=32, kernel_size=7, stride=1, padding=3, bias=False),
             nn.BatchNorm2d(32), nn.ReLU(inplace=True),
@@ -57,11 +57,11 @@ class SPyNetTOF(nn.Module):
     """
 
     def __init__(self, load_path=None):
-        super(SPyNetTOF, self).__init__()
+        super().__init__()
 
         self.basic_module = nn.ModuleList([BasicModule() for _ in range(4)])
         if load_path:
-            self.load_state_dict(torch.load(load_path, map_location=lambda storage, loc: storage)['params'])
+            self.load_state_dict(torch.load(load_path, map_location=lambda storage, loc: storage)["params"])
 
     def forward(self, ref, supp):
         """
@@ -84,7 +84,7 @@ class SPyNetTOF(nn.Module):
         # flow computation
         flow = ref[0].new_zeros(num_batches, 2, h // 16, w // 16)
         for i in range(4):
-            flow_up = F.interpolate(input=flow, scale_factor=2, mode='bilinear', align_corners=True) * 2.0
+            flow_up = F.interpolate(input=flow, scale_factor=2, mode="bilinear", align_corners=True) * 2.0
             flow = flow_up + self.basic_module[i](
                 torch.cat([ref[i], flow_warp(supp[i], flow_up.permute(0, 2, 3, 1)), flow_up], 1))
         return flow
@@ -109,12 +109,12 @@ class TOFlow(nn.Module):
     """
 
     def __init__(self, adapt_official_weights=False):
-        super(TOFlow, self).__init__()
+        super().__init__()
         self.adapt_official_weights = adapt_official_weights
         self.ref_idx = 0 if adapt_official_weights else 3
 
-        self.register_buffer('mean', torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
-        self.register_buffer('std', torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
+        self.register_buffer("mean", torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
+        self.register_buffer("std", torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
 
         # flow estimation module
         self.spynet = SPyNetTOF()

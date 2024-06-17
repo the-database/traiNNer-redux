@@ -1,19 +1,20 @@
-# modify from https://github.com/rosinality/stylegan2-pytorch/blob/master/op/upfirdn2d.py  # noqa:E501
+# modify from https://github.com/rosinality/stylegan2-pytorch/blob/master/op/upfirdn2d.py
 
 import os
+
 import torch
 from torch.autograd import Function
 from torch.nn import functional as F
 
-BASICSR_JIT = os.getenv('BASICSR_JIT')
-if BASICSR_JIT == 'True':
+BASICSR_JIT = os.getenv("BASICSR_JIT")
+if BASICSR_JIT == "True":
     from torch.utils.cpp_extension import load
     module_path = os.path.dirname(__file__)
     upfirdn2d_ext = load(
-        'upfirdn2d',
+        "upfirdn2d",
         sources=[
-            os.path.join(module_path, 'src', 'upfirdn2d.cpp'),
-            os.path.join(module_path, 'src', 'upfirdn2d_kernel.cu'),
+            os.path.join(module_path, "src", "upfirdn2d.cpp"),
+            os.path.join(module_path, "src", "upfirdn2d_kernel.cu"),
         ],
     )
 else:
@@ -151,7 +152,7 @@ class UpFirDn2d(Function):
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    if input.device.type == 'cpu':
+    if input.device.type == "cpu":
         out = upfirdn2d_native(input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1])
     else:
         out = UpFirDn2d.apply(input, kernel, (up, up), (down, down), (pad[0], pad[1], pad[0], pad[1]))

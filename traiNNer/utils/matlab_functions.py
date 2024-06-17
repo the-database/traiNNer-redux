@@ -1,4 +1,5 @@
 import math
+
 import numpy as np
 import torch
 
@@ -117,7 +118,7 @@ def imresize(img, scale, antialiasing=True):
     in_c, in_h, in_w = img.size()
     out_h, out_w = math.ceil(in_h * scale), math.ceil(in_w * scale)
     kernel_width = 4
-    kernel = 'cubic'
+    kernel = "cubic"
 
     # get weights and indices
     weights_h, indices_h, sym_len_hs, sym_len_he = calculate_weights_indices(in_h, out_h, scale, kernel, kernel_width,

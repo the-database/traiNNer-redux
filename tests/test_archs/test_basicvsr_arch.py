@@ -1,5 +1,4 @@
 import torch
-
 from traiNNer.archs.basicvsr_arch import BasicVSR, ConvResidualBlocks, IconVSR
 
 

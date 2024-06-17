@@ -1,10 +1,10 @@
 import argparse
-import cv2
 import glob
 import os
 import shutil
-import torch
 
+import cv2
+import torch
 from traiNNer.archs.basicvsr_arch import BasicVSR
 from traiNNer.data.data_util import read_img_seq
 from traiNNer.utils.img_util import tensor2img
@@ -16,25 +16,25 @@ def inference(imgs, imgnames, model, save_path):
     # save imgs
     outputs = outputs.squeeze()
     outputs = list(outputs)
-    for output, imgname in zip(outputs, imgnames):
+    for output, imgname in zip(outputs, imgnames, strict=False):
         output = tensor2img(output)
-        cv2.imwrite(os.path.join(save_path, f'{imgname}_BasicVSR.png'), output)
+        cv2.imwrite(os.path.join(save_path, f"{imgname}_BasicVSR.png"), output)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', type=str, default='experiments/pretrained_models/BasicVSR_REDS4.pth')
+    parser.add_argument("--model_path", type=str, default="experiments/pretrained_models/BasicVSR_REDS4.pth")
     parser.add_argument(
-        '--input_path', type=str, default='datasets/REDS4/sharp_bicubic/000', help='input test image folder')
-    parser.add_argument('--save_path', type=str, default='results/BasicVSR', help='save image path')
-    parser.add_argument('--interval', type=int, default=15, help='interval size')
+        "--input_path", type=str, default="datasets/REDS4/sharp_bicubic/000", help="input test image folder")
+    parser.add_argument("--save_path", type=str, default="results/BasicVSR", help="save image path")
+    parser.add_argument("--interval", type=int, default=15, help="interval size")
     args = parser.parse_args()
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # set up model
     model = BasicVSR(num_feat=64, num_block=30)
-    model.load_state_dict(torch.load(args.model_path)['params'], strict=True)
+    model.load_state_dict(torch.load(args.model_path)["params"], strict=True)
     model.eval()
     model = model.to(device)
 
@@ -46,12 +46,12 @@ def main():
     if not os.path.isdir(input_path):
         use_ffmpeg = True
         video_name = os.path.splitext(os.path.split(args.input_path)[-1])[0]
-        input_path = os.path.join('./BasicVSR_tmp', video_name)
-        os.makedirs(os.path.join('./BasicVSR_tmp', video_name), exist_ok=True)
-        os.system(f'ffmpeg -i {args.input_path} -qscale:v 1 -qmin 1 -qmax 1 -vsync 0  {input_path} /frame%08d.png')
+        input_path = os.path.join("./BasicVSR_tmp", video_name)
+        os.makedirs(os.path.join("./BasicVSR_tmp", video_name), exist_ok=True)
+        os.system(f"ffmpeg -i {args.input_path} -qscale:v 1 -qmin 1 -qmax 1 -vsync 0  {input_path} /frame%08d.png")
 
     # load data and inference
-    imgs_list = sorted(glob.glob(os.path.join(input_path, '*')))
+    imgs_list = sorted(glob.glob(os.path.join(input_path, "*")))
     num_imgs = len(imgs_list)
     if len(imgs_list) <= args.interval:  # too many images may cause CUDA out of memory
         imgs, imgnames = read_img_seq(imgs_list, return_imgname=True)
@@ -69,5 +69,5 @@ def main():
         shutil.rmtree(input_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

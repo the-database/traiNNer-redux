@@ -1,10 +1,9 @@
-from torch import nn as nn
-from torch.nn import functional as F
+from torch import nn
 
 from ..utils.registry import ARCH_REGISTRY
 
 
-@ARCH_REGISTRY.register(suffix='traiNNer')
+@ARCH_REGISTRY.register(suffix="traiNNer")
 class SRVGGNetCompactMod(nn.Module):
     """A compact VGG-style network structure for super-resolution.
 
@@ -20,8 +19,8 @@ class SRVGGNetCompactMod(nn.Module):
         act_type (str): Activation type, options: 'relu', 'prelu', 'leakyrelu'. Default: prelu.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=4, act_type='prelu', conv2x2=False):
-        super(SRVGGNetCompactMod, self).__init__()
+    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=4, act_type="prelu", conv2x2=False):
+        super().__init__()
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch
         self.num_feat = num_feat
@@ -42,11 +41,11 @@ class SRVGGNetCompactMod(nn.Module):
         # the first conv
         self.body.append(compact_conv_block(num_in_ch, num_feat, 3, 1, 1))
         # the first activation
-        if act_type == 'relu':
+        if act_type == "relu":
             activation = nn.ReLU(inplace=True)
-        elif act_type == 'prelu':
+        elif act_type == "prelu":
             activation = nn.PReLU(num_parameters=num_feat)
-        elif act_type == 'leakyrelu':
+        elif act_type == "leakyrelu":
             activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
         self.body.append(activation)
 
@@ -54,11 +53,11 @@ class SRVGGNetCompactMod(nn.Module):
         for _ in range(num_conv):
             self.body.append(compact_conv_block(num_feat, num_feat, 3, 1, 1))
             # activation
-            if act_type == 'relu':
+            if act_type == "relu":
                 activation = nn.ReLU(inplace=True)
-            elif act_type == 'prelu':
+            elif act_type == "prelu":
                 activation = nn.PReLU(num_parameters=num_feat)
-            elif act_type == 'leakyrelu':
+            elif act_type == "leakyrelu":
                 activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
             self.body.append(activation)
 
@@ -69,7 +68,7 @@ class SRVGGNetCompactMod(nn.Module):
 
     def forward(self, x):
         out = x
-        for i in range(0, len(self.body)):
+        for i in range(len(self.body)):
             out = self.body[i](out)
 
         out = self.upsampler(out)

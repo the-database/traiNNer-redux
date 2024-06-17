@@ -1,28 +1,28 @@
-import cv2
 import glob
-import numpy as np
 import os.path as osp
-from torchvision.transforms.functional import normalize
 
+import cv2
+import numpy as np
+from torchvision.transforms.functional import normalize
 from traiNNer.utils import img2tensor
 
 try:
     import lpips
 except ImportError:
-    print('Please install lpips: pip install lpips')
+    print("Please install lpips: pip install lpips")
 
 
 def main():
     # Configurations
     # -------------------------------------------------------------------------
-    folder_gt = 'datasets/celeba/celeba_512_validation'
-    folder_restored = 'datasets/celeba/celeba_512_validation_lq'
+    folder_gt = "datasets/celeba/celeba_512_validation"
+    folder_restored = "datasets/celeba/celeba_512_validation_lq"
     # crop_border = 4
-    suffix = ''
+    suffix = ""
     # -------------------------------------------------------------------------
-    loss_fn_vgg = lpips.LPIPS(net='vgg').cuda()  # RGB, normalized to [-1,1]
+    loss_fn_vgg = lpips.LPIPS(net="vgg").cuda()  # RGB, normalized to [-1,1]
     lpips_all = []
-    img_list = sorted(glob.glob(osp.join(folder_gt, '*')))
+    img_list = sorted(glob.glob(osp.join(folder_gt, "*")))
 
     mean = [0.5, 0.5, 0.5]
     std = [0.5, 0.5, 0.5]
@@ -40,11 +40,11 @@ def main():
         # calculate lpips
         lpips_val = loss_fn_vgg(img_restored.unsqueeze(0).cuda(), img_gt.unsqueeze(0).cuda())
 
-        print(f'{i+1:3d}: {basename:25}. \tLPIPS: {lpips_val:.6f}.')
+        print(f"{i+1:3d}: {basename:25}. \tLPIPS: {lpips_val:.6f}.")
         lpips_all.append(lpips_val)
 
-    print(f'Average: LPIPS: {sum(lpips_all) / len(lpips_all):.6f}')
+    print(f"Average: LPIPS: {sum(lpips_all) / len(lpips_all):.6f}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

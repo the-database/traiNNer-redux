@@ -1,7 +1,8 @@
-import cv2
 import math
-import numpy as np
 import os
+
+import cv2
+import numpy as np
 import torch
 from torchvision.utils import make_grid
 
@@ -64,7 +65,7 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         shape (H x W). The channel order is BGR.
     """
     if not (torch.is_tensor(tensor) or (isinstance(tensor, list) and all(torch.is_tensor(t) for t in tensor))):
-        raise TypeError(f'tensor or list of tensors expected, got {type(tensor)}')
+        raise TypeError(f"tensor or list of tensors expected, got {type(tensor)}")
 
     if torch.is_tensor(tensor):
         tensor = [tensor]
@@ -84,13 +85,12 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
             img_np = img_np.transpose(1, 2, 0)
             if img_np.shape[2] == 1:  # gray image
                 img_np = np.squeeze(img_np, axis=2)
-            else:
-                if rgb2bgr:
-                    img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+            elif rgb2bgr:
+                img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
         elif n_dim == 2:
             img_np = _tensor.numpy()
         else:
-            raise TypeError(f'Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}')
+            raise TypeError(f"Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}")
         if out_type == np.uint8:
             # Unlike MATLAB, numpy.unit8() WILL NOT round by default.
             img_np = (img_np * 255.0).round()
@@ -118,7 +118,7 @@ def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
     return output
 
 
-def imfrombytes(content, flag='color', float32=False):
+def imfrombytes(content, flag="color", float32=False):
     """Read an image from bytes.
 
     Args:
@@ -132,7 +132,7 @@ def imfrombytes(content, flag='color', float32=False):
         ndarray: Loaded image array.
     """
     img_np = np.frombuffer(content, np.uint8)
-    imread_flags = {'color': cv2.IMREAD_COLOR, 'grayscale': cv2.IMREAD_GRAYSCALE, 'unchanged': cv2.IMREAD_UNCHANGED}
+    imread_flags = {"color": cv2.IMREAD_COLOR, "grayscale": cv2.IMREAD_GRAYSCALE, "unchanged": cv2.IMREAD_UNCHANGED}
     img = cv2.imdecode(img_np, imread_flags[flag])
     if float32:
         img = img.astype(np.float32) / 255.
@@ -157,7 +157,7 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
         os.makedirs(dir_name, exist_ok=True)
     ok = cv2.imwrite(file_path, img, params)
     if not ok:
-        raise IOError('Failed in writing images.')
+        raise OSError("Failed in writing images.")
 
 
 def crop_border(imgs, crop_border):
@@ -172,8 +172,7 @@ def crop_border(imgs, crop_border):
     """
     if crop_border == 0:
         return imgs
+    elif isinstance(imgs, list):
+        return [v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs]
     else:
-        if isinstance(imgs, list):
-            return [v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs]
-        else:
-            return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]
+        return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]

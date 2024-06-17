@@ -1,26 +1,26 @@
+import math
+
 import numpy as np
 import torch
-import math
-from torch import nn as nn
-from torch.nn import functional as F
 import torchvision.transforms.functional as tf
+from torch import nn
+from torch.nn import functional as F
 from torchvision import models
-
-from traiNNer.utils.registry import LOSS_REGISTRY
 from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
+from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 class Downsample(nn.Module):
 
     def __init__(self, filter_size=5, stride=2, channels=None, pad_off=0):
-        super(Downsample, self).__init__()
+        super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
         self.channels = channels
         a = np.hanning(filter_size)[1:-1]
         g = torch.Tensor(a[:, None] * a[None, :])
         g = g / torch.sum(g)
-        self.register_buffer('filter', g[None, None, :, :].repeat((self.channels, 1, 1, 1)))
+        self.register_buffer("filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1)))
 
     def forward(self, input):
         input = input ** 2
@@ -33,7 +33,7 @@ class Downsample(nn.Module):
 class ADISTSLoss(torch.nn.Module):
 
     def __init__(self, window_size=21, resize_input=False, loss_weight=1.0):
-        super(ADISTSLoss, self).__init__()
+        super().__init__()
         self.resize_input = resize_input
         self.loss_weight = loss_weight
         vgg_pretrained_features = models.vgg16(pretrained=True).features
@@ -42,7 +42,7 @@ class ADISTSLoss(torch.nn.Module):
         self.stage3 = torch.nn.Sequential()
         self.stage4 = torch.nn.Sequential()
         self.stage5 = torch.nn.Sequential()
-        for x in range(0, 4):
+        for x in range(4):
             self.stage1.add_module(str(x), vgg_pretrained_features[x])
         self.stage2.add_module(str(4), Downsample(channels=64))
         for x in range(5, 9):
@@ -88,7 +88,7 @@ class ADISTSLoss(torch.nn.Module):
                 ps_min, _ = ps.flatten(2).min(dim=-1, keepdim=True)
                 ps_max, _ = ps.flatten(2).max(dim=-1, keepdim=True)
                 ps = (ps - ps_min.unsqueeze(-1)) / (ps_max.unsqueeze(-1) - ps_min.unsqueeze(-1) + c0)
-                ps_prod = ps * F.interpolate(ps_prod, size=(h, w), mode='bilinear', align_corners=True)
+                ps_prod = ps * F.interpolate(ps_prod, size=(h, w), mode="bilinear", align_corners=True)
                 psd_min, _ = ps_prod.flatten(2).min(dim=-1, keepdim=True)
                 psd_max, _ = ps_prod.flatten(2).max(dim=-1, keepdim=True)
                 ps_prod = (ps_prod - psd_min.unsqueeze(-1)) / (psd_max.unsqueeze(-1) - psd_min.unsqueeze(-1) + c0)
@@ -98,7 +98,7 @@ class ADISTSLoss(torch.nn.Module):
                 h, w = x_mean.shape[2], x_mean.shape[3]
                 gamma = torch.mean(x_var / (x_mean + c0), dim=1, keepdim=True)
                 ps = 1 / (1 + torch.exp(-gamma))
-                ps_prod = ps * F.interpolate(ps_prod, size=(h, w), mode='bilinear', align_corners=True)
+                ps_prod = ps * F.interpolate(ps_prod, size=(h, w), mode="bilinear", align_corners=True)
 
             ps_list.append(ps_prod)
         return ps_list[::-1]
@@ -162,7 +162,7 @@ class ADISTSLoss(torch.nn.Module):
         pad = nn.ReflectionPad2d(0)
         D = 0
         weight = []
-        for k in range(0, len(self.chns)):
+        for k in range(len(self.chns)):
             weight.append(self.entropy(feats_x[k]))
         weight = torch.concat(weight, dim=1)
 

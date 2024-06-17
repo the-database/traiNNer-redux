@@ -5,9 +5,10 @@ For images not divisible by 8
 https://dsp.stackexchange.com/questions/35339/jpeg-dct-padding/35343#35343
 """
 import itertools
+
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 # ------------------------ utils ------------------------#
@@ -51,7 +52,7 @@ class RGB2YCbCrJpeg(nn.Module):
     """
 
     def __init__(self):
-        super(RGB2YCbCrJpeg, self).__init__()
+        super().__init__()
         matrix = np.array([[0.299, 0.587, 0.114], [-0.168736, -0.331264, 0.5], [0.5, -0.418688, -0.081312]],
                           dtype=np.float32).T
         self.shift = nn.Parameter(torch.tensor([0., 128., 128.]))
@@ -75,7 +76,7 @@ class ChromaSubsampling(nn.Module):
     """
 
     def __init__(self):
-        super(ChromaSubsampling, self).__init__()
+        super().__init__()
 
     def forward(self, image):
         """
@@ -100,7 +101,7 @@ class BlockSplitting(nn.Module):
     """
 
     def __init__(self):
-        super(BlockSplitting, self).__init__()
+        super().__init__()
         self.k = 8
 
     def forward(self, image):
@@ -123,7 +124,7 @@ class DCT8x8(nn.Module):
     """
 
     def __init__(self):
-        super(DCT8x8, self).__init__()
+        super().__init__()
         tensor = np.zeros((8, 8, 8, 8), dtype=np.float32)
         for x, y, u, v in itertools.product(range(8), repeat=4):
             tensor[x, y, u, v] = np.cos((2 * x + 1) * u * np.pi / 16) * np.cos((2 * y + 1) * v * np.pi / 16)
@@ -153,7 +154,7 @@ class YQuantize(nn.Module):
     """
 
     def __init__(self, rounding):
-        super(YQuantize, self).__init__()
+        super().__init__()
         self.rounding = rounding
         self.y_table = y_table
 
@@ -165,7 +166,7 @@ class YQuantize(nn.Module):
         Returns:
             Tensor: batch x height x width
         """
-        if isinstance(factor, (int, float)):
+        if isinstance(factor, int | float):
             image = image.float() / (self.y_table * factor)
         else:
             b = factor.size(0)
@@ -183,7 +184,7 @@ class CQuantize(nn.Module):
     """
 
     def __init__(self, rounding):
-        super(CQuantize, self).__init__()
+        super().__init__()
         self.rounding = rounding
         self.c_table = c_table
 
@@ -195,7 +196,7 @@ class CQuantize(nn.Module):
         Returns:
             Tensor: batch x height x width
         """
-        if isinstance(factor, (int, float)):
+        if isinstance(factor, int | float):
             image = image.float() / (self.c_table * factor)
         else:
             b = factor.size(0)
@@ -213,7 +214,7 @@ class CompressJpeg(nn.Module):
     """
 
     def __init__(self, rounding=torch.round):
-        super(CompressJpeg, self).__init__()
+        super().__init__()
         self.l1 = nn.Sequential(RGB2YCbCrJpeg(), ChromaSubsampling())
         self.l2 = nn.Sequential(BlockSplitting(), DCT8x8())
         self.c_quantize = CQuantize(rounding=rounding)
@@ -228,17 +229,17 @@ class CompressJpeg(nn.Module):
             dict(tensor): Compressed tensor with batch x h*w/64 x 8 x 8.
         """
         y, cb, cr = self.l1(image * 255)
-        components = {'y': y, 'cb': cb, 'cr': cr}
+        components = {"y": y, "cb": cb, "cr": cr}
         for k in components.keys():
             comp = self.l2(components[k])
-            if k in ('cb', 'cr'):
+            if k in ("cb", "cr"):
                 comp = self.c_quantize(comp, factor=factor)
             else:
                 comp = self.y_quantize(comp, factor=factor)
 
             components[k] = comp
 
-        return components['y'], components['cb'], components['cr']
+        return components["y"], components["cb"], components["cr"]
 
 
 # ------------------------ decompression ------------------------#
@@ -249,7 +250,7 @@ class YDequantize(nn.Module):
     """
 
     def __init__(self):
-        super(YDequantize, self).__init__()
+        super().__init__()
         self.y_table = y_table
 
     def forward(self, image, factor=1):
@@ -260,7 +261,7 @@ class YDequantize(nn.Module):
         Returns:
             Tensor: batch x height x width
         """
-        if isinstance(factor, (int, float)):
+        if isinstance(factor, int | float):
             out = image * (self.y_table * factor)
         else:
             b = factor.size(0)
@@ -274,7 +275,7 @@ class CDequantize(nn.Module):
     """
 
     def __init__(self):
-        super(CDequantize, self).__init__()
+        super().__init__()
         self.c_table = c_table
 
     def forward(self, image, factor=1):
@@ -285,7 +286,7 @@ class CDequantize(nn.Module):
         Returns:
             Tensor: batch x height x width
         """
-        if isinstance(factor, (int, float)):
+        if isinstance(factor, int | float):
             out = image * (self.c_table * factor)
         else:
             b = factor.size(0)
@@ -299,7 +300,7 @@ class iDCT8x8(nn.Module):
     """
 
     def __init__(self):
-        super(iDCT8x8, self).__init__()
+        super().__init__()
         alpha = np.array([1. / np.sqrt(2)] + [1] * 7)
         self.alpha = nn.Parameter(torch.from_numpy(np.outer(alpha, alpha)).float())
         tensor = np.zeros((8, 8, 8, 8), dtype=np.float32)
@@ -326,7 +327,7 @@ class BlockMerging(nn.Module):
     """
 
     def __init__(self):
-        super(BlockMerging, self).__init__()
+        super().__init__()
 
     def forward(self, patches, height, width):
         """
@@ -350,7 +351,7 @@ class ChromaUpsampling(nn.Module):
     """
 
     def __init__(self):
-        super(ChromaUpsampling, self).__init__()
+        super().__init__()
 
     def forward(self, y, cb, cr):
         """
@@ -380,7 +381,7 @@ class YCbCr2RGBJpeg(nn.Module):
     """
 
     def __init__(self):
-        super(YCbCr2RGBJpeg, self).__init__()
+        super().__init__()
 
         matrix = np.array([[1., 0., 1.402], [1, -0.344136, -0.714136], [1, 1.772, 0]], dtype=np.float32).T
         self.shift = nn.Parameter(torch.tensor([0, -128., -128.]))
@@ -406,7 +407,7 @@ class DeCompressJpeg(nn.Module):
     """
 
     def __init__(self, rounding=torch.round):
-        super(DeCompressJpeg, self).__init__()
+        super().__init__()
         self.c_dequantize = CDequantize()
         self.y_dequantize = YDequantize()
         self.idct = iDCT8x8()
@@ -425,9 +426,9 @@ class DeCompressJpeg(nn.Module):
         Returns:
             Tensor: batch x 3 x height x width
         """
-        components = {'y': y, 'cb': cb, 'cr': cr}
+        components = {"y": y, "cb": cb, "cr": cr}
         for k in components.keys():
-            if k in ('cb', 'cr'):
+            if k in ("cb", "cr"):
                 comp = self.c_dequantize(components[k], factor=factor)
                 height, width = int(imgh / 2), int(imgw / 2)
             else:
@@ -436,7 +437,7 @@ class DeCompressJpeg(nn.Module):
             comp = self.idct(comp)
             components[k] = self.merging(comp, height, width)
             #
-        image = self.chroma(components['y'], components['cb'], components['cr'])
+        image = self.chroma(components["y"], components["cb"], components["cr"])
         image = self.colors(image)
 
         image = torch.min(255 * torch.ones_like(image), torch.max(torch.zeros_like(image), image))
@@ -455,7 +456,7 @@ class DiffJPEG(nn.Module):
     """
 
     def __init__(self, differentiable=True):
-        super(DiffJPEG, self).__init__()
+        super().__init__()
         if differentiable:
             rounding = diff_round
         else:
@@ -471,7 +472,7 @@ class DiffJPEG(nn.Module):
             quality(float): Quality factor for jpeg compression scheme.
         """
         factor = quality
-        if isinstance(factor, (int, float)):
+        if isinstance(factor, int | float):
             factor = quality_to_factor(factor)
         else:
             for i in range(factor.size(0)):
@@ -483,7 +484,7 @@ class DiffJPEG(nn.Module):
             h_pad = 16 - h % 16
         if w % 16 != 0:
             w_pad = 16 - w % 16
-        x = F.pad(x, (0, w_pad, 0, h_pad), mode='constant', value=0)
+        x = F.pad(x, (0, w_pad, 0, h_pad), mode="constant", value=0)
 
         y, cb, cr = self.compress(x, factor=factor)
         recovered = self.decompress(y, cb, cr, (h + h_pad), (w + w_pad), factor=factor)
@@ -491,18 +492,18 @@ class DiffJPEG(nn.Module):
         return recovered
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import cv2
 
     from . import img2tensor, tensor2img
 
-    img_gt = cv2.imread('test.png') / 255.
+    img_gt = cv2.imread("test.png") / 255.
 
     # -------------- cv2 -------------- #
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 20]
-    _, encimg = cv2.imencode('.jpg', img_gt * 255., encode_param)
+    _, encimg = cv2.imencode(".jpg", img_gt * 255., encode_param)
     img_lq = np.float32(cv2.imdecode(encimg, 1))
-    cv2.imwrite('cv2_JPEG_20.png', img_lq)
+    cv2.imwrite("cv2_JPEG_20.png", img_lq)
 
     # -------------- DiffJPEG -------------- #
     jpeger = DiffJPEG(differentiable=False).cuda()
@@ -511,5 +512,5 @@ if __name__ == '__main__':
     quality = img_gt.new_tensor([20, 40])
     out = jpeger(img_gt, quality=quality)
 
-    cv2.imwrite('pt_JPEG_20.png', tensor2img(out[0]))
-    cv2.imwrite('pt_JPEG_40.png', tensor2img(out[1]))
+    cv2.imwrite("pt_JPEG_20.png", tensor2img(out[0]))
+    cv2.imwrite("pt_JPEG_40.png", tensor2img(out[1]))

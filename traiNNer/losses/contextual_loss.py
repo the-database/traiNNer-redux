@@ -1,10 +1,8 @@
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
-
 from traiNNer.archs.vgg_arch import VGGFeatureExtractor
 from traiNNer.utils.registry import LOSS_REGISTRY
-
 
 ########################
 # Contextual Loss
@@ -20,7 +18,7 @@ def alt_layers_names(layers):
     return new_layers
 
 
-DIS_TYPES = ['cosine', 'l1', 'l2']
+DIS_TYPES = ["cosine", "l1", "l2"]
 
 
 @LOSS_REGISTRY.register()
@@ -38,24 +36,23 @@ class ContextualLoss(nn.Module):
 
     def __init__(self,
                  loss_weight=1.0,
-                 layer_weights={
-                     "conv3_2": 1.0,
-                     "conv4_2": 1.0
-                 },
+                 layer_weights=None,
                  crop_quarter: bool = False,
                  max_1d_size: int = 100,
-                 distance_type: str = 'cosine',
+                 distance_type: str = "cosine",
                  b=1.0,
                  band_width=0.5,
                  use_vgg: bool = True,
-                 net: str = 'vgg19',
-                 calc_type: str = 'regular',
+                 net: str = "vgg19",
+                 calc_type: str = "regular",
                  z_norm: bool = False):
-        super(ContextualLoss, self).__init__()
+        if layer_weights is None:
+            layer_weights = {"conv3_2": 1.0, "conv4_2": 1.0}
+        super().__init__()
 
-        assert band_width > 0, 'band_width parameter must be positive.'
+        assert band_width > 0, "band_width parameter must be positive."
         assert distance_type in DIS_TYPES, \
-            f'select a distance type from {DIS_TYPES}.'
+            f"select a distance type from {DIS_TYPES}."
 
         if layer_weights:
             layer_weights = alt_layers_names(layer_weights)
@@ -76,9 +73,9 @@ class ContextualLoss(nn.Module):
             self.vgg_model = VGGFeatureExtractor(
                 layer_name_list=listen_list, vgg_type=net, use_input_norm=z_norm, range_norm=z_norm)
 
-        if calc_type == 'bilateral':
+        if calc_type == "bilateral":
             self.calculate_loss = self.bilateral_CX_Loss
-        elif calc_type == 'symetric':
+        elif calc_type == "symetric":
             self.calculate_loss = self.symetric_CX_Loss
         else:  # if calc_type == 'regular':
             self.calculate_loss = self.calculate_CX_Loss
@@ -86,9 +83,9 @@ class ContextualLoss(nn.Module):
     def forward(self, images, gt):
         device = images.device
 
-        if hasattr(self, 'vgg_model'):
+        if hasattr(self, "vgg_model"):
             assert images.shape[1] == 3 and gt.shape[1] == 3, \
-                'VGG model takes 3 channel images.'
+                "VGG model takes 3 channel images."
 
             loss = 0
             vgg_images = self.vgg_model(images)
@@ -285,9 +282,9 @@ class ContextualLoss(nn.Module):
 
         # feature loss
         # calculate raw distances
-        if self.distanceType == 'l1':
+        if self.distanceType == "l1":
             raw_distance = ContextualLoss._create_using_L1(I_features, T_features)
-        elif self.distanceType == 'l2':
+        elif self.distanceType == "l2":
             raw_distance = ContextualLoss._create_using_L2(I_features, T_features)
         else:  # self.distanceType == 'cosine':
             raw_distance = ContextualLoss._create_using_dotP(I_features, T_features)
@@ -309,30 +306,30 @@ class ContextualLoss(nn.Module):
         if torch.sum(torch.isnan(I_features)) == torch.numel(I_features) or torch.sum(
                 torch.isinf(I_features)) == torch.numel(I_features):
             print(I_features)
-            raise ValueError('NaN or Inf in I_features')
+            raise ValueError("NaN or Inf in I_features")
         if torch.sum(torch.isnan(T_features)) == torch.numel(T_features) or torch.sum(
                 torch.isinf(T_features)) == torch.numel(T_features):
             print(T_features)
-            raise ValueError('NaN or Inf in T_features')
+            raise ValueError("NaN or Inf in T_features")
 
         # calculate raw distances
-        if self.distanceType == 'l1':
+        if self.distanceType == "l1":
             raw_distance = ContextualLoss._create_using_L1(I_features, T_features)
-        elif self.distanceType == 'l2':
+        elif self.distanceType == "l2":
             raw_distance = ContextualLoss._create_using_L2(I_features, T_features)
         else:  # self.distanceType == 'cosine':
             raw_distance = ContextualLoss._create_using_dotP(I_features, T_features)
         if torch.sum(torch.isnan(raw_distance)) == torch.numel(raw_distance) or torch.sum(
                 torch.isinf(raw_distance)) == torch.numel(raw_distance):
             print(raw_distance)
-            raise ValueError('NaN or Inf in raw_distance')
+            raise ValueError("NaN or Inf in raw_distance")
 
         # normalizing the distances
         relative_distance = ContextualLoss._calculate_relative_distance(raw_distance)
         if torch.sum(torch.isnan(relative_distance)) == torch.numel(relative_distance) or torch.sum(
                 torch.isinf(relative_distance)) == torch.numel(relative_distance):
             print(relative_distance)
-            raise ValueError('NaN or Inf in relative_distance')
+            raise ValueError("NaN or Inf in relative_distance")
         del raw_distance
 
         # compute_sim()
@@ -341,7 +338,7 @@ class ContextualLoss(nn.Module):
         if torch.sum(torch.isnan(exp_distance)) == torch.numel(exp_distance) or torch.sum(
                 torch.isinf(exp_distance)) == torch.numel(exp_distance):
             print(exp_distance)
-            raise ValueError('NaN or Inf in exp_distance')
+            raise ValueError("NaN or Inf in exp_distance")
         del relative_distance
 
         # Similarity
@@ -349,7 +346,7 @@ class ContextualLoss(nn.Module):
         if torch.sum(torch.isnan(contextual_sim)) == torch.numel(contextual_sim) or torch.sum(
                 torch.isinf(contextual_sim)) == torch.numel(contextual_sim):
             print(contextual_sim)
-            raise ValueError('NaN or Inf in contextual_sim')
+            raise ValueError("NaN or Inf in contextual_sim")
         del exp_distance
 
         # ContextualLoss()
@@ -358,6 +355,6 @@ class ContextualLoss(nn.Module):
         CS = torch.mean(max_gt_sim, dim=1)
         CX_loss = torch.mean(-torch.log(CS))  # Eq(5)
         if torch.isnan(CX_loss):
-            raise ValueError('NaN in computing CX_loss')
+            raise ValueError("NaN in computing CX_loss")
 
         return CX_loss * self.loss_weight

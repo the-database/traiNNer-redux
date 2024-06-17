@@ -1,5 +1,5 @@
 import torch
-from torch import nn as nn
+from torch import nn
 
 from ..archs.arch_util import ResidualBlockNoBN, Upsample, make_layer
 from ..utils.registry import ARCH_REGISTRY
@@ -36,7 +36,7 @@ class EDSR(nn.Module):
                  res_scale=1,
                  img_range=255.,
                  rgb_mean=(0.4488, 0.4371, 0.4040)):
-        super(EDSR, self).__init__()
+        super().__init__()
 
         self.img_range = img_range
         self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)

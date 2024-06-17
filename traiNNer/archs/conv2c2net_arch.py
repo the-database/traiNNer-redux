@@ -2,8 +2,7 @@ import math
 from collections import OrderedDict
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn
 
 from ..utils.registry import ARCH_REGISTRY
 from .arch_util import default_init_weights
@@ -27,9 +26,8 @@ class RRDB2C2Net(nn.Module):
         upscale = scale
         nf = num_feat
         nb = num_block
-        gc = num_grow_ch
 
-        super(RRDB2C2Net, self).__init__()
+        super().__init__()
         n_upscale = int(math.log(upscale, 2))
 
         fea_conv = conv_block(in_nc, nf, act_type=None)
@@ -84,7 +82,7 @@ class RRDB(nn.Module):
         gc=32,
         act_type="leakyrelu",
     ):
-        super(RRDB, self).__init__()
+        super().__init__()
         self.RDB1 = ResidualDenseBlock_5C(
             nf,
             gc,
@@ -116,7 +114,7 @@ class ResidualDenseBlock_5C(nn.Module):
         gc=32,
         act_type="leakyrelu",
     ):
-        super(ResidualDenseBlock_5C, self).__init__()
+        super().__init__()
 
         self.conv1 = conv_block(
             nf,
@@ -186,14 +184,14 @@ def act(act_type, inplace=True, neg_slope=0.2, n_prelu=1, beta=1.0):
     elif act_type == "sigmoid":  # [0, 1] range output
         layer = nn.Sigmoid()
     else:
-        raise NotImplementedError("activation layer [{:s}] is not found".format(act_type))
+        raise NotImplementedError(f"activation layer [{act_type:s}] is not found")
     return layer
 
 
 class ShortcutBlock(nn.Module):
     # Elementwise sum the output of a submodule to its input
     def __init__(self, submodule):
-        super(ShortcutBlock, self).__init__()
+        super().__init__()
         self.sub = submodule
 
     def forward(self, x):
@@ -270,7 +268,7 @@ class Upsample(nn.Module):
     """
 
     def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None):
-        super(Upsample, self).__init__()
+        super().__init__()
         if isinstance(scale_factor, tuple):
             self.scale_factor = tuple(float(factor) for factor in scale_factor)
         else:

@@ -13,8 +13,8 @@ def read_data_from_tensorboard(log_path, tag):
     # tensorboard event
     event_acc = EventAccumulator(log_path)
     event_acc.Reload()
-    scalar_list = event_acc.Tags()['scalars']
-    print('tag list: ', scalar_list)
+    scalar_list = event_acc.Tags()["scalars"]
+    print("tag list: ", scalar_list)
     steps = [int(s.step) for s in event_acc.Scalars(tag)]
     values = [s.value for s in event_acc.Scalars(tag)]
     return steps, values

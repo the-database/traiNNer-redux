@@ -1,11 +1,9 @@
-import torch
 import math
 
-from torch import nn as nn
+import torch
+from torch import nn
 from torch.nn import functional as F
-
 from traiNNer.utils.registry import LOSS_REGISTRY
-
 
 ####################################
 # Modified MSSIM Loss with cosine similarity from neosr

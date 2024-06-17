@@ -1,5 +1,6 @@
 import math
 import random
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -37,13 +38,13 @@ class EqualLinear(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels, bias=True, bias_init_val=0, lr_mul=1, activation=None):
-        super(EqualLinear, self).__init__()
+        super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.lr_mul = lr_mul
         self.activation = activation
-        if self.activation not in ['fused_lrelu', None]:
-            raise ValueError(f'Wrong activation value in EqualLinear: {activation}'
+        if self.activation not in ["fused_lrelu", None]:
+            raise ValueError(f"Wrong activation value in EqualLinear: {activation}"
                              "Supported ones are: ['fused_lrelu', None].")
         self.scale = (1 / math.sqrt(in_channels)) * lr_mul
 
@@ -51,14 +52,14 @@ class EqualLinear(nn.Module):
         if bias:
             self.bias = nn.Parameter(torch.zeros(out_channels).fill_(bias_init_val))
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
 
     def forward(self, x):
         if self.bias is None:
             bias = None
         else:
             bias = self.bias * self.lr_mul
-        if self.activation == 'fused_lrelu':
+        if self.activation == "fused_lrelu":
             out = F.linear(x, self.weight * self.scale)
             out = fused_leaky_relu(out, bias)
         else:
@@ -66,8 +67,8 @@ class EqualLinear(nn.Module):
         return out
 
     def __repr__(self):
-        return (f'{self.__class__.__name__}(in_channels={self.in_channels}, '
-                f'out_channels={self.out_channels}, bias={self.bias is not None})')
+        return (f"{self.__class__.__name__}(in_channels={self.in_channels}, "
+                f"out_channels={self.out_channels}, bias={self.bias is not None})")
 
 
 class ModulatedConv2d(nn.Module):
@@ -96,8 +97,8 @@ class ModulatedConv2d(nn.Module):
                  demodulate=True,
                  sample_mode=None,
                  eps=1e-8,
-                 interpolation_mode='bilinear'):
-        super(ModulatedConv2d, self).__init__()
+                 interpolation_mode="bilinear"):
+        super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
@@ -105,7 +106,7 @@ class ModulatedConv2d(nn.Module):
         self.sample_mode = sample_mode
         self.eps = eps
         self.interpolation_mode = interpolation_mode
-        if self.interpolation_mode == 'nearest':
+        if self.interpolation_mode == "nearest":
             self.align_corners = None
         else:
             self.align_corners = False
@@ -140,9 +141,9 @@ class ModulatedConv2d(nn.Module):
 
         weight = weight.view(b * self.out_channels, c, self.kernel_size, self.kernel_size)
 
-        if self.sample_mode == 'upsample':
+        if self.sample_mode == "upsample":
             x = F.interpolate(x, scale_factor=2, mode=self.interpolation_mode, align_corners=self.align_corners)
-        elif self.sample_mode == 'downsample':
+        elif self.sample_mode == "downsample":
             x = F.interpolate(x, scale_factor=0.5, mode=self.interpolation_mode, align_corners=self.align_corners)
 
         b, c, h, w = x.shape
@@ -154,10 +155,10 @@ class ModulatedConv2d(nn.Module):
         return out
 
     def __repr__(self):
-        return (f'{self.__class__.__name__}(in_channels={self.in_channels}, '
-                f'out_channels={self.out_channels}, '
-                f'kernel_size={self.kernel_size}, '
-                f'demodulate={self.demodulate}, sample_mode={self.sample_mode})')
+        return (f"{self.__class__.__name__}(in_channels={self.in_channels}, "
+                f"out_channels={self.out_channels}, "
+                f"kernel_size={self.kernel_size}, "
+                f"demodulate={self.demodulate}, sample_mode={self.sample_mode})")
 
 
 class StyleConv(nn.Module):
@@ -180,8 +181,8 @@ class StyleConv(nn.Module):
                  num_style_feat,
                  demodulate=True,
                  sample_mode=None,
-                 interpolation_mode='bilinear'):
-        super(StyleConv, self).__init__()
+                 interpolation_mode="bilinear"):
+        super().__init__()
         self.modulated_conv = ModulatedConv2d(
             in_channels,
             out_channels,
@@ -215,11 +216,11 @@ class ToRGB(nn.Module):
         upsample (bool): Whether to upsample. Default: True.
     """
 
-    def __init__(self, in_channels, num_style_feat, upsample=True, interpolation_mode='bilinear'):
-        super(ToRGB, self).__init__()
+    def __init__(self, in_channels, num_style_feat, upsample=True, interpolation_mode="bilinear"):
+        super().__init__()
         self.upsample = upsample
         self.interpolation_mode = interpolation_mode
-        if self.interpolation_mode == 'nearest':
+        if self.interpolation_mode == "nearest":
             self.align_corners = None
         else:
             self.align_corners = False
@@ -263,7 +264,7 @@ class ConstantInput(nn.Module):
     """
 
     def __init__(self, num_channel, size):
-        super(ConstantInput, self).__init__()
+        super().__init__()
         self.weight = nn.Parameter(torch.randn(1, num_channel, size, size))
 
     def forward(self, batch):
@@ -271,7 +272,7 @@ class ConstantInput(nn.Module):
         return out
 
 
-@ARCH_REGISTRY.register(suffix='traiNNer')
+@ARCH_REGISTRY.register(suffix="traiNNer")
 class StyleGAN2GeneratorBilinear(nn.Module):
     """StyleGAN2 Generator.
 
@@ -292,8 +293,8 @@ class StyleGAN2GeneratorBilinear(nn.Module):
                  channel_multiplier=2,
                  lr_mlp=0.01,
                  narrow=1,
-                 interpolation_mode='bilinear'):
-        super(StyleGAN2GeneratorBilinear, self).__init__()
+                 interpolation_mode="bilinear"):
+        super().__init__()
         # Style MLP layers
         self.num_style_feat = num_style_feat
         style_mlp_layers = [NormStyleCode()]
@@ -301,32 +302,32 @@ class StyleGAN2GeneratorBilinear(nn.Module):
             style_mlp_layers.append(
                 EqualLinear(
                     num_style_feat, num_style_feat, bias=True, bias_init_val=0, lr_mul=lr_mlp,
-                    activation='fused_lrelu'))
+                    activation="fused_lrelu"))
         self.style_mlp = nn.Sequential(*style_mlp_layers)
 
         channels = {
-            '4': int(512 * narrow),
-            '8': int(512 * narrow),
-            '16': int(512 * narrow),
-            '32': int(512 * narrow),
-            '64': int(256 * channel_multiplier * narrow),
-            '128': int(128 * channel_multiplier * narrow),
-            '256': int(64 * channel_multiplier * narrow),
-            '512': int(32 * channel_multiplier * narrow),
-            '1024': int(16 * channel_multiplier * narrow)
+            "4": int(512 * narrow),
+            "8": int(512 * narrow),
+            "16": int(512 * narrow),
+            "32": int(512 * narrow),
+            "64": int(256 * channel_multiplier * narrow),
+            "128": int(128 * channel_multiplier * narrow),
+            "256": int(64 * channel_multiplier * narrow),
+            "512": int(32 * channel_multiplier * narrow),
+            "1024": int(16 * channel_multiplier * narrow)
         }
         self.channels = channels
 
-        self.constant_input = ConstantInput(channels['4'], size=4)
+        self.constant_input = ConstantInput(channels["4"], size=4)
         self.style_conv1 = StyleConv(
-            channels['4'],
-            channels['4'],
+            channels["4"],
+            channels["4"],
             kernel_size=3,
             num_style_feat=num_style_feat,
             demodulate=True,
             sample_mode=None,
             interpolation_mode=interpolation_mode)
-        self.to_rgb1 = ToRGB(channels['4'], num_style_feat, upsample=False, interpolation_mode=interpolation_mode)
+        self.to_rgb1 = ToRGB(channels["4"], num_style_feat, upsample=False, interpolation_mode=interpolation_mode)
 
         self.log_size = int(math.log(out_size, 2))
         self.num_layers = (self.log_size - 2) * 2 + 1
@@ -336,15 +337,15 @@ class StyleGAN2GeneratorBilinear(nn.Module):
         self.to_rgbs = nn.ModuleList()
         self.noises = nn.Module()
 
-        in_channels = channels['4']
+        in_channels = channels["4"]
         # noise
         for layer_idx in range(self.num_layers):
             resolution = 2**((layer_idx + 5) // 2)
             shape = [1, 1, resolution, resolution]
-            self.noises.register_buffer(f'noise{layer_idx}', torch.randn(*shape))
+            self.noises.register_buffer(f"noise{layer_idx}", torch.randn(*shape))
         # style convs and to_rgbs
         for i in range(3, self.log_size + 1):
-            out_channels = channels[f'{2**i}']
+            out_channels = channels[f"{2**i}"]
             self.style_convs.append(
                 StyleConv(
                     in_channels,
@@ -352,7 +353,7 @@ class StyleGAN2GeneratorBilinear(nn.Module):
                     kernel_size=3,
                     num_style_feat=num_style_feat,
                     demodulate=True,
-                    sample_mode='upsample',
+                    sample_mode="upsample",
                     interpolation_mode=interpolation_mode))
             self.style_convs.append(
                 StyleConv(
@@ -419,7 +420,7 @@ class StyleGAN2GeneratorBilinear(nn.Module):
             if randomize_noise:
                 noise = [None] * self.num_layers  # for each style conv layer
             else:  # use the stored noise
-                noise = [getattr(self.noises, f'noise{i}') for i in range(self.num_layers)]
+                noise = [getattr(self.noises, f"noise{i}") for i in range(self.num_layers)]
         # style truncation
         if truncation < 1:
             style_truncation = []
@@ -449,7 +450,7 @@ class StyleGAN2GeneratorBilinear(nn.Module):
 
         i = 1
         for conv1, conv2, noise1, noise2, to_rgb in zip(self.style_convs[::2], self.style_convs[1::2], noise[1::2],
-                                                        noise[2::2], self.to_rgbs):
+                                                        noise[2::2], self.to_rgbs, strict=False):
             out = conv1(out, latent[:, i], noise=noise1)
             out = conv2(out, latent[:, i + 1], noise=noise2)
             skip = to_rgb(out, latent[:, i + 2], skip)
@@ -471,7 +472,7 @@ class ScaledLeakyReLU(nn.Module):
     """
 
     def __init__(self, negative_slope=0.2):
-        super(ScaledLeakyReLU, self).__init__()
+        super().__init__()
         self.negative_slope = negative_slope
 
     def forward(self, x):
@@ -495,7 +496,7 @@ class EqualConv2d(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, bias=True, bias_init_val=0):
-        super(EqualConv2d, self).__init__()
+        super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
@@ -507,7 +508,7 @@ class EqualConv2d(nn.Module):
         if bias:
             self.bias = nn.Parameter(torch.zeros(out_channels).fill_(bias_init_val))
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
 
     def forward(self, x):
         out = F.conv2d(
@@ -521,11 +522,11 @@ class EqualConv2d(nn.Module):
         return out
 
     def __repr__(self):
-        return (f'{self.__class__.__name__}(in_channels={self.in_channels}, '
-                f'out_channels={self.out_channels}, '
-                f'kernel_size={self.kernel_size},'
-                f' stride={self.stride}, padding={self.padding}, '
-                f'bias={self.bias is not None})')
+        return (f"{self.__class__.__name__}(in_channels={self.in_channels}, "
+                f"out_channels={self.out_channels}, "
+                f"kernel_size={self.kernel_size},"
+                f" stride={self.stride}, padding={self.padding}, "
+                f"bias={self.bias is not None})")
 
 
 class ConvLayer(nn.Sequential):
@@ -548,12 +549,12 @@ class ConvLayer(nn.Sequential):
                  downsample=False,
                  bias=True,
                  activate=True,
-                 interpolation_mode='bilinear'):
+                 interpolation_mode="bilinear"):
         layers = []
         self.interpolation_mode = interpolation_mode
         # downsample
         if downsample:
-            if self.interpolation_mode == 'nearest':
+            if self.interpolation_mode == "nearest":
                 self.align_corners = None
             else:
                 self.align_corners = False
@@ -574,7 +575,7 @@ class ConvLayer(nn.Sequential):
             else:
                 layers.append(ScaledLeakyReLU(0.2))
 
-        super(ConvLayer, self).__init__(*layers)
+        super().__init__(*layers)
 
 
 class ResBlock(nn.Module):
@@ -585,8 +586,8 @@ class ResBlock(nn.Module):
         out_channels (int): Channel number of the output.
     """
 
-    def __init__(self, in_channels, out_channels, interpolation_mode='bilinear'):
-        super(ResBlock, self).__init__()
+    def __init__(self, in_channels, out_channels, interpolation_mode="bilinear"):
+        super().__init__()
 
         self.conv1 = ConvLayer(in_channels, in_channels, 3, bias=True, activate=True)
         self.conv2 = ConvLayer(

@@ -1,5 +1,5 @@
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from ..utils.registry import ARCH_REGISTRY
@@ -18,7 +18,7 @@ class PCDAlignment(nn.Module):
     """
 
     def __init__(self, num_feat=64, deformable_groups=8):
-        super(PCDAlignment, self).__init__()
+        super().__init__()
 
         # Pyramid has three levels:
         # L3: level 3, 1/4 spatial size
@@ -32,7 +32,7 @@ class PCDAlignment(nn.Module):
 
         # Pyramids
         for i in range(3, 0, -1):
-            level = f'l{i}'
+            level = f"l{i}"
             self.offset_conv1[level] = nn.Conv2d(num_feat * 2, num_feat, 3, 1, 1)
             if i == 3:
                 self.offset_conv2[level] = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
@@ -49,7 +49,7 @@ class PCDAlignment(nn.Module):
         self.cas_offset_conv2 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
         self.cas_dcnpack = DCNv2Pack(num_feat, num_feat, 3, padding=1, deformable_groups=deformable_groups)
 
-        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
     def forward(self, nbr_feat_l, ref_feat_l):
@@ -69,7 +69,7 @@ class PCDAlignment(nn.Module):
         # Pyramids
         upsampled_offset, upsampled_feat = None, None
         for i in range(3, 0, -1):
-            level = f'l{i}'
+            level = f"l{i}"
             offset = torch.cat([nbr_feat_l[i - 1], ref_feat_l[i - 1]], dim=1)
             offset = self.lrelu(self.offset_conv1[level](offset))
             if i == 3:
@@ -113,7 +113,7 @@ class TSAFusion(nn.Module):
     """
 
     def __init__(self, num_feat=64, num_frame=5, center_frame_idx=2):
-        super(TSAFusion, self).__init__()
+        super().__init__()
         self.center_frame_idx = center_frame_idx
         # temporal attention (before fusion conv)
         self.temporal_attn1 = nn.Conv2d(num_feat, num_feat, 3, 1, 1)
@@ -135,7 +135,7 @@ class TSAFusion(nn.Module):
         self.spatial_attn_add2 = nn.Conv2d(num_feat, num_feat, 1)
 
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
 
     def forward(self, aligned_feat):
         """
@@ -199,7 +199,7 @@ class PredeblurModule(nn.Module):
     """
 
     def __init__(self, num_in_ch=3, num_feat=64, hr_in=False):
-        super(PredeblurModule, self).__init__()
+        super().__init__()
         self.hr_in = hr_in
 
         self.conv_first = nn.Conv2d(num_in_ch, num_feat, 3, 1, 1)
@@ -217,7 +217,7 @@ class PredeblurModule(nn.Module):
         self.resblock_l2_2 = ResidualBlockNoBN(num_feat=num_feat)
         self.resblock_l1 = nn.ModuleList([ResidualBlockNoBN(num_feat=num_feat) for i in range(5)])
 
-        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
     def forward(self, x):
@@ -280,7 +280,7 @@ class EDVR(nn.Module):
                  hr_in=False,
                  with_predeblur=False,
                  with_tsa=True):
-        super(EDVR, self).__init__()
+        super().__init__()
         if center_frame_idx is None:
             self.center_frame_idx = num_frame // 2
         else:
@@ -325,9 +325,9 @@ class EDVR(nn.Module):
     def forward(self, x):
         b, t, c, h, w = x.size()
         if self.hr_in:
-            assert h % 16 == 0 and w % 16 == 0, ('The height and width must be multiple of 16.')
+            assert h % 16 == 0 and w % 16 == 0, ("The height and width must be multiple of 16.")
         else:
-            assert h % 4 == 0 and w % 4 == 0, ('The height and width must be multiple of 4.')
+            assert h % 4 == 0 and w % 4 == 0, ("The height and width must be multiple of 4.")
 
         x_center = x[:, self.center_frame_idx, :, :, :].contiguous()
 
@@ -377,6 +377,6 @@ class EDVR(nn.Module):
         if self.hr_in:
             base = x_center
         else:
-            base = F.interpolate(x_center, scale_factor=4, mode='bilinear', align_corners=False)
+            base = F.interpolate(x_center, scale_factor=4, mode="bilinear", align_corners=False)
         out += base
         return out

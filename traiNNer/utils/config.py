@@ -21,4 +21,4 @@ class Config:
 
     @classmethod
     def get_scale(cls):
-        return cls.get_config()[0]['scale']
+        return cls.get_config()[0]["scale"]

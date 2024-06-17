@@ -1,13 +1,14 @@
 import collections.abc
 import math
-import torch
-import torchvision
 import warnings
 from distutils.version import LooseVersion
 from itertools import repeat
-from torch import nn as nn
+
+import torch
+import torchvision
+from torch import nn
 from torch.nn import functional as F
-from torch.nn import init as init
+from torch.nn import init
 from torch.nn.modules.batchnorm import _BatchNorm
 
 from ..ops.dcn import ModulatedDeformConvPack, modulated_deform_conv
@@ -73,7 +74,7 @@ class ResidualBlockNoBN(nn.Module):
     """
 
     def __init__(self, num_feat=64, res_scale=1, pytorch_init=False):
-        super(ResidualBlockNoBN, self).__init__()
+        super().__init__()
         self.res_scale = res_scale
         self.conv1 = nn.Conv2d(num_feat, num_feat, 3, 1, 1, bias=True)
         self.conv2 = nn.Conv2d(num_feat, num_feat, 3, 1, 1, bias=True)
@@ -106,11 +107,11 @@ class Upsample(nn.Sequential):
             m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
             m.append(nn.PixelShuffle(3))
         else:
-            raise ValueError(f'scale {scale} is not supported. Supported scales: 2^n and 3.')
-        super(Upsample, self).__init__(*m)
+            raise ValueError(f"scale {scale} is not supported. Supported scales: 2^n and 3.")
+        super().__init__(*m)
 
 
-def flow_warp(x, flow, interp_mode='bilinear', padding_mode='zeros', align_corners=True):
+def flow_warp(x, flow, interp_mode="bilinear", padding_mode="zeros", align_corners=True):
     """Warp an image or feature map with optical flow.
 
     Args:
@@ -144,7 +145,7 @@ def flow_warp(x, flow, interp_mode='bilinear', padding_mode='zeros', align_corne
     return output
 
 
-def resize_flow(flow, size_type, sizes, interp_mode='bilinear', align_corners=False):
+def resize_flow(flow, size_type, sizes, interp_mode="bilinear", align_corners=False):
     """Resize a flow according to ratio or shape.
 
     Args:
@@ -165,12 +166,12 @@ def resize_flow(flow, size_type, sizes, interp_mode='bilinear', align_corners=Fa
         Tensor: Resized flow.
     """
     _, _, flow_h, flow_w = flow.size()
-    if size_type == 'ratio':
+    if size_type == "ratio":
         output_h, output_w = int(flow_h * sizes[0]), int(flow_w * sizes[1])
-    elif size_type == 'shape':
+    elif size_type == "shape":
         output_h, output_w = sizes[0], sizes[1]
     else:
-        raise ValueError(f'Size type should be ratio or shape, but got type {size_type}.')
+        raise ValueError(f"Size type should be ratio or shape, but got type {size_type}.")
 
     input_flow = flow.clone()
     ratio_h = output_h / flow_h
@@ -214,13 +215,13 @@ class DepthToSpace(nn.Module):
             data is moved. In SR its equivalent to the scale factor.
         form: select tensorflow ('tf') or pytorch ('pt') style shuffle.
     """
-    def __init__(self, block_size:int=2, form:str='pt'):
+    def __init__(self, block_size:int=2, form:str="pt"):
         super().__init__()
         self.bs = block_size
         self.form = form
 
     def forward(self, x):
-        if self.form == 'tf':
+        if self.form == "tf":
             return depth_to_space_tf(x, self.bs)
         return depth_to_space(x, self.bs)
 
@@ -300,16 +301,16 @@ class SpaceToDepth(nn.Module):
             to the downscale factor.
         form: select tensorflow ('tf') or pytorch ('pt') style unshuffle.
     """
-    def __init__(self, block_size:int=2, form:str='pt'):
+    def __init__(self, block_size:int=2, form:str="pt"):
         super().__init__()
         self.bs = block_size
         self.form = form
 
     def forward(self, x):
-        if self.form == 'tf':
+        if self.form == "tf":
             return space_to_depth_tf(x, self.bs)
         return space_to_depth(x, self.bs)
-    
+
     def extra_repr(self):
         return f"block_size={self.bs}"
 
@@ -329,7 +330,7 @@ def space_to_depth(x, bs:int=2):
         return x
 
     b, c, h, w = x.size()
-    assert h % bs == 0 and w % bs == 0, "{}".format((h, w, bs))
+    assert h % bs == 0 and w % bs == 0, f"{(h, w, bs)}"
     new_d = -1  # c * (bs**2)
     new_h = h // bs
     new_w = w // bs
@@ -357,7 +358,7 @@ def space_to_depth_tf(x, bs:int=2):
         return x
 
     b, c, h, w = x.size()
-    assert h % bs == 0 and w % bs == 0, "{}".format((h, w, bs))
+    assert h % bs == 0 and w % bs == 0, f"{(h, w, bs)}"
     new_d = -1  # c * (bs**2)
     new_h = h // bs
     new_w = w // bs
@@ -388,9 +389,9 @@ class DCNv2Pack(ModulatedDeformConvPack):
         offset_absmean = torch.mean(torch.abs(offset))
         if offset_absmean > 50:
             logger = get_root_logger()
-            logger.warning(f'Offset abs mean is {offset_absmean}, larger than 50.')
+            logger.warning(f"Offset abs mean is {offset_absmean}, larger than 50.")
 
-        if LooseVersion(torchvision.__version__) >= LooseVersion('0.9.0'):
+        if LooseVersion(torchvision.__version__) >= LooseVersion("0.9.0"):
             return torchvision.ops.deform_conv2d(x, offset, self.weight, self.bias, self.stride, self.padding,
                                                  self.dilation, mask)
         else:
@@ -408,8 +409,8 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
 
     if (mean < a - 2 * std) or (mean > b + 2 * std):
         warnings.warn(
-            'mean is more than 2 std from [a, b] in nn.init.trunc_normal_. '
-            'The distribution of values may be incorrect.',
+            "mean is more than 2 std from [a, b] in nn.init.trunc_normal_. "
+            "The distribution of values may be incorrect.",
             stacklevel=2)
 
     with torch.no_grad():

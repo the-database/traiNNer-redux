@@ -1,6 +1,7 @@
 import math
+
 import torch
-from torch import nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from ..utils.registry import ARCH_REGISTRY
@@ -12,7 +13,7 @@ class BasicModule(nn.Module):
     """
 
     def __init__(self):
-        super(BasicModule, self).__init__()
+        super().__init__()
 
         self.basic_module = nn.Sequential(
             nn.Conv2d(in_channels=8, out_channels=32, kernel_size=7, stride=1, padding=3), nn.ReLU(inplace=False),
@@ -34,13 +35,13 @@ class SpyNet(nn.Module):
     """
 
     def __init__(self, load_path=None):
-        super(SpyNet, self).__init__()
+        super().__init__()
         self.basic_module = nn.ModuleList([BasicModule() for _ in range(6)])
         if load_path:
-            self.load_state_dict(torch.load(load_path, map_location=lambda storage, loc: storage)['params'])
+            self.load_state_dict(torch.load(load_path, map_location=lambda storage, loc: storage)["params"])
 
-        self.register_buffer('mean', torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
-        self.register_buffer('std', torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
+        self.register_buffer("mean", torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
+        self.register_buffer("std", torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
 
     def preprocess(self, tensor_input):
         tensor_output = (tensor_input - self.mean) / self.std
@@ -62,17 +63,17 @@ class SpyNet(nn.Module):
              int(math.floor(ref[0].size(3) / 2.0))])
 
         for level in range(len(ref)):
-            upsampled_flow = F.interpolate(input=flow, scale_factor=2, mode='bilinear', align_corners=True) * 2.0
+            upsampled_flow = F.interpolate(input=flow, scale_factor=2, mode="bilinear", align_corners=True) * 2.0
 
             if upsampled_flow.size(2) != ref[level].size(2):
-                upsampled_flow = F.pad(input=upsampled_flow, pad=[0, 0, 0, 1], mode='replicate')
+                upsampled_flow = F.pad(input=upsampled_flow, pad=[0, 0, 0, 1], mode="replicate")
             if upsampled_flow.size(3) != ref[level].size(3):
-                upsampled_flow = F.pad(input=upsampled_flow, pad=[0, 1, 0, 0], mode='replicate')
+                upsampled_flow = F.pad(input=upsampled_flow, pad=[0, 1, 0, 0], mode="replicate")
 
             flow = self.basic_module[level](torch.cat([
                 ref[level],
                 flow_warp(
-                    supp[level], upsampled_flow.permute(0, 2, 3, 1), interp_mode='bilinear', padding_mode='border'),
+                    supp[level], upsampled_flow.permute(0, 2, 3, 1), interp_mode="bilinear", padding_mode="border"),
                 upsampled_flow
             ], 1)) + upsampled_flow
 
@@ -85,10 +86,10 @@ class SpyNet(nn.Module):
         w_floor = math.floor(math.ceil(w / 32.0) * 32.0)
         h_floor = math.floor(math.ceil(h / 32.0) * 32.0)
 
-        ref = F.interpolate(input=ref, size=(h_floor, w_floor), mode='bilinear', align_corners=False)
-        supp = F.interpolate(input=supp, size=(h_floor, w_floor), mode='bilinear', align_corners=False)
+        ref = F.interpolate(input=ref, size=(h_floor, w_floor), mode="bilinear", align_corners=False)
+        supp = F.interpolate(input=supp, size=(h_floor, w_floor), mode="bilinear", align_corners=False)
 
-        flow = F.interpolate(input=self.process(ref, supp), size=(h, w), mode='bilinear', align_corners=False)
+        flow = F.interpolate(input=self.process(ref, supp), size=(h, w), mode="bilinear", align_corners=False)
 
         flow[:, 0, :, :] *= float(w) / float(w_floor)
         flow[:, 1, :, :] *= float(h) / float(h_floor)

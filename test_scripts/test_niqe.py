@@ -1,17 +1,17 @@
-import cv2
 import warnings
 
+import cv2
 from traiNNer.metrics import calculate_niqe
 
 
 def main():
-    img_path = 'tests/data/baboon.png'
+    img_path = "tests/data/baboon.png"
     img = cv2.imread(img_path)
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', category=RuntimeWarning)
-        niqe_result = calculate_niqe(img, 0, input_order='HWC', convert_to='y')
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        niqe_result = calculate_niqe(img, 0, input_order="HWC", convert_to="y")
     print(niqe_result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -7,14 +7,14 @@ from ..utils.registry import MODEL_REGISTRY
 from .realesrgan_model import RealESRGANModel
 from .sr_model import SRModel
 
-__all__ = ['build_model']
+__all__ = ["build_model"]
 
 # automatically scan and import model modules for registry
 # scan all the files under the 'models' folder and collect files ending with '_model.py'
 model_folder = osp.dirname(osp.abspath(__file__))
-model_filenames = [osp.splitext(osp.basename(v))[0] for v in scandir(model_folder) if v.endswith('_model.py')]
+model_filenames = [osp.splitext(osp.basename(v))[0] for v in scandir(model_folder) if v.endswith("_model.py")]
 # import all the model modules
-_model_modules = [importlib.import_module(f'traiNNer.models.{file_name}') for file_name in model_filenames]
+_model_modules = [importlib.import_module(f"traiNNer.models.{file_name}") for file_name in model_filenames]
 
 
 def build_model(opt):
@@ -27,11 +27,11 @@ def build_model(opt):
     print(opt)
     opt = deepcopy(opt)
 
-    if opt['high_order_degradation']:
+    if opt["high_order_degradation"]:
         model = RealESRGANModel(opt)
     else:
         model = SRModel(opt)
 
     logger = get_root_logger()
-    logger.info(f'Model [{model.__class__.__name__}] is created.')
+    logger.info(f"Model [{model.__class__.__name__}] is created.")
     return model

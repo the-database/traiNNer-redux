@@ -1,6 +1,5 @@
 import pytest
 import torch
-
 from traiNNer.archs.duf_arch import DUF, DynamicUpsamplingFilter
 
 

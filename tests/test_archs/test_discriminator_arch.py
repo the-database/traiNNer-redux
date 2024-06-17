@@ -1,6 +1,5 @@
 import pytest
 import torch
-
 from traiNNer.archs.discriminator_arch import VGGStyleDiscriminator
 
 
