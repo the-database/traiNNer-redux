@@ -315,7 +315,7 @@ class SRModel(BaseModel):
             self.optimizer_d.step()
 
         for key, value in loss_dict.items():
-            val = value if type(value) is float else value.item()
+            val = value if type(value) is float else value.detach()
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
         if self.ema_decay > 0:
