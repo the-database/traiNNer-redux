@@ -697,7 +697,9 @@ class ResBlock(nn.Module):
         out_channels (int): Channel number of the output.
     """
 
-    def __init__(self, in_channels, out_channels, interpolation_mode="bilinear") -> None:
+    def __init__(
+        self, in_channels, out_channels, interpolation_mode="bilinear"
+    ) -> None:
         super().__init__()
 
         self.conv1 = ConvLayer(in_channels, in_channels, 3, bias=True, activate=True)

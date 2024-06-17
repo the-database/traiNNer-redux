@@ -5,10 +5,10 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 @SPANDREL_REGISTRY.register()
 def atd(
-    in_chans=3,
-    img_size=96,
-    embed_dim=210,
-    depths=(
+    in_chans: int = 3,
+    img_size: int = 96,
+    embed_dim: int = 210,
+    depths: tuple[int] = (
         6,
         6,
         6,
@@ -16,7 +16,7 @@ def atd(
         6,
         6,
     ),
-    num_heads=(
+    num_heads: tuple[int] = (
         6,
         6,
         6,
@@ -24,18 +24,18 @@ def atd(
         6,
         6,
     ),
-    window_size=16,
-    category_size=256,
-    num_tokens=128,
-    reducted_dim=20,
-    convffn_kernel_size=5,
-    img_range=1.0,
-    mlp_ratio=2,
-    upsampler="pixelshuffle",
-    resi_connection="1conv",
-    use_checkpoint=True,
+    window_size: int = 16,
+    category_size: int = 256,
+    num_tokens: int = 128,
+    reducted_dim: int = 20,
+    convffn_kernel_size: int = 5,
+    img_range: float = 1.0,
+    mlp_ratio: int = 2,
+    upsampler: str = "pixelshuffle",
+    resi_connection: str = "1conv",
+    use_checkpoint: bool = True,
     **kwargs,
-):
+) -> ATD:
     return ATD(
         upscale=Config.get_scale(),
         in_chans=in_chans,
@@ -58,7 +58,7 @@ def atd(
 
 
 @SPANDREL_REGISTRY.register()
-def atd_light(**kwargs):
+def atd_light(**kwargs) -> ATD:
     return ATD(
         upscale=Config.get_scale(),
         in_chans=3,

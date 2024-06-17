@@ -18,7 +18,9 @@ class MeanShift(nn.Conv2d):
             Default: True.
     """
 
-    def __init__(self, rgb_range, rgb_mean, rgb_std, sign=-1, requires_grad=True) -> None:
+    def __init__(
+        self, rgb_range, rgb_mean, rgb_std, sign=-1, requires_grad=True
+    ) -> None:
         super().__init__(3, 3, kernel_size=1)
         std = torch.Tensor(rgb_std)
         self.weight.data = torch.eye(3).view(3, 3, 1, 1)
@@ -62,7 +64,9 @@ class MergeRun(nn.Module):
     Ref git repo: https://github.com/saeed-anwar/RIDNet
     """
 
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1) -> None:
+    def __init__(
+        self, in_channels, out_channels, kernel_size=3, stride=1, padding=1
+    ) -> None:
         super().__init__()
 
         self.dilation1 = nn.Sequential(

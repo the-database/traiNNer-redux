@@ -4,12 +4,12 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def hat(**kwargs):
+def hat(**kwargs) -> HAT:
     return HAT(upscaling_factor=Config.get_scale(), **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def hat_l(**kwargs):
+def hat_l(**kwargs) -> HAT:
     return HAT(
         upscale=Config.get_scale(),
         in_chans=3,
@@ -30,7 +30,7 @@ def hat_l(**kwargs):
 
 
 @SPANDREL_REGISTRY.register()
-def hat_m(**kwargs):
+def hat_m(**kwargs) -> HAT:
     return HAT(
         upscale=Config.get_scale(),
         in_chans=3,
@@ -51,7 +51,7 @@ def hat_m(**kwargs):
 
 
 @SPANDREL_REGISTRY.register()
-def hat_s(**kwargs):
+def hat_s(**kwargs) -> HAT:
     return HAT(
         upscale=Config.get_scale(),
         in_chans=3,

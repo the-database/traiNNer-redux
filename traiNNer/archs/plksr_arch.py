@@ -4,10 +4,10 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def plksr(**kwargs):
+def plksr(**kwargs) -> PLKSR:
     return PLKSR(upscaling_factor=Config.get_scale(), **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def realplksr(**kwargs):
+def realplksr(**kwargs) -> RealPLKSR:
     return RealPLKSR(upscaling_factor=Config.get_scale(), **kwargs)

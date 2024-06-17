@@ -5,18 +5,18 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 @SPANDREL_REGISTRY.register()
 def srformer(
-    in_chans=3,
-    img_size=48,
-    window_size=24,
-    img_range=1.0,
-    depths=(6, 6, 6, 6, 6, 6),
-    embed_dim=180,
-    num_heads=(6, 6, 6, 6, 6, 6),
-    mlp_ratio=2,
-    upsampler="pixelshuffle",
-    resi_connection="1conv",
+    in_chans: int = 3,
+    img_size: int = 48,
+    window_size: int = 24,
+    img_range: float = 1.0,
+    depths: tuple[int] = (6, 6, 6, 6, 6, 6),
+    embed_dim: int = 180,
+    num_heads: tuple[int] = (6, 6, 6, 6, 6, 6),
+    mlp_ratio: int = 2,
+    upsampler: str = "pixelshuffle",
+    resi_connection: str = "1conv",
     **kwargs,
-):
+) -> SRFormer:
     return SRFormer(
         upscale=Config.get_scale(),
         in_chans=in_chans,
@@ -34,7 +34,7 @@ def srformer(
 
 
 @SPANDREL_REGISTRY.register()
-def srformer_light(**kwargs):
+def srformer_light(**kwargs) -> SRFormer:
     return SRFormer(
         upscale=Config.get_scale(),
         in_chans=3,

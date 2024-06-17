@@ -72,7 +72,9 @@ class BaseModel:
             record[metric] = {"better": better, "val": init_val, "iter": -1}
         self.best_metric_results[dataset_name] = record
 
-    def _update_best_metric_result(self, dataset_name, metric, val, current_iter) -> None:
+    def _update_best_metric_result(
+        self, dataset_name, metric, val, current_iter
+    ) -> None:
         if self.best_metric_results[dataset_name][metric]["better"] == "higher":
             if val >= self.best_metric_results[dataset_name][metric]["val"]:
                 self.best_metric_results[dataset_name][metric]["val"] = val

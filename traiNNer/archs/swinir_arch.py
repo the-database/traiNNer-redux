@@ -4,12 +4,12 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def swinir(**kwargs):
+def swinir(**kwargs) -> SwinIR:
     return SwinIR(upscale=Config.get_scale(), **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_large(**kwargs):
+def swinir_large(**kwargs) -> SwinIR:
     return SwinIR(
         upscale=Config.get_scale(),
         img_size=64,
@@ -26,7 +26,7 @@ def swinir_large(**kwargs):
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_medium(**kwargs):
+def swinir_medium(**kwargs) -> SwinIR:
     return SwinIR(
         upscale=Config.get_scale(),
         img_size=48,
@@ -43,7 +43,7 @@ def swinir_medium(**kwargs):
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_small(**kwargs):
+def swinir_small(**kwargs) -> SwinIR:
     return SwinIR(
         upscale=Config.get_scale(),
         img_size=64,

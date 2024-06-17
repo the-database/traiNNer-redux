@@ -48,7 +48,9 @@ def get_confirm_token(response):
     return None
 
 
-def save_response_content(response, destination, file_size=None, chunk_size=32768) -> None:
+def save_response_content(
+    response, destination, file_size=None, chunk_size=32768
+) -> None:
     if file_size is not None:
         pbar = tqdm(total=math.ceil(file_size / chunk_size), unit="chunk")
 

@@ -4,5 +4,5 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def span(**kwargs):
+def span(**kwargs) -> SPAN:
     return SPAN(upscale=Config.get_scale(), **kwargs)

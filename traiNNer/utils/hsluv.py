@@ -26,20 +26,20 @@ _kappa = 903.2962962
 _epsilon = 0.0088564516
 
 
-def _y_to_l(y : Tensor) -> Tensor:
+def _y_to_l(y: Tensor) -> Tensor:
     return torch.where(
         y > _epsilon, 116 * torch.pow(y / _ref_y, 1 / 3) - 16, y / _ref_y * _kappa
     )
 
 
-def hsluv_to_lch(h : Tensor, s : Tensor, l : Tensor) -> Tensor:
+def hsluv_to_lch(h: Tensor, s: Tensor, l: Tensor) -> Tensor:
     l = torch.clamp(l, 0, 100)
     max_chroma = _max_chroma_for_lh(l, h)
     c = max_chroma * s / 100
     return torch.stack([l, c, h], dim=-1)
 
 
-def lch_to_hsluv(l : Tensor, c : Tensor, h : Tensor) -> Tensor:
+def lch_to_hsluv(l: Tensor, c: Tensor, h: Tensor) -> Tensor:
     _hx_max = torch.clamp(_max_chroma_for_lh(l, h), 1e-12)
     s = c / _hx_max * 100
 
@@ -49,13 +49,13 @@ def lch_to_hsluv(l : Tensor, c : Tensor, h : Tensor) -> Tensor:
     return torch.stack([h, torch.clamp(s, 0, 100), l], dim=-1)
 
 
-def _length_of_ray_until_intersect(theta : Tensor, line : Mapping[str, Tensor]) -> Tensor:
+def _length_of_ray_until_intersect(theta: Tensor, line: Mapping[str, Tensor]) -> Tensor:
     denominator = torch.sin(theta) - line["slope"] * torch.cos(theta)
     clamped_denominator = torch.where(torch.abs(denominator) < 1e-5, 1e-12, denominator)
     return line["intercept"] / clamped_denominator
 
 
-def _get_bounds(l : Tensor) -> list[Mapping[str, Tensor]]:
+def _get_bounds(l: Tensor) -> list[Mapping[str, Tensor]]:
     result = []  # TODO vectorize
     sub1 = ((l + 16) ** 3) / 1560896
     sub2 = torch.where(sub1 > _epsilon, sub1, l / _kappa)
@@ -74,7 +74,7 @@ def _get_bounds(l : Tensor) -> list[Mapping[str, Tensor]]:
     return result
 
 
-def _max_chroma_for_lh(l : Tensor, h : Tensor) -> Tensor:
+def _max_chroma_for_lh(l: Tensor, h: Tensor) -> Tensor:
     hrad = torch.deg2rad(h)
     bounds = _get_bounds(l)
     # TODO vectorize
@@ -87,7 +87,7 @@ def _max_chroma_for_lh(l : Tensor, h : Tensor) -> Tensor:
     return non_negative_lengths.min(dim=0).values
 
 
-def rgb_to_xyz(rgb : Tensor) -> Tensor:
+def rgb_to_xyz(rgb: Tensor) -> Tensor:
     rgbl = torch.where(
         rgb <= 0.04045, rgb / 12.92, torch.pow((rgb + 0.055) / 1.055, 2.4)
     )
@@ -95,12 +95,12 @@ def rgb_to_xyz(rgb : Tensor) -> Tensor:
     return xyz
 
 
-def xyz_to_luv(xyz : Tensor) -> Tensor:
-    x : Tensor = xyz[..., 0]
-    y : Tensor = xyz[..., 1]
-    z : Tensor = xyz[..., 2]
+def xyz_to_luv(xyz: Tensor) -> Tensor:
+    x: Tensor = xyz[..., 0]
+    y: Tensor = xyz[..., 1]
+    z: Tensor = xyz[..., 2]
 
-    l : Tensor = _y_to_l(y)
+    l: Tensor = _y_to_l(y)
 
     divider = x + 15 * y + 3 * z
 
@@ -116,7 +116,7 @@ def xyz_to_luv(xyz : Tensor) -> Tensor:
     return torch.stack([l, u, v], dim=-1)
 
 
-def luv_to_lch(luv : Tensor) -> Tensor:
+def luv_to_lch(luv: Tensor) -> Tensor:
     l = luv[..., 0]
 
     u = luv[..., 1]
@@ -139,7 +139,7 @@ def luv_to_lch(luv : Tensor) -> Tensor:
     return torch.stack([l, c, h], dim=-1)
 
 
-def rgb_to_hsluv(rgb_tensor : Tensor) -> Tensor:
+def rgb_to_hsluv(rgb_tensor: Tensor) -> Tensor:
     rgb_tensor = rgb_tensor.permute(0, 2, 3, 1).clamp(1e-12, 1)
     xyz = rgb_to_xyz(rgb_tensor)
     luv = xyz_to_luv(xyz)

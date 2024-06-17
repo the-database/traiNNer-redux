@@ -16,7 +16,9 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 class L2pooling(nn.Module):
-    def __init__(self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0) -> None:
+    def __init__(
+        self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0
+    ) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride

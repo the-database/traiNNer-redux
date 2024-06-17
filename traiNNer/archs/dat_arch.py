@@ -5,17 +5,17 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 @SPANDREL_REGISTRY.register()
 def dat(
-    in_chans=3,
-    img_size=64,
-    img_range=1.0,
-    split_size=(8, 32),
-    depth=(6, 6, 6, 6, 6, 6),
-    embed_dim=180,
-    num_heads=(6, 6, 6, 6, 6, 6),
-    expansion_factor=4,
-    resi_connection="1conv",
+    in_chans: int = 3,
+    img_size: int = 64,
+    img_range: float = 1.0,
+    split_size: tuple[int] = (8, 32),
+    depth: tuple[int] = (6, 6, 6, 6, 6, 6),
+    embed_dim: int = 180,
+    num_heads: tuple[int] = (6, 6, 6, 6, 6, 6),
+    expansion_factor: int = 4,
+    resi_connection: str = "1conv",
     **kwargs,
-):
+) -> DAT:
     return DAT(
         upscale=Config.get_scale(),
         in_chans=in_chans,
@@ -32,7 +32,7 @@ def dat(
 
 
 @SPANDREL_REGISTRY.register()
-def dat_2(**kwargs):
+def dat_2(**kwargs) -> DAT:
     return DAT(
         upscale=Config.get_scale(),
         in_chans=3,

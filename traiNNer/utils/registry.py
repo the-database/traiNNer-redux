@@ -1,7 +1,7 @@
 # Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
 
-from collections.abc import Callable
+from collections.abc import Callable, dict_keys
 
 
 class Registry:
@@ -38,7 +38,9 @@ class Registry:
         self._name = name
         self._obj_map = {}
 
-    def _do_register(self, name: str, obj: Callable | type, suffix: str | None = None) -> None:
+    def _do_register(
+        self, name: str, obj: Callable | type, suffix: str | None = None
+    ) -> None:
         if isinstance(suffix, str):
             name = name + "_" + suffix
 
@@ -48,7 +50,7 @@ class Registry:
         )
         self._obj_map[name] = obj
 
-    def register(self, obj: Callable | type | None = None, suffix: str | None = None):
+    def register(self, obj: Callable | type | None = None, suffix: str | None = None) -> None:
         """
         Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not.
@@ -67,7 +69,7 @@ class Registry:
         name = obj.__name__.lower()
         self._do_register(name, obj, suffix)
 
-    def get(self, name: str, suffix: str = "traiNNer"):
+    def get(self, name: str, suffix: str = "traiNNer") -> Callable | type:
         name = name.lower()
         ret = self._obj_map.get(name)
         if ret is None:
@@ -85,7 +87,7 @@ class Registry:
     def __iter__(self):
         return iter(self._obj_map.items())
 
-    def keys(self):
+    def keys(self) -> dict_keys:
         return self._obj_map.keys()
 
 

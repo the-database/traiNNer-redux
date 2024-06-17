@@ -134,7 +134,9 @@ class VideoBaseModel(SRModel):
         logger.warning("nondist_validation is not implemented. Run dist_validation.")
         self.dist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger) -> None:
+    def _log_validation_metric_values(
+        self, current_iter, dataset_name, tb_logger
+    ) -> None:
         # ----------------- calculate the average values for each folder, and for each metric  ----------------- #
         # average all frames for each sub-folder
         # metric_results_avg is a dict:{

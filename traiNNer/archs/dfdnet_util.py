@@ -134,7 +134,9 @@ def conv_block(
 class MSDilationBlock(nn.Module):
     """Multi-scale dilation block."""
 
-    def __init__(self, in_channels, kernel_size=3, dilation=(1, 1, 1, 1), bias=True) -> None:
+    def __init__(
+        self, in_channels, kernel_size=3, dilation=(1, 1, 1, 1), bias=True
+    ) -> None:
         super().__init__()
 
         self.conv_blocks = nn.ModuleList()

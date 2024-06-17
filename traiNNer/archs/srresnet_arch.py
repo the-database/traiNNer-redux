@@ -22,7 +22,9 @@ class MSRResNet(nn.Module):
         upscale (int): Upsampling factor. Support x2, x3 and x4. Default: 4.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_block=16, upscale=4) -> None:
+    def __init__(
+        self, num_in_ch=3, num_out_ch=3, num_feat=64, num_block=16, upscale=4
+    ) -> None:
         super().__init__()
         self.upscale = upscale
 

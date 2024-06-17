@@ -9,7 +9,9 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def realcugan(pro=False, fast=False, **kwargs):
+def realcugan(
+    pro: bool = False, fast: bool = False, **kwargs
+) -> UpCunet2x | UpCunet2x_fast | UpCunet3x | UpCunet4x:
     scale = Config.get_scale()
 
     if fast and scale != 2:

@@ -74,7 +74,9 @@ class SPADEResnetBlock(nn.Module):
     The code was inspired from https://github.com/LMescheder/GAN_stability.
     """
 
-    def __init__(self, fin, fout, norm_g="spectralspadesyncbatch3x3", semantic_nc=3) -> None:
+    def __init__(
+        self, fin, fout, norm_g="spectralspadesyncbatch3x3", semantic_nc=3
+    ) -> None:
         super().__init__()
         # Attributes
         self.learned_shortcut = fin != fout
@@ -198,7 +200,9 @@ class SimplifiedLIP(nn.Module):
 class LIPEncoder(BaseNetwork):
     """Local Importance-based Pooling (Ziteng Gao et.al.,ICCV 2019)"""
 
-    def __init__(self, input_nc, ngf, sw, sh, n_2xdown, norm_layer=nn.InstanceNorm2d) -> None:
+    def __init__(
+        self, input_nc, ngf, sw, sh, n_2xdown, norm_layer=nn.InstanceNorm2d
+    ) -> None:
         super().__init__()
         self.sw = sw
         self.sh = sh

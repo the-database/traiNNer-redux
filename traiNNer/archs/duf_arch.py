@@ -18,7 +18,9 @@ class DenseBlocksTemporalReduce(nn.Module):
             Set to false if you want to train from scratch. Default: False.
     """
 
-    def __init__(self, num_feat=64, num_grow_ch=32, adapt_official_weights=False) -> None:
+    def __init__(
+        self, num_feat=64, num_grow_ch=32, adapt_official_weights=False
+    ) -> None:
         super().__init__()
         if adapt_official_weights:
             eps = 1e-3

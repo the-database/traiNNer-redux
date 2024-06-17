@@ -53,7 +53,9 @@ def init_tb_loggers(opt: Mapping[str, Any]) -> SummaryWriter | None:
     return tb_logger
 
 
-def create_train_val_dataloader(opt: Mapping[str, Any], logger: logging.Logger) -> tuple[DataLoader | None, Sampler | None, list[DataLoader], int, int]:
+def create_train_val_dataloader(
+    opt: Mapping[str, Any], logger: logging.Logger
+) -> tuple[DataLoader | None, Sampler | None, list[DataLoader], int, int]:
     # create train and val dataloaders
     train_loader, val_loaders = None, []
     for phase, dataset_opt in opt["datasets"].items():

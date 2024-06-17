@@ -1,7 +1,11 @@
 from collections import OrderedDict
+from collections.abc import Mapping
 from os import path as osp
+from typing import Any
 
 import torch
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from traiNNer.archs import build_network
 from traiNNer.losses import build_loss
@@ -14,7 +18,7 @@ from traiNNer.utils import get_root_logger, imwrite, tensor2img
 class SRModel(BaseModel):
     """Base SR model for single image super-resolution."""
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: Mapping[str, Any]) -> None:
         super().__init__(opt)
 
         # define network
@@ -66,7 +70,7 @@ class SRModel(BaseModel):
 
         self.ema_decay = train_opt.get("ema_decay", 0)
         if self.ema_decay > 0:
-            logger.info(f"Use Exponential Moving Average with decay: {self.ema_decay}")
+            logger.info("Use Exponential Moving Average with decay: %f", self.ema_decay)
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
@@ -210,7 +214,7 @@ class SRModel(BaseModel):
                 optim_params.append(v)
             else:
                 logger = get_root_logger()
-                logger.warning(f"Params {k} will not be optimized.")
+                logger.warning("Params %s will not be optimized.", k)
 
         optim_type = train_opt["optim_g"].pop("type")
         self.optimizer_g = self.get_optimizer(
@@ -226,7 +230,7 @@ class SRModel(BaseModel):
             )
             self.optimizers.append(self.optimizer_d)
 
-    def feed_data(self, data) -> None:
+    def feed_data(self, data: Mapping[str, Any]) -> None:
         self.lq = data["lq"].to(self.device)
         if "gt" in data:
             self.gt = data["gt"].to(self.device)
@@ -235,7 +239,7 @@ class SRModel(BaseModel):
             if self.is_train and self.use_moa:
                 self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
-    def optimize_parameters(self, current_iter) -> None:
+    def optimize_parameters(self, current_iter: int) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         # optimize net_g
@@ -344,7 +348,7 @@ class SRModel(BaseModel):
             self.optimizer_d.step()
 
         for key, value in loss_dict.items():
-            val = value if type(value) is float else value.detach()
+            val = value if isinstance(value, float) else value.detach()
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
         if self.ema_decay > 0:
@@ -361,11 +365,23 @@ class SRModel(BaseModel):
                 self.output = self.net_g(self.lq)
             self.net_g.train()
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
+    def dist_validation(
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
+    ) -> None:
         if self.opt["rank"] == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
+    def nondist_validation(
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
+    ) -> None:
         self.is_train = False
 
         dataset_name = dataloader.dataset.opt["name"]
@@ -387,7 +403,7 @@ class SRModel(BaseModel):
         if use_pbar:
             pbar = tqdm(total=len(dataloader), unit="image")
 
-        for idx, val_data in enumerate(dataloader):
+        for val_data in dataloader:
             img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
             self.feed_data(val_data)
             self.test()
@@ -448,7 +464,9 @@ class SRModel(BaseModel):
 
         self.is_train = True
 
-    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger) -> None:
+    def _log_validation_metric_values(
+        self, current_iter: int, dataset_name: str, tb_logger: SummaryWriter
+    ) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():
             log_str += f"\t # {metric}: {value:.4f}"
@@ -467,7 +485,7 @@ class SRModel(BaseModel):
                     f"metrics/{dataset_name}/{metric}", value, current_iter
                 )
 
-    def get_current_visuals(self):
+    def get_current_visuals(self) -> Mapping[str, Any]:
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()
         out_dict["result"] = self.output.detach().cpu()
@@ -475,7 +493,7 @@ class SRModel(BaseModel):
             out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
-    def save(self, epoch, current_iter) -> None:
+    def save(self, epoch: int, current_iter: int) -> None:
         if hasattr(self, "net_g_ema"):
             self.save_network(
                 [self.net_g, self.net_g_ema],
