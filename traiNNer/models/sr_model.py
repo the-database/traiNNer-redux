@@ -324,6 +324,9 @@ class SRModel(BaseModel):
             l_g_total += l_g_gan
             loss_dict["l_g_gan"] = l_g_gan
 
+        # add total generator loss for tensorboard tracking
+        loss_dict["l_g_total"] = l_g_total
+
         l_g_total.backward()
         self.optimizer_g.step()
 

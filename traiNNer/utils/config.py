@@ -10,7 +10,9 @@ class Config:
     _args = None
 
     @classmethod
-    def load_config(cls, root_path:str, is_train:bool=True) -> tuple[Mapping[str, Any], argparse.Namespace]:
+    def load_config(
+        cls, root_path: str, is_train: bool = True
+    ) -> tuple[Mapping[str, Any], argparse.Namespace]:
         if cls._config is None:
             cls._config, cls._args = parse_options(root_path, is_train)
 
