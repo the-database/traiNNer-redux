@@ -2,7 +2,9 @@ import datetime
 import logging
 import math
 import time
+from collections.abc import Mapping
 from os import path as osp
+from typing import Any
 
 import torch
 
@@ -29,7 +31,7 @@ from traiNNer.utils.config import Config
 from traiNNer.utils.options import copy_opt_file, dict2str
 
 
-def init_tb_loggers(opt):
+def init_tb_loggers(opt: Mapping[str, Any]):
     # initialize wandb logger before tensorboard logger to allow proper sync
     if (
         (opt["logger"].get("wandb") is not None)
@@ -48,7 +50,7 @@ def init_tb_loggers(opt):
     return tb_logger
 
 
-def create_train_val_dataloader(opt, logger):
+def create_train_val_dataloader(opt: Mapping[str, Any], logger: logging.Logger):
     # create train and val dataloaders
     train_loader, val_loaders = None, []
     for phase, dataset_opt in opt["datasets"].items():
@@ -75,13 +77,20 @@ def create_train_val_dataloader(opt, logger):
             total_iters = int(opt["train"]["total_iter"])
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
             logger.info(
-                'Training statistics:'
-                f'\n\tNumber of train images: {len(train_set)}'
-                f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
-                f'\n\tBatch size per gpu: {dataset_opt["batch_size_per_gpu"]}'
-                f'\n\tWorld size (gpu number): {opt["world_size"]}'
-                f'\n\tRequire iter number per epoch: {num_iter_per_epoch}'
-                f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}.'
+                "Training statistics:"
+                "\n\tNumber of train images: %d"
+                "\n\tDataset enlarge ratio: %d"
+                "\n\tBatch size per gpu: %d"
+                "\n\tWorld size (gpu number): %d"
+                "\n\tRequire iter number per epoch: %d"
+                "\n\tTotal epochs: %d; iters: %d.",
+                len(train_set),
+                dataset_enlarge_ratio,
+                dataset_opt["batch_size_per_gpu"],
+                opt["world_size"],
+                num_iter_per_epoch,
+                total_epochs,
+                total_iters,
             )
         elif phase.split("_")[0] == "val":
             val_set = build_dataset(dataset_opt)
@@ -94,7 +103,9 @@ def create_train_val_dataloader(opt, logger):
                 seed=opt["manual_seed"],
             )
             logger.info(
-                f'Number of val images/folders in {dataset_opt["name"]}: {len(val_set)}'
+                "Number of val images/folders in %s: %d",
+                dataset_opt["name"],
+                len(val_set),
             )
             val_loaders.append(val_loader)
         else:
@@ -103,7 +114,7 @@ def create_train_val_dataloader(opt, logger):
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
-def load_resume_state(opt):
+def load_resume_state(opt: Mapping[str, Any]):
     resume_state_path = None
     if opt["auto_resume"]:
         state_path = osp.join("experiments", opt["name"], "training_states")

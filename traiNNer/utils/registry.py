@@ -1,6 +1,9 @@
 # Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
 
+from collections.abc import Callable
+
+
 class Registry:
     """
     The registry that provides name -> object mapping, to support third-party
@@ -27,7 +30,7 @@ class Registry:
         BACKBONE_REGISTRY.register(MyBackbone)
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         """
         Args:
             name (str): the name of this registry
@@ -35,7 +38,7 @@ class Registry:
         self._name = name
         self._obj_map = {}
 
-    def _do_register(self, name, obj, suffix=None):
+    def _do_register(self, name: str, obj: Callable | type, suffix: str | None = None):
         if isinstance(suffix, str):
             name = name + "_" + suffix
 
@@ -45,7 +48,7 @@ class Registry:
         )
         self._obj_map[name] = obj
 
-    def register(self, obj=None, suffix=None):
+    def register(self, obj: Callable | type | None = None, suffix: str | None = None):
         """
         Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not.
@@ -53,7 +56,7 @@ class Registry:
         """
         if obj is None:
             # used as a decorator
-            def deco(func_or_class):
+            def deco(func_or_class: Callable | type):
                 name = func_or_class.__name__.lower()
                 self._do_register(name, func_or_class, suffix)
                 return func_or_class
@@ -64,7 +67,7 @@ class Registry:
         name = obj.__name__.lower()
         self._do_register(name, obj, suffix)
 
-    def get(self, name, suffix="traiNNer"):
+    def get(self, name: str, suffix: str = "traiNNer"):
         name = name.lower()
         ret = self._obj_map.get(name)
         if ret is None:
@@ -76,7 +79,7 @@ class Registry:
             )
         return ret
 
-    def __contains__(self, name):
+    def __contains__(self, name: str):
         return name.lower() in self._obj_map
 
     def __iter__(self):

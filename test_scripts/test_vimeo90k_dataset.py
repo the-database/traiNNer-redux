@@ -19,16 +19,18 @@ def main(mode="folder"):
     opt["type"] = "Vimeo90KDataset"
     if mode == "folder":
         opt["dataroot_gt"] = "datasets/vimeo90k/vimeo_septuplet/sequences"
-        opt["dataroot_lq"] = "datasets/vimeo90k/vimeo_septuplet_matlabLRx4/sequences"  # noqa E501
+        opt["dataroot_lq"] = (
+            "datasets/vimeo90k/vimeo_septuplet_matlabLRx4/sequences"  # E501
+        )
         opt["meta_info_file"] = (
-            "traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt"  # noqa E501
+            "traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt"  # E501
         )
         opt["io_backend"] = {"type": "disk"}
     elif mode == "lmdb":
         opt["dataroot_gt"] = "datasets/vimeo90k/vimeo90k_train_GT_only4th.lmdb"
         opt["dataroot_lq"] = "datasets/vimeo90k/vimeo90k_train_LR7frames.lmdb"
         opt["meta_info_file"] = (
-            "traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt"  # noqa E501
+            "traiNNer/data/meta_info/meta_info_Vimeo90K_train_GT.txt"  # E501
         )
         opt["io_backend"] = {"type": "lmdb"}
 
