@@ -23,6 +23,11 @@ extend-select = [
     # "ANN", # flake8-annotations
     "ANN001",
     "ANN002",
+    "ANN201",
+    "ANN202",
+    "ANN204",
+    "ANN205",
+    "ANN206",
     # "ASYNC", # flake8-async
     "PL",  # pylint
     "RUF", # ruff

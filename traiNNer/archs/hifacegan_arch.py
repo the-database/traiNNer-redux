@@ -25,7 +25,7 @@ class SPADEGenerator(BaseNetwork):
         norm_g="spectralspadesyncbatch3x3",
         is_train=True,
         init_train_phase=3,
-    ):  # progressive training disabled
+    ) -> None:  # progressive training disabled
         super().__init__()
         self.nf = num_feat
         self.input_nc = num_in_ch
@@ -169,7 +169,7 @@ class HiFaceGAN(SPADEGenerator):
         norm_g="spectralspadesyncbatch3x3",
         is_train=True,
         init_train_phase=3,
-    ):
+    ) -> None:
         super().__init__(
             num_in_ch,
             num_feat,
@@ -219,7 +219,7 @@ class HiFaceGANDiscriminator(BaseNetwork):
         num_feat=64,
         norm_d="spectralinstance",
         keep_features=True,
-    ):
+    ) -> None:
         super().__init__()
         self.num_d = num_d
 
@@ -253,7 +253,7 @@ class HiFaceGANDiscriminator(BaseNetwork):
 class NLayerDiscriminator(BaseNetwork):
     """Defines the PatchGAN discriminator with the specified arguments."""
 
-    def __init__(self, input_nc, n_layers_d, num_feat, norm_d, keep_features):
+    def __init__(self, input_nc, n_layers_d, num_feat, norm_d, keep_features) -> None:
         super().__init__()
         kw = 4
         padw = int(np.ceil((kw - 1.0) / 2))

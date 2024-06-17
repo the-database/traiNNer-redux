@@ -3,7 +3,7 @@ import torch
 from traiNNer.archs.duf_arch import DUF, DynamicUpsamplingFilter
 
 
-def test_duf():
+def test_duf() -> None:
     """Test arch: DUF."""
 
     # model init and forward
@@ -27,7 +27,7 @@ def test_duf():
         net = DUF(scale=2, num_layer=4, adapt_official_weights=True)
 
 
-def test_dynamicupsamplingfilter():
+def test_dynamicupsamplingfilter() -> None:
     """Test block: DynamicUpsamplingFilter"""
     net = DynamicUpsamplingFilter(filter_size=(3, 3)).cuda()
     img = torch.rand((2, 3, 12, 12), dtype=torch.float32).cuda()

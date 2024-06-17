@@ -11,7 +11,7 @@ from .arch_util import flow_warp
 class BasicModule(nn.Module):
     """Basic Module for SpyNet."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.basic_module = nn.Sequential(
@@ -48,7 +48,7 @@ class SpyNet(nn.Module):
         load_path (str): path for pretrained SpyNet. Default: None.
     """
 
-    def __init__(self, load_path=None):
+    def __init__(self, load_path=None) -> None:
         super().__init__()
         self.basic_module = nn.ModuleList([BasicModule() for _ in range(6)])
         if load_path:

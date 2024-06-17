@@ -86,7 +86,7 @@ class FusedLeakyReLUFunction(Function):
 
 
 class FusedLeakyReLU(nn.Module):
-    def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
+    def __init__(self, channel, negative_slope=0.2, scale=2**0.5) -> None:
         super().__init__()
 
         self.bias = nn.Parameter(torch.zeros(channel))

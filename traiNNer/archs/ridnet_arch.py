@@ -18,7 +18,7 @@ class MeanShift(nn.Conv2d):
             Default: True.
     """
 
-    def __init__(self, rgb_range, rgb_mean, rgb_std, sign=-1, requires_grad=True):
+    def __init__(self, rgb_range, rgb_mean, rgb_std, sign=-1, requires_grad=True) -> None:
         super().__init__(3, 3, kernel_size=1)
         std = torch.Tensor(rgb_std)
         self.weight.data = torch.eye(3).view(3, 3, 1, 1)
@@ -34,7 +34,7 @@ class EResidualBlockNoBN(nn.Module):
     There are three convolution layers in residual branch.
     """
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels) -> None:
         super().__init__()
 
         self.body = nn.Sequential(
@@ -62,7 +62,7 @@ class MergeRun(nn.Module):
     Ref git repo: https://github.com/saeed-anwar/RIDNet
     """
 
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1) -> None:
         super().__init__()
 
         self.dilation1 = nn.Sequential(
@@ -100,7 +100,7 @@ class ChannelAttention(nn.Module):
         squeeze_factor (int): Channel squeeze factor. Default:
     """
 
-    def __init__(self, mid_channels, squeeze_factor=16):
+    def __init__(self, mid_channels, squeeze_factor=16) -> None:
         super().__init__()
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
@@ -128,7 +128,7 @@ class EAM(nn.Module):
         ca: The feature/channel attention unit.
     """
 
-    def __init__(self, in_channels, mid_channels, out_channels):
+    def __init__(self, in_channels, mid_channels, out_channels) -> None:
         super().__init__()
 
         self.merge = MergeRun(in_channels, mid_channels)
@@ -172,7 +172,7 @@ class RIDNet(nn.Module):
         img_range=255.0,
         rgb_mean=(0.4488, 0.4371, 0.4040),
         rgb_std=(1.0, 1.0, 1.0),
-    ):
+    ) -> None:
         super().__init__()
 
         self.sub_mean = MeanShift(img_range, rgb_mean, rgb_std)

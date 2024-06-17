@@ -25,7 +25,7 @@ class SFTUpBlock(nn.Module):
         padding (int): Padding in convolutions. Default: 1.
     """
 
-    def __init__(self, in_channel, out_channel, kernel_size=3, padding=1):
+    def __init__(self, in_channel, out_channel, kernel_size=3, padding=1) -> None:
         super().__init__()
         self.conv1 = nn.Sequential(
             Blur(in_channel),
@@ -79,7 +79,7 @@ class DFDNet(nn.Module):
         dict_path (str): Path to the facial component dictionary.
     """
 
-    def __init__(self, num_feat, dict_path):
+    def __init__(self, num_feat, dict_path) -> None:
         super().__init__()
         self.parts = ["left_eye", "right_eye", "nose", "mouth"]
         # part_sizes: [80, 80, 50, 110]
@@ -154,7 +154,7 @@ class DFDNet(nn.Module):
         )
         return updated_feat
 
-    def put_dict_to_device(self, x):
+    def put_dict_to_device(self, x) -> None:
         if self.flag_dict_device is False:
             for k, v in self.dict.items():
                 for kk, vv in v.items():

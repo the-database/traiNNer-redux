@@ -1,4 +1,4 @@
-def main():
+def main() -> None:
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(15, 10))

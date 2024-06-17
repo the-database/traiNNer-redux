@@ -10,7 +10,7 @@ from traiNNer.data.data_util import read_img_seq
 from traiNNer.utils.img_util import tensor2img
 
 
-def inference(imgs, imgnames, model, save_path):
+def inference(imgs, imgnames, model, save_path) -> None:
     with torch.no_grad():
         outputs = model(imgs)
     # save imgs
@@ -21,7 +21,7 @@ def inference(imgs, imgnames, model, save_path):
         cv2.imwrite(os.path.join(save_path, f"{imgname}_BasicVSR.png"), output)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model_path",

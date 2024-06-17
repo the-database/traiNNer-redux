@@ -12,7 +12,7 @@ from torch.nn.utils import spectral_norm
 
 
 class SPADE(nn.Module):
-    def __init__(self, config_text, norm_nc, label_nc):
+    def __init__(self, config_text, norm_nc, label_nc) -> None:
         super().__init__()
 
         assert config_text.startswith("spade")
@@ -74,7 +74,7 @@ class SPADEResnetBlock(nn.Module):
     The code was inspired from https://github.com/LMescheder/GAN_stability.
     """
 
-    def __init__(self, fin, fout, norm_g="spectralspadesyncbatch3x3", semantic_nc=3):
+    def __init__(self, fin, fout, norm_g="spectralspadesyncbatch3x3", semantic_nc=3) -> None:
         super().__init__()
         # Attributes
         self.learned_shortcut = fin != fout
@@ -123,8 +123,8 @@ class SPADEResnetBlock(nn.Module):
 class BaseNetwork(nn.Module):
     """A basis for hifacegan archs with custom initialization"""
 
-    def init_weights(self, init_type="normal", gain=0.02):
-        def init_func(m):
+    def init_weights(self, init_type="normal", gain=0.02) -> None:
+        def init_func(m) -> None:
             classname = m.__class__.__name__
             if classname.find("BatchNorm2d") != -1:
                 if hasattr(m, "weight") and m.weight is not None:
@@ -160,7 +160,7 @@ class BaseNetwork(nn.Module):
             if hasattr(m, "init_weights"):
                 m.init_weights(init_type, gain)
 
-    def forward(self, x):
+    def forward(self, x) -> None:
         pass
 
 
@@ -179,7 +179,7 @@ class SoftGate(nn.Module):
 
 
 class SimplifiedLIP(nn.Module):
-    def __init__(self, channels):
+    def __init__(self, channels) -> None:
         super().__init__()
         self.logit = nn.Sequential(
             nn.Conv2d(channels, channels, 3, padding=1, bias=False),
@@ -187,7 +187,7 @@ class SimplifiedLIP(nn.Module):
             SoftGate(),
         )
 
-    def init_layer(self):
+    def init_layer(self) -> None:
         self.logit[0].weight.data.fill_(0.0)
 
     def forward(self, x):
@@ -198,7 +198,7 @@ class SimplifiedLIP(nn.Module):
 class LIPEncoder(BaseNetwork):
     """Local Importance-based Pooling (Ziteng Gao et.al.,ICCV 2019)"""
 
-    def __init__(self, input_nc, ngf, sw, sh, n_2xdown, norm_layer=nn.InstanceNorm2d):
+    def __init__(self, input_nc, ngf, sw, sh, n_2xdown, norm_layer=nn.InstanceNorm2d) -> None:
         super().__init__()
         self.sw = sw
         self.sh = sh

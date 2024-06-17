@@ -2,7 +2,7 @@ import glob
 import os
 
 
-def regroup_reds_dataset(train_path, val_path):
+def regroup_reds_dataset(train_path, val_path) -> None:
     """Regroup original REDS datasets.
 
     We merge train and validation data into one folder, and separate the

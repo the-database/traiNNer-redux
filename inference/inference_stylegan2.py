@@ -8,7 +8,7 @@ from traiNNer.archs.stylegan2_arch import StyleGAN2Generator
 from traiNNer.utils import set_random_seed
 
 
-def generate(args, g_ema, device, mean_latent, randomize_noise):
+def generate(args, g_ema, device, mean_latent, randomize_noise) -> None:
     with torch.no_grad():
         g_ema.eval()
         for i in range(args.pics):

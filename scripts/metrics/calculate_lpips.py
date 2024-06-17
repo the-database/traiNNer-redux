@@ -12,7 +12,7 @@ except ImportError:
     print("Please install lpips: pip install lpips")
 
 
-def main():
+def main() -> None:
     # Configurations
     # -------------------------------------------------------------------------
     folder_gt = "datasets/celeba/celeba_512_validation"

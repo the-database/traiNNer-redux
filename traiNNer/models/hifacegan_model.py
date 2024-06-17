@@ -19,7 +19,7 @@ class HiFaceGANModel(SRModel):
     Currently doesn't support EMA for inference.
     """
 
-    def init_training_settings(self):
+    def init_training_settings(self) -> None:
         train_opt = self.opt["train"]
         self.ema_decay = train_opt.get("ema_decay", 0)
         if self.ema_decay > 0:
@@ -64,7 +64,7 @@ class HiFaceGANModel(SRModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
-    def setup_optimizers(self):
+    def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         # optimizer g
         optim_type = train_opt["optim_g"].pop("type")
@@ -121,7 +121,7 @@ class HiFaceGANModel(SRModel):
 
         return fake, real
 
-    def optimize_parameters(self, current_iter):
+    def optimize_parameters(self, current_iter) -> None:
         # optimize net_g
         for p in self.net_d.parameters():
             p.requires_grad = False
@@ -202,7 +202,7 @@ class HiFaceGANModel(SRModel):
         if self.ema_decay > 0:
             print("HiFaceGAN does not support EMA now. pass")
 
-    def validation(self, dataloader, current_iter, tb_logger, save_img=False):
+    def validation(self, dataloader, current_iter, tb_logger, save_img=False) -> None:
         """
         Warning: HiFaceGAN requires train() mode even for validation
         For more info, see https://github.com/Lotayou/Face-Renovation/issues/31
@@ -226,7 +226,7 @@ class HiFaceGANModel(SRModel):
             )
             super().nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         """
         TODO: Validation using updated metric system
         The metrics are now evaluated after all images have been tested
@@ -302,7 +302,7 @@ class HiFaceGANModel(SRModel):
                 )
             self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
 
-    def save(self, epoch, current_iter):
+    def save(self, epoch, current_iter) -> None:
         if hasattr(self, "net_g_ema"):
             print("HiFaceGAN does not support EMA now. Fallback to normal mode.")
 

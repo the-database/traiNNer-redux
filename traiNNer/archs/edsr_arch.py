@@ -37,7 +37,7 @@ class EDSR(nn.Module):
         res_scale=1,
         img_range=255.0,
         rgb_mean=(0.4488, 0.4371, 0.4040),
-    ):
+    ) -> None:
         super().__init__()
 
         self.img_range = img_range

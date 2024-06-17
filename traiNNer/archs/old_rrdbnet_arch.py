@@ -27,7 +27,7 @@ class old_RRDBNet(nn.Module):
         gaussian_noise=False,
         plus=False,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
         n_upscale = int(math.log(upscale, 2))
         if upscale == 3:
@@ -135,7 +135,7 @@ class RRDB(nn.Module):
         spectral_norm=False,
         gaussian_noise=False,
         plus=False,
-    ):
+    ) -> None:
         super().__init__()
         # This is for backwards compatibility with existing models
         if nr == 3:
@@ -252,7 +252,7 @@ class ResidualDenseBlock_5C(nn.Module):
         spectral_norm=False,
         gaussian_noise=False,
         plus=False,
-    ):
+    ) -> None:
         super().__init__()
 
         ## +

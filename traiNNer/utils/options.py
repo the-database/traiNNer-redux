@@ -206,7 +206,7 @@ def parse_options(root_path, is_train=True):
 
 
 @master_only
-def copy_opt_file(opt_file, experiments_root):
+def copy_opt_file(opt_file, experiments_root) -> None:
     # copy the yml file to the experiment root
     import sys
     import time

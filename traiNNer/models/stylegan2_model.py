@@ -19,7 +19,7 @@ from .base_model import BaseModel
 class StyleGAN2Model(BaseModel):
     """StyleGAN2 model."""
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
 
         # define network net_g
@@ -47,7 +47,7 @@ class StyleGAN2Model(BaseModel):
         if self.is_train:
             self.init_training_settings()
 
-    def init_training_settings(self):
+    def init_training_settings(self) -> None:
         train_opt = self.opt["train"]
 
         # define network net_d
@@ -103,7 +103,7 @@ class StyleGAN2Model(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
-    def setup_optimizers(self):
+    def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         # optimizer g
         net_g_reg_ratio = self.net_g_reg_every / (self.net_g_reg_every + 1)
@@ -189,7 +189,7 @@ class StyleGAN2Model(BaseModel):
         )
         self.optimizers.append(self.optimizer_d)
 
-    def feed_data(self, data):
+    def feed_data(self, data) -> None:
         self.real_img = data["gt"].to(self.device)
 
     def make_noise(self, batch, num_noise):
@@ -207,7 +207,7 @@ class StyleGAN2Model(BaseModel):
         else:
             return [self.make_noise(batch, 1)]
 
-    def optimize_parameters(self, current_iter):
+    def optimize_parameters(self, current_iter) -> None:
         loss_dict = OrderedDict()
 
         # optimize net_d
@@ -288,16 +288,16 @@ class StyleGAN2Model(BaseModel):
         # EMA
         self.model_ema(decay=0.5 ** (32 / (10 * 1000)))
 
-    def test(self):
+    def test(self) -> None:
         with torch.no_grad():
             self.net_g_ema.eval()
             self.output, _ = self.net_g_ema([self.fixed_sample])
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def dist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         if self.opt["rank"] == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         assert dataloader is None, "Validation dataloader should be None."
         self.test()
         result = tensor2img(self.output, min_max=(-1, 1))
@@ -320,7 +320,7 @@ class StyleGAN2Model(BaseModel):
                 "samples", result, global_step=current_iter, dataformats="HWC"
             )
 
-    def save(self, epoch, current_iter):
+    def save(self, epoch, current_iter) -> None:
         self.save_network(
             [self.net_g, self.net_g_ema],
             "net_g",

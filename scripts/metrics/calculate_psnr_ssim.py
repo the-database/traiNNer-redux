@@ -7,7 +7,7 @@ from traiNNer.metrics import calculate_psnr, calculate_ssim
 from traiNNer.utils import bgr2ycbcr, scandir
 
 
-def main(args):
+def main(args) -> None:
     """Calculate PSNR and SSIM for images."""
     psnr_all = []
     ssim_all = []

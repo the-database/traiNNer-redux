@@ -9,7 +9,7 @@ from tqdm import tqdm
 from traiNNer.utils import scandir
 
 
-def main():
+def main() -> None:
     """A multi-thread tool to crop large images to sub-images for faster IO.
 
     It is used for DIV2K dataset.
@@ -76,7 +76,7 @@ def main():
     extract_subimages(opt)
 
 
-def extract_subimages(opt):
+def extract_subimages(opt) -> None:
     """Crop images to subimages.
 
     Args:

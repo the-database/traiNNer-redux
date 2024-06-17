@@ -8,7 +8,7 @@ import torch
 from traiNNer.archs.rrdbnet_arch import RRDBNet
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model_path",

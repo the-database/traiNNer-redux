@@ -30,7 +30,7 @@ class DeformConv2d(nn.Module):
         dilation=1,
         groups=1,
         bias=True,
-    ):
+    ) -> None:
         super().__init__()
 
         self.conv_offset = nn.Conv2d(
@@ -85,7 +85,7 @@ class ModulatedDeformConv(nn.Module):
         groups=1,
         deformable_groups=1,
         bias=True,
-    ):
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -109,7 +109,7 @@ class ModulatedDeformConv(nn.Module):
             self.register_parameter("bias", None)
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         n = self.in_channels
         for k in self.kernel_size:
             n *= k
@@ -160,7 +160,7 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
 
     _version = 2
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.conv_offset = nn.Conv2d(
@@ -174,7 +174,7 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
         )
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         super().init_weights()
         if hasattr(self, "conv_offset"):
             self.conv_offset.weight.data.zero_()
@@ -265,7 +265,7 @@ class DCNv2Pack(ModulatedDeformConvPack):
 
 
 class PartialConv2d(nn.Conv2d):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # whether the mask is multi-channel or not
         if "multi_channel" in kwargs:
             self.multi_channel = kwargs["multi_channel"]
@@ -398,7 +398,7 @@ def swish_func(x, beta=1.0, inplace=False):
 class Swish(nn.Module):
     __constants__ = ["beta", "slope", "inplace"]
 
-    def __init__(self, beta=1.0, slope=1.67653251702, inplace=False):
+    def __init__(self, beta=1.0, slope=1.67653251702, inplace=False) -> None:
         """
         Shape:
         - Input: (N, *) where * means, any number of additional
@@ -456,7 +456,7 @@ def act(act_type, inplace=True, neg_slope=0.2, n_prelu=1, beta=1.0):
 
 
 class Identity(nn.Module):
-    def __init__(self, *kwargs):
+    def __init__(self, *kwargs) -> None:
         super().__init__()
 
     def forward(self, x, *kwargs):
@@ -524,7 +524,7 @@ def get_valid_padding(kernel_size, dilation):
 
 class ConcatBlock(nn.Module):
     # Concat the output of a submodule to its input
-    def __init__(self, submodule):
+    def __init__(self, submodule) -> None:
         super().__init__()
         self.sub = submodule
 
@@ -532,13 +532,13 @@ class ConcatBlock(nn.Module):
         output = torch.cat((x, self.sub(x)), dim=1)
         return output
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Identity .. \n|" + self.sub.__repr__().replace("\n", "\n|")
 
 
 class ShortcutBlock(nn.Module):
     # Elementwise sum the output of a submodule to its input
-    def __init__(self, submodule):
+    def __init__(self, submodule) -> None:
         super().__init__()
         self.sub = submodule
 
@@ -546,7 +546,7 @@ class ShortcutBlock(nn.Module):
         output = x + self.sub(x)
         return output
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Identity + \n|" + self.sub.__repr__().replace("\n", "\n|")
 
 
@@ -670,7 +670,7 @@ def make_layer(basic_block, num_basic_block, **kwarg):
 
 
 class Mean(nn.Module):
-    def __init__(self, dim: list, keepdim=False):
+    def __init__(self, dim: list, keepdim=False) -> None:
         super().__init__()
         self.dim = dim
         self.keepdim = keepdim
@@ -687,7 +687,7 @@ class Mean(nn.Module):
 @torch.no_grad()
 def default_init_weights(
     module_list, init_type="kaiming", scale=1, bias_fill=0, **kwargs
-):
+) -> None:
     """Initialize network weights.
     Args:
         module_list (list[nn.Module] | nn.Module): Modules to be initialized.
@@ -747,7 +747,7 @@ class Upsample(nn.Module):
 
     def __init__(
         self, size=None, scale_factor=None, mode="nearest", align_corners=None
-    ):
+    ) -> None:
         super().__init__()
         if isinstance(scale_factor, tuple):
             self.scale_factor = tuple(float(factor) for factor in scale_factor)
@@ -863,7 +863,7 @@ class DepthToSpace(nn.Module):
         form: select tensorflow ('tf') or pytorch ('pt') style shuffle.
     """
 
-    def __init__(self, block_size: int = 2, form: str = "pt"):
+    def __init__(self, block_size: int = 2, form: str = "pt") -> None:
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -873,7 +873,7 @@ class DepthToSpace(nn.Module):
             return depth_to_space_tf(x, self.bs)
         return depth_to_space(x, self.bs)
 
-    def extra_repr(self):
+    def extra_repr(self) -> str:
         return f"block_size={self.bs}"
 
 
@@ -947,7 +947,7 @@ class SpaceToDepth(nn.Module):
         form: select tensorflow ('tf') or pytorch ('pt') style unshuffle.
     """
 
-    def __init__(self, block_size: int = 2, form: str = "pt"):
+    def __init__(self, block_size: int = 2, form: str = "pt") -> None:
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -957,7 +957,7 @@ class SpaceToDepth(nn.Module):
             return space_to_depth_tf(x, self.bs)
         return space_to_depth(x, self.bs)
 
-    def extra_repr(self):
+    def extra_repr(self) -> str:
         return f"block_size={self.bs}"
 
 
@@ -1038,7 +1038,7 @@ def conv_layer(in_channels, out_channels, kernel_size, stride=1, dilation=1, gro
 
 
 class GaussianNoise(nn.Module):
-    def __init__(self, sigma=0.1, is_relative_detach=False):
+    def __init__(self, sigma=0.1, is_relative_detach=False) -> None:
         super().__init__()
         self.sigma = sigma
         self.is_relative_detach = is_relative_detach
@@ -1061,7 +1061,7 @@ def conv1x1(in_planes, out_planes, stride=1):
 # TODO: Not used:
 # https://github.com/github-pengge/PyTorch-progressive_growing_of_gans/blob/master/models/base_model.py
 class minibatch_std_concat_layer(nn.Module):
-    def __init__(self, averaging="all"):
+    def __init__(self, averaging="all") -> None:
         super().__init__()
         self.averaging = averaging.lower()
         if "group" in self.averaging:
@@ -1136,7 +1136,7 @@ class SelfAttentionBlock(nn.Module):
         poolsize=4,
         spectral_norm=False,
         ret_attention=False,
-    ):  # in_dim = in_feature_maps
+    ) -> None:  # in_dim = in_feature_maps
         super().__init__()
 
         self.in_dim = in_dim

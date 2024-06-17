@@ -53,7 +53,7 @@ class UpFirDnUpsample(nn.Module):
         factor (int): Upsampling scale factor. Default: 2.
     """
 
-    def __init__(self, resample_kernel, factor=2):
+    def __init__(self, resample_kernel, factor=2) -> None:
         super().__init__()
         self.kernel = make_resample_kernel(resample_kernel) * (factor**2)
         self.factor = factor
@@ -65,7 +65,7 @@ class UpFirDnUpsample(nn.Module):
         out = upfirdn2d(x, self.kernel.type_as(x), up=self.factor, down=1, pad=self.pad)
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(factor={self.factor})"
 
 
@@ -78,7 +78,7 @@ class UpFirDnDownsample(nn.Module):
         factor (int): Downsampling scale factor. Default: 2.
     """
 
-    def __init__(self, resample_kernel, factor=2):
+    def __init__(self, resample_kernel, factor=2) -> None:
         super().__init__()
         self.kernel = make_resample_kernel(resample_kernel)
         self.factor = factor
@@ -90,7 +90,7 @@ class UpFirDnDownsample(nn.Module):
         out = upfirdn2d(x, self.kernel.type_as(x), up=1, down=self.factor, pad=self.pad)
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(factor={self.factor})"
 
 
@@ -107,7 +107,7 @@ class UpFirDnSmooth(nn.Module):
 
     def __init__(
         self, resample_kernel, upsample_factor=1, downsample_factor=1, kernel_size=1
-    ):
+    ) -> None:
         super().__init__()
         self.upsample_factor = upsample_factor
         self.downsample_factor = downsample_factor
@@ -128,7 +128,7 @@ class UpFirDnSmooth(nn.Module):
         out = upfirdn2d(x, self.kernel.type_as(x), up=1, down=1, pad=self.pad)
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(upsample_factor={self.upsample_factor}"
             f", downsample_factor={self.downsample_factor})"
@@ -157,7 +157,7 @@ class EqualLinear(nn.Module):
         bias_init_val=0,
         lr_mul=1,
         activation=None,
-    ):
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -188,7 +188,7 @@ class EqualLinear(nn.Module):
             out = F.linear(x, self.weight * self.scale, bias=bias)
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(in_channels={self.in_channels}, "
             f"out_channels={self.out_channels}, bias={self.bias is not None})"
@@ -225,7 +225,7 @@ class ModulatedConv2d(nn.Module):
         sample_mode=None,
         resample_kernel=(1, 3, 3, 1),
         eps=1e-8,
-    ):
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -320,7 +320,7 @@ class ModulatedConv2d(nn.Module):
 
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(in_channels={self.in_channels}, "
             f"out_channels={self.out_channels}, "
@@ -353,7 +353,7 @@ class StyleConv(nn.Module):
         demodulate=True,
         sample_mode=None,
         resample_kernel=(1, 3, 3, 1),
-    ):
+    ) -> None:
         super().__init__()
         self.modulated_conv = ModulatedConv2d(
             in_channels,
@@ -393,7 +393,7 @@ class ToRGB(nn.Module):
 
     def __init__(
         self, in_channels, num_style_feat, upsample=True, resample_kernel=(1, 3, 3, 1)
-    ):
+    ) -> None:
         super().__init__()
         if upsample:
             self.upsample = UpFirDnUpsample(resample_kernel, factor=2)
@@ -437,7 +437,7 @@ class ConstantInput(nn.Module):
         size (int): Spatial size of constant input.
     """
 
-    def __init__(self, num_channel, size):
+    def __init__(self, num_channel, size) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.randn(1, num_channel, size, size))
 
@@ -472,7 +472,7 @@ class StyleGAN2Generator(nn.Module):
         resample_kernel=(1, 3, 3, 1),
         lr_mlp=0.01,
         narrow=1,
-    ):
+    ) -> None:
         super().__init__()
         # Style MLP layers
         self.num_style_feat = num_style_feat
@@ -688,7 +688,7 @@ class ScaledLeakyReLU(nn.Module):
         negative_slope (float): Negative slope. Default: 0.2.
     """
 
-    def __init__(self, negative_slope=0.2):
+    def __init__(self, negative_slope=0.2) -> None:
         super().__init__()
         self.negative_slope = negative_slope
 
@@ -721,7 +721,7 @@ class EqualConv2d(nn.Module):
         padding=0,
         bias=True,
         bias_init_val=0,
-    ):
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -749,7 +749,7 @@ class EqualConv2d(nn.Module):
 
         return out
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(in_channels={self.in_channels}, "
             f"out_channels={self.out_channels}, "
@@ -785,7 +785,7 @@ class ConvLayer(nn.Sequential):
         resample_kernel=(1, 3, 3, 1),
         bias=True,
         activate=True,
-    ):
+    ) -> None:
         layers = []
         # downsample
         if downsample:
@@ -835,7 +835,7 @@ class ResBlock(nn.Module):
             Default: (1, 3, 3, 1).
     """
 
-    def __init__(self, in_channels, out_channels, resample_kernel=(1, 3, 3, 1)):
+    def __init__(self, in_channels, out_channels, resample_kernel=(1, 3, 3, 1)) -> None:
         super().__init__()
 
         self.conv1 = ConvLayer(in_channels, in_channels, 3, bias=True, activate=True)
@@ -888,7 +888,7 @@ class StyleGAN2Discriminator(nn.Module):
         resample_kernel=(1, 3, 3, 1),
         stddev_group=4,
         narrow=1,
-    ):
+    ) -> None:
         super().__init__()
 
         channels = {

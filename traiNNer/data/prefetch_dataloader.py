@@ -15,14 +15,14 @@ class PrefetchGenerator(threading.Thread):
         num_prefetch_queue (int): Number of prefetch queue.
     """
 
-    def __init__(self, generator, num_prefetch_queue):
+    def __init__(self, generator, num_prefetch_queue) -> None:
         threading.Thread.__init__(self)
         self.queue = Queue.Queue(num_prefetch_queue)
         self.generator = generator
         self.daemon = True
         self.start()
 
-    def run(self):
+    def run(self) -> None:
         for item in self.generator:
             self.queue.put(item)
         self.queue.put(None)
@@ -51,7 +51,7 @@ class PrefetchDataLoader(DataLoader):
         kwargs (dict): Other arguments for dataloader.
     """
 
-    def __init__(self, num_prefetch_queue, **kwargs):
+    def __init__(self, num_prefetch_queue, **kwargs) -> None:
         self.num_prefetch_queue = num_prefetch_queue
         super().__init__(**kwargs)
 
@@ -66,7 +66,7 @@ class CPUPrefetcher:
         loader: Dataloader.
     """
 
-    def __init__(self, loader):
+    def __init__(self, loader) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
 
@@ -76,7 +76,7 @@ class CPUPrefetcher:
         except StopIteration:
             return None
 
-    def reset(self):
+    def reset(self) -> None:
         self.loader = iter(self.ori_loader)
 
 
@@ -92,7 +92,7 @@ class CUDAPrefetcher:
         opt (dict): Options.
     """
 
-    def __init__(self, loader, opt):
+    def __init__(self, loader, opt) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
         self.opt = opt
@@ -100,7 +100,7 @@ class CUDAPrefetcher:
         self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
         self.preload()
 
-    def preload(self):
+    def preload(self) -> None:
         try:
             self.batch = next(self.loader)  # self.batch is a dict
         except StopIteration:
@@ -120,6 +120,6 @@ class CUDAPrefetcher:
         self.preload()
         return batch
 
-    def reset(self):
+    def reset(self) -> None:
         self.loader = iter(self.ori_loader)
         self.preload()

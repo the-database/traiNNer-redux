@@ -14,7 +14,7 @@ from traiNNer.utils import get_root_logger, imwrite, tensor2img
 class SRModel(BaseModel):
     """Base SR model for single image super-resolution."""
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
 
         # define network
@@ -55,7 +55,7 @@ class SRModel(BaseModel):
         if self.is_train:
             self.init_training_settings()
 
-    def init_training_settings(self):
+    def init_training_settings(self) -> None:
         self.net_g.train()
         if self.net_d is not None:
             self.net_d.train()
@@ -202,7 +202,7 @@ class SRModel(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
-    def setup_optimizers(self):
+    def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         optim_params = []
         for k, v in self.net_g.named_parameters():
@@ -226,7 +226,7 @@ class SRModel(BaseModel):
             )
             self.optimizers.append(self.optimizer_d)
 
-    def feed_data(self, data):
+    def feed_data(self, data) -> None:
         self.lq = data["lq"].to(self.device)
         if "gt" in data:
             self.gt = data["gt"].to(self.device)
@@ -235,7 +235,7 @@ class SRModel(BaseModel):
             if self.is_train and self.use_moa:
                 self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
-    def optimize_parameters(self, current_iter):
+    def optimize_parameters(self, current_iter) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         # optimize net_g
@@ -350,7 +350,7 @@ class SRModel(BaseModel):
         if self.ema_decay > 0:
             self.model_ema(decay=self.ema_decay)
 
-    def test(self):
+    def test(self) -> None:
         if hasattr(self, "net_g_ema"):
             self.net_g_ema.eval()
             with torch.no_grad():
@@ -361,11 +361,11 @@ class SRModel(BaseModel):
                 self.output = self.net_g(self.lq)
             self.net_g.train()
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def dist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         if self.opt["rank"] == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         self.is_train = False
 
         dataset_name = dataloader.dataset.opt["name"]
@@ -448,7 +448,7 @@ class SRModel(BaseModel):
 
         self.is_train = True
 
-    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger):
+    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():
             log_str += f"\t # {metric}: {value:.4f}"
@@ -475,7 +475,7 @@ class SRModel(BaseModel):
             out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
-    def save(self, epoch, current_iter):
+    def save(self, epoch, current_iter) -> None:
         if hasattr(self, "net_g_ema"):
             self.save_network(
                 [self.net_g, self.net_g_ema],

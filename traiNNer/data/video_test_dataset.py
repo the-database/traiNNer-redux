@@ -44,7 +44,7 @@ class VideoTestDataset(data.Dataset):
         padding (str): Padding mode.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         self.cache_data = opt["cache_data"]
@@ -141,7 +141,7 @@ class VideoTestDataset(data.Dataset):
             "lq_path": lq_path,  # center frame
         }
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data_info["gt_path"])
 
 
@@ -165,7 +165,7 @@ class VideoTestVimeo90KDataset(data.Dataset):
         padding (str): Padding mode.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         self.cache_data = opt["cache_data"]
@@ -223,7 +223,7 @@ class VideoTestVimeo90KDataset(data.Dataset):
             "lq_path": lq_path[self.opt["num_frame"] // 2],  # center frame
         }
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data_info["gt_path"])
 
 
@@ -304,7 +304,7 @@ class VideoRecurrentTestDataset(VideoTestDataset):
 
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
         # Find unique folder strings
         self.folders = sorted(set(self.data_info["folder"]))
@@ -324,5 +324,5 @@ class VideoRecurrentTestDataset(VideoTestDataset):
             "folder": folder,
         }
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.folders)

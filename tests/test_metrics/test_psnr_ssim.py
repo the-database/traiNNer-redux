@@ -3,7 +3,7 @@ import pytest
 from traiNNer.metrics.psnr_ssim import calculate_psnr, calculate_ssim
 
 
-def test_calculate_psnr():
+def test_calculate_psnr() -> None:
     """Test metric: calculate_psnr"""
 
     # mismatched image shapes
@@ -29,7 +29,7 @@ def test_calculate_psnr():
     assert out == float("inf")
 
 
-def test_calculate_ssim():
+def test_calculate_ssim() -> None:
     """Test metric: calculate_ssim"""
 
     # mismatched image shapes

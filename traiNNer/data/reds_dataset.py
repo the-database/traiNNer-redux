@@ -47,7 +47,7 @@ class REDSDataset(data.Dataset):
         scale (bool): Scale, which will be added automatically.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         self.gt_root, self.lq_root = Path(opt["dataroot_gt"]), Path(opt["dataroot_lq"])
@@ -230,7 +230,7 @@ class REDSDataset(data.Dataset):
         else:
             return {"lq": img_lqs, "gt": img_gt, "key": key}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.keys)
 
 
@@ -270,7 +270,7 @@ class REDSRecurrentDataset(data.Dataset):
         scale (bool): Scale, which will be added automatically.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         self.gt_root, self.lq_root = Path(opt["dataroot_gt"]), Path(opt["dataroot_lq"])
@@ -389,5 +389,5 @@ class REDSRecurrentDataset(data.Dataset):
         # key: str
         return {"lq": img_lqs, "gt": img_gts, "key": key}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.keys)

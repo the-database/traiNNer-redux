@@ -35,7 +35,7 @@ class DegradationSimulator:
 
     def __init__(
         self,
-    ):
+    ) -> None:
         import imgaug.augmenters as ia
 
         self.default_deg_templates = {
@@ -79,7 +79,7 @@ class DegradationSimulator:
             rand_deg_list, random_order=True
         )
 
-    def create_training_dataset(self, deg, gt_folder, lq_folder=None):
+    def create_training_dataset(self, deg, gt_folder, lq_folder=None) -> None:
         from imgaug.augmenters.meta import Augmenter  # baseclass
 
         """

@@ -47,7 +47,7 @@ def flowread(flow_path, quantize=False, concat_axis=0, *args, **kwargs):
     return flow.astype(np.float32)
 
 
-def flowwrite(flow, filename, quantize=False, concat_axis=0, *args, **kwargs):
+def flowwrite(flow, filename, quantize=False, concat_axis=0, *args, **kwargs) -> None:
     """Write optical flow to file.
 
     If the flow is not quantized, it will be saved as a .flo file losslessly,

@@ -9,7 +9,7 @@ from tqdm import tqdm
 from .misc import sizeof_fmt
 
 
-def download_file_from_google_drive(file_id, save_path):
+def download_file_from_google_drive(file_id, save_path) -> None:
     """Download files from google drive.
 
     Reference: https://stackoverflow.com/questions/25010369/wget-curl-large-file-from-google-drive
@@ -48,7 +48,7 @@ def get_confirm_token(response):
     return None
 
 
-def save_response_content(response, destination, file_size=None, chunk_size=32768):
+def save_response_content(response, destination, file_size=None, chunk_size=32768) -> None:
     if file_size is not None:
         pbar = tqdm(total=math.ceil(file_size / chunk_size), unit="chunk")
 

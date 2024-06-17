@@ -36,7 +36,7 @@ class L1Loss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean"):
+    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -68,7 +68,7 @@ class MSELoss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean"):
+    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -105,7 +105,7 @@ class CharbonnierLoss(nn.Module):
         eps (float): A value used to control the curvature near zero. Default: 1e-12.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean", eps=1e-12):
+    def __init__(self, loss_weight=1.0, reduction="mean", eps=1e-12) -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -136,7 +136,7 @@ class WeightedTVLoss(L1Loss):
         loss_weight (float): Loss weight. Default: 1.0.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean"):
+    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
         if reduction not in ["mean", "sum"]:
             raise ValueError(
                 f"Unsupported reduction mode: {reduction}. Supported ones are: mean | sum"
@@ -163,7 +163,7 @@ class WeightedTVLoss(L1Loss):
 class ColorLoss(nn.Module):
     """Color loss"""
 
-    def __init__(self, criterion="l1", loss_weight=1.0, scale=4):
+    def __init__(self, criterion="l1", loss_weight=1.0, scale=4) -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
@@ -194,7 +194,7 @@ class ColorLoss(nn.Module):
 class AverageLoss(nn.Module):
     """Averaging Downscale loss"""
 
-    def __init__(self, criterion="l1", loss_weight=1.0, scale=4):
+    def __init__(self, criterion="l1", loss_weight=1.0, scale=4) -> None:
         super().__init__()
         self.ds_f = torch.nn.AvgPool2d(kernel_size=int(scale))
         self.loss_weight = loss_weight
@@ -214,7 +214,7 @@ class AverageLoss(nn.Module):
 class BicubicLoss(nn.Module):
     """Bicubic Downscale loss"""
 
-    def __init__(self, criterion="l1", loss_weight=1.0, scale=4):
+    def __init__(self, criterion="l1", loss_weight=1.0, scale=4) -> None:
         super().__init__()
         self.scale = scale
         self.ds_f = lambda x: torch.nn.Sequential(

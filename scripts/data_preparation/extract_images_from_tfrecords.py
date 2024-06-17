@@ -9,7 +9,7 @@ from traiNNer.utils.lmdb_util import LmdbMaker
 
 def convert_celeba_tfrecords(
     tf_file, log_resolution, save_root, save_type="img", compress_level=1
-):
+) -> None:
     """Convert CelebA tfrecords to images or lmdb files.
 
     Args:
@@ -72,7 +72,7 @@ def convert_celeba_tfrecords(
 
 def convert_ffhq_tfrecords(
     tf_file, log_resolution, save_root, save_type="img", compress_level=1
-):
+) -> None:
     """Convert FFHQ tfrecords to images or lmdb files.
 
     Args:
@@ -126,7 +126,7 @@ def convert_ffhq_tfrecords(
 
 def make_ffhq_lmdb_from_imgs(
     folder_path, log_resolution, save_root, save_type="lmdb", compress_level=1
-):
+) -> None:
     """Make FFHQ lmdb from images.
 
     Args:

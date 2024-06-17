@@ -17,7 +17,7 @@ def make_lmdb_from_imgs(
     multiprocessing_read=False,
     n_thread=40,
     map_size=None,
-):
+) -> None:
     """Make lmdb from images.
 
     Contents of lmdb. The file structure is:
@@ -83,7 +83,7 @@ def make_lmdb_from_imgs(
         print(f"Read images with multiprocessing, #thread: {n_thread} ...")
         pbar = tqdm(total=len(img_path_list), unit="image")
 
-        def callback(arg):
+        def callback(arg) -> None:
             """get the image data and update pbar."""
             key, dataset[key], shapes[key] = arg
             pbar.update(1)
@@ -182,7 +182,7 @@ class LmdbMaker:
         compress_level (int): Compress level when encoding images. Default: 1.
     """
 
-    def __init__(self, lmdb_path, map_size=1024**4, batch=5000, compress_level=1):
+    def __init__(self, lmdb_path, map_size=1024**4, batch=5000, compress_level=1) -> None:
         if not lmdb_path.endswith(".lmdb"):
             raise ValueError("lmdb_path must end with '.lmdb'.")
         if osp.exists(lmdb_path):
@@ -197,7 +197,7 @@ class LmdbMaker:
         self.txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w")
         self.counter = 0
 
-    def put(self, img_byte, key, img_shape):
+    def put(self, img_byte, key, img_shape) -> None:
         self.counter += 1
         key_byte = key.encode("ascii")
         self.txn.put(key_byte, img_byte)
@@ -208,7 +208,7 @@ class LmdbMaker:
             self.txn.commit()
             self.txn = self.env.begin(write=True)
 
-    def close(self):
+    def close(self) -> None:
         self.txn.commit()
         self.env.close()
         self.txt_file.close()

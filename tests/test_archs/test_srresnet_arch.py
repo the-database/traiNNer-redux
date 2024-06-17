@@ -2,7 +2,7 @@ import torch
 from traiNNer.archs.srresnet_arch import MSRResNet
 
 
-def test_msrresnet():
+def test_msrresnet() -> None:
     """Test arch: MSRResNet."""
 
     # model init and forward

@@ -11,7 +11,7 @@ except ImportError:
 mpl.use("Agg")
 
 
-def main():
+def main() -> None:
     optim_params = [
         {"params": [torch.zeros(3, 64, 3, 3)], "lr": 4e-4},
         {"params": [torch.zeros(3, 64, 3, 3)], "lr": 2e-4},

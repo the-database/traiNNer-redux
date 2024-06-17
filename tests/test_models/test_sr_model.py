@@ -8,7 +8,7 @@ from traiNNer.losses.basic_loss import L1Loss, PerceptualLoss
 from traiNNer.models.sr_model import SRModel
 
 
-def test_srmodel():
+def test_srmodel() -> None:
     """Test model: SRModel"""
 
     opt_str = r"""

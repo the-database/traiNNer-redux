@@ -49,7 +49,7 @@ class BasicVSRPlusPlus(nn.Module):
         is_low_res_input=True,
         spynet_path=None,
         cpu_cache_length=100,
-    ):
+    ) -> None:
         super().__init__()
         self.mid_channels = mid_channels
         self.is_low_res_input = is_low_res_input
@@ -118,7 +118,7 @@ class BasicVSRPlusPlus(nn.Module):
                 "be used with CUDA enabled. Alignment is skipped now."
             )
 
-    def check_if_mirror_extended(self, lqs):
+    def check_if_mirror_extended(self, lqs) -> None:
         """Check whether the input is a mirror-extended sequence.
 
         If mirror-extended, the i-th (i=0, ..., t-1) frame is equal to the (t-1-i)-th frame.
@@ -382,7 +382,7 @@ class SecondOrderDeformableAlignment(ModulatedDeformConvPack):
             residue (Eq. 6 in paper). Default: 10.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.max_residue_magnitude = kwargs.pop("max_residue_magnitude", 10)
 
         super().__init__(*args, **kwargs)
@@ -399,8 +399,8 @@ class SecondOrderDeformableAlignment(ModulatedDeformConvPack):
 
         self.init_offset()
 
-    def init_offset(self):
-        def _constant_init(module, val, bias=0):
+    def init_offset(self) -> None:
+        def _constant_init(module, val, bias=0) -> None:
             if hasattr(module, "weight") and module.weight is not None:
                 nn.init.constant_(module.weight, val)
             if hasattr(module, "bias") and module.bias is not None:

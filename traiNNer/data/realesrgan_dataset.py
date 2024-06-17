@@ -34,7 +34,7 @@ class RealESRGANDataset(data.Dataset):
             Please see more options in the codes.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         self.file_client = None
@@ -214,5 +214,5 @@ class RealESRGANDataset(data.Dataset):
         }
         return return_d
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.paths)

@@ -2,7 +2,7 @@ import torch
 from traiNNer.archs.basicvsr_arch import BasicVSR, ConvResidualBlocks, IconVSR
 
 
-def test_basicvsr():
+def test_basicvsr() -> None:
     """Test arch: BasicVSR."""
 
     # model init and forward
@@ -12,7 +12,7 @@ def test_basicvsr():
     assert output.shape == (1, 2, 3, 256, 256)
 
 
-def test_convresidualblocks():
+def test_convresidualblocks() -> None:
     """Test block: ConvResidualBlocks."""
 
     # model init and forward
@@ -22,7 +22,7 @@ def test_convresidualblocks():
     assert output.shape == (1, 8, 16, 16)
 
 
-def test_iconvsr():
+def test_iconvsr() -> None:
     """Test arch: IconVSR."""
 
     # model init and forward

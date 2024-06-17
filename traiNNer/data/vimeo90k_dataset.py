@@ -57,7 +57,7 @@ class Vimeo90KDataset(data.Dataset):
         scale (bool): Scale, which will be added automatically.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         self.gt_root, self.lq_root = Path(opt["dataroot_gt"]), Path(opt["dataroot_lq"])
@@ -136,13 +136,13 @@ class Vimeo90KDataset(data.Dataset):
         # key: str
         return {"lq": img_lqs, "gt": img_gt, "key": key}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.keys)
 
 
 @DATASET_REGISTRY.register()
 class Vimeo90KRecurrentDataset(Vimeo90KDataset):
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
 
         self.flip_sequence = opt["flip_sequence"]
@@ -205,5 +205,5 @@ class Vimeo90KRecurrentDataset(Vimeo90KDataset):
         # key: str
         return {"lq": img_lqs, "gt": img_gts, "key": key}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.keys)

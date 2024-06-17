@@ -60,7 +60,7 @@ def quality_to_factor(quality):
 class RGB2YCbCrJpeg(nn.Module):
     """Converts RGB image to YCbCr"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         matrix = np.array(
             [
@@ -89,7 +89,7 @@ class RGB2YCbCrJpeg(nn.Module):
 class ChromaSubsampling(nn.Module):
     """Chroma subsampling on CbCr channels"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(self, image):
@@ -123,7 +123,7 @@ class ChromaSubsampling(nn.Module):
 class BlockSplitting(nn.Module):
     """Splitting image into patches"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.k = 8
 
@@ -145,7 +145,7 @@ class BlockSplitting(nn.Module):
 class DCT8x8(nn.Module):
     """Discrete Cosine Transformation"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         tensor = np.zeros((8, 8, 8, 8), dtype=np.float32)
         for x, y, u, v in itertools.product(range(8), repeat=4):
@@ -179,7 +179,7 @@ class YQuantize(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding):
+    def __init__(self, rounding) -> None:
         super().__init__()
         self.rounding = rounding
         self.y_table = y_table
@@ -209,7 +209,7 @@ class CQuantize(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding):
+    def __init__(self, rounding) -> None:
         super().__init__()
         self.rounding = rounding
         self.c_table = c_table
@@ -239,7 +239,7 @@ class CompressJpeg(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding=torch.round):
+    def __init__(self, rounding=torch.round) -> None:
         super().__init__()
         self.l1 = nn.Sequential(RGB2YCbCrJpeg(), ChromaSubsampling())
         self.l2 = nn.Sequential(BlockSplitting(), DCT8x8())
@@ -274,7 +274,7 @@ class CompressJpeg(nn.Module):
 class YDequantize(nn.Module):
     """Dequantize Y channel"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.y_table = y_table
 
@@ -298,7 +298,7 @@ class YDequantize(nn.Module):
 class CDequantize(nn.Module):
     """Dequantize CbCr channel"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.c_table = c_table
 
@@ -322,7 +322,7 @@ class CDequantize(nn.Module):
 class iDCT8x8(nn.Module):
     """Inverse discrete Cosine Transformation"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         alpha = np.array([1.0 / np.sqrt(2)] + [1] * 7)
         self.alpha = nn.Parameter(torch.from_numpy(np.outer(alpha, alpha)).float())
@@ -350,7 +350,7 @@ class iDCT8x8(nn.Module):
 class BlockMerging(nn.Module):
     """Merge patches into image"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(self, patches, height, width):
@@ -373,7 +373,7 @@ class BlockMerging(nn.Module):
 class ChromaUpsampling(nn.Module):
     """Upsample chroma layers"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(self, y, cb, cr):
@@ -402,7 +402,7 @@ class ChromaUpsampling(nn.Module):
 class YCbCr2RGBJpeg(nn.Module):
     """Converts YCbCr image to RGB JPEG"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         matrix = np.array(
@@ -431,7 +431,7 @@ class DeCompressJpeg(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding=torch.round):
+    def __init__(self, rounding=torch.round) -> None:
         super().__init__()
         self.c_dequantize = CDequantize()
         self.y_dequantize = YDequantize()
@@ -482,7 +482,7 @@ class DiffJPEG(nn.Module):
         differentiable(bool): If True, uses custom differentiable rounding function, if False, uses standard torch.round
     """
 
-    def __init__(self, differentiable=True):
+    def __init__(self, differentiable=True) -> None:
         super().__init__()
         if differentiable:
             rounding = diff_round

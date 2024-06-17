@@ -1,7 +1,7 @@
 import torch
 
 
-def convert_edvr():
+def convert_edvr() -> None:
     ori_net = torch.load("experiments/pretrained_models/EDVR_REDS_SR_M.pth")
     crt_net = torch.load("xxx/net_g_8.pth")
     save_path = "./edvr_medium_x4_reds_sr_official.pth"
@@ -113,7 +113,7 @@ def convert_edvr():
     torch.save(crt_net, save_path)
 
 
-def convert_edsr(ori_net_path, crt_net_path, save_path, num_block=32):
+def convert_edsr(ori_net_path, crt_net_path, save_path, num_block=32) -> None:
     """Convert EDSR models in https://github.com/thstkdgus35/EDSR-PyTorch.
 
     It supports converting x2, x3 and x4 models.
@@ -149,7 +149,7 @@ def convert_edsr(ori_net_path, crt_net_path, save_path, num_block=32):
     torch.save(crt_net, save_path)
 
 
-def convert_rcan_model():
+def convert_rcan_model() -> None:
     ori_net = torch.load("RCAN_model_best.pt")
     crt_net = torch.load(
         "experiments/201_RCANx4_scratch_DIV2K_rand0/models/net_g_5000.pth"
@@ -187,7 +187,7 @@ def convert_rcan_model():
     torch.save(crt_net, "RCAN_model_best.pth")
 
 
-def convert_esrgan_model():
+def convert_esrgan_model() -> None:
     from traiNNer.archs.rrdbnet_arch import RRDBNet
 
     rrdb = RRDBNet(3, 3, num_feat=64, num_block=23, num_grow_ch=32)
@@ -218,7 +218,7 @@ def convert_esrgan_model():
     )
 
 
-def convert_duf_model():
+def convert_duf_model() -> None:
     from traiNNer.archs.duf_arch import DUF
 
     scale = 2

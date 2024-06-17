@@ -47,7 +47,7 @@ class ContextualLoss(nn.Module):
         net: str = "vgg19",
         calc_type: str = "regular",
         z_norm: bool = False,
-    ):
+    ) -> None:
         if layer_weights is None:
             layer_weights = {"conv3_2": 1.0, "conv4_2": 1.0}
         super().__init__()

@@ -37,7 +37,7 @@ class InceptionV3(nn.Module):
         normalize_input=True,
         requires_grad=False,
         use_fid_inception=True,
-    ):
+    ) -> None:
         """Build pretrained InceptionV3.
 
         Args:
@@ -206,7 +206,7 @@ def fid_inception_v3():
 class FIDInceptionA(models.inception.InceptionA):
     """InceptionA block patched for FID computation"""
 
-    def __init__(self, in_channels, pool_features):
+    def __init__(self, in_channels, pool_features) -> None:
         super().__init__(in_channels, pool_features)
 
     def forward(self, x):
@@ -233,7 +233,7 @@ class FIDInceptionA(models.inception.InceptionA):
 class FIDInceptionC(models.inception.InceptionC):
     """InceptionC block patched for FID computation"""
 
-    def __init__(self, in_channels, channels_7x7):
+    def __init__(self, in_channels, channels_7x7) -> None:
         super().__init__(in_channels, channels_7x7)
 
     def forward(self, x):
@@ -263,7 +263,7 @@ class FIDInceptionC(models.inception.InceptionC):
 class FIDInceptionE_1(models.inception.InceptionE):
     """First InceptionE block patched for FID computation"""
 
-    def __init__(self, in_channels):
+    def __init__(self, in_channels) -> None:
         super().__init__(in_channels)
 
     def forward(self, x):
@@ -298,7 +298,7 @@ class FIDInceptionE_1(models.inception.InceptionE):
 class FIDInceptionE_2(models.inception.InceptionE):
     """Second InceptionE block patched for FID computation"""
 
-    def __init__(self, in_channels):
+    def __init__(self, in_channels) -> None:
         super().__init__(in_channels)
 
     def forward(self, x):

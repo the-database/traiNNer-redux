@@ -4,7 +4,7 @@ from PIL import Image
 from traiNNer.utils import scandir
 
 
-def generate_meta_info_div2k():
+def generate_meta_info_div2k() -> None:
     """Generate meta info for DIV2K dataset."""
 
     gt_folder = "datasets/DIV2K/DIV2K_train_HR_sub/"

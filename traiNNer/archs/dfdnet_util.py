@@ -41,7 +41,7 @@ blur = BlurFunction.apply
 
 
 class Blur(nn.Module):
-    def __init__(self, channel):
+    def __init__(self, channel) -> None:
         super().__init__()
         kernel = torch.tensor([[1, 2, 1], [2, 4, 2], [1, 2, 1]], dtype=torch.float32)
         kernel = kernel.view(1, 1, 3, 3)
@@ -134,7 +134,7 @@ def conv_block(
 class MSDilationBlock(nn.Module):
     """Multi-scale dilation block."""
 
-    def __init__(self, in_channels, kernel_size=3, dilation=(1, 1, 1, 1), bias=True):
+    def __init__(self, in_channels, kernel_size=3, dilation=(1, 1, 1, 1), bias=True) -> None:
         super().__init__()
 
         self.conv_blocks = nn.ModuleList()
@@ -169,7 +169,7 @@ class MSDilationBlock(nn.Module):
 
 
 class UpResBlock(nn.Module):
-    def __init__(self, in_channel):
+    def __init__(self, in_channel) -> None:
         super().__init__()
         self.body = nn.Sequential(
             nn.Conv2d(in_channel, in_channel, 3, 1, 1),

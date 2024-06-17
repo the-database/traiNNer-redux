@@ -12,7 +12,7 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 class GaussianFilter2D(nn.Module):
-    def __init__(self, window_size=11, in_channels=3, sigma=1.5, padding=None):
+    def __init__(self, window_size=11, in_channels=3, sigma=1.5, padding=None) -> None:
         """2D Gaussian Filer
 
         Args:
@@ -73,7 +73,7 @@ class MSSIMLoss(nn.Module):
         cosim=True,
         cosim_lambda=5,
         loss_weight=1.0,
-    ):
+    ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
                 https://github.com/lartpang/mssim.pytorch

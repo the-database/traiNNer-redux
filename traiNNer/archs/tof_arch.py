@@ -13,7 +13,7 @@ class BasicModule(nn.Module):
     here contains batch normalization.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.basic_module = nn.Sequential(
             nn.Conv2d(
@@ -91,7 +91,7 @@ class SPyNetTOF(nn.Module):
         load_path (str): Path for pretrained SPyNet. Default: None.
     """
 
-    def __init__(self, load_path=None):
+    def __init__(self, load_path=None) -> None:
         super().__init__()
 
         self.basic_module = nn.ModuleList([BasicModule() for _ in range(4)])
@@ -166,7 +166,7 @@ class TOFlow(nn.Module):
             train from scratch. Default: False
     """
 
-    def __init__(self, adapt_official_weights=False):
+    def __init__(self, adapt_official_weights=False) -> None:
         super().__init__()
         self.adapt_official_weights = adapt_official_weights
         self.ref_idx = 0 if adapt_official_weights else 3

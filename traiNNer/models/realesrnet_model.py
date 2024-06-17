@@ -25,7 +25,7 @@ class RealESRNetModel(SRModel):
     2. optimize the networks with GAN training.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
         self.jpeger = DiffJPEG(
             differentiable=False
@@ -34,7 +34,7 @@ class RealESRNetModel(SRModel):
         self.queue_size = opt.get("queue_size", 180)
 
     @torch.no_grad()
-    def _dequeue_and_enqueue(self):
+    def _dequeue_and_enqueue(self) -> None:
         """It is the training pair pool for increasing the diversity in a batch.
 
         Batch processing limits the diversity of synthetic degradations in a batch. For example, samples in a
@@ -77,7 +77,7 @@ class RealESRNetModel(SRModel):
             self.queue_ptr = self.queue_ptr + b
 
     @torch.no_grad()
-    def feed_data(self, data):
+    def feed_data(self, data) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
         if self.is_train and self.opt.get("high_order_degradation", True):
             # training data synthesis
@@ -231,7 +231,7 @@ class RealESRNetModel(SRModel):
                 if self.is_train and self.use_moa:
                     self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         # do not use the synthetic process during validation
         self.is_train = False
         super().nondist_validation(dataloader, current_iter, tb_logger, save_img)

@@ -2,7 +2,7 @@ import yaml
 from traiNNer.data.single_image_dataset import SingleImageDataset
 
 
-def test_singleimagedataset():
+def test_singleimagedataset() -> None:
     """Test dataset: SingleImageDataset"""
 
     opt_str = r"""

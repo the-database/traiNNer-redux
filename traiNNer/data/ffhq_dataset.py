@@ -24,7 +24,7 @@ class FFHQDataset(data.Dataset):
 
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         # file client (io backend)
@@ -85,5 +85,5 @@ class FFHQDataset(data.Dataset):
         normalize(img_gt, self.mean, self.std, inplace=True)
         return {"gt": img_gt, "gt_path": gt_path}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.paths)

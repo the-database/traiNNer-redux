@@ -19,7 +19,7 @@ class SeqConv3x3(nn.Module):
         depth_multiplier (int): Width multiplier in the expand-and-squeeze conv. Default: 1.
     """
 
-    def __init__(self, seq_type, in_channels, out_channels, depth_multiplier=1):
+    def __init__(self, seq_type, in_channels, out_channels, depth_multiplier=1) -> None:
         super().__init__()
         self.seq_type = seq_type
         self.in_channels = in_channels
@@ -204,7 +204,7 @@ class ECB(nn.Module):
         depth_multiplier,
         act_type="prelu",
         with_idt=False,
-    ):
+    ) -> None:
         super().__init__()
 
         self.depth_multiplier = depth_multiplier
@@ -311,7 +311,7 @@ class ECBSR(nn.Module):
 
     def __init__(
         self, num_in_ch, num_out_ch, num_block, num_channel, with_idt, act_type, scale
-    ):
+    ) -> None:
         super().__init__()
         self.num_in_ch = num_in_ch
         self.scale = scale

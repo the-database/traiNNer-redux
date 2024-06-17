@@ -8,7 +8,7 @@ initialized_logger = {}
 
 
 class AvgTimer:
-    def __init__(self, window=200):
+    def __init__(self, window=200) -> None:
         self.window = window  # average window
         self.current_time = 0
         self.total_time = 0
@@ -16,10 +16,10 @@ class AvgTimer:
         self.avg_time = 0
         self.start()
 
-    def start(self):
+    def start(self) -> None:
         self.start_time = self.tic = time.time()
 
-    def record(self):
+    def record(self) -> None:
         self.count += 1
         self.toc = time.time()
         self.current_time = self.toc - self.tic
@@ -54,7 +54,7 @@ class MessageLogger:
         tb_logger (obj:`tb_logger`): Tensorboard logger. Default： None.
     """
 
-    def __init__(self, opt, start_iter=1, tb_logger=None):
+    def __init__(self, opt, start_iter=1, tb_logger=None) -> None:
         self.exp_name = opt["name"]
         self.interval = opt["logger"]["print_freq"]
         self.start_iter = start_iter
@@ -64,7 +64,7 @@ class MessageLogger:
         self.start_time = time.time()
         self.logger = get_root_logger()
 
-    def reset_start_time(self):
+    def reset_start_time(self) -> None:
         self.start_time = time.time()
 
     @master_only
@@ -124,7 +124,7 @@ def init_tb_logger(log_dir):
 
 
 @master_only
-def init_wandb_logger(opt):
+def init_wandb_logger(opt) -> None:
     """We now only use wandb to sync tensorboard log."""
     import wandb
 

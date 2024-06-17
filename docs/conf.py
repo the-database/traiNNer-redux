@@ -79,9 +79,9 @@ master_doc = "index"
 #     app.connect('builder-inited', run_apidoc)
 
 
-def auto_generate_api(app):
+def auto_generate_api(app) -> None:
     subprocess.run(["python", "./auto_generate_api.py"], check=False)
 
 
-def setup(app):
+def setup(app) -> None:
     app.connect("builder-inited", auto_generate_api)

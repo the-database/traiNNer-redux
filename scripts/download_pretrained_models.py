@@ -5,7 +5,7 @@ from os import path as osp
 from traiNNer.utils.download_util import download_file_from_google_drive
 
 
-def download_pretrained_models(method, file_ids):
+def download_pretrained_models(method, file_ids) -> None:
     save_path_root = f"./experiments/pretrained_models/{method}"
     os.makedirs(save_path_root, exist_ok=True)
 

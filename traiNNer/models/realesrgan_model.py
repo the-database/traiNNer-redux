@@ -24,7 +24,7 @@ class RealESRGANModel(SRModel):
     2. optimize the networks with GAN training.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
         self.jpeger = DiffJPEG(
             differentiable=False
@@ -33,7 +33,7 @@ class RealESRGANModel(SRModel):
         self.queue_size = opt.get("queue_size", 180)
 
     @torch.no_grad()
-    def _dequeue_and_enqueue(self):
+    def _dequeue_and_enqueue(self) -> None:
         """It is the training pair pool for increasing the diversity in a batch.
 
         Batch processing limits the diversity of synthetic degradations in a batch. For example, samples in a
@@ -76,7 +76,7 @@ class RealESRGANModel(SRModel):
             self.queue_ptr = self.queue_ptr + b
 
     @torch.no_grad()
-    def feed_data(self, data):
+    def feed_data(self, data) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
         if self.is_train and self.opt.get("high_order_degradation", True):
             # training data synthesis

@@ -6,7 +6,7 @@ from torch import nn
 
 
 class ToyDiscriminator(nn.Module):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conv0 = nn.Conv2d(3, 4, 3, 1, 1, bias=True)
         self.bn0 = nn.BatchNorm2d(4, affine=True)
@@ -23,7 +23,7 @@ class ToyDiscriminator(nn.Module):
         return out
 
 
-def main():
+def main() -> None:
     # use fixed random seed
     manual_seed = 999
     random.seed(manual_seed)

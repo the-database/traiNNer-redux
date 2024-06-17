@@ -6,7 +6,7 @@ from os import path as osp
 from traiNNer.utils.download_util import download_file_from_google_drive
 
 
-def download_dataset(dataset, file_ids):
+def download_dataset(dataset, file_ids) -> None:
     save_path_root = "./datasets/"
     os.makedirs(save_path_root, exist_ok=True)
 

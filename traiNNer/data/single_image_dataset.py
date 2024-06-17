@@ -25,7 +25,7 @@ class SingleImageDataset(data.Dataset):
             io_backend (dict): IO backend type and other kwarg.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         # file client (io backend)
@@ -70,5 +70,5 @@ class SingleImageDataset(data.Dataset):
             normalize(img_lq, self.mean, self.std, inplace=True)
         return {"lq": img_lq, "lq_path": lq_path}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.paths)

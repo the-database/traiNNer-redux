@@ -4,7 +4,7 @@ import cv2
 from traiNNer.metrics import calculate_niqe
 
 
-def main():
+def main() -> None:
     img_path = "tests/data/baboon.png"
     img = cv2.imread(img_path)
     with warnings.catch_warnings():

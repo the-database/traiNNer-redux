@@ -48,7 +48,7 @@ class TestLosses:
     eps = 1e-5  # torch.finfo(torch.float32).eps
 
     @pytest.mark.parametrize("loss_class", [L1Loss, MSELoss, CharbonnierLoss])
-    def test_pixellosses(self, loss_class):
+    def test_pixellosses(self, loss_class) -> None:
         """Test loss: pixel losses"""
 
         pred = torch.rand((1, 3, 4, 4), dtype=torch.float32)
@@ -80,7 +80,7 @@ class TestLosses:
         with pytest.raises(ValueError):
             loss_class(loss_weight=1.0, reduction="unknown")
 
-    def test_weightedtvloss(self):
+    def test_weightedtvloss(self) -> None:
         """Test loss: WeightedTVLoss"""
 
         pred = torch.rand((1, 3, 4, 4), dtype=torch.float32)
@@ -126,7 +126,7 @@ class TestLosses:
             dists_loss,
         ],
     )
-    def test_black_vs_black(self, loss_fn):
+    def test_black_vs_black(self, loss_fn) -> None:
         loss_value = loss_fn(self.black_image, self.black_image)
         print(loss_value)
 
@@ -148,7 +148,7 @@ class TestLosses:
             dists_loss,
         ],
     )
-    def test_black_vs_black_float64(self, loss_fn):
+    def test_black_vs_black_float64(self, loss_fn) -> None:
         loss_value = loss_fn(
             self.black_image.to(dtype=torch.float64),
             self.black_image.to(dtype=torch.float64),

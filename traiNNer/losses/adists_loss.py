@@ -11,7 +11,7 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 class Downsample(nn.Module):
-    def __init__(self, filter_size=5, stride=2, channels=None, pad_off=0):
+    def __init__(self, filter_size=5, stride=2, channels=None, pad_off=0) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
@@ -38,7 +38,7 @@ class Downsample(nn.Module):
 @LOSS_REGISTRY.register()
 # https://github.com/dingkeyan93/A-DISTS
 class ADISTSLoss(torch.nn.Module):
-    def __init__(self, window_size=21, resize_input=False, loss_weight=1.0):
+    def __init__(self, window_size=21, resize_input=False, loss_weight=1.0) -> None:
         super().__init__()
         self.resize_input = resize_input
         self.loss_weight = loss_weight

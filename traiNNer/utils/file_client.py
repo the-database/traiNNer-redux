@@ -1,5 +1,6 @@
 # Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
 from abc import ABCMeta, abstractmethod
+from typing import Never
 
 
 class BaseStorageBackend(metaclass=ABCMeta):
@@ -29,7 +30,7 @@ class MemcachedBackend(BaseStorageBackend):
             Default: None.
     """
 
-    def __init__(self, server_list_cfg, client_cfg, sys_path=None):
+    def __init__(self, server_list_cfg, client_cfg, sys_path=None) -> None:
         if sys_path is not None:
             import sys
 
@@ -55,7 +56,7 @@ class MemcachedBackend(BaseStorageBackend):
         value_buf = mc.ConvertBuffer(self._mc_buffer)
         return value_buf
 
-    def get_text(self, filepath):
+    def get_text(self, filepath) -> Never:
         raise NotImplementedError
 
 
@@ -103,7 +104,7 @@ class LmdbBackend(BaseStorageBackend):
         lock=False,
         readahead=False,
         **kwargs,
-    ):
+    ) -> None:
         try:
             import lmdb
         except ImportError:
@@ -143,7 +144,7 @@ class LmdbBackend(BaseStorageBackend):
             value_buf = txn.get(filepath.encode("ascii"))
         return value_buf
 
-    def get_text(self, filepath):
+    def get_text(self, filepath) -> Never:
         raise NotImplementedError
 
 
@@ -166,7 +167,7 @@ class FileClient:
         "lmdb": LmdbBackend,
     }
 
-    def __init__(self, backend="disk", **kwargs):
+    def __init__(self, backend="disk", **kwargs) -> None:
         if backend not in self._backends:
             raise ValueError(
                 f"Backend {backend} is not supported. Currently supported ones"

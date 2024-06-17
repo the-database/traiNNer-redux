@@ -5,7 +5,7 @@ from traiNNer.utils import scandir
 from traiNNer.utils.lmdb_util import make_lmdb_from_imgs
 
 
-def create_lmdb_for_div2k():
+def create_lmdb_for_div2k() -> None:
     """Create lmdb files for DIV2K dataset.
 
     Usage:
@@ -61,7 +61,7 @@ def prepare_keys_div2k(folder_path):
     return img_path_list, keys
 
 
-def create_lmdb_for_reds():
+def create_lmdb_for_reds() -> None:
     """Create lmdb files for REDS dataset.
 
     Usage:
@@ -107,7 +107,7 @@ def prepare_keys_reds(folder_path):
     return img_path_list, keys
 
 
-def create_lmdb_for_vimeo90k():
+def create_lmdb_for_vimeo90k() -> None:
     """Create lmdb files for Vimeo90K dataset.
 
     Usage:

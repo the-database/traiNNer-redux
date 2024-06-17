@@ -19,7 +19,7 @@ class EnlargedSampler(Sampler):
         ratio (int): Enlarging ratio. Default: 1.
     """
 
-    def __init__(self, dataset, num_replicas, rank, ratio=1):
+    def __init__(self, dataset, num_replicas, rank, ratio=1) -> None:
         self.dataset = dataset
         self.num_replicas = num_replicas
         self.rank = rank
@@ -42,8 +42,8 @@ class EnlargedSampler(Sampler):
 
         return iter(indices)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.num_samples
 
-    def set_epoch(self, epoch):
+    def set_epoch(self, epoch) -> None:
         self.epoch = epoch

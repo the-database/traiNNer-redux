@@ -6,7 +6,7 @@ import torchvision.utils
 from traiNNer.data import build_dataloader, build_dataset
 
 
-def main():
+def main() -> None:
     """Test FFHQ dataset."""
     opt = {}
     opt["dist"] = False

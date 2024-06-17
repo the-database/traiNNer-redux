@@ -43,7 +43,7 @@ class PerceptualLoss(nn.Module):
         perceptual_weight=1.0,
         style_weight=0.0,
         criterion="l1",
-    ):
+    ) -> None:
         super().__init__()
         self.perceptual_weight = perceptual_weight
         self.style_weight = style_weight

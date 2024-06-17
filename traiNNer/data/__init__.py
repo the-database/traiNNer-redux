@@ -121,7 +121,7 @@ def build_dataloader(
         return torch.utils.data.DataLoader(**dataloader_args)
 
 
-def worker_init_fn(worker_id, num_workers, rank, seed):
+def worker_init_fn(worker_id, num_workers, rank, seed) -> None:
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
     np.random.seed(worker_seed)

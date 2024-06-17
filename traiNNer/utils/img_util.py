@@ -150,7 +150,7 @@ def imfrombytes(content, flag="color", float32=False):
     return img
 
 
-def imwrite(img, file_path, params=None, auto_mkdir=True):
+def imwrite(img, file_path, params=None, auto_mkdir=True) -> None:
     """Write image to file.
 
     Args:

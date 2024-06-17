@@ -2,7 +2,7 @@ import yaml
 from traiNNer.data.paired_image_dataset import PairedImageDataset
 
 
-def test_pairedimagedataset():
+def test_pairedimagedataset() -> None:
     """Test dataset: PairedImageDataset"""
 
     opt_str = r"""

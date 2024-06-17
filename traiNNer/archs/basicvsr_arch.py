@@ -18,7 +18,7 @@ class BasicVSR(nn.Module):
         spynet_path (str): Path to the pretrained weights of SPyNet. Default: None.
     """
 
-    def __init__(self, num_feat=64, num_block=15, spynet_path=None):
+    def __init__(self, num_feat=64, num_block=15, spynet_path=None) -> None:
         super().__init__()
         self.num_feat = num_feat
 
@@ -109,7 +109,7 @@ class ConvResidualBlocks(nn.Module):
         num_block (int): Number of residual blocks. Default: 15.
     """
 
-    def __init__(self, num_in_ch=3, num_out_ch=64, num_block=15):
+    def __init__(self, num_in_ch=3, num_out_ch=64, num_block=15) -> None:
         super().__init__()
         self.main = nn.Sequential(
             nn.Conv2d(num_in_ch, num_out_ch, 3, 1, 1, bias=True),
@@ -142,7 +142,7 @@ class IconVSR(nn.Module):
         temporal_padding=2,
         spynet_path=None,
         edvr_path=None,
-    ):
+    ) -> None:
         super().__init__()
 
         self.num_feat = num_feat
@@ -285,7 +285,7 @@ class EDVRFeatureExtractor(nn.Module):
         load_path (str): Path to the pretrained weights of EDVR. Default: None.
     """
 
-    def __init__(self, num_input_frame, num_feat, load_path):
+    def __init__(self, num_input_frame, num_feat, load_path) -> None:
         super().__init__()
 
         self.center_frame_idx = num_input_frame // 2

@@ -16,7 +16,7 @@ from ..utils import get_root_logger
 
 
 @torch.no_grad()
-def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs):
+def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs) -> None:
     """Initialize network weights.
 
     Args:
@@ -73,7 +73,7 @@ class ResidualBlockNoBN(nn.Module):
             otherwise, use default_init_weights. Default: False.
     """
 
-    def __init__(self, num_feat=64, res_scale=1, pytorch_init=False):
+    def __init__(self, num_feat=64, res_scale=1, pytorch_init=False) -> None:
         super().__init__()
         self.res_scale = res_scale
         self.conv1 = nn.Conv2d(num_feat, num_feat, 3, 1, 1, bias=True)
@@ -97,7 +97,7 @@ class Upsample(nn.Sequential):
         num_feat (int): Channel number of intermediate features.
     """
 
-    def __init__(self, scale, num_feat):
+    def __init__(self, scale, num_feat) -> None:
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log(scale, 2))):
@@ -235,7 +235,7 @@ class DepthToSpace(nn.Module):
         form: select tensorflow ('tf') or pytorch ('pt') style shuffle.
     """
 
-    def __init__(self, block_size: int = 2, form: str = "pt"):
+    def __init__(self, block_size: int = 2, form: str = "pt") -> None:
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -245,7 +245,7 @@ class DepthToSpace(nn.Module):
             return depth_to_space_tf(x, self.bs)
         return depth_to_space(x, self.bs)
 
-    def extra_repr(self):
+    def extra_repr(self) -> str:
         return f"block_size={self.bs}"
 
 
@@ -320,7 +320,7 @@ class SpaceToDepth(nn.Module):
         form: select tensorflow ('tf') or pytorch ('pt') style unshuffle.
     """
 
-    def __init__(self, block_size: int = 2, form: str = "pt"):
+    def __init__(self, block_size: int = 2, form: str = "pt") -> None:
         super().__init__()
         self.bs = block_size
         self.form = form
@@ -330,7 +330,7 @@ class SpaceToDepth(nn.Module):
             return space_to_depth_tf(x, self.bs)
         return space_to_depth(x, self.bs)
 
-    def extra_repr(self):
+    def extra_repr(self) -> str:
         return f"block_size={self.bs}"
 
 

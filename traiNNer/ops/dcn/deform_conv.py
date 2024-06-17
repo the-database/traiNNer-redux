@@ -319,7 +319,7 @@ class DeformConv(nn.Module):
         groups=1,
         deformable_groups=1,
         bias=False,
-    ):
+    ) -> None:
         super().__init__()
 
         assert not bias
@@ -348,7 +348,7 @@ class DeformConv(nn.Module):
 
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         n = self.in_channels
         for k in self.kernel_size:
             n *= k
@@ -397,7 +397,7 @@ class DeformConvPack(DeformConv):
 
     _version = 2
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.conv_offset = nn.Conv2d(
@@ -411,7 +411,7 @@ class DeformConvPack(DeformConv):
         )
         self.init_offset()
 
-    def init_offset(self):
+    def init_offset(self) -> None:
         self.conv_offset.weight.data.zero_()
         self.conv_offset.bias.data.zero_()
 
@@ -441,7 +441,7 @@ class ModulatedDeformConv(nn.Module):
         groups=1,
         deformable_groups=1,
         bias=True,
-    ):
+    ) -> None:
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -465,7 +465,7 @@ class ModulatedDeformConv(nn.Module):
             self.register_parameter("bias", None)
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         n = self.in_channels
         for k in self.kernel_size:
             n *= k
@@ -507,7 +507,7 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
 
     _version = 2
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.conv_offset = nn.Conv2d(
@@ -521,7 +521,7 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
         )
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         super().init_weights()
         if hasattr(self, "conv_offset"):
             self.conv_offset.weight.data.zero_()

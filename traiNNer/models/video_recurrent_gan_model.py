@@ -11,7 +11,7 @@ from .video_recurrent_model import VideoRecurrentModel
 
 @MODEL_REGISTRY.register()
 class VideoRecurrentGANModel(VideoRecurrentModel):
-    def init_training_settings(self):
+    def init_training_settings(self) -> None:
         train_opt = self.opt["train"]
 
         self.ema_decay = train_opt.get("ema_decay", 0)
@@ -77,7 +77,7 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
-    def setup_optimizers(self):
+    def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         if train_opt["fix_flow"]:
             normal_params = []
@@ -111,7 +111,7 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
         )
         self.optimizers.append(self.optimizer_d)
 
-    def optimize_parameters(self, current_iter):
+    def optimize_parameters(self, current_iter) -> None:
         logger = get_root_logger()
         # optimize net_g
         for p in self.net_d.parameters():
@@ -191,7 +191,7 @@ class VideoRecurrentGANModel(VideoRecurrentModel):
         if self.ema_decay > 0:
             self.model_ema(decay=self.ema_decay)
 
-    def save(self, epoch, current_iter):
+    def save(self, epoch, current_iter) -> None:
         if self.ema_decay > 0:
             self.save_network(
                 [self.net_g, self.net_g_ema],

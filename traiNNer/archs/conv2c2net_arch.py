@@ -19,7 +19,7 @@ class RRDB2C2Net(nn.Module):
         num_block=23,
         num_grow_ch=32,
         act_type="leakyrelu",
-    ):
+    ) -> None:
         in_nc = num_in_ch
         out_nc = num_out_ch
         upscale = scale
@@ -83,7 +83,7 @@ class RRDB(nn.Module):
         nf,
         gc=32,
         act_type="leakyrelu",
-    ):
+    ) -> None:
         super().__init__()
         self.RDB1 = ResidualDenseBlock_5C(
             nf,
@@ -114,7 +114,7 @@ class ResidualDenseBlock_5C(nn.Module):
         nf=64,
         gc=32,
         act_type="leakyrelu",
-    ):
+    ) -> None:
         super().__init__()
 
         self.conv1 = conv_block(
@@ -193,7 +193,7 @@ def act(act_type, inplace=True, neg_slope=0.2, n_prelu=1, beta=1.0):
 
 class ShortcutBlock(nn.Module):
     # Elementwise sum the output of a submodule to its input
-    def __init__(self, submodule):
+    def __init__(self, submodule) -> None:
         super().__init__()
         self.sub = submodule
 
@@ -201,7 +201,7 @@ class ShortcutBlock(nn.Module):
         output = x + self.sub(x)
         return output
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ShortcutBlock"
 
 
@@ -274,7 +274,7 @@ class Upsample(nn.Module):
 
     def __init__(
         self, size=None, scale_factor=None, mode="nearest", align_corners=None
-    ):
+    ) -> None:
         super().__init__()
         if isinstance(scale_factor, tuple):
             self.scale_factor = tuple(float(factor) for factor in scale_factor)

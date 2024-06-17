@@ -3,7 +3,7 @@ import torch
 from traiNNer.archs.ecbsr_arch import ECB, ECBSR, SeqConv3x3
 
 
-def test_ecbsr():
+def test_ecbsr() -> None:
     """Test arch: ECBSR."""
 
     # model init and forward
@@ -35,7 +35,7 @@ def test_ecbsr():
     assert output.shape == (1, 3, 24, 24)
 
 
-def test_seqconv3x3():
+def test_seqconv3x3() -> None:
     """Test block: SeqConv3x3."""
 
     # model init and forward
@@ -73,7 +73,7 @@ def test_seqconv3x3():
         SeqConv3x3(seq_type="noseq", in_channels=1, out_channels=1)
 
 
-def test_ecb():
+def test_ecb() -> None:
     """Test block: ECB."""
     # model init and forward
     net = ECB(

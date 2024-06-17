@@ -13,7 +13,7 @@ class ChannelAttention(nn.Module):
         squeeze_factor (int): Channel squeeze factor. Default: 16.
     """
 
-    def __init__(self, num_feat, squeeze_factor=16):
+    def __init__(self, num_feat, squeeze_factor=16) -> None:
         super().__init__()
         self.attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
@@ -37,7 +37,7 @@ class RCAB(nn.Module):
         res_scale (float): Scale the residual. Default: 1.
     """
 
-    def __init__(self, num_feat, squeeze_factor=16, res_scale=1):
+    def __init__(self, num_feat, squeeze_factor=16, res_scale=1) -> None:
         super().__init__()
         self.res_scale = res_scale
 
@@ -63,7 +63,7 @@ class ResidualGroup(nn.Module):
         res_scale (float): Scale the residual. Default: 1.
     """
 
-    def __init__(self, num_feat, num_block, squeeze_factor=16, res_scale=1):
+    def __init__(self, num_feat, num_block, squeeze_factor=16, res_scale=1) -> None:
         super().__init__()
 
         self.residual_group = make_layer(
@@ -117,7 +117,7 @@ class RCAN(nn.Module):
         res_scale=1,
         img_range=255.0,
         rgb_mean=(0.4488, 0.4371, 0.4040),
-    ):
+    ) -> None:
         super().__init__()
 
         self.img_range = img_range

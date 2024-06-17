@@ -10,7 +10,7 @@ from torch.nn import functional as F
 from traiNNer.archs.swinir_arch import SwinIR
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--input",

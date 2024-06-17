@@ -12,7 +12,7 @@ rng = np.random.default_rng()
 
 
 class BatchAugment:
-    def __init__(self, train_opt):
+    def __init__(self, train_opt) -> None:
         self.moa_augs = train_opt.get(
             "moa_augs", ["none", "mixup", "cutmix", "resizemix"]
         )  # , "cutblur"]

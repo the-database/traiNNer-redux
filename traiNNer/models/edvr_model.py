@@ -10,12 +10,12 @@ class EDVRModel(VideoBaseModel):
     Paper: EDVR: Video Restoration with Enhanced Deformable Convolutional Networks.  # noqa: E501
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
         if self.is_train:
             self.train_tsa_iter = opt["train"].get("tsa_iter")
 
-    def setup_optimizers(self):
+    def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         dcn_lr_mul = train_opt.get("dcn_lr_mul", 1)
         logger = get_root_logger()
@@ -44,7 +44,7 @@ class EDVRModel(VideoBaseModel):
         )
         self.optimizers.append(self.optimizer_g)
 
-    def optimize_parameters(self, current_iter):
+    def optimize_parameters(self, current_iter) -> None:
         if self.train_tsa_iter:
             if current_iter == 1:
                 logger = get_root_logger()

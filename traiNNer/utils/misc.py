@@ -9,7 +9,7 @@ import torch
 from .dist_util import master_only
 
 
-def set_random_seed(seed):
+def set_random_seed(seed) -> None:
     """Set random seeds."""
     random.seed(seed)
     np.random.seed(seed)
@@ -22,7 +22,7 @@ def get_time_str():
     return time.strftime("%Y%m%d_%H%M%S", time.localtime())
 
 
-def mkdir_and_rename(path):
+def mkdir_and_rename(path) -> None:
     """mkdirs. If path exists, rename it with timestamp and create a new one.
 
     Args:
@@ -36,7 +36,7 @@ def mkdir_and_rename(path):
 
 
 @master_only
-def make_exp_dirs(opt):
+def make_exp_dirs(opt) -> None:
     """Make dirs for experiments."""
     path_opt = opt["path"].copy()
     if opt["is_train"]:
@@ -96,7 +96,7 @@ def scandir(dir_path, suffix=None, recursive=False, full_path=False):
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
-def check_resume(opt, resume_iter):
+def check_resume(opt, resume_iter) -> None:
     """Check resume states and pretrain_network paths.
 
     Args:
@@ -132,7 +132,7 @@ def check_resume(opt, resume_iter):
                 print(f"Set {param_key} to params")
 
 
-def sizeof_fmt(size, suffix="B"):
+def sizeof_fmt(size, suffix="B") -> str:
     """Get human readable file size.
 
     Args:

@@ -190,7 +190,7 @@ class VGGFeatureExtractor(nn.Module):
         crop_input=False,
         resize_input=False,
         pooling_stride=2,
-    ):
+    ) -> None:
         super().__init__()
 
         self.layer_name_list = layer_name_list

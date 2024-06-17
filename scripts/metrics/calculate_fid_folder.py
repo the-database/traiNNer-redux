@@ -12,7 +12,7 @@ from traiNNer.metrics.fid import (
 )
 
 
-def calculate_fid_folder():
+def calculate_fid_folder() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     parser = argparse.ArgumentParser()

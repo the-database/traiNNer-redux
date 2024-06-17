@@ -61,7 +61,7 @@ def usm_sharp(img, weight=0.5, radius=50, threshold=10):
 
 
 class USMSharp(torch.nn.Module):
-    def __init__(self, radius=50, sigma=0):
+    def __init__(self, radius=50, sigma=0) -> None:
         super().__init__()
         if radius % 2 == 0:
             radius += 1

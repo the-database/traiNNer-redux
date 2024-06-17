@@ -30,7 +30,7 @@ class Registry:
         BACKBONE_REGISTRY.register(MyBackbone)
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """
         Args:
             name (str): the name of this registry
@@ -38,7 +38,7 @@ class Registry:
         self._name = name
         self._obj_map = {}
 
-    def _do_register(self, name: str, obj: Callable | type, suffix: str | None = None):
+    def _do_register(self, name: str, obj: Callable | type, suffix: str | None = None) -> None:
         if isinstance(suffix, str):
             name = name + "_" + suffix
 
@@ -79,7 +79,7 @@ class Registry:
             )
         return ret
 
-    def __contains__(self, name: str):
+    def __contains__(self, name: str) -> bool:
         return name.lower() in self._obj_map
 
     def __iter__(self):

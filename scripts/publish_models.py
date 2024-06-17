@@ -6,7 +6,7 @@ import torch
 from torch.serialization import _is_zipfile, _open_file_like
 
 
-def update_sha(paths):
+def update_sha(paths) -> None:
     print("# Update sha ...")
     for idx, path in enumerate(paths):
         print(f"{idx+1:03d}: Processing {path}")
@@ -39,7 +39,7 @@ def update_sha(paths):
             subprocess.Popen(["mv", path, final_file])
 
 
-def convert_to_backward_compatible_models(paths):
+def convert_to_backward_compatible_models(paths) -> None:
     """Convert to backward compatible pth files.
 
     PyTorch 1.6 uses a updated version of torch.save. In order to be compatible

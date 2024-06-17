@@ -16,7 +16,7 @@ from .sr_model import SRModel
 class VideoBaseModel(SRModel):
     """Base video SR model."""
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def dist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         dataset = dataloader.dataset
         dataset_name = dataset.opt["name"]
         with_metrics = self.opt["val"]["metrics"] is not None
@@ -129,12 +129,12 @@ class VideoBaseModel(SRModel):
                     current_iter, dataset_name, tb_logger
                 )
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         logger = get_root_logger()
         logger.warning("nondist_validation is not implemented. Run dist_validation.")
         self.dist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger):
+    def _log_validation_metric_values(self, current_iter, dataset_name, tb_logger) -> None:
         # ----------------- calculate the average values for each folder, and for each metric  ----------------- #
         # average all frames for each sub-folder
         # metric_results_avg is a dict:{

@@ -17,7 +17,7 @@ class PCDAlignment(nn.Module):
         deformable_groups (int): Deformable groups. Defaults: 8.
     """
 
-    def __init__(self, num_feat=64, deformable_groups=8):
+    def __init__(self, num_feat=64, deformable_groups=8) -> None:
         super().__init__()
 
         # Pyramid has three levels:
@@ -124,7 +124,7 @@ class TSAFusion(nn.Module):
         center_frame_idx (int): The index of center frame. Default: 2.
     """
 
-    def __init__(self, num_feat=64, num_frame=5, center_frame_idx=2):
+    def __init__(self, num_feat=64, num_frame=5, center_frame_idx=2) -> None:
         super().__init__()
         self.center_frame_idx = center_frame_idx
         # temporal attention (before fusion conv)
@@ -216,7 +216,7 @@ class PredeblurModule(nn.Module):
         hr_in (bool): Whether the input has high resolution. Default: False.
     """
 
-    def __init__(self, num_in_ch=3, num_feat=64, hr_in=False):
+    def __init__(self, num_in_ch=3, num_feat=64, hr_in=False) -> None:
         super().__init__()
         self.hr_in = hr_in
 
@@ -303,7 +303,7 @@ class EDVR(nn.Module):
         hr_in=False,
         with_predeblur=False,
         with_tsa=True,
-    ):
+    ) -> None:
         super().__init__()
         if center_frame_idx is None:
             self.center_frame_idx = num_frame // 2

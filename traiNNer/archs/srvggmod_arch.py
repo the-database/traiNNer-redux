@@ -28,7 +28,7 @@ class SRVGGNetCompactMod(nn.Module):
         upscale=4,
         act_type="prelu",
         conv2x2=False,
-    ):
+    ) -> None:
         super().__init__()
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch

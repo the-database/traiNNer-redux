@@ -55,7 +55,7 @@ def get_hash():
     return sha
 
 
-def write_version_py():
+def write_version_py() -> None:
     content = """# GENERATED VERSION FILE
 # TIME: {}
 __version__ = '{}'

@@ -5,7 +5,7 @@ import torchvision.utils
 from traiNNer.data import build_dataloader, build_dataset
 
 
-def main(mode="folder"):
+def main(mode="folder") -> None:
     """Test vimeo90k dataset.
 
     Args:

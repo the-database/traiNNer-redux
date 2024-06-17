@@ -8,7 +8,7 @@ from traiNNer.data import build_dataset
 from traiNNer.metrics.fid import extract_inception_features, load_patched_inception_v3
 
 
-def calculate_stats_from_dataset():
+def calculate_stats_from_dataset() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     parser = argparse.ArgumentParser()

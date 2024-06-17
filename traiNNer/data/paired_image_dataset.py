@@ -39,7 +39,7 @@ class PairedImageDataset(data.Dataset):
         phase (str): 'train' or 'val'.
     """
 
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__()
         self.opt = opt
         # file client (io backend)
@@ -125,5 +125,5 @@ class PairedImageDataset(data.Dataset):
 
         return {"lq": img_lq, "gt": img_gt, "lq_path": lq_path, "gt_path": gt_path}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.paths)

@@ -7,6 +7,9 @@ from os import path as osp
 from typing import Any
 
 import torch
+from torch.utils.data import DataLoader
+from torch.utils.data.sampler import Sampler
+from torch.utils.tensorboard import SummaryWriter
 
 # SCRIPT_DIR = osp.dirname(osp.abspath(__file__))
 # sys.path.append(osp.dirname(SCRIPT_DIR))
@@ -31,7 +34,7 @@ from traiNNer.utils.config import Config
 from traiNNer.utils.options import copy_opt_file, dict2str
 
 
-def init_tb_loggers(opt: Mapping[str, Any]):
+def init_tb_loggers(opt: Mapping[str, Any]) -> SummaryWriter | None:
     # initialize wandb logger before tensorboard logger to allow proper sync
     if (
         (opt["logger"].get("wandb") is not None)
@@ -50,7 +53,7 @@ def init_tb_loggers(opt: Mapping[str, Any]):
     return tb_logger
 
 
-def create_train_val_dataloader(opt: Mapping[str, Any], logger: logging.Logger):
+def create_train_val_dataloader(opt: Mapping[str, Any], logger: logging.Logger) -> tuple[DataLoader | None, Sampler | None, list[DataLoader], int, int]:
     # create train and val dataloaders
     train_loader, val_loaders = None, []
     for phase, dataset_opt in opt["datasets"].items():
@@ -114,7 +117,7 @@ def create_train_val_dataloader(opt: Mapping[str, Any], logger: logging.Logger):
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
-def load_resume_state(opt: Mapping[str, Any]):
+def load_resume_state(opt: Mapping[str, Any]) -> Any | None:
     resume_state_path = None
     if opt["auto_resume"]:
         state_path = osp.join("experiments", opt["name"], "training_states")
@@ -140,7 +143,7 @@ def load_resume_state(opt: Mapping[str, Any]):
     return resume_state
 
 
-def train_pipeline(root_path: str):
+def train_pipeline(root_path: str) -> None:
     # torch.autograd.set_detect_anomaly(True)
     # parse options, set distributed setting, set random seed
     opt, args = Config.load_config(root_path, is_train=True)

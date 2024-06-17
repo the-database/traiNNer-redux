@@ -18,7 +18,7 @@ class DenseBlocksTemporalReduce(nn.Module):
             Set to false if you want to train from scratch. Default: False.
     """
 
-    def __init__(self, num_feat=64, num_grow_ch=32, adapt_official_weights=False):
+    def __init__(self, num_feat=64, num_grow_ch=32, adapt_official_weights=False) -> None:
         super().__init__()
         if adapt_official_weights:
             eps = 1e-3
@@ -132,7 +132,7 @@ class DenseBlocks(nn.Module):
 
     def __init__(
         self, num_block, num_feat=64, num_grow_ch=16, adapt_official_weights=False
-    ):
+    ) -> None:
         super().__init__()
         if adapt_official_weights:
             eps = 1e-3
@@ -197,7 +197,7 @@ class DynamicUpsamplingFilter(nn.Module):
         filter_size (tuple): Filter size of generated filters. The shape is (kh, kw). Default: (5, 5).
     """
 
-    def __init__(self, filter_size=(5, 5)):
+    def __init__(self, filter_size=(5, 5)) -> None:
         super().__init__()
         if not isinstance(filter_size, tuple):
             raise TypeError(
@@ -268,7 +268,7 @@ class DUF(nn.Module):
             want to train from scratch. Default: False.
     """
 
-    def __init__(self, scale=4, num_layer=52, adapt_official_weights=False):
+    def __init__(self, scale=4, num_layer=52, adapt_official_weights=False) -> None:
         super().__init__()
         self.scale = scale
         if adapt_official_weights:

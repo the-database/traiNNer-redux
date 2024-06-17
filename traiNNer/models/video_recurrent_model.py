@@ -14,12 +14,12 @@ from .video_base_model import VideoBaseModel
 
 @MODEL_REGISTRY.register()
 class VideoRecurrentModel(VideoBaseModel):
-    def __init__(self, opt):
+    def __init__(self, opt) -> None:
         super().__init__(opt)
         if self.is_train:
             self.fix_flow_iter = opt["train"].get("fix_flow")
 
-    def setup_optimizers(self):
+    def setup_optimizers(self) -> None:
         train_opt = self.opt["train"]
         flow_lr_mul = train_opt.get("flow_lr_mul", 1)
         logger = get_root_logger()
@@ -48,7 +48,7 @@ class VideoRecurrentModel(VideoBaseModel):
         )
         self.optimizers.append(self.optimizer_g)
 
-    def optimize_parameters(self, current_iter):
+    def optimize_parameters(self, current_iter) -> None:
         if self.fix_flow_iter:
             logger = get_root_logger()
             if current_iter == 1:
@@ -64,7 +64,7 @@ class VideoRecurrentModel(VideoBaseModel):
 
         super().optimize_parameters(current_iter)
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def dist_validation(self, dataloader, current_iter, tb_logger, save_img) -> None:
         dataset = dataloader.dataset
         dataset_name = dataset.opt["name"]
         with_metrics = self.opt["val"]["metrics"] is not None
@@ -191,7 +191,7 @@ class VideoRecurrentModel(VideoBaseModel):
                     current_iter, dataset_name, tb_logger
                 )
 
-    def test(self):
+    def test(self) -> None:
         n = self.lq.size(1)
         self.net_g.eval()
 
