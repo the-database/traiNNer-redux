@@ -1,6 +1,6 @@
 import torch
-from torch import nn
-from torch.nn import functional as F
+from torch import Tensor, nn
+from torch.nn import functional as F  # noqa: N812
 from torchvision.transforms import InterpolationMode, v2
 from traiNNer.losses.loss_util import weighted_loss
 from traiNNer.utils.color_util import rgb2ycbcr_pt, rgb_to_luma
@@ -12,17 +12,17 @@ VGG_PATCH_SIZE = 256
 
 
 @weighted_loss
-def l1_loss(pred, target):
+def l1_loss(pred: Tensor, target: Tensor) -> Tensor:
     return F.l1_loss(pred, target, reduction="none")
 
 
 @weighted_loss
-def mse_loss(pred, target):
+def mse_loss(pred: Tensor, target: Tensor) -> Tensor:
     return F.mse_loss(pred, target, reduction="none")
 
 
 @weighted_loss
-def charbonnier_loss(pred, target, eps=1e-12):
+def charbonnier_loss(pred: Tensor, target: Tensor, eps: float = 1e-12) -> Tensor:
     return torch.sqrt((pred - target) ** 2 + eps)
 
 
@@ -36,7 +36,7 @@ class L1Loss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
+    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -46,7 +46,9 @@ class L1Loss(nn.Module):
         self.loss_weight = loss_weight
         self.reduction = reduction
 
-    def forward(self, pred, target, weight=None, **kwargs):
+    def forward(
+        self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
+    ) -> Tensor:
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -68,7 +70,7 @@ class MSELoss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
+    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -78,7 +80,9 @@ class MSELoss(nn.Module):
         self.loss_weight = loss_weight
         self.reduction = reduction
 
-    def forward(self, pred, target, weight=None, **kwargs):
+    def forward(
+        self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
+    ) -> Tensor:
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -105,7 +109,9 @@ class CharbonnierLoss(nn.Module):
         eps (float): A value used to control the curvature near zero. Default: 1e-12.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean", eps=1e-12) -> None:
+    def __init__(
+        self, loss_weight: float = 1.0, reduction: str = "mean", eps: float = 1e-12
+    ) -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -116,7 +122,9 @@ class CharbonnierLoss(nn.Module):
         self.reduction = reduction
         self.eps = eps
 
-    def forward(self, pred, target, weight=None, **kwargs):
+    def forward(
+        self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
+    ) -> Tensor:
         """
         Args:
             pred (Tensor): of shape (N, C, H, W). Predicted tensor.
@@ -136,14 +144,14 @@ class WeightedTVLoss(L1Loss):
         loss_weight (float): Loss weight. Default: 1.0.
     """
 
-    def __init__(self, loss_weight=1.0, reduction="mean") -> None:
+    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
         if reduction not in ["mean", "sum"]:
             raise ValueError(
                 f"Unsupported reduction mode: {reduction}. Supported ones are: mean | sum"
             )
         super().__init__(loss_weight=loss_weight, reduction=reduction)
 
-    def forward(self, pred, weight=None):
+    def forward(self, pred: Tensor, weight: Tensor | None = None):
         if weight is None:
             y_weight = None
             x_weight = None
@@ -163,7 +171,9 @@ class WeightedTVLoss(L1Loss):
 class ColorLoss(nn.Module):
     """Color loss"""
 
-    def __init__(self, criterion="l1", loss_weight=1.0, scale=4) -> None:
+    def __init__(
+        self, criterion: str = "l1", loss_weight: float = 1.0, scale: int = 4
+    ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
@@ -177,7 +187,7 @@ class ColorLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         input_yuv = rgb2ycbcr_pt(x)
         target_yuv = rgb2ycbcr_pt(y)
         # Get just the UV channels
@@ -194,7 +204,9 @@ class ColorLoss(nn.Module):
 class AverageLoss(nn.Module):
     """Averaging Downscale loss"""
 
-    def __init__(self, criterion="l1", loss_weight=1.0, scale=4) -> None:
+    def __init__(
+        self, criterion: str = "l1", loss_weight: float = 1.0, scale: int = 4
+    ) -> None:
         super().__init__()
         self.ds_f = torch.nn.AvgPool2d(kernel_size=int(scale))
         self.loss_weight = loss_weight
@@ -206,7 +218,7 @@ class AverageLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
 
 
@@ -214,7 +226,9 @@ class AverageLoss(nn.Module):
 class BicubicLoss(nn.Module):
     """Bicubic Downscale loss"""
 
-    def __init__(self, criterion="l1", loss_weight=1.0, scale=4) -> None:
+    def __init__(
+        self, criterion: str = "l1", loss_weight: float = 1.0, scale: int = 4
+    ) -> None:
         super().__init__()
         self.scale = scale
         self.ds_f = lambda x: torch.nn.Sequential(
@@ -235,13 +249,13 @@ class BicubicLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
 
 
 @LOSS_REGISTRY.register()
 class LumaLoss(nn.Module):
-    def __init__(self, criterion="l1", loss_weight=1.0) -> None:
+    def __init__(self, criterion: str = "l1", loss_weight: float = 1.0) -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
@@ -255,7 +269,7 @@ class LumaLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         x_luma = rgb_to_luma(x)
         y_luma = rgb_to_luma(y)
         loss = self.criterion(x_luma, y_luma) * self.loss_weight
@@ -264,7 +278,7 @@ class LumaLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class HSLuvLoss(nn.Module):
-    def __init__(self, criterion="l1", loss_weight=1.0) -> None:
+    def __init__(self, criterion: str = "l1", loss_weight: float = 1.0) -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
@@ -278,7 +292,7 @@ class HSLuvLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         x_hsluv = rgb_to_hsluv(x)
         y_hsluv = rgb_to_hsluv(y)
 
