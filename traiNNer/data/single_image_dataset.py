@@ -1,4 +1,5 @@
 from os import path as osp
+from typing import Any
 
 from torch.utils import data
 from torchvision.transforms.functional import normalize
@@ -25,7 +26,7 @@ class SingleImageDataset(data.Dataset):
             io_backend (dict): IO backend type and other kwarg.
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__()
         self.opt = opt
         # file client (io backend)
@@ -48,7 +49,7 @@ class SingleImageDataset(data.Dataset):
         else:
             self.paths = sorted(scandir(self.lq_folder, full_path=True))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> dict[str, Any]:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt

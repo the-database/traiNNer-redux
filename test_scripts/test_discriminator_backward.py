@@ -2,7 +2,7 @@ import copy
 import random
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 
 
 class ToyDiscriminator(nn.Module):
@@ -15,7 +15,7 @@ class ToyDiscriminator(nn.Module):
         self.linear = nn.Linear(4 * 6 * 6, 1)
         self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         feat = self.lrelu(self.bn0(self.conv0(x)))
         feat = self.lrelu(self.bn1(self.conv1(feat)))
         feat = feat.view(feat.size(0), -1)

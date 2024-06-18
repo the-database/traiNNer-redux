@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
+from torch import Tensor
 
 from ..metrics.metric_util import reorder_image, to_y_channel
 from ..utils.color_util import rgb2ycbcr_pt
@@ -10,13 +11,13 @@ from ..utils.registry import METRIC_REGISTRY
 
 @METRIC_REGISTRY.register()
 def calculate_psnr(
-    img,
-    img2,
-    crop_border,
+    img: np.ndarray,
+    img2: np.ndarray,
+    crop_border: int,
     input_order: str = "HWC",
     test_y_channel: bool = False,
     **kwargs,
-):
+) -> float:
     """Calculate PSNR (Peak Signal-to-Noise Ratio).
 
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
@@ -60,7 +61,9 @@ def calculate_psnr(
 
 
 @METRIC_REGISTRY.register()
-def calculate_psnr_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
+def calculate_psnr_pt(
+    img: Tensor, img2: Tensor, crop_border: int, test_y_channel: bool = False, **kwargs
+):
     """Calculate PSNR (Peak Signal-to-Noise Ratio) (PyTorch version).
 
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
@@ -96,8 +99,13 @@ def calculate_psnr_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
 
 @METRIC_REGISTRY.register()
 def calculate_ssim(
-    img, img2, crop_border, input_order="HWC", test_y_channel=False, **kwargs
-):
+    img: np.ndarray,
+    img2: np.ndarray,
+    crop_border: int,
+    input_order: str = "HWC",
+    test_y_channel: bool = False,
+    **kwargs,
+) -> float:
     """Calculate SSIM (structural similarity).
 
     ``Paper: Image quality assessment: From error visibility to structural similarity``
@@ -148,7 +156,9 @@ def calculate_ssim(
 
 
 @METRIC_REGISTRY.register()
-def calculate_ssim_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
+def calculate_ssim_pt(
+    img: Tensor, img2: Tensor, crop_border: int, test_y_channel: bool = False, **kwargs
+) -> float:
     """Calculate SSIM (structural similarity) (PyTorch version).
 
     ``Paper: Image quality assessment: From error visibility to structural similarity``
@@ -188,7 +198,7 @@ def calculate_ssim_pt(img, img2, crop_border, test_y_channel=False, **kwargs):
     return ssim
 
 
-def _ssim(img, img2):
+def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
     """Calculate SSIM (structural similarity) for one channel images.
 
     It is called by func:`calculate_ssim`.
@@ -221,7 +231,7 @@ def _ssim(img, img2):
     return ssim_map.mean()
 
 
-def _ssim_pth(img, img2):
+def _ssim_pth(img: Tensor, img2: Tensor) -> float:
     """Calculate SSIM (structural similarity) (PyTorch version).
 
     It is called by func:`calculate_ssim_pt`.

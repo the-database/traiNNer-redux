@@ -10,8 +10,10 @@ from ..metrics.metric_util import reorder_image, to_y_channel
 from ..utils.matlab_functions import imresize
 from ..utils.registry import METRIC_REGISTRY
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def estimate_aggd_param(block):
+
+def estimate_aggd_param(block: np.ndarray) -> tuple[float, float, float]:
     """Estimate AGGD (Asymmetric Generalized Gaussian Distribution) parameters.
 
     Args:
@@ -41,7 +43,7 @@ def estimate_aggd_param(block):
     return (alpha, beta_l, beta_r)
 
 
-def compute_feature(block):
+def compute_feature(block: np.ndarray) -> list[float]:
     """Compute features.
 
     Args:
@@ -69,13 +71,13 @@ def compute_feature(block):
 
 
 def niqe(
-    img,
-    mu_pris_param,
-    cov_pris_param,
-    gaussian_window,
-    block_size_h=96,
-    block_size_w=96,
-):
+    img: np.ndarray,
+    mu_pris_param: np.ndarray,
+    cov_pris_param: np.ndarray,
+    gaussian_window: np.ndarray,
+    block_size_h: int = 96,
+    block_size_w: int = 96,
+) -> float:
     """Calculate NIQE (Natural Image Quality Evaluator) metric.
 
     ``Paper: Making a "Completely Blind" Image Quality Analyzer``
@@ -163,7 +165,13 @@ def niqe(
 
 
 @METRIC_REGISTRY.register()
-def calculate_niqe(img, crop_border, input_order="HWC", convert_to="y", **kwargs):
+def calculate_niqe(
+    img: np.ndarray,
+    crop_border: int,
+    input_order: str = "HWC",
+    convert_to: str = "y",
+    **kwargs,
+) -> float:
     """Calculate NIQE (Natural Image Quality Evaluator) metric.
 
     ``Paper: Making a "Completely Blind" Image Quality Analyzer``
@@ -193,7 +201,7 @@ def calculate_niqe(img, crop_border, input_order="HWC", convert_to="y", **kwargs
     Returns:
         float: NIQE result.
     """
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
     # we use the official params estimated from the pristine dataset.
     niqe_pris_params = np.load(os.path.join(ROOT_DIR, "niqe_pris_params.npz"))
     mu_pris_param = niqe_pris_params["mu_pris_param"]

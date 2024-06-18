@@ -6,6 +6,7 @@ https://dsp.stackexchange.com/questions/35339/jpeg-dct-padding/35343#35343
 """
 
 import itertools
+from collections.abc import Callable
 
 import numpy as np
 import torch
@@ -13,7 +14,7 @@ from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
 # ------------------------ utils ------------------------#
-y_table = np.array(
+y_table_arr = np.array(
     [
         [16, 11, 10, 16, 24, 40, 51, 61],
         [12, 12, 14, 19, 26, 58, 60, 55],
@@ -26,13 +27,13 @@ y_table = np.array(
     ],
     dtype=np.float32,
 ).T
-y_table = nn.Parameter(torch.from_numpy(y_table))
-c_table = np.empty((8, 8), dtype=np.float32)
-c_table.fill(99)
-c_table[:4, :4] = np.array(
+y_table = nn.Parameter(torch.from_numpy(y_table_arr))
+c_table_arr = np.empty((8, 8), dtype=np.float32)
+c_table_arr.fill(99)
+c_table_arr[:4, :4] = np.array(
     [[17, 18, 24, 47], [18, 21, 26, 66], [24, 26, 56, 99], [47, 66, 99, 99]]
 ).T
-c_table = nn.Parameter(torch.from_numpy(c_table))
+c_table = nn.Parameter(torch.from_numpy(c_table_arr))
 
 
 def diff_round(x: Tensor) -> Tensor:
@@ -92,7 +93,7 @@ class ChromaSubsampling(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(self, image: Tensor) -> Tensor:
+    def forward(self, image: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         """
         Args:
             image(tensor): batch x height x width x 3
@@ -179,7 +180,7 @@ class YQuantize(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding: function) -> None:
+    def __init__(self, rounding: Callable[[Tensor], Tensor]) -> None:
         super().__init__()
         self.rounding = rounding
         self.y_table = y_table
@@ -209,7 +210,7 @@ class CQuantize(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding: function) -> None:
+    def __init__(self, rounding: Callable[[Tensor], Tensor]) -> None:
         super().__init__()
         self.rounding = rounding
         self.c_table = c_table
@@ -239,14 +240,16 @@ class CompressJpeg(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding: function = torch.round) -> None:
+    def __init__(self, rounding: Callable[[Tensor], Tensor] = torch.round) -> None:
         super().__init__()
         self.l1 = nn.Sequential(RGB2YCbCrJpeg(), ChromaSubsampling())
         self.l2 = nn.Sequential(BlockSplitting(), DCT8x8())
         self.c_quantize = CQuantize(rounding=rounding)
         self.y_quantize = YQuantize(rounding=rounding)
 
-    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
+    def forward(
+        self, image: Tensor, factor: float = 1
+    ) -> tuple[Tensor, Tensor, Tensor]:
         """
         Args:
             image(tensor): batch x 3 x height x width
@@ -431,7 +434,7 @@ class DeCompressJpeg(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding: function = torch.round) -> None:
+    def __init__(self, rounding: Callable[[Tensor], Tensor] = torch.round) -> None:
         super().__init__()
         self.c_dequantize = CDequantize()
         self.y_dequantize = YDequantize()

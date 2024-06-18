@@ -6,7 +6,9 @@ from ...metrics.psnr_ssim import calculate_psnr_pt, calculate_ssim_pt
 from ...utils import img2tensor
 
 
-def test(img_path, img_path2, crop_border, test_y_channel=False) -> None:
+def test(
+    img_path: str, img_path2: str, crop_border: int, test_y_channel: bool = False
+) -> None:
     img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
     img2 = cv2.imread(img_path2, cv2.IMREAD_UNCHANGED)
 

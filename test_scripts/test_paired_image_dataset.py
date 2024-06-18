@@ -5,7 +5,7 @@ import torchvision.utils
 from traiNNer.data import build_dataloader, build_dataset
 
 
-def main(mode="folder") -> None:
+def main(mode: str = "folder") -> None:
     """Test paired image dataset.
 
     Args:

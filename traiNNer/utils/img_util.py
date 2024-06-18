@@ -11,7 +11,7 @@ from torchvision.utils import make_grid
 
 
 def img2tensor(
-    imgs: np.ndarray, color: bool, bgr2rgb: bool = True, float32: bool = True
+    imgs: np.ndarray, color: bool = True, bgr2rgb: bool = True, float32: bool = True
 ) -> Tensor:
     """Numpy array to tensor.
 

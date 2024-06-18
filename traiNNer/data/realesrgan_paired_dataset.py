@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from torch.utils import data
 from torchvision.transforms.functional import normalize
@@ -37,7 +38,7 @@ class RealESRGANPairedDataset(data.Dataset):
         phase (str): 'train' or 'val'.
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__()
         self.opt = opt
         self.file_client = None
@@ -75,7 +76,7 @@ class RealESRGANPairedDataset(data.Dataset):
                 [self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl
             )
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> dict[str, Any]:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt

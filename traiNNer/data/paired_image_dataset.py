@@ -1,3 +1,5 @@
+from typing import Any
+
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
@@ -39,7 +41,7 @@ class PairedImageDataset(data.Dataset):
         phase (str): 'train' or 'val'.
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__()
         self.opt = opt
         # file client (io backend)
@@ -73,7 +75,7 @@ class PairedImageDataset(data.Dataset):
                 [self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl
             )
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> dict[str, Any]:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
@@ -88,16 +90,16 @@ class PairedImageDataset(data.Dataset):
 
         try:
             img_gt = imfrombytes(img_bytes, float32=True)
-        except AttributeError:
-            raise AttributeError(gt_path)
+        except AttributeError as err:
+            raise AttributeError(gt_path) from err
 
         lq_path = self.paths[index]["lq_path"]
         img_bytes = self.file_client.get(lq_path, "lq")
 
         try:
             img_lq = imfrombytes(img_bytes, float32=True)
-        except AttributeError:
-            raise AttributeError(lq_path)
+        except AttributeError as err:
+            raise AttributeError(lq_path) from err
 
         # augmentation for training
         if self.opt["phase"] == "train":
