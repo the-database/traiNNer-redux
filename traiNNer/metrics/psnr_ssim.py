@@ -10,7 +10,12 @@ from ..utils.registry import METRIC_REGISTRY
 
 @METRIC_REGISTRY.register()
 def calculate_psnr(
-    img, img2, crop_border, input_order="HWC", test_y_channel=False, **kwargs
+    img,
+    img2,
+    crop_border,
+    input_order: str = "HWC",
+    test_y_channel: bool = False,
+    **kwargs,
 ):
     """Calculate PSNR (Peak Signal-to-Noise Ratio).
 

@@ -3,7 +3,7 @@ from os import path as osp
 import cv2
 import numpy as np
 import torch
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: N812
 
 from ..utils import img2tensor, scandir
 from .transforms import mod_crop

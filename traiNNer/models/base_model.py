@@ -66,7 +66,7 @@ class BaseModel:
         else:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
-    def _initialize_best_metric_results(self, dataset_name) -> None:
+    def _initialize_best_metric_results(self, dataset_name: str) -> None:
         """Initialize the best metric results dict for recording the best metric value and iteration."""
         if (
             hasattr(self, "best_metric_results")
@@ -85,7 +85,7 @@ class BaseModel:
         self.best_metric_results[dataset_name] = record
 
     def _update_best_metric_result(
-        self, dataset_name, metric, val, current_iter
+        self, dataset_name: str, metric: str, val, current_iter: int
     ) -> None:
         if self.best_metric_results[dataset_name][metric]["better"] == "higher":
             if val >= self.best_metric_results[dataset_name][metric]["val"]:
@@ -95,7 +95,7 @@ class BaseModel:
             self.best_metric_results[dataset_name][metric]["val"] = val
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
-    def model_ema(self, decay=0.999) -> None:
+    def model_ema(self, decay: float = 0.999) -> None:
         net_g = self.get_bare_model(self.net_g)
 
         net_g_params = dict(net_g.named_parameters())

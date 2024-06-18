@@ -1,5 +1,5 @@
 from torch import nn
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: N812
 from torch.nn.utils import spectral_norm
 
 from ..utils.registry import ARCH_REGISTRY

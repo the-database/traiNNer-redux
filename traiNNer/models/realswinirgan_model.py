@@ -1,5 +1,5 @@
 import torch
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: N812
 
 from ..utils.registry import MODEL_REGISTRY
 from .realesrgan_model import RealESRGANModel

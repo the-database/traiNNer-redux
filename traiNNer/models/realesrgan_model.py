@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 import torch
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: N812
 
 from ..data.degradations import (
     random_add_gaussian_noise_pt,

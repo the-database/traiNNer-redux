@@ -1,13 +1,18 @@
 import math
 import os
+from collections.abc import Sequence
 
 import cv2
 import numpy as np
 import torch
+from cv2.typing import MatLike
+from torch import Tensor
 from torchvision.utils import make_grid
 
 
-def img2tensor(imgs, color, bgr2rgb=True, float32=True):
+def img2tensor(
+    imgs: np.ndarray, color: bool, bgr2rgb: bool = True, float32: bool = True
+) -> Tensor:
     """Numpy array to tensor.
 
     Args:
@@ -20,7 +25,7 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
             one element, just return tensor.
     """
 
-    def _totensor(img, color, bgr2rgb, float32):
+    def _totensor(img: np.ndarray, color: bool, bgr2rgb: bool, float32: bool) -> Tensor:
         if color:
             if img.shape[2] == 3 and bgr2rgb:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -43,7 +48,12 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
         return _totensor(imgs, color, bgr2rgb, float32)
 
 
-def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
+def tensor2img(
+    tensor: Tensor,
+    rgb2bgr: bool = True,
+    out_type: np.dtype = np.uint8,
+    min_max: tuple[int, int] = (0, 1),
+) -> np.ndarray | list[np.ndarray]:
     """Convert torch Tensors into image numpy arrays.
 
     After clamping to [min, max], values will be normalized to [0, 1].
@@ -108,7 +118,9 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
     return result
 
 
-def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
+def tensor2img_fast(
+    tensor: Tensor, rgb2bgr: bool = True, min_max: tuple[int, int] = (0, 1)
+) -> np.ndarray:
     """This implementation is slightly faster than tensor2img.
     It now only supports torch tensor with shape (1, c, h, w).
 
@@ -125,7 +137,7 @@ def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
     return output
 
 
-def imfrombytes(content, flag="color", float32=False):
+def imfrombytes(content, flag: str = "color", float32: bool = False) -> MatLike:
     """Read an image from bytes.
 
     Args:
@@ -150,7 +162,12 @@ def imfrombytes(content, flag="color", float32=False):
     return img
 
 
-def imwrite(img, file_path, params=None, auto_mkdir=True) -> None:
+def imwrite(
+    img: np.ndarray,
+    file_path: str,
+    params: Sequence[int] | None = None,
+    auto_mkdir: bool = True,
+) -> None:
     """Write image to file.
 
     Args:
@@ -171,7 +188,9 @@ def imwrite(img, file_path, params=None, auto_mkdir=True) -> None:
         raise OSError("Failed in writing images.")
 
 
-def crop_border(imgs, crop_border):
+def crop_border(
+    imgs: np.ndarray | list[np.ndarray], crop_border: int
+) -> list[np.ndarray]:
     """Crop borders of images.
 
     Args:
