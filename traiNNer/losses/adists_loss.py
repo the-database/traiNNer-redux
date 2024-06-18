@@ -3,15 +3,21 @@ import math
 import numpy as np
 import torch
 import torchvision.transforms.functional as tf
-from torch import nn
-from torch.nn import functional as F
+from torch import Tensor, nn
+from torch.nn import functional as F  # noqa: N812
 from torchvision import models
 from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 class Downsample(nn.Module):
-    def __init__(self, filter_size=5, stride=2, channels=None, pad_off=0) -> None:
+    def __init__(
+        self,
+        filter_size: int = 5,
+        stride: int = 2,
+        channels: int | None = None,
+        pad_off: int = 0,
+    ) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
         self.stride = stride
@@ -23,7 +29,7 @@ class Downsample(nn.Module):
             "filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1))
         )
 
-    def forward(self, input):
+    def forward(self, input: Tensor) -> Tensor:
         input = input**2
         out = F.conv2d(
             input,
@@ -38,7 +44,12 @@ class Downsample(nn.Module):
 @LOSS_REGISTRY.register()
 # https://github.com/dingkeyan93/A-DISTS
 class ADISTSLoss(torch.nn.Module):
-    def __init__(self, window_size=21, resize_input=False, loss_weight=1.0) -> None:
+    def __init__(
+        self,
+        window_size: int = 21,
+        resize_input: bool = False,
+        loss_weight: float = 1.0,
+    ) -> None:
         super().__init__()
         self.resize_input = resize_input
         self.loss_weight = loss_weight
@@ -81,7 +92,7 @@ class ADISTSLoss(torch.nn.Module):
                 self.create_window(self.window_size, self.window_size / 3, self.chns[k])
             )
 
-    def compute_prob(self, feats):
+    def compute_prob(self, feats: list[Tensor]) -> list[Tensor]:
         ps_list = []
         x = feats[0]
         pad = nn.ReflectionPad2d(0)
@@ -139,7 +150,7 @@ class ADISTSLoss(torch.nn.Module):
             ps_list.append(ps_prod)
         return ps_list[::-1]
 
-    def gaussian(self, window_size, sigma):
+    def gaussian(self, window_size: int, sigma: int) -> Tensor:
         gauss = torch.Tensor(
             [
                 math.exp(-((x - window_size // 2) ** 2) / float(2 * sigma**2))
@@ -148,13 +159,15 @@ class ADISTSLoss(torch.nn.Module):
         )
         return gauss / gauss.sum()
 
-    def create_window(self, window_size, window_sigma, channel):
-        _1D_window = self.gaussian(window_size, window_sigma).unsqueeze(1)
-        _2D_window = _1D_window.mm(_1D_window.t()).float().unsqueeze(0).unsqueeze(0)
-        window = _2D_window.expand(channel, 1, window_size, window_size).contiguous()
+    def create_window(
+        self, window_size: int, window_sigma: int, channel: int
+    ) -> nn.Parameter:
+        _1d_window = self.gaussian(window_size, window_sigma).unsqueeze(1)
+        _2d_window = _1d_window.mm(_1d_window.t()).float().unsqueeze(0).unsqueeze(0)
+        window = _2d_window.expand(channel, 1, window_size, window_size).contiguous()
         return nn.Parameter(window, requires_grad=False)
 
-    def forward_once(self, x):
+    def forward_once(self, x: Tensor) -> list[Tensor]:
         if self.resize_input:
             # skip resize if dimensions already match
             if x.shape[2] != VGG_PATCH_SIZE or x.shape[3] != VGG_PATCH_SIZE:
@@ -184,7 +197,7 @@ class ADISTSLoss(torch.nn.Module):
             outs = [x, h_relu1_2, h_relu2_2, h_relu3_3, h_relu4_3]
         return outs
 
-    def entropy(self, feat):
+    def entropy(self, feat: Tensor) -> Tensor:
         c0 = 1e-12
         b, c, h, w = feat.shape
         feat = F.normalize(F.relu(feat), dim=(2, 3))
@@ -195,7 +208,7 @@ class ADISTSLoss(torch.nn.Module):
         return weight * c
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(self, x, y):
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         assert x.shape == y.shape
 
         feats_x = self.forward_once(x)
@@ -204,7 +217,7 @@ class ADISTSLoss(torch.nn.Module):
         ps_x = self.compute_prob(feats_x)
 
         pad = nn.ReflectionPad2d(0)
-        D = 0
+        d = 0
         weight = []
         for k in range(len(self.chns)):
             weight.append(self.entropy(feats_x[k]))
@@ -276,11 +289,11 @@ class ADISTSLoss(torch.nn.Module):
                 y_var = ((feat_y - y_mean) ** 2).mean([2, 3], keepdim=True)
                 xy_cov = (feat_x * feat_y).mean([2, 3], keepdim=True) - x_mean * y_mean
 
-            T = (2 * x_mean * y_mean + 1e-6) / (x_mean**2 + y_mean**2 + 1e-6)
-            S = (2 * xy_cov + 1e-6) / (x_var + y_var + 1e-6)
+            t = (2 * x_mean * y_mean + 1e-6) / (x_mean**2 + y_mean**2 + 1e-6)
+            s = (2 * xy_cov + 1e-6) / (x_var + y_var + 1e-6)
 
             ps = ps_x[k].expand(x_mean.shape[0], x_mean.shape[1], -1, -1)
             pt = 1 - ps
-            D_map = (pt * T + ps * S) * weight_list[k].unsqueeze(3)
-            D = D + D_map.mean([2, 3]).sum(1)
-        return (1 - D.mean()) * self.loss_weight
+            d_map = (pt * t + ps * s) * weight_list[k].unsqueeze(3)
+            d = d + d_map.mean([2, 3]).sum(1)
+        return (1 - d.mean()) * self.loss_weight
