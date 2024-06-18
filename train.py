@@ -180,6 +180,9 @@ def train_pipeline(root_path: str) -> None:
     logger.info(get_env_info())
     logger.info(dict2str(opt))
 
+    if opt["deterministic"]:
+        logger.info("Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.", opt["manual_seed"])
+
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
 
