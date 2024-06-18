@@ -2,14 +2,12 @@ import datetime
 import logging
 import math
 import time
-from collections.abc import Mapping
 from os import path as osp
 from typing import Any
 
 import torch
 from torch.utils.data import DataLoader
-from torch.utils.data.sampler import Sampler
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 
 # SCRIPT_DIR = osp.dirname(osp.abspath(__file__))
 # sys.path.append(osp.dirname(SCRIPT_DIR))
@@ -34,7 +32,7 @@ from traiNNer.utils.config import Config
 from traiNNer.utils.options import copy_opt_file, dict2str
 
 
-def init_tb_loggers(opt: Mapping[str, Any]) -> SummaryWriter | None:
+def init_tb_loggers(opt: dict[str, Any]) -> SummaryWriter | None:
     # initialize wandb logger before tensorboard logger to allow proper sync
     if (
         (opt["logger"].get("wandb") is not None)
@@ -54,10 +52,16 @@ def init_tb_loggers(opt: Mapping[str, Any]) -> SummaryWriter | None:
 
 
 def create_train_val_dataloader(
-    opt: Mapping[str, Any], logger: logging.Logger
-) -> tuple[DataLoader | None, Sampler | None, list[DataLoader], int, int]:
+    opt: dict[str, Any], logger: logging.Logger
+) -> tuple[DataLoader | None, EnlargedSampler | None, list[DataLoader], int, int]:
     # create train and val dataloaders
-    train_loader, val_loaders = None, []
+    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
+        None,
+        None,
+        [],
+        0,
+        0,
+    )
     for phase, dataset_opt in opt["datasets"].items():
         if phase == "train":
             dataset_enlarge_ratio = dataset_opt.get("dataset_enlarge_ratio", 1)
@@ -119,7 +123,7 @@ def create_train_val_dataloader(
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
-def load_resume_state(opt: Mapping[str, Any]) -> Any | None:
+def load_resume_state(opt: dict[str, Any]) -> Any | None:
     resume_state_path = None
     if opt["auto_resume"]:
         state_path = osp.join("experiments", opt["name"], "training_states")
@@ -183,6 +187,11 @@ def train_pipeline(root_path: str) -> None:
     # create train and validation dataloaders
     result = create_train_val_dataloader(opt, logger)
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = result
+
+    if train_loader is None or train_sampler is None:
+        raise ValueError(
+            "Failed to initialize training dataloader. Make sure train dataset is defined in datasets."
+        )
 
     # create model
     model = build_model(opt)
