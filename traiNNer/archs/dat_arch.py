@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from spandrel.architectures.DAT import DAT
 from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
@@ -8,10 +10,10 @@ def dat(
     in_chans: int = 3,
     img_size: int = 64,
     img_range: float = 1.0,
-    split_size: tuple[int] = (8, 32),
-    depth: tuple[int] = (6, 6, 6, 6, 6, 6),
+    split_size: Sequence[int] = (8, 32),
+    depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
-    num_heads: tuple[int] = (6, 6, 6, 6, 6, 6),
+    num_heads: Sequence[int] = (6, 6, 6, 6, 6, 6),
     expansion_factor: int = 4,
     resi_connection: str = "1conv",
     **kwargs,

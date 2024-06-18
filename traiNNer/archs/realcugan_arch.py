@@ -17,13 +17,18 @@ def realcugan(
     if fast and scale != 2:
         raise ValueError(f"Fast is only supported on scale 2, not: {scale}")
 
+    if pro and fast:
+        raise ValueError(
+            "Pro is not supported with fast enabled, disable pro or disable fast."
+        )
+
     if scale == 4:
         return UpCunet4x(pro=pro, **kwargs)
     elif scale == 3:
         return UpCunet3x(pro=pro, **kwargs)
     elif scale == 2:
         if fast:
-            return UpCunet2x_fast(pro=pro, **kwargs)
+            return UpCunet2x_fast(**kwargs)
         return UpCunet2x(pro=pro)
 
     raise ValueError(f"Scale must be 2, 3, or 4, not: {scale}")

@@ -1,4 +1,5 @@
 import functools
+from collections.abc import Callable
 
 import torch
 from torch import Tensor
@@ -59,7 +60,7 @@ def weight_reduce_loss(
     return loss
 
 
-def weighted_loss(loss_func: function) -> function:
+def weighted_loss(loss_func: Callable) -> Callable:
     """Create a weighted version of a given loss function.
 
     To use this decorator, the loss function must have the signature like

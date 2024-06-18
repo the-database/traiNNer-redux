@@ -10,7 +10,6 @@ def omnisr(
     bias: bool = True,
     window_size: int = 8,
     pe: bool = True,
-    ffn_bias: bool = True,
     **kwargs,
 ) -> OmniSR:
     return OmniSR(
@@ -20,6 +19,5 @@ def omnisr(
         bias=bias,
         window_size=window_size,
         pe=pe,
-        ffn_bias=ffn_bias,
         **kwargs,
     )

@@ -254,7 +254,7 @@ class VGGFeatureExtractor(nn.Module):
                 "std", torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
             )
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> dict[str, Tensor]:
         """Forward function.
 
         Args:

@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from spandrel_extra_arches.architectures.SRFormer import SRFormer
 from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
@@ -9,9 +11,9 @@ def srformer(
     img_size: int = 48,
     window_size: int = 24,
     img_range: float = 1.0,
-    depths: tuple[int] = (6, 6, 6, 6, 6, 6),
+    depths: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
-    num_heads: tuple[int] = (6, 6, 6, 6, 6, 6),
+    num_heads: Sequence[int] = (6, 6, 6, 6, 6, 6),
     mlp_ratio: int = 2,
     upsampler: str = "pixelshuffle",
     resi_connection: str = "1conv",

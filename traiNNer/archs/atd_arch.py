@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from spandrel.architectures.ATD import ATD
 from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
@@ -8,7 +10,7 @@ def atd(
     in_chans: int = 3,
     img_size: int = 96,
     embed_dim: int = 210,
-    depths: tuple[int] = (
+    depths: Sequence[int] = (
         6,
         6,
         6,
@@ -16,7 +18,7 @@ def atd(
         6,
         6,
     ),
-    num_heads: tuple[int] = (
+    num_heads: Sequence[int] = (
         6,
         6,
         6,
@@ -33,7 +35,6 @@ def atd(
     mlp_ratio: int = 2,
     upsampler: str = "pixelshuffle",
     resi_connection: str = "1conv",
-    use_checkpoint: bool = True,
     **kwargs,
 ) -> ATD:
     return ATD(
@@ -52,7 +53,6 @@ def atd(
         mlp_ratio=mlp_ratio,
         upsampler=upsampler,
         resi_connection=resi_connection,
-        use_checkpoint=use_checkpoint,
         **kwargs,
     )
 
@@ -85,6 +85,5 @@ def atd_light(**kwargs) -> ATD:
         mlp_ratio=1,
         upsampler="pixelshuffledirect",
         resi_connection="1conv",
-        use_checkpoint=False,
         **kwargs,
     )

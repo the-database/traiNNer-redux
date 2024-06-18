@@ -2,6 +2,7 @@
 
 
 from collections.abc import Callable, ItemsView, Iterator, KeysView
+from typing import overload
 
 
 class Registry:
@@ -50,9 +51,17 @@ class Registry:
         )
         self._obj_map[name] = obj
 
+    @overload
+    def register(
+        self, obj: None = None, suffix: str | None = None
+    ) -> Callable | type: ...
+
+    @overload
+    def register(self, obj: Callable | type, suffix: str | None = None) -> None: ...
+
     def register(
         self, obj: Callable | type | None = None, suffix: str | None = None
-    ) -> None:
+    ) -> Callable | type | None:
         """
         Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not.
