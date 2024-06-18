@@ -6,8 +6,13 @@ from typing import Any
 
 import pytorch_optimizer
 import torch
+from pytorch_optimizer.base.types import PARAMETERS
 from spandrel import ModelLoader
+from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard.writer import SummaryWriter
 
 from ..ops.batchaug import BatchAugment
 from ..utils import get_root_logger
@@ -29,19 +34,25 @@ class BaseModel:
         self.loss_samples = 0
         self.model_loader = ModelLoader()
 
-    def feed_data(self, data) -> None:
+    def feed_data(self, data: dict[str, Any]) -> None:
         pass
 
-    def optimize_parameters(self, current_iter) -> None:
+    def optimize_parameters(self, current_iter: int) -> None:
         pass
 
     def get_current_visuals(self) -> dict[str, Any]:
         pass
 
-    def save(self, epoch, current_iter) -> None:
+    def save(self, epoch: int, current_iter: int) -> None:
         """Save networks and training state."""
 
-    def validation(self, dataloader, current_iter, tb_logger, save_img=False) -> None:
+    def validation(
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool = False,
+    ) -> None:
         """Validation function.
 
         Args:
@@ -95,14 +106,14 @@ class BaseModel:
                 net_g_params[k].data, alpha=1 - decay
             )
 
-    def get_current_log(self):
+    def get_current_log(self) -> dict[str, float | torch.Tensor]:
         return {k: v / self.loss_samples for k, v in self.log_dict.items()}
 
     def reset_current_log(self) -> None:
         self.log_dict = {}
         self.loss_samples = 0
 
-    def model_to_device(self, net):
+    def model_to_device(self, net: nn.Module) -> nn.Module:
         """Model to device. It also warps models with DistributedDataParallel
         or DataParallel.
 
@@ -121,7 +132,9 @@ class BaseModel:
             net = DataParallel(net)
         return net
 
-    def get_optimizer(self, optim_type, params, lr, **kwargs):
+    def get_optimizer(
+        self, optim_type: str, params: PARAMETERS, lr: float, **kwargs
+    ) -> Optimizer:
         if optim_type == "AdamP":
             optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
         elif optim_type == "Lamb":
@@ -182,7 +195,7 @@ class BaseModel:
         return net
 
     @master_only
-    def print_network(self, net) -> None:
+    def print_network(self, net: nn.Module) -> None:
         """Print the str and parameter number of a network.
 
         Args:
@@ -218,7 +231,7 @@ class BaseModel:
             init_lr_groups_l.append([v["initial_lr"] for v in optimizer.param_groups])
         return init_lr_groups_l
 
-    def update_learning_rate(self, current_iter, warmup_iter=-1) -> None:
+    def update_learning_rate(self, current_iter: int, warmup_iter: int = -1) -> None:
         """Update learning rate.
 
         Args:
@@ -247,7 +260,7 @@ class BaseModel:
     @master_only
     def save_network(
         self,
-        net,
+        net: nn.Module | list[nn.Module],
         net_label: str,
         current_iter: int,
         param_key: str | list[str] = "params",
@@ -351,7 +364,13 @@ class BaseModel:
             print(e)
             return False
 
-    def load_network(self, net, load_path, strict=True, param_key="params") -> None:
+    def load_network(
+        self,
+        net: nn.Module,
+        load_path: str,
+        strict: bool = True,
+        param_key: str = "params",
+    ) -> None:
         """Load network.
 
         Args:
@@ -386,7 +405,7 @@ class BaseModel:
             net.load_state_dict(load_net, strict=strict)
 
     @master_only
-    def save_training_state(self, epoch, current_iter) -> None:
+    def save_training_state(self, epoch: int, current_iter: int) -> None:
         """Save training states during training, which will be used for
         resuming.
 
@@ -427,7 +446,7 @@ class BaseModel:
                 logger.warning(f"Still cannot save {save_path}. Just ignore it.")
                 # raise IOError(f'Cannot save {save_path}.')
 
-    def resume_training(self, resume_state) -> None:
+    def resume_training(self, resume_state: dict[str, Any]) -> None:
         """Reload the optimizers and schedulers for resumed training.
 
         Args:
@@ -446,7 +465,7 @@ class BaseModel:
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
 
-    def reduce_loss_dict(self, loss_dict):
+    def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
 
         In distributed training, it averages the losses among different GPUs .
