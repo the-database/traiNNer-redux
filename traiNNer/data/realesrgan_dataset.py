@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch.utils import data
-from traiNNer.utils import rng
+from traiNNer.utils import RNG
 
 from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor
 from ..utils.registry import DATASET_REGISTRY
@@ -146,12 +146,12 @@ class RealESRGANDataset(data.Dataset):
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if rng.uniform() < self.opt["sinc_prob"]:
+        if RNG.get_rng().uniform() < self.opt["sinc_prob"]:
             # this sinc filter setting is for kernels ranging from [7, 21]
             if kernel_size < 13:
-                omega_c = rng.uniform(np.pi / 3, np.pi)
+                omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
             else:
-                omega_c = rng.uniform(np.pi / 5, np.pi)
+                omega_c = RNG.get_rng().uniform(np.pi / 5, np.pi)
             kernel = circular_lowpass_kernel(omega_c, kernel_size, pad_to=False)
         else:
             kernel = random_mixed_kernels(
@@ -171,11 +171,11 @@ class RealESRGANDataset(data.Dataset):
 
         # ------------------------ Generate kernels (used in the second degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if rng.uniform() < self.opt["sinc_prob2"]:
+        if RNG.get_rng().uniform() < self.opt["sinc_prob2"]:
             if kernel_size < 13:
-                omega_c = rng.uniform(np.pi / 3, np.pi)
+                omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
             else:
-                omega_c = rng.uniform(np.pi / 5, np.pi)
+                omega_c = RNG.get_rng().uniform(np.pi / 5, np.pi)
             kernel2 = circular_lowpass_kernel(omega_c, kernel_size, pad_to=False)
         else:
             kernel2 = random_mixed_kernels(
@@ -195,9 +195,9 @@ class RealESRGANDataset(data.Dataset):
         kernel2 = np.pad(kernel2, ((pad_size, pad_size), (pad_size, pad_size)))
 
         # ------------------------------------- the final sinc kernel ------------------------------------- #
-        if rng.uniform() < self.opt["final_sinc_prob"]:
+        if RNG.get_rng().uniform() < self.opt["final_sinc_prob"]:
             kernel_size = random.choice(self.kernel_range)
-            omega_c = rng.uniform(np.pi / 3, np.pi)
+            omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(omega_c, kernel_size, pad_to=21)
             sinc_kernel = torch.FloatTensor(sinc_kernel)
         else:

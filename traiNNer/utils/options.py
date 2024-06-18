@@ -3,6 +3,7 @@ import os
 from collections import OrderedDict
 from os import path as osp
 from typing import Any
+import random
 
 import torch
 import yaml
@@ -142,9 +143,7 @@ def parse_options(
     seed = opt.get("manual_seed")
     opt["deterministic"] = seed is not None
     if opt["deterministic"]:
-        import secrets
-
-        seed = secrets.randbits(128)
+        seed = random.randint(1024, 10000)
         opt["manual_seed"] = seed
     set_random_seed(seed + opt["rank"])
 

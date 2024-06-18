@@ -142,21 +142,20 @@ class MSSIMLoss(nn.Module):
         if self.cosim:
             cosine_term = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
 
-        ms_components = []
+        msssim = torch.Tensor(1., device=x.device)
+
         for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
             ssim, cs = self._ssim(x, y)
             ssim = ssim.mean()
             cs = cs.mean()
 
             if i == 4:
-                ms_components.append(ssim**w)
+                msssim *= ssim**w
             else:
-                ms_components.append(cs**w)
+                msssim *= cs**w
                 padding = [s % 2 for s in x.shape[2:]]  # spatial padding
                 x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
-
-        msssim = math.prod(ms_components)  # equ 7 in ref2
 
         if self.cosim:
             msssim -= self.cosim_lambda * cosine_term

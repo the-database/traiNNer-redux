@@ -9,7 +9,7 @@ from scipy import special
 from scipy.stats import multivariate_normal
 from torch import Tensor
 from torchvision.transforms.functional import rgb_to_grayscale
-from traiNNer.utils import rng
+from traiNNer.utils import RNG
 
 # -------------------------------------------------------------------- #
 # --------------------------- blur kernels --------------------------- #
@@ -235,12 +235,12 @@ def random_bivariate_gaussian(
     """
     assert kernel_size % 2 == 1, "Kernel size must be an odd number."
     assert sigma_x_range[0] < sigma_x_range[1], "Wrong sigma_x_range."
-    sigma_x = rng.uniform(sigma_x_range[0], sigma_x_range[1])
+    sigma_x = RNG.get_rng().uniform(sigma_x_range[0], sigma_x_range[1])
     if isotropic is False:
         assert sigma_y_range[0] < sigma_y_range[1], "Wrong sigma_y_range."
         assert rotation_range[0] < rotation_range[1], "Wrong rotation_range."
-        sigma_y = rng.uniform(sigma_y_range[0], sigma_y_range[1])
-        rotation = rng.uniform(rotation_range[0], rotation_range[1])
+        sigma_y = RNG.get_rng().uniform(sigma_y_range[0], sigma_y_range[1])
+        rotation = RNG.get_rng().uniform(rotation_range[0], rotation_range[1])
     else:
         sigma_y = sigma_x
         rotation = 0
@@ -252,7 +252,7 @@ def random_bivariate_gaussian(
     # add multiplicative noise
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], "Wrong noise range."
-        noise = rng.uniform(noise_range[0], noise_range[1], size=kernel.shape)
+        noise = RNG.get_rng().uniform(noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
     kernel = kernel / np.sum(kernel)
     return kernel
@@ -285,21 +285,21 @@ def random_bivariate_generalized_gaussian(
     """
     assert kernel_size % 2 == 1, "Kernel size must be an odd number."
     assert sigma_x_range[0] < sigma_x_range[1], "Wrong sigma_x_range."
-    sigma_x = rng.uniform(sigma_x_range[0], sigma_x_range[1])
+    sigma_x = RNG.get_rng().uniform(sigma_x_range[0], sigma_x_range[1])
     if isotropic is False:
         assert sigma_y_range[0] < sigma_y_range[1], "Wrong sigma_y_range."
         assert rotation_range[0] < rotation_range[1], "Wrong rotation_range."
-        sigma_y = rng.uniform(sigma_y_range[0], sigma_y_range[1])
-        rotation = rng.uniform(rotation_range[0], rotation_range[1])
+        sigma_y = RNG.get_rng().uniform(sigma_y_range[0], sigma_y_range[1])
+        rotation = RNG.get_rng().uniform(rotation_range[0], rotation_range[1])
     else:
         sigma_y = sigma_x
         rotation = 0
 
     # assume beta_range[0] < 1 < beta_range[1]
-    if rng.uniform() < 0.5:
-        beta = rng.uniform(beta_range[0], 1)
+    if RNG.get_rng().uniform() < 0.5:
+        beta = RNG.get_rng().uniform(beta_range[0], 1)
     else:
-        beta = rng.uniform(1, beta_range[1])
+        beta = RNG.get_rng().uniform(1, beta_range[1])
 
     kernel = bivariate_generalized_gaussian(
         kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic
@@ -308,7 +308,7 @@ def random_bivariate_generalized_gaussian(
     # add multiplicative noise
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], "Wrong noise range."
-        noise = rng.uniform(noise_range[0], noise_range[1], size=kernel.shape)
+        noise = RNG.get_rng().uniform(noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
     kernel = kernel / np.sum(kernel)
     return kernel
@@ -341,21 +341,21 @@ def random_bivariate_plateau(
     """
     assert kernel_size % 2 == 1, "Kernel size must be an odd number."
     assert sigma_x_range[0] < sigma_x_range[1], "Wrong sigma_x_range."
-    sigma_x = rng.uniform(sigma_x_range[0], sigma_x_range[1])
+    sigma_x = RNG.get_rng().uniform(sigma_x_range[0], sigma_x_range[1])
     if isotropic is False:
         assert sigma_y_range[0] < sigma_y_range[1], "Wrong sigma_y_range."
         assert rotation_range[0] < rotation_range[1], "Wrong rotation_range."
-        sigma_y = rng.uniform(sigma_y_range[0], sigma_y_range[1])
-        rotation = rng.uniform(rotation_range[0], rotation_range[1])
+        sigma_y = RNG.get_rng().uniform(sigma_y_range[0], sigma_y_range[1])
+        rotation = RNG.get_rng().uniform(rotation_range[0], rotation_range[1])
     else:
         sigma_y = sigma_x
         rotation = 0
 
     # TODO: this may be not proper
-    if rng.uniform() < 0.5:
-        beta = rng.uniform(beta_range[0], 1)
+    if RNG.get_rng().uniform() < 0.5:
+        beta = RNG.get_rng().uniform(beta_range[0], 1)
     else:
-        beta = rng.uniform(1, beta_range[1])
+        beta = RNG.get_rng().uniform(1, beta_range[1])
 
     kernel = bivariate_plateau(
         kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic
@@ -363,7 +363,7 @@ def random_bivariate_plateau(
     # add multiplicative noise
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], "Wrong noise range."
-        noise = rng.uniform(noise_range[0], noise_range[1], size=kernel.shape)
+        noise = RNG.get_rng().uniform(noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
     kernel = kernel / np.sum(kernel)
 
@@ -524,10 +524,10 @@ def generate_gaussian_noise(
             float32.
     """
     if gray_noise:
-        noise = np.float32(rng.randn(*(img.shape[0:2]))) * sigma / 255.0
+        noise = np.float32(RNG.get_rng().randn(*(img.shape[0:2]))) * sigma / 255.0
         noise = np.expand_dims(noise, axis=2).repeat(3, axis=2)
     else:
-        noise = np.float32(rng.randn(*(img.shape))) * sigma / 255.0
+        noise = np.float32(RNG.get_rng().randn(*(img.shape))) * sigma / 255.0
     return noise
 
 
@@ -631,8 +631,8 @@ def random_generate_gaussian_noise(
     sigma_range: tuple[float, float] = (0, 10),
     gray_prob: float | np.ndarray = 0,
 ) -> np.ndarray:
-    sigma = rng.uniform(sigma_range[0], sigma_range[1])
-    if rng.uniform() < gray_prob:
+    sigma = RNG.get_rng().uniform(sigma_range[0], sigma_range[1])
+    if RNG.get_rng().uniform() < gray_prob:
         gray_noise = True
     else:
         gray_noise = False
@@ -715,7 +715,7 @@ def generate_poisson_noise(
     img = np.clip((img * 255.0).round(), 0, 255) / 255.0
     vals = len(np.unique(img))
     vals = 2 ** np.ceil(np.log2(vals))
-    out = np.float32(rng.poisson(img * vals) / float(vals))
+    out = np.float32(RNG.get_rng().poisson(img * vals) / float(vals))
     noise = out - img
     if gray_noise:
         noise = np.repeat(noise[:, :, np.newaxis], 3, axis=2)
@@ -840,8 +840,8 @@ def random_generate_poisson_noise(
     scale_range: tuple[float, float] = (0, 1.0),
     gray_prob: float | np.ndarray = 0,
 ) -> np.ndarray:
-    scale = rng.uniform(scale_range[0], scale_range[1])
-    if rng.uniform() < gray_prob:
+    scale = RNG.get_rng().uniform(scale_range[0], scale_range[1])
+    if RNG.get_rng().uniform() < gray_prob:
         gray_noise = True
     else:
         gray_noise = False
@@ -938,5 +938,5 @@ def random_add_jpg_compression(
         (Numpy array): Returned image after JPG, shape (h, w, c), range[0, 1],
             float32.
     """
-    quality = rng.uniform(quality_range[0], quality_range[1])
+    quality = RNG.get_rng().uniform(quality_range[0], quality_range[1])
     return add_jpg_compression(img, quality)

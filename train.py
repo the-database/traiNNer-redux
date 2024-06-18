@@ -32,7 +32,7 @@ from traiNNer.utils import (
 from traiNNer.utils.config import Config
 from traiNNer.utils.options import copy_opt_file, dict2str
 
-from . import set_random_seed
+from traiNNer.utils import set_random_seed
 
 
 def init_tb_loggers(opt: dict[str, Any]) -> SummaryWriter | None:

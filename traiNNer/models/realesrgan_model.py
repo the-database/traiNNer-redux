@@ -3,7 +3,7 @@ from typing import Any
 
 import torch
 from torch.nn import functional as F  # noqa: N812
-from traiNNer.utils import rng
+from traiNNer.utils import RNG
 
 from ..data.degradations import (
     random_add_gaussian_noise_pt,
@@ -97,16 +97,16 @@ class RealESRGANModel(SRModel):
                 ["up", "down", "keep"], self.opt["resize_prob"]
             )[0]
             if updown_type == "up":
-                scale = rng.uniform(1, self.opt["resize_range"][1])
+                scale = RNG.get_rng().uniform(1, self.opt["resize_range"][1])
             elif updown_type == "down":
-                scale = rng.uniform(self.opt["resize_range"][0], 1)
+                scale = RNG.get_rng().uniform(self.opt["resize_range"][0], 1)
             else:
                 scale = 1
             mode = random.choice(["area", "bilinear", "bicubic"])
             out = F.interpolate(out, scale_factor=scale, mode=mode)
             # add noise
             gray_noise_prob = self.opt["gray_noise_prob"]
-            if rng.uniform() < self.opt["gaussian_noise_prob"]:
+            if RNG.get_rng().uniform() < self.opt["gaussian_noise_prob"]:
                 out = random_add_gaussian_noise_pt(
                     out,
                     sigma_range=self.opt["noise_range"],
@@ -131,16 +131,16 @@ class RealESRGANModel(SRModel):
 
             # ----------------------- The second degradation process ----------------------- #
             # blur
-            if rng.uniform() < self.opt["second_blur_prob"]:
+            if RNG.get_rng().uniform() < self.opt["second_blur_prob"]:
                 out = filter2d(out, self.kernel2)
             # random resize
             updown_type = random.choices(
                 ["up", "down", "keep"], self.opt["resize_prob2"]
             )[0]
             if updown_type == "up":
-                scale = rng.uniform(1, self.opt["resize_range2"][1])
+                scale = RNG.get_rng().uniform(1, self.opt["resize_range2"][1])
             elif updown_type == "down":
-                scale = rng.uniform(self.opt["resize_range2"][0], 1)
+                scale = RNG.get_rng().uniform(self.opt["resize_range2"][0], 1)
             else:
                 scale = 1
             mode = random.choice(["area", "bilinear", "bicubic"])
@@ -154,7 +154,7 @@ class RealESRGANModel(SRModel):
             )
             # add noise
             gray_noise_prob = self.opt["gray_noise_prob2"]
-            if rng.uniform() < self.opt["gaussian_noise_prob2"]:
+            if RNG.get_rng().uniform() < self.opt["gaussian_noise_prob2"]:
                 out = random_add_gaussian_noise_pt(
                     out,
                     sigma_range=self.opt["noise_range2"],
@@ -178,7 +178,7 @@ class RealESRGANModel(SRModel):
             #   1. [resize back + sinc filter] + JPEG compression
             #   2. JPEG compression + [resize back + sinc filter]
             # Empirically, we find other combinations (sinc + JPEG + Resize) will introduce twisted lines.
-            if rng.uniform() < 0.5:
+            if RNG.get_rng().uniform() < 0.5:
                 # resize back + the final sinc filter
                 mode = random.choice(["area", "bilinear", "bicubic"])
                 out = F.interpolate(

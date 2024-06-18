@@ -1,9 +1,16 @@
 import numpy as np
-
-from utils.config import Config
-
-seed = Config.get_manual_seed()
+from traiNNer.utils.config import Config
 
 
-rng = np.random.default_rng(seed)
-print(f"init rng with seed = {seed}")
+class RNG:
+    _rng = None
+
+    @classmethod
+    def get_rng(cls):
+        if cls._rng is None:
+            # seed = Config.get_manual_seed()
+            # if seed is None:
+            #     raise RuntimeError("Manual seed is not set in the configuration.")
+            cls._rng = np.random.default_rng(0)
+        return cls._rng
+

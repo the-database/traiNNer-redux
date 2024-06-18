@@ -9,7 +9,7 @@ import torch
 import torchvision
 from torch import Size, Tensor
 from torch.nn import functional as F  # noqa: N812
-from traiNNer.utils import rng
+from traiNNer.utils import RNG
 
 
 class BatchAugment:
@@ -142,7 +142,7 @@ def mixup(
         alpha_min/max (float): The given min/max mixing ratio.
     """
 
-    lam = rng.uniform(alpha_min, alpha_max)
+    lam = RNG.get_rng().uniform(alpha_min, alpha_max)
 
     # mixup process
     rand_index = torch.randperm(img_gt.size(0))
@@ -160,13 +160,13 @@ def _cutmix(img2: Tensor, prob: float = 1.0, alpha: float = 1.0) -> dict[str, Te
     if alpha <= 0 or random.random() >= prob:
         return None
 
-    cut_ratio = rng.randn() * 0.01 + alpha
+    cut_ratio = RNG.get_rng().randn() * 0.01 + alpha
 
     h, w = img2.shape[2:]
     ch, cw = int(h * cut_ratio), int(w * cut_ratio)
 
-    fcy = rng.randint(0, h - ch + 1)
-    fcx = rng.randint(0, w - cw + 1)
+    fcy = RNG.get_rng().randint(0, h - ch + 1)
+    fcx = RNG.get_rng().randint(0, w - cw + 1)
     tcy, tcx = fcy, fcx
     r_index = torch.randperm(img2.size(0)).to(img2.device)
 
@@ -213,8 +213,8 @@ def cutmix(
         cut_h = int(h * cut_rat)
 
         # uniform
-        cx = rng.integers(w)
-        cy = rng.integers(h)
+        cx = RNG.get_rng().integers(w)
+        cy = RNG.get_rng().integers(h)
 
         bbx1 = np.clip(cx - cut_w // 2, 0, W)
         bby1 = np.clip(cy - cut_h // 2, 0, H)
@@ -225,7 +225,7 @@ def cutmix(
 
         return tuple(bbi * scale for bbi in bb)
 
-    lam = rng.uniform(0, alpha)
+    lam = RNG.get_rng().uniform(0, alpha)
     rand_index = torch.randperm(img_gt.size(0))
 
     # mixup process
@@ -280,8 +280,8 @@ def resizemix(
         cut_h = int(h * tao)
 
         # uniform
-        cx = rng.integers(w)
-        cy = rng.integers(h)
+        cx = RNG.get_rng().integers(w)
+        cy = RNG.get_rng().integers(h)
 
         bbx1 = np.clip(cx - cut_w // 2, 0, w)
         bby1 = np.clip(cy - cut_h // 2, 0, h)
@@ -300,7 +300,7 @@ def resizemix(
     img_lq_resize = img_lq_resize[rand_index]
 
     # generate tao
-    tao = rng.uniform(scope[0], scope[1])
+    tao = RNG.get_rng().uniform(scope[0], scope[1])
 
     # random box
     # bbx1, bby1, bbx2, bby2 = rand_bbox_tao(img_gt.size(), scale, tao)
@@ -349,7 +349,7 @@ def resizemix(
 #     hfcy, hfcx, htcy, htcx = (
 #         fcy * scale, fcx * scale, tcy * scale, tcx * scale)
 #
-#     v = rng.beta(mixup_alpha, mixup_alpha)
+#     v = RNG.get_rng().beta(mixup_alpha, mixup_alpha)
 #     if mixup_alpha <= 0 or random.random() >= mixup_prob:
 #         img1_aug = img1[r_index, :]
 #         img2_aug = img2[r_index, :]
@@ -358,7 +358,7 @@ def resizemix(
 #         img2_aug = v * img2 + (1-v) * img2[r_index, :]
 #
 #     # apply mixup to inside or outside
-#     if rng.random() > 0.5:
+#     if RNG.get_rng().random() > 0.5:
 #         img1[..., htcy:htcy+hch, htcx:htcx+hcw] = img1_aug[..., hfcy:hfcy+hch, hfcx:hfcx+hcw]
 #         img2[..., tcy:tcy+ch, tcx:tcx+cw] = img2_aug[..., fcy:fcy+ch, fcx:fcx+cw]
 #     else:
@@ -399,8 +399,8 @@ def cutblur(
         cut_h = int(h * lam)
 
         # uniform
-        cx = rng.integers(w)
-        cy = rng.integers(h)
+        cx = RNG.get_rng().integers(w)
+        cy = RNG.get_rng().integers(h)
 
         bbx1 = np.clip(cx - cut_w // 2, 0, w)
         bby1 = np.clip(cy - cut_h // 2, 0, h)
@@ -411,7 +411,7 @@ def cutblur(
 
         return (bbi * scale for bbi in bb)
 
-    lam = rng.uniform(0.2, alpha)
+    lam = RNG.get_rng().uniform(0.2, alpha)
     bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
 
     # cutblur inside
@@ -437,7 +437,7 @@ def downup(
 
     # don't allow nearest for both
     if down_sample[0] == sampling_opts[2][0] and up_sample[0] == sampling_opts[2][0]:
-        if rng.random() > 0.5:
+        if RNG.get_rng().random() > 0.5:
             # change up sample
             while up_sample[0] == sampling_opts[2][0]:
                 up_sample = random.choice(sampling_opts)
@@ -446,7 +446,7 @@ def downup(
             while down_sample[0] == sampling_opts[2][0]:
                 down_sample = random.choice(sampling_opts)
 
-    scale_factor = rng.uniform(scope[0], scope[1])
+    scale_factor = RNG.get_rng().uniform(scope[0], scope[1])
     img_lq_base_size = img_lq.shape
 
     # downscale
@@ -483,8 +483,8 @@ def up(
         pad_h = cut_h // 2
 
         # uniform
-        cx = rng.integers(pad_w, w - pad_w)
-        cy = rng.integers(pad_h, h - pad_w)
+        cx = RNG.get_rng().integers(pad_w, w - pad_w)
+        cy = RNG.get_rng().integers(pad_h, h - pad_w)
 
         bbx1 = cx - pad_w
         bby1 = cy - pad_h
@@ -498,7 +498,7 @@ def up(
     img_gt_base_size = img_gt.shape
     img_lq_base_size = img_lq.shape
 
-    lam = rng.uniform(scope[0], scope[1])
+    lam = RNG.get_rng().uniform(scope[0], scope[1])
 
     # random box
     gt_bbox = rand_bbox(img_gt.size(), scale, lam)
