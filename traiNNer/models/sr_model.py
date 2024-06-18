@@ -24,7 +24,7 @@ class SRModel(BaseModel):
         # define network
         self.net_g = build_network(opt["network_g"])
         self.net_g = self.model_to_device(self.net_g)
-        # self.print_network(self.net_g)
+        self.print_network(self.net_g)
 
         # load pretrained models
         load_path = self.opt["path"].get("pretrain_network_g", None)
@@ -43,7 +43,7 @@ class SRModel(BaseModel):
         if net_d_opt is not None:
             self.net_d = build_network(net_d_opt)
             self.net_d = self.model_to_device(self.net_d)
-            # self.print_network(self.net_d)
+            self.print_network(self.net_d)
 
             # load pretrained models
             load_path = self.opt["path"].get("pretrain_network_d", None)
@@ -89,83 +89,87 @@ class SRModel(BaseModel):
             self.net_g_ema.eval()
 
         # define losses
-        self.cri_pix = None
         pixel_opt = train_opt.get("pixel_opt")
         if pixel_opt:
             if pixel_opt.get("loss_weight", 0) > 0:
                 self.cri_pix = build_loss(train_opt["pixel_opt"]).to(self.device)
+        else:
+            self.cri_pix = None
 
-        self.cri_mssim = None
         mssim_opt = train_opt.get("mssim_opt")
         if mssim_opt:
             if mssim_opt.get("loss_weight", 0) > 0:
                 self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(self.device)
+        else:
+            self.cri_mssim = None
 
-        self.cri_cosim = None
-        cosim_opt = train_opt.get("cosim_opt")
-        if cosim_opt:
-            if cosim_opt.get("loss_weight", 0) > 0:
-                self.cri_cosim = build_loss(train_opt["cosim_opt"]).to(self.device)
-
-        self.cri_ldl = None
         ldl_opt = train_opt.get("ldl_opt")
         if ldl_opt:
             if ldl_opt.get("loss_weight", 0) > 0:
                 self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(self.device)
+        else:
+            self.cri_ldl = None
 
-        self.cri_perceptual = None
         perceptual_opt = train_opt.get("perceptual_opt")
         if perceptual_opt:
             if perceptual_opt.get("perceptual_weight", 0) > 0:
                 self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
                     self.device
                 )
+        else:
+            self.cri_perceptual = None
 
-        self.cri_dists = None
         dists_opt = train_opt.get("dists_opt")
         if dists_opt:
             if dists_opt.get("loss_weight", 0) > 0:
                 self.cri_dists = build_loss(train_opt["dists_opt"]).to(self.device)
+        else:
+            self.cri_dists = None
 
-        self.cri_contextual = None
         contextual_opt = train_opt.get("contextual_opt")
         if contextual_opt:
             if contextual_opt.get("loss_weight", 0) > 0:
                 self.cri_contextual = build_loss(train_opt["contextual_opt"]).to(
                     self.device
                 )
+        else:
+            self.cri_contextual = None
 
-        self.cri_color = None
         color_opt = train_opt.get("color_opt")
         if color_opt:
             if color_opt.get("loss_weight", 0) > 0:
                 self.cri_color = build_loss(train_opt["color_opt"]).to(self.device)
+        else:
+            self.cri_color = None
 
-        self.cri_luma = None
         luma_opt = train_opt.get("luma_opt")
         if luma_opt:
             if luma_opt.get("loss_weight", 0) > 0:
                 self.cri_luma = build_loss(train_opt["luma_opt"]).to(self.device)
+        else:
+            self.cri_luma = None
 
-        self.cri_hsluv = None
         hsluv_opt = train_opt.get("hsluv_opt")
         if hsluv_opt:
             if hsluv_opt.get("loss_weight", 0) > 0:
                 self.cri_hsluv = build_loss(train_opt["hsluv_opt"]).to(self.device)
+        else:
+            self.cri_hsluv = None
 
-        self.cri_avg = None
         avg_opt = train_opt.get("avg_opt")
         if avg_opt:
             if avg_opt.get("loss_weight", 0) > 0:
                 self.cri_avg = build_loss(train_opt["avg_opt"]).to(self.device)
+        else:
+            self.cri_avg = None
 
-        self.cri_bicubic = None
         bicubic_opt = train_opt.get("bicubic_opt")
         if bicubic_opt:
             if bicubic_opt.get("loss_weight", 0) > 0:
                 self.cri_bicubic = build_loss(train_opt["bicubic_opt"]).to(self.device)
+        else:
+            self.cri_bicubic = None
 
-        self.cri_gan = None
         gan_opt = train_opt.get("gan_opt")
         if gan_opt:
             if gan_opt.get("loss_weight", 0) > 0:
@@ -181,8 +185,8 @@ class SRModel(BaseModel):
                     )
 
                 self.cri_gan = build_loss(train_opt["gan_opt"]).to(self.device)
-
-        if not self.cri_gan:
+        else:
+            self.cri_gan = None
 
             # warn that discriminator network / optimizer won't be used if enabled
             if self.net_d:
@@ -256,17 +260,10 @@ class SRModel(BaseModel):
             l_g_pix = self.cri_pix(self.output, self.gt)
             l_g_total += l_g_pix
             loss_dict["l_g_pix"] = l_g_pix
-        # mssim loss
         if self.cri_mssim:
             l_g_mssim = self.cri_mssim(self.output, self.gt)
             l_g_total += l_g_mssim
             loss_dict["l_g_mssim"] = l_g_mssim
-        # cosim loss
-        if self.cri_cosim:
-            l_g_cosim = self.cri_cosim(self.output, self.gt)
-            l_g_total += l_g_cosim
-            loss_dict["l_g_cosim"] = l_g_cosim
-            # ldl loss
         if self.cri_ldl:
             pixel_weight = get_refined_artifact_map(
                 self.gt, self.output, self.net_g_ema(self.lq), 7
@@ -372,21 +369,21 @@ class SRModel(BaseModel):
             self.net_g.train()
 
     def dist_validation(
-            self,
-            dataloader: DataLoader,
-            current_iter: int,
-            tb_logger: SummaryWriter,
-            save_img: bool,
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
     ) -> None:
         if self.opt["rank"] == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(
-            self,
-            dataloader: DataLoader,
-            current_iter: int,
-            tb_logger: SummaryWriter,
-            save_img: bool,
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
     ) -> None:
         self.is_train = False
 
@@ -471,7 +468,7 @@ class SRModel(BaseModel):
         self.is_train = True
 
     def _log_validation_metric_values(
-            self, current_iter: int, dataset_name: str, tb_logger: SummaryWriter
+        self, current_iter: int, dataset_name: str, tb_logger: SummaryWriter
     ) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():

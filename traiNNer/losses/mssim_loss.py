@@ -6,7 +6,6 @@ from torch import SymInt, nn
 from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils.registry import LOSS_REGISTRY
 
-
 ####################################
 # Modified MSSIM Loss with cosine similarity from neosr
 # https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
@@ -15,11 +14,11 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 class GaussianFilter2D(nn.Module):
     def __init__(
-            self,
-            window_size: int = 11,
-            in_channels: int = 3,
-            sigma: float = 1.5,
-            padding: int | SymInt | Sequence[int | SymInt] = None,
+        self,
+        window_size: int = 11,
+        in_channels: int = 3,
+        sigma: float = 1.5,
+        padding: int | SymInt | Sequence[int | SymInt] = None,
     ) -> None:
         """2D Gaussian Filer
 
@@ -46,7 +45,7 @@ class GaussianFilter2D(nn.Module):
     def _get_gaussian_window1d(self) -> torch.Tensor:
         sigma2 = self.sigma * self.sigma
         x = torch.arange(-(self.window_size // 2), self.window_size // 2 + 1)
-        w = torch.exp(-0.5 * x ** 2 / sigma2)
+        w = torch.exp(-0.5 * x**2 / sigma2)
         w = w / w.sum()
         return w.reshape(1, 1, 1, self.window_size)
 
@@ -67,48 +66,20 @@ class GaussianFilter2D(nn.Module):
         return x
 
 
-# def dynamic_lambda_smooth(msssim, cosim, default_lambda=5, k=10):
-#
-#     top_threshold = 0.9
-#     bottom_threshold = 0.5
-#
-#     dynamic_lambda = msssim / cosim
-#     lambda_value = torch.zeros_like(msssim)
-#
-#     lower_middle = (msssim >= bottom_threshold) & (
-#                 msssim <= (bottom_threshold + (top_threshold - bottom_threshold) / 2))
-#     upper_middle = (msssim > (bottom_threshold + (top_threshold - bottom_threshold) / 2)) & (msssim <= top_threshold)
-#
-#     if torch.any(lower_middle):
-#         sigmoid_factor_lower = torch.sigmoid(
-#             k * ((msssim[lower_middle] - bottom_threshold) / ((top_threshold - bottom_threshold) / 2)))
-#         lambda_value[lower_middle] = sigmoid_factor_lower * dynamic_lambda[lower_middle]
-#
-#     if torch.any(upper_middle):
-#         sigmoid_factor_upper = torch.sigmoid(k * (
-#                     1 - (msssim[upper_middle] - (bottom_threshold + (top_threshold - bottom_threshold) / 2)) / (
-#                         (top_threshold - bottom_threshold) / 2)))
-#         lambda_value[upper_middle] = sigmoid_factor_upper * default_lambda + (1 - sigmoid_factor_upper) * \
-#                                      dynamic_lambda[upper_middle]
-#
-#     top_range = (msssim > top_threshold)
-#     lambda_value[top_range] = default_lambda
-#
-#     return lambda_value
-
-
 @LOSS_REGISTRY.register()
 class MSSIMLoss(nn.Module):
     def __init__(
-            self,
-            window_size: int = 11,
-            in_channels: int = 3,
-            sigma: float = 1.5,
-            k1: float = 0.01,
-            k2: float = 0.03,
-            l: int = 1,
-            padding: int | SymInt | Sequence[int | SymInt] = None,
-            loss_weight: float = 1.0,
+        self,
+        window_size: int = 11,
+        in_channels: int = 3,
+        sigma: float = 1.5,
+        k1: float = 0.01,
+        k2: float = 0.03,
+        l: int = 1,
+        padding: int | SymInt | Sequence[int | SymInt] = None,
+        cosim: bool = True,
+        cosim_lambda: int = 5,
+        loss_weight: float = 1.0,
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -125,6 +96,8 @@ class MSSIMLoss(nn.Module):
             L (int): The dynamic range of the pixel values (255 for 8-bit grayscale images). Defaults to 1.
             padding (int, optional): The padding of the gaussian filter. Defaults to None. If it is set to None,
                 the filter will use window_size//2 as the padding. Another common setting is 0.
+            cosim (bool): Enables CosineSimilary on final loss, to keep better color consistency.
+            cosim_lambda (float): Lambda value to increase CosineSimilarity weight.
             loss_weight (float): Weight of final loss value.
         """
         super().__init__()
@@ -132,6 +105,8 @@ class MSSIMLoss(nn.Module):
         self.window_size = window_size
         self.C1 = (k1 * l) ** 2  # equ 7 in ref1
         self.C2 = (k2 * l) ** 2  # equ 7 in ref1
+        self.cosim = cosim
+        self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
 
@@ -163,6 +138,10 @@ class MSSIMLoss(nn.Module):
         x = x.clamp(1e-12, 1)
         y = y.clamp(1e-12, 1)
 
+        cosine_term = 0
+        if self.cosim:
+            cosine_term = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
+
         ms_components = []
         for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
             ssim, cs = self._ssim(x, y)
@@ -170,21 +149,24 @@ class MSSIMLoss(nn.Module):
             cs = cs.mean()
 
             if i == 4:
-                ms_components.append(ssim ** w)
+                ms_components.append(ssim**w)
             else:
-                ms_components.append(cs ** w)
+                ms_components.append(cs**w)
                 padding = [s % 2 for s in x.shape[2:]]  # spatial padding
                 x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
 
         msssim = math.prod(ms_components)  # equ 7 in ref2
 
+        if self.cosim:
+            msssim -= self.cosim_lambda * cosine_term
+            msssim = torch.clamp(msssim, 0, 1)
+
         return msssim
 
     def _ssim(
-            self, x: torch.Tensor, y: torch.Tensor
+        self, x: torch.Tensor, y: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-
         mu_x = self.gaussian_filter(x)  # equ 14
         mu_y = self.gaussian_filter(y)  # equ 14
         sigma2_x = self.gaussian_filter(x * x) - mu_x * mu_x  # equ 15
