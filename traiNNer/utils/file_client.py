@@ -1,5 +1,6 @@
 # Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
 from abc import ABCMeta, abstractmethod
+from collections.abc import Sequence
 from typing import Never
 
 
@@ -98,17 +99,17 @@ class LmdbBackend(BaseStorageBackend):
 
     def __init__(
         self,
-        db_paths,
-        client_keys="default",
-        readonly=True,
-        lock=False,
-        readahead=False,
+        db_paths: str | Sequence[str],
+        client_keys: str = "default",
+        readonly: bool = True,
+        lock: bool = False,
+        readahead: bool = False,
         **kwargs,
     ) -> None:
         try:
             import lmdb
-        except ImportError:
-            raise ImportError("Please install lmdb to enable LmdbBackend.")
+        except ImportError as err:
+            raise ImportError("Please install lmdb to enable LmdbBackend.") from err
 
         if isinstance(client_keys, str):
             client_keys = [client_keys]
@@ -128,7 +129,7 @@ class LmdbBackend(BaseStorageBackend):
                 path, readonly=readonly, lock=lock, readahead=readahead, **kwargs
             )
 
-    def get(self, filepath, client_key):
+    def get(self, filepath: str, client_key: str):
         """Get values according to the filepath from one lmdb named client_key.
 
         Args:
@@ -144,7 +145,7 @@ class LmdbBackend(BaseStorageBackend):
             value_buf = txn.get(filepath.encode("ascii"))
         return value_buf
 
-    def get_text(self, filepath) -> Never:
+    def get_text(self, filepath: str) -> Never:
         raise NotImplementedError
 
 
@@ -167,7 +168,7 @@ class FileClient:
         "lmdb": LmdbBackend,
     }
 
-    def __init__(self, backend="disk", **kwargs) -> None:
+    def __init__(self, backend: str = "disk", **kwargs) -> None:
         if backend not in self._backends:
             raise ValueError(
                 f"Backend {backend} is not supported. Currently supported ones"
@@ -176,7 +177,7 @@ class FileClient:
         self.backend = backend
         self.client = self._backends[backend](**kwargs)
 
-    def get(self, filepath, client_key="default"):
+    def get(self, filepath: str, client_key: str = "default"):
         # client_key is used only for lmdb, where different fileclients have
         # different lmdb environments.
         if self.backend == "lmdb":

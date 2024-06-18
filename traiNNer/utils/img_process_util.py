@@ -1,7 +1,8 @@
+from torch import Tensor
 from torch.nn import functional as F  # noqa: N812
 
 
-def filter2D(img, kernel):
+def filter2d(img: Tensor, kernel: Tensor) -> Tensor:
     """PyTorch version of cv2.filter2D
 
     Args:

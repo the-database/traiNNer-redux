@@ -1,11 +1,13 @@
 import math
 import random
+from collections.abc import Sequence
 
 import cv2
 import numpy as np
 import torch
 from scipy import special
 from scipy.stats import multivariate_normal
+from torch import Tensor
 from torchvision.transforms.functional import rgb_to_grayscale
 
 # -------------------------------------------------------------------- #
@@ -14,7 +16,7 @@ from torchvision.transforms.functional import rgb_to_grayscale
 
 
 # --------------------------- util functions --------------------------- #
-def sigma_matrix2(sig_x, sig_y, theta):
+def sigma_matrix2(sig_x: float, sig_y: float, theta: float) -> np.ndarray:
     """Calculate the rotated sigma matrix (two dimensional matrix).
 
     Args:
@@ -32,7 +34,7 @@ def sigma_matrix2(sig_x, sig_y, theta):
     return np.dot(u_matrix, np.dot(d_matrix, u_matrix.T))
 
 
-def mesh_grid(kernel_size):
+def mesh_grid(kernel_size: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate the mesh grid, centering at zero.
 
     Args:
@@ -54,7 +56,7 @@ def mesh_grid(kernel_size):
     return xy, xx, yy
 
 
-def pdf2(sigma_matrix, grid):
+def pdf2(sigma_matrix: np.ndarray, grid: np.ndarray) -> np.ndarray:
     """Calculate PDF of the bivariate Gaussian distribution.
 
     Args:
@@ -70,7 +72,7 @@ def pdf2(sigma_matrix, grid):
     return kernel
 
 
-def cdf2(d_matrix, grid):
+def cdf2(d_matrix: np.ndarray, grid: np.ndarray) -> np.ndarray:
     """Calculate the CDF of the standard bivariate Gaussian distribution.
         Used in skewed Gaussian distribution.
 
@@ -88,7 +90,14 @@ def cdf2(d_matrix, grid):
     return cdf
 
 
-def bivariate_Gaussian(kernel_size, sig_x, sig_y, theta, grid=None, isotropic=True):
+def bivariate_gaussian(
+    kernel_size: int,
+    sig_x: float,
+    sig_y: float,
+    theta: float,
+    grid: np.ndarray | None = None,
+    isotropic: bool = True,
+) -> np.ndarray:
     """Generate a bivariate isotropic or anisotropic Gaussian kernel.
 
     In the isotropic mode, only `sig_x` is used. `sig_y` and `theta` is ignored.
@@ -116,9 +125,15 @@ def bivariate_Gaussian(kernel_size, sig_x, sig_y, theta, grid=None, isotropic=Tr
     return kernel
 
 
-def bivariate_generalized_Gaussian(
-    kernel_size, sig_x, sig_y, theta, beta, grid=None, isotropic=True
-):
+def bivariate_generalized_gaussian(
+    kernel_size: int,
+    sig_x: float,
+    sig_y: float,
+    theta: float,
+    beta: float,
+    grid: np.ndarray | None = None,
+    isotropic: bool = True,
+) -> np.ndarray:
     """Generate a bivariate generalized Gaussian kernel.
 
     ``Paper: Parameter Estimation For Multivariate Generalized Gaussian Distributions``
@@ -152,8 +167,14 @@ def bivariate_generalized_Gaussian(
 
 
 def bivariate_plateau(
-    kernel_size, sig_x, sig_y, theta, beta, grid=None, isotropic=True
-):
+    kernel_size: int,
+    sig_x: float,
+    sig_y: float,
+    theta: float,
+    beta: float,
+    grid: np.ndarray | None = None,
+    isotropic: bool = True,
+) -> np.ndarray:
     """Generate a plateau-like anisotropic kernel.
 
     1 / (1+x^(beta))
@@ -188,14 +209,14 @@ def bivariate_plateau(
     return kernel
 
 
-def random_bivariate_Gaussian(
-    kernel_size,
-    sigma_x_range,
-    sigma_y_range,
-    rotation_range,
-    noise_range=None,
-    isotropic=True,
-):
+def random_bivariate_gaussian(
+    kernel_size: int,
+    sigma_x_range: tuple[float, float],
+    sigma_y_range: tuple[float, float],
+    rotation_range: tuple[float, float],
+    noise_range: tuple[float, float] | None = None,
+    isotropic: bool = True,
+) -> np.ndarray:
     """Randomly generate bivariate isotropic or anisotropic Gaussian kernels.
 
     In the isotropic mode, only `sigma_x_range` is used. `sigma_y_range` and `rotation_range` is ignored.
@@ -223,7 +244,7 @@ def random_bivariate_Gaussian(
         sigma_y = sigma_x
         rotation = 0
 
-    kernel = bivariate_Gaussian(
+    kernel = bivariate_gaussian(
         kernel_size, sigma_x, sigma_y, rotation, isotropic=isotropic
     )
 
@@ -236,15 +257,15 @@ def random_bivariate_Gaussian(
     return kernel
 
 
-def random_bivariate_generalized_Gaussian(
-    kernel_size,
-    sigma_x_range,
-    sigma_y_range,
-    rotation_range,
-    beta_range,
-    noise_range=None,
-    isotropic=True,
-):
+def random_bivariate_generalized_gaussian(
+    kernel_size: int,
+    sigma_x_range: tuple[float, float],
+    sigma_y_range: tuple[float, float],
+    rotation_range: tuple[float, float],
+    beta_range: tuple[float, float],
+    noise_range: tuple[float, float] | None = None,
+    isotropic: bool = True,
+) -> np.ndarray:
     """Randomly generate bivariate generalized Gaussian kernels.
 
     In the isotropic mode, only `sigma_x_range` is used. `sigma_y_range` and `rotation_range` is ignored.
@@ -279,7 +300,7 @@ def random_bivariate_generalized_Gaussian(
     else:
         beta = np.random.uniform(1, beta_range[1])
 
-    kernel = bivariate_generalized_Gaussian(
+    kernel = bivariate_generalized_gaussian(
         kernel_size, sigma_x, sigma_y, rotation, beta, isotropic=isotropic
     )
 
@@ -293,14 +314,14 @@ def random_bivariate_generalized_Gaussian(
 
 
 def random_bivariate_plateau(
-    kernel_size,
-    sigma_x_range,
-    sigma_y_range,
-    rotation_range,
-    beta_range,
-    noise_range=None,
-    isotropic=True,
-):
+    kernel_size: int,
+    sigma_x_range: tuple[float, float],
+    sigma_y_range: tuple[float, float],
+    rotation_range: tuple[float, float],
+    beta_range: tuple[float, float],
+    noise_range: tuple[float, float] | None = None,
+    isotropic: bool = True,
+) -> np.ndarray:
     """Randomly generate bivariate plateau kernels.
 
     In the isotropic mode, only `sigma_x_range` is used. `sigma_y_range` and `rotation_range` is ignored.
@@ -349,16 +370,16 @@ def random_bivariate_plateau(
 
 
 def random_mixed_kernels(
-    kernel_list,
-    kernel_prob,
-    kernel_size=21,
-    sigma_x_range=(0.6, 5),
-    sigma_y_range=(0.6, 5),
-    rotation_range=(-math.pi, math.pi),
-    betag_range=(0.5, 8),
-    betap_range=(0.5, 8),
-    noise_range=None,
-):
+    kernel_list: Sequence[str],
+    kernel_prob: Sequence[float],
+    kernel_size: int = 21,
+    sigma_x_range: tuple[float, float] = (0.6, 5),
+    sigma_y_range: tuple[float, float] = (0.6, 5),
+    rotation_range: tuple[float, float] = (-math.pi, math.pi),
+    betag_range: tuple[float, float] = (0.5, 8),
+    betap_range: tuple[float, float] = (0.5, 8),
+    noise_range: tuple[float, float] | None = None,
+) -> np.ndarray:
     """Randomly generate mixed kernels.
 
     Args:
@@ -380,7 +401,7 @@ def random_mixed_kernels(
     """
     kernel_type = random.choices(kernel_list, kernel_prob)[0]
     if kernel_type == "iso":
-        kernel = random_bivariate_Gaussian(
+        kernel = random_bivariate_gaussian(
             kernel_size,
             sigma_x_range,
             sigma_y_range,
@@ -389,7 +410,7 @@ def random_mixed_kernels(
             isotropic=True,
         )
     elif kernel_type == "aniso":
-        kernel = random_bivariate_Gaussian(
+        kernel = random_bivariate_gaussian(
             kernel_size,
             sigma_x_range,
             sigma_y_range,
@@ -398,7 +419,7 @@ def random_mixed_kernels(
             isotropic=False,
         )
     elif kernel_type == "generalized_iso":
-        kernel = random_bivariate_generalized_Gaussian(
+        kernel = random_bivariate_generalized_gaussian(
             kernel_size,
             sigma_x_range,
             sigma_y_range,
@@ -408,7 +429,7 @@ def random_mixed_kernels(
             isotropic=True,
         )
     elif kernel_type == "generalized_aniso":
-        kernel = random_bivariate_generalized_Gaussian(
+        kernel = random_bivariate_generalized_gaussian(
             kernel_size,
             sigma_x_range,
             sigma_y_range,
@@ -443,7 +464,9 @@ def random_mixed_kernels(
 np.seterr(divide="ignore", invalid="ignore")
 
 
-def circular_lowpass_kernel(cutoff: float, kernel_size: int, pad_to: int = 0):
+def circular_lowpass_kernel(
+    cutoff: float, kernel_size: int, pad_to: int = 0
+) -> np.ndarray:
     """2D sinc filter
 
     Reference: https://dsp.stackexchange.com/questions/58301/2-d-circularly-symmetric-low-pass-filter
@@ -486,7 +509,9 @@ def circular_lowpass_kernel(cutoff: float, kernel_size: int, pad_to: int = 0):
 # ----------------------- Gaussian Noise ----------------------- #
 
 
-def generate_gaussian_noise(img, sigma=10, gray_noise=False):
+def generate_gaussian_noise(
+    img: np.ndarray, sigma: float = 10, gray_noise: bool = False
+) -> np.ndarray:
     """Generate Gaussian noise.
 
     Args:
@@ -505,7 +530,13 @@ def generate_gaussian_noise(img, sigma=10, gray_noise=False):
     return noise
 
 
-def add_gaussian_noise(img, sigma=10, clip=True, rounds=False, gray_noise=False):
+def add_gaussian_noise(
+    img: np.ndarray,
+    sigma: float = 10,
+    clip: bool = True,
+    rounds: bool = False,
+    gray_noise: bool = False,
+) -> np.ndarray:
     """Add Gaussian noise.
 
     Args:
@@ -527,7 +558,9 @@ def add_gaussian_noise(img, sigma=10, clip=True, rounds=False, gray_noise=False)
     return out
 
 
-def generate_gaussian_noise_pt(img, sigma=10, gray_noise=0):
+def generate_gaussian_noise_pt(
+    img: Tensor, sigma: float = 10, gray_noise: float | Tensor = 0
+) -> Tensor:
     """Add Gaussian noise (PyTorch version).
 
     Args:
@@ -563,7 +596,13 @@ def generate_gaussian_noise_pt(img, sigma=10, gray_noise=0):
     return noise
 
 
-def add_gaussian_noise_pt(img, sigma=10, gray_noise=0, clip=True, rounds=False):
+def add_gaussian_noise_pt(
+    img: Tensor,
+    sigma: float = 10,
+    gray_noise: float | Tensor = 0,
+    clip: bool = True,
+    rounds: bool = False,
+) -> Tensor:
     """Add Gaussian noise (PyTorch version).
 
     Args:
@@ -586,7 +625,11 @@ def add_gaussian_noise_pt(img, sigma=10, gray_noise=0, clip=True, rounds=False):
 
 
 # ----------------------- Random Gaussian Noise ----------------------- #
-def random_generate_gaussian_noise(img, sigma_range=(0, 10), gray_prob=0):
+def random_generate_gaussian_noise(
+    img: np.ndarray,
+    sigma_range: tuple[float, float] = (0, 10),
+    gray_prob: float | np.ndarray = 0,
+) -> np.ndarray:
     sigma = np.random.uniform(sigma_range[0], sigma_range[1])
     if np.random.uniform() < gray_prob:
         gray_noise = True
@@ -596,8 +639,12 @@ def random_generate_gaussian_noise(img, sigma_range=(0, 10), gray_prob=0):
 
 
 def random_add_gaussian_noise(
-    img, sigma_range=(0, 1.0), gray_prob=0, clip=True, rounds=False
-):
+    img: np.ndarray,
+    sigma_range: tuple[float, float] = (0, 1.0),
+    gray_prob: float | np.ndarray = 0,
+    clip: bool = True,
+    rounds: bool = False,
+) -> np.ndarray:
     noise = random_generate_gaussian_noise(img, sigma_range, gray_prob)
     out = img + noise
     if clip and rounds:
@@ -609,7 +656,11 @@ def random_add_gaussian_noise(
     return out
 
 
-def random_generate_gaussian_noise_pt(img, sigma_range=(0, 10), gray_prob=0):
+def random_generate_gaussian_noise_pt(
+    img: Tensor,
+    sigma_range: tuple[float, float] = (0, 10),
+    gray_prob: float | Tensor = 0,
+) -> Tensor:
     sigma = (
         torch.rand(img.size(0), dtype=img.dtype, device=img.device)
         * (sigma_range[1] - sigma_range[0])
@@ -621,8 +672,12 @@ def random_generate_gaussian_noise_pt(img, sigma_range=(0, 10), gray_prob=0):
 
 
 def random_add_gaussian_noise_pt(
-    img, sigma_range=(0, 1.0), gray_prob=0, clip=True, rounds=False
-):
+    img: Tensor,
+    sigma_range: tuple[float, float] = (0, 1.0),
+    gray_prob: float | Tensor = 0,
+    clip: bool = True,
+    rounds: bool = False,
+) -> Tensor:
     noise = random_generate_gaussian_noise_pt(img, sigma_range, gray_prob)
     out = img + noise
     if clip and rounds:
@@ -637,7 +692,9 @@ def random_add_gaussian_noise_pt(
 # ----------------------- Poisson (Shot) Noise ----------------------- #
 
 
-def generate_poisson_noise(img, scale=1.0, gray_noise=False):
+def generate_poisson_noise(
+    img: np.ndarray, scale: float = 1.0, gray_noise: bool = False
+) -> np.ndarray:
     """Generate poisson noise.
 
     Reference: https://github.com/scikit-image/scikit-image/blob/main/skimage/util/noise.py#L37-L219
@@ -664,7 +721,13 @@ def generate_poisson_noise(img, scale=1.0, gray_noise=False):
     return noise * scale
 
 
-def add_poisson_noise(img, scale=1.0, clip=True, rounds=False, gray_noise=False):
+def add_poisson_noise(
+    img: np.ndarray,
+    scale: float = 1.0,
+    clip: bool = True,
+    rounds: bool = False,
+    gray_noise: bool = False,
+) -> np.ndarray:
     """Add poisson noise.
 
     Args:
@@ -687,7 +750,9 @@ def add_poisson_noise(img, scale=1.0, clip=True, rounds=False, gray_noise=False)
     return out
 
 
-def generate_poisson_noise_pt(img, scale=1.0, gray_noise=0):
+def generate_poisson_noise_pt(
+    img: Tensor, scale: float = 1.0, gray_noise: float | Tensor = 0
+) -> Tensor:
     """Generate a batch of poisson noise (PyTorch version)
 
     Args:
@@ -735,7 +800,13 @@ def generate_poisson_noise_pt(img, scale=1.0, gray_noise=0):
     return noise * scale
 
 
-def add_poisson_noise_pt(img, scale=1.0, clip=True, rounds=False, gray_noise=0):
+def add_poisson_noise_pt(
+    img: Tensor,
+    scale: float = 1.0,
+    clip: bool = True,
+    rounds: bool = False,
+    gray_noise: float | Tensor = 0,
+) -> Tensor:
     """Add poisson noise to a batch of images (PyTorch version).
 
     Args:
@@ -763,7 +834,11 @@ def add_poisson_noise_pt(img, scale=1.0, clip=True, rounds=False, gray_noise=0):
 # ----------------------- Random Poisson (Shot) Noise ----------------------- #
 
 
-def random_generate_poisson_noise(img, scale_range=(0, 1.0), gray_prob=0):
+def random_generate_poisson_noise(
+    img: np.ndarray,
+    scale_range: tuple[float, float] = (0, 1.0),
+    gray_prob: float | np.ndarray = 0,
+) -> np.ndarray:
     scale = np.random.uniform(scale_range[0], scale_range[1])
     if np.random.uniform() < gray_prob:
         gray_noise = True
@@ -773,8 +848,12 @@ def random_generate_poisson_noise(img, scale_range=(0, 1.0), gray_prob=0):
 
 
 def random_add_poisson_noise(
-    img, scale_range=(0, 1.0), gray_prob=0, clip=True, rounds=False
-):
+    img: np.ndarray,
+    scale_range: tuple[float, float] = (0, 1.0),
+    gray_prob: float | np.ndarray = 0,
+    clip: bool = True,
+    rounds: bool = False,
+) -> np.ndarray:
     noise = random_generate_poisson_noise(img, scale_range, gray_prob)
     out = img + noise
     if clip and rounds:
@@ -786,7 +865,11 @@ def random_add_poisson_noise(
     return out
 
 
-def random_generate_poisson_noise_pt(img, scale_range=(0, 1.0), gray_prob=0):
+def random_generate_poisson_noise_pt(
+    img: Tensor,
+    scale_range: tuple[float, float] = (0, 1.0),
+    gray_prob: float | Tensor = 0,
+) -> Tensor:
     scale = (
         torch.rand(img.size(0), dtype=img.dtype, device=img.device)
         * (scale_range[1] - scale_range[0])
@@ -798,8 +881,12 @@ def random_generate_poisson_noise_pt(img, scale_range=(0, 1.0), gray_prob=0):
 
 
 def random_add_poisson_noise_pt(
-    img, scale_range=(0, 1.0), gray_prob=0, clip=True, rounds=False
-):
+    img: Tensor,
+    scale_range: tuple[float, float] = (0, 1.0),
+    gray_prob: float | Tensor = 0,
+    clip: bool = True,
+    rounds: bool = False,
+) -> Tensor:
     noise = random_generate_poisson_noise_pt(img, scale_range, gray_prob)
     out = img + noise
     if clip and rounds:
@@ -816,7 +903,7 @@ def random_add_poisson_noise_pt(
 # ------------------------------------------------------------------------ #
 
 
-def add_jpg_compression(img, quality=90):
+def add_jpg_compression(img: np.ndarray, quality: float = 90) -> np.ndarray:
     """Add JPG compression artifacts.
 
     Args:
@@ -835,7 +922,9 @@ def add_jpg_compression(img, quality=90):
     return img
 
 
-def random_add_jpg_compression(img, quality_range=(90, 100)):
+def random_add_jpg_compression(
+    img: np.ndarray, quality_range: Sequence[float, float] = (90, 100)
+) -> np.ndarray:
     """Randomly add JPG compression artifacts.
 
     Args:

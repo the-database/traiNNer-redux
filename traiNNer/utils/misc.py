@@ -1,7 +1,7 @@
 import os
 import random
 import time
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
 from os import path as osp
 from typing import Any
 
@@ -11,7 +11,7 @@ import torch
 from .dist_util import master_only
 
 
-def set_random_seed(seed) -> None:
+def set_random_seed(seed: int) -> None:
     """Set random seeds."""
     random.seed(seed)
     np.random.seed(seed)
@@ -20,11 +20,11 @@ def set_random_seed(seed) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
-def get_time_str():
+def get_time_str() -> str:
     return time.strftime("%Y%m%d_%H%M%S", time.localtime())
 
 
-def mkdir_and_rename(path) -> None:
+def mkdir_and_rename(path: str) -> None:
     """mkdirs. If path exists, rename it with timestamp and create a new one.
 
     Args:
@@ -57,7 +57,12 @@ def make_exp_dirs(opt: Mapping[str, Any]) -> None:
             os.makedirs(path, exist_ok=True)
 
 
-def scandir(dir_path, suffix=None, recursive=False, full_path=False):
+def scandir(
+    dir_path: str,
+    suffix: str | tuple[str] | None = None,
+    recursive: bool = False,
+    full_path: bool = False,
+) -> Generator:
     """Scan a directory to find the interested files.
 
     Args:
@@ -78,7 +83,9 @@ def scandir(dir_path, suffix=None, recursive=False, full_path=False):
 
     root = dir_path
 
-    def _scandir(dir_path, suffix, recursive):
+    def _scandir(
+        dir_path: str, suffix: str | tuple[str] | None, recursive: bool
+    ) -> Generator:
         for entry in os.scandir(dir_path):
             if not entry.name.startswith(".") and entry.is_file():
                 if full_path:

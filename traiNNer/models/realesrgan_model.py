@@ -12,7 +12,7 @@ from ..data.degradations import (
 from ..data.transforms import paired_random_crop
 from ..models.sr_model import SRModel
 from ..utils import DiffJPEG
-from ..utils.img_process_util import filter2D
+from ..utils.img_process_util import filter2d
 from ..utils.registry import MODEL_REGISTRY
 
 
@@ -91,7 +91,7 @@ class RealESRGANModel(SRModel):
 
             # ----------------------- The first degradation process ----------------------- #
             # blur
-            out = filter2D(self.gt_usm, self.kernel1)
+            out = filter2d(self.gt_usm, self.kernel1)
             # random resize
             updown_type = random.choices(
                 ["up", "down", "keep"], self.opt["resize_prob"]
@@ -132,7 +132,7 @@ class RealESRGANModel(SRModel):
             # ----------------------- The second degradation process ----------------------- #
             # blur
             if np.random.uniform() < self.opt["second_blur_prob"]:
-                out = filter2D(out, self.kernel2)
+                out = filter2d(out, self.kernel2)
             # random resize
             updown_type = random.choices(
                 ["up", "down", "keep"], self.opt["resize_prob2"]
@@ -186,7 +186,7 @@ class RealESRGANModel(SRModel):
                     size=(ori_h // self.opt["scale"], ori_w // self.opt["scale"]),
                     mode=mode,
                 )
-                out = filter2D(out, self.sinc_kernel)
+                out = filter2d(out, self.sinc_kernel)
                 # JPEG compression
                 jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
                 out = torch.clamp(out, 0, 1)
@@ -203,7 +203,7 @@ class RealESRGANModel(SRModel):
                     size=(ori_h // self.opt["scale"], ori_w // self.opt["scale"]),
                     mode=mode,
                 )
-                out = filter2D(out, self.sinc_kernel)
+                out = filter2d(out, self.sinc_kernel)
 
             # clamp and round
             self.lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.0

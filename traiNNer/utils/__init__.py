@@ -1,7 +1,6 @@
 from .color_util import bgr2ycbcr, rgb2ycbcr, rgb2ycbcr_pt, ycbcr2bgr, ycbcr2rgb
 from .diffjpeg import DiffJPEG
 from .file_client import FileClient
-from .img_process_util import USMSharp, usm_sharp
 from .img_util import crop_border, imfrombytes, img2tensor, imwrite, tensor2img
 from .logger import (
     AvgTimer,
@@ -55,8 +54,6 @@ __all__ = [
     # diffjpeg
     "DiffJPEG",
     # img_process_util
-    "USMSharp",
-    "usm_sharp",
     # options
     "yaml_load",
 ]
