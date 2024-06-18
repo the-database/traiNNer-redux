@@ -1,5 +1,5 @@
 import torch
-from torch import nn
+from torch import Tensor, nn
 from traiNNer.archs.vgg_arch import VGGFeatureExtractor
 from traiNNer.losses.basic_loss import charbonnier_loss
 from traiNNer.utils.registry import LOSS_REGISTRY
@@ -33,16 +33,16 @@ class PerceptualLoss(nn.Module):
 
     def __init__(
         self,
-        layer_weights,
-        vgg_type="vgg19",
-        use_input_norm=True,
-        range_norm=False,
-        normalize_layer_weights=False,
-        crop_input=False,
-        resize_input=False,
-        perceptual_weight=1.0,
-        style_weight=0.0,
-        criterion="l1",
+        layer_weights: dict[str, float],
+        vgg_type: str = "vgg19",
+        use_input_norm: bool = True,
+        range_norm: bool = False,
+        normalize_layer_weights: bool = False,
+        crop_input: bool = False,
+        resize_input: bool = False,
+        perceptual_weight: float = 1.0,
+        style_weight: float = 0.0,
+        criterion: str = "l1",
     ) -> None:
         super().__init__()
         self.perceptual_weight = perceptual_weight
@@ -75,7 +75,7 @@ class PerceptualLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    def forward(self, x, gt):
+    def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         """Forward function.
 
         Args:
@@ -134,7 +134,7 @@ class PerceptualLoss(nn.Module):
 
         return percep_loss, style_loss
 
-    def _gram_mat(self, x):
+    def _gram_mat(self, x: Tensor) -> Tensor:
         """Calculate Gram matrix.
 
         Args:
