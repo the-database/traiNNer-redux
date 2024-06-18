@@ -216,10 +216,10 @@ def cutmix(
         cx = RNG.get_rng().integers(w)
         cy = RNG.get_rng().integers(h)
 
-        bbx1 = np.clip(cx - cut_w // 2, 0, W)
-        bby1 = np.clip(cy - cut_h // 2, 0, H)
-        bbx2 = np.clip(cx + cut_w // 2, 0, W)
-        bby2 = np.clip(cy + cut_h // 2, 0, H)
+        bbx1 = np.clip(cx - cut_w // 2, 0, w)
+        bby1 = np.clip(cy - cut_h // 2, 0, h)
+        bbx2 = np.clip(cx + cut_w // 2, 0, w)
+        bby2 = np.clip(cy + cut_h // 2, 0, h)
 
         bb = (bbx1, bby1, bbx2, bby2)
 
