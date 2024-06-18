@@ -85,7 +85,7 @@ class BaseModel:
         self.best_metric_results[dataset_name] = record
 
     def _update_best_metric_result(
-        self, dataset_name: str, metric: str, val, current_iter: int
+        self, dataset_name: str, metric: str, val: float, current_iter: int
     ) -> None:
         if self.best_metric_results[dataset_name][metric]["better"] == "higher":
             if val >= self.best_metric_results[dataset_name][metric]["val"]:
@@ -213,10 +213,10 @@ class BaseModel:
         net_params = sum(x.numel() for x in net.parameters())
 
         logger = get_root_logger()
-        logger.info(f"Network: {net_cls_str}, with parameters: {net_params:,d}")
+        logger.info("Network: %s, with parameters: %s", net_cls_str, f"{net_params:,d}")
         logger.info(net_str)
 
-    def _set_lr(self, lr_groups_l) -> None:
+    def _set_lr(self, lr_groups_l: list[list[float]]) -> None:
         """Set learning rate for warm-up.
 
         Args:
@@ -226,7 +226,7 @@ class BaseModel:
             for param_group, lr in zip(optimizer.param_groups, lr_groups, strict=False):
                 param_group["lr"] = lr
 
-    def _get_init_lr(self):
+    def _get_init_lr(self) -> list[list[float]]:
         """Get the initial lr, which is set by the scheduler."""
         init_lr_groups_l = []
         for optimizer in self.optimizers:
@@ -256,7 +256,7 @@ class BaseModel:
             # set learning rate
             self._set_lr(warm_up_lr_l)
 
-    def get_current_learning_rate(self):
+    def get_current_learning_rate(self) -> list[float]:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
     @master_only
@@ -306,7 +306,7 @@ class BaseModel:
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(
-                    f"Save model error: {e}, remaining retry times: {retry - 1}"
+                    "Save model error: %s, remaining retry times: %d", e, retry - 1
                 )
                 time.sleep(1)
             else:
@@ -340,10 +340,10 @@ class BaseModel:
         if crt_net_keys != load_net_keys:
             logger.warning("Current net - loaded net:")
             for v in sorted(crt_net_keys - load_net_keys):
-                logger.warning(f"  {v}")
+                logger.warning("  %s", v)
             logger.warning("Loaded net - current net:")
             for v in sorted(load_net_keys - crt_net_keys):
-                logger.warning(f"  {v}")
+                logger.warning("  %s", v)
 
         # check the size for the same keys
         if not strict:
@@ -351,8 +351,10 @@ class BaseModel:
             for k in common_keys:
                 if crt_net[k].size() != load_net[k].size():
                     logger.warning(
-                        f"Size different, ignore [{k}]: crt_net: "
-                        f"{crt_net[k].shape}; load_net: {load_net[k].shape}"
+                        "Size different, ignore [%s]: crt_net: " "%s; load_net: %s",
+                        k,
+                        crt_net[k].shape,
+                        load_net[k].shape,
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
@@ -447,7 +449,9 @@ class BaseModel:
                 except Exception as e:
                     logger = get_root_logger()
                     logger.warning(
-                        f"Save training state error: {e}, remaining retry times: {retry - 1}"
+                        "Save training state error: %s, remaining retry times: %d",
+                        e,
+                        retry - 1,
                     )
                     time.sleep(1)
                 else:

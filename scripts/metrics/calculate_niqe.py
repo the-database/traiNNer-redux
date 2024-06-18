@@ -7,7 +7,7 @@ from traiNNer.metrics import calculate_niqe
 from traiNNer.utils import scandir
 
 
-def main(args) -> None:
+def main(args: argparse.Namespace) -> None:
     niqe_all = []
     img_list = sorted(scandir(args.input, recursive=True, full_path=True))
 

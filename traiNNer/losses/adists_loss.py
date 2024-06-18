@@ -137,7 +137,7 @@ class ADISTSLoss(torch.nn.Module):
                 ps_prod = (ps_prod - psd_min.unsqueeze(-1)) / (
                     psd_max.unsqueeze(-1) - psd_min.unsqueeze(-1) + c0
                 )
-            except:
+            except:  # noqa: E722
                 x_mean = feats[k].mean([2, 3], keepdim=True)
                 x_var = ((feats[k] - x_mean) ** 2).mean([2, 3], keepdim=True)
                 h, w = x_mean.shape[2], x_mean.shape[3]
@@ -282,7 +282,7 @@ class ADISTSLoss(torch.nn.Module):
                     )
                     - x_mean * y_mean
                 )
-            except:
+            except:  # noqa: E722
                 x_mean = feat_x.mean([2, 3], keepdim=True)
                 y_mean = feat_y.mean([2, 3], keepdim=True)
                 x_var = ((feat_x - x_mean) ** 2).mean([2, 3], keepdim=True)

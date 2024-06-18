@@ -1,6 +1,7 @@
 import queue
 import threading
 from collections.abc import Iterator
+from typing import Any
 
 import torch
 from torch.utils.data import DataLoader
@@ -28,7 +29,7 @@ class PrefetchGenerator(threading.Thread):
             self.queue.put(item)
         self.queue.put(None)
 
-    def __next__(self):
+    def __next__(self) -> Any:
         next_item = self.queue.get()
         if next_item is None:
             raise StopIteration
@@ -56,7 +57,7 @@ class PrefetchDataLoader(DataLoader):
         self.num_prefetch_queue = num_prefetch_queue
         super().__init__(**kwargs)
 
-    def __iter__(self):
+    def __iter__(self) -> PrefetchGenerator:
         return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
 
 
@@ -67,11 +68,11 @@ class CPUPrefetcher:
         loader: Dataloader.
     """
 
-    def __init__(self, loader) -> None:
+    def __init__(self, loader: DataLoader) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
 
-    def next(self):
+    def next(self) -> Any:
         try:
             return next(self.loader)
         except StopIteration:
@@ -93,7 +94,7 @@ class CUDAPrefetcher:
         opt (dict): Options.
     """
 
-    def __init__(self, loader, opt) -> None:
+    def __init__(self, loader: DataLoader, opt: dict[str, Any]) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
         self.opt = opt
@@ -115,7 +116,7 @@ class CUDAPrefetcher:
                         device=self.device, non_blocking=True
                     )
 
-    def next(self):
+    def next(self) -> Any:
         torch.cuda.current_stream().wait_stream(self.stream)
         batch = self.batch
         self.preload()

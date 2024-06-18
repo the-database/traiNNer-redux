@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 import torch
 from traiNNer.losses import (
@@ -39,7 +41,7 @@ class TestLosses:
         .permute(0, 3, 1, 2)
     )
 
-    mssim_neo_loss = MSSIMLoss()
+    mssim_loss = MSSIMLoss()
     l1_loss = L1Loss()
     luma_loss = LumaLoss(criterion="charbonnier")
     charbonnier_loss = CharbonnierLoss()
@@ -54,11 +56,12 @@ class TestLosses:
     )
     color_loss = ColorLoss(criterion="charbonnier")
     dists_loss = DISTSLoss()
+    mse_loss = MSELoss()
 
     eps = 1e-5  # torch.finfo(torch.float32).eps
 
     @pytest.mark.parametrize("loss_class", [L1Loss, MSELoss, CharbonnierLoss])
-    def test_pixellosses(self, loss_class) -> None:
+    def test_pixellosses(self, loss_class: Callable) -> None:
         """Test loss: pixel losses"""
 
         pred = torch.rand((1, 3, 4, 4), dtype=torch.float32)
@@ -126,7 +129,7 @@ class TestLosses:
     @pytest.mark.parametrize(
         "loss_fn",
         [
-            mssim_neo_loss,
+            mssim_loss,
             l1_loss,
             luma_loss,
             mse_loss,
@@ -136,7 +139,7 @@ class TestLosses:
             dists_loss,
         ],
     )
-    def test_black_vs_black(self, loss_fn) -> None:
+    def test_black_vs_black(self, loss_fn: Callable) -> None:
         loss_value = loss_fn(self.black_image, self.black_image)
         print(loss_value)
 
@@ -148,7 +151,7 @@ class TestLosses:
     @pytest.mark.parametrize(
         "loss_fn",
         [
-            mssim_neo_loss,
+            mssim_loss,
             l1_loss,
             luma_loss,
             mse_loss,
@@ -158,7 +161,7 @@ class TestLosses:
             dists_loss,
         ],
     )
-    def test_black_vs_black_float64(self, loss_fn) -> None:
+    def test_black_vs_black_float64(self, loss_fn: Callable) -> None:
         loss_value = loss_fn(
             self.black_image.to(dtype=torch.float64),
             self.black_image.to(dtype=torch.float64),

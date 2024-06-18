@@ -142,7 +142,8 @@ class MultiScaleGANLoss(GANLoss):
         """
         if isinstance(input, list):
             loss = 0
-            for pred_i in input:
+            for pred_i_wrapper in input:
+                pred_i = pred_i_wrapper
                 if isinstance(pred_i, list):
                     # Only compute GAN loss for the last layer
                     # in case of multiscale feature matching
