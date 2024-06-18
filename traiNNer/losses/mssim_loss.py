@@ -141,7 +141,7 @@ class MSSIMLoss(nn.Module):
         if self.cosim:
             cosine_term = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
 
-        msssim = torch.Tensor(1.0, device=x.device)
+        msssim = torch.tensor(1.0, device=x.device)
 
         for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
             ssim, cs = self._ssim(x, y)
