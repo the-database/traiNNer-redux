@@ -1,6 +1,16 @@
 import pytest
 import torch
-from traiNNer.losses.basic_loss import *
+from traiNNer.losses import (
+    CharbonnierLoss,
+    ColorLoss,
+    DISTSLoss,
+    L1Loss,
+    LumaLoss,
+    MSELoss,
+    MSSIMLoss,
+    PerceptualLoss,
+    WeightedTVLoss,
+)
 
 
 class TestLosses:
@@ -29,7 +39,7 @@ class TestLosses:
         .permute(0, 3, 1, 2)
     )
 
-    mssim_neo_loss = MSSIMNeoLoss()
+    mssim_neo_loss = MSSIMLoss()
     l1_loss = L1Loss()
     luma_loss = LumaLoss(criterion="charbonnier")
     charbonnier_loss = CharbonnierLoss()

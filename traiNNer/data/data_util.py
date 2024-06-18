@@ -3,13 +3,18 @@ from os import path as osp
 import cv2
 import numpy as np
 import torch
-from torch.nn import functional as F  # noqa: N812
+from torch import Tensor
 
 from ..utils import img2tensor, scandir
 from .transforms import mod_crop
 
 
-def read_img_seq(path, require_mod_crop=False, scale=1, return_imgname=False):
+def read_img_seq(
+    path: str | list[str],
+    require_mod_crop: bool = False,
+    scale: int = 1,
+    return_imgname: bool = False,
+) -> Tensor | tuple[Tensor, list[str]]:
     """Read a sequence of images from a given folder path.
 
     Args:
@@ -41,7 +46,9 @@ def read_img_seq(path, require_mod_crop=False, scale=1, return_imgname=False):
         return imgs
 
 
-def generate_frame_indices(crt_idx, max_frame_num, num_frames, padding="reflection"):
+def generate_frame_indices(
+    crt_idx: int, max_frame_num: int, num_frames: int, padding: str = "reflection"
+) -> list[int]:
     """Generate an index list for reading `num_frames` frames from a sequence
     of images.
 
@@ -98,7 +105,7 @@ def generate_frame_indices(crt_idx, max_frame_num, num_frames, padding="reflecti
     return indices
 
 
-def paired_paths_from_lmdb(folders, keys):
+def paired_paths_from_lmdb(folders: list[str], keys: list[str]) -> list[str]:
     """Generate paired paths from lmdb files.
 
     Contents of lmdb. Taking the `lq.lmdb` for example, the file structure is:
@@ -167,7 +174,9 @@ def paired_paths_from_lmdb(folders, keys):
         return paths
 
 
-def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmpl):
+def paired_paths_from_meta_info_file(
+    folders: list[str], keys: list[str], meta_info_file: str, filename_tmpl: str
+) -> list[str]:
     """Generate paired paths from an meta information file.
 
     Each line in the meta information file contains the image names and
@@ -215,7 +224,9 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file, filename_tmp
     return paths
 
 
-def paired_paths_from_folder(folders, keys, filename_tmpl):
+def paired_paths_from_folder(
+    folders: list[str], keys: list[str], filename_tmpl: str
+) -> list[str]:
     """Generate paired paths from folders.
 
     Args:
@@ -278,7 +289,7 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     return [dict([a, b]) for a, b in zip(input_paths, gt_paths, strict=False)]
 
 
-def paths_from_folder(folder):
+def paths_from_folder(folder: str) -> list[str]:
     """Generate paths from folder.
 
     Args:
@@ -293,7 +304,7 @@ def paths_from_folder(folder):
     return paths
 
 
-def paths_from_lmdb(folder):
+def paths_from_lmdb(folder: str) -> list[str]:
     """Generate paths from lmdb.
 
     Args:
@@ -309,7 +320,7 @@ def paths_from_lmdb(folder):
     return paths
 
 
-def generate_gaussian_kernel(kernel_size=13, sigma=1.6):
+def generate_gaussian_kernel(kernel_size: int = 13, sigma: float = 1.6) -> np.ndarray:
     """Generate Gaussian kernel used in `duf_downsample`.
 
     Args:
@@ -326,38 +337,3 @@ def generate_gaussian_kernel(kernel_size=13, sigma=1.6):
     kernel[kernel_size // 2, kernel_size // 2] = 1
     # gaussian-smooth the dirac, resulting in a gaussian filter
     return filters.gaussian_filter(kernel, sigma)
-
-
-def duf_downsample(x, kernel_size=13, scale=4):
-    """Downsamping with Gaussian kernel used in the DUF official code.
-
-    Args:
-        x (Tensor): Frames to be downsampled, with shape (b, t, c, h, w).
-        kernel_size (int): Kernel size. Default: 13.
-        scale (int): Downsampling factor. Supported scale: (2, 3, 4).
-            Default: 4.
-
-    Returns:
-        Tensor: DUF downsampled frames.
-    """
-    assert scale in (2, 3, 4), f"Only support scale (2, 3, 4), but got {scale}."
-
-    squeeze_flag = False
-    if x.ndim == 4:
-        squeeze_flag = True
-        x = x.unsqueeze(0)
-    b, t, c, h, w = x.size()
-    x = x.view(-1, 1, h, w)
-    pad_w, pad_h = kernel_size // 2 + scale * 2, kernel_size // 2 + scale * 2
-    x = F.pad(x, (pad_w, pad_w, pad_h, pad_h), "reflect")
-
-    gaussian_filter = generate_gaussian_kernel(kernel_size, 0.4 * scale)
-    gaussian_filter = (
-        torch.from_numpy(gaussian_filter).type_as(x).unsqueeze(0).unsqueeze(0)
-    )
-    x = F.conv2d(x, gaussian_filter, stride=scale)
-    x = x[:, :, 2:-2, 2:-2]
-    x = x.view(b, t, c, x.size(2), x.size(3))
-    if squeeze_flag:
-        x = x.squeeze(0)
-    return x

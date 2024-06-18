@@ -443,7 +443,7 @@ def random_mixed_kernels(
 np.seterr(divide="ignore", invalid="ignore")
 
 
-def circular_lowpass_kernel(cutoff, kernel_size, pad_to=0):
+def circular_lowpass_kernel(cutoff: float, kernel_size: int, pad_to: int = 0):
     """2D sinc filter
 
     Reference: https://dsp.stackexchange.com/questions/58301/2-d-circularly-symmetric-low-pass-filter

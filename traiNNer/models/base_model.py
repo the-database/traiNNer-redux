@@ -186,7 +186,9 @@ class BaseModel:
                 f"Scheduler {scheduler_type} is not implemented yet."
             )
 
-    def get_bare_model(self, net):
+    def get_bare_model(
+        self, net: DataParallel | DistributedDataParallel | nn.Module
+    ) -> nn.Module:
         """Get bare model, especially under wrapping with
         DistributedDataParallel or DataParallel.
         """
@@ -311,7 +313,7 @@ class BaseModel:
             finally:
                 retry -= 1
         if retry == 0:
-            logger.warning(f"Still cannot save {save_path}. Just ignore it.")
+            logger.warning("Still cannot save %s. Just ignore it.", save_path)
             # raise IOError(f'Cannot save {save_path}.')
 
     def _print_different_keys_loading(self, crt_net, load_net, strict=True) -> None:
@@ -351,7 +353,9 @@ class BaseModel:
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
-    def load_network_spandrel(self, net, load_path, strict=True) -> bool | None:
+    def load_network_spandrel(
+        self, net: nn.Module, load_path: str, strict: bool = True
+    ) -> bool | None:
         try:
             logger = get_root_logger()
             load_net = self.model_loader.load_from_file(load_path)

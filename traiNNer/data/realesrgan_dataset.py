@@ -3,10 +3,12 @@ import os
 import os.path as osp
 import random
 import time
+from typing import Any
 
 import cv2
 import numpy as np
 import torch
+from torch import Tensor
 from torch.utils import data
 
 from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor
@@ -34,7 +36,7 @@ class RealESRGANDataset(data.Dataset):
             Please see more options in the codes.
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__()
         self.opt = opt
         self.file_client = None
@@ -90,7 +92,7 @@ class RealESRGANDataset(data.Dataset):
         ).float()  # convolving with pulse tensor brings no blurry effect
         self.pulse_tensor[10, 10] = 1
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> tuple[Tensor, Tensor, Tensor, Tensor, str]:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt

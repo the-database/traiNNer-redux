@@ -1,4 +1,4 @@
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torch.nn.utils import spectral_norm
 
@@ -16,7 +16,7 @@ class VGGStyleDiscriminator(nn.Module):
         num_feat (int): Channel number of base intermediate features.Default: 64.
     """
 
-    def __init__(self, num_in_ch, num_feat, input_size=128) -> None:
+    def __init__(self, num_in_ch: int, num_feat: int, input_size: int = 128) -> None:
         super().__init__()
         self.input_size = input_size
         assert self.input_size in (
@@ -60,7 +60,7 @@ class VGGStyleDiscriminator(nn.Module):
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         assert (
             x.size(2) == self.input_size
         ), f"Input size must be identical to input_size, but received {x.size()}."
@@ -105,7 +105,9 @@ class UNetDiscriminatorSN(nn.Module):
         skip_connection (bool): Whether to use skip connections between U-Net. Default: True.
     """
 
-    def __init__(self, num_in_ch, num_feat=64, skip_connection=True) -> None:
+    def __init__(
+        self, num_in_ch: int, num_feat: int = 64, skip_connection: bool = True
+    ) -> None:
         super().__init__()
         self.skip_connection = skip_connection
         norm = spectral_norm
@@ -124,7 +126,7 @@ class UNetDiscriminatorSN(nn.Module):
         self.conv8 = norm(nn.Conv2d(num_feat, num_feat, 3, 1, 1, bias=False))
         self.conv9 = nn.Conv2d(num_feat, 1, 3, 1, 1)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         # downsample
         x0 = F.leaky_relu(self.conv0(x), negative_slope=0.2, inplace=True)
         x1 = F.leaky_relu(self.conv1(x0), negative_slope=0.2, inplace=True)

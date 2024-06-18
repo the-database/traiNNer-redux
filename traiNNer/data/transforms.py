@@ -1,10 +1,12 @@
 import random
 
 import cv2
+import numpy as np
 import torch
+from torch import Tensor
 
 
-def mod_crop(img, scale):
+def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     """Mod crop images, used during testing.
 
     Args:
@@ -24,7 +26,13 @@ def mod_crop(img, scale):
     return img
 
 
-def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
+def paired_random_crop(
+    img_gts: np.ndarray | list[np.ndarray] | Tensor | list[Tensor],
+    img_lqs: np.ndarray | list[np.ndarray] | Tensor | list[Tensor],
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> np.ndarray | list[np.ndarray] | Tensor | list[Tensor]:
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -108,7 +116,13 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
     return img_gts, img_lqs
 
 
-def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
+def augment(
+    imgs: np.ndarray | list[np.ndarray],
+    hflip: bool = True,
+    rotation: bool = True,
+    flows: list[np.ndarray] | None = None,
+    return_status: bool = False,
+) -> np.ndarray | list[np.ndarray]:
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
     We use vertical flip and transpose for rotation implementation.
@@ -134,7 +148,7 @@ def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
     vflip = rotation and random.random() < 0.5
     rot90 = rotation and random.random() < 0.5
 
-    def _augment(img):
+    def _augment(img: np.ndarray) -> np.ndarray:
         if hflip:  # horizontal
             cv2.flip(img, 1, img)
         if vflip:  # vertical
@@ -143,7 +157,7 @@ def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
             img = img.transpose(1, 0, 2)
         return img
 
-    def _augment_flow(flow):
+    def _augment_flow(flow: np.ndarray) -> np.ndarray:
         if hflip:  # horizontal
             cv2.flip(flow, 1, flow)
             flow[:, :, 0] *= -1
@@ -174,7 +188,9 @@ def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
         return imgs
 
 
-def img_rotate(img, angle, center=None, scale=1.0):
+def img_rotate(
+    img: np.ndarray, angle: float, center: tuple[int] | None = None, scale: float = 1.0
+) -> np.ndarray:
     """Rotate image.
 
     Args:
