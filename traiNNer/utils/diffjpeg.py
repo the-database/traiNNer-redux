@@ -9,7 +9,7 @@ import itertools
 
 import numpy as np
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
 # ------------------------ utils ------------------------#
@@ -35,12 +35,12 @@ c_table[:4, :4] = np.array(
 c_table = nn.Parameter(torch.from_numpy(c_table))
 
 
-def diff_round(x):
+def diff_round(x: Tensor) -> Tensor:
     """Differentiable rounding function"""
     return torch.round(x) + (x - torch.round(x)) ** 3
 
 
-def quality_to_factor(quality):
+def quality_to_factor(quality: float) -> float:
     """Calculate factor corresponding to quality
 
     Args:
@@ -73,7 +73,7 @@ class RGB2YCbCrJpeg(nn.Module):
         self.shift = nn.Parameter(torch.tensor([0.0, 128.0, 128.0]))
         self.matrix = nn.Parameter(torch.from_numpy(matrix))
 
-    def forward(self, image):
+    def forward(self, image: Tensor) -> Tensor:
         """
         Args:
             image(Tensor): batch x 3 x height x width
@@ -92,7 +92,7 @@ class ChromaSubsampling(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(self, image):
+    def forward(self, image: Tensor) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width x 3
@@ -127,7 +127,7 @@ class BlockSplitting(nn.Module):
         super().__init__()
         self.k = 8
 
-    def forward(self, image):
+    def forward(self, image: Tensor) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -158,7 +158,7 @@ class DCT8x8(nn.Module):
             torch.from_numpy(np.outer(alpha, alpha) * 0.25).float()
         )
 
-    def forward(self, image):
+    def forward(self, image: Tensor) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -179,12 +179,12 @@ class YQuantize(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding) -> None:
+    def __init__(self, rounding: function) -> None:
         super().__init__()
         self.rounding = rounding
         self.y_table = y_table
 
-    def forward(self, image, factor=1):
+    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -209,12 +209,12 @@ class CQuantize(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding) -> None:
+    def __init__(self, rounding: function) -> None:
         super().__init__()
         self.rounding = rounding
         self.c_table = c_table
 
-    def forward(self, image, factor=1):
+    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -239,14 +239,14 @@ class CompressJpeg(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding=torch.round) -> None:
+    def __init__(self, rounding: function = torch.round) -> None:
         super().__init__()
         self.l1 = nn.Sequential(RGB2YCbCrJpeg(), ChromaSubsampling())
         self.l2 = nn.Sequential(BlockSplitting(), DCT8x8())
         self.c_quantize = CQuantize(rounding=rounding)
         self.y_quantize = YQuantize(rounding=rounding)
 
-    def forward(self, image, factor=1):
+    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x 3 x height x width
@@ -278,7 +278,7 @@ class YDequantize(nn.Module):
         super().__init__()
         self.y_table = y_table
 
-    def forward(self, image, factor=1):
+    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -302,7 +302,7 @@ class CDequantize(nn.Module):
         super().__init__()
         self.c_table = c_table
 
-    def forward(self, image, factor=1):
+    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -319,7 +319,7 @@ class CDequantize(nn.Module):
         return out
 
 
-class iDCT8x8(nn.Module):
+class IDCT8x8(nn.Module):
     """Inverse discrete Cosine Transformation"""
 
     def __init__(self) -> None:
@@ -333,7 +333,7 @@ class iDCT8x8(nn.Module):
             )
         self.tensor = nn.Parameter(torch.from_numpy(tensor).float())
 
-    def forward(self, image):
+    def forward(self, image: Tensor) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -353,7 +353,7 @@ class BlockMerging(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(self, patches, height, width):
+    def forward(self, patches: Tensor, height: int, width: int) -> Tensor:
         """
         Args:
             patches(tensor) batch x height*width/64, height x width
@@ -376,7 +376,7 @@ class ChromaUpsampling(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(self, y, cb, cr):
+    def forward(self, y: Tensor, cb: Tensor, cr: Tensor) -> Tensor:
         """
         Args:
             y(tensor): y channel image
@@ -387,7 +387,7 @@ class ChromaUpsampling(nn.Module):
             Tensor: batch x height x width x 3
         """
 
-        def repeat(x, k=2):
+        def repeat(x: Tensor, k: int = 2) -> Tensor:
             height, width = x.shape[1:3]
             x = x.unsqueeze(-1)
             x = x.repeat(1, 1, k, k)
@@ -412,7 +412,7 @@ class YCbCr2RGBJpeg(nn.Module):
         self.shift = nn.Parameter(torch.tensor([0, -128.0, -128.0]))
         self.matrix = nn.Parameter(torch.from_numpy(matrix))
 
-    def forward(self, image):
+    def forward(self, image: Tensor) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width x 3
@@ -431,16 +431,18 @@ class DeCompressJpeg(nn.Module):
         rounding(function): rounding function to use
     """
 
-    def __init__(self, rounding=torch.round) -> None:
+    def __init__(self, rounding: function = torch.round) -> None:
         super().__init__()
         self.c_dequantize = CDequantize()
         self.y_dequantize = YDequantize()
-        self.idct = iDCT8x8()
+        self.idct = IDCT8x8()
         self.merging = BlockMerging()
         self.chroma = ChromaUpsampling()
         self.colors = YCbCr2RGBJpeg()
 
-    def forward(self, y, cb, cr, imgh, imgw, factor=1):
+    def forward(
+        self, y: Tensor, cb: Tensor, cr: Tensor, imgh: int, imgw: int, factor: float = 1
+    ) -> Tensor:
         """
         Args:
             compressed(dict(tensor)): batch x h*w/64 x 8 x 8
@@ -482,7 +484,7 @@ class DiffJPEG(nn.Module):
         differentiable(bool): If True, uses custom differentiable rounding function, if False, uses standard torch.round
     """
 
-    def __init__(self, differentiable=True) -> None:
+    def __init__(self, differentiable: bool = True) -> None:
         super().__init__()
         if differentiable:
             rounding = diff_round
@@ -492,7 +494,7 @@ class DiffJPEG(nn.Module):
         self.compress = CompressJpeg(rounding=rounding)
         self.decompress = DeCompressJpeg(rounding=rounding)
 
-    def forward(self, x, quality):
+    def forward(self, x: Tensor, quality: float) -> Tensor:
         """
         Args:
             x (Tensor): Input image, bchw, rgb, [0, 1]

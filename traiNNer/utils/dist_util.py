@@ -8,7 +8,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 
-def init_dist(launcher, backend="nccl", **kwargs) -> None:
+def init_dist(launcher: str, backend: str = "nccl", **kwargs) -> None:
     if mp.get_start_method(allow_none=True) is None:
         mp.set_start_method("spawn")
     if launcher == "pytorch":
@@ -19,14 +19,14 @@ def init_dist(launcher, backend="nccl", **kwargs) -> None:
         raise ValueError(f"Invalid launcher type: {launcher}")
 
 
-def _init_dist_pytorch(backend, **kwargs) -> None:
+def _init_dist_pytorch(backend: str, **kwargs) -> None:
     rank = int(os.environ["RANK"])
     num_gpus = torch.cuda.device_count()
     torch.cuda.set_device(rank % num_gpus)
     dist.init_process_group(backend=backend, **kwargs)
 
 
-def _init_dist_slurm(backend, port=None) -> None:
+def _init_dist_slurm(backend: str, port: int | None = None) -> None:
     """Initialize slurm distributed training environment.
 
     If argument ``port`` is not specified, then the master port will be system
@@ -58,7 +58,7 @@ def _init_dist_slurm(backend, port=None) -> None:
     dist.init_process_group(backend=backend)
 
 
-def get_dist_info():
+def get_dist_info() -> tuple[int, int]:
     if dist.is_available():
         initialized = dist.is_initialized()
     else:
@@ -72,7 +72,7 @@ def get_dist_info():
     return rank, world_size
 
 
-def master_only(func):
+def master_only(func: function) -> function:
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         rank, _ = get_dist_info()

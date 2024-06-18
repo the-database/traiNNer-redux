@@ -2,9 +2,10 @@ import math
 
 import numpy as np
 import torch
+from torch import Tensor
 
 
-def cubic(x):
+def cubic(x: Tensor) -> Tensor:
     """cubic function used for calculate_weights_indices."""
     absx = torch.abs(x)
     absx2 = absx**2
@@ -15,8 +16,13 @@ def cubic(x):
 
 
 def calculate_weights_indices(
-    in_length, out_length, scale, kernel, kernel_width, antialiasing
-):
+    in_length: int,
+    out_length: int,
+    scale: float,
+    kernel: str,
+    kernel_width: int,
+    antialiasing: bool,
+) -> tuple[Tensor, Tensor, int, int]:
     """Calculate weights and indices, used for imresize function.
 
     Args:
@@ -87,7 +93,9 @@ def calculate_weights_indices(
 
 
 @torch.no_grad()
-def imresize(img, scale, antialiasing=True):
+def imresize(
+    img: Tensor | np.ndarray, scale: float, antialiasing: bool = True
+) -> Tensor:
     """imresize function same as MATLAB.
 
     It now only supports bicubic.

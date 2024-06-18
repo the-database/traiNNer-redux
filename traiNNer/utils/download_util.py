@@ -3,13 +3,14 @@ import os
 from urllib.parse import urlparse
 
 import requests
+from requests import Response
 from torch.hub import download_url_to_file, get_dir
 from tqdm import tqdm
 
 from .misc import sizeof_fmt
 
 
-def download_file_from_google_drive(file_id, save_path) -> None:
+def download_file_from_google_drive(file_id: str, save_path: str) -> None:
     """Download files from google drive.
 
     Reference: https://stackoverflow.com/questions/25010369/wget-curl-large-file-from-google-drive
@@ -20,18 +21,18 @@ def download_file_from_google_drive(file_id, save_path) -> None:
     """
 
     session = requests.Session()
-    URL = "https://docs.google.com/uc?export=download"
+    url = "https://docs.google.com/uc?export=download"
     params = {"id": file_id}
 
-    response = session.get(URL, params=params, stream=True)
+    response = session.get(url, params=params, stream=True)
     token = get_confirm_token(response)
     if token:
         params["confirm"] = token
-        response = session.get(URL, params=params, stream=True)
+        response = session.get(url, params=params, stream=True)
 
     # get file size
     response_file_size = session.get(
-        URL, params=params, stream=True, headers={"Range": "bytes=0-2"}
+        url, params=params, stream=True, headers={"Range": "bytes=0-2"}
     )
     if "Content-Range" in response_file_size.headers:
         file_size = int(response_file_size.headers["Content-Range"].split("/")[1])
@@ -41,7 +42,7 @@ def download_file_from_google_drive(file_id, save_path) -> None:
     save_response_content(response, save_path, file_size)
 
 
-def get_confirm_token(response):
+def get_confirm_token(response: Response) -> str | None:
     for key, value in response.cookies.items():
         if key.startswith("download_warning"):
             return value
@@ -49,7 +50,10 @@ def get_confirm_token(response):
 
 
 def save_response_content(
-    response, destination, file_size=None, chunk_size=32768
+    response: Response,
+    destination: str,
+    file_size: int | None = None,
+    chunk_size: int = 32768,
 ) -> None:
     if file_size is not None:
         pbar = tqdm(total=math.ceil(file_size / chunk_size), unit="chunk")
@@ -73,7 +77,12 @@ def save_response_content(
             pbar.close()
 
 
-def load_file_from_url(url, model_dir=None, progress=True, file_name=None):
+def load_file_from_url(
+    url: str,
+    model_dir: str | None = None,
+    progress: bool = True,
+    file_name: str | None = None,
+) -> str:
     """Load file form http url, will download models if necessary.
 
     Reference: https://github.com/1adrianb/face-alignment/blob/master/face_alignment/utils.py
