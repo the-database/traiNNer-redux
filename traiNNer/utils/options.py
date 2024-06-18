@@ -8,6 +8,7 @@ from typing import Any
 
 import torch
 import yaml
+from yaml import MappingNode
 
 from . import set_random_seed
 from .dist_util import get_dist_info, init_dist, master_only
@@ -28,10 +29,10 @@ def ordered_yaml() -> tuple[Loader, Dumper]:
 
     _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
 
-    def dict_representer(dumper, data):
+    def dict_representer(dumper: Dumper, data: Mapping[str, Any]) -> MappingNode:
         return dumper.represent_dict(data.items())
 
-    def dict_constructor(loader, node) -> OrderedDict:
+    def dict_constructor(loader: Loader, node: MappingNode) -> OrderedDict:
         return OrderedDict(loader.construct_pairs(node))
 
     Dumper.add_representer(OrderedDict, dict_representer)
@@ -39,7 +40,7 @@ def ordered_yaml() -> tuple[Loader, Dumper]:
     return Loader, Dumper
 
 
-def yaml_load(f) -> Mapping[str, Any]:
+def yaml_load(f: str) -> Mapping[str, Any]:
     """Load yaml file or string.
 
     Args:
@@ -48,10 +49,10 @@ def yaml_load(f) -> Mapping[str, Any]:
     Returns:
         dict: Loaded dict.
     """
-    if os.path.isfile(f):
-        with open(f) as f:
-            return yaml.load(f, Loader=ordered_yaml()[0])
-    else:
+    if not os.path.isfile(f):
+        raise FileNotFoundError(f"Options file does not exist: {f}")
+
+    with open(f) as f:
         return yaml.load(f, Loader=ordered_yaml()[0])
 
 
@@ -171,9 +172,9 @@ def parse_options(
         opt["num_gpu"] = torch.cuda.device_count()
 
     # datasets
-    for phase, dataset in opt["datasets"].items():
+    for full_phase, dataset in opt["datasets"].items():
         # for multiple datasets, e.g., val_1, val_2; test_1, test_2
-        phase = phase.split("_")[0]
+        phase = full_phase.split("_")[0]
         dataset["phase"] = phase
         if "scale" in opt:
             dataset["scale"] = opt["scale"]
@@ -211,7 +212,7 @@ def parse_options(
 
 
 @master_only
-def copy_opt_file(opt_file, experiments_root) -> None:
+def copy_opt_file(opt_file: str, experiments_root: str) -> None:
     # copy the yml file to the experiment root
     import sys
     import time
