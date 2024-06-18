@@ -1,8 +1,9 @@
 import numpy as np
 import torch
+from torch import Tensor
 
 
-def rgb2ycbcr(img, y_only=False):
+def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
     """Convert a RGB image to YCbCr image.
 
     This function produces the same results as Matlab's `rgb2ycbcr` function.
@@ -46,7 +47,7 @@ def rgb2ycbcr(img, y_only=False):
     return out_img
 
 
-def bgr2ycbcr(img, y_only=False):
+def bgr2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
     """Convert a BGR image to YCbCr image.
 
     The bgr version of rgb2ycbcr.
@@ -90,7 +91,7 @@ def bgr2ycbcr(img, y_only=False):
     return out_img
 
 
-def ycbcr2rgb(img):
+def ycbcr2rgb(img: np.ndarray) -> np.ndarray:
     """Convert a YCbCr image to RGB image.
 
     This function produces the same results as Matlab's ycbcr2rgb function.
@@ -125,7 +126,7 @@ def ycbcr2rgb(img):
     return out_img
 
 
-def ycbcr2bgr(img):
+def ycbcr2bgr(img: np.ndarray) -> np.ndarray:
     """Convert a YCbCr image to BGR image.
 
     The bgr version of ycbcr2rgb.
@@ -160,7 +161,7 @@ def ycbcr2bgr(img):
     return out_img
 
 
-def _convert_input_type_range(img):
+def _convert_input_type_range(img: np.ndarray) -> np.ndarray:
     """Convert the type and range of the input image.
 
     It converts the input image to np.float32 type and range of [0, 1].
@@ -189,7 +190,7 @@ def _convert_input_type_range(img):
     return img
 
 
-def _convert_output_type_range(img, dst_type):
+def _convert_output_type_range(img: np.ndarray, dst_type: np.dtype) -> np.ndarray:
     """Convert the type and range of the image according to dst_type.
 
     It converts the image to desired type and range. If `dst_type` is np.uint8,
@@ -221,7 +222,7 @@ def _convert_output_type_range(img, dst_type):
     return img.astype(dst_type)
 
 
-def rgb2ycbcr_pt(img, y_only=False):
+def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
     """Convert RGB images to YCbCr images (PyTorch version).
 
     It implements the ITU-R BT.601 conversion for standard-definition television. See more details in
@@ -256,7 +257,7 @@ def rgb2ycbcr_pt(img, y_only=False):
     return out_img
 
 
-def rgb_to_luma(img: torch.Tensor) -> torch.Tensor:
+def rgb_to_luma(img: Tensor) -> Tensor:
     """RGB to CIELAB L*"""
 
     if not isinstance(img, torch.Tensor):

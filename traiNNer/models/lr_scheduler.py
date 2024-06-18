@@ -1,6 +1,8 @@
 import math
 from collections import Counter
+from collections.abc import Sequence
 
+from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
 
@@ -19,12 +21,12 @@ class MultiStepRestartLR(_LRScheduler):
 
     def __init__(
         self,
-        optimizer,
-        milestones,
-        gamma=0.1,
-        restarts=(0,),
-        restart_weights=(1,),
-        last_epoch=-1,
+        optimizer: Optimizer,
+        milestones: Sequence[int],
+        gamma: float = 0.1,
+        restarts: Sequence[int] = (0,),
+        restart_weights: Sequence[int] = (1,),
+        last_epoch: int = -1,
     ) -> None:
         self.milestones = Counter(milestones)
         self.gamma = gamma
@@ -35,7 +37,7 @@ class MultiStepRestartLR(_LRScheduler):
         ), "restarts and their weights do not match."
         super().__init__(optimizer, last_epoch)
 
-    def get_lr(self):
+    def get_lr(self) -> list[float]:
         if self.last_epoch in self.restarts:
             weight = self.restart_weights[self.restarts.index(self.last_epoch)]
             return [
@@ -49,7 +51,7 @@ class MultiStepRestartLR(_LRScheduler):
         ]
 
 
-def get_position_from_periods(iteration, cumulative_period):
+def get_position_from_periods(iteration: int, cumulative_period: Sequence[int]) -> int:
     """Get the position from a period list.
 
     It will return the index of the right-closest number in the period list.
@@ -91,7 +93,12 @@ class CosineAnnealingRestartLR(_LRScheduler):
     """
 
     def __init__(
-        self, optimizer, periods, restart_weights=(1,), eta_min=0, last_epoch=-1
+        self,
+        optimizer: Optimizer,
+        periods: Sequence[int],
+        restart_weights: Sequence[int] = (1,),
+        eta_min: int = 0,
+        last_epoch: int = -1,
     ) -> None:
         self.periods = periods
         self.restart_weights = restart_weights
@@ -104,7 +111,7 @@ class CosineAnnealingRestartLR(_LRScheduler):
         ]
         super().__init__(optimizer, last_epoch)
 
-    def get_lr(self):
+    def get_lr(self) -> list[float]:
         idx = get_position_from_periods(self.last_epoch, self.cumulative_period)
         current_weight = self.restart_weights[idx]
         nearest_restart = 0 if idx == 0 else self.cumulative_period[idx - 1]
