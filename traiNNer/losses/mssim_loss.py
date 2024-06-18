@@ -1,4 +1,3 @@
-import math
 from collections.abc import Sequence
 
 import torch
@@ -18,7 +17,7 @@ class GaussianFilter2D(nn.Module):
         window_size: int = 11,
         in_channels: int = 3,
         sigma: float = 1.5,
-        padding: int | SymInt | Sequence[int | SymInt] = None,
+        padding: int | SymInt | Sequence[int | SymInt] | None = None,
     ) -> None:
         """2D Gaussian Filer
 
@@ -76,7 +75,7 @@ class MSSIMLoss(nn.Module):
         k1: float = 0.01,
         k2: float = 0.03,
         l: int = 1,
-        padding: int | SymInt | Sequence[int | SymInt] = None,
+        padding: int | SymInt | Sequence[int | SymInt] | None = None,
         cosim: bool = True,
         cosim_lambda: int = 5,
         loss_weight: float = 1.0,
@@ -142,7 +141,7 @@ class MSSIMLoss(nn.Module):
         if self.cosim:
             cosine_term = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
 
-        msssim = torch.Tensor(1., device=x.device)
+        msssim = torch.Tensor(1.0, device=x.device)
 
         for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
             ssim, cs = self._ssim(x, y)

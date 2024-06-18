@@ -1,9 +1,9 @@
 import argparse
 import os
+import random
 from collections import OrderedDict
 from os import path as osp
 from typing import Any
-import random
 
 import torch
 import yaml

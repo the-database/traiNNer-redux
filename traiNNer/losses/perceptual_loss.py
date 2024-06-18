@@ -91,7 +91,7 @@ class PerceptualLoss(nn.Module):
 
         # calculate perceptual loss
         if self.perceptual_weight > 0:
-            percep_loss = Tensor(0.)
+            percep_loss = Tensor(0.0, device=x.device)
             for k in x_features.keys():
                 if self.criterion is None:
                     percep_loss += (
@@ -109,7 +109,7 @@ class PerceptualLoss(nn.Module):
 
         # calculate style loss
         if self.style_weight > 0:
-            style_loss = Tensor(0.)
+            style_loss = Tensor(0.0, device=x.device)
             for k in x_features.keys():
                 if self.criterion is None:
                     style_loss += (

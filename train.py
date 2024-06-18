@@ -28,11 +28,10 @@ from traiNNer.utils import (
     make_exp_dirs,
     mkdir_and_rename,
     scandir,
+    set_random_seed,
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.options import copy_opt_file, dict2str
-
-from traiNNer.utils import set_random_seed
 
 
 def init_tb_loggers(opt: dict[str, Any]) -> SummaryWriter | None:
