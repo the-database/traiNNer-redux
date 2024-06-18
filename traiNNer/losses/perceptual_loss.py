@@ -75,7 +75,7 @@ class PerceptualLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    def forward(self, x: Tensor, gt: Tensor) -> Tensor:
+    def forward(self, x: Tensor, gt: Tensor) -> tuple[Tensor | None, Tensor | None]:
         """Forward function.
 
         Args:
@@ -91,9 +91,9 @@ class PerceptualLoss(nn.Module):
 
         # calculate perceptual loss
         if self.perceptual_weight > 0:
-            percep_loss = 0
+            percep_loss = Tensor(0.)
             for k in x_features.keys():
-                if self.criterion_type == "fro":
+                if self.criterion is None:
                     percep_loss += (
                         torch.norm(x_features[k] - gt_features[k], p="fro")
                         * self.layer_weights[k]
@@ -109,9 +109,9 @@ class PerceptualLoss(nn.Module):
 
         # calculate style loss
         if self.style_weight > 0:
-            style_loss = 0
+            style_loss = Tensor(0.)
             for k in x_features.keys():
-                if self.criterion_type == "fro":
+                if self.criterion is None:
                     style_loss += (
                         torch.norm(
                             self._gram_mat(x_features[k])
