@@ -2,6 +2,7 @@ import os
 import time
 from collections import OrderedDict
 from copy import deepcopy
+from typing import Any
 
 import pytorch_optimizer
 import torch
@@ -17,7 +18,7 @@ from . import lr_scheduler
 class BaseModel:
     """Base model."""
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         self.opt = opt
         self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
         self.is_train = opt["is_train"]
@@ -34,7 +35,7 @@ class BaseModel:
     def optimize_parameters(self, current_iter) -> None:
         pass
 
-    def get_current_visuals(self) -> None:
+    def get_current_visuals(self) -> dict[str, Any]:
         pass
 
     def save(self, epoch, current_iter) -> None:
@@ -244,7 +245,13 @@ class BaseModel:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
     @master_only
-    def save_network(self, net, net_label, current_iter, param_key="params") -> None:
+    def save_network(
+        self,
+        net,
+        net_label: str,
+        current_iter: int,
+        param_key: str | list[str] = "params",
+    ) -> None:
         """Save networks.
 
         Args:

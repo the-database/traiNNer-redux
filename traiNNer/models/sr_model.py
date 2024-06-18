@@ -1,11 +1,10 @@
 from collections import OrderedDict
-from collections.abc import Mapping
 from os import path as osp
 from typing import Any
 
 import torch
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 from traiNNer.archs import build_network
 from traiNNer.losses import build_loss
@@ -18,7 +17,7 @@ from traiNNer.utils import get_root_logger, imwrite, tensor2img
 class SRModel(BaseModel):
     """Base SR model for single image super-resolution."""
 
-    def __init__(self, opt: Mapping[str, Any]) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__(opt)
 
         # define network
@@ -230,19 +229,19 @@ class SRModel(BaseModel):
             )
             self.optimizers.append(self.optimizer_d)
 
-    def feed_data(self, data: Mapping[str, Any]) -> None:
+    def feed_data(self, data: dict[str, Any]) -> None:
         self.lq = data["lq"].to(self.device)
         if "gt" in data:
             self.gt = data["gt"].to(self.device)
 
             # moa
-            if self.is_train and self.use_moa:
+            if self.is_train and self.batchaugment:
                 self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter: int) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
-        # optimize net_g
+        # optimize net_d
         if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
@@ -253,7 +252,7 @@ class SRModel(BaseModel):
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
 
-        l_g_total = 0
+        l_g_total = torch.tensor(0.0, device=self.output.device)
         loss_dict = OrderedDict()
         # pixel loss
         if self.cri_pix:
@@ -318,7 +317,7 @@ class SRModel(BaseModel):
             l_g_total += l_g_bicubic
             loss_dict["l_g_bicubic"] = l_g_bicubic
         # gan loss
-        if self.cri_gan:
+        if self.cri_gan and self.net_d:
             fake_g_pred = self.net_d(self.output)
             l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
             l_g_total += l_g_gan
@@ -330,7 +329,7 @@ class SRModel(BaseModel):
         l_g_total.backward()
         self.optimizer_g.step()
 
-        if self.net_d is not None:
+        if self.net_d is not None and self.cri_gan is not None:
             # optimize net_d
             for p in self.net_d.parameters():
                 p.requires_grad = True
@@ -393,7 +392,7 @@ class SRModel(BaseModel):
 
         if with_metrics:
             if not hasattr(self, "metric_results"):  # only execute in the first run
-                self.metric_results = {
+                self.metric_results: dict[str, Any] = {
                     metric: 0 for metric in self.opt["val"]["metrics"].keys()
                 }
             # initialize the best metric results for each dataset_name (supporting multiple validation datasets)
@@ -403,6 +402,7 @@ class SRModel(BaseModel):
             self.metric_results = {metric: 0 for metric in self.metric_results}
 
         metric_data = {}
+        pbar = None
         if use_pbar:
             pbar = tqdm(total=len(dataloader), unit="image")
 
@@ -449,15 +449,15 @@ class SRModel(BaseModel):
                 # calculate metrics
                 for name, opt_ in self.opt["val"]["metrics"].items():
                     self.metric_results[name] += calculate_metric(metric_data, opt_)
-            if use_pbar:
+            if pbar is not None:
                 pbar.update(1)
                 pbar.set_description(f"Test {img_name}")
-        if use_pbar:
+        if pbar is not None:
             pbar.close()
 
         if with_metrics:
             for metric in self.metric_results.keys():
-                self.metric_results[metric] /= idx + 1
+                self.metric_results[metric] /= len(dataloader)
                 # update the best metric result
                 self._update_best_metric_result(
                     dataset_name, metric, self.metric_results[metric], current_iter
@@ -488,7 +488,7 @@ class SRModel(BaseModel):
                     f"metrics/{dataset_name}/{metric}", value, current_iter
                 )
 
-    def get_current_visuals(self) -> Mapping[str, Any]:
+    def get_current_visuals(self) -> dict[str, Any]:
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()
         out_dict["result"] = self.output.detach().cpu()

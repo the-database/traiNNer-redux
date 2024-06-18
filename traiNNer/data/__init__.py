@@ -7,6 +7,7 @@ from os import path as osp
 import numpy as np
 import torch
 import torch.utils.data
+from traiNNer.data.data_sampler import EnlargedSampler
 
 from ..utils import get_root_logger, scandir
 from ..utils.dist_util import get_dist_info
@@ -48,8 +49,13 @@ def build_dataset(dataset_opt):
 
 
 def build_dataloader(
-    dataset, dataset_opt, num_gpu=1, dist=False, sampler=None, seed=None
-):
+    dataset,
+    dataset_opt,
+    num_gpu=1,
+    dist=False,
+    sampler: EnlargedSampler | None = None,
+    seed=None,
+) -> PrefetchDataLoader | torch.utils.data.DataLoader:
     """Build dataloader.
 
     Args:
