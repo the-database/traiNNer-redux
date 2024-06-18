@@ -1,10 +1,11 @@
 import functools
 
 import torch
-from torch.nn import functional as F
+from torch import Tensor
+from torch.nn import functional as F  # noqa: N812
 
 
-def reduce_loss(loss, reduction):
+def reduce_loss(loss: Tensor, reduction: str) -> Tensor:
     """Reduce loss as specified.
 
     Args:
@@ -14,7 +15,7 @@ def reduce_loss(loss, reduction):
     Returns:
         Tensor: Reduced loss tensor.
     """
-    reduction_enum = F._Reduction.get_enum(reduction)
+    reduction_enum = F._Reduction.get_enum(reduction)  # noqa: SLF001
     # none: 0, elementwise_mean:1, sum: 2
     if reduction_enum == 0:
         return loss
@@ -24,7 +25,9 @@ def reduce_loss(loss, reduction):
         return loss.sum()
 
 
-def weight_reduce_loss(loss, weight=None, reduction="mean"):
+def weight_reduce_loss(
+    loss: Tensor, weight: Tensor | None = None, reduction: str = "mean"
+) -> Tensor:
     """Apply element-wise weight and reduce loss.
 
     Args:
@@ -56,7 +59,7 @@ def weight_reduce_loss(loss, weight=None, reduction="mean"):
     return loss
 
 
-def weighted_loss(loss_func):
+def weighted_loss(loss_func: function) -> function:
     """Create a weighted version of a given loss function.
 
     To use this decorator, the loss function must have the signature like
@@ -88,7 +91,13 @@ def weighted_loss(loss_func):
     """
 
     @functools.wraps(loss_func)
-    def wrapper(pred, target, weight=None, reduction="mean", **kwargs):
+    def wrapper(
+        pred: Tensor,
+        target: Tensor,
+        weight: Tensor | None = None,
+        reduction: str = "mean",
+        **kwargs,
+    ) -> Tensor:
         # get element-wise loss
         loss = loss_func(pred, target, **kwargs)
         loss = weight_reduce_loss(loss, weight, reduction)
@@ -97,7 +106,7 @@ def weighted_loss(loss_func):
     return wrapper
 
 
-def get_local_weights(residual, ksize):
+def get_local_weights(residual: Tensor, ksize: int) -> Tensor:
     """Get local weights for generating the artifact map of LDL.
 
     It is only called by the `get_refined_artifact_map` function.
@@ -123,7 +132,9 @@ def get_local_weights(residual, ksize):
     return pixel_level_weight
 
 
-def get_refined_artifact_map(img_gt, img_output, img_ema, ksize):
+def get_refined_artifact_map(
+    img_gt: Tensor, img_output: Tensor, img_ema: Tensor, ksize: int
+) -> Tensor:
     """Calculate the artifact map of LDL
     (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022)
 
