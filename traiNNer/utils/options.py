@@ -141,8 +141,13 @@ def parse_options(
 
     # random seed
     seed = opt.get("manual_seed")
-    opt["deterministic"] = seed is not None
+    opt["deterministic"] = seed is not None and seed > 0
     if opt["deterministic"]:
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+    else:
+        torch.backends.cudnn.benchmark = True
         seed = random.randint(1024, 10000)
         opt["manual_seed"] = seed
     set_random_seed(seed + opt["rank"])

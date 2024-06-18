@@ -23,7 +23,7 @@ class SRModel(BaseModel):
         # define network
         self.net_g = build_network(opt["network_g"])
         self.net_g = self.model_to_device(self.net_g)
-        self.print_network(self.net_g)
+        # self.print_network(self.net_g)
 
         # load pretrained models
         load_path = self.opt["path"].get("pretrain_network_g", None)
@@ -42,7 +42,7 @@ class SRModel(BaseModel):
         if net_d_opt is not None:
             self.net_d = build_network(net_d_opt)
             self.net_d = self.model_to_device(self.net_d)
-            self.print_network(self.net_d)
+            # self.print_network(self.net_d)
 
             # load pretrained models
             load_path = self.opt["path"].get("pretrain_network_d", None)

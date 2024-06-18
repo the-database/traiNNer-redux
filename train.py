@@ -2,7 +2,6 @@ import datetime
 import logging
 import math
 import time
-from os import environ
 from os import path as osp
 from typing import Any
 
@@ -157,13 +156,6 @@ def train_pipeline(root_path: str) -> None:
     opt, args = Config.load_config(root_path, is_train=True)
     opt["root_path"] = root_path
 
-    if opt["deterministic"]:
-        torch.backends.cudnn.benchmark = True
-    else:
-        torch.backends.cudnn.benchmark = False
-        set_random_seed(opt["manual_seed"])
-        environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-
     # load resume states if necessary
     resume_state = load_resume_state(opt)
     # mkdir for experiments and logger
@@ -187,6 +179,7 @@ def train_pipeline(root_path: str) -> None:
     )
     logger.info(get_env_info())
     logger.info(dict2str(opt))
+
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
 
