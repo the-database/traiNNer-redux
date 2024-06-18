@@ -3,8 +3,8 @@ from os import path as osp
 import numpy as np
 import torch
 import torchvision.transforms.functional as tf
-from torch import nn
-from torch.nn import functional as F
+from torch import Tensor, nn
+from torch.nn import functional as F  # noqa: N812
 from torchvision import models
 from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
 from traiNNer.utils.registry import LOSS_REGISTRY
@@ -17,7 +17,12 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 class L2pooling(nn.Module):
     def __init__(
-        self, filter_size=5, stride=2, channels=None, as_loss=True, pad_off=0
+        self,
+        filter_size: int = 5,
+        stride: int = 2,
+        channels: int | None = None,
+        as_loss: bool = True,
+        pad_off: int = 0,
     ) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
@@ -34,7 +39,7 @@ class L2pooling(nn.Module):
             # send to cuda
             self.filter = self.filter.cuda()
 
-    def forward(self, input):
+    def forward(self, input: Tensor) -> Tensor:
         input = input**2
         out = F.conv2d(
             input,
@@ -62,12 +67,12 @@ class DISTSLoss(nn.Module):
 
     def __init__(
         self,
-        as_loss=True,
-        loss_weight=1.0,
-        load_weights=True,
-        use_input_norm=True,
-        resize_input=False,
-        clip_min=0,
+        as_loss: bool = True,
+        loss_weight: float = 1.0,
+        load_weights: bool = True,
+        use_input_norm: bool = True,
+        resize_input: bool = False,
+        clip_min: int = 0,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -135,7 +140,7 @@ class DISTSLoss(nn.Module):
                 self.alpha.data = self.alpha.data.cuda()
                 self.beta.data = self.beta.data.cuda()
 
-    def forward_once(self, x):
+    def forward_once(self, x: Tensor) -> list[Tensor]:
         if (
             self.resize_input
             and x.shape[2] != VGG_PATCH_SIZE
@@ -167,7 +172,7 @@ class DISTSLoss(nn.Module):
         return [x, h_relu1_2, h_relu2_2, h_relu3_3, h_relu4_3, h_relu5_3]
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(self, x, y):
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         feats0 = self.forward_once(x)
         feats1 = self.forward_once(y)
         dist1 = 0
