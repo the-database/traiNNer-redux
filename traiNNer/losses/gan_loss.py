@@ -1,8 +1,8 @@
 import math
 
 import torch
-from torch import autograd, nn
-from torch.nn import functional as F
+from torch import Tensor, autograd, nn
+from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 
@@ -20,7 +20,11 @@ class GANLoss(nn.Module):
     """
 
     def __init__(
-        self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0
+        self,
+        gan_type: str,
+        real_label_val: float = 1.0,
+        fake_label_val: float = 0.0,
+        loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
         self.gan_type = gan_type
@@ -41,7 +45,7 @@ class GANLoss(nn.Module):
         else:
             raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
-    def _wgan_loss(self, input, target):
+    def _wgan_loss(self, input: Tensor, target: Tensor) -> Tensor:
         """wgan loss.
 
         Args:
@@ -53,7 +57,7 @@ class GANLoss(nn.Module):
         """
         return -input.mean() if target else input.mean()
 
-    def _wgan_softplus_loss(self, input, target):
+    def _wgan_softplus_loss(self, input: Tensor, target: Tensor) -> Tensor:
         """wgan loss with soft plus. softplus is a smooth approximation to the
         ReLU function.
 
@@ -70,7 +74,7 @@ class GANLoss(nn.Module):
         """
         return F.softplus(-input).mean() if target else F.softplus(input).mean()
 
-    def get_target_label(self, input, target_is_real):
+    def get_target_label(self, input: Tensor, target_is_real: bool) -> Tensor:
         """Get target label.
 
         Args:
@@ -87,7 +91,9 @@ class GANLoss(nn.Module):
         target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
-    def forward(self, input, target_is_real, is_disc=False):
+    def forward(
+        self, input: Tensor, target_is_real: bool, is_disc: bool = False
+    ) -> Tensor:
         """
         Args:
             input (Tensor): The input for the loss module, i.e., the network
@@ -120,11 +126,17 @@ class MultiScaleGANLoss(GANLoss):
     """
 
     def __init__(
-        self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0
+        self,
+        gan_type: str,
+        real_label_val: float = 1.0,
+        fake_label_val: float = 0.0,
+        loss_weight: float = 1.0,
     ) -> None:
         super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
 
-    def forward(self, input, target_is_real, is_disc=False):
+    def forward(
+        self, input: Tensor, target_is_real: bool, is_disc: bool = False
+    ) -> Tensor:
         """
         The input is a list of tensors, or a list of (a list of tensors)
         """
@@ -143,7 +155,7 @@ class MultiScaleGANLoss(GANLoss):
             return super().forward(input, target_is_real, is_disc)
 
 
-def r1_penalty(real_pred, real_img):
+def r1_penalty(real_pred: Tensor, real_img: Tensor) -> Tensor:
     """R1 regularization for discriminator. The core idea is to
     penalize the gradient on real data alone: when the
     generator distribution produces the true data distribution
@@ -161,7 +173,9 @@ def r1_penalty(real_pred, real_img):
     return grad_penalty
 
 
-def g_path_regularize(fake_img, latents, mean_path_length, decay=0.01):
+def g_path_regularize(
+    fake_img: Tensor, latents: Tensor, mean_path_length: Tensor, decay: float = 0.01
+) -> tuple[Tensor, Tensor, Tensor]:
     noise = torch.randn_like(fake_img) / math.sqrt(
         fake_img.shape[2] * fake_img.shape[3]
     )
@@ -177,7 +191,12 @@ def g_path_regularize(fake_img, latents, mean_path_length, decay=0.01):
     return path_penalty, path_lengths.detach().mean(), path_mean.detach()
 
 
-def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
+def gradient_penalty_loss(
+    discriminator: nn.Module,
+    real_data: Tensor,
+    fake_data: Tensor,
+    weight: Tensor | None = None,
+) -> Tensor:
     """Calculate gradient penalty for wgan-gp.
 
     Args:
