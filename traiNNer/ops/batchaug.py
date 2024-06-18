@@ -2,17 +2,19 @@
 
 import os
 import random
+from typing import Any
 
 import numpy as np
 import torch
 import torchvision
-from torch.nn import functional as F
+from torch import Size, Tensor
+from torch.nn import functional as F  # noqa: N812
 
 rng = np.random.default_rng()
 
 
 class BatchAugment:
-    def __init__(self, train_opt) -> None:
+    def __init__(self, train_opt: dict[str, Any]) -> None:
         self.moa_augs = train_opt.get(
             "moa_augs", ["none", "mixup", "cutmix", "resizemix"]
         )  # , "cutblur"]
@@ -23,13 +25,13 @@ class BatchAugment:
         self.debug = train_opt.get("moa_debug", False)
         self.debug_limit = train_opt.get("moa_debug_limit", 0)
 
-    def __call__(self, img1, img2):
+    def __call__(self, img1: Tensor, img2: Tensor) -> Tensor:
         """Apply the configured augmentations.
         Args:
             img1: the target image.
             img2: the input image.
         """
-        return BatchAug(
+        return batch_aug(
             img1,
             img2,
             self.scale,
@@ -40,7 +42,15 @@ class BatchAugment:
         )
 
 
-def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
+def batch_aug(
+    img_gt: Tensor,
+    img_lq: Tensor,
+    scale: int,
+    augs: list[str],
+    probs: list[float],
+    debug: bool,
+    debug_limit: int,
+) -> tuple[Tensor, Tensor]:
     """Mixture of Batch Augmentations (MoA)
     Randomly selects single augmentation from the augmentation pool
     and applies it to the batch.
@@ -114,7 +124,13 @@ def BatchAug(img_gt, img_lq, scale, augs, probs, debug, debug_limit):
 
 
 @torch.no_grad()
-def mixup(img_gt, img_lq, scale, alpha_min=0.4, alpha_max=0.6):
+def mixup(
+    img_gt: Tensor,
+    img_lq: Tensor,
+    scale: int,
+    alpha_min: float = 0.4,
+    alpha_max: float = 0.6,
+) -> tuple[Tensor, Tensor]:
     r"""MixUp augmentation.
 
     "Mixup: Beyond Empirical Risk Minimization (https://arxiv.org/abs/1710.09412)".
@@ -141,7 +157,7 @@ def mixup(img_gt, img_lq, scale, alpha_min=0.4, alpha_max=0.6):
 
 
 @torch.no_grad()
-def _cutmix(img2, prob=1.0, alpha=1.0):
+def _cutmix(img2: Tensor, prob: float = 1.0, alpha: float = 1.0) -> dict[str, Tensor]:
     if alpha <= 0 or random.random() >= prob:
         return None
 
@@ -167,7 +183,9 @@ def _cutmix(img2, prob=1.0, alpha=1.0):
 
 
 @torch.no_grad()
-def cutmix(img_gt, img_lq, scale, alpha=0.9):
+def cutmix(
+    img_gt: Tensor, img_lq: Tensor, scale: int, alpha: float = 0.9
+) -> tuple[Tensor, Tensor]:
     r"""CutMix augmentation.
 
     "CutMix: Regularization Strategy to Train Strong Classifiers with
@@ -187,17 +205,17 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
-    def rand_bbox(size, scale, lam):
+    def rand_bbox(size: Size, scale: int, lam: float) -> tuple[int, int, int, int]:
         """generate random box by lam"""
-        W = size[2] // scale
-        H = size[3] // scale
+        w = size[2] // scale
+        h = size[3] // scale
         cut_rat = np.sqrt(1.0 - lam)
-        cut_w = int(W * cut_rat)
-        cut_h = int(H * cut_rat)
+        cut_w = int(w * cut_rat)
+        cut_h = int(h * cut_rat)
 
         # uniform
-        cx = rng.integers(W)
-        cy = rng.integers(H)
+        cx = rng.integers(w)
+        cy = rng.integers(h)
 
         bbx1 = np.clip(cx - cut_w // 2, 0, W)
         bby1 = np.clip(cy - cut_h // 2, 0, H)
@@ -234,7 +252,9 @@ def cutmix(img_gt, img_lq, scale, alpha=0.9):
 
 
 @torch.no_grad()
-def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
+def resizemix(
+    img_gt: Tensor, img_lq: Tensor, scale: int, scope: tuple[float, float] = (0.5, 0.9)
+) -> tuple[Tensor, Tensor]:
     r"""ResizeMix augmentation.
 
     "ResizeMix: Mixing Data with Preserved Object Information and True Labels
@@ -253,21 +273,21 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
-    def rand_bbox_tao(size, scale, tao):
+    def rand_bbox_tao(size: Size, scale: int, tao: float) -> tuple[int, int, int, int]:
         """generate random box by tao (scale)"""
-        W = size[2] // scale
-        H = size[3] // scale
-        cut_w = int(W * tao)
-        cut_h = int(H * tao)
+        w = size[2] // scale
+        h = size[3] // scale
+        cut_w = int(w * tao)
+        cut_h = int(h * tao)
 
         # uniform
-        cx = rng.integers(W)
-        cy = rng.integers(H)
+        cx = rng.integers(w)
+        cy = rng.integers(h)
 
-        bbx1 = np.clip(cx - cut_w // 2, 0, W)
-        bby1 = np.clip(cy - cut_h // 2, 0, H)
-        bbx2 = np.clip(cx + cut_w // 2, 0, W)
-        bby2 = np.clip(cy + cut_h // 2, 0, H)
+        bbx1 = np.clip(cx - cut_w // 2, 0, w)
+        bby1 = np.clip(cy - cut_h // 2, 0, h)
+        bbx2 = np.clip(cx + cut_w // 2, 0, w)
+        bby2 = np.clip(cy + cut_h // 2, 0, h)
 
         bb = (bbx1, bby1, bbx2, bby2)
 
@@ -314,9 +334,9 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
 
 # TODO
 # def cutmixup(img1, img2, mixup_prob=1.0, mixup_alpha=1.0,
-#     cutmix_prob=1.0, cutmix_alpha=1.0):  # (α1 / α2) -> 0.7 / 1.2
+#     cutmix_prob=1.0, cutmix_alpha=1.0):  # (alpha1 / alpha2) -> 0.7 / 1.2
 #     """ CutMix with the Mixup-ed image.
-#     CutMix and Mixup procedure use hyper-parameter α1 and α2 respectively.
+#     CutMix and Mixup procedure use hyper-parameter alpha1 and alpha2 respectively.
 #     """
 #     c = _cutmix(img2, cutmix_prob, cutmix_alpha)
 #     if c is None:
@@ -351,7 +371,9 @@ def resizemix(img_gt, img_lq, scale, scope=(0.5, 0.9)):
 
 
 @torch.no_grad()
-def cutblur(img_gt, img_lq, scale, alpha=0.7):
+def cutblur(
+    img_gt: Tensor, img_lq: Tensor, scale: int, alpha: float = 0.7
+) -> tuple[Tensor, Tensor]:
     r"""CutBlur Augmentation.
 
     "Rethinking Data Augmentation for Image Super-resolution:
@@ -370,21 +392,21 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
         msg = "img_gt and img_lq have to be the same resolution."
         raise ValueError(msg)
 
-    def rand_bbox(size, scale, lam):
+    def rand_bbox(size: Size, scale: int, lam: float) -> tuple[int, int, int, int]:
         """generate random box by lam (scale)"""
-        W = size[2] // scale
-        H = size[3] // scale
-        cut_w = int(W * lam)
-        cut_h = int(H * lam)
+        w = size[2] // scale
+        h = size[3] // scale
+        cut_w = int(w * lam)
+        cut_h = int(h * lam)
 
         # uniform
-        cx = rng.integers(W)
-        cy = rng.integers(H)
+        cx = rng.integers(w)
+        cy = rng.integers(h)
 
-        bbx1 = np.clip(cx - cut_w // 2, 0, W)
-        bby1 = np.clip(cy - cut_h // 2, 0, H)
-        bbx2 = np.clip(cx + cut_w // 2, 0, W)
-        bby2 = np.clip(cy + cut_h // 2, 0, H)
+        bbx1 = np.clip(cx - cut_w // 2, 0, w)
+        bby1 = np.clip(cy - cut_h // 2, 0, h)
+        bbx2 = np.clip(cx + cut_w // 2, 0, w)
+        bby2 = np.clip(cy + cut_h // 2, 0, h)
 
         bb = (bbx1, bby1, bbx2, bby2)
 
@@ -406,7 +428,9 @@ def cutblur(img_gt, img_lq, scale, alpha=0.7):
     return img_gt, img_lq
 
 
-def downup(img_gt, img_lq, scope=(0.5, 0.9)):
+def downup(
+    img_gt: Tensor, img_lq: Tensor, scope: tuple[float, float] = (0.5, 0.9)
+) -> tuple[Tensor, Tensor]:
     sampling_opts = [("bicubic", True), ("bilinear", True), ("nearest-exact", False)]
 
     down_sample = random.choice(sampling_opts)
@@ -444,22 +468,24 @@ def downup(img_gt, img_lq, scope=(0.5, 0.9)):
     return img_gt, img_lq
 
 
-def up(img_gt, img_lq, scale, scope=(0.5, 0.9)):
+def up(
+    img_gt: Tensor, img_lq: Tensor, scale: int, scope: tuple[float, float] = (0.5, 0.9)
+) -> tuple[Tensor, Tensor]:
     sampling_opts = [("bicubic", True), ("bilinear", True), ("nearest-exact", False)]
 
-    def rand_bbox(size, scale, lam):
+    def rand_bbox(size: Size, scale: int, lam: float) -> tuple[int, int, int, int]:
         """generate random box by lam (scale)"""
-        W = size[2] // scale
-        H = size[3] // scale
-        cut_w = int(W * lam)
-        cut_h = int(H * lam)
+        w = size[2] // scale
+        h = size[3] // scale
+        cut_w = int(w * lam)
+        cut_h = int(h * lam)
 
         pad_w = cut_w // 2
         pad_h = cut_h // 2
 
         # uniform
-        cx = rng.integers(pad_w, W - pad_w)
-        cy = rng.integers(pad_h, H - pad_w)
+        cx = rng.integers(pad_w, w - pad_w)
+        cy = rng.integers(pad_h, h - pad_w)
 
         bbx1 = cx - pad_w
         bby1 = cy - pad_h
