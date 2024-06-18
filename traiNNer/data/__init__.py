@@ -43,9 +43,7 @@ def build_dataset(dataset_opt: dict[str, Any]) -> Dataset:
     """
     logger = get_root_logger()
     dataset_opt = deepcopy(dataset_opt)
-    logger.info(
-        "Building Dataset %s...", dataset_opt["name"]
-    )
+    logger.info("Building Dataset %s...", dataset_opt["name"])
 
     dataset = DATASET_REGISTRY.get(dataset_opt["type"])(dataset_opt)
 

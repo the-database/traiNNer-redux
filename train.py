@@ -27,7 +27,6 @@ from traiNNer.utils import (
     make_exp_dirs,
     mkdir_and_rename,
     scandir,
-    set_random_seed,
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.options import copy_opt_file, dict2str
@@ -181,7 +180,10 @@ def train_pipeline(root_path: str) -> None:
     logger.info(dict2str(opt))
 
     if opt["deterministic"]:
-        logger.info("Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.", opt["manual_seed"])
+        logger.info(
+            "Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.",
+            opt["manual_seed"],
+        )
 
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
