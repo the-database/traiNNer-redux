@@ -289,9 +289,10 @@ class BaseModel:
 
         save_dict = {}
         for net_, param_key_ in zip(net, param_key, strict=False):
-            net_ = self.get_bare_model(net_)
-            state_dict = net_.state_dict()
-            for key, param in state_dict.items():
+            bare_net_ = self.get_bare_model(net_)
+            state_dict = bare_net_.state_dict()
+            for full_key, param in state_dict.items():
+                key = full_key
                 if key.startswith("module."):  # remove unnecessary 'module.'
                     key = key[7:]
                 state_dict[key] = param.cpu()
@@ -316,7 +317,9 @@ class BaseModel:
             logger.warning("Still cannot save %s. Just ignore it.", save_path)
             # raise IOError(f'Cannot save {save_path}.')
 
-    def _print_different_keys_loading(self, crt_net, load_net, strict=True) -> None:
+    def _print_different_keys_loading(
+        self, crt_net: nn.Module, load_net: dict[str, Any], strict: bool = True
+    ) -> None:
         """Print keys with different name or different size when loading models.
 
         1. Print keys with different names.

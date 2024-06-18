@@ -4,19 +4,20 @@ from os import path as osp
 
 import cv2
 import lmdb
+import numpy as np
 from tqdm import tqdm
 
 
 def make_lmdb_from_imgs(
-    data_path,
-    lmdb_path,
-    img_path_list,
-    keys,
-    batch=5000,
-    compress_level=1,
-    multiprocessing_read=False,
-    n_thread=40,
-    map_size=None,
+    data_path: str,
+    lmdb_path: str,
+    img_path_list: str,
+    keys: str,
+    batch: int = 5000,
+    compress_level: int = 1,
+    multiprocessing_read: bool = False,
+    n_thread: int = 40,
+    map_size: int | None = None,
 ) -> None:
     """Make lmdb from images.
 
@@ -145,7 +146,9 @@ def make_lmdb_from_imgs(
     print("\nFinish writing lmdb.")
 
 
-def read_img_worker(path, key, compress_level):
+def read_img_worker(
+    path: str, key: str, compress_level: int
+) -> tuple[str, np.ndarray, tuple[int, int, int]]:
     """Read image worker.
 
     Args:
@@ -183,7 +186,11 @@ class LmdbMaker:
     """
 
     def __init__(
-        self, lmdb_path, map_size=1024**4, batch=5000, compress_level=1
+        self,
+        lmdb_path: str,
+        map_size: int = 1024**4,
+        batch: int = 5000,
+        compress_level: int = 1,
     ) -> None:
         if not lmdb_path.endswith(".lmdb"):
             raise ValueError("lmdb_path must end with '.lmdb'.")
@@ -199,7 +206,9 @@ class LmdbMaker:
         self.txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w")
         self.counter = 0
 
-    def put(self, img_byte, key, img_shape) -> None:
+    def put(
+        self, img_byte: np.ndarray, key: str, img_shape: tuple[int, int, int]
+    ) -> None:
         self.counter += 1
         key_byte = key.encode("ascii")
         self.txn.put(key_byte, img_byte)

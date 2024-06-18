@@ -1,6 +1,5 @@
 import argparse
 import os
-import random
 from collections import OrderedDict
 from os import path as osp
 from typing import Any
@@ -9,8 +8,8 @@ import torch
 import yaml
 from yaml import MappingNode
 
-from . import set_random_seed
 from .dist_util import get_dist_info, init_dist, master_only
+from .misc import set_random_seed
 
 try:
     from yaml import CDumper as Dumper
@@ -141,8 +140,11 @@ def parse_options(
 
     # random seed
     seed = opt.get("manual_seed")
-    if seed is None:
-        seed = random.randint(1, 10000)
+    opt["deterministic"] = seed is not None
+    if opt["deterministic"]:
+        import secrets
+
+        seed = secrets.randbits(128)
         opt["manual_seed"] = seed
     set_random_seed(seed + opt["rank"])
 

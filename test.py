@@ -8,7 +8,7 @@ from traiNNer.utils import get_env_info, get_root_logger, get_time_str, make_exp
 from traiNNer.utils.options import dict2str, parse_options
 
 
-def test_pipeline(root_path) -> None:
+def test_pipeline(root_path: str) -> None:
     # parse options, set distributed setting, set ramdom seed
     opt, _ = parse_options(root_path, is_train=False)
 
@@ -36,7 +36,9 @@ def test_pipeline(root_path) -> None:
             sampler=None,
             seed=opt["manual_seed"],
         )
-        logger.info(f"Number of test images in {dataset_opt['name']}: {len(test_set)}")
+        logger.info(
+            "Number of test images in %s: %d", dataset_opt["name"], len(test_set)
+        )
         test_loaders.append(test_loader)
 
     # create model
@@ -44,7 +46,7 @@ def test_pipeline(root_path) -> None:
 
     for test_loader in test_loaders:
         test_set_name = test_loader.dataset.opt["name"]
-        logger.info(f"Testing {test_set_name}...")
+        logger.info("Testing %s...", test_set_name)
         model.validation(
             test_loader,
             current_iter=opt["name"],

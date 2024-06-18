@@ -27,3 +27,7 @@ class Config:
     @classmethod
     def get_scale(cls) -> int:
         return cls.get_config()[0]["scale"]
+
+    @classmethod
+    def get_manual_seed(cls) -> int | None:
+        return cls.get_config()[0].get("manual_seed")

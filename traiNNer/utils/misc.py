@@ -5,7 +5,6 @@ from collections.abc import Generator, Mapping
 from os import path as osp
 from typing import Any
 
-import numpy as np
 import torch
 
 from .dist_util import master_only
@@ -14,10 +13,7 @@ from .dist_util import master_only
 def set_random_seed(seed: int) -> None:
     """Set random seeds."""
     random.seed(seed)
-    np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
 
 
 def get_time_str() -> str:

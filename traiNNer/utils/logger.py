@@ -157,28 +157,28 @@ def init_wandb_logger(opt: Mapping[str, Any]) -> None:
         sync_tensorboard=True,
     )
 
-    logger.info(f"Use wandb logger with id={wandb_id}; project={project}.")
+    logger.info("Use wandb logger with id=%s; project=%s.", wandb_id, project)
 
 
 def get_root_logger(
     logger_name: str = "traiNNer", log_level: int = logging.INFO, log_file=None
 ) -> Logger:
     """Get the root logger.
+    duf_downsample
+        The logger will be initialized if it has not been initialized. By default a
+        StreamHandler will be added. If `log_file` is specified, a FileHandler will
+        also be added.
 
-    The logger will be initialized if it has not been initialized. By default a
-    StreamHandler will be added. If `log_file` is specified, a FileHandler will
-    also be added.
+        Args:
+            logger_name (str): root logger name. Default: 'traiNNer'.
+            log_file (str | None): The log filename. If specified, a FileHandler
+                will be added to the root logger.
+            log_level (int): The root logger level. Note that only the process of
+                rank 0 is affected, while other processes will set the level to
+                "Error" and be silent most of the time.
 
-    Args:
-        logger_name (str): root logger name. Default: 'traiNNer'.
-        log_file (str | None): The log filename. If specified, a FileHandler
-            will be added to the root logger.
-        log_level (int): The root logger level. Note that only the process of
-            rank 0 is affected, while other processes will set the level to
-            "Error" and be silent most of the time.
-
-    Returns:
-        logging.Logger: The root logger.
+        Returns:
+            logging.Logger: The root logger.
     """
     logger = logging.getLogger(logger_name)
     # if the logger has been initialized, just return it

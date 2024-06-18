@@ -1,4 +1,4 @@
-# Code from: https://github.com/victorca25/traiNNer/blob/master/codes/dataops/batchaug.py
+# Modified from: https://github.com/victorca25/traiNNer/blob/master/codes/dataops/batchaug.py
 
 import os
 import random
@@ -9,8 +9,7 @@ import torch
 import torchvision
 from torch import Size, Tensor
 from torch.nn import functional as F  # noqa: N812
-
-rng = np.random.default_rng()
+from traiNNer.utils import rng
 
 
 class BatchAugment:
@@ -161,13 +160,13 @@ def _cutmix(img2: Tensor, prob: float = 1.0, alpha: float = 1.0) -> dict[str, Te
     if alpha <= 0 or random.random() >= prob:
         return None
 
-    cut_ratio = np.random.randn() * 0.01 + alpha
+    cut_ratio = rng.randn() * 0.01 + alpha
 
     h, w = img2.shape[2:]
     ch, cw = int(h * cut_ratio), int(w * cut_ratio)
 
-    fcy = np.random.randint(0, h - ch + 1)
-    fcx = np.random.randint(0, w - cw + 1)
+    fcy = rng.randint(0, h - ch + 1)
+    fcx = rng.randint(0, w - cw + 1)
     tcy, tcx = fcy, fcx
     r_index = torch.randperm(img2.size(0)).to(img2.device)
 
@@ -350,7 +349,7 @@ def resizemix(
 #     hfcy, hfcx, htcy, htcx = (
 #         fcy * scale, fcx * scale, tcy * scale, tcx * scale)
 #
-#     v = np.random.beta(mixup_alpha, mixup_alpha)
+#     v = rng.beta(mixup_alpha, mixup_alpha)
 #     if mixup_alpha <= 0 or random.random() >= mixup_prob:
 #         img1_aug = img1[r_index, :]
 #         img2_aug = img2[r_index, :]
@@ -359,7 +358,7 @@ def resizemix(
 #         img2_aug = v * img2 + (1-v) * img2[r_index, :]
 #
 #     # apply mixup to inside or outside
-#     if np.random.random() > 0.5:
+#     if rng.random() > 0.5:
 #         img1[..., htcy:htcy+hch, htcx:htcx+hcw] = img1_aug[..., hfcy:hfcy+hch, hfcx:hfcx+hcw]
 #         img2[..., tcy:tcy+ch, tcx:tcx+cw] = img2_aug[..., fcy:fcy+ch, fcx:fcx+cw]
 #     else:

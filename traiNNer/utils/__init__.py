@@ -20,6 +20,7 @@ from .misc import (
     sizeof_fmt,
 )
 from .options import yaml_load
+from .rng import rng
 
 __all__ = [
     #  color_util.py
@@ -56,4 +57,6 @@ __all__ = [
     # img_process_util
     # options
     "yaml_load",
+    # rng
+    "rng",
 ]

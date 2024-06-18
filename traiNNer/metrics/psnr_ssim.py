@@ -63,7 +63,7 @@ def calculate_psnr(
 @METRIC_REGISTRY.register()
 def calculate_psnr_pt(
     img: Tensor, img2: Tensor, crop_border: int, test_y_channel: bool = False, **kwargs
-):
+) -> float:
     """Calculate PSNR (Peak Signal-to-Noise Ratio) (PyTorch version).
 
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio

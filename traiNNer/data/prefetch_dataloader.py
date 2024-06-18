@@ -15,7 +15,7 @@ class PrefetchGenerator(threading.Thread):
         num_prefetch_queue (int): Number of prefetch queue.
     """
 
-    def __init__(self, generator, num_prefetch_queue) -> None:
+    def __init__(self, generator: DataLoader, num_prefetch_queue: int) -> None:
         threading.Thread.__init__(self)
         self.queue = Queue.Queue(num_prefetch_queue)
         self.generator = generator
@@ -33,7 +33,7 @@ class PrefetchGenerator(threading.Thread):
             raise StopIteration
         return next_item
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return self
 
 
@@ -51,7 +51,7 @@ class PrefetchDataLoader(DataLoader):
         kwargs (dict): Other arguments for dataloader.
     """
 
-    def __init__(self, num_prefetch_queue, **kwargs) -> None:
+    def __init__(self, num_prefetch_queue: int, **kwargs) -> None:
         self.num_prefetch_queue = num_prefetch_queue
         super().__init__(**kwargs)
 

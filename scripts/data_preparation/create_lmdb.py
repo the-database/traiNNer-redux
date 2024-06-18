@@ -44,7 +44,7 @@ def create_lmdb_for_div2k() -> None:
     make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys)
 
 
-def prepare_keys_div2k(folder_path):
+def prepare_keys_div2k(folder_path: str) -> tuple[list[str], list[str]]:
     """Prepare image path list and keys for DIV2K dataset.
 
     Args:
@@ -90,7 +90,7 @@ def create_lmdb_for_reds() -> None:
     )
 
 
-def prepare_keys_reds(folder_path):
+def prepare_keys_reds(folder_path: str) -> tuple[list[str], list[str]]:
     """Prepare image path list and keys for REDS dataset.
 
     Args:
@@ -132,7 +132,9 @@ def create_lmdb_for_vimeo90k() -> None:
     )
 
 
-def prepare_keys_vimeo90k(folder_path, train_list_path, mode):
+def prepare_keys_vimeo90k(
+    folder_path: str, train_list_path: str, mode: str
+) -> tuple[list[str], list[str]]:
     """Prepare image path list and keys for Vimeo90K dataset.
 
     Args:

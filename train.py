@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 import time
+from os import environ
 from os import path as osp
 from typing import Any
 
@@ -30,6 +31,8 @@ from traiNNer.utils import (
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.options import copy_opt_file, dict2str
+
+from . import set_random_seed
 
 
 def init_tb_loggers(opt: dict[str, Any]) -> SummaryWriter | None:
@@ -155,8 +158,12 @@ def train_pipeline(root_path: str) -> None:
     opt, args = Config.load_config(root_path, is_train=True)
     opt["root_path"] = root_path
 
-    torch.backends.cudnn.benchmark = True
-    # torch.backends.cudnn.deterministic = True
+    if opt["deterministic"]:
+        torch.backends.cudnn.benchmark = True
+    else:
+        torch.backends.cudnn.benchmark = False
+        set_random_seed(opt["manual_seed"])
+        environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
     # load resume states if necessary
     resume_state = load_resume_state(opt)
