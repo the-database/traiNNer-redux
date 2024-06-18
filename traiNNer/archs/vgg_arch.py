@@ -2,7 +2,7 @@ import os
 from collections import OrderedDict
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torchvision.models import VGG19_Weights, vgg
 from torchvision.transforms.functional import InterpolationMode, center_crop, resize
 
@@ -137,7 +137,7 @@ NAMES = {
 }
 
 
-def insert_bn(names):
+def insert_bn(names: list[str]) -> list[str]:
     """Insert bn layer after each conv.
 
     Args:
@@ -181,15 +181,15 @@ class VGGFeatureExtractor(nn.Module):
 
     def __init__(
         self,
-        layer_name_list,
-        vgg_type="vgg19",
-        use_input_norm=True,
-        range_norm=False,
-        requires_grad=False,
-        remove_pooling=False,
-        crop_input=False,
-        resize_input=False,
-        pooling_stride=2,
+        layer_name_list: list[str],
+        vgg_type: str = "vgg19",
+        use_input_norm: bool = True,
+        range_norm: bool = False,
+        requires_grad: bool = False,
+        remove_pooling: bool = False,
+        crop_input: bool = False,
+        resize_input: bool = False,
+        pooling_stride: int = 2,
     ) -> None:
         super().__init__()
 
@@ -254,7 +254,7 @@ class VGGFeatureExtractor(nn.Module):
                 "std", torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
             )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         """Forward function.
 
         Args:
@@ -285,7 +285,7 @@ class VGGFeatureExtractor(nn.Module):
             x = (x - self.mean) / self.std
 
         output = {}
-        for key, layer in self.vgg_net._modules.items():
+        for key, layer in self.vgg_net._modules.items():  # noqa: SLF001
             x = layer(x)
             if key in self.layer_name_list:
                 output[key] = x.clone()

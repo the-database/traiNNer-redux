@@ -151,7 +151,7 @@ class WeightedTVLoss(L1Loss):
             )
         super().__init__(loss_weight=loss_weight, reduction=reduction)
 
-    def forward(self, pred: Tensor, weight: Tensor | None = None):
+    def forward(self, pred: Tensor, weight: Tensor | None = None) -> Tensor:
         if weight is None:
             y_weight = None
             x_weight = None

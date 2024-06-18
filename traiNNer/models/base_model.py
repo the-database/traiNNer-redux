@@ -357,7 +357,9 @@ class BaseModel:
             load_net = self.model_loader.load_from_file(load_path)
             net.load_state_dict(load_net.model.state_dict(), strict=strict)
             logger.info(
-                f"Loading {net.__class__.__name__} model from {load_path}, with spandrel."
+                "Loading %s model from %s, with spandrel.",
+                net.__class__.__name__,
+                load_path,
             )
             return True
         except Exception as e:
@@ -393,7 +395,10 @@ class BaseModel:
                     logger.info("Loading: params_ema does not exist, use params.")
                 load_net = load_net[param_key]
             logger.info(
-                f"Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}]."
+                "Loading %s model from %s, with param key: [%s].",
+                net.__class__.__name__,
+                load_path,
+                param_key,
             )
             # remove unnecessary 'module.'
             for k, v in deepcopy(load_net).items():
@@ -443,7 +448,7 @@ class BaseModel:
                 finally:
                     retry -= 1
             if retry == 0:
-                logger.warning(f"Still cannot save {save_path}. Just ignore it.")
+                logger.warning("Still cannot save %s. Just ignore it.", save_path)
                 # raise IOError(f'Cannot save {save_path}.')
 
     def resume_training(self, resume_state: dict[str, Any]) -> None:

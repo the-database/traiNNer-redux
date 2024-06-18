@@ -1,4 +1,5 @@
 import random
+from typing import Any
 
 import numpy as np
 import torch
@@ -10,7 +11,7 @@ from ..data.degradations import (
 )
 from ..data.transforms import paired_random_crop
 from ..models.sr_model import SRModel
-from ..utils import DiffJPEG, USMSharp
+from ..utils import DiffJPEG
 from ..utils.img_process_util import filter2D
 from ..utils.registry import MODEL_REGISTRY
 
@@ -24,12 +25,11 @@ class RealESRGANModel(SRModel):
     2. optimize the networks with GAN training.
     """
 
-    def __init__(self, opt) -> None:
+    def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__(opt)
         self.jpeger = DiffJPEG(
             differentiable=False
         ).cuda()  # simulate JPEG compression artifacts
-        self.usm_sharpener = USMSharp().cuda()  # do usm sharpening
         self.queue_size = opt.get("queue_size", 180)
 
     @torch.no_grad()
@@ -76,7 +76,7 @@ class RealESRGANModel(SRModel):
             self.queue_ptr = self.queue_ptr + b
 
     @torch.no_grad()
-    def feed_data(self, data) -> None:
+    def feed_data(self, data: dict[str, Any]) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
         if self.is_train and self.opt.get("high_order_degradation", True):
             # training data synthesis

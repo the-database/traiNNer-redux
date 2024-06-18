@@ -186,16 +186,16 @@ class DISTSLoss(nn.Module):
         for k in range(len(self.chns)):
             x_mean = feats0[k].mean([2, 3], keepdim=True)
             y_mean = feats1[k].mean([2, 3], keepdim=True)
-            S1 = (2 * x_mean * y_mean + c1) / (x_mean**2 + y_mean**2 + c1)
-            dist1 = dist1 + (alpha[k] * S1).sum(1, keepdim=True)
+            s1 = (2 * x_mean * y_mean + c1) / (x_mean**2 + y_mean**2 + c1)
+            dist1 = dist1 + (alpha[k] * s1).sum(1, keepdim=True)
 
             x_var = ((feats0[k] - x_mean) ** 2).mean([2, 3], keepdim=True)
             y_var = ((feats1[k] - y_mean) ** 2).mean([2, 3], keepdim=True)
             xy_cov = (feats0[k] * feats1[k]).mean(
                 [2, 3], keepdim=True
             ) - x_mean * y_mean
-            S2 = (2 * xy_cov + c2) / (x_var + y_var + c2)
-            dist2 = dist2 + (beta[k] * S2).sum(1, keepdim=True)
+            s2 = (2 * xy_cov + c2) / (x_var + y_var + c2)
+            dist2 = dist2 + (beta[k] * s2).sum(1, keepdim=True)
 
         if self.as_loss:
             out = (

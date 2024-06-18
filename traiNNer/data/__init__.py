@@ -3,10 +3,12 @@ import random
 from copy import deepcopy
 from functools import partial
 from os import path as osp
+from typing import Any
 
 import numpy as np
 import torch
 import torch.utils.data
+from torch.utils.data.dataloader import Dataset
 from traiNNer.data.data_sampler import EnlargedSampler
 
 from ..utils import get_root_logger, scandir
@@ -31,7 +33,7 @@ _dataset_modules = [
 ]
 
 
-def build_dataset(dataset_opt):
+def build_dataset(dataset_opt: dict[str, Any]) -> Dataset:
     """Build dataset from options.
 
     Args:
@@ -43,18 +45,18 @@ def build_dataset(dataset_opt):
     dataset = DATASET_REGISTRY.get(dataset_opt["type"])(dataset_opt)
     logger = get_root_logger()
     logger.info(
-        f'Dataset [{dataset.__class__.__name__}] - {dataset_opt["name"]} is built.'
+        "Dataset [%s] - %s is built.", dataset.__class__.__name__, dataset_opt["name"]
     )
     return dataset
 
 
 def build_dataloader(
-    dataset,
-    dataset_opt,
-    num_gpu=1,
-    dist=False,
+    dataset: Dataset,
+    dataset_opt: dict[str, Any],
+    num_gpu: int = 1,
+    dist: bool = False,
     sampler: EnlargedSampler | None = None,
-    seed=None,
+    seed: int | None = None,
 ) -> PrefetchDataLoader | torch.utils.data.DataLoader:
     """Build dataloader.
 
@@ -116,7 +118,9 @@ def build_dataloader(
         num_prefetch_queue = dataset_opt.get("num_prefetch_queue", 1)
         logger = get_root_logger()
         logger.info(
-            f"Use {prefetch_mode} prefetch dataloader: num_prefetch_queue = {num_prefetch_queue}"
+            "Use %s prefetch dataloader: num_prefetch_queue = %d",
+            prefetch_mode,
+            num_prefetch_queue,
         )
         return PrefetchDataLoader(
             num_prefetch_queue=num_prefetch_queue, **dataloader_args
@@ -127,7 +131,7 @@ def build_dataloader(
         return torch.utils.data.DataLoader(**dataloader_args)
 
 
-def worker_init_fn(worker_id, num_workers, rank, seed) -> None:
+def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
     np.random.seed(worker_seed)
