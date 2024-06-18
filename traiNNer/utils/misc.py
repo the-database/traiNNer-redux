@@ -1,7 +1,9 @@
 import os
 import random
 import time
+from collections.abc import Mapping
 from os import path as osp
+from typing import Any
 
 import numpy as np
 import torch
@@ -36,7 +38,7 @@ def mkdir_and_rename(path) -> None:
 
 
 @master_only
-def make_exp_dirs(opt) -> None:
+def make_exp_dirs(opt: Mapping[str, Any]) -> None:
     """Make dirs for experiments."""
     path_opt = opt["path"].copy()
     if opt["is_train"]:
@@ -96,7 +98,7 @@ def scandir(dir_path, suffix=None, recursive=False, full_path=False):
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
-def check_resume(opt, resume_iter) -> None:
+def check_resume(opt: Mapping[str, Any], resume_iter: int) -> None:
     """Check resume states and pretrain_network paths.
 
     Args:
@@ -132,7 +134,7 @@ def check_resume(opt, resume_iter) -> None:
                 print(f"Set {param_key} to params")
 
 
-def sizeof_fmt(size, suffix="B") -> str:
+def sizeof_fmt(size: float, suffix: str = "B") -> str:
     """Get human readable file size.
 
     Args:

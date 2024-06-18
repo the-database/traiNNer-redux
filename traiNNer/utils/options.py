@@ -2,7 +2,6 @@ import argparse
 import os
 import random
 from collections import OrderedDict
-from collections.abc import Mapping
 from os import path as osp
 from typing import Any
 
@@ -20,7 +19,7 @@ except ImportError:
     from yaml import Dumper, Loader
 
 
-def ordered_yaml() -> tuple[Loader, Dumper]:
+def ordered_yaml() -> tuple[type[Loader], type[Dumper]]:
     """Support OrderedDict for yaml.
 
     Returns:
@@ -29,7 +28,7 @@ def ordered_yaml() -> tuple[Loader, Dumper]:
 
     _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
 
-    def dict_representer(dumper: Dumper, data: Mapping[str, Any]) -> MappingNode:
+    def dict_representer(dumper: Dumper, data: dict[str, Any]) -> MappingNode:
         return dumper.represent_dict(data.items())
 
     def dict_constructor(loader: Loader, node: MappingNode) -> OrderedDict:
@@ -40,7 +39,7 @@ def ordered_yaml() -> tuple[Loader, Dumper]:
     return Loader, Dumper
 
 
-def yaml_load(f: str) -> Mapping[str, Any]:
+def yaml_load(file_path: str) -> dict[str, Any]:
     """Load yaml file or string.
 
     Args:
@@ -49,14 +48,14 @@ def yaml_load(f: str) -> Mapping[str, Any]:
     Returns:
         dict: Loaded dict.
     """
-    if not os.path.isfile(f):
-        raise FileNotFoundError(f"Options file does not exist: {f}")
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"Options file does not exist: {file_path}")
 
-    with open(f) as f:
+    with open(file_path) as f:
         return yaml.load(f, Loader=ordered_yaml()[0])
 
 
-def dict2str(opt: Mapping[str, Any], indent_level: int = 1) -> str:
+def dict2str(opt: dict[str, Any], indent_level: int = 1) -> str:
     """dict to string for printing options.
 
     Args:
@@ -103,7 +102,7 @@ def _postprocess_yml_value(value: str) -> None | bool | float | int | list[Any] 
 
 def parse_options(
     root_path: str, is_train: bool = True
-) -> tuple[Mapping[str, Any], argparse.Namespace]:
+) -> tuple[dict[str, Any], argparse.Namespace]:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-opt", type=str, required=True, help="Path to option YAML file."
