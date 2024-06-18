@@ -1,6 +1,7 @@
 # Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/fileio/file_client.py
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
+from types import MappingProxyType
 from typing import Never
 
 
@@ -13,64 +14,24 @@ class BaseStorageBackend(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def get(self, filepath):
+    def get(self, filepath: str) -> bytes:
         pass
 
     @abstractmethod
-    def get_text(self, filepath):
+    def get_text(self, filepath: str) -> str:
         pass
-
-
-class MemcachedBackend(BaseStorageBackend):
-    """Memcached storage backend.
-
-    Attributes:
-        server_list_cfg (str): Config file for memcached server list.
-        client_cfg (str): Config file for memcached client.
-        sys_path (str | None): Additional path to be appended to `sys.path`.
-            Default: None.
-    """
-
-    def __init__(self, server_list_cfg, client_cfg, sys_path=None) -> None:
-        if sys_path is not None:
-            import sys
-
-            sys.path.append(sys_path)
-        try:
-            import mc
-        except ImportError:
-            raise ImportError("Please install memcached to enable MemcachedBackend.")
-
-        self.server_list_cfg = server_list_cfg
-        self.client_cfg = client_cfg
-        self._client = mc.MemcachedClient.GetInstance(
-            self.server_list_cfg, self.client_cfg
-        )
-        # mc.pyvector servers as a point which points to a memory cache
-        self._mc_buffer = mc.pyvector()
-
-    def get(self, filepath):
-        filepath = str(filepath)
-        import mc
-
-        self._client.Get(filepath, self._mc_buffer)
-        value_buf = mc.ConvertBuffer(self._mc_buffer)
-        return value_buf
-
-    def get_text(self, filepath) -> Never:
-        raise NotImplementedError
 
 
 class HardDiskBackend(BaseStorageBackend):
     """Raw hard disks storage backend."""
 
-    def get(self, filepath):
+    def get(self, filepath: str) -> bytes:
         filepath = str(filepath)
         with open(filepath, "rb") as f:
             value_buf = f.read()
         return value_buf
 
-    def get_text(self, filepath):
+    def get_text(self, filepath: str) -> str:
         filepath = str(filepath)
         with open(filepath) as f:
             value_buf = f.read()
@@ -129,7 +90,7 @@ class LmdbBackend(BaseStorageBackend):
                 path, readonly=readonly, lock=lock, readahead=readahead, **kwargs
             )
 
-    def get(self, filepath: str, client_key: str):
+    def get(self, filepath: str, client_key: str) -> bytes:
         """Get values according to the filepath from one lmdb named client_key.
 
         Args:
@@ -157,16 +118,16 @@ class FileClient:
     accessor with a given name and backend class.
 
     Attributes:
-        backend (str): The storage backend type. Options are "disk",
-            "memcached" and "lmdb".
+        backend (str): The storage backend type. Options are "disk", and "lmdb".
         client (:obj:`BaseStorageBackend`): The backend object.
     """
 
-    _backends = {
-        "disk": HardDiskBackend,
-        "memcached": MemcachedBackend,
-        "lmdb": LmdbBackend,
-    }
+    _backends = MappingProxyType(
+        {
+            "disk": HardDiskBackend,
+            "lmdb": LmdbBackend,
+        }
+    )
 
     def __init__(self, backend: str = "disk", **kwargs) -> None:
         if backend not in self._backends:
@@ -177,7 +138,7 @@ class FileClient:
         self.backend = backend
         self.client = self._backends[backend](**kwargs)
 
-    def get(self, filepath: str, client_key: str = "default"):
+    def get(self, filepath: str, client_key: str = "default") -> bytes:
         # client_key is used only for lmdb, where different fileclients have
         # different lmdb environments.
         if self.backend == "lmdb":
@@ -185,5 +146,5 @@ class FileClient:
         else:
             return self.client.get(filepath)
 
-    def get_text(self, filepath):
+    def get_text(self, filepath: str) -> str:
         return self.client.get_text(filepath)

@@ -2,6 +2,7 @@ import os
 import sys
 from multiprocessing import Pool
 from os import path as osp
+from typing import Any
 
 import cv2
 import numpy as np
@@ -76,7 +77,7 @@ def main() -> None:
     extract_subimages(opt)
 
 
-def extract_subimages(opt) -> None:
+def extract_subimages(opt: dict[str, Any]) -> None:
     """Crop images to subimages.
 
     Args:
@@ -106,7 +107,7 @@ def extract_subimages(opt) -> None:
     print("All processes done.")
 
 
-def worker(path, opt):
+def worker(path: str, opt: dict[str, Any]) -> str:
     """Worker for each process.
 
     Args:

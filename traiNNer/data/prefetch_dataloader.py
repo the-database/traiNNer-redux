@@ -1,5 +1,6 @@
-import queue as Queue
+import queue
 import threading
+from collections.abc import Iterator
 
 import torch
 from torch.utils.data import DataLoader
@@ -17,7 +18,7 @@ class PrefetchGenerator(threading.Thread):
 
     def __init__(self, generator: DataLoader, num_prefetch_queue: int) -> None:
         threading.Thread.__init__(self)
-        self.queue = Queue.Queue(num_prefetch_queue)
+        self.queue = queue.Queue(num_prefetch_queue)
         self.generator = generator
         self.daemon = True
         self.start()

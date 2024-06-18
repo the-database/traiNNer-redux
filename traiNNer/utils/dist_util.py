@@ -2,6 +2,8 @@
 import functools
 import os
 import subprocess
+from collections.abc import Callable
+from typing import Any
 
 import torch
 import torch.distributed as dist
@@ -72,11 +74,12 @@ def get_dist_info() -> tuple[int, int]:
     return rank, world_size
 
 
-def master_only(func: function) -> function:
+def master_only(func: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         rank, _ = get_dist_info()
         if rank == 0:
             return func(*args, **kwargs)
+        return None
 
     return wrapper

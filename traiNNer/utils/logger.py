@@ -78,7 +78,7 @@ class MessageLogger:
         self.start_time = time.time()
 
     @master_only
-    def __call__(self, log_vars):
+    def __call__(self, log_vars: dict[str, Any]) -> None:
         """Format logging message.
 
         Args:
@@ -126,7 +126,7 @@ class MessageLogger:
 
 
 @master_only
-def init_tb_logger(log_dir) -> SummaryWriter:
+def init_tb_logger(log_dir: str) -> SummaryWriter:
     tb_logger = SummaryWriter(log_dir=log_dir)
     return tb_logger
 
@@ -143,7 +143,7 @@ def init_wandb_logger(opt: Mapping[str, Any]) -> None:
     if resume_id:
         wandb_id = resume_id
         resume = "allow"
-        logger.warning(f"Resume wandb logger with id={wandb_id}.")
+        logger.warning("Resume wandb logger with id=%s.", wandb_id)
     else:
         wandb_id = wandb.util.generate_id()
         resume = "never"
@@ -161,7 +161,9 @@ def init_wandb_logger(opt: Mapping[str, Any]) -> None:
 
 
 def get_root_logger(
-    logger_name: str = "traiNNer", log_level: int = logging.INFO, log_file=None
+    logger_name: str = "traiNNer",
+    log_level: int = logging.INFO,
+    log_file: str | None = None,
 ) -> Logger:
     """Get the root logger.
     duf_downsample

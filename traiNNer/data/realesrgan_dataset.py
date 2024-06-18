@@ -110,7 +110,7 @@ class RealESRGANDataset(data.Dataset):
             except OSError as e:
                 logger = get_root_logger()
                 logger.warning(
-                    f"File client error: {e}, remaining retry times: {retry - 1}"
+                    "File client error: %s, remaining retry times: %d", e, retry - 1
                 )
                 # change another file to read
                 index = random.randint(0, self.__len__())

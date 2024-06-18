@@ -2,7 +2,7 @@ import argparse
 import os
 
 
-def get_lr_hr_pair(hr_folder, lr_folder):
+def get_lr_hr_pair(hr_folder: str, lr_folder: str) -> list[tuple[str, str]]:
     hr_files = os.listdir(hr_folder)
     lr_files = os.listdir(lr_folder)
 
@@ -23,7 +23,7 @@ def get_lr_hr_pair(hr_folder, lr_folder):
     return lr_hr_pairs
 
 
-def save_meta_info(meta_info_file, lr_hr_pairs) -> None:
+def save_meta_info(meta_info_file: str, lr_hr_pairs: list[tuple[str, str]]) -> None:
     with open(meta_info_file, "w") as f:
         for lr, hr in lr_hr_pairs:
             f.write(f"{lr}, {hr}\n")

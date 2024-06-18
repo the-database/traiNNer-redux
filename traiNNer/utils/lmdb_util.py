@@ -1,6 +1,7 @@
 import sys
 from multiprocessing import Pool
 from os import path as osp
+from typing import Any
 
 import cv2
 import lmdb
@@ -84,7 +85,7 @@ def make_lmdb_from_imgs(
         print(f"Read images with multiprocessing, #thread: {n_thread} ...")
         pbar = tqdm(total=len(img_path_list), unit="image")
 
-        def callback(arg) -> None:
+        def callback(arg: tuple[str, dict[str, Any], dict[str, Any]]) -> None:
             """get the image data and update pbar."""
             key, dataset[key], shapes[key] = arg
             pbar.update(1)

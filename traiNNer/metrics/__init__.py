@@ -8,7 +8,7 @@ from .psnr_ssim import calculate_psnr, calculate_ssim
 __all__ = ["calculate_psnr", "calculate_ssim", "calculate_niqe"]
 
 
-def calculate_metric(data, opt: dict[str, Any]) -> float:
+def calculate_metric(data: dict[str, Any], opt: dict[str, Any]) -> float:
     """Calculate metric from data and options.
 
     Args:

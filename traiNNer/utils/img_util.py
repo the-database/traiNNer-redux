@@ -137,7 +137,7 @@ def tensor2img_fast(
     return output
 
 
-def imfrombytes(content, flag: str = "color", float32: bool = False) -> MatLike:
+def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> MatLike:
     """Read an image from bytes.
 
     Args:
