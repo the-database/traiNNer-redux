@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from logging import Logger
 from typing import Any
 
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 
 from .dist_util import get_dist_info, master_only
 
