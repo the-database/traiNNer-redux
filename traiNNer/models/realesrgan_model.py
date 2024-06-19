@@ -81,7 +81,6 @@ class RealESRGANModel(SRModel):
         if self.is_train and self.opt.get("high_order_degradation", True):
             # training data synthesis
             self.gt = data["gt"].to(self.device)
-            self.gt_usm = self.usm_sharpener(self.gt)
 
             self.kernel1 = data["kernel1"].to(self.device)
             self.kernel2 = data["kernel2"].to(self.device)
@@ -216,16 +215,13 @@ class RealESRGANModel(SRModel):
 
             # training pair pool
             self._dequeue_and_enqueue()
-            # sharpen self.gt again, as we have changed the self.gt with self._dequeue_and_enqueue
-            self.gt_usm = self.usm_sharpener(self.gt)
             self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
         else:
             # for paired training or validation
             self.lq = data["lq"].to(self.device)
             if "gt" in data:
                 self.gt = data["gt"].to(self.device)
-                self.gt_usm = self.usm_sharpener(self.gt)
 
                 # moa
-                if self.is_train and self.use_moa:
+                if self.is_train and self.batchaugment is not None:
                     self.gt, self.lq = self.batchaugment(self.gt, self.lq)

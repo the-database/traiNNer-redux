@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import Any
 
 from torch import nn
+from traiNNer.models.base_model import BaseModel
 
 from ..utils import get_root_logger
 from .realesrgan_model import RealESRGANModel
@@ -10,7 +11,7 @@ from .sr_model import SRModel
 __all__ = ["build_model"]
 
 
-def build_model(opt: dict[str, Any]) -> nn.Module:
+def build_model(opt: dict[str, Any]) -> BaseModel:
     """Build model from options.
 
     Args:
