@@ -124,13 +124,13 @@ def paired_random_crop(
         ]
     output_gts = None
     output_lqs = None
-    if len(img_gts) == 1:
+    if len(l_img_gts) == 1:
         first_out_gt = l_img_gts[0]
         assert isinstance(first_out_gt, np.ndarray | Tensor)
         output_gts = first_out_gt
     else:
         output_gts = l_img_gts
-    if len(img_lqs) == 1:
+    if len(l_img_lqs) == 1:
         first_out_lq = l_img_lqs[0]
         assert isinstance(first_out_lq, np.ndarray | Tensor)
         output_lqs = first_out_lq
