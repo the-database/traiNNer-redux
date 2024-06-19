@@ -35,7 +35,7 @@ def paired_random_crop(
     gt_patch_size: int,
     scale: int,
     gt_path: str | None = None,
-) -> T:
+) -> tuple[T, T]:
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -78,8 +78,8 @@ def paired_random_crop(
         h_lq, w_lq = first_lq.size()[-2:]
         h_gt, w_gt = first_gt.size()[-2:]
     else:
-        h_lq, w_lq = img_lqs[0].shape[0:2]
-        h_gt, w_gt = img_gts[0].shape[0:2]
+        h_lq, w_lq = l_img_lqs[0].shape[0:2]
+        h_gt, w_gt = l_img_gts[0].shape[0:2]
     lq_patch_size = gt_patch_size // scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
@@ -102,12 +102,12 @@ def paired_random_crop(
     if input_type == "Tensor":
         l_img_lqs: list[np.ndarray | Tensor] = [
             v[:, :, top : top + lq_patch_size, left : left + lq_patch_size]
-            for v in img_lqs
+            for v in l_img_lqs
         ]
     else:
         l_img_lqs: list[np.ndarray | Tensor] = [
             v[top : top + lq_patch_size, left : left + lq_patch_size, ...]
-            for v in img_lqs
+            for v in l_img_lqs
         ]
 
     # crop corresponding gt patch
@@ -115,25 +115,29 @@ def paired_random_crop(
     if input_type == "Tensor":
         l_img_gts: list[np.ndarray | Tensor] = [
             v[:, :, top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size]
-            for v in img_gts
+            for v in l_img_gts
         ]
     else:
         l_img_gts: list[np.ndarray | Tensor] = [
             v[top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size, ...]
-            for v in img_gts
+            for v in l_img_gts
         ]
-    output_gts = l_img_gts
-    output_lqs = l_img_lqs
-    assert isinstance(output_gts, list)
-    assert isinstance(output_lqs, list)
+    output_gts = None
+    output_lqs = None
     if len(img_gts) == 1:
         first_out_gt = l_img_gts[0]
         assert isinstance(first_out_gt, np.ndarray | Tensor)
         output_gts = first_out_gt
+    else:
+        output_gts = l_img_gts
     if len(img_lqs) == 1:
         first_out_lq = l_img_lqs[0]
         assert isinstance(first_out_lq, np.ndarray | Tensor)
         output_lqs = first_out_lq
+    else:
+        output_lqs = l_img_lqs
+    assert output_gts is not None
+    assert output_lqs is not None
     return output_gts, output_lqs  # type: ignore
 
 
