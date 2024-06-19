@@ -60,8 +60,12 @@ def paired_random_crop(
     l_img_lqs = []
     if not isinstance(img_gts, list):
         l_img_gts = [img_gts]
+    else:
+        l_img_gts = list(img_gts)
     if not isinstance(img_lqs, list):
         l_img_lqs = [img_lqs]
+    else:
+        l_img_lqs = list(img_lqs)
 
     # determine input type: Numpy array or Tensor
     input_type = "Tensor" if isinstance(l_img_gts[0], Tensor) else "Numpy"
