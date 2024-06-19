@@ -1,6 +1,7 @@
 import os
 from typing import Any
 
+import numpy as np
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
@@ -104,9 +105,11 @@ class RealESRGANPairedDataset(data.Dataset):
             )
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt, img_lq = img2tensor([img_gt, img_lq], bgr2rgb=True, float32=True)
+        img_gt, img_lq = img2tensor(
+            [np.asarray(img_gt), np.asarray(img_lq)], bgr2rgb=True, float32=True
+        )
         # normalize
-        if self.mean is not None or self.std is not None:
+        if self.mean is not None and self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
             normalize(img_gt, self.mean, self.std, inplace=True)
 

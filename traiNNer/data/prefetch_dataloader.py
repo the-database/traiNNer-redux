@@ -57,8 +57,8 @@ class PrefetchDataLoader(DataLoader):
         self.num_prefetch_queue = num_prefetch_queue
         super().__init__(**kwargs)
 
-    def __iter__(self) -> PrefetchGenerator:
-        return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
+    def __iter__(self) -> PrefetchGenerator:  # type: ignore
+        return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)  # type: ignore
 
 
 class CPUPrefetcher:
@@ -100,6 +100,7 @@ class CUDAPrefetcher:
         self.opt = opt
         self.stream = torch.cuda.Stream()
         self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
+        self.batch = None
         self.preload()
 
     def preload(self) -> None:
@@ -109,7 +110,7 @@ class CUDAPrefetcher:
             self.batch = None
             return None
         # put tensors to gpu
-        with torch.cuda.stream(self.stream):
+        with torch.cuda.stream(self.stream):  # type: ignore
             for k, v in self.batch.items():
                 if torch.is_tensor(v):
                     self.batch[k] = self.batch[k].to(

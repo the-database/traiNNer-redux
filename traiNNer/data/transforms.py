@@ -1,8 +1,8 @@
 import random
+from typing import TypeVar
 
 import cv2
 import numpy as np
-import torch
 from torch import Tensor
 
 
@@ -26,13 +26,16 @@ def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     return img
 
 
+T = TypeVar("T", np.ndarray, list[np.ndarray], Tensor, list[Tensor])
+
+
 def paired_random_crop(
-    img_gts: np.ndarray | list[np.ndarray] | Tensor | list[Tensor],
-    img_lqs: np.ndarray | list[np.ndarray] | Tensor | list[Tensor],
+    img_gts: T,
+    img_lqs: T,
     gt_patch_size: int,
     scale: int,
     gt_path: str | None = None,
-) -> np.ndarray | list[np.ndarray] | Tensor | list[Tensor]:
+) -> T:
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -53,17 +56,23 @@ def paired_random_crop(
             only have one element, just return ndarray.
     """
 
+    l_img_gts = []
+    l_img_lqs = []
     if not isinstance(img_gts, list):
-        img_gts = [img_gts]
+        l_img_gts = [img_gts]
     if not isinstance(img_lqs, list):
-        img_lqs = [img_lqs]
+        l_img_lqs = [img_lqs]
 
     # determine input type: Numpy array or Tensor
-    input_type = "Tensor" if torch.is_tensor(img_gts[0]) else "Numpy"
+    input_type = "Tensor" if isinstance(l_img_gts[0], Tensor) else "Numpy"
 
     if input_type == "Tensor":
-        h_lq, w_lq = img_lqs[0].size()[-2:]
-        h_gt, w_gt = img_gts[0].size()[-2:]
+        first_lq = l_img_lqs[0]
+        first_gt = l_img_gts[0]
+        assert isinstance(first_lq, Tensor)
+        assert isinstance(first_gt, Tensor)
+        h_lq, w_lq = first_lq.size()[-2:]
+        h_gt, w_gt = first_gt.size()[-2:]
     else:
         h_lq, w_lq = img_lqs[0].shape[0:2]
         h_gt, w_gt = img_gts[0].shape[0:2]
@@ -87,12 +96,12 @@ def paired_random_crop(
 
     # crop lq patch
     if input_type == "Tensor":
-        img_lqs = [
+        l_img_lqs: list[np.ndarray | Tensor] = [
             v[:, :, top : top + lq_patch_size, left : left + lq_patch_size]
             for v in img_lqs
         ]
     else:
-        img_lqs = [
+        l_img_lqs: list[np.ndarray | Tensor] = [
             v[top : top + lq_patch_size, left : left + lq_patch_size, ...]
             for v in img_lqs
         ]
@@ -100,20 +109,28 @@ def paired_random_crop(
     # crop corresponding gt patch
     top_gt, left_gt = int(top * scale), int(left * scale)
     if input_type == "Tensor":
-        img_gts = [
+        l_img_gts: list[np.ndarray | Tensor] = [
             v[:, :, top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size]
             for v in img_gts
         ]
     else:
-        img_gts = [
+        l_img_gts: list[np.ndarray | Tensor] = [
             v[top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size, ...]
             for v in img_gts
         ]
+    output_gts = l_img_gts
+    output_lqs = l_img_lqs
+    assert isinstance(output_gts, list)
+    assert isinstance(output_lqs, list)
     if len(img_gts) == 1:
-        img_gts = img_gts[0]
+        first_out_gt = l_img_gts[0]
+        assert isinstance(first_out_gt, np.ndarray | Tensor)
+        output_gts = first_out_gt
     if len(img_lqs) == 1:
-        img_lqs = img_lqs[0]
-    return img_gts, img_lqs
+        first_out_lq = l_img_lqs[0]
+        assert isinstance(first_out_lq, np.ndarray | Tensor)
+        output_lqs = first_out_lq
+    return output_gts, output_lqs  # type: ignore
 
 
 def augment(
@@ -122,7 +139,13 @@ def augment(
     rotation: bool = True,
     flows: list[np.ndarray] | None = None,
     return_status: bool = False,
-) -> np.ndarray | list[np.ndarray]:
+) -> (
+    np.ndarray
+    | list[np.ndarray]
+    | tuple[np.ndarray, np.ndarray]
+    | tuple[list[np.ndarray], np.ndarray]
+    | tuple[list[np.ndarray], list[np.ndarray]]
+):
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
     We use vertical flip and transpose for rotation implementation.
@@ -176,20 +199,21 @@ def augment(
         imgs = imgs[0]
 
     if flows is not None:
-        if not isinstance(flows, list):
-            flows = [flows]
         flows = [_augment_flow(flow) for flow in flows]
         if len(flows) == 1:
-            flows = flows[0]
-        return imgs, flows
+            flows = flows[0]  # type: ignore -- wtf is this function even? this needs to be rewritten to be less jank with what its returning
+        return imgs, flows  # type: ignore -- ditto above
     elif return_status:
-        return imgs, (hflip, vflip, rot90)
+        return imgs, (hflip, vflip, rot90)  # type: ignore -- ditto above
     else:
         return imgs
 
 
 def img_rotate(
-    img: np.ndarray, angle: float, center: tuple[int] | None = None, scale: float = 1.0
+    img: np.ndarray,
+    angle: float,
+    center: tuple[int, int] | None = None,
+    scale: float = 1.0,
 ) -> np.ndarray:
     """Rotate image.
 

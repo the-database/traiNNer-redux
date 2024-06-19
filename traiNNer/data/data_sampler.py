@@ -1,5 +1,5 @@
 import math
-from collections.abc import Iterator
+from collections.abc import Iterator, Sized
 
 import torch
 from torch.utils.data import Dataset
@@ -28,6 +28,7 @@ class EnlargedSampler(Sampler):
         self.num_replicas = num_replicas
         self.rank = rank
         self.epoch = 0
+        assert isinstance(self.dataset, Sized), "Unable to determine length of dataset"
         self.num_samples = math.ceil(len(self.dataset) * ratio / self.num_replicas)
         self.total_size = self.num_samples * self.num_replicas
 
@@ -37,6 +38,7 @@ class EnlargedSampler(Sampler):
         g.manual_seed(self.epoch)
         indices = torch.randperm(self.total_size, generator=g).tolist()
 
+        assert isinstance(self.dataset, Sized), "Unable to determine length of dataset"
         dataset_size = len(self.dataset)
         indices = [v % dataset_size for v in indices]
 
