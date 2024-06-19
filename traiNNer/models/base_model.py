@@ -7,11 +7,11 @@ from typing import Any
 
 import pytorch_optimizer
 import torch
-from pytorch_optimizer.base.types import PARAMETERS
 from spandrel import ModelLoader
 from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim import Optimizer
+from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.utils.types import DataFeed
@@ -38,6 +38,7 @@ class BaseModel:
         self.best_metric_results: dict[str, Any] = {}
         self.model_loader = ModelLoader()
         self.net_g = None
+        self.net_g_ema = None
         self.net_d = None
 
     def feed_data(self, data: DataFeed) -> None:
@@ -123,6 +124,9 @@ class BaseModel:
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
     def model_ema(self, decay: float = 0.999) -> None:
+        assert self.net_g is not None
+        assert self.net_g_ema is not None
+
         net_g = self.get_bare_model(self.net_g)
 
         net_g_params = dict(net_g.named_parameters())
@@ -160,7 +164,11 @@ class BaseModel:
         return net
 
     def get_optimizer(
-        self, optim_type: str, params: PARAMETERS, lr: float, **kwargs
+        self,
+        optim_type: str,
+        params: ParamsT,
+        lr: float,
+        **kwargs,
     ) -> Optimizer:
         if optim_type == "AdamP":
             optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
