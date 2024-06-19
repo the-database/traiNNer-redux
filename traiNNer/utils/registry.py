@@ -96,7 +96,7 @@ class Registry:
         return name.lower() in self._obj_map
 
     def __iter__(self) -> Iterator[ItemsView[str, Callable | type]]:
-        return iter(self._obj_map.items())
+        return iter(self._obj_map.items())  # type: ignore
 
     def keys(self) -> KeysView[str]:
         return self._obj_map.keys()

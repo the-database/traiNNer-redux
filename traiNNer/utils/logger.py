@@ -19,12 +19,17 @@ class AvgTimer:
         self.total_time = 0
         self.count = 0
         self.avg_time = 0
+        self.start_time = None
+        self.tic = None
+        self.toc = None
         self.start()
 
     def start(self) -> None:
         self.start_time = self.tic = time.time()
 
     def record(self) -> None:
+        if self.tic is None:
+            raise ValueError("Must start timing before recording")
         self.count += 1
         self.toc = time.time()
         self.current_time = self.toc - self.tic
@@ -71,6 +76,10 @@ class MessageLogger:
         self.max_iters = opt["train"]["total_iter"]
         self.use_tb_logger = opt["logger"]["use_tb_logger"]
         self.tb_logger = tb_logger
+
+        if self.use_tb_logger:
+            assert self.tb_logger is not None
+
         self.start_time = time.time()
         self.logger = get_root_logger()
 
@@ -118,9 +127,9 @@ class MessageLogger:
             message += f"{k}: {v:.4e} "
             # tensorboard logger
             if self.use_tb_logger and "debug" not in self.exp_name:
-                if k.startswith("l_"):
+                if k.startswith("l_") and self.tb_logger is not None:
                     self.tb_logger.add_scalar(f"losses/{k}", v, current_iter)
-                else:
+                elif self.tb_logger is not None:
                     self.tb_logger.add_scalar(k, v, current_iter)
         self.logger.info(message)
 
@@ -145,14 +154,14 @@ def init_wandb_logger(opt: Mapping[str, Any]) -> None:
         resume = "allow"
         logger.warning("Resume wandb logger with id=%s.", wandb_id)
     else:
-        wandb_id = wandb.util.generate_id()
+        wandb_id = wandb.util.generate_id()  # type: ignore
         resume = "never"
 
     wandb.init(
         id=wandb_id,
         resume=resume,
         name=opt["name"],
-        config=opt,
+        config=opt,  # type: ignore
         project=project,
         sync_tensorboard=True,
     )

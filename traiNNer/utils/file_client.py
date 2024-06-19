@@ -61,7 +61,7 @@ class LmdbBackend(BaseStorageBackend):
     def __init__(
         self,
         db_paths: str | Sequence[str],
-        client_keys: str = "default",
+        client_keys: str | list[str] = "default",
         readonly: bool = True,
         lock: bool = False,
         readahead: bool = False,
@@ -90,7 +90,7 @@ class LmdbBackend(BaseStorageBackend):
                 path, readonly=readonly, lock=lock, readahead=readahead, **kwargs
             )
 
-    def get(self, filepath: str, client_key: str) -> bytes:
+    def get(self, filepath: str, client_key: str | None = None) -> bytes:
         """Get values according to the filepath from one lmdb named client_key.
 
         Args:
@@ -142,7 +142,7 @@ class FileClient:
         # client_key is used only for lmdb, where different fileclients have
         # different lmdb environments.
         if self.backend == "lmdb":
-            return self.client.get(filepath, client_key)
+            return self.client.get(filepath, client_key)  # type: ignore
         else:
             return self.client.get(filepath)
 

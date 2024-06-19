@@ -7,6 +7,7 @@ https://dsp.stackexchange.com/questions/35339/jpeg-dct-padding/35343#35343
 
 import itertools
 from collections.abc import Callable
+from typing import TypeVar
 
 import numpy as np
 import torch
@@ -41,7 +42,10 @@ def diff_round(x: Tensor) -> Tensor:
     return torch.round(x) + (x - torch.round(x)) ** 3
 
 
-def quality_to_factor(quality: float) -> float:
+T = TypeVar("T", float, Tensor)
+
+
+def quality_to_factor(quality: T) -> T:
     """Calculate factor corresponding to quality
 
     Args:
@@ -185,7 +189,7 @@ class YQuantize(nn.Module):
         self.rounding = rounding
         self.y_table = y_table
 
-    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
+    def forward(self, image: Tensor, factor: float | Tensor = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -215,7 +219,7 @@ class CQuantize(nn.Module):
         self.rounding = rounding
         self.c_table = c_table
 
-    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
+    def forward(self, image: Tensor, factor: float | Tensor = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -281,7 +285,7 @@ class YDequantize(nn.Module):
         super().__init__()
         self.y_table = y_table
 
-    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
+    def forward(self, image: Tensor, factor: float | Tensor = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -305,7 +309,7 @@ class CDequantize(nn.Module):
         super().__init__()
         self.c_table = c_table
 
-    def forward(self, image: Tensor, factor: float = 1) -> Tensor:
+    def forward(self, image: Tensor, factor: float | Tensor = 1) -> Tensor:
         """
         Args:
             image(tensor): batch x height x width
@@ -497,7 +501,7 @@ class DiffJPEG(nn.Module):
         self.compress = CompressJpeg(rounding=rounding)
         self.decompress = DeCompressJpeg(rounding=rounding)
 
-    def forward(self, x: Tensor, quality: float) -> Tensor:
+    def forward(self, x: Tensor, quality: float | Tensor) -> Tensor:
         """
         Args:
             x (Tensor): Input image, bchw, rgb, [0, 1]
@@ -522,27 +526,3 @@ class DiffJPEG(nn.Module):
         recovered = self.decompress(y, cb, cr, (h + h_pad), (w + w_pad), factor=factor)
         recovered = recovered[:, :, 0:h, 0:w]
         return recovered
-
-
-if __name__ == "__main__":
-    import cv2
-
-    from . import img2tensor, tensor2img
-
-    img_gt = cv2.imread("test.png") / 255.0
-
-    # -------------- cv2 -------------- #
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 20]
-    _, encimg = cv2.imencode(".jpg", img_gt * 255.0, encode_param)
-    img_lq = np.float32(cv2.imdecode(encimg, 1))
-    cv2.imwrite("cv2_JPEG_20.png", img_lq)
-
-    # -------------- DiffJPEG -------------- #
-    jpeger = DiffJPEG(differentiable=False).cuda()
-    img_gt = img2tensor(img_gt)
-    img_gt = torch.stack([img_gt, img_gt]).cuda()
-    quality = img_gt.new_tensor([20, 40])
-    out = jpeger(img_gt, quality=quality)
-
-    cv2.imwrite("pt_JPEG_20.png", tensor2img(out[0]))
-    cv2.imwrite("pt_JPEG_40.png", tensor2img(out[1]))

@@ -73,10 +73,6 @@ def scandir(
     Returns:
         A generator for all the interested files with relative paths.
     """
-
-    if (suffix is not None) and not isinstance(suffix, str | tuple):
-        raise TypeError('"suffix" must be a string or tuple of strings')
-
     root = dir_path
 
     def _scandir(

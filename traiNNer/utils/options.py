@@ -150,6 +150,7 @@ def parse_options(
         torch.backends.cudnn.benchmark = True
         seed = random.randint(1024, 10000)
         opt["manual_seed"] = seed
+    assert seed is not None
     set_random_seed(seed + opt["rank"])
 
     # force to update yml options

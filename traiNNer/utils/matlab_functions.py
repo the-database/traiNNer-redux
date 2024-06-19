@@ -33,10 +33,11 @@ def calculate_weights_indices(
         antialisaing (bool): Whether to apply anti-aliasing when downsampling.
     """
 
+    f_kernel_width = float(kernel_width)
     if (scale < 1) and antialiasing:
         # Use a modified kernel (larger kernel width) to simultaneously
         # interpolate and antialias
-        kernel_width = kernel_width / scale
+        f_kernel_width /= scale
 
     # Output-space coordinates
     x = torch.linspace(1, out_length, out_length)
@@ -47,13 +48,13 @@ def calculate_weights_indices(
     u = x / scale + 0.5 * (1 - 1 / scale)
 
     # What is the left-most pixel that can be involved in the computation?
-    left = torch.floor(u - kernel_width / 2)
+    left = torch.floor(u - f_kernel_width / 2)
 
     # What is the maximum number of pixels that can be involved in the
     # computation?  Note: it's OK to use an extra pixel here; if the
     # corresponding weights are all zero, it will be eliminated at the end
     # of this function.
-    p = math.ceil(kernel_width) + 2
+    p = math.ceil(f_kernel_width) + 2
 
     # The indices of the input pixels involved in computing the k-th output
     # pixel are in row k of the indices matrix.
@@ -114,17 +115,19 @@ def imresize(
         Tensor: Output image with shape (c, h, w), [0, 1] range, w/o round.
     """
     squeeze_flag = False
-    if type(img).__module__ == np.__name__:  # numpy type
+    if isinstance(img, np.ndarray):  # numpy type
         numpy_type = True
         if img.ndim == 2:
             img = img[:, :, None]
             squeeze_flag = True
         img = torch.from_numpy(img.transpose(2, 0, 1)).float()
-    else:
+    elif type(img) == Tensor:
         numpy_type = False
         if img.ndim == 2:
             img = img.unsqueeze(0)
             squeeze_flag = True
+    else:
+        raise ValueError("Unknown image type provided")
 
     in_c, in_h, in_w = img.size()
     out_h, out_w = math.ceil(in_h * scale), math.ceil(in_w * scale)

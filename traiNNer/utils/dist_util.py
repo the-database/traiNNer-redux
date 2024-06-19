@@ -11,7 +11,7 @@ import torch.multiprocessing as mp
 
 
 def init_dist(launcher: str, backend: str = "nccl", **kwargs) -> None:
-    if mp.get_start_method(allow_none=True) is None:
+    if mp.get_start_method(allow_none=True) is None:  # type: ignore
         mp.set_start_method("spawn")
     if launcher == "pytorch":
         _init_dist_pytorch(backend, **kwargs)

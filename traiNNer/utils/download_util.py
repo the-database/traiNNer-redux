@@ -61,12 +61,13 @@ def save_response_content(
         readable_file_size = sizeof_fmt(file_size)
     else:
         pbar = None
+        readable_file_size = None
 
     with open(destination, "wb") as f:
         downloaded_size = 0
         for chunk in response.iter_content(chunk_size):
             downloaded_size += chunk_size
-            if pbar is not None:
+            if pbar is not None and readable_file_size is not None:
                 pbar.update(1)
                 pbar.set_description(
                     f"Download {sizeof_fmt(downloaded_size)} / {readable_file_size}"
