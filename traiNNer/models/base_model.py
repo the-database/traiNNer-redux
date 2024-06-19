@@ -34,7 +34,11 @@ class BaseModel:
         self.batchaugment = None
         self.log_dict = {}
         self.loss_samples = 0
+        self.metric_results: dict[str, Any] = {}
+        self.best_metric_results: dict[str, Any] = {}
         self.model_loader = ModelLoader()
+        self.net_g = None
+        self.net_d = None
 
     def feed_data(self, data: DataFeed) -> None:
         pass

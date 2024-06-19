@@ -2,6 +2,7 @@ import random
 from typing import Any
 
 import torch
+from torch import Tensor
 from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils import RNG
 from traiNNer.utils.types import DataFeed
@@ -28,6 +29,14 @@ class RealESRGANModel(SRModel):
 
     def __init__(self, opt: dict[str, Any]) -> None:
         super().__init__(opt)
+
+        self.queue_lr: Tensor | None = None
+        self.queue_gt: Tensor | None = None
+        self.queue_ptr = 0
+        self.kernel1: Tensor | None = None
+        self.kernel2: Tensor | None = None
+        self.sinc_kernel: Tensor | None = None
+
         self.jpeger = DiffJPEG(
             differentiable=False
         ).cuda()  # simulate JPEG compression artifacts
@@ -41,9 +50,13 @@ class RealESRGANModel(SRModel):
         batch could not have different resize scaling factors. Therefore, we employ this training pair pool
         to increase the degradation diversity in a batch.
         """
+
+        assert self.lq is not None, "lq image is not a tensor"
+        assert self.gt is not None, "gt image is not a tensor"
+
         # initialize
         b, c, h, w = self.lq.size()
-        if not hasattr(self, "queue_lr"):
+        if self.queue_lr is not None:
             assert (
                 self.queue_size % b == 0
             ), f"queue size {self.queue_size} should be divisible by batch size {b}"
@@ -54,6 +67,8 @@ class RealESRGANModel(SRModel):
         if self.queue_ptr == self.queue_size:  # the pool is full
             # do dequeue and enqueue
             # shuffle
+            assert self.queue_lr is not None, "queue_lr image is not a tensor"
+            assert self.queue_gt is not None, "queue_gt image is not a tensor"
             idx = torch.randperm(self.queue_size)
             self.queue_lr = self.queue_lr[idx]
             self.queue_gt = self.queue_gt[idx]
@@ -67,6 +82,9 @@ class RealESRGANModel(SRModel):
             self.lq = lq_dequeue
             self.gt = gt_dequeue
         else:
+            assert self.queue_lr is not None, "queue_lr image is not a tensor"
+            assert self.queue_gt is not None, "queue_gt image is not a tensor"
+
             # only do enqueue
             self.queue_lr[self.queue_ptr : self.queue_ptr + b, :, :, :] = (
                 self.lq.clone()

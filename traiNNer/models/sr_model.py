@@ -246,8 +246,8 @@ class SRModel(BaseModel):
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         assert self.optimizer_g is not None, "Optimizer generator is undefined"
-        assert isinstance(self.lq, Tensor), "lq image is not a tensor"
-        assert isinstance(self.gt, Tensor), "gt image is not a tensor"
+        assert self.lq is not None, "lq image is not a tensor"
+        assert self.gt is not None, "gt image is not a tensor"
 
         # optimize net_d
         if self.net_d is not None:
@@ -502,6 +502,10 @@ class SRModel(BaseModel):
                 )
 
     def get_current_visuals(self) -> dict[str, Tensor]:
+        assert isinstance(self.output, Tensor), "output image is not a tensor"
+        assert isinstance(self.lq, Tensor), "lq image is not a tensor"
+        assert isinstance(self.gt, Tensor), "gt image is not a tensor"
+
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()
         out_dict["result"] = self.output.detach().cpu()
