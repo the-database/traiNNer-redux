@@ -85,7 +85,7 @@ def cdf2(d_matrix: np.ndarray, grid: np.ndarray) -> np.ndarray:
     Returns:
         cdf (ndarray): skewed cdf.
     """
-    rv = multivariate_normal([0, 0], [[1, 0], [0, 1]])
+    rv = multivariate_normal([0, 0], [[1, 0], [0, 1]])  # type: ignore
     grid = np.dot(grid, d_matrix)
     cdf = rv.cdf(grid)
     return cdf
@@ -459,6 +459,8 @@ def random_mixed_kernels(
             noise_range=None,
             isotropic=False,
         )
+    else:
+        raise ValueError("Unknown kernel type")
     return kernel
 
 
@@ -511,7 +513,7 @@ def circular_lowpass_kernel(
 
 
 def generate_gaussian_noise(
-    img: np.ndarray, sigma: float = 10, gray_noise: bool = False
+    img: np.ndarray, sigma: float | Tensor = 10, gray_noise: bool = False
 ) -> np.ndarray:
     """Generate Gaussian noise.
 
@@ -524,16 +526,17 @@ def generate_gaussian_noise(
             float32.
     """
     if gray_noise:
-        noise = np.float32(RNG.get_rng().randn(*(img.shape[0:2]))) * sigma / 255.0
+        noise = np.float32(RNG.get_rng().randn(*(img.shape[0:2]))) * sigma / 255.0  # type: ignore
         noise = np.expand_dims(noise, axis=2).repeat(3, axis=2)
     else:
-        noise = np.float32(RNG.get_rng().randn(*(img.shape))) * sigma / 255.0
+        noise = np.float32(RNG.get_rng().randn(*(img.shape))) * sigma / 255.0  # type: ignore
+    assert isinstance(noise, np.ndarray)
     return noise
 
 
 def add_gaussian_noise(
     img: np.ndarray,
-    sigma: float = 10,
+    sigma: float | Tensor = 10,
     clip: bool = True,
     rounds: bool = False,
     gray_noise: bool = False,
@@ -560,7 +563,7 @@ def add_gaussian_noise(
 
 
 def generate_gaussian_noise_pt(
-    img: Tensor, sigma: float = 10, gray_noise: float | Tensor = 0
+    img: Tensor, sigma: float | Tensor = 10, gray_noise: float | Tensor = 0
 ) -> Tensor:
     """Add Gaussian noise (PyTorch version).
 
@@ -581,6 +584,7 @@ def generate_gaussian_noise_pt(
         gray_noise = gray_noise.view(b, 1, 1, 1)
         cal_gray_noise = torch.sum(gray_noise) > 0
 
+    noise_gray = None
     if cal_gray_noise:
         noise_gray = (
             torch.randn(*img.size()[2:4], dtype=img.dtype, device=img.device)
@@ -592,14 +596,14 @@ def generate_gaussian_noise_pt(
     # always calculate color noise
     noise = torch.randn(*img.size(), dtype=img.dtype, device=img.device) * sigma / 255.0
 
-    if cal_gray_noise:
+    if cal_gray_noise and noise_gray is not None:
         noise = noise * (1 - gray_noise) + noise_gray * gray_noise
     return noise
 
 
 def add_gaussian_noise_pt(
     img: Tensor,
-    sigma: float = 10,
+    sigma: float | Tensor = 10,
     gray_noise: float | Tensor = 0,
     clip: bool = True,
     rounds: bool = False,
@@ -694,7 +698,7 @@ def random_add_gaussian_noise_pt(
 
 
 def generate_poisson_noise(
-    img: np.ndarray, scale: float = 1.0, gray_noise: bool = False
+    img: np.ndarray, scale: float | Tensor = 1.0, gray_noise: bool = False
 ) -> np.ndarray:
     """Generate poisson noise.
 
@@ -752,7 +756,7 @@ def add_poisson_noise(
 
 
 def generate_poisson_noise_pt(
-    img: Tensor, scale: float = 1.0, gray_noise: float | Tensor = 0
+    img: Tensor, scale: float | Tensor = 1.0, gray_noise: float | Tensor = 0
 ) -> Tensor:
     """Generate a batch of poisson noise (PyTorch version)
 
@@ -773,6 +777,8 @@ def generate_poisson_noise_pt(
     else:
         gray_noise = gray_noise.view(b, 1, 1, 1)
         cal_gray_noise = torch.sum(gray_noise) > 0
+
+    noise_gray = None
     if cal_gray_noise:
         img_gray = rgb_to_grayscale(img, num_output_channels=1)
         # round and clip image for counting vals correctly
@@ -794,7 +800,7 @@ def generate_poisson_noise_pt(
     vals = img.new_tensor(vals_list).view(b, 1, 1, 1)
     out = torch.poisson(img * vals) / vals
     noise = out - img
-    if cal_gray_noise:
+    if cal_gray_noise and noise_gray is not None:
         noise = noise * (1 - gray_noise) + noise_gray * gray_noise
     if not isinstance(scale, float | int):
         scale = scale.view(b, 1, 1, 1)
@@ -917,14 +923,14 @@ def add_jpg_compression(img: np.ndarray, quality: float = 90) -> np.ndarray:
             float32.
     """
     img = np.clip(img, 0, 1)
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), int(quality)]
     _, encimg = cv2.imencode(".jpg", img * 255.0, encode_param)
-    img = np.float32(cv2.imdecode(encimg, 1)) / 255.0
+    img = np.asarray(cv2.imdecode(encimg, 1)).astype(np.float32) / 255.0
     return img
 
 
 def random_add_jpg_compression(
-    img: np.ndarray, quality_range: Sequence[float, float] = (90, 100)
+    img: np.ndarray, quality_range: tuple[float, float] | list[float] = (90, 100)
 ) -> np.ndarray:
     """Randomly add JPG compression artifacts.
 

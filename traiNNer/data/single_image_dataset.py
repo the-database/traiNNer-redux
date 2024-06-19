@@ -1,6 +1,7 @@
 from os import path as osp
 from typing import Any
 
+from torch import Tensor
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
@@ -66,8 +67,9 @@ class SingleImageDataset(data.Dataset):
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_lq = img2tensor(img_lq, bgr2rgb=True, float32=True)
+        assert isinstance(img_lq, Tensor)
         # normalize
-        if self.mean is not None or self.std is not None:
+        if self.mean is not None and self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
         return {"lq": img_lq, "lq_path": lq_path}
 

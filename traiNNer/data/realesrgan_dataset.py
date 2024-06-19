@@ -3,7 +3,7 @@ import os
 import os.path as osp
 import random
 import time
-from typing import Any
+from typing import Any, TypedDict
 
 import cv2
 import numpy as np
@@ -16,6 +16,14 @@ from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor
 from ..utils.registry import DATASET_REGISTRY
 from .degradations import circular_lowpass_kernel, random_mixed_kernels
 from .transforms import augment
+
+
+class ReturnD(TypedDict):
+    gt: Tensor
+    kernel1: Tensor
+    kernel2: Tensor
+    sinc_kernel: Tensor
+    gt_path: str
 
 
 @DATASET_REGISTRY.register(suffix="traiNNer")
@@ -93,7 +101,7 @@ class RealESRGANDataset(data.Dataset):
         ).float()  # convolving with pulse tensor brings no blurry effect
         self.pulse_tensor[10, 10] = 1
 
-    def __getitem__(self, index: int) -> tuple[Tensor, Tensor, Tensor, Tensor, str]:
+    def __getitem__(self, index: int) -> ReturnD:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
@@ -104,6 +112,7 @@ class RealESRGANDataset(data.Dataset):
         gt_path = self.paths[index]
         # avoid errors caused by high latency in reading files
         retry = 3
+        img_bytes = None
         while retry > 0:
             try:
                 img_bytes = self.file_client.get(gt_path, "gt")
@@ -120,10 +129,12 @@ class RealESRGANDataset(data.Dataset):
                 break
             finally:
                 retry -= 1
+        assert img_bytes is not None
         img_gt = imfrombytes(img_bytes, float32=True)
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
         img_gt = augment(img_gt, self.opt["use_hflip"], self.opt["use_rot"])
+        assert isinstance(img_gt, np.ndarray)
 
         # crop or pad to 400
         # TODO: 400 is hard-coded. You may change it accordingly
@@ -160,7 +171,7 @@ class RealESRGANDataset(data.Dataset):
                 kernel_size,
                 self.blur_sigma,
                 self.blur_sigma,
-                [-math.pi, math.pi],
+                (-math.pi, math.pi),
                 self.betag_range,
                 self.betap_range,
                 noise_range=None,
@@ -184,7 +195,7 @@ class RealESRGANDataset(data.Dataset):
                 kernel_size,
                 self.blur_sigma2,
                 self.blur_sigma2,
-                [-math.pi, math.pi],
+                (-math.pi, math.pi),
                 self.betag_range2,
                 self.betap_range2,
                 noise_range=None,
@@ -208,7 +219,7 @@ class RealESRGANDataset(data.Dataset):
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
-        return_d = {
+        return_d: ReturnD = {
             "gt": img_gt,
             "kernel1": kernel,
             "kernel2": kernel2,

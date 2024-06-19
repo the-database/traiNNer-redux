@@ -131,7 +131,7 @@ def build_dataloader(
     else:
         # prefetch_mode=None: Normal dataloader
         # prefetch_mode='cuda': dataloader for CUDAPrefetcher
-        return torch.utils.data.DataLoader(**dataloader_args)
+        return torch.utils.data.DataLoader(**dataloader_args)  # type: ignore -- TODO: use TypedDict
 
 
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:

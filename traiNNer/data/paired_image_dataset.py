@@ -1,5 +1,6 @@
 from typing import Any
 
+import numpy as np
 from torch.utils import data
 from torchvision.transforms.functional import normalize
 
@@ -110,6 +111,8 @@ class PairedImageDataset(data.Dataset):
             img_gt, img_lq = augment(
                 [img_gt, img_lq], self.opt["use_hflip"], self.opt["use_rot"]
             )
+            assert isinstance(img_gt, np.ndarray)
+            assert isinstance(img_lq, np.ndarray)
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop
@@ -118,10 +121,13 @@ class PairedImageDataset(data.Dataset):
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt, img_lq = img2tensor(
-            [img_gt, img_lq], color=self.color, bgr2rgb=True, float32=True
+            [img_gt, img_lq],
+            color=self.color,
+            bgr2rgb=True,
+            float32=True,
         )
         # normalize
-        if self.mean is not None or self.std is not None:
+        if self.mean is not None and self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
             normalize(img_gt, self.mean, self.std, inplace=True)
 

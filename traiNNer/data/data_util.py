@@ -37,6 +37,7 @@ def read_img_seq(
     if require_mod_crop:
         imgs = [mod_crop(img, scale) for img in imgs]
     imgs = img2tensor(imgs, bgr2rgb=True, float32=True)
+    assert isinstance(imgs, list)
     imgs = torch.stack(imgs, dim=0)
 
     if return_imgname:
@@ -105,7 +106,7 @@ def generate_frame_indices(
     return indices
 
 
-def paired_paths_from_lmdb(folders: list[str], keys: list[str]) -> list[str]:
+def paired_paths_from_lmdb(folders: list[str], keys: list[str]) -> list[dict[str, str]]:
     """Generate paired paths from lmdb files.
 
     Contents of lmdb. Taking the `lq.lmdb` for example, the file structure is:
@@ -176,7 +177,7 @@ def paired_paths_from_lmdb(folders: list[str], keys: list[str]) -> list[str]:
 
 def paired_paths_from_meta_info_file(
     folders: list[str], keys: list[str], meta_info_file: str, filename_tmpl: str
-) -> list[str]:
+) -> list[dict[str, str]]:
     """Generate paired paths from an meta information file.
 
     Each line in the meta information file contains the image names and
@@ -226,7 +227,7 @@ def paired_paths_from_meta_info_file(
 
 def paired_paths_from_folder(
     folders: list[str], keys: list[str], filename_tmpl: str
-) -> list[str]:
+) -> list[dict[str, str]]:
     """Generate paired paths from folders.
 
     Args:
@@ -336,4 +337,4 @@ def generate_gaussian_kernel(kernel_size: int = 13, sigma: float = 1.6) -> np.nd
     # set element at the middle to one, a dirac delta
     kernel[kernel_size // 2, kernel_size // 2] = 1
     # gaussian-smooth the dirac, resulting in a gaussian filter
-    return filters.gaussian_filter(kernel, sigma)
+    return filters.gaussian_filter(kernel, sigma)  # type: ignore
