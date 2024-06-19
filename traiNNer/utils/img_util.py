@@ -11,8 +11,11 @@ from torchvision.utils import make_grid
 
 
 def img2tensor(
-    imgs: np.ndarray, color: bool = True, bgr2rgb: bool = True, float32: bool = True
-) -> Tensor:
+    imgs: np.ndarray | list[np.ndarray],
+    color: bool = True,
+    bgr2rgb: bool = True,
+    float32: bool = True,
+) -> Tensor | list[Tensor]:
     """Numpy array to tensor.
 
     Args:
@@ -29,18 +32,18 @@ def img2tensor(
         if color:
             if img.shape[2] == 3 and bgr2rgb:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img = torch.from_numpy(img.transpose(2, 0, 1))
+            out = torch.from_numpy(img.transpose(2, 0, 1))
         else:
             if img.shape[2] == 3:
                 if bgr2rgb:
                     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 else:
                     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            img = torch.from_numpy(img[None, ...])
+            out = torch.from_numpy(img[None, ...])
 
         if float32:
-            img = img.float()
-        return img
+            out = out.float()
+        return out
 
     if isinstance(imgs, list):
         return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
@@ -49,9 +52,9 @@ def img2tensor(
 
 
 def tensor2img(
-    tensor: Tensor,
+    tensor: Tensor | list[Tensor],
     rgb2bgr: bool = True,
-    out_type: np.dtype = np.uint8,
+    out_type: np.dtype = np.uint8,  # type: ignore
     min_max: tuple[int, int] = (0, 1),
 ) -> np.ndarray | list[np.ndarray]:
     """Convert torch Tensors into image numpy arrays.
@@ -80,7 +83,7 @@ def tensor2img(
     ):
         raise TypeError(f"tensor or list of tensors expected, got {type(tensor)}")
 
-    if torch.is_tensor(tensor):
+    if isinstance(tensor, Tensor):
         tensor = [tensor]
     result = []
     for _tensor in tensor:
@@ -183,14 +186,17 @@ def imwrite(
     if auto_mkdir:
         dir_name = os.path.abspath(os.path.dirname(file_path))
         os.makedirs(dir_name, exist_ok=True)
-    ok = cv2.imwrite(file_path, img, params)
+    if params:
+        ok = cv2.imwrite(file_path, img, params)
+    else:
+        ok = cv2.imwrite(file_path, img)
     if not ok:
         raise OSError("Failed in writing images.")
 
 
 def crop_border(
     imgs: np.ndarray | list[np.ndarray], crop_border: int
-) -> list[np.ndarray]:
+) -> np.ndarray | list[np.ndarray]:
     """Crop borders of images.
 
     Args:

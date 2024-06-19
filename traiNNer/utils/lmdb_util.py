@@ -78,6 +78,8 @@ def make_lmdb_from_imgs(
         print(f"Folder {lmdb_path} already exists. Exit.")
         sys.exit(1)
 
+    dataset = None
+    shapes = None
     if multiprocessing_read:
         # read all the images to memory (multiprocessing)
         dataset = {}  # use dict to keep the order for multiprocessing
@@ -96,7 +98,7 @@ def make_lmdb_from_imgs(
             pool.apply_async(
                 read_img_worker,
                 args=(osp.join(data_path, path), key, compress_level),
-                callback=callback,
+                callback=callback,  # type: ignore
             )
         pool.close()
         pool.join()
@@ -126,6 +128,7 @@ def make_lmdb_from_imgs(
         pbar.set_description(f"Write {key}")
         key_byte = key.encode("ascii")
         if multiprocessing_read:
+            assert dataset is not None and shapes is not None
             img_byte = dataset[key]
             h, w, c = shapes[key]
         else:

@@ -43,6 +43,7 @@ def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
             128,
             128,
         ]
+    assert isinstance(out_img, np.ndarray)
     out_img = _convert_output_type_range(out_img, img_type)
     return out_img
 
@@ -87,6 +88,7 @@ def bgr2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
             128,
             128,
         ]
+    assert isinstance(out_img, np.ndarray)
     out_img = _convert_output_type_range(out_img, img_type)
     return out_img
 
@@ -211,7 +213,7 @@ def _convert_output_type_range(img: np.ndarray, dst_type: np.dtype) -> np.ndarra
     Returns:
         (ndarray): The converted image with desired type and range.
     """
-    if dst_type not in (np.uint8, np.float32):
+    if dst_type not in (np.uint8, np.float32):  # type: ignore
         raise TypeError(
             f"The dst_type should be np.float32 or np.uint8, but got {dst_type}"
         )
@@ -259,9 +261,6 @@ def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
 
 def rgb_to_luma(img: Tensor) -> Tensor:
     """RGB to CIELAB L*"""
-
-    if not isinstance(img, torch.Tensor):
-        raise TypeError(f"Input type is not a Tensor. Got {type(img)}")
 
     if len(img.shape) < 3 or (img.shape[-3] != 3 and img.shape[-3] != 1):
         raise ValueError(
