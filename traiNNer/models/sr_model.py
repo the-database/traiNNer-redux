@@ -3,6 +3,8 @@ from os import path as osp
 from typing import Any
 
 import torch
+from torch import Tensor, nn
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
@@ -12,6 +14,7 @@ from traiNNer.losses.loss_util import get_refined_artifact_map
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.utils.types import DataFeed
 
 
 class SRModel(BaseModel):
@@ -56,6 +59,29 @@ class SRModel(BaseModel):
                 )
 
         if self.is_train:
+            self.cri_pix = None
+            self.cri_mssim = None
+            self.cri_ldl = None
+            self.cri_dists = None
+            self.cri_perceptual = None
+            self.cri_contextual = None
+            self.cri_color = None
+            self.cri_luma = None
+            self.cri_hsluv = None
+            self.cri_gan = None
+            self.cri_avg = None
+            self.cri_bicubic = None
+
+            self.ema_decay = 0
+            self.net_g_ema: nn.Module | None = None
+
+            self.lq: Tensor | None = None
+            self.gt: Tensor | None = None
+            self.output: Tensor | None = None
+
+            self.optimizer_g: Optimizer | None = None
+            self.optimizer_d: Optimizer | None = None
+
             self.init_training_settings()
 
     def init_training_settings(self) -> None:
@@ -92,22 +118,16 @@ class SRModel(BaseModel):
         if pixel_opt:
             if pixel_opt.get("loss_weight", 0) > 0:
                 self.cri_pix = build_loss(train_opt["pixel_opt"]).to(self.device)
-        else:
-            self.cri_pix = None
 
         mssim_opt = train_opt.get("mssim_opt")
         if mssim_opt:
             if mssim_opt.get("loss_weight", 0) > 0:
                 self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(self.device)
-        else:
-            self.cri_mssim = None
 
         ldl_opt = train_opt.get("ldl_opt")
         if ldl_opt:
             if ldl_opt.get("loss_weight", 0) > 0:
                 self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(self.device)
-        else:
-            self.cri_ldl = None
 
         perceptual_opt = train_opt.get("perceptual_opt")
         if perceptual_opt:
@@ -115,15 +135,11 @@ class SRModel(BaseModel):
                 self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
                     self.device
                 )
-        else:
-            self.cri_perceptual = None
 
         dists_opt = train_opt.get("dists_opt")
         if dists_opt:
             if dists_opt.get("loss_weight", 0) > 0:
                 self.cri_dists = build_loss(train_opt["dists_opt"]).to(self.device)
-        else:
-            self.cri_dists = None
 
         contextual_opt = train_opt.get("contextual_opt")
         if contextual_opt:
@@ -131,43 +147,31 @@ class SRModel(BaseModel):
                 self.cri_contextual = build_loss(train_opt["contextual_opt"]).to(
                     self.device
                 )
-        else:
-            self.cri_contextual = None
 
         color_opt = train_opt.get("color_opt")
         if color_opt:
             if color_opt.get("loss_weight", 0) > 0:
                 self.cri_color = build_loss(train_opt["color_opt"]).to(self.device)
-        else:
-            self.cri_color = None
 
         luma_opt = train_opt.get("luma_opt")
         if luma_opt:
             if luma_opt.get("loss_weight", 0) > 0:
                 self.cri_luma = build_loss(train_opt["luma_opt"]).to(self.device)
-        else:
-            self.cri_luma = None
 
         hsluv_opt = train_opt.get("hsluv_opt")
         if hsluv_opt:
             if hsluv_opt.get("loss_weight", 0) > 0:
                 self.cri_hsluv = build_loss(train_opt["hsluv_opt"]).to(self.device)
-        else:
-            self.cri_hsluv = None
 
         avg_opt = train_opt.get("avg_opt")
         if avg_opt:
             if avg_opt.get("loss_weight", 0) > 0:
                 self.cri_avg = build_loss(train_opt["avg_opt"]).to(self.device)
-        else:
-            self.cri_avg = None
 
         bicubic_opt = train_opt.get("bicubic_opt")
         if bicubic_opt:
             if bicubic_opt.get("loss_weight", 0) > 0:
                 self.cri_bicubic = build_loss(train_opt["bicubic_opt"]).to(self.device)
-        else:
-            self.cri_bicubic = None
 
         gan_opt = train_opt.get("gan_opt")
         if gan_opt:
@@ -229,7 +233,7 @@ class SRModel(BaseModel):
             )
             self.optimizers.append(self.optimizer_d)
 
-    def feed_data(self, data: dict[str, Any]) -> None:
+    def feed_data(self, data: DataFeed) -> None:
         self.lq = data["lq"].to(self.device)
         if "gt" in data:
             self.gt = data["gt"].to(self.device)
@@ -241,6 +245,10 @@ class SRModel(BaseModel):
     def optimize_parameters(self, current_iter: int) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
+        assert self.optimizer_g is not None, "Optimizer generator is undefined"
+        assert isinstance(self.lq, Tensor), "lq image is not a tensor"
+        assert isinstance(self.gt, Tensor), "gt image is not a tensor"
+
         # optimize net_d
         if self.net_d is not None:
             for p in self.net_d.parameters():
@@ -248,6 +256,7 @@ class SRModel(BaseModel):
 
         self.optimizer_g.zero_grad()
         self.output = self.net_g(self.lq)
+        assert isinstance(self.output, Tensor), "output image is not a tensor"
 
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
@@ -357,7 +366,7 @@ class SRModel(BaseModel):
             self.model_ema(decay=self.ema_decay)
 
     def test(self) -> None:
-        if hasattr(self, "net_g_ema"):
+        if self.net_g_ema is not None:
             self.net_g_ema.eval()
             with torch.no_grad():
                 self.output = self.net_g_ema(self.lq)

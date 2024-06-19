@@ -4,6 +4,7 @@ from typing import Any
 import torch
 from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils import RNG
+from traiNNer.utils.types import DataFeed
 
 from ..data.degradations import (
     random_add_gaussian_noise_pt,
@@ -76,7 +77,7 @@ class RealESRGANModel(SRModel):
             self.queue_ptr = self.queue_ptr + b
 
     @torch.no_grad()
-    def feed_data(self, data: dict[str, Any]) -> None:
+    def feed_data(self, data: DataFeed) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
         if self.is_train and self.opt.get("high_order_degradation", True):
             # training data synthesis
@@ -90,7 +91,7 @@ class RealESRGANModel(SRModel):
 
             # ----------------------- The first degradation process ----------------------- #
             # blur
-            out = filter2d(self.gt_usm, self.kernel1)
+            out = filter2d(self.gt, self.kernel1)
             # random resize
             updown_type = random.choices(
                 ["up", "down", "keep"], self.opt["resize_prob"]
@@ -209,8 +210,8 @@ class RealESRGANModel(SRModel):
 
             # random crop
             gt_size = self.opt["gt_size"]
-            (self.gt, self.gt_usm), self.lq = paired_random_crop(
-                [self.gt, self.gt_usm], self.lq, gt_size, self.opt["scale"]
+            self.gt, self.lq = paired_random_crop(
+                self.gt, self.lq, gt_size, self.opt["scale"]
             )
 
             # training pair pool

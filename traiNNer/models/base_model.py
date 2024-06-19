@@ -1,5 +1,6 @@
 import os
 import time
+from abc import abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Any
@@ -13,6 +14,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
+from traiNNer.utils.types import DataFeed
 
 from ..ops.batchaug import BatchAugment
 from ..utils import get_root_logger
@@ -34,12 +36,13 @@ class BaseModel:
         self.loss_samples = 0
         self.model_loader = ModelLoader()
 
-    def feed_data(self, data: dict[str, Any]) -> None:
+    def feed_data(self, data: DataFeed) -> None:
         pass
 
     def optimize_parameters(self, current_iter: int) -> None:
         pass
 
+    @abstractmethod
     def get_current_visuals(self) -> dict[str, Any]:
         pass
 
@@ -65,6 +68,26 @@ class BaseModel:
             self.dist_validation(dataloader, current_iter, tb_logger, save_img)
         else:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+
+    @abstractmethod
+    def dist_validation(
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def nondist_validation(
+        self,
+        dataloader: DataLoader,
+        current_iter: int,
+        tb_logger: SummaryWriter,
+        save_img: bool,
+    ) -> None:
+        pass
 
     def _initialize_best_metric_results(self, dataset_name: str) -> None:
         """Initialize the best metric results dict for recording the best metric value and iteration."""
