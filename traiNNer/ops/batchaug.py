@@ -11,6 +11,8 @@ from torch import Size, Tensor
 from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils import RNG
 
+MOA_DEBUG_PATH = "./moa_debug"
+
 
 class BatchAugment:
     def __init__(self, train_opt: dict[str, Any]) -> None:
@@ -24,7 +26,7 @@ class BatchAugment:
         self.debug = train_opt.get("moa_debug", False)
         self.debug_limit = train_opt.get("moa_debug_limit", 0)
 
-    def __call__(self, img1: Tensor, img2: Tensor) -> Tensor:
+    def __call__(self, img1: Tensor, img2: Tensor) -> tuple[Tensor, Tensor]:
         """Apply the configured augmentations.
         Args:
             img1: the target image.
@@ -63,19 +65,19 @@ def batch_aug(
     https://github.com/clovaai/cutblur/blob/master/augments.py
     """
 
+    i = 1
+
     if debug:
-        i = 1
-        moa_debug_path = "./moa_debug"
-        os.makedirs(moa_debug_path, exist_ok=True)
+        os.makedirs(MOA_DEBUG_PATH, exist_ok=True)
         while os.path.exists(rf"./moa_debug/{i:06d}_preauglq.png"):
             i += 1
 
         if i <= debug_limit or debug_limit == 0:
             torchvision.utils.save_image(
-                img_lq, os.path.join(moa_debug_path, f"{i:06d}_preauglq.png"), padding=0
+                img_lq, os.path.join(MOA_DEBUG_PATH, f"{i:06d}_preauglq.png"), padding=0
             )
             torchvision.utils.save_image(
-                img_gt, os.path.join(moa_debug_path, f"{i:06d}_preauggt.png"), padding=0
+                img_gt, os.path.join(MOA_DEBUG_PATH, f"{i:06d}_preauggt.png"), padding=0
             )
 
     if len(augs) != len(probs):
@@ -110,12 +112,12 @@ def batch_aug(
         if i <= debug_limit:
             torchvision.utils.save_image(
                 img_lq,
-                os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_lqfinal.png"),
+                os.path.join(MOA_DEBUG_PATH, f"{i:06d}_postaug_{aug}_lqfinal.png"),
                 padding=0,
             )
             torchvision.utils.save_image(
                 img_gt,
-                os.path.join(moa_debug_path, f"{i:06d}_postaug_{aug}_gtfinal.png"),
+                os.path.join(MOA_DEBUG_PATH, f"{i:06d}_postaug_{aug}_gtfinal.png"),
                 padding=0,
             )
 
@@ -153,32 +155,6 @@ def mixup(
     img_lq = lam * img_lq + (1 - lam) * _img_lq
 
     return img_gt, img_lq
-
-
-@torch.no_grad()
-def _cutmix(img2: Tensor, prob: float = 1.0, alpha: float = 1.0) -> dict[str, Tensor]:
-    if alpha <= 0 or random.random() >= prob:
-        return None
-
-    cut_ratio = RNG.get_rng().randn() * 0.01 + alpha
-
-    h, w = img2.shape[2:]
-    ch, cw = int(h * cut_ratio), int(w * cut_ratio)
-
-    fcy = RNG.get_rng().randint(0, h - ch + 1)
-    fcx = RNG.get_rng().randint(0, w - cw + 1)
-    tcy, tcx = fcy, fcx
-    r_index = torch.randperm(img2.size(0)).to(img2.device)
-
-    return {
-        "r_index": r_index,
-        "ch": ch,
-        "cw": cw,
-        "tcy": tcy,
-        "tcx": tcx,
-        "fcy": fcy,
-        "fcx": fcx,
-    }
 
 
 @torch.no_grad()
@@ -402,14 +378,12 @@ def cutblur(
         cx = RNG.get_rng().integers(w)
         cy = RNG.get_rng().integers(h)
 
-        bbx1 = np.clip(cx - cut_w // 2, 0, w)
-        bby1 = np.clip(cy - cut_h // 2, 0, h)
-        bbx2 = np.clip(cx + cut_w // 2, 0, w)
-        bby2 = np.clip(cy + cut_h // 2, 0, h)
+        bbx1 = np.clip(cx - cut_w // 2, 0, w) * scale
+        bby1 = np.clip(cy - cut_h // 2, 0, h) * scale
+        bbx2 = np.clip(cx + cut_w // 2, 0, w) * scale
+        bby2 = np.clip(cy + cut_h // 2, 0, h) * scale
 
-        bb = (bbx1, bby1, bbx2, bby2)
-
-        return (bbi * scale for bbi in bb)
+        return (bbx1, bby1, bbx2, bby2)
 
     lam = RNG.get_rng().uniform(0.2, alpha)
     bbx1, bby1, bbx2, bby2 = rand_bbox(img_gt.size(), scale, lam)
@@ -486,14 +460,12 @@ def up(
         cx = RNG.get_rng().integers(pad_w, w - pad_w)
         cy = RNG.get_rng().integers(pad_h, h - pad_w)
 
-        bbx1 = cx - pad_w
-        bby1 = cy - pad_h
-        bbx2 = cx + pad_w
-        bby2 = cy + pad_h
+        bbx1 = (cx - pad_w) * scale
+        bby1 = (cy - pad_h) * scale
+        bbx2 = (cx + pad_w) * scale
+        bby2 = (cy + pad_h) * scale
 
-        bb = (bbx1, bby1, bbx2, bby2)
-
-        return tuple(bbi * scale for bbi in bb)
+        return (bbx1, bby1, bbx2, bby2)
 
     img_gt_base_size = img_gt.shape
     img_lq_base_size = img_lq.shape
