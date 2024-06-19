@@ -338,7 +338,11 @@ class SRModel(BaseModel):
         l_g_total.backward()
         self.optimizer_g.step()
 
-        if self.net_d is not None and self.cri_gan is not None:
+        if (
+            self.net_d is not None
+            and self.cri_gan is not None
+            and self.optimizer_d is not None
+        ):
             # optimize net_d
             for p in self.net_d.parameters():
                 p.requires_grad = True
@@ -497,7 +501,7 @@ class SRModel(BaseModel):
                     f"metrics/{dataset_name}/{metric}", value, current_iter
                 )
 
-    def get_current_visuals(self) -> dict[str, Any]:
+    def get_current_visuals(self) -> dict[str, Tensor]:
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()
         out_dict["result"] = self.output.detach().cpu()

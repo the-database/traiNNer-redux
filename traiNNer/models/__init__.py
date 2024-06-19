@@ -1,7 +1,6 @@
 from copy import deepcopy
 from typing import Any
 
-from torch import nn
 from traiNNer.models.base_model import BaseModel
 
 from ..utils import get_root_logger
