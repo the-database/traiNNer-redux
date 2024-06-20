@@ -100,13 +100,8 @@ class BaseModel:
 
     def _initialize_best_metric_results(self, dataset_name: str) -> None:
         """Initialize the best metric results dict for recording the best metric value and iteration."""
-        if (
-            hasattr(self, "best_metric_results")
-            and dataset_name in self.best_metric_results
-        ):
+        if dataset_name in self.best_metric_results:
             return
-        elif not hasattr(self, "best_metric_results"):
-            self.best_metric_results = {}
 
         # add a dataset record
         record = {}

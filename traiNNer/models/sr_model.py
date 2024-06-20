@@ -410,7 +410,7 @@ class SRModel(BaseModel):
         use_pbar = self.opt["val"].get("pbar", False)
 
         if with_metrics:
-            if not hasattr(self, "metric_results"):  # only execute in the first run
+            if len(self.metric_results) == 0:  # only execute in the first run
                 self.metric_results: dict[str, Any] = {
                     metric: 0 for metric in self.opt["val"]["metrics"].keys()
                 }
@@ -492,7 +492,7 @@ class SRModel(BaseModel):
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():
             log_str += f"\t # {metric}: {value:.4f}"
-            if hasattr(self, "best_metric_results"):
+            if len(self.best_metric_results) > 0:
                 log_str += (
                     f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
                     f'{self.best_metric_results[dataset_name][metric]["iter"]} iter'
@@ -515,12 +515,11 @@ class SRModel(BaseModel):
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()
         out_dict["result"] = self.output.detach().cpu()
-        if hasattr(self, "gt"):
-            out_dict["gt"] = self.gt.detach().cpu()
+        out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
     def save(self, epoch: int, current_iter: int) -> None:
-        if hasattr(self, "net_g_ema"):
+        if self.net_g_ema is not None:
             self.save_network(
                 [self.net_g, self.net_g_ema],
                 "net_g",
