@@ -63,7 +63,7 @@ def calculate_psnr(
 @METRIC_REGISTRY.register()
 def calculate_psnr_pt(
     img: Tensor, img2: Tensor, crop_border: int, test_y_channel: bool = False, **kwargs
-) -> float:
+) -> Tensor:
     """Calculate PSNR (Peak Signal-to-Noise Ratio) (PyTorch version).
 
     Reference: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
@@ -231,7 +231,7 @@ def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
     return ssim_map.mean()
 
 
-def _ssim_pth(img: Tensor, img2: Tensor) -> float:
+def _ssim_pth(img: Tensor, img2: Tensor) -> Tensor:
     """Calculate SSIM (structural similarity) (PyTorch version).
 
     It is called by func:`calculate_ssim_pt`.

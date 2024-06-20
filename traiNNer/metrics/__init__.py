@@ -2,10 +2,9 @@ from copy import deepcopy
 from typing import Any
 
 from ..utils.registry import METRIC_REGISTRY
-from .niqe import calculate_niqe
 from .psnr_ssim import calculate_psnr, calculate_ssim
 
-__all__ = ["calculate_psnr", "calculate_ssim", "calculate_niqe"]
+__all__ = ["calculate_psnr", "calculate_ssim"]
 
 
 def calculate_metric(data: dict[str, Any], opt: dict[str, Any]) -> float:
