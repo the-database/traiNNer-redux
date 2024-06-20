@@ -415,7 +415,7 @@ class BaseModel:
         net: nn.Module,
         load_path: str,
         strict: bool = True,
-        param_key: str = "params",
+        param_key: str | None = "params",
     ) -> None:
         """Load network.
 
@@ -432,7 +432,6 @@ class BaseModel:
             logger = get_root_logger()
             net = self.get_bare_model(net)
             load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
-            param_key = self.opt["path"].get("param_key_g", None)
             if param_key is not None:
                 if param_key not in load_net and "params" in load_net:
                     param_key = "params"
