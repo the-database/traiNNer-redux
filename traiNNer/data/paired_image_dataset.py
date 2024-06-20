@@ -5,7 +5,7 @@ from torchvision.transforms.functional import normalize
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.utils.types import DataFeed
 
-from ..utils import FileClient, imfrombytes, img2tensor
+from ..utils import FileClient, imfrombytes, imgs2tensors
 from ..utils.registry import DATASET_REGISTRY
 from .data_util import (
     paired_paths_from_folder,
@@ -120,7 +120,7 @@ class PairedImageDataset(BaseDataset):
             img_gt = img_gt[0 : img_lq.shape[0] * scale, 0 : img_lq.shape[1] * scale, :]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt, img_lq = img2tensor(
+        img_gt, img_lq = imgs2tensors(
             [img_gt, img_lq],
             color=self.color,
             bgr2rgb=True,

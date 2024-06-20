@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from ..utils import img2tensor, scandir
+from ..utils import imgs2tensors, scandir
 from .transforms import mod_crop
 
 
@@ -36,7 +36,7 @@ def read_img_seq(
 
     if require_mod_crop:
         imgs = [mod_crop(img, scale) for img in imgs]
-    imgs = img2tensor(imgs, bgr2rgb=True, float32=True)
+    imgs = imgs2tensors(imgs, bgr2rgb=True, float32=True)
     assert isinstance(imgs, list)
     imgs = torch.stack(imgs, dim=0)
 

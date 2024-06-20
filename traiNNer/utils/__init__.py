@@ -1,7 +1,15 @@
 from .color_util import bgr2ycbcr, rgb2ycbcr, rgb2ycbcr_pt, ycbcr2bgr, ycbcr2rgb
 from .diffjpeg import DiffJPEG
 from .file_client import FileClient
-from .img_util import crop_border, imfrombytes, img2tensor, imwrite, tensor2img
+from .img_util import (
+    crop_border,
+    imfrombytes,
+    img2tensor,
+    imgs2tensors,
+    imwrite,
+    tensor2img,
+    tensors2imgs,
+)
 from .logger import (
     AvgTimer,
     MessageLogger,
@@ -33,7 +41,9 @@ __all__ = [
     "FileClient",
     # img_util.py
     "img2tensor",
+    "imgs2tensors",
     "tensor2img",
+    "tensors2imgs",
     "imfrombytes",
     "imwrite",
     "crop_border",

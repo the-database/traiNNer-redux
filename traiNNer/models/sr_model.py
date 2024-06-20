@@ -275,6 +275,8 @@ class SRModel(BaseModel):
             l_g_total += l_g_mssim
             loss_dict["l_g_mssim"] = l_g_mssim
         if self.cri_ldl:
+            assert self.net_g_ema is not None
+            # TODO support LDL without ema
             pixel_weight = get_refined_artifact_map(
                 self.gt, self.output, self.net_g_ema(self.lq), 7
             )
@@ -429,10 +431,10 @@ class SRModel(BaseModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = tensor2img([visuals["result"]])
+            sr_img = tensor2img(visuals["result"])
             metric_data["img"] = sr_img
             if "gt" in visuals:
-                gt_img = tensor2img([visuals["gt"]])
+                gt_img = tensor2img(visuals["gt"])
                 metric_data["img2"] = gt_img
                 del self.gt
 
@@ -506,9 +508,9 @@ class SRModel(BaseModel):
                 )
 
     def get_current_visuals(self) -> dict[str, Tensor]:
-        assert isinstance(self.output, Tensor), "output image is not a tensor"
-        assert isinstance(self.lq, Tensor), "lq image is not a tensor"
-        assert isinstance(self.gt, Tensor), "gt image is not a tensor"
+        assert isinstance(self.output, Tensor)
+        assert isinstance(self.lq, Tensor)
+        assert isinstance(self.gt, Tensor)
 
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()

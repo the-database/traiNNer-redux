@@ -1,5 +1,5 @@
 import random
-from typing import TypeVar
+from typing import overload
 
 import cv2
 import numpy as np
@@ -26,16 +26,33 @@ def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     return img
 
 
-T = TypeVar("T", np.ndarray, list[np.ndarray], Tensor, list[Tensor])
-
-
+@overload
 def paired_random_crop(
-    img_gts: T,
-    img_lqs: T,
+    img_gt: np.ndarray,
+    img_lq: np.ndarray,
     gt_patch_size: int,
     scale: int,
     gt_path: str | None = None,
-) -> tuple[T, T]:
+) -> tuple[np.ndarray, np.ndarray]: ...
+
+
+@overload
+def paired_random_crop(
+    img_gt: Tensor,
+    img_lq: Tensor,
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[Tensor, Tensor]: ...
+
+
+def paired_random_crop(
+    img_gt: np.ndarray | Tensor,
+    img_lq: np.ndarray | Tensor,
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[np.ndarray, np.ndarray] | tuple[Tensor, Tensor]:
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -56,30 +73,14 @@ def paired_random_crop(
             only have one element, just return ndarray.
     """
 
-    l_img_gts = []
-    l_img_lqs = []
-    if not isinstance(img_gts, list):
-        l_img_gts = [img_gts]
+    if isinstance(img_gt, Tensor):
+        assert isinstance(img_lq, Tensor)
+        h_lq, w_lq = img_lq.size()[-2:]
+        h_gt, w_gt = img_gt.size()[-2:]
     else:
-        l_img_gts = list(img_gts)
-    if not isinstance(img_lqs, list):
-        l_img_lqs = [img_lqs]
-    else:
-        l_img_lqs = list(img_lqs)
-
-    # determine input type: Numpy array or Tensor
-    input_type = "Tensor" if isinstance(l_img_gts[0], Tensor) else "Numpy"
-
-    if input_type == "Tensor":
-        first_lq = l_img_lqs[0]
-        first_gt = l_img_gts[0]
-        assert isinstance(first_lq, Tensor)
-        assert isinstance(first_gt, Tensor)
-        h_lq, w_lq = first_lq.size()[-2:]
-        h_gt, w_gt = first_gt.size()[-2:]
-    else:
-        h_lq, w_lq = l_img_lqs[0].shape[0:2]
-        h_gt, w_gt = l_img_gts[0].shape[0:2]
+        assert isinstance(img_lq, np.ndarray)
+        h_lq, w_lq = img_lq.shape[0:2]
+        h_gt, w_gt = img_gt.shape[0:2]
     lq_patch_size = gt_patch_size // scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
@@ -99,46 +100,95 @@ def paired_random_crop(
     left = random.randint(0, w_lq - lq_patch_size)
 
     # crop lq patch
-    if input_type == "Tensor":
-        l_img_lqs: list[np.ndarray | Tensor] = [
-            v[:, :, top : top + lq_patch_size, left : left + lq_patch_size]
-            for v in l_img_lqs
-        ]
+    if isinstance(img_lq, Tensor):
+        img_lq = img_lq[:, :, top : top + lq_patch_size, left : left + lq_patch_size]
+
     else:
-        l_img_lqs: list[np.ndarray | Tensor] = [
-            v[top : top + lq_patch_size, left : left + lq_patch_size, ...]
-            for v in l_img_lqs
-        ]
+        img_lq = img_lq[top : top + lq_patch_size, left : left + lq_patch_size, ...]
 
     # crop corresponding gt patch
     top_gt, left_gt = int(top * scale), int(left * scale)
-    if input_type == "Tensor":
-        l_img_gts: list[np.ndarray | Tensor] = [
-            v[:, :, top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size]
-            for v in l_img_gts
+    if isinstance(img_gt, Tensor):
+        assert isinstance(img_lq, Tensor)
+        img_gt = img_gt[
+            :, :, top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size
         ]
+
+        return img_gt, img_lq
     else:
-        l_img_gts: list[np.ndarray | Tensor] = [
-            v[top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size, ...]
-            for v in l_img_gts
+        assert isinstance(img_lq, np.ndarray)
+        img_gt = img_gt[
+            top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size, ...
         ]
-    output_gts = None
-    output_lqs = None
-    if len(l_img_gts) == 1:
-        first_out_gt = l_img_gts[0]
-        assert isinstance(first_out_gt, np.ndarray | Tensor)
-        output_gts = first_out_gt
-    else:
-        output_gts = l_img_gts
-    if len(l_img_lqs) == 1:
-        first_out_lq = l_img_lqs[0]
-        assert isinstance(first_out_lq, np.ndarray | Tensor)
-        output_lqs = first_out_lq
-    else:
-        output_lqs = l_img_lqs
-    assert output_gts is not None
-    assert output_lqs is not None
-    return output_gts, output_lqs  # type: ignore
+
+        return img_gt, img_lq
+
+
+@overload
+def paired_random_crop_list(
+    img_gts: list[np.ndarray],
+    img_lqs: list[np.ndarray],
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[list[np.ndarray], list[np.ndarray]]: ...
+
+
+@overload
+def paired_random_crop_list(
+    img_gts: list[Tensor],
+    img_lqs: list[Tensor],
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[list[Tensor], list[Tensor]]: ...
+
+
+def paired_random_crop_list(
+    img_gts: list[np.ndarray] | list[Tensor],
+    img_lqs: list[np.ndarray] | list[Tensor],
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[list[np.ndarray] | list[Tensor], list[np.ndarray] | list[Tensor]]:
+    """Paired random crop. Support Numpy array and Tensor inputs.
+
+    It crops lists of lq and gt images with corresponding locations.
+
+    Args:
+        img_gts (list[ndarray] | ndarray | list[Tensor] | Tensor): GT images. Note that all images
+            should have the same shape. If the input is an ndarray, it will
+            be transformed to a list containing itself.
+        img_lqs (list[ndarray] | ndarray): LQ images. Note that all images
+            should have the same shape. If the input is an ndarray, it will
+            be transformed to a list containing itself.
+        gt_patch_size (int): GT patch size.
+        scale (int): Scale factor.
+        gt_path (str): Path to ground-truth. Default: None.
+
+    Returns:
+        list[ndarray] | ndarray: GT images and LQ images. If returned results
+            only have one element, just return ndarray.
+    """
+
+    assert len(img_gts) == len(img_lqs)
+
+    cropped_gts, cropped_lqs = [], []
+    for img_gt, img_lq in zip(img_gts, img_lqs, strict=False):
+        if isinstance(img_gt, Tensor) and isinstance(img_lq, Tensor):
+            cropped_gt, cropped_lq = paired_random_crop(
+                img_gt, img_lq, gt_patch_size, scale, gt_path
+            )
+        elif isinstance(img_gt, np.ndarray) and isinstance(img_lq, np.ndarray):
+            cropped_gt, cropped_lq = paired_random_crop(
+                img_gt, img_lq, gt_patch_size, scale, gt_path
+            )
+        else:
+            raise ValueError("img_gts and img_lqs must be all Tensor or all np.ndarray")
+        cropped_gts.append(cropped_gt)
+        cropped_lqs.append(cropped_lq)
+
+    return cropped_gts, cropped_lqs
 
 
 def augment(
