@@ -137,6 +137,5 @@ def build_dataloader(
 def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
-    print(f"worker seed = {worker_seed}")
     np.random.seed(worker_seed)  # noqa: NPY002
     random.seed(worker_seed)
