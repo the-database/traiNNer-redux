@@ -1,8 +1,9 @@
 from typing import Any
 
 import numpy as np
-from torch.utils import data
 from torchvision.transforms.functional import normalize
+from traiNNer.data.base_dataset import BaseDataset
+from traiNNer.utils.types import DataFeed
 
 from ..utils import FileClient, imfrombytes, img2tensor
 from ..utils.registry import DATASET_REGISTRY
@@ -15,7 +16,7 @@ from .transforms import augment, paired_random_crop
 
 
 @DATASET_REGISTRY.register()
-class PairedImageDataset(data.Dataset):
+class PairedImageDataset(BaseDataset):
     """Paired image dataset for image restoration.
 
     Read LQ (Low Quality, e.g. LR (Low Resolution), blurry, noisy, etc) and GT image pairs.
@@ -43,8 +44,7 @@ class PairedImageDataset(data.Dataset):
     """
 
     def __init__(self, opt: dict[str, Any]) -> None:
-        super().__init__()
-        self.opt = opt
+        super().__init__(opt)
         # file client (io backend)
         self.file_client = None
         self.io_backend_opt = opt["io_backend"]
@@ -76,7 +76,7 @@ class PairedImageDataset(data.Dataset):
                 [self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl
             )
 
-    def __getitem__(self, index: int) -> dict[str, Any]:
+    def __getitem__(self, index: int) -> DataFeed:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt

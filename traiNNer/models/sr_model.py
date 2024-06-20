@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 from traiNNer.archs import build_network
+from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
 from traiNNer.losses.loss_util import get_refined_artifact_map
 from traiNNer.metrics import calculate_metric
@@ -234,20 +235,21 @@ class SRModel(BaseModel):
             self.optimizers.append(self.optimizer_d)
 
     def feed_data(self, data: DataFeed) -> None:
+        assert "lq" in data
         self.lq = data["lq"].to(self.device)
         if "gt" in data:
             self.gt = data["gt"].to(self.device)
 
-            # moa
-            if self.is_train and self.batchaugment:
-                self.gt, self.lq = self.batchaugment(self.gt, self.lq)
+        # moa
+        if self.is_train and self.batchaugment and self.gt is not None:
+            self.gt, self.lq = self.batchaugment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter: int) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
-        assert self.optimizer_g is not None, "Optimizer generator is undefined"
-        assert self.lq is not None, "lq image is not a tensor"
-        assert self.gt is not None, "gt image is not a tensor"
+        assert self.optimizer_g is not None
+        assert self.lq is not None
+        assert self.gt is not None
 
         # optimize net_d
         if self.net_d is not None:
@@ -398,6 +400,8 @@ class SRModel(BaseModel):
         save_img: bool,
     ) -> None:
         self.is_train = False
+
+        assert isinstance(dataloader.dataset, BaseDataset)
 
         dataset_name = dataloader.dataset.opt["name"]
         with_metrics = self.opt["val"].get("metrics") is not None

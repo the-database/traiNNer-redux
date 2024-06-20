@@ -11,15 +11,15 @@ from spandrel import ModelLoader
 from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
-from traiNNer.utils.types import DataFeed
 
 from ..ops.batchaug import BatchAugment
 from ..utils import get_root_logger
 from ..utils.dist_util import master_only
-from . import lr_scheduler
+from ..utils.types import DataFeed, TrainingState
 
 
 class BaseModel:
@@ -29,8 +29,8 @@ class BaseModel:
         self.opt = opt
         self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
         self.is_train = opt["is_train"]
-        self.schedulers = []
-        self.optimizers = []
+        self.schedulers: list[LRScheduler] = []
+        self.optimizers: list[Optimizer] = []
         self.batchaugment = None
         self.log_dict = {}
         self.loss_samples = 0
@@ -40,10 +40,13 @@ class BaseModel:
         self.net_g = None
         self.net_g_ema = None
         self.net_d = None
+        self.use_moa = False
 
+    @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
         pass
 
+    @abstractmethod
     def optimize_parameters(self, current_iter: int) -> None:
         pass
 
@@ -51,6 +54,7 @@ class BaseModel:
     def get_current_visuals(self) -> dict[str, Any]:
         pass
 
+    @abstractmethod
     def save(self, epoch: int, current_iter: int) -> None:
         """Save networks and training state."""
 
@@ -201,20 +205,34 @@ class BaseModel:
         return optimizer
 
     def setup_schedulers(self) -> None:
+        # https://github.com/Corpsecreate/neosr/blob/a29e509dae5cd39aea94ac82d1347d2a54e1175c/neosr/models/default.py#L276
+
         """Set up schedulers."""
         train_opt = self.opt["train"]
         scheduler_type = train_opt["scheduler"].pop("type")
-        if scheduler_type in ["MultiStepLR", "MultiStepRestartLR"]:
+        # uppercase scheduler_type to make it case insensitive
+        sch_typ_upper = scheduler_type.upper()
+        sch_map: dict[str, type[LRScheduler]] = {
+            "CONSTANTLR": torch.optim.lr_scheduler.ConstantLR,
+            "LINEARLR": torch.optim.lr_scheduler.LinearLR,
+            "EXPONENTIALLR": torch.optim.lr_scheduler.ExponentialLR,
+            "CYCLICLR": torch.optim.lr_scheduler.CyclicLR,
+            "STEPLR": torch.optim.lr_scheduler.StepLR,
+            "MULTISTEPLR": torch.optim.lr_scheduler.MultiStepLR,
+            "LAMBDALR": torch.optim.lr_scheduler.LambdaLR,
+            "MULTIPLICATIVELR": torch.optim.lr_scheduler.MultiplicativeLR,
+            "SEQUENTIALLR": torch.optim.lr_scheduler.SequentialLR,
+            "CHAINEDSCHEDULER": torch.optim.lr_scheduler.ChainedScheduler,
+            "ONECYCLELR": torch.optim.lr_scheduler.OneCycleLR,
+            "POLYNOMIALLR": torch.optim.lr_scheduler.PolynomialLR,
+            "COSINEANNEALINGWARMRESTARTS": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
+            "COSINEANNEALING": torch.optim.lr_scheduler.CosineAnnealingLR,
+            "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
+        }
+        if sch_typ_upper in sch_map:
             for optimizer in self.optimizers:
                 self.schedulers.append(
-                    lr_scheduler.MultiStepRestartLR(optimizer, **train_opt["scheduler"])
-                )
-        elif scheduler_type == "CosineAnnealingRestartLR":
-            for optimizer in self.optimizers:
-                self.schedulers.append(
-                    lr_scheduler.CosineAnnealingRestartLR(
-                        optimizer, **train_opt["scheduler"]
-                    )
+                    sch_map[sch_typ_upper](optimizer, **train_opt["scheduler"])
                 )
         else:
             raise NotImplementedError(
@@ -311,9 +329,10 @@ class BaseModel:
             param_key (str | list[str]): The parameter key(s) to save network.
                 Default: 'params'.
         """
-        if current_iter == -1:
-            current_iter = "latest"
-        save_filename = f"{net_label}_{current_iter}.pth"
+
+        current_iter_str = "latest" if current_iter == -1 else str(current_iter)
+
+        save_filename = f"{net_label}_{current_iter_str}.pth"
         save_path = os.path.join(self.opt["path"]["models"], save_filename)
 
         net = net if isinstance(net, list) else [net]
@@ -367,7 +386,7 @@ class BaseModel:
             strict (bool): Whether strictly loaded. Default: True.
         """
         crt_net = self.get_bare_model(crt_net)
-        crt_net = crt_net.state_dict()
+        crt_net_state_dict = crt_net.state_dict()
         crt_net_keys = set(crt_net.keys())
         load_net_keys = set(load_net.keys())
 
@@ -384,11 +403,11 @@ class BaseModel:
         if not strict:
             common_keys = crt_net_keys & load_net_keys
             for k in common_keys:
-                if crt_net[k].size() != load_net[k].size():
+                if crt_net_state_dict[k].size() != load_net[k].size():
                     logger.warning(
                         "Size different, ignore [%s]: crt_net: " "%s; load_net: %s",
                         k,
-                        crt_net[k].shape,
+                        crt_net_state_dict[k].shape,
                         load_net[k].shape,
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
@@ -462,7 +481,7 @@ class BaseModel:
             current_iter (int): Current iteration.
         """
         if current_iter != -1:
-            state = {
+            state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
                 "optimizers": [],
@@ -531,7 +550,7 @@ class BaseModel:
                     keys.append(name)
                     losses.append(value)
                 losses = torch.stack(losses, 0)
-                torch.distributed.reduce(losses, dst=0)
+                torch.distributed.reduce(losses, dst=0)  # type: ignore
                 if self.opt["rank"] == 0:
                     losses /= self.opt["world_size"]
                 loss_dict = dict(zip(keys, losses, strict=False))

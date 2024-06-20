@@ -51,8 +51,8 @@ class RealESRGANModel(SRModel):
         to increase the degradation diversity in a batch.
         """
 
-        assert self.lq is not None, "lq image is not a tensor"
-        assert self.gt is not None, "gt image is not a tensor"
+        assert self.lq is not None
+        assert self.gt is not None
 
         # initialize
         b, c, h, w = self.lq.size()
@@ -98,6 +98,12 @@ class RealESRGANModel(SRModel):
     def feed_data(self, data: DataFeed) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
         if self.is_train and self.opt.get("high_order_degradation", True):
+            assert (
+                "gt" in data
+                and "kernel1" in data
+                and "kernel2" in data
+                and "sinc_kernel" in data
+            )
             # training data synthesis
             self.gt = data["gt"].to(self.device)
 
@@ -237,10 +243,11 @@ class RealESRGANModel(SRModel):
             self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
         else:
             # for paired training or validation
+            assert "lq" in data
             self.lq = data["lq"].to(self.device)
             if "gt" in data:
                 self.gt = data["gt"].to(self.device)
 
                 # moa
-                if self.is_train and self.batchaugment is not None:
+                if self.is_train and self.batchaugment:
                     self.gt, self.lq = self.batchaugment(self.gt, self.lq)

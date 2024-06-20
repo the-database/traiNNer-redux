@@ -2,8 +2,9 @@ from os import path as osp
 from typing import Any
 
 from torch import Tensor
-from torch.utils import data
 from torchvision.transforms.functional import normalize
+from traiNNer.data.base_dataset import BaseDataset
+from traiNNer.utils.types import DataFeed
 
 from ..utils import FileClient, imfrombytes, img2tensor, rgb2ycbcr, scandir
 from ..utils.registry import DATASET_REGISTRY
@@ -11,7 +12,7 @@ from .data_util import paths_from_lmdb
 
 
 @DATASET_REGISTRY.register()
-class SingleImageDataset(data.Dataset):
+class SingleImageDataset(BaseDataset):
     """Read only lq images in the test phase.
 
     Read LQ (Low Quality, e.g. LR (Low Resolution), blurry, noisy, etc).
@@ -28,8 +29,7 @@ class SingleImageDataset(data.Dataset):
     """
 
     def __init__(self, opt: dict[str, Any]) -> None:
-        super().__init__()
-        self.opt = opt
+        super().__init__(opt)
         # file client (io backend)
         self.file_client = None
         self.io_backend_opt = opt["io_backend"]
@@ -50,7 +50,7 @@ class SingleImageDataset(data.Dataset):
         else:
             self.paths = sorted(scandir(self.lq_folder, full_path=True))
 
-    def __getitem__(self, index: int) -> dict[str, Any]:
+    def __getitem__(self, index: int) -> DataFeed:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
@@ -71,6 +71,7 @@ class SingleImageDataset(data.Dataset):
         # normalize
         if self.mean is not None and self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
+
         return {"lq": img_lq, "lq_path": lq_path}
 
     def __len__(self) -> int:

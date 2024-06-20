@@ -3,14 +3,14 @@ import os
 import os.path as osp
 import random
 import time
-from typing import Any, TypedDict
+from typing import Any
 
 import cv2
 import numpy as np
 import torch
-from torch import Tensor
-from torch.utils import data
+from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.utils import RNG
+from traiNNer.utils.types import DataFeed
 
 from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor
 from ..utils.registry import DATASET_REGISTRY
@@ -18,16 +18,8 @@ from .degradations import circular_lowpass_kernel, random_mixed_kernels
 from .transforms import augment
 
 
-class ReturnD(TypedDict):
-    gt: Tensor
-    kernel1: Tensor
-    kernel2: Tensor
-    sinc_kernel: Tensor
-    gt_path: str
-
-
 @DATASET_REGISTRY.register(suffix="traiNNer")
-class RealESRGANDataset(data.Dataset):
+class RealESRGANDataset(BaseDataset):
     """Dataset used for Real-ESRGAN model:
     Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic Data.
 
@@ -46,8 +38,7 @@ class RealESRGANDataset(data.Dataset):
     """
 
     def __init__(self, opt: dict[str, Any]) -> None:
-        super().__init__()
-        self.opt = opt
+        super().__init__(opt)
         self.file_client = None
         self.io_backend_opt = opt["io_backend"]
         self.gt_folder = opt["dataroot_gt"]
@@ -101,7 +92,7 @@ class RealESRGANDataset(data.Dataset):
         ).float()  # convolving with pulse tensor brings no blurry effect
         self.pulse_tensor[10, 10] = 1
 
-    def __getitem__(self, index: int) -> ReturnD:
+    def __getitem__(self, index: int) -> DataFeed:
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
@@ -219,14 +210,13 @@ class RealESRGANDataset(data.Dataset):
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
-        return_d: ReturnD = {
+        return {
             "gt": img_gt,
             "kernel1": kernel,
             "kernel2": kernel2,
             "sinc_kernel": sinc_kernel,
             "gt_path": gt_path,
         }
-        return return_d
 
     def __len__(self) -> int:
         return len(self.paths)
