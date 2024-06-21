@@ -3,7 +3,8 @@ from os import path as osp
 from typing import Any
 
 import torch
-from torch import GradScaler, Tensor, nn
+from torch import Tensor, nn
+from torch.cuda.amp import GradScaler
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -116,8 +117,8 @@ class SRModel(BaseModel):
 
         # use amp
         self.use_amp = train_opt.get("use_amp", False)
-        self.gradscaler_g = GradScaler(enabled=self.use_amp, device=self.device.type)
-        self.gradscaler_d = GradScaler(enabled=self.use_amp, device=self.device.type)
+        self.gradscaler_g = GradScaler(enabled=self.use_amp)
+        self.gradscaler_d = GradScaler(enabled=self.use_amp)
         self.amp_dtype = (
             torch.bfloat16 if train_opt.get("amp_bfloat16", False) else torch.float16
         )
