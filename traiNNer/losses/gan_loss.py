@@ -45,7 +45,7 @@ class GANLoss(nn.Module):
         else:
             raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
-    def _wgan_loss(self, input: Tensor, target: Tensor) -> Tensor:
+    def _wgan_loss(self, input: Tensor, target: bool | Tensor) -> Tensor:
         """wgan loss.
 
         Args:
@@ -55,9 +55,10 @@ class GANLoss(nn.Module):
         Returns:
             Tensor: wgan loss.
         """
+        assert isinstance(target, bool)
         return -input.mean() if target else input.mean()
 
-    def _wgan_softplus_loss(self, input: Tensor, target: Tensor) -> Tensor:
+    def _wgan_softplus_loss(self, input: Tensor, target: bool | Tensor) -> Tensor:
         """wgan loss with soft plus. softplus is a smooth approximation to the
         ReLU function.
 
@@ -72,9 +73,10 @@ class GANLoss(nn.Module):
         Returns:
             Tensor: wgan loss.
         """
+        assert isinstance(target, bool)
         return F.softplus(-input).mean() if target else F.softplus(input).mean()
 
-    def get_target_label(self, input: Tensor, target_is_real: bool) -> Tensor:
+    def get_target_label(self, input: Tensor, target_is_real: bool) -> Tensor | bool:
         """Get target label.
 
         Args:
@@ -109,6 +111,7 @@ class GANLoss(nn.Module):
         if self.gan_type == "hinge":
             if is_disc:  # for discriminators in hinge-gan
                 input = -input if target_is_real else input
+                assert isinstance(self.loss, nn.ReLU)
                 loss = self.loss(1 + input).mean()
             else:  # for generators in hinge-gan
                 loss = -input.mean()
@@ -135,13 +138,14 @@ class MultiScaleGANLoss(GANLoss):
         super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
 
     def forward(
-        self, input: Tensor, target_is_real: bool, is_disc: bool = False
+        self, input: Tensor | list[Tensor], target_is_real: bool, is_disc: bool = False
     ) -> Tensor:
         """
         The input is a list of tensors, or a list of (a list of tensors)
         """
         if isinstance(input, list):
-            loss = 0
+            assert len(input) > 0
+            loss = torch.tensor(0, device=input[0].device)
             for pred_i_wrapper in input:
                 pred_i = pred_i_wrapper
                 if isinstance(pred_i, list):

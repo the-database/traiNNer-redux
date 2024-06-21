@@ -2,9 +2,11 @@ import tempfile
 
 import torch
 import yaml
-from traiNNer.archs.srresnet_arch import MSRResNet
+from spandrel.architectures.ESRGAN import RRDBNet
+from torch.utils.data import DataLoader
 from traiNNer.data.paired_image_dataset import PairedImageDataset
-from traiNNer.losses.basic_loss import L1Loss, PerceptualLoss
+from traiNNer.losses.basic_loss import L1Loss
+from traiNNer.losses.perceptual_loss import PerceptualLoss
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils.types import DataFeed
 
@@ -87,7 +89,7 @@ val:
     model = SRModel(opt)
     # test attributes
     assert model.__class__.__name__ == "SRModel"
-    assert isinstance(model.net_g, MSRResNet)
+    assert isinstance(model.net_g, RRDBNet)
     assert isinstance(model.cri_pix, L1Loss)
     assert isinstance(model.cri_perceptual, PerceptualLoss)
     assert isinstance(model.optimizers[0], torch.optim.Adam)
@@ -139,9 +141,7 @@ val:
         "phase": "val",
     }
     dataset = PairedImageDataset(dataset_opt)
-    dataloader = torch.utils.data.DataLoader(
-        dataset=dataset, batch_size=1, shuffle=False, num_workers=0
-    )
+    dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=False, num_workers=0)
     assert model.is_train is True
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt["path"]["visualization"] = tmpdir

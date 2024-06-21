@@ -79,6 +79,7 @@ def main() -> None:
     # Compare differences
     ###########################
     for k1, k2 in zip(net_d_1.parameters(), net_d_2.parameters(), strict=False):
+        assert k1.grad is not None
         print(torch.sum(torch.abs(k1.grad - k2.grad)))
 
 

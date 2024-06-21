@@ -12,8 +12,8 @@ from tqdm import tqdm
 def make_lmdb_from_imgs(
     data_path: str,
     lmdb_path: str,
-    img_path_list: str,
-    keys: str,
+    img_path_list: list[str],
+    keys: list[str],
     batch: int = 5000,
     compress_level: int = 1,
     multiprocessing_read: bool = False,

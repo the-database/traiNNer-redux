@@ -37,6 +37,12 @@ phase: train
     expected_keys = ["lq", "gt", "lq_path", "gt_path"]
     assert set(expected_keys).issubset(set(result.keys()))
     # check shape and contents
+    assert (
+        "gt" in result
+        and "lq" in result
+        and "lq_path" in result
+        and "gt_path" in result
+    )
     assert result["gt"].shape == (3, 128, 128)
     assert result["lq"].shape == (3, 32, 32)
     assert result["lq_path"] == "tests/data/lq/baboon.png"
@@ -74,6 +80,12 @@ phase: train
     expected_keys = ["lq", "gt", "lq_path", "gt_path"]
     assert set(expected_keys).issubset(set(result.keys()))
     # check shape and contents
+    assert (
+        "gt" in result
+        and "lq" in result
+        and "lq_path" in result
+        and "gt_path" in result
+    )
     assert result["gt"].shape == (1, 128, 128)
     assert result["lq"].shape == (1, 32, 32)
     assert result["lq_path"] == "comic"
@@ -90,6 +102,12 @@ phase: train
     expected_keys = ["lq", "gt", "lq_path", "gt_path"]
     assert set(expected_keys).issubset(set(result.keys()))
     # check shape and contents
+    assert (
+        "gt" in result
+        and "lq" in result
+        and "lq_path" in result
+        and "gt_path" in result
+    )
     assert result["gt"].shape == (1, 480, 492)
     assert result["lq"].shape == (1, 120, 123)
     assert result["lq_path"] == "baboon"

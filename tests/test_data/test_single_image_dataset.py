@@ -28,6 +28,10 @@ std: [0.5, 0.5, 0.5]
     # check returned keys
     expected_keys = ["lq", "lq_path"]
     assert set(expected_keys).issubset(set(result.keys()))
+    assert (
+        "lq" in result
+        and "lq_path" in result
+    )
     # check shape and contents
     assert result["lq"].shape == (3, 120, 123)
     assert result["lq_path"] == "tests/data/lq/baboon.png"
@@ -57,5 +61,9 @@ std: [0.5, 0.5, 0.5]
     expected_keys = ["lq", "lq_path"]
     assert set(expected_keys).issubset(set(result.keys()))
     # check shape and contents
+    assert (
+        "lq" in result
+        and "lq_path" in result
+    )
     assert result["lq"].shape == (1, 90, 60)
     assert result["lq_path"] == "comic"
