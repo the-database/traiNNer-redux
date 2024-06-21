@@ -15,7 +15,7 @@ scipy
 spandrel
 spandrel-extra-arches
 tb-nightly
-torch>=1.7
+torch>=2.3
 torchvision
 tqdm
 yapf
