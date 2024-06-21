@@ -116,11 +116,11 @@ class SRModel(BaseModel):
             self.net_g_ema.eval()
 
         # use amp
-        self.use_amp = train_opt.get("use_amp", False)
+        self.use_amp = self.opt.get("use_amp", False)
         self.gradscaler_g = GradScaler(enabled=self.use_amp)
         self.gradscaler_d = GradScaler(enabled=self.use_amp)
         self.amp_dtype = (
-            torch.bfloat16 if train_opt.get("amp_bfloat16", False) else torch.float16
+            torch.bfloat16 if self.opt.get("amp_bfloat16", False) else torch.float16
         )
 
         if not self.use_amp and self.amp_dtype == torch.bfloat16:
@@ -394,7 +394,7 @@ class SRModel(BaseModel):
             self.optimizer_d.zero_grad()
 
         for key, value in loss_dict.items():
-            val = value if isinstance(value, float) else value.detach()
+            val = value if isinstance(value, float) else value.to(dtype=torch.float32).detach()
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
         if self.ema_decay > 0:
