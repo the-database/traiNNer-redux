@@ -9,6 +9,7 @@ import pytorch_optimizer
 import torch
 from spandrel import ModelLoader
 from torch import nn
+from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -41,6 +42,10 @@ class BaseModel:
         self.net_g_ema = None
         self.net_d = None
         self.use_moa = False
+        self.use_amp = False
+        self.amp_dtype = torch.float16
+        self.gradscaler_g: GradScaler | None = None
+        self.gradscaler_d: GradScaler | None = None
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:

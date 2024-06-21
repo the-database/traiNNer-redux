@@ -4,6 +4,7 @@ from typing import Any
 
 import torch
 from torch import Tensor, nn
+from torch.amp.grad_scaler import GradScaler
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -113,6 +114,19 @@ class SRModel(BaseModel):
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
+
+        # use amp
+        self.use_amp = train_opt.get("use_amp", False)
+        self.gradscaler_g = GradScaler(enabled=self.use_amp, device=self.device.type)
+        self.gradscaler_d = GradScaler(enabled=self.use_amp, device=self.device.type)
+        self.amp_dtype = (
+            torch.bfloat16 if train_opt.get("amp_bfloat16", False) else torch.float16
+        )
+
+        if not self.use_amp and self.amp_dtype == torch.bfloat16:
+            logger.warning(
+                "bfloat16 (amp_bfloat16) was enabled without AMP (use_amp) and will have no effect. Enable AMP to use bfloat16."
+            )
 
         # define losses
         pixel_opt = train_opt.get("pixel_opt")
@@ -250,97 +264,103 @@ class SRModel(BaseModel):
         assert self.optimizer_g is not None
         assert self.lq is not None
         assert self.gt is not None
+        assert self.gradscaler_d is not None
+        assert self.gradscaler_g is not None
 
         # optimize net_d
         if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
 
-        self.optimizer_g.zero_grad()
-        self.output = self.net_g(self.lq)
-        assert isinstance(self.output, Tensor), "output image is not a tensor"
-
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
 
-        l_g_total = torch.tensor(0.0, device=self.output.device)
-        loss_dict = OrderedDict()
-        # pixel loss
-        if self.cri_pix:
-            l_g_pix = self.cri_pix(self.output, self.gt)
-            l_g_total += l_g_pix
-            loss_dict["l_g_pix"] = l_g_pix
-        if self.cri_mssim:
-            l_g_mssim = self.cri_mssim(self.output, self.gt)
-            l_g_total += l_g_mssim
-            loss_dict["l_g_mssim"] = l_g_mssim
-        if self.cri_ldl:
-            assert self.net_g_ema is not None
-            # TODO support LDL without ema
-            pixel_weight = get_refined_artifact_map(
-                self.gt, self.output, self.net_g_ema(self.lq), 7
-            )
-            l_g_ldl = self.cri_ldl(
-                torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt)
-            )
-            l_g_total += l_g_ldl
-            loss_dict["l_g_ldl"] = l_g_ldl
-        # perceptual loss
-        if self.cri_perceptual:
-            l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
-            if l_g_percep is not None:
-                l_g_total += l_g_percep
-                loss_dict["l_g_percep"] = l_g_percep
-            if l_g_style is not None:
-                l_g_total += l_g_style
-                loss_dict["l_g_style"] = l_g_style
-        # dists loss
-        if self.cri_dists:
-            l_g_dists = self.cri_dists(self.output, self.gt)
-            l_g_total += l_g_dists
-            loss_dict["l_g_dists"] = l_g_dists
-        # contextual loss
-        if self.cri_contextual:
-            l_g_contextual = self.cri_contextual(self.output, self.gt)
-            l_g_total += l_g_contextual
-            loss_dict["l_g_contextual"] = l_g_contextual
-        # color loss
-        if self.cri_color:
-            l_g_color = self.cri_color(self.output, self.gt)
-            l_g_total += l_g_color
-            loss_dict["l_g_color"] = l_g_color
-        # luma loss
-        if self.cri_luma:
-            l_g_luma = self.cri_luma(self.output, self.gt)
-            l_g_total += l_g_luma
-            loss_dict["l_g_luma"] = l_g_luma
-        # hsluv loss
-        if self.cri_hsluv:
-            l_g_hsluv = self.cri_hsluv(self.output, self.gt)
-            l_g_total += l_g_hsluv
-            loss_dict["l_g_hsluv"] = l_g_hsluv
-        # avg loss
-        if self.cri_avg:
-            l_g_avg = self.cri_avg(self.output, self.gt)
-            l_g_total += l_g_avg
-            loss_dict["l_g_avg"] = l_g_avg
-        # bicubic loss
-        if self.cri_bicubic:
-            l_g_bicubic = self.cri_bicubic(self.output, self.gt)
-            l_g_total += l_g_bicubic
-            loss_dict["l_g_bicubic"] = l_g_bicubic
-        # gan loss
-        if self.cri_gan and self.net_d:
-            fake_g_pred = self.net_d(self.output)
-            l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-            l_g_total += l_g_gan
-            loss_dict["l_g_gan"] = l_g_gan
+        with torch.autocast(
+            device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
+        ):
+            self.output = self.net_g(self.lq)
+            assert isinstance(self.output, Tensor)
+            l_g_total = torch.tensor(0.0, device=self.output.device)
+            loss_dict = OrderedDict()
+            # pixel loss
+            if self.cri_pix:
+                l_g_pix = self.cri_pix(self.output, self.gt)
+                l_g_total += l_g_pix
+                loss_dict["l_g_pix"] = l_g_pix
+            if self.cri_mssim:
+                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_total += l_g_mssim
+                loss_dict["l_g_mssim"] = l_g_mssim
+            if self.cri_ldl:
+                assert self.net_g_ema is not None
+                # TODO support LDL without ema
+                pixel_weight = get_refined_artifact_map(
+                    self.gt, self.output, self.net_g_ema(self.lq), 7
+                )
+                l_g_ldl = self.cri_ldl(
+                    torch.mul(pixel_weight, self.output),
+                    torch.mul(pixel_weight, self.gt),
+                )
+                l_g_total += l_g_ldl
+                loss_dict["l_g_ldl"] = l_g_ldl
+            # perceptual loss
+            if self.cri_perceptual:
+                l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
+                if l_g_percep is not None:
+                    l_g_total += l_g_percep
+                    loss_dict["l_g_percep"] = l_g_percep
+                if l_g_style is not None:
+                    l_g_total += l_g_style
+                    loss_dict["l_g_style"] = l_g_style
+            # dists loss
+            if self.cri_dists:
+                l_g_dists = self.cri_dists(self.output, self.gt)
+                l_g_total += l_g_dists
+                loss_dict["l_g_dists"] = l_g_dists
+            # contextual loss
+            if self.cri_contextual:
+                l_g_contextual = self.cri_contextual(self.output, self.gt)
+                l_g_total += l_g_contextual
+                loss_dict["l_g_contextual"] = l_g_contextual
+            # color loss
+            if self.cri_color:
+                l_g_color = self.cri_color(self.output, self.gt)
+                l_g_total += l_g_color
+                loss_dict["l_g_color"] = l_g_color
+            # luma loss
+            if self.cri_luma:
+                l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_total += l_g_luma
+                loss_dict["l_g_luma"] = l_g_luma
+            # hsluv loss
+            if self.cri_hsluv:
+                l_g_hsluv = self.cri_hsluv(self.output, self.gt)
+                l_g_total += l_g_hsluv
+                loss_dict["l_g_hsluv"] = l_g_hsluv
+            # avg loss
+            if self.cri_avg:
+                l_g_avg = self.cri_avg(self.output, self.gt)
+                l_g_total += l_g_avg
+                loss_dict["l_g_avg"] = l_g_avg
+            # bicubic loss
+            if self.cri_bicubic:
+                l_g_bicubic = self.cri_bicubic(self.output, self.gt)
+                l_g_total += l_g_bicubic
+                loss_dict["l_g_bicubic"] = l_g_bicubic
+            # gan loss
+            if self.cri_gan and self.net_d:
+                fake_g_pred = self.net_d(self.output)
+                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                l_g_total += l_g_gan
+                loss_dict["l_g_gan"] = l_g_gan
 
-        # add total generator loss for tensorboard tracking
-        loss_dict["l_g_total"] = l_g_total
+            # add total generator loss for tensorboard tracking
+            loss_dict["l_g_total"] = l_g_total
 
-        l_g_total.backward()
-        self.optimizer_g.step()
+        self.gradscaler_g.scale(l_g_total).backward()
+        self.gradscaler_g.step(self.optimizer_g)
+        self.gradscaler_g.update()
+        self.optimizer_g.zero_grad()
 
         if (
             self.net_d is not None
@@ -351,20 +371,27 @@ class SRModel(BaseModel):
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
+            with torch.autocast(
+                device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
+            ):
+                # real
+                real_d_pred = self.net_d(self.gt)
+                l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
+                loss_dict["l_d_real"] = l_d_real
+                loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
+                # fake
+                fake_d_pred = self.net_d(
+                    self.output.detach().clone()
+                )  # clone for pt1.9
+                l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
+                loss_dict["l_d_fake"] = l_d_fake
+                loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
+
+            self.gradscaler_d.scale(l_d_real).backward()  # retain_graph?
+            self.gradscaler_d.scale(l_d_fake).backward()
+            self.gradscaler_d.step(self.optimizer_d)
+            self.gradscaler_d.update()
             self.optimizer_d.zero_grad()
-            # real
-            real_d_pred = self.net_d(self.gt)
-            l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-            loss_dict["l_d_real"] = l_d_real
-            loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
-            l_d_real.backward()
-            # fake
-            fake_d_pred = self.net_d(self.output.detach().clone())  # clone for pt1.9
-            l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-            loss_dict["l_d_fake"] = l_d_fake
-            loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
-            l_d_fake.backward()
-            self.optimizer_d.step()
 
         for key, value in loss_dict.items():
             val = value if isinstance(value, float) else value.detach()
