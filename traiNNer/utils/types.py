@@ -19,4 +19,5 @@ class TrainingState(TypedDict):
     iter: int
     optimizers: list[StateDict]
     schedulers: list[StateDict]
-    # TODO gradscaler
+    scaler_g: StateDict
+    scaler_d: StateDict

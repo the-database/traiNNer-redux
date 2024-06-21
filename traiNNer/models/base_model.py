@@ -481,11 +481,15 @@ class BaseModel:
             current_iter (int): Current iteration.
         """
         if current_iter != -1:
+            assert self.gradscaler_g is not None
+            assert self.gradscaler_d is not None
             state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
                 "optimizers": [],
                 "schedulers": [],
+                "scaler_d": self.gradscaler_d.state_dict(),
+                "scaler_g": self.gradscaler_g.state_dict(),
             }
             for o in self.optimizers:
                 state["optimizers"].append(o.state_dict())
@@ -515,24 +519,32 @@ class BaseModel:
                 logger.warning("Still cannot save %s. Just ignore it.", save_path)
                 # raise IOError(f'Cannot save {save_path}.')
 
-    def resume_training(self, resume_state: dict[str, Any]) -> None:
+    def resume_training(self, resume_state: TrainingState) -> None:
         """Reload the optimizers and schedulers for resumed training.
 
         Args:
             resume_state (dict): Resume state.
         """
+        assert self.gradscaler_d is not None
+        assert self.gradscaler_g is not None
+
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
+
         assert len(resume_optimizers) == len(
             self.optimizers
         ), "Wrong lengths of optimizers"
         assert len(resume_schedulers) == len(
             self.schedulers
         ), "Wrong lengths of schedulers"
+
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
+
+        self.gradscaler_d.load_state_dict(resume_state["scaler_d"])
+        self.gradscaler_g.load_state_dict(resume_state["scaler_g"])
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
