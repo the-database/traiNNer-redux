@@ -11,10 +11,11 @@ class Config:
     @classmethod
     def load_config(
         cls, root_path: str, is_train: bool = True
-    ) -> tuple[dict[str, Any], argparse.Namespace | None]:
+    ) -> tuple[dict[str, Any], argparse.Namespace]:
         if cls._config is None:
             cls._config, cls._args = parse_options(root_path, is_train)
 
+        assert cls._args is not None
         return cls._config, cls._args
 
     @classmethod

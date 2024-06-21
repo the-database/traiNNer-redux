@@ -388,7 +388,7 @@ class SRModel(BaseModel):
         self,
         dataloader: DataLoader,
         current_iter: int,
-        tb_logger: SummaryWriter,
+        tb_logger: SummaryWriter | None,
         save_img: bool,
     ) -> None:
         if self.opt["rank"] == 0:
@@ -398,7 +398,7 @@ class SRModel(BaseModel):
         self,
         dataloader: DataLoader,
         current_iter: int,
-        tb_logger: SummaryWriter,
+        tb_logger: SummaryWriter | None,
         save_img: bool,
     ) -> None:
         self.is_train = False
@@ -487,7 +487,7 @@ class SRModel(BaseModel):
         self.is_train = True
 
     def _log_validation_metric_values(
-        self, current_iter: int, dataset_name: str, tb_logger: SummaryWriter
+        self, current_iter: int, dataset_name: str, tb_logger: SummaryWriter | None
     ) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():

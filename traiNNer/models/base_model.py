@@ -62,7 +62,7 @@ class BaseModel:
         self,
         dataloader: DataLoader,
         current_iter: int,
-        tb_logger: SummaryWriter,
+        tb_logger: SummaryWriter | None,
         save_img: bool = False,
     ) -> None:
         """Validation function.
@@ -83,7 +83,7 @@ class BaseModel:
         self,
         dataloader: DataLoader,
         current_iter: int,
-        tb_logger: SummaryWriter,
+        tb_logger: SummaryWriter | None,
         save_img: bool,
     ) -> None:
         pass
@@ -93,7 +93,7 @@ class BaseModel:
         self,
         dataloader: DataLoader,
         current_iter: int,
-        tb_logger: SummaryWriter,
+        tb_logger: SummaryWriter | None,
         save_img: bool,
     ) -> None:
         pass

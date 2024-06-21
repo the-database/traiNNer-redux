@@ -6,6 +6,7 @@ from traiNNer.archs.srresnet_arch import MSRResNet
 from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.losses.basic_loss import L1Loss, PerceptualLoss
 from traiNNer.models.sr_model import SRModel
+from traiNNer.utils.types import DataFeed
 
 
 def test_srmodel() -> None:
@@ -95,14 +96,17 @@ val:
     # prepare data
     gt = torch.rand((1, 3, 32, 32), dtype=torch.float32)
     lq = torch.rand((1, 3, 8, 8), dtype=torch.float32)
-    data = {"gt": gt, "lq": lq}
+    data: DataFeed = {"gt": gt, "lq": lq}
     model.feed_data(data)
+    assert model.lq is not None
+    assert model.gt is not None
     # check data shape
     assert model.lq.shape == (1, 3, 8, 8)
     assert model.gt.shape == (1, 3, 32, 32)
 
     # ----------------- test optimize_parameters -------------------- #
     model.optimize_parameters(1)
+    assert model.output is not None
     assert model.output.shape == (1, 3, 32, 32)
     assert isinstance(model.log_dict, dict)
     # check returned keys

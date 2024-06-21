@@ -2,17 +2,16 @@ from collections.abc import Callable
 
 import pytest
 import torch
-from traiNNer.losses import (
+from traiNNer.losses.basic_loss import (
     CharbonnierLoss,
     ColorLoss,
-    DISTSLoss,
     L1Loss,
     LumaLoss,
     MSELoss,
-    MSSIMLoss,
-    PerceptualLoss,
-    WeightedTVLoss,
 )
+from traiNNer.losses.dists_loss import DISTSLoss
+from traiNNer.losses.mssim_loss import MSSIMLoss
+from traiNNer.losses.perceptual_loss import PerceptualLoss
 
 
 class TestLosses:
@@ -92,39 +91,6 @@ class TestLosses:
         # -------------------- test unsupported loss reduction -------------------- #
         with pytest.raises(ValueError):
             loss_class(loss_weight=1.0, reduction="unknown")
-
-    def test_weightedtvloss(self) -> None:
-        """Test loss: WeightedTVLoss"""
-
-        pred = torch.rand((1, 3, 4, 4), dtype=torch.float32)
-        loss = WeightedTVLoss(loss_weight=1.0, reduction="mean")
-        out = loss(pred, weight=None)
-        assert isinstance(out, torch.Tensor)
-        assert out.shape == torch.Size([])
-
-        # test with spatial weights
-        weight = torch.rand((1, 3, 4, 4), dtype=torch.float32)
-        out = loss(pred, weight=weight)
-        assert isinstance(out, torch.Tensor)
-        assert out.shape == torch.Size([])
-
-        # -------------------- test reduction = sum-------------------- #
-        loss = WeightedTVLoss(loss_weight=1.0, reduction="sum")
-        out = loss(pred, weight=None)
-        assert isinstance(out, torch.Tensor)
-        assert out.shape == torch.Size([])
-
-        # test with spatial weights
-        weight = torch.rand((1, 3, 4, 4), dtype=torch.float32)
-        out = loss(pred, weight=weight)
-        assert isinstance(out, torch.Tensor)
-        assert out.shape == torch.Size([])
-
-        # -------------------- test unsupported loss reduction -------------------- #
-        with pytest.raises(ValueError):
-            WeightedTVLoss(loss_weight=1.0, reduction="unknown")
-        with pytest.raises(ValueError):
-            WeightedTVLoss(loss_weight=1.0, reduction="none")
 
     @pytest.mark.parametrize(
         "loss_fn",

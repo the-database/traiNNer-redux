@@ -143,7 +143,7 @@ def init_tb_logger(log_dir: str) -> SummaryWriter:
 @master_only
 def init_wandb_logger(opt: Mapping[str, Any]) -> None:
     """We now only use wandb to sync tensorboard log."""
-    import wandb
+    import wandb  # type: ignore
 
     logger = get_root_logger()
 
