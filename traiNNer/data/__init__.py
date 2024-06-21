@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torch.utils.data
 from torch.utils.data.dataloader import Dataset
+from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_sampler import EnlargedSampler
 
 from ..utils import get_root_logger, scandir
@@ -33,7 +34,7 @@ _dataset_modules = [
 ]
 
 
-def build_dataset(dataset_opt: dict[str, Any]) -> Dataset:
+def build_dataset(dataset_opt: dict[str, Any]) -> BaseDataset:
     """Build dataset from options.
 
     Args:
