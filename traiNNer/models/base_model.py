@@ -44,8 +44,8 @@ class BaseModel:
         self.use_moa = False
         self.use_amp = False
         self.amp_dtype = torch.float16
-        self.gradscaler_g: GradScaler | None = None
-        self.gradscaler_d: GradScaler | None = None
+        self.scaler_g: GradScaler | None = None
+        self.scaler_d: GradScaler | None = None
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
@@ -481,15 +481,15 @@ class BaseModel:
             current_iter (int): Current iteration.
         """
         if current_iter != -1:
-            assert self.gradscaler_g is not None
-            assert self.gradscaler_d is not None
+            assert self.scaler_g is not None
+            assert self.scaler_d is not None
             state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
                 "optimizers": [],
                 "schedulers": [],
-                "scaler_d": self.gradscaler_d.state_dict(),
-                "scaler_g": self.gradscaler_g.state_dict(),
+                "scaler_d": self.scaler_d.state_dict(),
+                "scaler_g": self.scaler_g.state_dict(),
             }
             for o in self.optimizers:
                 state["optimizers"].append(o.state_dict())
@@ -525,8 +525,8 @@ class BaseModel:
         Args:
             resume_state (dict): Resume state.
         """
-        assert self.gradscaler_d is not None
-        assert self.gradscaler_g is not None
+        assert self.scaler_d is not None
+        assert self.scaler_g is not None
 
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
@@ -543,8 +543,8 @@ class BaseModel:
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
 
-        self.gradscaler_d.load_state_dict(resume_state["scaler_d"])
-        self.gradscaler_g.load_state_dict(resume_state["scaler_g"])
+        self.scaler_d.load_state_dict(resume_state["scaler_d"])
+        self.scaler_g.load_state_dict(resume_state["scaler_g"])
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.

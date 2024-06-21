@@ -117,8 +117,8 @@ class SRModel(BaseModel):
 
         # use amp
         self.use_amp = self.opt.get("use_amp", False)
-        self.gradscaler_g = GradScaler(enabled=self.use_amp)
-        self.gradscaler_d = GradScaler(enabled=self.use_amp)
+        self.scaler_g = GradScaler(enabled=self.use_amp)
+        self.scaler_d = GradScaler(enabled=self.use_amp)
         self.amp_dtype = (
             torch.bfloat16 if self.opt.get("amp_bfloat16", False) else torch.float16
         )
@@ -264,8 +264,8 @@ class SRModel(BaseModel):
         assert self.optimizer_g is not None
         assert self.lq is not None
         assert self.gt is not None
-        assert self.gradscaler_d is not None
-        assert self.gradscaler_g is not None
+        assert self.scaler_d is not None
+        assert self.scaler_g is not None
 
         # optimize net_d
         if self.net_d is not None:
@@ -357,9 +357,9 @@ class SRModel(BaseModel):
             # add total generator loss for tensorboard tracking
             loss_dict["l_g_total"] = l_g_total
 
-        self.gradscaler_g.scale(l_g_total).backward()
-        self.gradscaler_g.step(self.optimizer_g)
-        self.gradscaler_g.update()
+        self.scaler_g.scale(l_g_total).backward()
+        self.scaler_g.step(self.optimizer_g)
+        self.scaler_g.update()
         self.optimizer_g.zero_grad()
 
         if (
@@ -387,14 +387,18 @@ class SRModel(BaseModel):
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
-            self.gradscaler_d.scale(l_d_real).backward()  # retain_graph?
-            self.gradscaler_d.scale(l_d_fake).backward()
-            self.gradscaler_d.step(self.optimizer_d)
-            self.gradscaler_d.update()
+            self.scaler_d.scale(l_d_real).backward()  # retain_graph?
+            self.scaler_d.scale(l_d_fake).backward()
+            self.scaler_d.step(self.optimizer_d)
+            self.scaler_d.update()
             self.optimizer_d.zero_grad()
 
         for key, value in loss_dict.items():
-            val = value if isinstance(value, float) else value.to(dtype=torch.float32).detach()
+            val = (
+                value
+                if isinstance(value, float)
+                else value.to(dtype=torch.float32).detach()
+            )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
         if self.ema_decay > 0:
