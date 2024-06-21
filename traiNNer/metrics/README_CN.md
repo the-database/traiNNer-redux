@@ -27,7 +27,7 @@ PSNR 和 SSIM 的结果趋势是一致的，即一般 PSNR 高，则 SSIM 也高
 在实现上, PSNR 的各种实现都很一致。SSIM 有各种各样的实现，我们这里和 MATLAB 最原始版本保持 (参考 [NTIRE17比赛](https://competitions.codalab.org/competitions/16306#participate) 的 [evaluation代码](https://competitions.codalab.org/my/datasets/download/ebe960d8-0ec8-4846-a1a2-7c4a586a7378))
 
 下面列了各个实现的结果比对.
-总结：PyTorch 实现和 MATLAB 实现基本一致，在 GPU 运行上会有稍许差异
+总结:PyTorch 实现和 MATLAB 实现基本一致，在 GPU 运行上会有稍许差异
 
 - PSNR 比对
 

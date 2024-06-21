@@ -1,13 +1,13 @@
 import copy
 import random
+
 import torch
-from torch import nn as nn
+from torch import Tensor, nn
 
 
 class ToyDiscriminator(nn.Module):
-
-    def __init__(self):
-        super(ToyDiscriminator, self).__init__()
+    def __init__(self) -> None:
+        super().__init__()
         self.conv0 = nn.Conv2d(3, 4, 3, 1, 1, bias=True)
         self.bn0 = nn.BatchNorm2d(4, affine=True)
         self.conv1 = nn.Conv2d(4, 4, 3, 1, 1, bias=True)
@@ -15,7 +15,7 @@ class ToyDiscriminator(nn.Module):
         self.linear = nn.Linear(4 * 6 * 6, 1)
         self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         feat = self.lrelu(self.bn0(self.conv0(x)))
         feat = self.lrelu(self.bn1(self.conv1(feat)))
         feat = feat.view(feat.size(0), -1)
@@ -23,7 +23,7 @@ class ToyDiscriminator(nn.Module):
         return out
 
 
-def main():
+def main() -> None:
     # use fixed random seed
     manual_seed = 999
     random.seed(manual_seed)
@@ -78,11 +78,12 @@ def main():
     ###########################
     # Compare differences
     ###########################
-    for k1, k2 in zip(net_d_1.parameters(), net_d_2.parameters()):
+    for k1, k2 in zip(net_d_1.parameters(), net_d_2.parameters(), strict=False):
+        assert k1.grad is not None
         print(torch.sum(torch.abs(k1.grad - k2.grad)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 r"""Output:
 conv0.weight torch.Size([4, 3, 3, 3])

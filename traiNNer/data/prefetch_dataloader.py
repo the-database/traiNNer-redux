@@ -1,5 +1,8 @@
-import queue as Queue
+import queue
 import threading
+from collections.abc import Iterator
+from typing import Any
+
 import torch
 from torch.utils.data import DataLoader
 
@@ -14,25 +17,25 @@ class PrefetchGenerator(threading.Thread):
         num_prefetch_queue (int): Number of prefetch queue.
     """
 
-    def __init__(self, generator, num_prefetch_queue):
+    def __init__(self, generator: DataLoader, num_prefetch_queue: int) -> None:
         threading.Thread.__init__(self)
-        self.queue = Queue.Queue(num_prefetch_queue)
+        self.queue = queue.Queue(num_prefetch_queue)
         self.generator = generator
         self.daemon = True
         self.start()
 
-    def run(self):
+    def run(self) -> None:
         for item in self.generator:
             self.queue.put(item)
         self.queue.put(None)
 
-    def __next__(self):
+    def __next__(self) -> Any:
         next_item = self.queue.get()
         if next_item is None:
             raise StopIteration
         return next_item
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return self
 
 
@@ -50,36 +53,36 @@ class PrefetchDataLoader(DataLoader):
         kwargs (dict): Other arguments for dataloader.
     """
 
-    def __init__(self, num_prefetch_queue, **kwargs):
+    def __init__(self, num_prefetch_queue: int, **kwargs) -> None:
         self.num_prefetch_queue = num_prefetch_queue
-        super(PrefetchDataLoader, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
-    def __iter__(self):
-        return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)
+    def __iter__(self) -> PrefetchGenerator:  # type: ignore
+        return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)  # type: ignore
 
 
-class CPUPrefetcher():
+class CPUPrefetcher:
     """CPU prefetcher.
 
     Args:
         loader: Dataloader.
     """
 
-    def __init__(self, loader):
+    def __init__(self, loader: DataLoader) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
 
-    def next(self):
+    def next(self) -> Any:
         try:
             return next(self.loader)
         except StopIteration:
             return None
 
-    def reset(self):
+    def reset(self) -> None:
         self.loader = iter(self.ori_loader)
 
 
-class CUDAPrefetcher():
+class CUDAPrefetcher:
     """CUDA prefetcher.
 
     Reference: https://github.com/NVIDIA/apex/issues/304#
@@ -91,32 +94,35 @@ class CUDAPrefetcher():
         opt (dict): Options.
     """
 
-    def __init__(self, loader, opt):
+    def __init__(self, loader: DataLoader, opt: dict[str, Any]) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
         self.opt = opt
         self.stream = torch.cuda.Stream()
-        self.device = torch.device('cuda' if opt['num_gpu'] != 0 else 'cpu')
+        self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
+        self.batch = None
         self.preload()
 
-    def preload(self):
+    def preload(self) -> None:
         try:
             self.batch = next(self.loader)  # self.batch is a dict
         except StopIteration:
             self.batch = None
             return None
         # put tensors to gpu
-        with torch.cuda.stream(self.stream):
+        with torch.cuda.stream(self.stream):  # type: ignore
             for k, v in self.batch.items():
                 if torch.is_tensor(v):
-                    self.batch[k] = self.batch[k].to(device=self.device, non_blocking=True)
+                    self.batch[k] = self.batch[k].to(
+                        device=self.device, non_blocking=True
+                    )
 
-    def next(self):
+    def next(self) -> Any:
         torch.cuda.current_stream().wait_stream(self.stream)
         batch = self.batch
         self.preload()
         return batch
 
-    def reset(self):
+    def reset(self) -> None:
         self.loader = iter(self.ori_loader)
         self.preload()

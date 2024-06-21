@@ -1,10 +1,9 @@
 import pytest
 import torch
-
 from traiNNer.archs.discriminator_arch import VGGStyleDiscriminator
 
 
-def test_vggstylediscriminator():
+def test_vggstylediscriminator() -> None:
     """Test arch: VGGStyleDiscriminator."""
 
     # model init and forward

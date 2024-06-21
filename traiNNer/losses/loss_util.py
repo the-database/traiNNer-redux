@@ -1,9 +1,12 @@
 import functools
+from collections.abc import Callable
+
 import torch
-from torch.nn import functional as F
+from torch import Tensor
+from torch.nn import functional as F  # noqa: N812
 
 
-def reduce_loss(loss, reduction):
+def reduce_loss(loss: Tensor, reduction: str) -> Tensor:
     """Reduce loss as specified.
 
     Args:
@@ -13,7 +16,7 @@ def reduce_loss(loss, reduction):
     Returns:
         Tensor: Reduced loss tensor.
     """
-    reduction_enum = F._Reduction.get_enum(reduction)
+    reduction_enum = F._Reduction.get_enum(reduction)  # type: ignore # noqa: SLF001
     # none: 0, elementwise_mean:1, sum: 2
     if reduction_enum == 0:
         return loss
@@ -23,7 +26,9 @@ def reduce_loss(loss, reduction):
         return loss.sum()
 
 
-def weight_reduce_loss(loss, weight=None, reduction='mean'):
+def weight_reduce_loss(
+    loss: Tensor, weight: Tensor | None = None, reduction: str = "mean"
+) -> Tensor:
     """Apply element-wise weight and reduce loss.
 
     Args:
@@ -42,10 +47,10 @@ def weight_reduce_loss(loss, weight=None, reduction='mean'):
         loss = loss * weight
 
     # if weight is not specified or reduction is sum, just reduce the loss
-    if weight is None or reduction == 'sum':
+    if weight is None or reduction == "sum":
         loss = reduce_loss(loss, reduction)
     # if reduction is mean, then compute mean over weight region
-    elif reduction == 'mean':
+    elif reduction == "mean":
         if weight.size(1) > 1:
             weight = weight.sum()
         else:
@@ -55,7 +60,7 @@ def weight_reduce_loss(loss, weight=None, reduction='mean'):
     return loss
 
 
-def weighted_loss(loss_func):
+def weighted_loss(loss_func: Callable) -> Callable:
     """Create a weighted version of a given loss function.
 
     To use this decorator, the loss function must have the signature like
@@ -87,7 +92,13 @@ def weighted_loss(loss_func):
     """
 
     @functools.wraps(loss_func)
-    def wrapper(pred, target, weight=None, reduction='mean', **kwargs):
+    def wrapper(
+        pred: Tensor,
+        target: Tensor,
+        weight: Tensor | None = None,
+        reduction: str = "mean",
+        **kwargs,
+    ) -> Tensor:
         # get element-wise loss
         loss = loss_func(pred, target, **kwargs)
         loss = weight_reduce_loss(loss, weight, reduction)
@@ -96,7 +107,7 @@ def weighted_loss(loss_func):
     return wrapper
 
 
-def get_local_weights(residual, ksize):
+def get_local_weights(residual: Tensor, ksize: int) -> Tensor:
     """Get local weights for generating the artifact map of LDL.
 
     It is only called by the `get_refined_artifact_map` function.
@@ -110,15 +121,21 @@ def get_local_weights(residual, ksize):
     """
 
     pad = (ksize - 1) // 2
-    residual_pad = F.pad(residual, pad=[pad, pad, pad, pad], mode='reflect')
+    residual_pad = F.pad(residual, pad=[pad, pad, pad, pad], mode="reflect")
 
     unfolded_residual = residual_pad.unfold(2, ksize, 1).unfold(3, ksize, 1)
-    pixel_level_weight = torch.var(unfolded_residual, dim=(-1, -2), unbiased=True, keepdim=True).squeeze(-1).squeeze(-1)
+    pixel_level_weight = (
+        torch.var(unfolded_residual, dim=(-1, -2), unbiased=True, keepdim=True)
+        .squeeze(-1)
+        .squeeze(-1)
+    )
 
     return pixel_level_weight
 
 
-def get_refined_artifact_map(img_gt, img_output, img_ema, ksize):
+def get_refined_artifact_map(
+    img_gt: Tensor, img_output: Tensor, img_ema: Tensor, ksize: int
+) -> Tensor:
     """Calculate the artifact map of LDL
     (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022)
 
@@ -136,7 +153,9 @@ def get_refined_artifact_map(img_gt, img_output, img_ema, ksize):
     residual_ema = torch.sum(torch.abs(img_gt - img_ema), 1, keepdim=True)
     residual_sr = torch.sum(torch.abs(img_gt - img_output), 1, keepdim=True)
 
-    patch_level_weight = torch.var(residual_sr.clone(), dim=(-1, -2, -3), keepdim=True)**(1 / 5)
+    patch_level_weight = torch.var(
+        residual_sr.clone(), dim=(-1, -2, -3), keepdim=True
+    ) ** (1 / 5)
     pixel_level_weight = get_local_weights(residual_sr.clone(), ksize)
     overall_weight = patch_level_weight * pixel_level_weight
 

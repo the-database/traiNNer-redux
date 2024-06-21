@@ -1,12 +1,21 @@
-import cv2
 import math
-import numpy as np
 import os
+from collections.abc import Sequence
+
+import cv2
+import numpy as np
 import torch
+from cv2.typing import MatLike
+from torch import Tensor
 from torchvision.utils import make_grid
 
 
-def img2tensor(imgs, color, bgr2rgb=True, float32=True):
+def img2tensor(
+    img: np.ndarray,
+    color: bool = True,
+    bgr2rgb: bool = True,
+    float32: bool = True,
+) -> Tensor:
     """Numpy array to tensor.
 
     Args:
@@ -19,30 +28,56 @@ def img2tensor(imgs, color, bgr2rgb=True, float32=True):
             one element, just return tensor.
     """
 
-    def _totensor(img, color, bgr2rgb, float32):
-        if color:
-            if img.shape[2] == 3 and bgr2rgb:
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img = torch.from_numpy(img.transpose(2, 0, 1))
-        else:
-            if img.shape[2] == 3:
-                if bgr2rgb:
-                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                else:
-                    img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            img = torch.from_numpy(img[None, ...])
-
-        if float32:
-            img = img.float()
-        return img
-
-    if isinstance(imgs, list):
-        return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
+    # def _totensor(img: np.ndarray, color: bool, bgr2rgb: bool, float32: bool) -> Tensor:
+    if color:
+        if img.shape[2] == 3 and bgr2rgb:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        out = torch.from_numpy(img.transpose(2, 0, 1))
     else:
-        return _totensor(imgs, color, bgr2rgb, float32)
+        if img.shape[2] == 3:
+            if bgr2rgb:
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            else:
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        out = torch.from_numpy(img[None, ...])
+
+    if float32:
+        out = out.float()
+    return out
+
+    # if isinstance(imgs, list):
+    #     return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
+    # else:
+    #     return _totensor(imgs, color, bgr2rgb, float32)
 
 
-def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
+def imgs2tensors(
+    imgs: list[np.ndarray],
+    color: bool = True,
+    bgr2rgb: bool = True,
+    float32: bool = True,
+) -> list[Tensor]:
+    """Numpy array to tensor.
+
+    Args:
+        imgs (list[ndarray] | ndarray): Input images.
+        bgr2rgb (bool): Whether to change bgr to rgb.
+        float32 (bool): Whether to change to float32.
+
+    Returns:
+        list[tensor] | tensor: Tensor images. If returned results only have
+            one element, just return tensor.
+    """
+
+    return [img2tensor(img, color, bgr2rgb, float32) for img in imgs]
+
+
+def tensors2imgs(
+    tensors: list[Tensor],
+    rgb2bgr: bool = True,
+    out_type: np.dtype = np.uint8,  # type: ignore
+    min_max: tuple[int, int] = (0, 1),
+) -> list[np.ndarray]:
     """Convert torch Tensors into image numpy arrays.
 
     After clamping to [min, max], values will be normalized to [0, 1].
@@ -63,45 +98,71 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         (Tensor or list): 3D ndarray of shape (H x W x C) OR 2D ndarray of
         shape (H x W). The channel order is BGR.
     """
-    if not (torch.is_tensor(tensor) or (isinstance(tensor, list) and all(torch.is_tensor(t) for t in tensor))):
-        raise TypeError(f'tensor or list of tensors expected, got {type(tensor)}')
-
-    if torch.is_tensor(tensor):
-        tensor = [tensor]
-    result = []
-    for _tensor in tensor:
-        _tensor = _tensor.squeeze(0).float().detach().cpu().clamp_(*min_max)
-        _tensor = (_tensor - min_max[0]) / (min_max[1] - min_max[0])
-
-        n_dim = _tensor.dim()
-        if n_dim == 4:
-            img_np = make_grid(_tensor, nrow=int(math.sqrt(_tensor.size(0))), normalize=False).numpy()
-            img_np = img_np.transpose(1, 2, 0)
-            if rgb2bgr:
-                img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-        elif n_dim == 3:
-            img_np = _tensor.numpy()
-            img_np = img_np.transpose(1, 2, 0)
-            if img_np.shape[2] == 1:  # gray image
-                img_np = np.squeeze(img_np, axis=2)
-            else:
-                if rgb2bgr:
-                    img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-        elif n_dim == 2:
-            img_np = _tensor.numpy()
-        else:
-            raise TypeError(f'Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}')
-        if out_type == np.uint8:
-            # Unlike MATLAB, numpy.unit8() WILL NOT round by default.
-            img_np = (img_np * 255.0).round()
-        img_np = img_np.astype(out_type)
-        result.append(img_np)
-    if len(result) == 1:
-        result = result[0]
-    return result
+    return [tensor2img(x, rgb2bgr, out_type, min_max) for x in tensors]
 
 
-def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
+def tensor2img(
+    tensor: Tensor,
+    rgb2bgr: bool = True,
+    out_type: np.dtype = np.uint8,  # type: ignore
+    min_max: tuple[int, int] = (0, 1),
+) -> np.ndarray:
+    """Convert torch Tensors into image numpy arrays.
+
+    After clamping to [min, max], values will be normalized to [0, 1].
+
+    Args:
+        tensor (Tensor or list[Tensor]): Accept shapes:
+            1) 4D mini-batch Tensor of shape (B x 3/1 x H x W);
+            2) 3D Tensor of shape (3/1 x H x W);
+            3) 2D Tensor of shape (H x W).
+            Tensor channel should be in RGB order.
+        rgb2bgr (bool): Whether to change rgb to bgr.
+        out_type (numpy type): output types. If ``np.uint8``, transform outputs
+            to uint8 type with range [0, 255]; otherwise, float type with
+            range [0, 1]. Default: ``np.uint8``.
+        min_max (tuple[int]): min and max values for clamp.
+
+    Returns:
+        (Tensor or list): 3D ndarray of shape (H x W x C) OR 2D ndarray of
+        shape (H x W). The channel order is BGR.
+    """
+
+    _tensor = tensor.squeeze(0).float().detach().cpu().clamp_(*min_max)
+    _tensor = (_tensor - min_max[0]) / (min_max[1] - min_max[0])
+
+    n_dim = _tensor.dim()
+    if n_dim == 4:
+        img_np = make_grid(
+            _tensor, nrow=int(math.sqrt(_tensor.size(0))), normalize=False
+        ).numpy()
+        img_np = img_np.transpose(1, 2, 0)
+        if rgb2bgr:
+            img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    elif n_dim == 3:
+        img_np = _tensor.numpy()
+        img_np = img_np.transpose(1, 2, 0)
+        if img_np.shape[2] == 1:  # gray image
+            img_np = np.squeeze(img_np, axis=2)
+        elif rgb2bgr:
+            img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    elif n_dim == 2:
+        img_np = _tensor.numpy()
+    else:
+        raise TypeError(
+            f"Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}"
+        )
+    if out_type == np.uint8:
+        # Unlike MATLAB, numpy.unit8() WILL NOT round by default.
+        img_np = (img_np * 255.0).round()
+    img_np = img_np.astype(out_type)
+
+    return img_np
+
+
+def tensor2img_fast(
+    tensor: Tensor, rgb2bgr: bool = True, min_max: tuple[int, int] = (0, 1)
+) -> np.ndarray:
     """This implementation is slightly faster than tensor2img.
     It now only supports torch tensor with shape (1, c, h, w).
 
@@ -118,7 +179,7 @@ def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
     return output
 
 
-def imfrombytes(content, flag='color', float32=False):
+def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> MatLike:
     """Read an image from bytes.
 
     Args:
@@ -132,14 +193,23 @@ def imfrombytes(content, flag='color', float32=False):
         ndarray: Loaded image array.
     """
     img_np = np.frombuffer(content, np.uint8)
-    imread_flags = {'color': cv2.IMREAD_COLOR, 'grayscale': cv2.IMREAD_GRAYSCALE, 'unchanged': cv2.IMREAD_UNCHANGED}
+    imread_flags = {
+        "color": cv2.IMREAD_COLOR,
+        "grayscale": cv2.IMREAD_GRAYSCALE,
+        "unchanged": cv2.IMREAD_UNCHANGED,
+    }
     img = cv2.imdecode(img_np, imread_flags[flag])
     if float32:
-        img = img.astype(np.float32) / 255.
+        img = img.astype(np.float32) / 255.0
     return img
 
 
-def imwrite(img, file_path, params=None, auto_mkdir=True):
+def imwrite(
+    img: np.ndarray,
+    file_path: str,
+    params: Sequence[int] | None = None,
+    auto_mkdir: bool = True,
+) -> None:
     """Write image to file.
 
     Args:
@@ -155,12 +225,17 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
     if auto_mkdir:
         dir_name = os.path.abspath(os.path.dirname(file_path))
         os.makedirs(dir_name, exist_ok=True)
-    ok = cv2.imwrite(file_path, img, params)
+    if params:
+        ok = cv2.imwrite(file_path, img, params)
+    else:
+        ok = cv2.imwrite(file_path, img)
     if not ok:
-        raise IOError('Failed in writing images.')
+        raise OSError("Failed in writing images.")
 
 
-def crop_border(imgs, crop_border):
+def crop_border(
+    imgs: np.ndarray | list[np.ndarray], crop_border: int
+) -> np.ndarray | list[np.ndarray]:
     """Crop borders of images.
 
     Args:
@@ -172,8 +247,9 @@ def crop_border(imgs, crop_border):
     """
     if crop_border == 0:
         return imgs
+    elif isinstance(imgs, list):
+        return [
+            v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs
+        ]
     else:
-        if isinstance(imgs, list):
-            return [v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs]
-        else:
-            return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]
+        return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]

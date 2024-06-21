@@ -1,10 +1,9 @@
 import math
-import torch
-from torch import autograd as autograd
-from torch import nn as nn
-from torch.nn import functional as F
 
-from ..utils.registry import LOSS_REGISTRY
+import torch
+from torch import Tensor, autograd, nn
+from torch.nn import functional as F  # noqa: N812
+from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 @LOSS_REGISTRY.register()
@@ -20,27 +19,33 @@ class GANLoss(nn.Module):
             for discriminators.
     """
 
-    def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
-        super(GANLoss, self).__init__()
+    def __init__(
+        self,
+        gan_type: str,
+        real_label_val: float = 1.0,
+        fake_label_val: float = 0.0,
+        loss_weight: float = 1.0,
+    ) -> None:
+        super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
 
-        if self.gan_type == 'vanilla':
+        if self.gan_type == "vanilla":
             self.loss = nn.BCEWithLogitsLoss()
-        elif self.gan_type == 'lsgan':
+        elif self.gan_type == "lsgan":
             self.loss = nn.MSELoss()
-        elif self.gan_type == 'wgan':
+        elif self.gan_type == "wgan":
             self.loss = self._wgan_loss
-        elif self.gan_type == 'wgan_softplus':
+        elif self.gan_type == "wgan_softplus":
             self.loss = self._wgan_softplus_loss
-        elif self.gan_type == 'hinge':
+        elif self.gan_type == "hinge":
             self.loss = nn.ReLU()
         else:
-            raise NotImplementedError(f'GAN type {self.gan_type} is not implemented.')
+            raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
-    def _wgan_loss(self, input, target):
+    def _wgan_loss(self, input: Tensor, target: bool | Tensor) -> Tensor:
         """wgan loss.
 
         Args:
@@ -50,9 +55,10 @@ class GANLoss(nn.Module):
         Returns:
             Tensor: wgan loss.
         """
+        assert isinstance(target, bool)
         return -input.mean() if target else input.mean()
 
-    def _wgan_softplus_loss(self, input, target):
+    def _wgan_softplus_loss(self, input: Tensor, target: bool | Tensor) -> Tensor:
         """wgan loss with soft plus. softplus is a smooth approximation to the
         ReLU function.
 
@@ -67,9 +73,10 @@ class GANLoss(nn.Module):
         Returns:
             Tensor: wgan loss.
         """
+        assert isinstance(target, bool)
         return F.softplus(-input).mean() if target else F.softplus(input).mean()
 
-    def get_target_label(self, input, target_is_real):
+    def get_target_label(self, input: Tensor, target_is_real: bool) -> Tensor | bool:
         """Get target label.
 
         Args:
@@ -81,12 +88,14 @@ class GANLoss(nn.Module):
                 return Tensor.
         """
 
-        if self.gan_type in ['wgan', 'wgan_softplus']:
+        if self.gan_type in ["wgan", "wgan_softplus"]:
             return target_is_real
-        target_val = (self.real_label_val if target_is_real else self.fake_label_val)
+        target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
-    def forward(self, input, target_is_real, is_disc=False):
+    def forward(
+        self, input: Tensor, target_is_real: bool, is_disc: bool = False
+    ) -> Tensor:
         """
         Args:
             input (Tensor): The input for the loss module, i.e., the network
@@ -99,9 +108,10 @@ class GANLoss(nn.Module):
             Tensor: GAN loss value.
         """
         target_label = self.get_target_label(input, target_is_real)
-        if self.gan_type == 'hinge':
+        if self.gan_type == "hinge":
             if is_disc:  # for discriminators in hinge-gan
                 input = -input if target_is_real else input
+                assert isinstance(self.loss, nn.ReLU)
                 loss = self.loss(1 + input).mean()
             else:  # for generators in hinge-gan
                 loss = -input.mean()
@@ -118,16 +128,26 @@ class MultiScaleGANLoss(GANLoss):
     MultiScaleGANLoss accepts a list of predictions
     """
 
-    def __init__(self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0):
-        super(MultiScaleGANLoss, self).__init__(gan_type, real_label_val, fake_label_val, loss_weight)
+    def __init__(
+        self,
+        gan_type: str,
+        real_label_val: float = 1.0,
+        fake_label_val: float = 0.0,
+        loss_weight: float = 1.0,
+    ) -> None:
+        super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
 
-    def forward(self, input, target_is_real, is_disc=False):
+    def forward(
+        self, input: Tensor | list[Tensor], target_is_real: bool, is_disc: bool = False
+    ) -> Tensor:
         """
         The input is a list of tensors, or a list of (a list of tensors)
         """
         if isinstance(input, list):
-            loss = 0
-            for pred_i in input:
+            assert len(input) > 0
+            loss = torch.tensor(0, device=input[0].device)
+            for pred_i_wrapper in input:
+                pred_i = pred_i_wrapper
                 if isinstance(pred_i, list):
                     # Only compute GAN loss for the last layer
                     # in case of multiscale feature matching
@@ -140,25 +160,33 @@ class MultiScaleGANLoss(GANLoss):
             return super().forward(input, target_is_real, is_disc)
 
 
-def r1_penalty(real_pred, real_img):
+def r1_penalty(real_pred: Tensor, real_img: Tensor) -> Tensor:
     """R1 regularization for discriminator. The core idea is to
-        penalize the gradient on real data alone: when the
-        generator distribution produces the true data distribution
-        and the discriminator is equal to 0 on the data manifold, the
-        gradient penalty ensures that the discriminator cannot create
-        a non-zero gradient orthogonal to the data manifold without
-        suffering a loss in the GAN game.
+    penalize the gradient on real data alone: when the
+    generator distribution produces the true data distribution
+    and the discriminator is equal to 0 on the data manifold, the
+    gradient penalty ensures that the discriminator cannot create
+    a non-zero gradient orthogonal to the data manifold without
+    suffering a loss in the GAN game.
 
-        Reference: Eq. 9 in Which training methods for GANs do actually converge.
-        """
-    grad_real = autograd.grad(outputs=real_pred.sum(), inputs=real_img, create_graph=True)[0]
+    Reference: Eq. 9 in Which training methods for GANs do actually converge.
+    """
+    grad_real = autograd.grad(
+        outputs=real_pred.sum(), inputs=real_img, create_graph=True
+    )[0]
     grad_penalty = grad_real.pow(2).view(grad_real.shape[0], -1).sum(1).mean()
     return grad_penalty
 
 
-def g_path_regularize(fake_img, latents, mean_path_length, decay=0.01):
-    noise = torch.randn_like(fake_img) / math.sqrt(fake_img.shape[2] * fake_img.shape[3])
-    grad = autograd.grad(outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True)[0]
+def g_path_regularize(
+    fake_img: Tensor, latents: Tensor, mean_path_length: Tensor, decay: float = 0.01
+) -> tuple[Tensor, Tensor, Tensor]:
+    noise = torch.randn_like(fake_img) / math.sqrt(
+        fake_img.shape[2] * fake_img.shape[3]
+    )
+    grad = autograd.grad(
+        outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True
+    )[0]
     path_lengths = torch.sqrt(grad.pow(2).sum(2).mean(1))
 
     path_mean = mean_path_length + decay * (path_lengths.mean() - mean_path_length)
@@ -168,7 +196,12 @@ def g_path_regularize(fake_img, latents, mean_path_length, decay=0.01):
     return path_penalty, path_lengths.detach().mean(), path_mean.detach()
 
 
-def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
+def gradient_penalty_loss(
+    discriminator: nn.Module,
+    real_data: Tensor,
+    fake_data: Tensor,
+    weight: Tensor | None = None,
+) -> Tensor:
     """Calculate gradient penalty for wgan-gp.
 
     Args:
@@ -185,7 +218,7 @@ def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
     alpha = real_data.new_tensor(torch.rand(batch_size, 1, 1, 1))
 
     # interpolate between real_data and fake_data
-    interpolates = alpha * real_data + (1. - alpha) * fake_data
+    interpolates = alpha * real_data + (1.0 - alpha) * fake_data
     interpolates = autograd.Variable(interpolates, requires_grad=True)
 
     disc_interpolates = discriminator(interpolates)
@@ -195,12 +228,13 @@ def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
         grad_outputs=torch.ones_like(disc_interpolates),
         create_graph=True,
         retain_graph=True,
-        only_inputs=True)[0]
+        only_inputs=True,
+    )[0]
 
     if weight is not None:
         gradients = gradients * weight
 
-    gradients_penalty = ((gradients.norm(2, dim=1) - 1)**2).mean()
+    gradients_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
     if weight is not None:
         gradients_penalty /= torch.mean(weight)
 

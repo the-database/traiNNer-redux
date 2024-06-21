@@ -1,14 +1,17 @@
 import tempfile
+
 import torch
 import yaml
-
-from traiNNer.archs.srresnet_arch import MSRResNet
+from spandrel.architectures.ESRGAN import RRDBNet
+from torch.utils.data import DataLoader
 from traiNNer.data.paired_image_dataset import PairedImageDataset
-from traiNNer.losses.basic_loss import L1Loss, PerceptualLoss
+from traiNNer.losses.basic_loss import L1Loss
+from traiNNer.losses.perceptual_loss import PerceptualLoss
 from traiNNer.models.sr_model import SRModel
+from traiNNer.utils.types import DataFeed
 
 
-def test_srmodel():
+def test_srmodel() -> None:
     """Test model: SRModel"""
 
     opt_str = r"""
@@ -85,8 +88,8 @@ val:
     # build model
     model = SRModel(opt)
     # test attributes
-    assert model.__class__.__name__ == 'SRModel'
-    assert isinstance(model.net_g, MSRResNet)
+    assert model.__class__.__name__ == "SRModel"
+    assert isinstance(model.net_g, RRDBNet)
     assert isinstance(model.cri_pix, L1Loss)
     assert isinstance(model.cri_perceptual, PerceptualLoss)
     assert isinstance(model.optimizers[0], torch.optim.Adam)
@@ -95,71 +98,75 @@ val:
     # prepare data
     gt = torch.rand((1, 3, 32, 32), dtype=torch.float32)
     lq = torch.rand((1, 3, 8, 8), dtype=torch.float32)
-    data = dict(gt=gt, lq=lq)
+    data: DataFeed = {"gt": gt, "lq": lq}
     model.feed_data(data)
+    assert model.lq is not None
+    assert model.gt is not None
     # check data shape
     assert model.lq.shape == (1, 3, 8, 8)
     assert model.gt.shape == (1, 3, 32, 32)
 
     # ----------------- test optimize_parameters -------------------- #
     model.optimize_parameters(1)
+    assert model.output is not None
     assert model.output.shape == (1, 3, 32, 32)
     assert isinstance(model.log_dict, dict)
     # check returned keys
-    expected_keys = ['l_pix', 'l_percep', 'l_style']
+    expected_keys = ["l_pix", "l_percep", "l_style"]
     assert set(expected_keys).issubset(set(model.log_dict.keys()))
 
     # ----------------- test save -------------------- #
     with tempfile.TemporaryDirectory() as tmpdir:
-        model.opt['path']['models'] = tmpdir
-        model.opt['path']['training_states'] = tmpdir
+        model.opt["path"]["models"] = tmpdir
+        model.opt["path"]["training_states"] = tmpdir
         model.save(0, 1)
 
     # ----------------- test the test function -------------------- #
     model.test()
     assert model.output.shape == (1, 3, 32, 32)
     # delete net_g_ema
-    model.__delattr__('net_g_ema')
+    model.__delattr__("net_g_ema")
     model.test()
     assert model.output.shape == (1, 3, 32, 32)
     assert model.net_g.training is True  # should back to training mode after testing
 
     # ----------------- test nondist_validation -------------------- #
     # construct dataloader
-    dataset_opt = dict(
-        name='Test',
-        dataroot_gt='tests/data/gt',
-        dataroot_lq='tests/data/lq',
-        io_backend=dict(type='disk'),
-        scale=4,
-        phase='val')
+    dataset_opt = {
+        "name": "Test",
+        "dataroot_gt": "tests/data/gt",
+        "dataroot_lq": "tests/data/lq",
+        "io_backend": {"type": "disk"},
+        "scale": 4,
+        "phase": "val",
+    }
     dataset = PairedImageDataset(dataset_opt)
-    dataloader = torch.utils.data.DataLoader(dataset=dataset, batch_size=1, shuffle=False, num_workers=0)
+    dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=False, num_workers=0)
     assert model.is_train is True
     with tempfile.TemporaryDirectory() as tmpdir:
-        model.opt['path']['visualization'] = tmpdir
+        model.opt["path"]["visualization"] = tmpdir
         model.nondist_validation(dataloader, 1, None, save_img=True)
         assert model.is_train is True
         # check metric_results
-        assert 'psnr' in model.metric_results
-        assert isinstance(model.metric_results['psnr'], float)
+        assert "psnr" in model.metric_results
+        assert isinstance(model.metric_results["psnr"], float)
 
     # in validation mode
     with tempfile.TemporaryDirectory() as tmpdir:
-        model.opt['is_train'] = False
-        model.opt['val']['suffix'] = 'test'
-        model.opt['path']['visualization'] = tmpdir
-        model.opt['val']['pbar'] = True
+        model.opt["is_train"] = False
+        model.opt["val"]["suffix"] = "test"
+        model.opt["path"]["visualization"] = tmpdir
+        model.opt["val"]["pbar"] = True
         model.nondist_validation(dataloader, 1, None, save_img=True)
         # check metric_results
-        assert 'psnr' in model.metric_results
-        assert isinstance(model.metric_results['psnr'], float)
+        assert "psnr" in model.metric_results
+        assert isinstance(model.metric_results["psnr"], float)
 
         # if opt['val']['suffix'] is None
-        model.opt['val']['suffix'] = None
-        model.opt['name'] = 'demo'
-        model.opt['path']['visualization'] = tmpdir
+        model.opt["val"]["suffix"] = None
+        model.opt["name"] = "demo"
+        model.opt["path"]["visualization"] = tmpdir
         model.nondist_validation(dataloader, 1, None, save_img=True)
         # check metric_results
-        assert 'psnr' in model.metric_results
-        assert isinstance(model.metric_results['psnr'], float)
+        assert "psnr" in model.metric_results
+        assert isinstance(model.metric_results["psnr"], float)

@@ -1,9 +1,12 @@
-import cv2
 import random
-import torch
+from typing import overload
+
+import cv2
+import numpy as np
+from torch import Tensor
 
 
-def mod_crop(img, scale):
+def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     """Mod crop images, used during testing.
 
     Args:
@@ -17,13 +20,39 @@ def mod_crop(img, scale):
     if img.ndim in (2, 3):
         h, w = img.shape[0], img.shape[1]
         h_remainder, w_remainder = h % scale, w % scale
-        img = img[:h - h_remainder, :w - w_remainder, ...]
+        img = img[: h - h_remainder, : w - w_remainder, ...]
     else:
-        raise ValueError(f'Wrong img ndim: {img.ndim}.')
+        raise ValueError(f"Wrong img ndim: {img.ndim}.")
     return img
 
 
-def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
+@overload
+def paired_random_crop(
+    img_gt: np.ndarray,
+    img_lq: np.ndarray,
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[np.ndarray, np.ndarray]: ...
+
+
+@overload
+def paired_random_crop(
+    img_gt: Tensor,
+    img_lq: Tensor,
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[Tensor, Tensor]: ...
+
+
+def paired_random_crop(
+    img_gt: np.ndarray | Tensor,
+    img_lq: np.ndarray | Tensor,
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[np.ndarray, np.ndarray] | tuple[Tensor, Tensor]:
     """Paired random crop. Support Numpy array and Tensor inputs.
 
     It crops lists of lq and gt images with corresponding locations.
@@ -44,54 +73,137 @@ def paired_random_crop(img_gts, img_lqs, gt_patch_size, scale, gt_path=None):
             only have one element, just return ndarray.
     """
 
-    if not isinstance(img_gts, list):
-        img_gts = [img_gts]
-    if not isinstance(img_lqs, list):
-        img_lqs = [img_lqs]
-
-    # determine input type: Numpy array or Tensor
-    input_type = 'Tensor' if torch.is_tensor(img_gts[0]) else 'Numpy'
-
-    if input_type == 'Tensor':
-        h_lq, w_lq = img_lqs[0].size()[-2:]
-        h_gt, w_gt = img_gts[0].size()[-2:]
+    if isinstance(img_gt, Tensor):
+        assert isinstance(img_lq, Tensor)
+        h_lq, w_lq = img_lq.size()[-2:]
+        h_gt, w_gt = img_gt.size()[-2:]
     else:
-        h_lq, w_lq = img_lqs[0].shape[0:2]
-        h_gt, w_gt = img_gts[0].shape[0:2]
+        assert isinstance(img_lq, np.ndarray)
+        h_lq, w_lq = img_lq.shape[0:2]
+        h_gt, w_gt = img_gt.shape[0:2]
     lq_patch_size = gt_patch_size // scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
-        raise ValueError(f'Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ',
-                         f'multiplication of LQ ({h_lq}, {w_lq}). {gt_path}')
+        raise ValueError(
+            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
+            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}",
+        )
     if h_lq < lq_patch_size or w_lq < lq_patch_size:
-        raise ValueError(f'LQ ({h_lq}, {w_lq}) is smaller than patch size '
-                         f'({lq_patch_size}, {lq_patch_size}). '
-                         f'Please remove {gt_path}.')
+        raise ValueError(
+            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
+            f"({lq_patch_size}, {lq_patch_size}). "
+            f"Please remove {gt_path}."
+        )
 
     # randomly choose top and left coordinates for lq patch
     top = random.randint(0, h_lq - lq_patch_size)
     left = random.randint(0, w_lq - lq_patch_size)
 
     # crop lq patch
-    if input_type == 'Tensor':
-        img_lqs = [v[:, :, top:top + lq_patch_size, left:left + lq_patch_size] for v in img_lqs]
+    if isinstance(img_lq, Tensor):
+        img_lq = img_lq[:, :, top : top + lq_patch_size, left : left + lq_patch_size]
+
     else:
-        img_lqs = [v[top:top + lq_patch_size, left:left + lq_patch_size, ...] for v in img_lqs]
+        img_lq = img_lq[top : top + lq_patch_size, left : left + lq_patch_size, ...]
 
     # crop corresponding gt patch
     top_gt, left_gt = int(top * scale), int(left * scale)
-    if input_type == 'Tensor':
-        img_gts = [v[:, :, top_gt:top_gt + gt_patch_size, left_gt:left_gt + gt_patch_size] for v in img_gts]
+    if isinstance(img_gt, Tensor):
+        assert isinstance(img_lq, Tensor)
+        img_gt = img_gt[
+            :, :, top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size
+        ]
+
+        return img_gt, img_lq
     else:
-        img_gts = [v[top_gt:top_gt + gt_patch_size, left_gt:left_gt + gt_patch_size, ...] for v in img_gts]
-    if len(img_gts) == 1:
-        img_gts = img_gts[0]
-    if len(img_lqs) == 1:
-        img_lqs = img_lqs[0]
-    return img_gts, img_lqs
+        assert isinstance(img_lq, np.ndarray)
+        img_gt = img_gt[
+            top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size, ...
+        ]
+
+        return img_gt, img_lq
 
 
-def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
+@overload
+def paired_random_crop_list(
+    img_gts: list[np.ndarray],
+    img_lqs: list[np.ndarray],
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[list[np.ndarray], list[np.ndarray]]: ...
+
+
+@overload
+def paired_random_crop_list(
+    img_gts: list[Tensor],
+    img_lqs: list[Tensor],
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[list[Tensor], list[Tensor]]: ...
+
+
+def paired_random_crop_list(
+    img_gts: list[np.ndarray] | list[Tensor],
+    img_lqs: list[np.ndarray] | list[Tensor],
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[list[np.ndarray] | list[Tensor], list[np.ndarray] | list[Tensor]]:
+    """Paired random crop. Support Numpy array and Tensor inputs.
+
+    It crops lists of lq and gt images with corresponding locations.
+
+    Args:
+        img_gts (list[ndarray] | ndarray | list[Tensor] | Tensor): GT images. Note that all images
+            should have the same shape. If the input is an ndarray, it will
+            be transformed to a list containing itself.
+        img_lqs (list[ndarray] | ndarray): LQ images. Note that all images
+            should have the same shape. If the input is an ndarray, it will
+            be transformed to a list containing itself.
+        gt_patch_size (int): GT patch size.
+        scale (int): Scale factor.
+        gt_path (str): Path to ground-truth. Default: None.
+
+    Returns:
+        list[ndarray] | ndarray: GT images and LQ images. If returned results
+            only have one element, just return ndarray.
+    """
+
+    assert len(img_gts) == len(img_lqs)
+
+    cropped_gts, cropped_lqs = [], []
+    for img_gt, img_lq in zip(img_gts, img_lqs, strict=False):
+        if isinstance(img_gt, Tensor) and isinstance(img_lq, Tensor):
+            cropped_gt, cropped_lq = paired_random_crop(
+                img_gt, img_lq, gt_patch_size, scale, gt_path
+            )
+        elif isinstance(img_gt, np.ndarray) and isinstance(img_lq, np.ndarray):
+            cropped_gt, cropped_lq = paired_random_crop(
+                img_gt, img_lq, gt_patch_size, scale, gt_path
+            )
+        else:
+            raise ValueError("img_gts and img_lqs must be all Tensor or all np.ndarray")
+        cropped_gts.append(cropped_gt)
+        cropped_lqs.append(cropped_lq)
+
+    return cropped_gts, cropped_lqs
+
+
+def augment(
+    imgs: np.ndarray | list[np.ndarray],
+    hflip: bool = True,
+    rotation: bool = True,
+    flows: list[np.ndarray] | None = None,
+    return_status: bool = False,
+) -> (
+    np.ndarray
+    | list[np.ndarray]
+    | tuple[np.ndarray, np.ndarray]
+    | tuple[list[np.ndarray], np.ndarray]
+    | tuple[list[np.ndarray], list[np.ndarray]]
+):
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
     We use vertical flip and transpose for rotation implementation.
@@ -117,7 +229,7 @@ def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
     vflip = rotation and random.random() < 0.5
     rot90 = rotation and random.random() < 0.5
 
-    def _augment(img):
+    def _augment(img: np.ndarray) -> np.ndarray:
         if hflip:  # horizontal
             cv2.flip(img, 1, img)
         if vflip:  # vertical
@@ -126,7 +238,7 @@ def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
             img = img.transpose(1, 0, 2)
         return img
 
-    def _augment_flow(flow):
+    def _augment_flow(flow: np.ndarray) -> np.ndarray:
         if hflip:  # horizontal
             cv2.flip(flow, 1, flow)
             flow[:, :, 0] *= -1
@@ -145,20 +257,22 @@ def augment(imgs, hflip=True, rotation=True, flows=None, return_status=False):
         imgs = imgs[0]
 
     if flows is not None:
-        if not isinstance(flows, list):
-            flows = [flows]
         flows = [_augment_flow(flow) for flow in flows]
         if len(flows) == 1:
-            flows = flows[0]
-        return imgs, flows
+            flows = flows[0]  # type: ignore -- wtf is this function even? this needs to be rewritten to be less jank with what its returning
+        return imgs, flows  # type: ignore -- ditto above
+    elif return_status:
+        return imgs, (hflip, vflip, rot90)  # type: ignore -- ditto above
     else:
-        if return_status:
-            return imgs, (hflip, vflip, rot90)
-        else:
-            return imgs
+        return imgs
 
 
-def img_rotate(img, angle, center=None, scale=1.0):
+def img_rotate(
+    img: np.ndarray,
+    angle: float,
+    center: tuple[int, int] | None = None,
+    scale: float = 1.0,
+) -> np.ndarray:
     """Rotate image.
 
     Args:
