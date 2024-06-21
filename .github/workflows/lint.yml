@@ -10,10 +10,6 @@ on:
             - opened
             - synchronize
             - closed
-        paths:
-            - '.github/workflows/**'
-            - 'pyproject.toml'
-            - 'requirements.txt'
     push:
         branches: [main]
 
