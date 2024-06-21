@@ -13,9 +13,9 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 class Downsample(nn.Module):
     def __init__(
         self,
+        channels: int,
         filter_size: int = 5,
         stride: int = 2,
-        channels: int | None = None,
         pad_off: int = 0,
     ) -> None:
         super().__init__()
@@ -51,9 +51,11 @@ class ADISTSLoss(torch.nn.Module):
         loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
+        assert window_size % 3 == 0
         self.resize_input = resize_input
         self.loss_weight = loss_weight
         vgg_pretrained_features = models.vgg16(pretrained=True).features
+        assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
         self.stage1 = torch.nn.Sequential()
         self.stage2 = torch.nn.Sequential()
         self.stage3 = torch.nn.Sequential()
@@ -89,7 +91,9 @@ class ADISTSLoss(torch.nn.Module):
         self.window_size = window_size
         for k in range(len(self.chns)):
             self.windows.append(
-                self.create_window(self.window_size, self.window_size / 3, self.chns[k])
+                self.create_window(
+                    self.window_size, self.window_size // 3, self.chns[k]
+                )
             )
 
     def compute_prob(self, feats: list[Tensor]) -> list[Tensor]:
@@ -165,7 +169,9 @@ class ADISTSLoss(torch.nn.Module):
         _1d_window = self.gaussian(window_size, window_sigma).unsqueeze(1)
         _2d_window = _1d_window.mm(_1d_window.t()).float().unsqueeze(0).unsqueeze(0)
         window = _2d_window.expand(channel, 1, window_size, window_size).contiguous()
-        return nn.Parameter(window, requires_grad=False)
+        param = nn.Parameter(window, requires_grad=False)
+        assert isinstance(param, nn.Parameter)
+        return param
 
     def forward_once(self, x: Tensor) -> list[Tensor]:
         if self.resize_input:
@@ -199,8 +205,8 @@ class ADISTSLoss(torch.nn.Module):
 
     def entropy(self, feat: Tensor) -> Tensor:
         c0 = 1e-12
-        b, c, h, w = feat.shape
-        feat = F.normalize(F.relu(feat), dim=(2, 3))
+        b, c, _, _ = feat.shape
+        feat = F.normalize(F.relu(feat), dim=(2, 3))  # type: ignore
         feat = feat.reshape(b, c, -1)
         feat = feat / (torch.sum(feat, dim=2, keepdim=True) + c0)
         weight = torch.sum(-feat * torch.log2(feat + c0), dim=2, keepdim=True)
@@ -217,7 +223,7 @@ class ADISTSLoss(torch.nn.Module):
         ps_x = self.compute_prob(feats_x)
 
         pad = nn.ReflectionPad2d(0)
-        d = 0
+        d = torch.tensor(0, device=x.device)
         weight = []
         for k in range(len(self.chns)):
             weight.append(self.entropy(feats_x[k]))
@@ -235,8 +241,8 @@ class ADISTSLoss(torch.nn.Module):
         weight_list = torch.split(weight, self.chns, dim=1)
 
         for k in range(len(self.chns) - 1, -1, -1):
-            feat_x = F.normalize(feats_x[k], dim=(2, 3))
-            feat_y = F.normalize(feats_y[k], dim=(2, 3))
+            feat_x = F.normalize(feats_x[k], dim=(2, 3))  # type: ignore
+            feat_y = F.normalize(feats_y[k], dim=(2, 3))  # type: ignore
             try:
                 x_mean = F.conv2d(
                     pad(feat_x),

@@ -137,37 +137,6 @@ class CharbonnierLoss(nn.Module):
 
 
 @LOSS_REGISTRY.register()
-class WeightedTVLoss(L1Loss):
-    """Weighted TV loss.
-
-    Args:
-        loss_weight (float): Loss weight. Default: 1.0.
-    """
-
-    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
-        if reduction not in ["mean", "sum"]:
-            raise ValueError(
-                f"Unsupported reduction mode: {reduction}. Supported ones are: mean | sum"
-            )
-        super().__init__(loss_weight=loss_weight, reduction=reduction)
-
-    def forward(self, pred: Tensor, weight: Tensor | None = None) -> Tensor:
-        if weight is None:
-            y_weight = None
-            x_weight = None
-        else:
-            y_weight = weight[:, :, :-1, :]
-            x_weight = weight[:, :, :, :-1]
-
-        y_diff = super().forward(pred[:, :, :-1, :], pred[:, :, 1:, :], weight=y_weight)
-        x_diff = super().forward(pred[:, :, :, :-1], pred[:, :, :, 1:], weight=x_weight)
-
-        loss = x_diff + y_diff
-
-        return loss
-
-
-@LOSS_REGISTRY.register()
 class ColorLoss(nn.Module):
     """Color loss"""
 

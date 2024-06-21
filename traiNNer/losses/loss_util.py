@@ -16,7 +16,7 @@ def reduce_loss(loss: Tensor, reduction: str) -> Tensor:
     Returns:
         Tensor: Reduced loss tensor.
     """
-    reduction_enum = F._Reduction.get_enum(reduction)  # noqa: SLF001
+    reduction_enum = F._Reduction.get_enum(reduction)  # type: ignore # noqa: SLF001
     # none: 0, elementwise_mean:1, sum: 2
     if reduction_enum == 0:
         return loss

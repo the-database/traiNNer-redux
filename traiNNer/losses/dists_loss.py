@@ -18,9 +18,9 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 class L2pooling(nn.Module):
     def __init__(
         self,
+        channels: int,
         filter_size: int = 5,
         stride: int = 2,
-        channels: int | None = None,
         as_loss: bool = True,
         pad_off: int = 0,
     ) -> None:
@@ -83,6 +83,7 @@ class DISTSLoss(nn.Module):
         self.clip_min = clip_min
 
         vgg_pretrained_features = models.vgg16(weights="DEFAULT").features
+        assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
         self.stage1 = torch.nn.Sequential()
         self.stage2 = torch.nn.Sequential()
         self.stage3 = torch.nn.Sequential()
@@ -115,12 +116,14 @@ class DISTSLoss(nn.Module):
             )
 
         self.chns = [3, 64, 128, 256, 512, 512]
-        self.register_parameter(
-            "alpha", nn.Parameter(torch.randn(1, sum(self.chns), 1, 1))
+
+        alpha_param = nn.Parameter(torch.randn(1, sum(self.chns), 1, 1))
+        beta_param = nn.Parameter(torch.randn(1, sum(self.chns), 1, 1))
+        assert isinstance(alpha_param, nn.Parameter) and isinstance(
+            beta_param, nn.Parameter
         )
-        self.register_parameter(
-            "beta", nn.Parameter(torch.randn(1, sum(self.chns), 1, 1))
-        )
+        self.register_parameter("alpha", alpha_param)
+        self.register_parameter("beta", beta_param)
         self.alpha.data.normal_(0.1, 0.01)
         self.beta.data.normal_(0.1, 0.01)
 
@@ -175,8 +178,8 @@ class DISTSLoss(nn.Module):
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         feats0 = self.forward_once(x)
         feats1 = self.forward_once(y)
-        dist1 = 0
-        dist2 = 0
+        dist1 = torch.tensor(0, device=x.device)
+        dist2 = torch.tensor(0, device=x.device)
         c1 = 1e-6
         c2 = 1e-6
 

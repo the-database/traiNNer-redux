@@ -1,4 +1,5 @@
 from typing import overload
+
 import torch
 from torch import Size, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
@@ -143,7 +144,8 @@ class ContextualLoss(nn.Module):
             indices = torch.randperm(s)[:num].contiguous().type_as(tensor).long()
 
             indices = indices.clamp(
-                indices.min(), tensor.shape[-1] - 1 # type: ignore
+                indices.min(),
+                tensor.shape[-1] - 1,  # type: ignore
             )
             assert indices is not None
             indices = indices.view(1, 1, -1).expand(n, c, -1)
@@ -154,9 +156,7 @@ class ContextualLoss(nn.Module):
 
     @overload
     @staticmethod
-    def _random_pooling(
-        feats: Tensor, output_1d_size: int = 100
-    ) -> Tensor: ...
+    def _random_pooling(feats: Tensor, output_1d_size: int = 100) -> Tensor: ...
 
     @overload
     @staticmethod
