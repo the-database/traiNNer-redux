@@ -1,3 +1,4 @@
+from typing import overload
 import torch
 from torch import Size, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
@@ -93,7 +94,7 @@ class ContextualLoss(nn.Module):
                 images.shape[1] == 3 and gt.shape[1] == 3
             ), "VGG model takes 3 channel images."
 
-            loss = 0
+            loss = torch.tensor(0, device=images.device)
             vgg_images = self.vgg_model(images)
             vgg_images = {k: v.clone().to(device) for k, v in vgg_images.items()}
             vgg_gt = self.vgg_model(gt)
@@ -104,7 +105,7 @@ class ContextualLoss(nn.Module):
                     vgg_images[key] = self._crop_quarters(vgg_images[key])
                     vgg_gt[key] = self._crop_quarters(vgg_gt[key])
 
-                n, c, h, w = vgg_images[key].size()
+                _, _, h, w = vgg_images[key].size()
                 if h * w > self.max_1d_size**2:
                     vgg_images[key] = self._random_pooling(
                         vgg_images[key], output_1d_size=self.max_1d_size
@@ -122,7 +123,7 @@ class ContextualLoss(nn.Module):
                 images = self._crop_quarters(images)
                 gt = self._crop_quarters(gt)
 
-            n, c, h, w = images.size()
+            _, _, h, w = images.size()
             if h * w > self.max_1d_size**2:
                 images = self._random_pooling(images, output_1d_size=self.max_1d_size)
                 gt = self._random_pooling(gt, output_1d_size=self.max_1d_size)
@@ -140,25 +141,39 @@ class ContextualLoss(nn.Module):
         device = tensor.device
         if indices is None:
             indices = torch.randperm(s)[:num].contiguous().type_as(tensor).long()
+
             indices = indices.clamp(
-                indices.min(), tensor.shape[-1] - 1
-            )  # max = indices.max()-1
+                indices.min(), tensor.shape[-1] - 1 # type: ignore
+            )
+            assert indices is not None
             indices = indices.view(1, 1, -1).expand(n, c, -1)
         indices = indices.to(device)
 
         res = torch.gather(tensor, index=indices, dim=-1)
         return res, indices
 
+    @overload
+    @staticmethod
+    def _random_pooling(
+        feats: Tensor, output_1d_size: int = 100
+    ) -> Tensor: ...
+
+    @overload
+    @staticmethod
+    def _random_pooling(
+        feats: list[Tensor], output_1d_size: int = 100
+    ) -> list[Tensor]: ...
+
     @staticmethod
     def _random_pooling(
         feats: Tensor | list[Tensor], output_1d_size: int = 100
-    ) -> list[Tensor]:
+    ) -> Tensor | list[Tensor]:
         single_input = type(feats) is torch.Tensor
 
         if single_input:
             feats = [feats]
 
-        n, c, h, w = feats[0].size()
+        n, c, _, _ = feats[0].size()
         feats_sample, indices = ContextualLoss._random_sampling(
             feats[0], output_1d_size**2, None
         )
@@ -179,7 +194,7 @@ class ContextualLoss(nn.Module):
 
     @staticmethod
     def _crop_quarters(feature_tensor: Tensor) -> Tensor:
-        n, fc, fh, fw = feature_tensor.size()
+        _, _, fh, fw = feature_tensor.size()
         quarters_list = []
         quarters_list.append(feature_tensor[..., 0 : round(fh / 2), 0 : round(fw / 2)])
         quarters_list.append(feature_tensor[..., 0 : round(fh / 2), round(fw / 2) :])
@@ -300,7 +315,7 @@ class ContextualLoss(nn.Module):
         self, i_features: Tensor, t_features: Tensor, weight_sp: float = 0.1
     ) -> Tensor:
         def compute_meshgrid(shape: Size) -> Tensor:
-            n, c, h, w = shape
+            n, _, h, w = shape
             rows = torch.arange(0, h, dtype=torch.float32) / (h + 1)
             cols = torch.arange(0, w, dtype=torch.float32) / (w + 1)
 

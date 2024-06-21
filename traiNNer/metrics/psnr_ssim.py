@@ -158,7 +158,7 @@ def calculate_ssim(
 @METRIC_REGISTRY.register()
 def calculate_ssim_pt(
     img: Tensor, img2: Tensor, crop_border: int, test_y_channel: bool = False, **kwargs
-) -> float:
+) -> Tensor:
     """Calculate SSIM (structural similarity) (PyTorch version).
 
     ``Paper: Image quality assessment: From error visibility to structural similarity``
@@ -198,37 +198,32 @@ def calculate_ssim_pt(
     return ssim
 
 
-def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
-    """Calculate SSIM (structural similarity) for one channel images.
+def _ssim(img1: np.ndarray, img2: np.ndarray) -> float:
+    """Calculates mean localized Structural Similarity Index (SSIM)
+    between two images."""
 
-    It is called by func:`calculate_ssim`.
+    # https://github.com/chaiNNer-org/chaiNNer/blob/43e76551a7c83d229ee7ff11e5ec7f8e576d3b5c/backend/src/nodes/impl/image_utils.py#L301
 
-    Args:
-        img (ndarray): Images with range [0, 255] with order 'HWC'.
-        img2 (ndarray): Images with range [0, 255] with order 'HWC'.
+    c1 = 0.01**2
+    c2 = 0.03**2
 
-    Returns:
-        float: SSIM result.
-    """
-
-    c1 = (0.01 * 255) ** 2
-    c2 = (0.03 * 255) ** 2
     kernel = cv2.getGaussianKernel(11, 1.5)
-    window = np.outer(kernel, kernel.transpose())
+    window = np.outer(kernel, kernel.transpose())  # type: ignore
 
-    mu1 = cv2.filter2D(img, -1, window)[5:-5, 5:-5]  # valid mode for window size 11
+    mu1 = cv2.filter2D(img1, -1, window)[5:-5, 5:-5]
     mu2 = cv2.filter2D(img2, -1, window)[5:-5, 5:-5]
-    mu1_sq = mu1**2
-    mu2_sq = mu2**2
-    mu1_mu2 = mu1 * mu2
-    sigma1_sq = cv2.filter2D(img**2, -1, window)[5:-5, 5:-5] - mu1_sq
+    mu1_sq = np.power(mu1, 2)
+    mu2_sq = np.power(mu2, 2)
+    mu1_mu2 = np.multiply(mu1, mu2)
+    sigma1_sq = cv2.filter2D(img1**2, -1, window)[5:-5, 5:-5] - mu1_sq
     sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
-    sigma12 = cv2.filter2D(img * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
+    sigma12 = cv2.filter2D(img1 * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
 
     ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / (
         (mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2)
     )
-    return ssim_map.mean()
+
+    return float(np.mean(ssim_map))
 
 
 def _ssim_pth(img: Tensor, img2: Tensor) -> Tensor:
@@ -247,7 +242,7 @@ def _ssim_pth(img: Tensor, img2: Tensor) -> Tensor:
     c2 = (0.03 * 255) ** 2
 
     kernel = cv2.getGaussianKernel(11, 1.5)
-    window = np.outer(kernel, kernel.transpose())
+    window = np.outer(kernel, kernel.transpose())  # type: ignore
     window = (
         torch.from_numpy(window)
         .view(1, 1, 11, 11)
