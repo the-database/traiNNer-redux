@@ -8,8 +8,7 @@ from typing import Any
 import pytorch_optimizer
 import torch
 from spandrel import ModelLoader
-from torch import nn
-from torch.amp.grad_scaler import GradScaler
+from torch import GradScaler, nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler

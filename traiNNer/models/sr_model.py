@@ -3,8 +3,7 @@ from os import path as osp
 from typing import Any
 
 import torch
-from torch import Tensor, nn
-from torch.amp.grad_scaler import GradScaler
+from torch import GradScaler, Tensor, nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
