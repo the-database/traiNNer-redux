@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from logging import Logger
 from typing import Any
 
+import torch
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from .dist_util import get_dist_info, master_only
@@ -126,11 +127,13 @@ class MessageLogger:
         for k, v in log_vars.items():
             message += f"{k}: {v:.4e} "
             # tensorboard logger
-            if self.use_tb_logger and "debug" not in self.exp_name:
-                if k.startswith("l_") and self.tb_logger is not None:
-                    self.tb_logger.add_scalar(f"losses/{k}", v, current_iter)
-                elif self.tb_logger is not None:
-                    self.tb_logger.add_scalar(k, v, current_iter)
+            if self.tb_logger is not None and "debug" not in self.exp_name:
+                label = f"losses/{k}" if k.startswith("l_") else k
+                self.tb_logger.add_scalar(
+                    label,
+                    v.to(dtype=torch.float32) if v.dtype == torch.bfloat16 else v,
+                    current_iter,
+                )
         self.logger.info(message)
 
 
