@@ -316,10 +316,10 @@ class BaseModel:
     @master_only
     def save_network(
         self,
-        net: nn.Module | list[nn.Module],
+        net: nn.Module,
         net_label: str,
         current_iter: int,
-        param_key: str | list[str] = "params",
+        param_key: str = "params",
     ) -> None:
         """Save networks.
 
@@ -336,28 +336,19 @@ class BaseModel:
         save_filename = f"{net_label}_{current_iter_str}.safetensors"
         save_path = os.path.join(self.opt["path"]["models"], save_filename)
 
-        net = net if isinstance(net, list) else [net]
-        param_key = param_key if isinstance(param_key, list) else [param_key]
-        assert len(net) == len(
-            param_key
-        ), "The lengths of net and param_key should be the same."
-
-        save_dict = {}
-        for net_, param_key_ in zip(net, param_key, strict=False):
-            bare_net_ = self.get_bare_model(net_)
-            state_dict = bare_net_.state_dict()
-            for full_key, param in state_dict.items():
-                key = full_key
-                if key.startswith("module."):  # remove unnecessary 'module.'
-                    key = key[7:]
-                state_dict[key] = param.cpu()
-            save_dict[param_key_] = state_dict
+        bare_net_ = self.get_bare_model(net)
+        state_dict = bare_net_.state_dict()
+        for full_key, param in state_dict.items():
+            key = full_key
+            if key.startswith("module."):  # remove unnecessary 'module.'
+                key = key[7:]
+            state_dict[key] = param.cpu()
 
         # avoid occasional writing errors
         retry = 3
         while retry > 0:
             try:
-                save_file(save_dict, save_path)
+                save_file(state_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(
