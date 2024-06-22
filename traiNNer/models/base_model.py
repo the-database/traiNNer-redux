@@ -579,4 +579,4 @@ class BaseModel:
         logger = get_root_logger()
         if self.use_moa:
             self.batchaugment = BatchAugment(train_opt)
-            logger.info("Batch augmentations enabled")
+            logger.info("Batch augmentations enabled.")
