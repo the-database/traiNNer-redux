@@ -7,6 +7,7 @@ from typing import Any
 
 import pytorch_optimizer
 import torch
+from safetensors.torch import save_file
 from spandrel import ModelLoader
 from torch import nn
 from torch.cuda.amp import GradScaler
@@ -16,7 +17,6 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
-from safetensors.torch import save_file
 
 from ..ops.batchaug import BatchAugment
 from ..utils import get_root_logger
