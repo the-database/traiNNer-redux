@@ -140,6 +140,11 @@ class SRModel(BaseModel):
                 "bfloat16 was enabled without AMP and will have no effect. Enable AMP to use bfloat16 (use_amp: true)."
             )
 
+        if self.opt.get("fast_matmul", False):
+            logger.info(
+                "Fast matrix multiplication and convolution operations (fast_matmul) enabled, trading precision for performance."
+            )
+
         # define losses
         pixel_opt = train_opt.get("pixel_opt")
         if pixel_opt:
