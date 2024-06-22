@@ -97,7 +97,9 @@ class SRModel(BaseModel):
 
         self.ema_decay = train_opt.get("ema_decay", 0)
         if self.ema_decay > 0:
-            logger.info("Use Exponential Moving Average with decay: %f", self.ema_decay)
+            logger.info(
+                "Using Exponential Moving Average (EMA) with decay: %f", self.ema_decay
+            )
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
@@ -123,7 +125,12 @@ class SRModel(BaseModel):
             torch.bfloat16 if self.opt.get("amp_bfloat16", False) else torch.float16
         )
 
-        if not self.use_amp and self.amp_dtype == torch.bfloat16:
+        if self.use_amp:
+            logger.info(
+                "Using Automatic Mixed Precision (AMP) with %s datatype.",
+                self.amp_dtype,
+            )
+        elif self.amp_dtype == torch.bfloat16:
             logger.warning(
                 "bfloat16 was enabled without AMP and will have no effect. Enable AMP to use bfloat16 (use_amp: true)."
             )
