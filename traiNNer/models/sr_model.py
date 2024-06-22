@@ -564,10 +564,10 @@ class SRModel(BaseModel):
     def save(self, epoch: int, current_iter: int) -> None:
         if self.net_g_ema is not None:
             self.save_network(
-                [self.net_g, self.net_g_ema],
+                self.net_g_ema,
                 "net_g",
                 current_iter,
-                param_key=["params", "params_ema"],
+                param_key="params_ema",
             )
         else:
             self.save_network(self.net_g, "net_g", current_iter)
