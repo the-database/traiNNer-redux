@@ -552,7 +552,6 @@ class BaseModel:
         if "scaler_d" in resume_state:
             self.scaler_d.load_state_dict(resume_state["scaler_d"])
 
-
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
 
