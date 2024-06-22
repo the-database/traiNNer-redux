@@ -382,7 +382,7 @@ class BaseModel:
         """
         crt_net = self.get_bare_model(crt_net)
         crt_net_state_dict = crt_net.state_dict()
-        crt_net_keys = set(crt_net.keys())
+        crt_net_keys = set(crt_net_state_dict.keys())
         load_net_keys = set(load_net.keys())
 
         logger = get_root_logger()
