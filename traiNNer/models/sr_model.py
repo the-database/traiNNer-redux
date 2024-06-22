@@ -126,6 +126,11 @@ class SRModel(BaseModel):
         )
 
         if self.use_amp:
+            if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
+                logger.warning(
+                    "bfloat16 was enabled for AMP but the current GPU does not support bfloat16. Falling back to float16 for AMP."
+                )
+                self.amp_dtype = torch.float16
             logger.info(
                 "Using Automatic Mixed Precision (AMP) with %s datatype.",
                 self.amp_dtype,
