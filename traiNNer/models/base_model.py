@@ -7,7 +7,7 @@ from typing import Any
 
 import pytorch_optimizer
 import torch
-from safetensors.torch import save_file
+from safetensors.torch import save_file, load_file
 from spandrel import ModelLoader
 from torch import nn
 from torch.cuda.amp import GradScaler
@@ -442,12 +442,25 @@ class BaseModel:
         if not self.load_network_spandrel(net, load_path, strict):
             logger = get_root_logger()
             net = self.get_bare_model(net)
-            load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
+            if load_path.endswith(".safetensors"):
+                load_net = load_file(load_path, device=str(self.device))
+            elif load_path.endswith(".pth"):
+                load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
+            else:
+                raise ValueError(f"Unsupported model: {load_path}")
             if param_key is not None:
-                if param_key not in load_net and "params" in load_net:
-                    param_key = "params"
-                    logger.info("Loading: params_ema does not exist, use params.")
-                load_net = load_net[param_key]
+                if param_key not in load_net:
+                    if "params_ema" in load_net:
+                        logger.info("Loading: %s does not exist, using params_ema.", param_key)
+                        param_key = "params_ema"
+                    elif "params" in load_net:
+                        logger.info("Loading: %s does not exist, using params.", param_key)
+                        param_key = "params"
+                    else:
+                        logger.info("Loading: %s does not exist, using None.", param_key)
+                        param_key = None
+                else:
+                    load_net = load_net[param_key]
             logger.info(
                 "Loading %s model from %s, with param key: [%s].",
                 net.__class__.__name__,
