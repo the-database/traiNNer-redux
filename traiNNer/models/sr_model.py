@@ -125,7 +125,7 @@ class SRModel(BaseModel):
 
         if not self.use_amp and self.amp_dtype == torch.bfloat16:
             logger.warning(
-                "bfloat16 (amp_bfloat16) was enabled without AMP (use_amp) and will have no effect. Enable AMP to use bfloat16."
+                "bfloat16 was enabled without AMP and will have no effect. Enable AMP to use bfloat16 (use_amp: true)."
             )
 
         # define losses
