@@ -489,9 +489,12 @@ class BaseModel:
                 "iter": current_iter,
                 "optimizers": [],
                 "schedulers": [],
-                "scaler_d": self.scaler_d.state_dict(),
-                "scaler_g": self.scaler_g.state_dict(),
             }
+
+            if self.use_amp:
+                state["scaler_d"] = self.scaler_d.state_dict()
+                state["scaler_g"] = self.scaler_g.state_dict()
+
             for o in self.optimizers:
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
@@ -544,8 +547,11 @@ class BaseModel:
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
 
-        self.scaler_d.load_state_dict(resume_state["scaler_d"])
-        self.scaler_g.load_state_dict(resume_state["scaler_g"])
+        if "scaler_g" in resume_state:
+            self.scaler_g.load_state_dict(resume_state["scaler_g"])
+        if "scaler_d" in resume_state:
+            self.scaler_d.load_state_dict(resume_state["scaler_d"])
+
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.

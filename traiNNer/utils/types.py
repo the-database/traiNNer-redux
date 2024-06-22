@@ -19,5 +19,5 @@ class TrainingState(TypedDict):
     iter: int
     optimizers: list[StateDict]
     schedulers: list[StateDict]
-    scaler_g: StateDict
-    scaler_d: StateDict
+    scaler_g: NotRequired[StateDict]
+    scaler_d: NotRequired[StateDict]
