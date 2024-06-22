@@ -17,7 +17,6 @@ def build_model(opt: dict[str, Any]) -> BaseModel:
         opt (dict): Configuration. It must contain:
             model_type (str): Model type.
     """
-    print(opt)
     opt = deepcopy(opt)
 
     if opt["high_order_degradation"]:
