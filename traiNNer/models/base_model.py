@@ -16,6 +16,7 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
+from safetensors.torch import save_file
 
 from ..ops.batchaug import BatchAugment
 from ..utils import get_root_logger
@@ -332,7 +333,7 @@ class BaseModel:
 
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
 
-        save_filename = f"{net_label}_{current_iter_str}.pth"
+        save_filename = f"{net_label}_{current_iter_str}.safetensors"
         save_path = os.path.join(self.opt["path"]["models"], save_filename)
 
         net = net if isinstance(net, list) else [net]
@@ -356,7 +357,7 @@ class BaseModel:
         retry = 3
         while retry > 0:
             try:
-                torch.save(save_dict, save_path)
+                save_file(save_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(
