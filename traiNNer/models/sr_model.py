@@ -98,7 +98,7 @@ class SRModel(BaseModel):
         self.ema_decay = train_opt.get("ema_decay", 0)
         if self.ema_decay > 0:
             logger.info(
-                "Using Exponential Moving Average (EMA) with decay: %f", self.ema_decay
+                "Using Exponential Moving Average (EMA) with decay: %s", self.ema_decay
             )
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
