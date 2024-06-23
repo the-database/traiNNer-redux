@@ -438,8 +438,18 @@ class BaseModel:
                 Default: 'params'.
         """
 
-        if not self.load_network_spandrel(net, load_path, strict):
-            logger = get_root_logger()
+        logger = get_root_logger()
+        try:
+            load_net = self.model_loader.load_from_file(load_path).model.state_dict()
+            # net.load_state_dict(load_net.model.state_dict(), strict=strict)
+            logger.info(
+                "Loading %s model from %s, with spandrel.",
+                net.__class__.__name__,
+                load_path,
+            )
+        except Exception as e:
+            print(e)
+
             net = self.get_bare_model(net)
             if load_path.endswith(".safetensors"):
                 load_net = load_file(load_path, device=str(self.device))
@@ -469,21 +479,21 @@ class BaseModel:
                     else:
                         load_net = load_net[param_key]
             else:
-                raise ValueError(f"Unsupported model: {load_path}")
+                raise ValueError(f"Unsupported model: {load_path}") from e
             logger.info(
                 "Loading %s model from %s, with param key: [%s].",
                 net.__class__.__name__,
                 load_path,
                 param_key,
             )
-            # remove unnecessary 'module.'
-            for k, v in deepcopy(load_net).items():
-                if k.startswith("module."):
-                    load_net[k[7:]] = v
-                    load_net.pop(k)
-            self._print_different_keys_loading(net, load_net, strict)
+        # remove unnecessary 'module.'
+        for k, v in deepcopy(load_net).items():
+            if k.startswith("module."):
+                load_net[k[7:]] = v
+                load_net.pop(k)
+        self._print_different_keys_loading(net, load_net, strict)
 
-            net.load_state_dict(load_net, strict=strict)
+        net.load_state_dict(load_net, strict=strict)
 
     @master_only
     def save_training_state(self, epoch: int, current_iter: int) -> None:
