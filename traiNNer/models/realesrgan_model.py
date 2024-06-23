@@ -4,18 +4,16 @@ from typing import Any
 import torch
 from torch import Tensor
 from torch.nn import functional as F  # noqa: N812
-from traiNNer.utils import RNG
-from traiNNer.utils.types import DataFeed
-
-from ..data.degradations import (
+from traiNNer.data.degradations import (
     random_add_gaussian_noise_pt,
     random_add_poisson_noise_pt,
 )
-from ..data.transforms import paired_random_crop
-from ..models.sr_model import SRModel
-from ..utils import DiffJPEG
-from ..utils.img_process_util import filter2d
-from ..utils.registry import MODEL_REGISTRY
+from traiNNer.data.transforms import paired_random_crop
+from traiNNer.models.sr_model import SRModel
+from traiNNer.utils import RNG, DiffJPEG
+from traiNNer.utils.img_process_util import filter2d
+from traiNNer.utils.registry import MODEL_REGISTRY
+from traiNNer.utils.types import DataFeed
 
 
 @MODEL_REGISTRY.register(suffix="traiNNer")

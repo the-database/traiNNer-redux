@@ -1,0 +1,279 @@
+####################
+# General Settings
+####################
+name: %scale%_%archname%_OTF
+# Scaling factor for the model.
+scale: %scale%
+# Enables AMP which uses mixed precision (fp32 + fp16) to improve performance and reduce VRAM, recommended in most cases.
+use_amp: true
+# Uses bf16 instead of fp16 for AMP, only supported on NVIDIA Ampere (e.g., RTX 3000 series) or newer.
+# Older cards will ignore this setting and fall back to fp16.
+amp_bf16: true
+# Reduces precision of fp32 matrix multiplications and convolution operations to improve performance.
+fast_matmul: false
+num_gpu: auto
+# Manual seed for training in deterministic mode, which makes training reproducible, so training with the same settings
+# and dataset should produce the same model. Reduces training performance. For testing purposes only.
+# manual_seed: 1024
+
+# Enable OTF degradations.
+high_order_degradation: true
+
+# The first degradation process.
+resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
+resize_range: [0.15, 1.5]
+gaussian_noise_prob: 0.5
+noise_range: [1, 30]
+poisson_scale_range: [0.05, 3]
+gray_noise_prob: 0.4
+jpeg_range: [30, 95]
+
+# The second degradation process.
+second_blur_prob: 0.8
+resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
+resize_range2: [0.3, 1.2]
+gaussian_noise_prob2: 0.5
+noise_range2: [1, 25]
+poisson_scale_range2: [0.05, 2.5]
+gray_noise_prob2: 0.4
+jpeg_range2: [30, 95]
+
+gt_size: 128
+queue_size: 180
+
+#################################
+# Dataset and Dataloader Settings
+#################################
+datasets:
+  train:
+    type: RealESRGANDataset
+    # Path to the HR (high res) images in your dataset.
+    dataroot_gt: datasets/train/dataset1/hr
+    # Path to the LR (low res) images in your dataset.
+    dataroot_lq: datasets/train/dataset1/lr
+    # meta_info: data/meta_info/dataset1.txt
+    io_backend:
+      type: disk
+
+    # OTF degradation settings for training dataset
+
+    # Valid blur kernel range is 7-21
+    blur_kernel_size: 21
+    kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob: 0.1
+    blur_sigma: [0.2, 3]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    # Valid blur kernel range is 7-21
+    blur_kernel_size2: 21
+    kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob2: 0.1
+    blur_sigma2: [0.2, 1.5]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0.8
+
+    # During training, it will crop a square of this size from your HR images, and a square of size
+    # gt_size / scale from your LR images. Larger is usually better but uses more VRAM. If you have
+    # VRAM to spare, try increasing this value until your VRAM is close to maximized.
+    # The number must be divisible by 8.
+    gt_size: 128
+    # Randomly flip the images horizontally.
+    use_hflip: true
+    # Randomly rotate the images.
+    use_rot: true
+
+    # Number of worker processes for the data loader which processes the dataset. Optimal settings depend on several
+    # factors like CPU cores, OS, etc. Experiment and use whatever gives maximum performance speed while training,
+    # higher is not always better.
+    num_worker_per_gpu: 8
+    # Number of images to process in a single batch. Increasing batch size stabilizes training but
+    # going too high can have diminishing returns or cause issues.
+    batch_size_per_gpu: 6
+    # Duplicate the dataset this many times, which improves performance when the
+    # size of the dataset is too small (less than 1000).
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+  # Uncomment these for validation
+  # val:
+  #   type: PairedImageDataset
+  #   dataroot_gt: datasets\val\dataset1\hr
+  #   dataroot_lq: datasets\val\dataset1\lr
+  #   io_backend:
+  #     type: disk
+
+#####################
+# Network Settings
+#####################
+# Generator model settings
+network_g:
+  type: %archname%
+
+# Discriminator model settings
+network_d:
+  type: UNetDiscriminatorSN
+  num_in_ch: 3
+  num_feat: 64
+  skip_connection: True
+
+############################
+# Pretrain and Resume Paths
+############################
+path:
+  # Path to the pretrain model to use for the generator.
+  pretrain_network_g: experiments\pretrained_models\%pretrain%.pth
+  param_key_g: params_ema
+  # Whether to load the pretrain in strict mode, which requires the pretrain model to be an exact match in all network
+  # settings, including scale. If strict mode is disabled, then models of different scales can be used as a partial
+  # pretrain to get some benefit.
+  strict_load_g: true
+  resume_state: ~
+
+#####################
+# Training Settings
+#####################
+train:
+  ema_decay: 0.999
+  # Optimizer for generator model
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  # Optimizer for discriminator model
+  optim_d:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [200000, 400000]
+    gamma: 0.5
+
+  # Total number of iterations
+  total_iter: 500000
+  warmup_iter: -1  # No warm up.
+
+  # Losses - for any loss set the loss_weight to 0 to disable it.
+  # MSSIM loss with cosine similarity for improved color consistency.
+  # Disable cosine similariy by setting cosim: false when training a
+  # model from scratch with MSSIM loss only.
+  mssim_opt:
+    type: MSSIMLoss
+    cosim: true
+    loss_weight: 1.0
+  # Perceptual loss
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights:
+      # before relu
+      "conv1_2": 0.1
+      "conv2_2": 0.1
+      "conv3_4": 1
+      "conv4_4": 1
+      "conv5_4": 1
+    vgg_type: vgg19
+    use_input_norm: true
+    crop_input: true
+    style_weight: 0
+    range_norm: false
+    criterion: charbonnier
+    perceptual_weight: 0.03
+  # DISTS (Deep Image Structure and Texture Similarity) loss
+  # type option supports DISTSLoss (https://github.com/dingkeyan93/DISTS)
+  # and ADISTSLoss (https://github.com/dingkeyan93/A-DISTS)
+  # dists_opt:
+  #   type: DISTSLoss
+  #   use_input_norm: true
+  #   loss_weight: 0.25
+  # HSLuv loss based on perceptual hue, saturation, and lightness.
+  # Use one of HSLuv loss or ColorLoss + LumaLoss, not both.
+  hsluv_opt:
+    type: HSLuvLoss
+    criterion: charbonnier
+    loss_weight: 1.0
+  # GAN loss
+  gan_opt:
+    type: GANLoss
+    gan_type: vanilla
+    real_label_val: 1.0
+    fake_label_val: 0.0
+    loss_weight: 0.1
+  # Color loss using ITU-R BT.601 conversion.
+  # color_opt:
+  #   type: ColorLoss
+  #   criterion: charbonnier
+  #   loss_weight: 1.0
+  # Luma loss using RGB to CIELAB L* conversion.
+  # luma_opt:
+  #   type: LumaLoss
+  #   criterion: charbonnier
+  #   loss_weight: 1.0
+
+  # Mix of Augmentations (MoA)
+  # Augment the dataset on the fly with various augmentations,
+  # see https://github.com/clovaai/cutblur for details.
+  # Whether to enable mixture of augmentations.
+  use_moa: false
+  # The specific augmentations to apply, or "none" for no augmentation.
+  moa_augs: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']
+  # The probability each augmentation in moa_augs will be applied.
+  # For the most intuitive results, make sure the total probabilities add
+  # up to 1. For example with the default settings, there is a 40% chance
+  # "none" will be used (no augmentation), 8.4% chance that "mixup" will be used,
+  # 8.4% chance that "cutmix" will be used, 8.4% chance that "resizemix" will
+  # be used, and a 34.8% chance that cutblur will be used.
+  moa_probs: [0.4, 0.084, 0.084, 0.084, 0.348]
+  # Whether to save the images before and after augmentation, to see what the
+  # augmentations are doing. 4 images are saved per iteration: the LR and HR
+  # image before and after the augmentation is applied. Images are saved to the
+  # debug/moa folder inside of the training directory.
+  moa_debug: false
+  # The maximum number of iterations to save augmentation images for, to prevent
+  # filling up storage too quickly. Since each iteration saves 4 images, this
+  # setting limits the maximum number of saved augmentation images to 4 times
+  # the number specified here.
+  moa_debug_limit: 100
+
+#############
+# Validation
+#############
+# Uncomment these for validation.
+# val:
+#   val_freq: 100
+#   save_img: True
+
+#   metrics:
+#     psnr:
+#       type: calculate_psnr
+#       crop_border: 4
+#       test_y_channel: false
+#     ssim:
+#       # Metric type. Usually the function name defined in the`basicsr/metrics` folder.
+#       type: calculate_ssim
+#       #### The following arguments are flexible and can be obtained in the corresponding doc
+#       # Whether to crop border during validation.
+#       crop_border: 4
+#       # Whether to convert to Y(CbCr) for validation.
+#       test_y_channel: false
+
+##########
+# Logging
+##########
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 100
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+dist_params:
+  backend: nccl
+  port: 29500
