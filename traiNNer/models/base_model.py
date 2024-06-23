@@ -597,8 +597,12 @@ class BaseModel:
         logger = get_root_logger()
         if train_opt.get("use_moa", False):
             self.batch_augment = BatchAugment(train_opt)
-            logger.info("Mixture of augmentations (MoA) enabled.")
-            if train_opt.get("moa_debug", False):
+            logger.info(
+                "Mixture of augmentations (MoA) enabled, with augs: %s and probs: %s",
+                self.batch_augment.moa_augs,
+                self.batch_augment.moa_probs,
+            )
+            if self.batch_augment.debug:
                 logger.info(
                     "MoA debugging enabled. Augmented tiles will be saved to: %s",
                     MOA_DEBUG_PATH,
