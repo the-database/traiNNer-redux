@@ -18,7 +18,7 @@ from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from ..ops.batchaug import BatchAugment, MOA_DEBUG_PATH
+from ..ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from ..utils import get_root_logger
 from ..utils.dist_util import master_only
 from ..utils.types import DataFeed, TrainingState
@@ -599,4 +599,7 @@ class BaseModel:
             self.batch_augment = BatchAugment(train_opt)
             logger.info("Mixture of augmentations (MoA) enabled.")
             if train_opt.get("moa_debug", False):
-                logger.info("MoA debugging enabled. Augmented tiles will be saved to: %s", MOA_DEBUG_PATH)
+                logger.info(
+                    "MoA debugging enabled. Augmented tiles will be saved to: %s",
+                    MOA_DEBUG_PATH,
+                )

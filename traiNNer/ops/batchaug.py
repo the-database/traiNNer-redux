@@ -2,6 +2,7 @@
 
 import os
 import random
+import sys
 from os import path as osp
 from typing import Any
 
@@ -13,7 +14,9 @@ from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils import RNG
 from traiNNer.utils.config import Config
 
-MOA_DEBUG_PATH = osp.join(osp.abspath(osp.join(__file__, osp.pardir)), "./debug/moa")
+MOA_DEBUG_PATH = osp.abspath(
+    osp.abspath(osp.join(osp.join(sys.argv[0], osp.pardir), "./debug/moa"))
+)
 
 
 class BatchAugment:
