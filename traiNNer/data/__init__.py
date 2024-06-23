@@ -11,6 +11,7 @@ import torch.utils.data
 from torch.utils.data.dataloader import Dataset
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_sampler import EnlargedSampler
+from traiNNer.utils.rng import RNG
 
 from ..utils import get_root_logger, scandir
 from ..utils.dist_util import get_dist_info
@@ -98,7 +99,12 @@ def build_dataloader(
         if sampler is None:
             dataloader_args["shuffle"] = True
         dataloader_args["worker_init_fn"] = (
-            partial(worker_init_fn, num_workers=num_workers, rank=rank, seed=seed)
+            partial(
+                worker_init_fn,
+                num_workers=num_workers,
+                rank=rank,
+                seed=seed,
+            )
             if seed is not None
             else None
         )
@@ -135,8 +141,14 @@ def build_dataloader(
         return torch.utils.data.DataLoader(**dataloader_args)  # type: ignore -- TODO: use TypedDict
 
 
-def worker_init_fn(worker_id: int, num_workers: int, rank: int, seed: int) -> None:
+def worker_init_fn(
+    worker_id: int,
+    num_workers: int,
+    rank: int,
+    seed: int,
+) -> None:
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
     np.random.seed(worker_seed)  # noqa: NPY002
     random.seed(worker_seed)
+    RNG.init_rng(worker_seed)

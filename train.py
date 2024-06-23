@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import logging
 import math
@@ -54,7 +55,7 @@ def init_tb_loggers(opt: dict[str, Any]) -> SummaryWriter | None:
 
 
 def create_train_val_dataloader(
-    opt: dict[str, Any], logger: logging.Logger
+    opt: dict[str, Any], args: argparse.Namespace, logger: logging.Logger
 ) -> tuple[DataLoader | None, EnlargedSampler | None, list[DataLoader], int, int]:
     # create train and val dataloaders
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
@@ -154,7 +155,7 @@ def load_resume_state(opt: dict[str, Any]) -> Any | None:
 def train_pipeline(root_path: str) -> None:
     # torch.autograd.set_detect_anomaly(True)
     # parse options, set distributed setting, set random seed
-    opt, args = Config.load_config(root_path, is_train=True)
+    opt, args = Config.load_config_from_file(root_path, is_train=True)
     opt["root_path"] = root_path
 
     seed = opt.get("manual_seed")
@@ -201,7 +202,7 @@ def train_pipeline(root_path: str) -> None:
     tb_logger = init_tb_loggers(opt)
 
     # create train and validation dataloaders
-    result = create_train_val_dataloader(opt, logger)
+    result = create_train_val_dataloader(opt, args, logger)
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = result
 
     if train_loader is None or train_sampler is None:

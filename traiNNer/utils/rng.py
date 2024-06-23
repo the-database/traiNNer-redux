@@ -7,6 +7,10 @@ class RNG:
     _rng = None
 
     @classmethod
+    def init_rng(cls, seed: int) -> None:
+        cls._rng = np.random.default_rng(seed)
+
+    @classmethod
     def get_rng(cls) -> Generator:
         if cls._rng is None:
             seed = Config.get_manual_seed()
