@@ -22,7 +22,6 @@
 	"reportUnnecessaryComparison": "error",
 	"reportUnnecessaryContains": "error",
 	"reportUnnecessaryIsInstance": "error",
-	// "reportUnnecessaryTypeIgnoreComment": "warning",
 	"reportUnusedClass": "warning",
 	"reportUnusedFunction": "warning",
 	"reportUnusedImport": "warning",

@@ -104,6 +104,9 @@ def check_resume(opt: Mapping[str, Any], resume_iter: int) -> None:
         opt (dict): Options.
         resume_iter (int): Resume iteration.
     """
+
+    model_extensions = ["safetensors", "pth"]
+
     if opt["path"]["resume_state"]:
         # get all the networks
         networks = [key for key in opt.keys() if key.startswith("network_")]
@@ -120,9 +123,22 @@ def check_resume(opt: Mapping[str, Any], resume_iter: int) -> None:
             if opt["path"].get("ignore_resume_networks") is None or (
                 network not in opt["path"]["ignore_resume_networks"]
             ):
-                opt["path"][name] = osp.join(
-                    opt["path"]["models"], f"net_{basename}_{resume_iter}.pth"
-                )
+                model_exists = False
+                for ext in model_extensions:
+                    basepath = osp.join(
+                        opt["path"]["models"], f"net_{basename}_{resume_iter}"
+                    )
+
+                    if osp.exists(f"{basepath}.{ext}"):
+                        opt["path"][name] = f"{basepath}.{ext}"
+                        model_exists = True
+                        break
+
+                if not model_exists:
+                    raise RuntimeError(
+                        f"Unable to resume, model not found at path: {basepath}.{model_extensions[0]}"
+                    )
+
                 print(f"Set {name} to {opt['path'][name]}")
 
         # change param_key to params in resume

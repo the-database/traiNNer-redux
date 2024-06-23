@@ -4,6 +4,7 @@ from typing import Any
 
 import torch
 from torch import Tensor, nn
+from torch.cuda.amp import GradScaler
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -96,7 +97,9 @@ class SRModel(BaseModel):
 
         self.ema_decay = train_opt.get("ema_decay", 0)
         if self.ema_decay > 0:
-            logger.info("Use Exponential Moving Average with decay: %f", self.ema_decay)
+            logger.info(
+                "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
+            )
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
@@ -113,6 +116,34 @@ class SRModel(BaseModel):
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
+
+        # use amp
+        self.use_amp = self.opt.get("use_amp", False)
+        self.scaler_g = GradScaler(enabled=self.use_amp)
+        self.scaler_d = GradScaler(enabled=self.use_amp)
+        self.amp_dtype = (
+            torch.bfloat16 if self.opt.get("amp_bfloat16", False) else torch.float16
+        )
+
+        if self.use_amp:
+            if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
+                logger.warning(
+                    "bfloat16 was enabled for AMP but the current GPU does not support bfloat16. Falling back to float16 for AMP. Disable bfloat16 to hide this warning (amp_bfloat16: false)."
+                )
+                self.amp_dtype = torch.float16
+            logger.info(
+                "Using Automatic Mixed Precision (AMP) with fp32 and %s.",
+                "bf16" if self.amp_dtype == torch.bfloat16 else "fp16",
+            )
+        elif self.amp_dtype == torch.bfloat16:
+            logger.warning(
+                "bfloat16 was enabled without AMP and will have no effect. Enable AMP to use bfloat16 (use_amp: true)."
+            )
+
+        if self.opt.get("fast_matmul", False):
+            logger.info(
+                "Fast matrix multiplication and convolution operations (fast_matmul) enabled, trading precision for performance."
+            )
 
         # define losses
         pixel_opt = train_opt.get("pixel_opt")
@@ -241,8 +272,8 @@ class SRModel(BaseModel):
             self.gt = data["gt"].to(self.device)
 
         # moa
-        if self.is_train and self.batchaugment and self.gt is not None:
-            self.gt, self.lq = self.batchaugment(self.gt, self.lq)
+        if self.is_train and self.batch_augment and self.gt is not None:
+            self.gt, self.lq = self.batch_augment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter: int) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
@@ -250,97 +281,103 @@ class SRModel(BaseModel):
         assert self.optimizer_g is not None
         assert self.lq is not None
         assert self.gt is not None
+        assert self.scaler_d is not None
+        assert self.scaler_g is not None
 
         # optimize net_d
         if self.net_d is not None:
             for p in self.net_d.parameters():
                 p.requires_grad = False
 
-        self.optimizer_g.zero_grad()
-        self.output = self.net_g(self.lq)
-        assert isinstance(self.output, Tensor), "output image is not a tensor"
-
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
 
-        l_g_total = torch.tensor(0.0, device=self.output.device)
-        loss_dict = OrderedDict()
-        # pixel loss
-        if self.cri_pix:
-            l_g_pix = self.cri_pix(self.output, self.gt)
-            l_g_total += l_g_pix
-            loss_dict["l_g_pix"] = l_g_pix
-        if self.cri_mssim:
-            l_g_mssim = self.cri_mssim(self.output, self.gt)
-            l_g_total += l_g_mssim
-            loss_dict["l_g_mssim"] = l_g_mssim
-        if self.cri_ldl:
-            assert self.net_g_ema is not None
-            # TODO support LDL without ema
-            pixel_weight = get_refined_artifact_map(
-                self.gt, self.output, self.net_g_ema(self.lq), 7
-            )
-            l_g_ldl = self.cri_ldl(
-                torch.mul(pixel_weight, self.output), torch.mul(pixel_weight, self.gt)
-            )
-            l_g_total += l_g_ldl
-            loss_dict["l_g_ldl"] = l_g_ldl
-        # perceptual loss
-        if self.cri_perceptual:
-            l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
-            if l_g_percep is not None:
-                l_g_total += l_g_percep
-                loss_dict["l_g_percep"] = l_g_percep
-            if l_g_style is not None:
-                l_g_total += l_g_style
-                loss_dict["l_g_style"] = l_g_style
-        # dists loss
-        if self.cri_dists:
-            l_g_dists = self.cri_dists(self.output, self.gt)
-            l_g_total += l_g_dists
-            loss_dict["l_g_dists"] = l_g_dists
-        # contextual loss
-        if self.cri_contextual:
-            l_g_contextual = self.cri_contextual(self.output, self.gt)
-            l_g_total += l_g_contextual
-            loss_dict["l_g_contextual"] = l_g_contextual
-        # color loss
-        if self.cri_color:
-            l_g_color = self.cri_color(self.output, self.gt)
-            l_g_total += l_g_color
-            loss_dict["l_g_color"] = l_g_color
-        # luma loss
-        if self.cri_luma:
-            l_g_luma = self.cri_luma(self.output, self.gt)
-            l_g_total += l_g_luma
-            loss_dict["l_g_luma"] = l_g_luma
-        # hsluv loss
-        if self.cri_hsluv:
-            l_g_hsluv = self.cri_hsluv(self.output, self.gt)
-            l_g_total += l_g_hsluv
-            loss_dict["l_g_hsluv"] = l_g_hsluv
-        # avg loss
-        if self.cri_avg:
-            l_g_avg = self.cri_avg(self.output, self.gt)
-            l_g_total += l_g_avg
-            loss_dict["l_g_avg"] = l_g_avg
-        # bicubic loss
-        if self.cri_bicubic:
-            l_g_bicubic = self.cri_bicubic(self.output, self.gt)
-            l_g_total += l_g_bicubic
-            loss_dict["l_g_bicubic"] = l_g_bicubic
-        # gan loss
-        if self.cri_gan and self.net_d:
-            fake_g_pred = self.net_d(self.output)
-            l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-            l_g_total += l_g_gan
-            loss_dict["l_g_gan"] = l_g_gan
+        with torch.autocast(
+            device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
+        ):
+            self.output = self.net_g(self.lq)
+            assert isinstance(self.output, Tensor)
+            l_g_total = torch.tensor(0.0, device=self.output.device)
+            loss_dict = OrderedDict()
+            # pixel loss
+            if self.cri_pix:
+                l_g_pix = self.cri_pix(self.output, self.gt)
+                l_g_total += l_g_pix
+                loss_dict["l_g_pix"] = l_g_pix
+            if self.cri_mssim:
+                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_total += l_g_mssim
+                loss_dict["l_g_mssim"] = l_g_mssim
+            if self.cri_ldl:
+                assert self.net_g_ema is not None
+                # TODO support LDL without ema
+                pixel_weight = get_refined_artifact_map(
+                    self.gt, self.output, self.net_g_ema(self.lq), 7
+                )
+                l_g_ldl = self.cri_ldl(
+                    torch.mul(pixel_weight, self.output),
+                    torch.mul(pixel_weight, self.gt),
+                )
+                l_g_total += l_g_ldl
+                loss_dict["l_g_ldl"] = l_g_ldl
+            # perceptual loss
+            if self.cri_perceptual:
+                l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
+                if l_g_percep is not None:
+                    l_g_total += l_g_percep
+                    loss_dict["l_g_percep"] = l_g_percep
+                if l_g_style is not None:
+                    l_g_total += l_g_style
+                    loss_dict["l_g_style"] = l_g_style
+            # dists loss
+            if self.cri_dists:
+                l_g_dists = self.cri_dists(self.output, self.gt)
+                l_g_total += l_g_dists
+                loss_dict["l_g_dists"] = l_g_dists
+            # contextual loss
+            if self.cri_contextual:
+                l_g_contextual = self.cri_contextual(self.output, self.gt)
+                l_g_total += l_g_contextual
+                loss_dict["l_g_contextual"] = l_g_contextual
+            # color loss
+            if self.cri_color:
+                l_g_color = self.cri_color(self.output, self.gt)
+                l_g_total += l_g_color
+                loss_dict["l_g_color"] = l_g_color
+            # luma loss
+            if self.cri_luma:
+                l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_total += l_g_luma
+                loss_dict["l_g_luma"] = l_g_luma
+            # hsluv loss
+            if self.cri_hsluv:
+                l_g_hsluv = self.cri_hsluv(self.output, self.gt)
+                l_g_total += l_g_hsluv
+                loss_dict["l_g_hsluv"] = l_g_hsluv
+            # avg loss
+            if self.cri_avg:
+                l_g_avg = self.cri_avg(self.output, self.gt)
+                l_g_total += l_g_avg
+                loss_dict["l_g_avg"] = l_g_avg
+            # bicubic loss
+            if self.cri_bicubic:
+                l_g_bicubic = self.cri_bicubic(self.output, self.gt)
+                l_g_total += l_g_bicubic
+                loss_dict["l_g_bicubic"] = l_g_bicubic
+            # gan loss
+            if self.cri_gan and self.net_d:
+                fake_g_pred = self.net_d(self.output)
+                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                l_g_total += l_g_gan
+                loss_dict["l_g_gan"] = l_g_gan
 
-        # add total generator loss for tensorboard tracking
-        loss_dict["l_g_total"] = l_g_total
+            # add total generator loss for tensorboard tracking
+            loss_dict["l_g_total"] = l_g_total
 
-        l_g_total.backward()
-        self.optimizer_g.step()
+        self.scaler_g.scale(l_g_total).backward()
+        self.scaler_g.step(self.optimizer_g)
+        self.scaler_g.update()
+        self.optimizer_g.zero_grad()
 
         if (
             self.net_d is not None
@@ -351,23 +388,34 @@ class SRModel(BaseModel):
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
+            with torch.autocast(
+                device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
+            ):
+                # real
+                real_d_pred = self.net_d(self.gt)
+                l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
+                loss_dict["l_d_real"] = l_d_real
+                loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
+                # fake
+                fake_d_pred = self.net_d(
+                    self.output.detach().clone()
+                )  # clone for pt1.9
+                l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
+                loss_dict["l_d_fake"] = l_d_fake
+                loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
+
+            self.scaler_d.scale(l_d_real).backward()  # retain_graph?
+            self.scaler_d.scale(l_d_fake).backward()
+            self.scaler_d.step(self.optimizer_d)
+            self.scaler_d.update()
             self.optimizer_d.zero_grad()
-            # real
-            real_d_pred = self.net_d(self.gt)
-            l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
-            loss_dict["l_d_real"] = l_d_real
-            loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
-            l_d_real.backward()
-            # fake
-            fake_d_pred = self.net_d(self.output.detach().clone())  # clone for pt1.9
-            l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
-            loss_dict["l_d_fake"] = l_d_fake
-            loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
-            l_d_fake.backward()
-            self.optimizer_d.step()
 
         for key, value in loss_dict.items():
-            val = value if isinstance(value, float) else value.detach()
+            val = (
+                value
+                if isinstance(value, float)
+                else value.to(dtype=torch.float32).detach()
+            )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
         if self.ema_decay > 0:
@@ -521,10 +569,10 @@ class SRModel(BaseModel):
     def save(self, epoch: int, current_iter: int) -> None:
         if self.net_g_ema is not None:
             self.save_network(
-                [self.net_g, self.net_g_ema],
+                self.net_g_ema,
                 "net_g",
                 current_iter,
-                param_key=["params", "params_ema"],
+                param_key="params_ema",
             )
         else:
             self.save_network(self.net_g, "net_g", current_iter)

@@ -197,6 +197,10 @@ def train_pipeline(root_path: str) -> None:
             "Failed to initialize training dataloader. Make sure train dataset is defined in datasets."
         )
 
+    if opt.get("fast_matmul", False):
+        torch.set_float32_matmul_precision("medium")
+        torch.backends.cudnn.allow_tf32 = True
+
     # create model
     model = build_model(opt)
     if resume_state:  # resume training

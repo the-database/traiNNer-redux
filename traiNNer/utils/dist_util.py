@@ -3,7 +3,7 @@ import functools
 import os
 import subprocess
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeVar
 
 import torch
 import torch.distributed as dist
@@ -74,7 +74,10 @@ def get_dist_info() -> tuple[int, int]:
     return rank, world_size
 
 
-def master_only(func: Callable[..., Any]) -> Callable[..., Any]:
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def master_only(func: F) -> F:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         rank, _ = get_dist_info()
@@ -82,4 +85,4 @@ def master_only(func: Callable[..., Any]) -> Callable[..., Any]:
             return func(*args, **kwargs)
         return None
 
-    return wrapper
+    return wrapper  # type: ignore

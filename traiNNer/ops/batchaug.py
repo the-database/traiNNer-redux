@@ -2,6 +2,8 @@
 
 import os
 import random
+import sys
+from os import path as osp
 from typing import Any
 
 import numpy as np
@@ -10,8 +12,11 @@ import torchvision
 from torch import Size, Tensor
 from torch.nn import functional as F  # noqa: N812
 from traiNNer.utils import RNG
+from traiNNer.utils.config import Config
 
-MOA_DEBUG_PATH = "./moa_debug"
+MOA_DEBUG_PATH = osp.abspath(
+    osp.abspath(osp.join(osp.join(sys.argv[0], osp.pardir), "./debug/moa"))
+)
 
 
 class BatchAugment:
@@ -22,7 +27,7 @@ class BatchAugment:
         self.moa_probs = train_opt.get(
             "moa_probs", [0.4, 0.084, 0.084, 0.084, 0.348]
         )  # , 1.0]
-        self.scale = train_opt.get("scale", 4)
+        self.scale = Config.get_scale()
         self.debug = train_opt.get("moa_debug", False)
         self.debug_limit = train_opt.get("moa_debug_limit", 0)
 
@@ -69,7 +74,7 @@ def batch_aug(
 
     if debug:
         os.makedirs(MOA_DEBUG_PATH, exist_ok=True)
-        while os.path.exists(rf"./moa_debug/{i:06d}_preauglq.png"):
+        while os.path.exists(rf"{MOA_DEBUG_PATH}/{i:06d}_preauglq.png"):
             i += 1
 
         if i <= debug_limit or debug_limit == 0:

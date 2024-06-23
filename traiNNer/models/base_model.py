@@ -7,8 +7,10 @@ from typing import Any
 
 import pytorch_optimizer
 import torch
+from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader
 from torch import nn
+from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -16,7 +18,7 @@ from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from ..ops.batchaug import BatchAugment
+from ..ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from ..utils import get_root_logger
 from ..utils.dist_util import master_only
 from ..utils.types import DataFeed, TrainingState
@@ -31,7 +33,7 @@ class BaseModel:
         self.is_train = opt["is_train"]
         self.schedulers: list[LRScheduler] = []
         self.optimizers: list[Optimizer] = []
-        self.batchaugment = None
+        self.batch_augment = None
         self.log_dict = {}
         self.loss_samples = 0
         self.metric_results: dict[str, Any] = {}
@@ -40,7 +42,10 @@ class BaseModel:
         self.net_g = None
         self.net_g_ema = None
         self.net_d = None
-        self.use_moa = False
+        self.use_amp = False
+        self.amp_dtype = torch.float16
+        self.scaler_g: GradScaler | None = None
+        self.scaler_d: GradScaler | None = None
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
@@ -310,10 +315,10 @@ class BaseModel:
     @master_only
     def save_network(
         self,
-        net: nn.Module | list[nn.Module],
+        net: nn.Module,
         net_label: str,
         current_iter: int,
-        param_key: str | list[str] = "params",
+        param_key: str = "params",
     ) -> None:
         """Save networks.
 
@@ -327,31 +332,22 @@ class BaseModel:
 
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
 
-        save_filename = f"{net_label}_{current_iter_str}.pth"
+        save_filename = f"{net_label}_{current_iter_str}.safetensors"
         save_path = os.path.join(self.opt["path"]["models"], save_filename)
 
-        net = net if isinstance(net, list) else [net]
-        param_key = param_key if isinstance(param_key, list) else [param_key]
-        assert len(net) == len(
-            param_key
-        ), "The lengths of net and param_key should be the same."
-
-        save_dict = {}
-        for net_, param_key_ in zip(net, param_key, strict=False):
-            bare_net_ = self.get_bare_model(net_)
-            state_dict = bare_net_.state_dict()
-            for full_key, param in state_dict.items():
-                key = full_key
-                if key.startswith("module."):  # remove unnecessary 'module.'
-                    key = key[7:]
-                state_dict[key] = param.cpu()
-            save_dict[param_key_] = state_dict
+        bare_net_ = self.get_bare_model(net)
+        state_dict = bare_net_.state_dict()
+        for full_key, param in state_dict.items():
+            key = full_key
+            if key.startswith("module."):  # remove unnecessary 'module.'
+                key = key[7:]
+            state_dict[key] = param.cpu()
 
         # avoid occasional writing errors
         retry = 3
         while retry > 0:
             try:
-                torch.save(save_dict, save_path)
+                save_file(state_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(
@@ -367,7 +363,11 @@ class BaseModel:
             # raise IOError(f'Cannot save {save_path}.')
 
     def _print_different_keys_loading(
-        self, crt_net: nn.Module, load_net: dict[str, Any], strict: bool = True
+        self,
+        crt_net: nn.Module,
+        load_net: dict[str, Any],
+        file_path: str,
+        strict: bool = True,
     ) -> None:
         """Print keys with different name or different size when loading models.
 
@@ -407,6 +407,27 @@ class BaseModel:
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
+            new_common_keys = crt_net_keys & set(load_net.keys())
+            if len(new_common_keys) == 0:
+                logger.warning(
+                    "Pretrain model %s matched %.2f%% of the keys of the currently training model. Pretrain will have no effect and the model will be trained from scratch.",
+                    file_path,
+                    0,
+                )
+            elif len(new_common_keys) == len(crt_net_keys):
+                logger.info(
+                    "Pretrain model %s matched %.2f%% of the keys of the currently training model. Pretrain is loaded in strict mode.",
+                    file_path,
+                    100,
+                )
+            else:
+                overlap = len(new_common_keys) / len(crt_net_keys) * 100
+                logger.info(
+                    "Pretrain model %s matched %.2f%% of the keys of the currently training model.",
+                    file_path,
+                    overlap,
+                )
+
     def load_network_spandrel(
         self, net: nn.Module, load_path: str, strict: bool = True
     ) -> bool | None:
@@ -442,29 +463,62 @@ class BaseModel:
                 Default: 'params'.
         """
 
-        if not self.load_network_spandrel(net, load_path, strict):
-            logger = get_root_logger()
+        logger = get_root_logger()
+        try:
+            load_net = self.model_loader.load_from_file(load_path).model.state_dict()
+            # net.load_state_dict(load_net.model.state_dict(), strict=strict)
+            logger.info(
+                "Loading %s model from %s, with spandrel.",
+                net.__class__.__name__,
+                load_path,
+            )
+        except Exception as e:
+            print(e)
+
             net = self.get_bare_model(net)
-            load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
-            if param_key is not None:
-                if param_key not in load_net and "params" in load_net:
-                    param_key = "params"
-                    logger.info("Loading: params_ema does not exist, use params.")
-                load_net = load_net[param_key]
+            if load_path.endswith(".safetensors"):
+                load_net = load_file(load_path, device=str(self.device))
+            elif load_path.endswith(".pth"):
+                load_net = torch.load(
+                    load_path, map_location=lambda storage, loc: storage
+                )
+
+                if param_key is not None:
+                    if param_key not in load_net:
+                        if "params_ema" in load_net:
+                            logger.info(
+                                "Loading: %s does not exist, using params_ema.",
+                                param_key,
+                            )
+                            param_key = "params_ema"
+                        elif "params" in load_net:
+                            logger.info(
+                                "Loading: %s does not exist, using params.", param_key
+                            )
+                            param_key = "params"
+                        else:
+                            logger.info(
+                                "Loading: %s does not exist, using None.", param_key
+                            )
+                            param_key = None
+                    else:
+                        load_net = load_net[param_key]
+            else:
+                raise ValueError(f"Unsupported model: {load_path}") from e
             logger.info(
                 "Loading %s model from %s, with param key: [%s].",
                 net.__class__.__name__,
                 load_path,
                 param_key,
             )
-            # remove unnecessary 'module.'
-            for k, v in deepcopy(load_net).items():
-                if k.startswith("module."):
-                    load_net[k[7:]] = v
-                    load_net.pop(k)
-            self._print_different_keys_loading(net, load_net, strict)
+        # remove unnecessary 'module.'
+        for k, v in deepcopy(load_net).items():
+            if k.startswith("module."):
+                load_net[k[7:]] = v
+                load_net.pop(k)
+        self._print_different_keys_loading(net, load_net, load_path, strict)
 
-            net.load_state_dict(load_net, strict=strict)
+        net.load_state_dict(load_net, strict=strict)
 
     @master_only
     def save_training_state(self, epoch: int, current_iter: int) -> None:
@@ -476,12 +530,19 @@ class BaseModel:
             current_iter (int): Current iteration.
         """
         if current_iter != -1:
+            assert self.scaler_g is not None
+            assert self.scaler_d is not None
             state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
                 "optimizers": [],
                 "schedulers": [],
             }
+
+            if self.use_amp:
+                state["scaler_d"] = self.scaler_d.state_dict()
+                state["scaler_g"] = self.scaler_g.state_dict()
+
             for o in self.optimizers:
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
@@ -510,24 +571,34 @@ class BaseModel:
                 logger.warning("Still cannot save %s. Just ignore it.", save_path)
                 # raise IOError(f'Cannot save {save_path}.')
 
-    def resume_training(self, resume_state: dict[str, Any]) -> None:
+    def resume_training(self, resume_state: TrainingState) -> None:
         """Reload the optimizers and schedulers for resumed training.
 
         Args:
             resume_state (dict): Resume state.
         """
+        assert self.scaler_d is not None
+        assert self.scaler_g is not None
+
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
+
         assert len(resume_optimizers) == len(
             self.optimizers
         ), "Wrong lengths of optimizers"
         assert len(resume_schedulers) == len(
             self.schedulers
         ), "Wrong lengths of schedulers"
+
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
+
+        if "scaler_g" in resume_state:
+            self.scaler_g.load_state_dict(resume_state["scaler_g"])
+        if "scaler_d" in resume_state:
+            self.scaler_d.load_state_dict(resume_state["scaler_d"])
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
@@ -558,8 +629,16 @@ class BaseModel:
 
     def setup_batchaug(self) -> None:
         train_opt = self.opt["train"]
-        self.use_moa = train_opt.get("use_moa", False)
         logger = get_root_logger()
-        if self.use_moa:
-            self.batchaugment = BatchAugment(train_opt)
-            logger.info("Batch augmentations enabled")
+        if train_opt.get("use_moa", False):
+            self.batch_augment = BatchAugment(train_opt)
+            logger.info(
+                "Mixture of augmentations (MoA) enabled with augs: %s and probs: %s",
+                self.batch_augment.moa_augs,
+                self.batch_augment.moa_probs,
+            )
+            if self.batch_augment.debug:
+                logger.info(
+                    "MoA debugging enabled. Augmented tiles will be saved to: %s",
+                    MOA_DEBUG_PATH,
+                )
