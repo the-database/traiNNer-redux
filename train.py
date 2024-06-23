@@ -1,6 +1,7 @@
 import datetime
 import logging
 import math
+import os
 import time
 from os import path as osp
 from typing import Any
@@ -29,6 +30,7 @@ from traiNNer.utils import (
     scandir,
 )
 from traiNNer.utils.config import Config
+from traiNNer.utils.misc import set_random_seed
 from traiNNer.utils.options import copy_opt_file, dict2str
 
 
@@ -155,6 +157,16 @@ def train_pipeline(root_path: str) -> None:
     opt, args = Config.load_config(root_path, is_train=True)
     opt["root_path"] = root_path
 
+    seed = opt.get("manual_seed")
+    if opt["deterministic"]:
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+    else:
+        torch.backends.cudnn.benchmark = True
+    assert seed is not None
+    set_random_seed(seed + opt["rank"])
+
     # load resume states if necessary
     resume_state = load_resume_state(opt)
     # mkdir for experiments and logger
@@ -182,7 +194,7 @@ def train_pipeline(root_path: str) -> None:
     if opt["deterministic"]:
         logger.info(
             "Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.",
-            opt["manual_seed"],
+            seed,
         )
 
     # initialize wandb and tb loggers
