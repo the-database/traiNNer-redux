@@ -272,8 +272,8 @@ class SRModel(BaseModel):
             self.gt = data["gt"].to(self.device)
 
         # moa
-        if self.is_train and self.batchaugment and self.gt is not None:
-            self.gt, self.lq = self.batchaugment(self.gt, self.lq)
+        if self.is_train and self.batch_augment and self.gt is not None:
+            self.gt, self.lq = self.batch_augment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter: int) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328

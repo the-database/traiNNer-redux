@@ -249,5 +249,5 @@ class RealESRGANModel(SRModel):
                 self.gt = data["gt"].to(self.device)
 
                 # moa
-                if self.is_train and self.batchaugment:
-                    self.gt, self.lq = self.batchaugment(self.gt, self.lq)
+                if self.is_train and self.batch_augment:
+                    self.gt, self.lq = self.batch_augment(self.gt, self.lq)

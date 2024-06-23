@@ -18,7 +18,7 @@ from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from ..ops.batchaug import BatchAugment
+from ..ops.batchaug import BatchAugment, MOA_DEBUG_PATH
 from ..utils import get_root_logger
 from ..utils.dist_util import master_only
 from ..utils.types import DataFeed, TrainingState
@@ -33,7 +33,7 @@ class BaseModel:
         self.is_train = opt["is_train"]
         self.schedulers: list[LRScheduler] = []
         self.optimizers: list[Optimizer] = []
-        self.batchaugment = None
+        self.batch_augment = None
         self.log_dict = {}
         self.loss_samples = 0
         self.metric_results: dict[str, Any] = {}
@@ -42,7 +42,6 @@ class BaseModel:
         self.net_g = None
         self.net_g_ema = None
         self.net_d = None
-        self.use_moa = False
         self.use_amp = False
         self.amp_dtype = torch.float16
         self.scaler_g: GradScaler | None = None
@@ -595,8 +594,9 @@ class BaseModel:
 
     def setup_batchaug(self) -> None:
         train_opt = self.opt["train"]
-        self.use_moa = train_opt.get("use_moa", False)
         logger = get_root_logger()
-        if self.use_moa:
-            self.batchaugment = BatchAugment(train_opt)
-            logger.info("Batch augmentations enabled.")
+        if train_opt.get("use_moa", False):
+            self.batch_augment = BatchAugment(train_opt)
+            logger.info("Mixture of augmentations (MoA) enabled.")
+            if train_opt.get("moa_debug", False):
+                logger.info("MoA debugging enabled. Augmented tiles will be saved to: %s", MOA_DEBUG_PATH)
