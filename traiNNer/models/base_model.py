@@ -363,7 +363,7 @@ class BaseModel:
             # raise IOError(f'Cannot save {save_path}.')
 
     def _print_different_keys_loading(
-        self, crt_net: nn.Module, load_net: dict[str, Any], strict: bool = True
+        self, crt_net: nn.Module, load_net: dict[str, Any], file_path: str, strict: bool = True
     ) -> None:
         """Print keys with different name or different size when loading models.
 
@@ -402,6 +402,18 @@ class BaseModel:
                         load_net[k].shape,
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
+
+            new_common_keys = crt_net_keys & set(load_net.keys())
+            if len(new_common_keys) == 0:
+                logger.warning("Pretrain model %s matched %.2f%% of keys of currently training model. Pretrain will have no effect and the model will be trained from scratch.", file_path, 0)
+            elif len(new_common_keys) == len(crt_net_keys):
+                logger.info("Pretrain model %s matched %.2f%% of keys of currently training model. Pretrain is loaded in strict mode.", file_path,
+                               1)
+            else:
+                overlap = len(new_common_keys) / len(crt_net_keys) * 100
+                logger.info("Pretrain model %s matched %.2f%% of keys of currently training model.", file_path,
+                               overlap)
+
 
     def load_network_spandrel(
         self, net: nn.Module, load_path: str, strict: bool = True
@@ -491,7 +503,7 @@ class BaseModel:
             if k.startswith("module."):
                 load_net[k[7:]] = v
                 load_net.pop(k)
-        self._print_different_keys_loading(net, load_net, strict)
+        self._print_different_keys_loading(net, load_net, load_path, strict)
 
         net.load_state_dict(load_net, strict=strict)
 
