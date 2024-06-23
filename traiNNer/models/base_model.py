@@ -410,20 +410,20 @@ class BaseModel:
             new_common_keys = crt_net_keys & set(load_net.keys())
             if len(new_common_keys) == 0:
                 logger.warning(
-                    "Pretrain model %s matched %.2f%% of keys of currently training model. Pretrain will have no effect and the model will be trained from scratch.",
+                    "Pretrain model %s matched %.2f%% of the keys of the currently training model. Pretrain will have no effect and the model will be trained from scratch.",
                     file_path,
                     0,
                 )
             elif len(new_common_keys) == len(crt_net_keys):
                 logger.info(
-                    "Pretrain model %s matched %.2f%% of keys of currently training model. Pretrain is loaded in strict mode.",
+                    "Pretrain model %s matched %.2f%% of the keys of the currently training model. Pretrain is loaded in strict mode.",
                     file_path,
-                    1,
+                    100,
                 )
             else:
                 overlap = len(new_common_keys) / len(crt_net_keys) * 100
                 logger.info(
-                    "Pretrain model %s matched %.2f%% of keys of currently training model.",
+                    "Pretrain model %s matched %.2f%% of the keys of the currently training model.",
                     file_path,
                     overlap,
                 )
@@ -633,7 +633,7 @@ class BaseModel:
         if train_opt.get("use_moa", False):
             self.batch_augment = BatchAugment(train_opt)
             logger.info(
-                "Mixture of augmentations (MoA) enabled, with augs: %s and probs: %s",
+                "Mixture of augmentations (MoA) enabled with augs: %s and probs: %s",
                 self.batch_augment.moa_augs,
                 self.batch_augment.moa_probs,
             )
