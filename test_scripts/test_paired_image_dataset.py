@@ -9,7 +9,7 @@ def main(mode: str = "folder") -> None:
     """Test paired image dataset.
 
     Args:
-        mode: There are three modes: 'lmdb', 'folder', 'meta_info_file'.
+        mode: There are three modes: 'lmdb', 'folder', 'meta_info'.
     """
     opt = {}
     opt["dist"] = False
@@ -22,10 +22,10 @@ def main(mode: str = "folder") -> None:
         opt["dataroot_lq"] = "datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"
         opt["filename_tmpl"] = "{}"
         opt["io_backend"] = {"type": "disk"}
-    elif mode == "meta_info_file":
+    elif mode == "meta_info":
         opt["dataroot_gt"] = "datasets/DIV2K/DIV2K_train_HR_sub"
         opt["dataroot_lq"] = "datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"
-        opt["meta_info_file"] = "traiNNer/data/meta_info/meta_info_DIV2K800sub_GT.txt"
+        opt["meta_info"] = "traiNNer/data/meta_info/meta_info_DIV2K800sub_GT.txt"
         opt["filename_tmpl"] = "{}"
         opt["io_backend"] = {"type": "disk"}
     elif mode == "lmdb":

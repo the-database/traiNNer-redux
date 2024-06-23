@@ -10,7 +10,7 @@ name: Test
 type: PairedImageDataset
 dataroot_gt: tests/data/gt
 dataroot_lq: tests/data/lq
-meta_info_file: tests/data/meta_info_gt.txt
+meta_info: tests/data/meta_info_gt.txt
 filename_tmpl: '{}'
 io_backend:
     type: disk
@@ -55,7 +55,7 @@ phase: train
     assert dataset.filename_tmpl == "{}"
 
     # ------------------ test scan folder mode -------------------- #
-    opt.pop("meta_info_file")
+    opt.pop("meta_info")
     opt["io_backend"] = {"type": "disk"}
     dataset = PairedImageDataset(opt)
     assert dataset.io_backend_opt["type"] == "disk"  # io backend

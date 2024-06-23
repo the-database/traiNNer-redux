@@ -41,8 +41,8 @@ class SingleImageDataset(BaseDataset):
             self.io_backend_opt["db_paths"] = [self.lq_folder]
             self.io_backend_opt["client_keys"] = ["lq"]
             self.paths = paths_from_lmdb(self.lq_folder)
-        elif "meta_info_file" in self.opt:
-            with open(self.opt["meta_info_file"]) as fin:
+        elif "meta_info" in self.opt:
+            with open(self.opt["meta_info"]) as fin:
                 self.paths = [
                     osp.join(self.lq_folder, line.rstrip().split(" ")[0])
                     for line in fin
