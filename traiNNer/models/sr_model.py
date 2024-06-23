@@ -122,13 +122,13 @@ class SRModel(BaseModel):
         self.scaler_g = GradScaler(enabled=self.use_amp)
         self.scaler_d = GradScaler(enabled=self.use_amp)
         self.amp_dtype = (
-            torch.bfloat16 if self.opt.get("amp_bfloat16", False) else torch.float16
+            torch.bfloat16 if self.opt.get("amp_bf16", False) else torch.float16
         )
 
         if self.use_amp:
             if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
                 logger.warning(
-                    "bfloat16 was enabled for AMP but the current GPU does not support bfloat16. Falling back to float16 for AMP. Disable bfloat16 to hide this warning (amp_bfloat16: false)."
+                    "bf16 was enabled for AMP but the current GPU does not support bf16. Falling back to float16 for AMP. Disable bf16 to hide this warning (amp_bf16: false)."
                 )
                 self.amp_dtype = torch.float16
             logger.info(
@@ -137,7 +137,7 @@ class SRModel(BaseModel):
             )
         elif self.amp_dtype == torch.bfloat16:
             logger.warning(
-                "bfloat16 was enabled without AMP and will have no effect. Enable AMP to use bfloat16 (use_amp: true)."
+                "bf16 was enabled without AMP and will have no effect. Enable AMP to use bf16 (use_amp: true)."
             )
 
         if self.opt.get("fast_matmul", False):
