@@ -9,7 +9,7 @@ def swinir(**kwargs) -> SwinIR:
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_large(**kwargs) -> SwinIR:
+def swinir_l(**kwargs) -> SwinIR:
     return SwinIR(
         upscale=Config.get_scale(),
         img_size=64,
@@ -26,7 +26,7 @@ def swinir_large(**kwargs) -> SwinIR:
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_medium(**kwargs) -> SwinIR:
+def swinir_m(**kwargs) -> SwinIR:
     return SwinIR(
         upscale=Config.get_scale(),
         img_size=48,
@@ -43,7 +43,7 @@ def swinir_medium(**kwargs) -> SwinIR:
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_small(**kwargs) -> SwinIR:
+def swinir_s(**kwargs) -> SwinIR:
     return SwinIR(
         upscale=Config.get_scale(),
         img_size=64,
