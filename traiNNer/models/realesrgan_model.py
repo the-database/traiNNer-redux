@@ -67,8 +67,8 @@ class RealESRGANModel(SRModel):
         if self.queue_ptr == self.queue_size:  # the pool is full
             # do dequeue and enqueue
             # shuffle
-            assert self.queue_lr is not None, "queue_lr image is not a tensor"
-            assert self.queue_gt is not None, "queue_gt image is not a tensor"
+            assert self.queue_lr is not None
+            assert self.queue_gt is not None
             idx = torch.randperm(self.queue_size)
             self.queue_lr = self.queue_lr[idx]
             self.queue_gt = self.queue_gt[idx]
@@ -82,8 +82,8 @@ class RealESRGANModel(SRModel):
             self.lq = lq_dequeue
             self.gt = gt_dequeue
         else:
-            assert self.queue_lr is not None, "queue_lr image is not a tensor"
-            assert self.queue_gt is not None, "queue_gt image is not a tensor"
+            assert self.queue_lr is not None
+            assert self.queue_gt is not None
 
             # only do enqueue
             self.queue_lr[self.queue_ptr : self.queue_ptr + b, :, :, :] = (
