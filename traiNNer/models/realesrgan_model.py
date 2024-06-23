@@ -56,7 +56,7 @@ class RealESRGANModel(SRModel):
 
         # initialize
         b, c, h, w = self.lq.size()
-        if self.queue_lr is not None:
+        if self.queue_lr is None:
             assert (
                 self.queue_size % b == 0
             ), f"queue size {self.queue_size} should be divisible by batch size {b}"
