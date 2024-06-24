@@ -1,12 +1,12 @@
 import os
 from os import path as osp
-from typing import Any, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 
 class ArchInfo(TypedDict):
     names: list[str]
     scales: list[int]
-    extras: NotRequired[dict[str, Any]]
+    extras: NotRequired[dict[str, str]]
 
 
 ALL_SCALES = [1, 2, 3, 4, 8]
@@ -23,7 +23,11 @@ archs: list[ArchInfo] = [
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": SCALES_234},
     {"names": ["PLKSR", "RealPLKSR"], "scales": SCALES_234},
-    {"names": ["RealCUGAN"], "scales": SCALES_234, "extras": {"pro": "true", "fast": "false"}},
+    {
+        "names": ["RealCUGAN"],
+        "scales": SCALES_234,
+        "extras": {"pro": "true", "fast": "false"},
+    },
     {"names": ["SPAN"], "scales": [2, 4]},
     {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
     {"names": ["Compact", "UltraCompact", "SuperUltraCompact"], "scales": [1, 2, 4]},
