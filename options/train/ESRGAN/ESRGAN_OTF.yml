@@ -40,7 +40,7 @@ queue_size: 180
 datasets:
   train:
     name: Train Dataset
-    type: PairedImageDataset
+    type: RealESRGANDataset
     # Path to the HR (high res) images in your dataset.
     dataroot_gt: datasets/train/dataset1/hr
     # Path to the LR (low res) images in your dataset.
