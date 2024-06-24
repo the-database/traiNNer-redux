@@ -13,6 +13,33 @@ ALL_SCALES = [1, 2, 3, 4, 8]
 SCALES_234 = [2, 3, 4]
 
 
+def final_template(template: str, arch: ArchInfo) -> str:
+
+    default_scale = 4
+
+    template = template.replace(
+        "scale: %scale%",
+        f"scale: {default_scale}  # {', '.join([str(x) for x in arch['scales']])}",
+    )
+
+    arch_type_str = f"type: {arch['names'][0]}"
+    if len(arch["names"]) > 1:
+        arch_type_str += f"  # {', '.join([str(x) for x in arch['names']])}"
+
+    if "extras" in arch:
+        for k, v in arch["extras"].items():
+            arch_type_str += f"\n  {k}: {v}"
+
+    template = template.replace(
+        "type: %archname%",
+        arch_type_str,
+    )
+
+    template = template.replace("%archname%", f"{arch['names'][0]}")
+    template = template.replace("%scale%", f"{default_scale}x")
+    return template
+
+
 archs: list[ArchInfo] = [
     {
         "names": ["ESRGAN", "ESRGAN_lite"],
@@ -45,38 +72,20 @@ for arch in archs:
     # print(folder_name, folder_path)
     os.makedirs(folder_path, exist_ok=True)
 
-    template_path = osp.normpath(
+    template_path_paired = osp.normpath(
         osp.join(__file__, osp.pardir, "./default_options_paired.yml")
     )
 
-    with open(template_path) as f:
-        template = f.read()
+    template_path_otf = osp.normpath(
+        osp.join(__file__, osp.pardir, "./default_options_otf.yml")
+    )
 
-        default_scale = 4
-
-        template = template.replace(
-            "scale: %scale%",
-            f"scale: {default_scale}  # {', '.join([str(x) for x in arch['scales']])}",
-        )
-
-        arch_type_str = f"type: {arch['names'][0]}"
-        if len(arch["names"]) > 1:
-            arch_type_str += f"  # {', '.join([str(x) for x in arch['names']])}"
-
-        if "extras" in arch:
-            for k, v in arch["extras"].items():
-                arch_type_str += f"\n  {k}: {v}"
-
-        template = template.replace(
-            "type: %archname%",
-            arch_type_str,
-        )
-
-        template = template.replace("%archname%", f"{arch['names'][0]}")
-        template = template.replace("%scale%", f"{default_scale}x")
+    with open(template_path_paired) as fp, open(template_path_otf) as fo:
+        template_paired = fp.read()
+        template_otf = fo.read()
 
         with open(osp.join(folder_path, f"{folder_name}.yml"), mode="w") as fw:
-            fw.write(template)
+            fw.write(final_template(template_paired, arch))
 
         with open(osp.join(folder_path, f"{folder_name}_OTF.yml"), mode="w") as fw:
-            fw.write(template)
+            fw.write(final_template(template_otf, arch))
