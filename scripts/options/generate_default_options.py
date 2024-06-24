@@ -1,11 +1,12 @@
 import os
 from os import path as osp
-from typing import TypedDict
+from typing import Any, NotRequired, TypedDict
 
 
 class ArchInfo(TypedDict):
     names: list[str]
     scales: list[int]
+    extras: NotRequired[dict[str, Any]]
 
 
 ALL_SCALES = [1, 2, 3, 4, 8]
@@ -22,7 +23,7 @@ archs: list[ArchInfo] = [
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": SCALES_234},
     {"names": ["PLKSR", "RealPLKSR"], "scales": SCALES_234},
-    {"names": ["RealCUGAN"], "scales": SCALES_234},
+    {"names": ["RealCUGAN"], "scales": SCALES_234, "extras": {"pro": "true", "fast": "false"}},
     {"names": ["SPAN"], "scales": [2, 4]},
     {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
     {"names": ["Compact", "UltraCompact", "SuperUltraCompact"], "scales": [1, 2, 4]},
@@ -56,6 +57,10 @@ for arch in archs:
         arch_type_str = f"type: {arch['names'][0]}"
         if len(arch["names"]) > 1:
             arch_type_str += f"  # {', '.join([str(x) for x in arch['names']])}"
+
+        if "extras" in arch:
+            for k, v in arch["extras"].items():
+                arch_type_str += f"\n  {k}: {v}"
 
         template = template.replace(
             "type: %archname%",

@@ -46,6 +46,8 @@ datasets:
 # Generator model settings
 network_g:
   type: RealCUGAN
+  pro: true
+  fast: false
 
 # Discriminator model settings
 network_d:
