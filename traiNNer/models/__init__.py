@@ -19,7 +19,7 @@ def build_model(opt: dict[str, Any]) -> BaseModel:
     """
     opt = deepcopy(opt)
 
-    if opt["high_order_degradation"]:
+    if opt.get("high_order_degradation", False):
         model = RealESRGANModel(opt)
     else:
         model = SRModel(opt)

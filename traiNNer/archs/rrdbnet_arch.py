@@ -17,8 +17,8 @@ def esrgan(use_pixel_unshuffle: bool = False, in_nc: int = 3, **kwargs) -> RRDBN
         else:
             logger = get_root_logger()
             logger.warning(
-                "Pixel unshuffle option is ignored since scale is not in %s",
-                str(pixel_unshuffle_scales),
+                "Pixel unshuffle option is ignored since scale is not %s",
+                " or ".join([str(x) for x in pixel_unshuffle_scales]),
             )
 
     return RRDBNet(scale=scale, **kwargs)

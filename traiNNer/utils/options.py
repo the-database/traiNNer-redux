@@ -7,10 +7,8 @@ from typing import Any
 
 import torch
 import yaml
+from traiNNer.utils.dist_util import get_dist_info, init_dist, master_only
 from yaml import MappingNode
-
-from .dist_util import get_dist_info, init_dist, master_only
-from .misc import set_random_seed
 
 try:
     from yaml import CDumper as Dumper
@@ -142,16 +140,9 @@ def parse_options(
     # random seed
     seed = opt.get("manual_seed")
     opt["deterministic"] = seed is not None and seed > 0
-    if opt["deterministic"]:
-        torch.backends.cudnn.benchmark = False
-        torch.use_deterministic_algorithms(True)
-        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-    else:
-        torch.backends.cudnn.benchmark = True
+    if not opt["deterministic"]:
         seed = random.randint(1024, 10000)
         opt["manual_seed"] = seed
-    assert seed is not None
-    set_random_seed(seed + opt["rank"])
 
     # force to update yml options
     if args.force_yml is not None:

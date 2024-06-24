@@ -9,7 +9,7 @@ def test_singleimagedataset() -> None:
 name: Test
 type: SingleImageDataset
 dataroot_lq: tests/data/lq
-meta_info_file: tests/data/meta_info_gt.txt
+meta_info: tests/data/meta_info_gt.txt
 io_backend:
     type: disk
 
@@ -34,7 +34,7 @@ std: [0.5, 0.5, 0.5]
     assert result["lq_path"] == "tests/data/lq/baboon.png"
 
     # ------------------ test scan folder mode -------------------- #
-    opt.pop("meta_info_file")
+    opt.pop("meta_info")
     opt["io_backend"] = {"type": "disk"}
     dataset = SingleImageDataset(opt)
     assert dataset.io_backend_opt["type"] == "disk"  # io backend

@@ -4,18 +4,16 @@ from typing import Any
 import torch
 from torch import Tensor
 from torch.nn import functional as F  # noqa: N812
-from traiNNer.utils import RNG
-from traiNNer.utils.types import DataFeed
-
-from ..data.degradations import (
+from traiNNer.data.degradations import (
     random_add_gaussian_noise_pt,
     random_add_poisson_noise_pt,
 )
-from ..data.transforms import paired_random_crop
-from ..models.sr_model import SRModel
-from ..utils import DiffJPEG
-from ..utils.img_process_util import filter2d
-from ..utils.registry import MODEL_REGISTRY
+from traiNNer.data.transforms import paired_random_crop
+from traiNNer.models.sr_model import SRModel
+from traiNNer.utils import RNG, DiffJPEG
+from traiNNer.utils.img_process_util import filter2d
+from traiNNer.utils.registry import MODEL_REGISTRY
+from traiNNer.utils.types import DataFeed
 
 
 @MODEL_REGISTRY.register(suffix="traiNNer")
@@ -56,7 +54,7 @@ class RealESRGANModel(SRModel):
 
         # initialize
         b, c, h, w = self.lq.size()
-        if self.queue_lr is not None:
+        if self.queue_lr is None:
             assert (
                 self.queue_size % b == 0
             ), f"queue size {self.queue_size} should be divisible by batch size {b}"
@@ -67,8 +65,8 @@ class RealESRGANModel(SRModel):
         if self.queue_ptr == self.queue_size:  # the pool is full
             # do dequeue and enqueue
             # shuffle
-            assert self.queue_lr is not None, "queue_lr image is not a tensor"
-            assert self.queue_gt is not None, "queue_gt image is not a tensor"
+            assert self.queue_lr is not None
+            assert self.queue_gt is not None
             idx = torch.randperm(self.queue_size)
             self.queue_lr = self.queue_lr[idx]
             self.queue_gt = self.queue_gt[idx]
@@ -82,8 +80,8 @@ class RealESRGANModel(SRModel):
             self.lq = lq_dequeue
             self.gt = gt_dequeue
         else:
-            assert self.queue_lr is not None, "queue_lr image is not a tensor"
-            assert self.queue_gt is not None, "queue_gt image is not a tensor"
+            assert self.queue_lr is not None
+            assert self.queue_gt is not None
 
             # only do enqueue
             self.queue_lr[self.queue_ptr : self.queue_ptr + b, :, :, :] = (
@@ -97,7 +95,7 @@ class RealESRGANModel(SRModel):
     @torch.no_grad()
     def feed_data(self, data: DataFeed) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
-        if self.is_train and self.opt.get("high_order_degradation", True):
+        if self.is_train:
             assert (
                 "gt" in data
                 and "kernel1" in data

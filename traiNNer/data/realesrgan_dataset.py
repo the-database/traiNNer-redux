@@ -12,7 +12,7 @@ from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.utils import RNG
 from traiNNer.utils.types import DataFeed
 
-from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor
+from ..utils import FileClient, get_root_logger, imfrombytes, img2tensor, scandir
 from ..utils.registry import DATASET_REGISTRY
 from .degradations import circular_lowpass_kernel, random_mixed_kernels
 from .transforms import augment
@@ -53,12 +53,14 @@ class RealESRGANDataset(BaseDataset):
                 )
             with open(osp.join(self.gt_folder, "meta_info.txt")) as fin:
                 self.paths = [line.split(".")[0] for line in fin]
-        else:
+        elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
             with open(self.opt["meta_info"]) as fin:
                 paths = [line.strip().split(" ")[0] for line in fin]
                 self.paths = [os.path.join(self.gt_folder, v) for v in paths]
+        else:
+            self.paths = sorted(scandir(self.gt_folder, full_path=True))
 
         # blur settings for the first degradation
         self.blur_kernel_size = opt["blur_kernel_size"]
@@ -206,7 +208,7 @@ class RealESRGANDataset(BaseDataset):
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt = img2tensor(img_gt, bgr2rgb=True, float32=True)[0]
+        img_gt = img2tensor(img_gt, bgr2rgb=True, float32=True)
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 
