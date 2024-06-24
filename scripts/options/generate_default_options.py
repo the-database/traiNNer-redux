@@ -43,6 +43,7 @@ archs: list[ArchInfo] = [
     {
         "names": ["ESRGAN", "ESRGAN_lite"],
         "scales": ALL_SCALES,
+        "extras": {"use_pixel_unshuffle": "true"},
     },
     {"names": ["ATD"], "scales": ALL_SCALES},
     {"names": ["DAT_2"], "scales": SCALES_234},

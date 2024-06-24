@@ -48,6 +48,7 @@ datasets:
 # Generator model settings
 network_g:
   type: ESRGAN  # ESRGAN, ESRGAN_lite
+  use_pixel_unshuffle: true
 
 # Discriminator model settings
 network_d:
