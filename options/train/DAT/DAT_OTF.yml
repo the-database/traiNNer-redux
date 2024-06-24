@@ -131,7 +131,7 @@ train:
     gamma: 0.5
 
   total_iter: 500000  # Total number of iterations.
-  warmup_iter: -1  # No warm up.
+  warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
   # MSSIM loss

@@ -14,7 +14,6 @@ SCALES_234 = [2, 3, 4]
 
 
 def final_template(template: str, arch: ArchInfo) -> str:
-
     default_scale = 4
 
     template = template.replace(
