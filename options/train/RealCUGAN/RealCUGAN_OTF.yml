@@ -189,8 +189,8 @@ train:
   #   loss_weight: 1.0
 
   # Mix of Augmentations (MoA)
-  use_moa: false  # Whether to enable mixture of augmentations.
-  moa_augs: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']
+  use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
+  moa_augs: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']  # The list of augmentations to choose from, only one is selected per iteration.
   moa_probs: [0.4, 0.084, 0.084, 0.084, 0.348]  # The probability each augmentation in moa_augs will be applied. Total should add up to 1.
   moa_debug: false  # Save images before and after augment to debug/moa folder inside of the root training directory.
   moa_debug_limit: 100  # The max number of iterations to save augmentation images for.
