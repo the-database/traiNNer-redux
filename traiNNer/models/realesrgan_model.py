@@ -95,7 +95,7 @@ class RealESRGANModel(SRModel):
     @torch.no_grad()
     def feed_data(self, data: DataFeed) -> None:
         """Accept data from dataloader, and then add two-order degradations to obtain LQ images."""
-        if self.is_train and self.opt.get("high_order_degradation", True):
+        if self.is_train:
             assert (
                 "gt" in data
                 and "kernel1" in data
