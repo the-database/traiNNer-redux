@@ -125,7 +125,7 @@ network_d:
 ############################
 path:
   # Path to the pretrain model to use for the generator.
-  pretrain_network_g: experiments\pretrained_models\%pretrain%.pth
+  #pretrain_network_g: experiments\pretrained_models\pretrain.pth
   param_key_g: params_ema
   # Whether to load the pretrain in strict mode, which requires the pretrain model to be an exact match in all network
   # settings, including scale. If strict mode is disabled, then models of different scales can be used as a partial

@@ -1,9 +1,9 @@
 ####################
 # General Settings
 ####################
-name: %scale%_%archname%
+name: 4x_ESRGAN
 # Scaling factor for the model.
-scale: %scale%
+scale: 4  # 1, 2, 3, 4, 8
 # Enables AMP which uses mixed precision (fp32 + fp16) to improve performance and reduce VRAM, recommended in most cases.
 use_amp: true
 # Uses bf16 instead of fp16 for AMP, only supported on NVIDIA Ampere (e.g., RTX 3000 series) or newer.
@@ -64,7 +64,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: %archname%
+  type: ESRGAN  # ESRGAN, ESRGAN_lite
 
 # Discriminator model settings
 network_d:
