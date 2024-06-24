@@ -45,7 +45,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: PLKSR  # PLKSR, RealPLKSR
+  type: PLKSR
 
 # Discriminator model settings
 network_d:

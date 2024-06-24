@@ -22,7 +22,8 @@ archs: list[ArchInfo] = [
     {"names": ["DAT_2"], "scales": SCALES_234},
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": SCALES_234},
-    {"names": ["PLKSR", "RealPLKSR"], "scales": SCALES_234},
+    {"names": ["PLKSR"], "scales": SCALES_234},
+    {"names": ["RealPLKSR"], "scales": SCALES_234},
     {
         "names": ["RealCUGAN"],
         "scales": SCALES_234,

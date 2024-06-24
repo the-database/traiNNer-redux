@@ -1,7 +1,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_PLKSR
+name: 4x_RealPLKSR
 scale: 4  # 2, 3, 4
 use_amp: true  # Speed up training and reduce VRAM usage.
 amp_bf16: true  # Use bf16 for AMP, RTX 3000 series or newer only.
@@ -45,7 +45,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: PLKSR
+  type: RealPLKSR
 
 # Discriminator model settings
 network_d:
