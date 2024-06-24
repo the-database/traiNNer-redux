@@ -39,6 +39,7 @@ queue_size: 180
 #################################
 datasets:
   train:
+    name: Train Dataset
     type: PairedImageDataset
     # Path to the HR (high res) images in your dataset.
     dataroot_gt: datasets/train/dataset1/hr
@@ -78,6 +79,7 @@ datasets:
     prefetch_mode: ~
   # Uncomment these for validation
   # val:
+  #   name: Val Dataset
   #   type: PairedImageDataset
   #   dataroot_gt: datasets\val\dataset1\hr
   #   dataroot_lq: datasets\val\dataset1\lr
