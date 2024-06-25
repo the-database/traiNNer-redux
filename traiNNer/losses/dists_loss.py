@@ -169,11 +169,11 @@ class DISTSLoss(nn.Module):
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         if self.as_loss:
             feats0 = self.forward_once(x)
-            feats1 = self.forward_once(y)   
+            feats1 = self.forward_once(y)
         else:
             with torch.no_grad():
                 feats0 = self.forward_once(x)
-                feats1 = self.forward_once(y) 
+                feats1 = self.forward_once(y)
         dist1 = torch.tensor(0, device=x.device)
         dist2 = torch.tensor(0, device=x.device)
         c1 = 1e-6
