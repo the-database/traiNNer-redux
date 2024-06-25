@@ -35,10 +35,6 @@ class L2pooling(nn.Module):
             "filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1))
         )
 
-        if as_loss is False:
-            # send to cuda
-            self.filter = self.filter.cuda()
-
     def forward(self, input: Tensor) -> Tensor:
         input = input**2
         out = F.conv2d(
@@ -138,11 +134,6 @@ class DISTSLoss(nn.Module):
             self.alpha.data = weights["alpha"]
             self.beta.data = weights["beta"]
 
-            if as_loss is False:
-                # send to cuda
-                self.alpha.data = self.alpha.data.cuda()
-                self.beta.data = self.beta.data.cuda()
-
     def forward_once(self, x: Tensor) -> list[Tensor]:
         if (
             self.resize_input
@@ -176,8 +167,13 @@ class DISTSLoss(nn.Module):
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        feats0 = self.forward_once(x)
-        feats1 = self.forward_once(y)
+        if self.as_loss:
+            feats0 = self.forward_once(x)
+            feats1 = self.forward_once(y)
+        else:
+            with torch.no_grad():
+                feats0 = self.forward_once(x)
+                feats1 = self.forward_once(y)
         dist1 = torch.tensor(0, device=x.device)
         dist2 = torch.tensor(0, device=x.device)
         c1 = 1e-6

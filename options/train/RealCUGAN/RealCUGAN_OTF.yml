@@ -200,7 +200,7 @@ train:
 #############
 # Uncomment these for validation.
 # val:
-#   val_freq: 100
+#   val_freq: 1000
 #   save_img: True
 
 #   metrics:
@@ -209,13 +209,12 @@ train:
 #       crop_border: 4
 #       test_y_channel: false
 #     ssim:
-#       # Metric type. Usually the function name defined in the`basicsr/metrics` folder.
 #       type: calculate_ssim
-#       #### The following arguments are flexible and can be obtained in the corresponding doc
-#       # Whether to crop border during validation.
-#       crop_border: 4
-#       # Whether to convert to Y(CbCr) for validation.
-#       test_y_channel: false
+#       crop_border: 4  # Whether to crop border during validation.
+#       test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
+#     dists:
+#       type: calculate_dists
+#       better: lower
 
 ##########
 # Logging

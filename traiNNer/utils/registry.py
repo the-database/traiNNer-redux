@@ -85,7 +85,6 @@ class Registry:
         ret = self._obj_map.get(name)
         if ret is None:
             ret = self._obj_map.get(name + "_" + suffix)
-            print(f"Name {name} is not found, use name: {name}_{suffix}!")
         if ret is None:
             raise KeyError(
                 f"No object named '{name}' found in '{self._name}' registry!"
