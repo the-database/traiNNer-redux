@@ -108,6 +108,8 @@ def build_dataloader(
             if seed is not None
             else None
         )
+
+        dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", True)
     elif phase in ["val", "test"]:  # validation
         dataloader_args = {
             "dataset": dataset,
@@ -121,8 +123,6 @@ def build_dataloader(
         )
 
     dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", True)
-    dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", True)
-
     prefetch_mode = dataset_opt.get("prefetch_mode")
     if prefetch_mode == "cpu":  # CPUPrefetcher
         num_prefetch_queue = dataset_opt.get("num_prefetch_queue", 1)
