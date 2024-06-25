@@ -22,7 +22,6 @@ def calculate_dists(img: np.ndarray, img2: np.ndarray, **kwargs) -> Tensor:
     device = torch.device("cuda")
     img_t, img2_t = img_t.to(device), img2_t.to(device)
 
-    loss = DISTSLoss(as_loss=False)
-    loss = loss.forward(img_t, img2_t)
-
-    return loss
+    loss = DISTSLoss(as_loss=False).to(device)
+    with torch.no_grad():
+        return loss.forward(img_t, img2_t)
