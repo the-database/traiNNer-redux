@@ -1,6 +1,5 @@
 import numpy as np
-
-from ..utils import bgr2ycbcr
+from traiNNer.utils import bgr2ycbcr
 
 
 def reorder_image(img: np.ndarray, input_order: str = "HWC") -> np.ndarray:

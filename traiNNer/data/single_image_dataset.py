@@ -4,10 +4,10 @@ from typing import Any
 from torch import Tensor
 from torchvision.transforms.functional import normalize
 from traiNNer.data.base_dataset import BaseDataset
+from traiNNer.utils import FileClient, imfrombytes, img2tensor, rgb2ycbcr, scandir
+from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 
-from ..utils import FileClient, imfrombytes, img2tensor, rgb2ycbcr, scandir
-from ..utils.registry import DATASET_REGISTRY
 from .data_util import paths_from_lmdb
 
 

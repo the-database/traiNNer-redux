@@ -2,8 +2,8 @@ from copy import deepcopy
 from typing import Any
 
 from traiNNer.models.base_model import BaseModel
+from traiNNer.utils import get_root_logger
 
-from ..utils import get_root_logger
 from .realesrgan_model import RealESRGANModel
 from .sr_model import SRModel
 

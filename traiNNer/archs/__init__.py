@@ -5,9 +5,8 @@ from os import path as osp
 from typing import Any
 
 from torch import nn
-
-from ..utils import get_root_logger, scandir
-from ..utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
+from traiNNer.utils import get_root_logger, scandir
+from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
 
 __all__ = ["build_network"]
 spandrel_name = "spandrel"
