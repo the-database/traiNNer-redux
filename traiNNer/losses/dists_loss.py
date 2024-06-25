@@ -35,7 +35,7 @@ class L2pooling(nn.Module):
             "filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1))
         )
 
-        if as_loss is False:
+        if not as_loss:
             # send to cuda
             self.filter = self.filter.cuda()
 
@@ -138,7 +138,7 @@ class DISTSLoss(nn.Module):
             self.alpha.data = weights["alpha"]
             self.beta.data = weights["beta"]
 
-            if as_loss is False:
+            if not as_loss:
                 # send to cuda
                 self.alpha.data = self.alpha.data.cuda()
                 self.beta.data = self.beta.data.cuda()
