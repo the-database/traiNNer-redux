@@ -9,13 +9,15 @@ from ..utils import imgs2tensors, scandir
 from .transforms import mod_crop
 
 
-def check_missing_paths(missing_from_paths, key, folder):
+def check_missing_paths(missing_from_paths: set[str], key: str, folder: str) -> None:
     if len(missing_from_paths) == 0:
         return
 
-    missing_subset = list(missing_from_paths)[:10]
-    raise ValueError(f"{len(missing_from_paths)} files are missing from {key}_paths ({folder}). The first few missing files are:\n" + "\n".join(missing_subset))
-
+    missing_subset = sorted(missing_from_paths)[:10]
+    raise ValueError(
+        f"{len(missing_from_paths)} files are missing from {key}_paths ({folder}). The first few missing files are:\n"
+        + "\n".join(missing_subset)
+    )
 
 
 def read_img_seq(

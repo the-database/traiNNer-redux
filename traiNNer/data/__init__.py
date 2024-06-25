@@ -109,7 +109,9 @@ def build_dataloader(
             else None
         )
 
-        dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", True)
+        dataloader_args["persistent_workers"] = dataset_opt.get(
+            "persistent_workers", True
+        )
     elif phase in ["val", "test"]:  # validation
         dataloader_args = {
             "dataset": dataset,
