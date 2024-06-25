@@ -58,7 +58,7 @@ def scandir(
     suffix: str | tuple[str] | None = None,
     recursive: bool = False,
     full_path: bool = False,
-) -> Generator:
+) -> Generator[str]:
     """Scan a directory to find the interested files.
 
     Args:
@@ -77,7 +77,7 @@ def scandir(
 
     def _scandir(
         dir_path: str, suffix: str | tuple[str] | None, recursive: bool
-    ) -> Generator:
+    ) -> Generator[str]:
         for entry in os.scandir(dir_path):
             if not entry.name.startswith(".") and entry.is_file():
                 if full_path:
