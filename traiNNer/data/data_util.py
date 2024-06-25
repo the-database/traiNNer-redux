@@ -9,6 +9,15 @@ from ..utils import imgs2tensors, scandir
 from .transforms import mod_crop
 
 
+def check_missing_paths(missing_from_paths, key, folder):
+    if len(missing_from_paths) == 0:
+        return
+
+    missing_subset = list(missing_from_paths)[:10]
+    raise ValueError(f"{len(missing_from_paths)} files are missing from {key}_paths ({folder}). The first few missing files are:\n" + "\n".join(missing_subset))
+
+
+
 def read_img_seq(
     path: str | list[str],
     require_mod_crop: bool = False,
@@ -266,12 +275,9 @@ def paired_paths_from_folder(
     gt_set = set(gt_names)
     missing_from_gt_paths = input_set - gt_set
     missing_from_input_paths = gt_set - input_set
-    assert (
-        len(missing_from_gt_paths) == 0
-    ), f"{missing_from_gt_paths} are missing from {gt_key}_paths."
-    assert (
-        len(missing_from_input_paths) == 0
-    ), f"{missing_from_input_paths} are missing from {input_key}_paths."
+
+    check_missing_paths(missing_from_gt_paths, gt_key, gt_folder)
+    check_missing_paths(missing_from_input_paths, input_key, input_folder)
 
     if filename_tmpl == "{}":
         input_paths = [
