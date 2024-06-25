@@ -7,8 +7,7 @@ from typing import Any
 
 import torch
 from torch.utils.tensorboard.writer import SummaryWriter
-
-from .dist_util import get_dist_info, master_only
+from traiNNer.utils.dist_util import get_dist_info, master_only
 
 initialized_logger = {}
 

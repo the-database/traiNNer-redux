@@ -6,8 +6,7 @@ from os import path as osp
 from typing import Any
 
 import torch
-
-from .dist_util import master_only
+from traiNNer.utils.dist_util import master_only
 
 
 def set_random_seed(seed: int) -> None:

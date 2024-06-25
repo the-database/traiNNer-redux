@@ -2,10 +2,9 @@ from copy import deepcopy
 from typing import Any
 
 from traiNNer.models.base_model import BaseModel
+from traiNNer.models.realesrgan_model import RealESRGANModel
+from traiNNer.models.sr_model import SRModel
 from traiNNer.utils import get_root_logger
-
-from .realesrgan_model import RealESRGANModel
-from .sr_model import SRModel
 
 __all__ = ["build_model"]
 
