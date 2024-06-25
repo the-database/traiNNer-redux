@@ -120,8 +120,8 @@ def build_dataloader(
             f"Wrong dataset phase: {phase}. Supported ones are 'train', 'val' and 'test'."
         )
 
-    dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", False)
-    dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", False)
+    dataloader_args["pin_memory"] = dataset_opt.get("pin_memory", True)
+    dataloader_args["persistent_workers"] = dataset_opt.get("persistent_workers", True)
 
     prefetch_mode = dataset_opt.get("prefetch_mode")
     if prefetch_mode == "cpu":  # CPUPrefetcher
