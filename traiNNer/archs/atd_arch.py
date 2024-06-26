@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
 from spandrel.architectures.ATD import ATD
-from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
 def atd(
+    scale: int = 4,
     in_chans: int = 3,
     img_size: int = 96,
     embed_dim: int = 210,
@@ -38,7 +38,7 @@ def atd(
     **kwargs,
 ) -> ATD:
     return ATD(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
         embed_dim=embed_dim,
@@ -58,9 +58,9 @@ def atd(
 
 
 @SPANDREL_REGISTRY.register()
-def atd_light(**kwargs) -> ATD:
+def atd_light(scale: int = 4, **kwargs) -> ATD:
     return ATD(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=3,
         img_size=64,
         embed_dim=48,

@@ -1,13 +1,12 @@
 from spandrel.architectures.PLKSR import PLKSR, RealPLKSR
-from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def plksr(**kwargs) -> PLKSR:
-    return PLKSR(upscaling_factor=Config.get_scale(), **kwargs)
+def plksr(scale: int = 4, **kwargs) -> PLKSR:
+    return PLKSR(upscaling_factor=scale, **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def realplksr(**kwargs) -> RealPLKSR:
-    return RealPLKSR(upscaling_factor=Config.get_scale(), **kwargs)
+def realplksr(scale: int = 4, **kwargs) -> RealPLKSR:
+    return RealPLKSR(upscaling_factor=scale, **kwargs)

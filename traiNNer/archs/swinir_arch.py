@@ -1,17 +1,16 @@
 from spandrel.architectures.SwinIR import SwinIR
-from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def swinir(**kwargs) -> SwinIR:
-    return SwinIR(upscale=Config.get_scale(), **kwargs)
+def swinir(scale: int = 4, **kwargs) -> SwinIR:
+    return SwinIR(upscale=scale, **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_l(**kwargs) -> SwinIR:
+def swinir_l(scale: int = 4, **kwargs) -> SwinIR:
     return SwinIR(
-        upscale=Config.get_scale(),
+        upscale=scale,
         img_size=64,
         embed_dim=240,
         depths=[6, 6, 6, 6, 6, 6, 6, 6, 6],
@@ -26,9 +25,9 @@ def swinir_l(**kwargs) -> SwinIR:
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_m(**kwargs) -> SwinIR:
+def swinir_m(scale: int = 4, **kwargs) -> SwinIR:
     return SwinIR(
-        upscale=Config.get_scale(),
+        upscale=scale,
         img_size=48,
         embed_dim=180,
         depths=[6, 6, 6, 6, 6, 6],
@@ -43,9 +42,9 @@ def swinir_m(**kwargs) -> SwinIR:
 
 
 @SPANDREL_REGISTRY.register()
-def swinir_s(**kwargs) -> SwinIR:
+def swinir_s(scale: int = 4, **kwargs) -> SwinIR:
     return SwinIR(
-        upscale=Config.get_scale(),
+        upscale=scale,
         img_size=64,
         embed_dim=60,
         depths=[6, 6, 6, 6],

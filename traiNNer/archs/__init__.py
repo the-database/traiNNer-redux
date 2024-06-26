@@ -6,6 +6,7 @@ from typing import Any
 
 from torch import nn
 from traiNNer.utils import get_root_logger, scandir
+from traiNNer.utils.config import Config
 from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
 
 __all__ = ["build_network"]
@@ -29,6 +30,8 @@ def build_network(opt: dict[str, Any]) -> nn.Module:
     opt = deepcopy(opt)
     network_type = opt.pop("type")
     logger = get_root_logger()
+
+    opt["scale"] = Config.get_scale()
 
     # try loading from spandrel first
     try:
