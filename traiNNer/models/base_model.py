@@ -32,6 +32,7 @@ class BaseModel:
         self.is_train = opt["is_train"]
         self.schedulers: list[LRScheduler] = []
         self.optimizers: list[Optimizer] = []
+        self.optimizers_skipped: list[bool] = []
         self.batch_augment = None
         self.log_dict = {}
         self.loss_samples = 0
@@ -293,8 +294,8 @@ class BaseModel:
             warmup_iter (int): Warm-up iter numbers. -1 for no warm-up.
                 Default: -1.
         """
-        if current_iter > 1:
-            for scheduler in self.schedulers:
+        for i, scheduler in enumerate(self.schedulers):
+            if not self.optimizers_skipped[i]:
                 scheduler.step()
         # set up warm-up learning rate
         if current_iter < warmup_iter:
