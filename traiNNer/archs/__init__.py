@@ -31,11 +31,9 @@ def build_network(opt: dict[str, Any]) -> nn.Module:
     network_type = opt.pop("type")
     logger = get_root_logger()
 
-    opt["scale"] = Config.get_scale()
-
     # try loading from spandrel first
     try:
-        net = SPANDREL_REGISTRY.get(network_type)(**opt)
+        net = SPANDREL_REGISTRY.get(network_type)(**opt, scale=Config.get_scale())
         logger.info(
             "Network [%s] is created from %s v%s.",
             net.__class__.__name__,

@@ -1,7 +1,7 @@
 # Modified from: https://github.com/facebookresearch/fvcore/blob/master/fvcore/common/registry.py
 
 
-from collections.abc import Callable, ItemsView, Iterator, KeysView
+from collections.abc import Callable, Iterator, KeysView
 from typing import overload
 
 
@@ -37,11 +37,9 @@ class Registry:
             name (str): the name of this registry
         """
         self._name = name
-        self._obj_map = {}
+        self._obj_map: dict[str, Callable] = {}
 
-    def _do_register(
-        self, name: str, obj: Callable | type, suffix: str | None = None
-    ) -> None:
+    def _do_register(self, name: str, obj: Callable, suffix: str | None = None) -> None:
         if isinstance(suffix, str):
             name = name + "_" + suffix
 
@@ -52,16 +50,14 @@ class Registry:
         self._obj_map[name] = obj
 
     @overload
-    def register(
-        self, obj: None = None, suffix: str | None = None
-    ) -> Callable | type: ...
+    def register(self, obj: None = None, suffix: str | None = None) -> Callable: ...
 
     @overload
-    def register(self, obj: Callable | type, suffix: str | None = None) -> None: ...
+    def register(self, obj: Callable, suffix: str | None = None) -> None: ...
 
     def register(
-        self, obj: Callable | type | None = None, suffix: str | None = None
-    ) -> Callable | type | None:
+        self, obj: Callable | None = None, suffix: str | None = None
+    ) -> Callable | None:
         """
         Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not.
@@ -69,7 +65,7 @@ class Registry:
         """
         if obj is None:
             # used as a decorator
-            def deco(func_or_class: Callable | type) -> Callable | type:
+            def deco(func_or_class: Callable) -> Callable:
                 name = func_or_class.__name__.lower()
                 self._do_register(name, func_or_class, suffix)
                 return func_or_class
@@ -80,7 +76,7 @@ class Registry:
         name = obj.__name__.lower()
         self._do_register(name, obj, suffix)
 
-    def get(self, name: str, suffix: str = "traiNNer") -> Callable | type:
+    def get(self, name: str, suffix: str = "traiNNer") -> Callable:
         name = name.lower()
         ret = self._obj_map.get(name)
         if ret is None:
@@ -94,8 +90,8 @@ class Registry:
     def __contains__(self, name: str) -> bool:
         return name.lower() in self._obj_map
 
-    def __iter__(self) -> Iterator[ItemsView[str, Callable | type]]:
-        return iter(self._obj_map.items())  # type: ignore
+    def __iter__(self) -> Iterator[tuple[str, Callable]]:
+        return iter(self._obj_map.items())
 
     def keys(self) -> KeysView[str]:
         return self._obj_map.keys()
