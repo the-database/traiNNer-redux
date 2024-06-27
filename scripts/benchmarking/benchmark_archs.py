@@ -10,29 +10,11 @@ sys.path.append(
 )
 from traiNNer.archs import SPANDREL_REGISTRY
 
-BENCHMARK_ARCHS = [
-    "atd_light",
-    "atd",
-    "compact",
-    "dat_2",
-    "esrgan_lite",
-    "esrgan",
-    "hat_l",
-    "hat_m",
-    "hat_s",
-    "omnisr",
-    "plksr",
-    "realcugan",
-    "realplksr",
-    "span",
-    "srformer_light",
-    "srformer",
-    "superultracompact",
-    "swinir_l",
-    "swinir_m",
-    "swinir_s",
-    "ultracompact",
-]
+EXCLUDE_BENCHMARK_ARCHS = {
+        "dat",
+        "hat",
+        "swinir"
+    }
 
 
 def benchmark_model(
@@ -68,8 +50,10 @@ if __name__ == "__main__":
 
     results = []
 
-    for name in BENCHMARK_ARCHS:
-        arch = SPANDREL_REGISTRY.get(name)
+    for name, arch in SPANDREL_REGISTRY:
+        if name in EXCLUDE_BENCHMARK_ARCHS:
+            continue
+        print("try", name)
         model = arch(scale=scale).eval().to(device)
 
         avg_time, output = benchmark_model(model, random_input, warmup_runs, num_runs)
@@ -80,7 +64,9 @@ if __name__ == "__main__":
         )
 
         results.append((name, avg_time, 1 / avg_time))
-        print(f"{name:<18}: {1 / avg_time:>7.2f} fps ({avg_time:.4f} seconds per image)")
+        print(
+            f"{name:<18}: {1 / avg_time:>7.2f} fps ({avg_time:.4f} seconds per image)"
+        )
 
     results.sort(key=lambda x: x[1])
 
@@ -89,7 +75,7 @@ if __name__ == "__main__":
     )
     for name, avg_time, fps in results:
         # print(f"{name}: {fps:.2f} fps ({avg_time:.4f} seconds per image)")
-         print(f"{name:<18}: {fps:>7.2f} fps ({avg_time:.4f} seconds per image)")
+        print(f"{name:<18}: {fps:>7.2f} fps ({avg_time:.4f} seconds per image)")
 
     end_script_time = time.time()
     print(f"\nFinished in: {end_script_time - start_script_time:.2f} seconds")
