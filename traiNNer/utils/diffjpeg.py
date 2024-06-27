@@ -470,7 +470,6 @@ class DeCompressJpeg(nn.Module):
                 height, width = imgh, imgw
             comp = self.idct(comp)
             components[k] = self.merging(comp, height, width)
-            #
         image = self.chroma(components["y"], components["cb"], components["cr"])
         image = self.colors(image)
 
