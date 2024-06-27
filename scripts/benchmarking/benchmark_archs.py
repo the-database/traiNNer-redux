@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
     if not print_markdown:
         print(
-            f"\n{w}x{h} {c} channel input, {scale}x scale, {dtype_str}, {warmup_runs} warmup + {num_runs} runs averaged"
+            f"\n{w}x{h} {c} channel input, {scale}x scale, {dtype_str}, {warmup_runs} warmup + {num_runs} ({lightweight_num_runs} for lightweight) runs averaged"
         )
 
     for scale in scales:
@@ -147,8 +147,9 @@ if __name__ == "__main__":
 
     for arch_name in sorted(results_by_arch.keys()):
         print(f"\n### {arch_name}")
+        runs = lightweight_num_runs if arch_name in LIGHTWEIGHT_ARCHS else num_runs
         print(
-            f"{w}x{h} {c} channel input, {dtype_str}, {warmup_runs} warmup + {num_runs} runs averaged"
+            f"{w}x{h} {c} channel input, {dtype_str}, {warmup_runs} warmup + {runs} runs averaged"
         )
         print("|Name|FPS|sec/img|VRAM|Params|")
         print("|:-|-:|-:|-:|-:|")
