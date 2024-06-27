@@ -39,6 +39,7 @@ def benchmark_model(
     return avg_time, output
 
 
+# TODO https://pytorch.org/tutorials/recipes/recipes/benchmark.html
 if __name__ == "__main__":
     start_script_time = time.time()
     device = "cuda"
@@ -47,8 +48,8 @@ if __name__ == "__main__":
     random_input = torch.rand(input_shape, device=device)
     n, c, h, w = random_input.shape
     scale = 2
-    warmup_runs = 5
-    num_runs = 10
+    warmup_runs = 0
+    num_runs = 1
 
     results = []
 
@@ -68,9 +69,7 @@ if __name__ == "__main__":
             and output.shape[3] == random_input.shape[3] * scale
         )
 
-        vram_usage = torch.cuda.max_memory_allocated(device) / (
-            1024**2
-        )
+        vram_usage = torch.cuda.max_memory_allocated(device) / (1024**2)
         results.append([name, avg_time, 1 / avg_time, vram_usage])
         output_line(*results[-1])
 
