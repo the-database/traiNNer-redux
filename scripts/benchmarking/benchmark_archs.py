@@ -11,7 +11,14 @@ sys.path.append(
 from traiNNer.archs import SPANDREL_REGISTRY
 
 EXCLUDE_BENCHMARK_ARCHS = {"dat", "hat", "swinir"}
-LIGHTWEIGHT_ARCHS = {"realcugan", "span", "compact", "ultracompact", "superultracompact"}
+LIGHTWEIGHT_ARCHS = {
+    "realcugan",
+    "span",
+    "compact",
+    "ultracompact",
+    "superultracompact",
+}
+
 
 def get_line(
     name: str,
