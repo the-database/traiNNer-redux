@@ -10,11 +10,7 @@ sys.path.append(
 )
 from traiNNer.archs import SPANDREL_REGISTRY
 
-EXCLUDE_BENCHMARK_ARCHS = {
-        "dat",
-        "hat",
-        "swinir"
-    }
+EXCLUDE_BENCHMARK_ARCHS = {"dat", "hat", "swinir"}
 
 
 def benchmark_model(
