@@ -11,7 +11,7 @@ sys.path.append(
 from traiNNer.archs import SPANDREL_REGISTRY
 
 EXCLUDE_BENCHMARK_ARCHS = {"dat", "hat", "swinir"}
-
+LIGHTWEIGHT_ARCHS = {"realcugan", "compact", "ultracompact", "superultracompact"}
 
 def get_line(
     name: str,
@@ -65,8 +65,9 @@ if __name__ == "__main__":
 
     input_shape = (1, 3, 480, 640)
     scales = [4, 3, 2, 1]
-    warmup_runs = 5
-    num_runs = 10
+    warmup_runs = 1
+    num_runs = 5
+    lightweight_num_runs = 250
     use_fp16 = False
     print_markdown = True
 
@@ -89,12 +90,12 @@ if __name__ == "__main__":
             try:
                 model = arch(scale=scale).eval().to(device, dtype=dtype)
                 total_params = sum(p[1].numel() for p in model.named_parameters())
-
+                runs = lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
                 torch.cuda.empty_cache()
                 torch.cuda.reset_peak_memory_stats()
 
                 avg_time, output = benchmark_model(
-                    model, random_input, warmup_runs, num_runs
+                    model, random_input, warmup_runs, runs
                 )
 
                 if not (
@@ -146,6 +147,9 @@ if __name__ == "__main__":
 
     for arch_name in sorted(results_by_arch.keys()):
         print(f"\n### {arch_name}")
+        print(
+            f"{w}x{h} {c} channel input, {dtype_str}, {warmup_runs} warmup + {num_runs} runs averaged"
+        )
         print("|Name|FPS|sec/img|VRAM|Params|")
         print("|:-|-:|-:|-:|-:|")
         for scale in scales:
