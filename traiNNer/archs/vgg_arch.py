@@ -5,8 +5,7 @@ import torch
 from torch import Tensor, nn
 from torchvision.models import VGG19_Weights, vgg
 from torchvision.transforms.functional import InterpolationMode, center_crop, resize
-
-from ..utils.registry import ARCH_REGISTRY
+from traiNNer.utils.registry import ARCH_REGISTRY
 
 VGG19_PATCH_SIZE = 256
 VGG19_CROP_SIZE = 224

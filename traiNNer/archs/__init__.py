@@ -5,9 +5,9 @@ from os import path as osp
 from typing import Any
 
 from torch import nn
-
-from ..utils import get_root_logger, scandir
-from ..utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
+from traiNNer.utils import get_root_logger, scandir
+from traiNNer.utils.config import Config
+from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
 
 __all__ = ["build_network"]
 spandrel_name = "spandrel"
@@ -33,7 +33,7 @@ def build_network(opt: dict[str, Any]) -> nn.Module:
 
     # try loading from spandrel first
     try:
-        net = SPANDREL_REGISTRY.get(network_type)(**opt)
+        net = SPANDREL_REGISTRY.get(network_type)(**opt, scale=Config.get_scale())
         logger.info(
             "Network [%s] is created from %s v%s.",
             net.__class__.__name__,

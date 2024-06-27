@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
 from spandrel.architectures.DAT import DAT
-from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
 def dat(
+    scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
     img_range: float = 1.0,
@@ -19,7 +19,7 @@ def dat(
     **kwargs,
 ) -> DAT:
     return DAT(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
         img_range=img_range,
@@ -34,9 +34,9 @@ def dat(
 
 
 @SPANDREL_REGISTRY.register()
-def dat_2(**kwargs) -> DAT:
+def dat_2(scale: int = 4, **kwargs) -> DAT:
     return DAT(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=3,
         img_size=64,
         img_range=1.0,

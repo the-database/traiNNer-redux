@@ -17,11 +17,10 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
-
-from ..ops.batchaug import MOA_DEBUG_PATH, BatchAugment
-from ..utils import get_root_logger
-from ..utils.dist_util import master_only
-from ..utils.types import DataFeed, TrainingState
+from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
+from traiNNer.utils import get_root_logger
+from traiNNer.utils.dist_util import master_only
+from traiNNer.utils.types import DataFeed, TrainingState
 
 
 class BaseModel:
@@ -33,6 +32,7 @@ class BaseModel:
         self.is_train = opt["is_train"]
         self.schedulers: list[LRScheduler] = []
         self.optimizers: list[Optimizer] = []
+        self.optimizers_skipped: list[bool] = []
         self.batch_augment = None
         self.log_dict = {}
         self.loss_samples = 0
@@ -294,8 +294,8 @@ class BaseModel:
             warmup_iter (int): Warm-up iter numbers. -1 for no warm-up.
                 Default: -1.
         """
-        if current_iter > 1:
-            for scheduler in self.schedulers:
+        for i, scheduler in enumerate(self.schedulers):
+            if not self.optimizers_skipped[i]:
                 scheduler.step()
         # set up warm-up learning rate
         if current_iter < warmup_iter:

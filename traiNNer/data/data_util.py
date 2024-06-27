@@ -4,9 +4,8 @@ import cv2
 import numpy as np
 import torch
 from torch import Tensor
-
-from ..utils import imgs2tensors, scandir
-from .transforms import mod_crop
+from traiNNer.data.transforms import mod_crop
+from traiNNer.utils import imgs2tensors, scandir
 
 
 def check_missing_paths(missing_from_paths: set[str], key: str, folder: str) -> None:

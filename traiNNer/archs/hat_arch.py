@@ -1,17 +1,16 @@
 from spandrel.architectures.HAT import HAT
-from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def hat(**kwargs) -> HAT:
-    return HAT(upscale=Config.get_scale(), **kwargs)
+def hat(scale: int = 4, **kwargs) -> HAT:
+    return HAT(upscale=scale, **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def hat_l(**kwargs) -> HAT:
+def hat_l(scale: int = 4, **kwargs) -> HAT:
     return HAT(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=3,
         window_size=16,
         compress_ratio=3,
@@ -30,9 +29,9 @@ def hat_l(**kwargs) -> HAT:
 
 
 @SPANDREL_REGISTRY.register()
-def hat_m(**kwargs) -> HAT:
+def hat_m(scale: int = 4, **kwargs) -> HAT:
     return HAT(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=3,
         window_size=16,
         compress_ratio=3,
@@ -51,9 +50,9 @@ def hat_m(**kwargs) -> HAT:
 
 
 @SPANDREL_REGISTRY.register()
-def hat_s(**kwargs) -> HAT:
+def hat_s(scale: int = 4, **kwargs) -> HAT:
     return HAT(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=3,
         img_size=64,
         window_size=16,

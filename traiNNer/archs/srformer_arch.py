@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
 from spandrel_extra_arches.architectures.SRFormer import SRFormer
-from traiNNer.utils.config import Config
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
 def srformer(
+    scale: int = 4,
     in_chans: int = 3,
     img_size: int = 48,
     window_size: int = 24,
@@ -20,7 +20,7 @@ def srformer(
     **kwargs,
 ) -> SRFormer:
     return SRFormer(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
         window_size=window_size,
@@ -36,9 +36,9 @@ def srformer(
 
 
 @SPANDREL_REGISTRY.register()
-def srformer_light(**kwargs) -> SRFormer:
+def srformer_light(scale: int = 4, **kwargs) -> SRFormer:
     return SRFormer(
-        upscale=Config.get_scale(),
+        upscale=scale,
         in_chans=3,
         img_size=64,
         window_size=16,

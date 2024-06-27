@@ -262,13 +262,13 @@ def train_pipeline(root_path: str) -> None:
             current_iter += 1
             if current_iter > total_iters:
                 break
+            # training
+            model.feed_data(train_data)
+            model.optimize_parameters(current_iter)
             # update learning rate
             model.update_learning_rate(
                 current_iter, warmup_iter=opt["train"].get("warmup_iter", -1)
             )
-            # training
-            model.feed_data(train_data)
-            model.optimize_parameters(current_iter)
             iter_timer.record()
             if current_iter == 1:
                 # reset start time in msg_logger for more accurate eta_time

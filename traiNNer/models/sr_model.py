@@ -256,6 +256,7 @@ class SRModel(BaseModel):
             optim_type, optim_params, **train_opt["optim_g"]
         )
         self.optimizers.append(self.optimizer_g)
+        self.optimizers_skipped.append(False)
 
         # optimizer d
         if self.net_d is not None:
@@ -264,6 +265,7 @@ class SRModel(BaseModel):
                 optim_type, self.net_d.parameters(), **train_opt["optim_d"]
             )
             self.optimizers.append(self.optimizer_d)
+            self.optimizers_skipped.append(False)
 
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data
@@ -375,8 +377,10 @@ class SRModel(BaseModel):
             loss_dict["l_g_total"] = l_g_total
 
         self.scaler_g.scale(l_g_total).backward()
+        scale_before = self.scaler_g.get_scale()
         self.scaler_g.step(self.optimizer_g)
         self.scaler_g.update()
+        self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
         self.optimizer_g.zero_grad()
 
         if (
@@ -406,8 +410,10 @@ class SRModel(BaseModel):
 
             self.scaler_d.scale(l_d_real).backward()  # retain_graph?
             self.scaler_d.scale(l_d_fake).backward()
+            scale_before = self.scaler_d.get_scale()
             self.scaler_d.step(self.optimizer_d)
             self.scaler_d.update()
+            self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
             self.optimizer_d.zero_grad()
 
         for key, value in loss_dict.items():

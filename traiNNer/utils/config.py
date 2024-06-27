@@ -1,5 +1,4 @@
 import argparse
-from copy import deepcopy
 from typing import Any
 
 from traiNNer.utils.options import parse_options
@@ -10,13 +9,8 @@ class Config:
     _args = None
 
     @classmethod
-    def load_config_from_config(
-        cls, config: dict[str, Any], args: argparse.Namespace
-    ) -> tuple[dict[str, Any], argparse.Namespace]:
-        cls._config = deepcopy(config)
-        cls._args = deepcopy(args)
-        assert cls._args is not None
-        return cls._config, cls._args
+    def is_loaded(cls) -> bool:
+        return cls._config is not None
 
     @classmethod
     def load_config_from_file(

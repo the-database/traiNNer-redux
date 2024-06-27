@@ -3,16 +3,15 @@ from typing import Any
 import numpy as np
 from torchvision.transforms.functional import normalize
 from traiNNer.data.base_dataset import BaseDataset
-from traiNNer.utils.types import DataFeed
-
-from ..utils import FileClient, imfrombytes, imgs2tensors
-from ..utils.registry import DATASET_REGISTRY
-from .data_util import (
+from traiNNer.data.data_util import (
     paired_paths_from_folder,
     paired_paths_from_lmdb,
     paired_paths_from_meta_info_file,
 )
-from .transforms import augment, paired_random_crop
+from traiNNer.data.transforms import augment, paired_random_crop
+from traiNNer.utils import FileClient, imfrombytes, imgs2tensors
+from traiNNer.utils.registry import DATASET_REGISTRY
+from traiNNer.utils.types import DataFeed
 
 
 @DATASET_REGISTRY.register()

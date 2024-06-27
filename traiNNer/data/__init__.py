@@ -11,12 +11,11 @@ import torch.utils.data
 from torch.utils.data.dataloader import Dataset
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_sampler import EnlargedSampler
+from traiNNer.data.prefetch_dataloader import PrefetchDataLoader
+from traiNNer.utils import get_root_logger, scandir
+from traiNNer.utils.dist_util import get_dist_info
+from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.rng import RNG
-
-from ..utils import get_root_logger, scandir
-from ..utils.dist_util import get_dist_info
-from ..utils.registry import DATASET_REGISTRY
-from .prefetch_dataloader import PrefetchDataLoader
 
 __all__ = ["build_dataset", "build_dataloader"]
 

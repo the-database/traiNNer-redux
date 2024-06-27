@@ -2,9 +2,8 @@ from abc import abstractmethod
 from typing import Any
 
 from torch.utils import data
+from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
-
-from ..utils.registry import DATASET_REGISTRY
 
 
 @DATASET_REGISTRY.register()

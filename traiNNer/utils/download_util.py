@@ -6,8 +6,7 @@ import requests
 from requests import Response
 from torch.hub import download_url_to_file, get_dir
 from tqdm import tqdm
-
-from .misc import sizeof_fmt
+from traiNNer.utils.misc import sizeof_fmt
 
 
 def download_file_from_google_drive(file_id: str, save_path: str) -> None:
