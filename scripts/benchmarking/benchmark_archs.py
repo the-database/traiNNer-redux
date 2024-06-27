@@ -36,10 +36,9 @@ BENCHMARK_ARCHS = [
 
 
 def benchmark_model(
-    model: nn.Module, input_tensor: Tensor, num_runs: int = 10
+    model: nn.Module, input_tensor: Tensor, warmup_runs: int = 5, num_runs: int = 10
 ) -> tuple[float, Tensor]:
-    # warm up
-    for _ in range(5):
+    for _ in range(warmup_runs):
         with torch.no_grad():
             model(input_tensor)
 
@@ -57,25 +56,39 @@ def benchmark_model(
 
 
 if __name__ == "__main__":
+    start_script_time = time.time()
     device = "cuda"
 
     input_shape = (1, 3, 480, 640)
     random_input = torch.rand(input_shape, device=device)
     n, c, h, w = random_input.shape
     scale = 2
+    warmup_runs = 5
     num_runs = 10
 
-    print(f"upscaling {w}x{h} input by {scale}x over {num_runs} runs")
+    results = []
 
     for name in BENCHMARK_ARCHS:
         arch = SPANDREL_REGISTRY.get(name)
         model = arch(scale=scale).eval().to(device)
 
-        avg_time, output = benchmark_model(model, random_input, num_runs)
+        avg_time, output = benchmark_model(model, random_input, warmup_runs, num_runs)
 
         assert (
             output.shape[2] == random_input.shape[2] * scale
             and output.shape[3] == random_input.shape[3] * scale
         )
 
+        results.append((name, avg_time, 1 / avg_time))
         print(f"{name}: {1 / avg_time:.2f} fps ({avg_time:.4f} seconds per image)")
+
+    results.sort(key=lambda x: x[1])
+
+    print(
+        f"\n{w}x{h} {c} channel input, {scale}x scale, {warmup_runs} warmup + {num_runs} runs averaged"
+    )
+    for name, avg_time, fps in results:
+        print(f"{name}: Average Time: {avg_time:.4f} seconds, FPS: {fps:.2f}")
+
+    end_script_time = time.time()
+    print(f"\nFinished in: {end_script_time - start_script_time:.2f} seconds")
