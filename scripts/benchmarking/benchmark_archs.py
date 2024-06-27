@@ -88,7 +88,7 @@ if __name__ == "__main__":
         f"\n{w}x{h} {c} channel input, {scale}x scale, {warmup_runs} warmup + {num_runs} runs averaged"
     )
     for name, avg_time, fps in results:
-        print(f"{name}: Average Time: {avg_time:.4f} seconds, FPS: {fps:.2f}")
+        print(f"{name}: {fps:.2f} fps ({avg_time:.4f} seconds per image)")
 
     end_script_time = time.time()
     print(f"\nFinished in: {end_script_time - start_script_time:.2f} seconds")
