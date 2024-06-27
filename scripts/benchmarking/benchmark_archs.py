@@ -48,8 +48,8 @@ if __name__ == "__main__":
     random_input = torch.rand(input_shape, device=device)
     n, c, h, w = random_input.shape
     scale = 2
-    warmup_runs = 0
-    num_runs = 1
+    warmup_runs = 5
+    num_runs = 10
 
     results = []
 
