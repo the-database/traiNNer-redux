@@ -39,7 +39,6 @@ def benchmark_model(
     return avg_time, output
 
 
-# TODO https://pytorch.org/tutorials/recipes/recipes/benchmark.html
 if __name__ == "__main__":
     start_script_time = time.time()
     device = "cuda"
@@ -48,7 +47,7 @@ if __name__ == "__main__":
     random_input = torch.rand(input_shape, device=device)
     n, c, h, w = random_input.shape
     scale = 2
-    warmup_runs = 5
+    warmup_runs = 1
     num_runs = 10
 
     results = []
