@@ -60,6 +60,8 @@ archs: list[ArchInfo] = [
     {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
     {"names": ["Compact", "UltraCompact", "SuperUltraCompact"], "scales": [1, 2, 4]},
     {"names": ["SwinIR_L", "SwinIR_M", "SwinIR_S"], "scales": ALL_SCALES},
+    {"names": ["RGT", "RGT_S"], "scales": ALL_SCALES},
+    {"names": ["DRCT", "DRCT_L", "DRCT_XL"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:
