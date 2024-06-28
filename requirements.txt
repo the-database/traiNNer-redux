@@ -1,6 +1,3 @@
-addict
-future
-lmdb
 numpy>=1.17
 opencv-python
 Pillow
@@ -19,4 +16,3 @@ tb-nightly
 torch>=2.3
 torchvision
 tqdm
-yapf

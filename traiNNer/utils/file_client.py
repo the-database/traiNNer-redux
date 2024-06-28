@@ -68,7 +68,7 @@ class LmdbBackend(BaseStorageBackend):
         **kwargs,
     ) -> None:
         try:
-            import lmdb
+            import lmdb  # type: ignore
         except ImportError as err:
             raise ImportError("Please install lmdb to enable LmdbBackend.") from err
 

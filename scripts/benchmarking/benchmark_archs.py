@@ -95,6 +95,8 @@ if __name__ == "__main__":
                 continue
 
             try:
+                if name not in results_by_arch:
+                    results_by_arch[name] = {}
                 model = arch(scale=scale).eval().to(device, dtype=dtype)
                 total_params = sum(p[1].numel() for p in model.named_parameters())
                 runs = lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
@@ -117,9 +119,6 @@ if __name__ == "__main__":
                 row = (name, avg_time, 1 / avg_time, vram_usage, total_params, scale)
 
                 results_by_scale[scale].append(row)
-
-                if name not in results_by_arch:
-                    results_by_arch[name] = {}
                 results_by_arch[name][scale] = row
             except ValueError:
                 row = (
@@ -140,6 +139,8 @@ if __name__ == "__main__":
         print(
             f"\n{w}x{h} {c} channel input, {scale}x scale, {dtype_str}, {warmup_runs} warmup + {num_runs} ({lightweight_num_runs} for lightweight) runs averaged"
         )
+    else:
+        print("## By Scale")
 
     for scale in scales:
         if print_markdown:
@@ -151,6 +152,9 @@ if __name__ == "__main__":
             print("|:-|-:|-:|-:|-:|")
         for row in results_by_scale[scale]:
             print(get_line(*row, print_markdown))
+
+    if print_markdown:
+        print("\n## By Architecture")
 
     for arch_name in sorted(results_by_arch.keys()):
         print(f"\n### {arch_name}")
