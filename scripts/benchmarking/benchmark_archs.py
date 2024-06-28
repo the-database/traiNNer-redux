@@ -139,6 +139,9 @@ if __name__ == "__main__":
         print(
             f"\n{w}x{h} {c} channel input, {scale}x scale, {dtype_str}, {warmup_runs} warmup + {num_runs} ({lightweight_num_runs} for lightweight) runs averaged"
         )
+    else:
+        print("## By Scale")
+
 
     for scale in scales:
         if print_markdown:
@@ -150,6 +153,9 @@ if __name__ == "__main__":
             print("|:-|-:|-:|-:|-:|")
         for row in results_by_scale[scale]:
             print(get_line(*row, print_markdown))
+
+    if print_markdown:
+        print("\n## By Architecture")
 
     for arch_name in sorted(results_by_arch.keys()):
         print(f"\n### {arch_name}")
