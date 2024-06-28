@@ -10,7 +10,6 @@ class ArchInfo(TypedDict):
 
 
 ALL_SCALES = [1, 2, 3, 4, 8]
-SCALES_234 = [2, 3, 4]
 
 
 def final_template(template: str, arch: ArchInfo) -> str:
@@ -46,19 +45,19 @@ archs: list[ArchInfo] = [
         "extras": {"use_pixel_unshuffle": "true"},
     },
     {"names": ["ATD"], "scales": ALL_SCALES},
-    {"names": ["DAT_2"], "scales": SCALES_234},
+    {"names": ["DAT_2"], "scales": ALL_SCALES},
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
-    {"names": ["OmniSR"], "scales": SCALES_234},
-    {"names": ["PLKSR"], "scales": SCALES_234},
-    {"names": ["RealPLKSR"], "scales": SCALES_234},
+    {"names": ["OmniSR"], "scales": ALL_SCALES},
+    {"names": ["PLKSR"], "scales": ALL_SCALES},
+    {"names": ["RealPLKSR"], "scales": ALL_SCALES},
     {
         "names": ["RealCUGAN"],
-        "scales": SCALES_234,
+        "scales": [2, 3, 4],
         "extras": {"pro": "true", "fast": "false"},
     },
     {"names": ["SPAN"], "scales": [2, 4]},
     {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
-    {"names": ["Compact", "UltraCompact", "SuperUltraCompact"], "scales": [1, 2, 4]},
+    {"names": ["Compact", "UltraCompact", "SuperUltraCompact"], "scales": ALL_SCALES},
     {"names": ["SwinIR_L", "SwinIR_M", "SwinIR_S"], "scales": ALL_SCALES},
     {"names": ["RGT", "RGT_S"], "scales": ALL_SCALES},
     {"names": ["DRCT", "DRCT_L", "DRCT_XL"], "scales": ALL_SCALES},
