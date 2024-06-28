@@ -2,7 +2,7 @@
 # General Settings
 ####################
 name: 4x_OmniSR
-scale: 4  # 2, 3, 4
+scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage.
 amp_bf16: true  # Use bf16 for AMP, RTX 3000 series or newer only.
 fast_matmul: false  # Trade precision for performance.
