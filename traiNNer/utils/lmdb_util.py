@@ -4,7 +4,7 @@ from os import path as osp
 from typing import Any
 
 import cv2
-import lmdb
+import lmdb  # type: ignore
 import numpy as np
 from tqdm import tqdm
 
