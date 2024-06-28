@@ -142,7 +142,6 @@ if __name__ == "__main__":
     else:
         print("## By Scale")
 
-
     for scale in scales:
         if print_markdown:
             print(f"\n### {scale}x scale")
