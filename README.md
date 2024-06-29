@@ -8,7 +8,7 @@ A modern community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and
 1. Install [Python](https://www.python.org/) if it's not already installed. A minimum of version Python 3.11 is required. 
 2. Install the [latest stable version of PyTorch](https://pytorch.org/get-started/locally/).
 3. Clone the repository:
-   - To use the [git](https://git-scm.com/) command line, navigate to where you want to install traiNNer-redux, and enter this command:     
+   - To use the git command line, navigate to where you want to install traiNNer-redux, and enter this command (install [git](https://git-scm.com/) first if it's not already installed):
       ```
       git clone https://github.com/the-database/traiNNer-redux.git
       ```
