@@ -40,6 +40,7 @@ class PerceptualLoss(nn.Module):
         normalize_layer_weights: bool = False,
         crop_input: bool = False,
         resize_input: bool = False,
+        use_replicate_padding: bool = False,
         perceptual_weight: float = 1.0,
         style_weight: float = 0.0,
         criterion: str = "l1",
@@ -61,6 +62,7 @@ class PerceptualLoss(nn.Module):
             range_norm=range_norm,
             crop_input=crop_input,
             resize_input=resize_input,
+            use_replicate_padding=use_replicate_padding,
         )
 
         self.criterion_type = criterion
