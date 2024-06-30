@@ -1,3 +1,4 @@
+import itertools
 import os
 import sys
 from collections.abc import Callable
@@ -27,6 +28,14 @@ FILTERED_REGISTRY = [
     if name not in EXCLUDE_ARCHS
 ]
 
+ALL_SCALES = [1, 2, 3, 4]
+
+FILTERED_REGISTRIES_SCALES = [
+    (*a, b) for a, b in itertools.product(FILTERED_REGISTRY, ALL_SCALES)
+]
+
+EXCLUDE_ARCH_SCALES = {"swinir_l": [3], "realcugan": [1]}
+
 
 class TestArchData(TypedDict):
     device: str
@@ -49,16 +58,25 @@ def data() -> TestArchData:
 
 class TestArchs:
     @pytest.mark.parametrize(
-        "arch",
-        [pytest.param(arch, id=f"test_{name}") for name, arch in FILTERED_REGISTRY],
+        "name,arch,scale",
+        [
+            pytest.param(name, arch, scale, id=f"test_{name}_{scale}x")
+            for name, arch, scale in FILTERED_REGISTRIES_SCALES
+        ],
     )
     def test_arch_inference(
-        self, data: TestArchData, arch: Callable[..., nn.Module]
+        self,
+        data: TestArchData,
+        name: str,
+        arch: Callable[..., nn.Module],
+        scale: int,
     ) -> None:
+        if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
+            pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
+
         device = data["device"]
         lq = data["lq"]
         dtype = data["dtype"]
-        scale = 5
         model = arch(scale=scale).eval().to(device, dtype=dtype)
 
         with torch.inference_mode():
@@ -66,17 +84,26 @@ class TestArchs:
             assert (
                 output.shape[2] == lq.shape[2] * scale
                 and output.shape[3] == lq.shape[3] * scale
-            )
+            ), f"{name}: {output.shape} is not {scale}x {lq.shape}"
 
     @pytest.mark.parametrize(
-        "arch",
-        [pytest.param(arch, id=f"train_{name}") for name, arch in FILTERED_REGISTRY],
+        "name,arch,scale",
+        [
+            pytest.param(name, arch, scale, id=f"train_{name}_{scale}")
+            for name, arch, scale in FILTERED_REGISTRIES_SCALES
+        ],
     )
     def test_arch_training(
-        self, data: TestArchData, arch: Callable[..., nn.Module]
+        self,
+        data: TestArchData,
+        name: str,
+        arch: Callable[..., nn.Module],
+        scale: int,
     ) -> None:
+        if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
+            pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
+
         device = data["device"]
-        scale = 4
         lq = data["lq"]
         gt_shape = (lq.shape[0], lq.shape[1], lq.shape[2] * scale, lq.shape[3] * scale)
         dtype = data["dtype"]
