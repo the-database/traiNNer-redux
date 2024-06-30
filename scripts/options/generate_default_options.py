@@ -55,12 +55,16 @@ archs: list[ArchInfo] = [
         "scales": [2, 3, 4],
         "extras": {"pro": "true", "fast": "false"},
     },
-    {"names": ["SPAN"], "scales": [2, 4]},
+    {"names": ["SPAN"], "scales": ALL_SCALES},
     {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
     {"names": ["Compact", "UltraCompact", "SuperUltraCompact"], "scales": ALL_SCALES},
     {"names": ["SwinIR_L", "SwinIR_M", "SwinIR_S"], "scales": ALL_SCALES},
     {"names": ["RGT", "RGT_S"], "scales": ALL_SCALES},
     {"names": ["DRCT", "DRCT_L", "DRCT_XL"], "scales": ALL_SCALES},
+    {
+        "names": ["SpanPlus", "SpanPlus_STS", "SpanPlus_S", "SpanPlus_ST"],
+        "scales": ALL_SCALES,
+    },
 ]
 
 for arch in archs:
