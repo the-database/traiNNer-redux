@@ -93,7 +93,6 @@ class GANLoss(nn.Module):
         target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(
         self, input: Tensor, target_is_real: bool, is_disc: bool = False
     ) -> Tensor:
@@ -138,7 +137,6 @@ class MultiScaleGANLoss(GANLoss):
     ) -> None:
         super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(
         self, input: Tensor | list[Tensor], target_is_real: bool, is_disc: bool = False
     ) -> Tensor:

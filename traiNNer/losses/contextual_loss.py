@@ -87,7 +87,6 @@ class ContextualLoss(nn.Module):
         else:  # if calc_type == 'regular':
             self.calculate_loss = self.calculate_cx_loss
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, images: Tensor, gt: Tensor) -> Tensor:
         device = images.device
 

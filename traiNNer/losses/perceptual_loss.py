@@ -77,7 +77,6 @@ class PerceptualLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x: Tensor, gt: Tensor) -> tuple[Tensor | None, Tensor | None]:
         """Forward function.
 
