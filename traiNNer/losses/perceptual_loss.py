@@ -38,8 +38,9 @@ class PerceptualLoss(nn.Module):
         use_input_norm: bool = True,
         range_norm: bool = False,
         normalize_layer_weights: bool = False,
-        crop_input: bool = False,
-        resize_input: bool = False,
+        crop_input: bool = True,
+        resize_input: bool = True,
+        use_replicate_padding: bool = True,
         perceptual_weight: float = 1.0,
         style_weight: float = 0.0,
         criterion: str = "l1",
@@ -61,6 +62,7 @@ class PerceptualLoss(nn.Module):
             range_norm=range_norm,
             crop_input=crop_input,
             resize_input=resize_input,
+            use_replicate_padding=use_replicate_padding,
         )
 
         self.criterion_type = criterion
@@ -75,7 +77,6 @@ class PerceptualLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x: Tensor, gt: Tensor) -> tuple[Tensor | None, Tensor | None]:
         """Forward function.
 

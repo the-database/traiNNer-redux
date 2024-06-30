@@ -428,23 +428,6 @@ class BaseModel:
                     overlap,
                 )
 
-    def load_network_spandrel(
-        self, net: nn.Module, load_path: str, strict: bool = True
-    ) -> bool | None:
-        try:
-            logger = get_root_logger()
-            load_net = self.model_loader.load_from_file(load_path)
-            net.load_state_dict(load_net.model.state_dict(), strict=strict)
-            logger.info(
-                "Loading %s model from %s, with spandrel.",
-                net.__class__.__name__,
-                load_path,
-            )
-            return True
-        except Exception as e:
-            print(e)
-            return False
-
     def load_network(
         self,
         net: nn.Module,

@@ -122,7 +122,6 @@ class CharbonnierLoss(nn.Module):
         self.reduction = reduction
         self.eps = eps
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(
         self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
     ) -> Tensor:
@@ -157,7 +156,6 @@ class ColorLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         input_yuv = rgb2ycbcr_pt(x)
         target_yuv = rgb2ycbcr_pt(y)
@@ -220,7 +218,6 @@ class BicubicLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
 
@@ -241,7 +238,6 @@ class LumaLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         x_luma = rgb_to_luma(x)
         y_luma = rgb_to_luma(y)

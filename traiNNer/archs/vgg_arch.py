@@ -188,6 +188,7 @@ class VGGFeatureExtractor(nn.Module):
         remove_pooling: bool = False,
         crop_input: bool = False,
         resize_input: bool = False,
+        use_replicate_padding: bool = False,
         pooling_stride: int = 2,
     ) -> None:
         super().__init__()
@@ -219,6 +220,11 @@ class VGGFeatureExtractor(nn.Module):
             vgg_net = getattr(vgg, vgg_type)(weights=VGG19_Weights.DEFAULT)
 
         features = vgg_net.features[: max_idx + 1]
+
+        # Reduces edge artifacts
+        # https://github.com/crowsonkb/style-transfer-pytorch/blob/e7e2c7134e3937be05ff9f5fcc0873fe5ceb6060/style_transfer/style_transfer.py#L39
+        if use_replicate_padding:
+            features[0] = self._change_padding_mode(features[0], "replicate")
 
         modified_net = OrderedDict()
         for k, v in zip(self.names, features, strict=False):
@@ -252,6 +258,22 @@ class VGGFeatureExtractor(nn.Module):
             self.register_buffer(
                 "std", torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
             )
+
+    @staticmethod
+    def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
+        new_conv = nn.Conv2d(
+            conv.in_channels,
+            conv.out_channels,
+            conv.kernel_size,
+            stride=conv.stride,
+            padding=conv.padding,
+            padding_mode=padding_mode,
+        )
+        with torch.no_grad():
+            new_conv.weight.copy_(conv.weight)
+            if new_conv.bias is not None:
+                new_conv.bias.copy_(conv.bias)
+        return new_conv
 
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         """Forward function.

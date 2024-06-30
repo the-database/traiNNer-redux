@@ -109,8 +109,6 @@ train:
       "conv4_4": 1
       "conv5_4": 1
     vgg_type: vgg19
-    use_input_norm: true
-    crop_input: true
     style_weight: 0
     range_norm: false
     criterion: charbonnier
