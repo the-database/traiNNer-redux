@@ -1,16 +1,10 @@
 import itertools
-import os
-import sys
 from collections.abc import Callable
 from typing import TypedDict
 
 import pytest
 import torch
 from torch import Tensor, nn
-
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), r"..\.."))
-)
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
 from traiNNer.losses.basic_loss import L1Loss
 
