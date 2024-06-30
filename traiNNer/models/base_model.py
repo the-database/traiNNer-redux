@@ -20,7 +20,6 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
-from traiNNer.utils.registry import SPANDREL_REGISTRY
 from traiNNer.utils.types import DataFeed, TrainingState
 
 
@@ -428,28 +427,6 @@ class BaseModel:
                     file_path,
                     overlap,
                 )
-
-    def load_network_spandrel(
-        self, net: nn.Module, load_path: str, strict: bool = True
-    ) -> bool | None:
-        try:
-            logger = get_root_logger()
-            load_net = self.model_loader.load_from_file(load_path)
-            arch_name = str(load_net.architecture)
-            if arch_name not in SPANDREL_REGISTRY:
-                raise ValueError(
-                    f"Network {arch_name} is not registered in spandrel registry. Falling back to traiNNer-redux arch registry."
-                )
-            net.load_state_dict(load_net.model.state_dict(), strict=strict)
-            logger.info(
-                "Loading %s model from %s, with spandrel.",
-                net.__class__.__name__,
-                load_path,
-            )
-            return True
-        except Exception as e:
-            print(e)
-            return False
 
     def load_network(
         self,
