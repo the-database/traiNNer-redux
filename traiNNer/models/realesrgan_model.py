@@ -240,6 +240,10 @@ class RealESRGANModel(SRModel):
             # training pair pool
             self._dequeue_and_enqueue()
             self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
+
+            # moa
+            if self.is_train and self.batch_augment:
+                self.gt, self.lq = self.batch_augment(self.gt, self.lq)
         else:
             # for paired training or validation
             assert "lq" in data
@@ -247,6 +251,3 @@ class RealESRGANModel(SRModel):
             if "gt" in data:
                 self.gt = data["gt"].to(self.device)
 
-                # moa
-                if self.is_train and self.batch_augment:
-                    self.gt, self.lq = self.batch_augment(self.gt, self.lq)

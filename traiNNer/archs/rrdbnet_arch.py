@@ -25,7 +25,7 @@ def esrgan(
             )
         else:
             logger = get_root_logger()
-            logger.warning(
+            logger.info(
                 "Pixel unshuffle option is ignored since scale is not %s",
                 " or ".join([str(x) for x in pixel_unshuffle_scales]),
             )
