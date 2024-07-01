@@ -55,7 +55,10 @@ def init_tb_loggers(opt: dict[str, Any]) -> SummaryWriter | None:
 
 
 def create_train_val_dataloader(
-    opt: dict[str, Any], args: argparse.Namespace, logger: logging.Logger
+    opt: dict[str, Any],
+    args: argparse.Namespace,
+    val_enabled: bool,
+    logger: logging.Logger,
 ) -> tuple[DataLoader | None, EnlargedSampler | None, list[DataLoader], int, int]:
     # create train and val dataloaders
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
@@ -105,21 +108,27 @@ def create_train_val_dataloader(
                 total_iters,
             )
         elif phase.split("_")[0] == "val":
-            val_set = build_dataset(dataset_opt)
-            val_loader = build_dataloader(
-                val_set,
-                dataset_opt,
-                num_gpu=opt["num_gpu"],
-                dist=opt["dist"],
-                sampler=None,
-                seed=opt["manual_seed"],
-            )
-            logger.info(
-                "Number of val images/folders in %s: %d",
-                dataset_opt["name"],
-                len(val_set),
-            )
-            val_loaders.append(val_loader)
+            if val_enabled:
+                val_set = build_dataset(dataset_opt)
+                val_loader = build_dataloader(
+                    val_set,
+                    dataset_opt,
+                    num_gpu=opt["num_gpu"],
+                    dist=opt["dist"],
+                    sampler=None,
+                    seed=opt["manual_seed"],
+                )
+                logger.info(
+                    "Number of val images/folders in %s: %d",
+                    dataset_opt["name"],
+                    len(val_set),
+                )
+                val_loaders.append(val_loader)
+            else:
+                logger.info(
+                    "Validation is disabled, skip building val dataset %s.",
+                    dataset_opt["name"],
+                )
         else:
             raise ValueError(f"Dataset phase {phase} is not recognized.")
 
@@ -202,7 +211,11 @@ def train_pipeline(root_path: str) -> None:
     tb_logger = init_tb_loggers(opt)
 
     # create train and validation dataloaders
-    result = create_train_val_dataloader(opt, args, logger)
+    val_enabled = False
+    val = opt.get("val")
+    if val:
+        val_enabled = val.get("val_enabled", False)
+    result = create_train_val_dataloader(opt, args, val_enabled, logger)
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = result
 
     if train_loader is None or train_sampler is None:
