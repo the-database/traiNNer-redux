@@ -83,7 +83,7 @@ class TestArchs:
     @pytest.mark.parametrize(
         "name,arch,scale",
         [
-            pytest.param(name, arch, scale, id=f"train_{name}_{scale}")
+            pytest.param(name, arch, scale, id=f"train_{name}_{scale}x")
             for name, arch, scale in FILTERED_REGISTRIES_SCALES
         ],
     )
