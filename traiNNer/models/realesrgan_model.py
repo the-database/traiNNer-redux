@@ -268,6 +268,12 @@ class RealESRGANModel(SRModel):
                         padding=0,
                     )
 
+                    torchvision.utils.save_image(
+                        self.gt,
+                        os.path.join(OTF_DEBUG_PATH, f"{i:06d}_otf_gt.png"),
+                        padding=0,
+                    )
+
             # moa
             if self.is_train and self.batch_augment:
                 self.gt, self.lq = self.batch_augment(self.gt, self.lq)
