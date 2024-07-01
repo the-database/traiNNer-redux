@@ -11,7 +11,14 @@ sys.path.append(
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
 
 ALL_REGISTRIES = list(SPANDREL_REGISTRY) + list(ARCH_REGISTRY)
-EXCLUDE_BENCHMARK_ARCHS = {"dat", "hat", "swinir"}
+EXCLUDE_BENCHMARK_ARCHS = {
+    "dat",
+    "hat",
+    "swinir",
+    "vggstylediscriminator",
+    "unetdiscriminatorsn_traiNNer",
+    "vggfeatureextractor",
+}
 LIGHTWEIGHT_ARCHS = {
     "realcugan",
     "span",

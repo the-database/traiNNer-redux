@@ -1,3 +1,5 @@
+import math
+
 from spandrel.architectures.ESRGAN import RRDBNet
 
 from traiNNer.utils.logger import get_root_logger
@@ -8,12 +10,19 @@ pixel_unshuffle_scales = (1, 2)
 
 @SPANDREL_REGISTRY.register()
 def esrgan(
-    scale: int = 4, use_pixel_unshuffle: bool = False, in_nc: int = 3, **kwargs
+    scale: int = 4,
+    use_pixel_unshuffle: bool = False,
+    in_nc: int = 3,
+    out_nc: int = 3,
+    **kwargs,
 ) -> RRDBNet:
     if use_pixel_unshuffle:
         if scale in pixel_unshuffle_scales:
             in_nc *= 4 ** (3 - scale)
-            return RRDBNet(scale=4, in_nc=in_nc, shuffle_factor=scale, **kwargs)
+            shuffle_factor = int(math.sqrt(in_nc / out_nc))
+            return RRDBNet(
+                scale=4, in_nc=in_nc, shuffle_factor=shuffle_factor, **kwargs
+            )
         else:
             logger = get_root_logger()
             logger.warning(
