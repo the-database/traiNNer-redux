@@ -44,6 +44,11 @@ REQUIRE_BATCH_2 = {"dat_2"}
 # image size of 32x32 to do training or inference with.
 REQUIRE_32_HW = {"realcugan"}
 
+EXTRA_ARGS = {
+    "esrgan": {"use_pixel_unshuffle": True},
+    "esrgan_lite": {"use_pixel_unshuffle": True},
+}
+
 
 class TestArchData(TypedDict):
     device: str
@@ -134,12 +139,16 @@ class TestArchs:
         gt_shape = (lq.shape[0], lq.shape[1], lq.shape[2] * scale, lq.shape[3] * scale)
         dtype = data["dtype"]
         gt = torch.rand(gt_shape, device=device, dtype=dtype)
-        model = arch(scale=scale).train().to(device, dtype=dtype)
+        model_args = {}
+        if name in EXTRA_ARGS:
+            model_args = EXTRA_ARGS[name]
+        model = arch(scale=scale, **model_args).train().to(device, dtype=dtype)
 
         optimizer = torch.optim.AdamW(model.parameters())
         loss_fn = L1Loss()
 
         output = model(lq)
+        assert output.shape == gt.shape
         assert not torch.isnan(output).any(), "NaN detected in model output"
 
         l_g_l1 = loss_fn(output, gt)
