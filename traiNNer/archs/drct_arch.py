@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 from spandrel.architectures.DRCT import DRCT
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

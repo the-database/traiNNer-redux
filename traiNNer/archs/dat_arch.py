@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 from spandrel.architectures.DAT import DAT
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

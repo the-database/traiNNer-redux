@@ -1,4 +1,5 @@
 from spandrel.architectures.SwinIR import SwinIR
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

@@ -3,6 +3,7 @@ from collections.abc import Sequence
 import torch
 from torch import SymInt, nn
 from torch.nn import functional as F  # noqa: N812
+
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 ####################################

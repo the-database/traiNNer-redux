@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 from spandrel.architectures.RGT import RGT
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

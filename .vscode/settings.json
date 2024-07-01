@@ -7,4 +7,9 @@
     ],
     "editor.renderWhitespace": "all",
     "editor.renderControlCharacters": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
 }

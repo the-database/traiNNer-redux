@@ -8,8 +8,9 @@ from torch import Tensor, nn
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), r"..\.."))
 )
-from traiNNer.archs import SPANDREL_REGISTRY
+from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
 
+ALL_REGISTRIES = list(SPANDREL_REGISTRY) + list(ARCH_REGISTRY)
 EXCLUDE_BENCHMARK_ARCHS = {"dat", "hat", "swinir"}
 LIGHTWEIGHT_ARCHS = {
     "realcugan",
@@ -17,6 +18,10 @@ LIGHTWEIGHT_ARCHS = {
     "compact",
     "ultracompact",
     "superultracompact",
+    "spanplus",
+    "spanplus_s",
+    "spanplus_st",
+    "spanplus_sts",
 }
 
 
@@ -72,6 +77,7 @@ if __name__ == "__main__":
 
     input_shape = (1, 3, 480, 640)
     scales = [4, 3, 2, 1]
+
     warmup_runs = 1
     num_runs = 5
     lightweight_num_runs = 250
@@ -90,7 +96,7 @@ if __name__ == "__main__":
     for scale in scales:
         results_by_scale[scale] = []
 
-        for name, arch in SPANDREL_REGISTRY:
+        for name, arch in ALL_REGISTRIES:
             if name in EXCLUDE_BENCHMARK_ARCHS:
                 continue
 

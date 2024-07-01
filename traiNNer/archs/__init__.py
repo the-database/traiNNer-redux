@@ -5,6 +5,7 @@ from os import path as osp
 from typing import Any
 
 from torch import nn
+
 from traiNNer.utils import get_root_logger, scandir
 from traiNNer.utils.config import Config
 from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
@@ -32,7 +33,7 @@ def build_network(opt: dict[str, Any]) -> nn.Module:
     logger = get_root_logger()
 
     # try loading from spandrel first
-    try:
+    if network_type in SPANDREL_REGISTRY:
         net = SPANDREL_REGISTRY.get(network_type)(**opt, scale=Config.get_scale())
         logger.info(
             "Network [%s] is created from %s v%s.",
@@ -40,11 +41,16 @@ def build_network(opt: dict[str, Any]) -> nn.Module:
             spandrel_name,
             version(spandrel_name),
         )
-
-    except KeyError:
-        net = ARCH_REGISTRY.get(network_type)(**opt)
-        logger.info(
-            "Network %s is created from traiNNer-redux.", net.__class__.__name__
-        )
+    else:
+        try:
+            net = ARCH_REGISTRY.get(network_type)(**opt, scale=Config.get_scale())
+            logger.info(
+                "Network %s is created from traiNNer-redux.", net.__class__.__name__
+            )
+        except TypeError:
+            net = ARCH_REGISTRY.get(network_type)(**opt)
+            logger.info(
+                "Network %s is created from traiNNer-redux.", net.__class__.__name__
+            )
 
     return net

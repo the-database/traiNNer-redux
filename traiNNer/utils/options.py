@@ -7,8 +7,9 @@ from typing import Any
 
 import torch
 import yaml
-from traiNNer.utils.dist_util import get_dist_info, init_dist, master_only
 from yaml import MappingNode
+
+from traiNNer.utils.dist_util import get_dist_info, init_dist, master_only
 
 try:
     from yaml import CDumper as Dumper

@@ -4,6 +4,7 @@ from os import path as osp
 from typing import Any
 
 from torch import nn
+
 from traiNNer.losses.gan_loss import (
     g_path_regularize,
     gradient_penalty_loss,

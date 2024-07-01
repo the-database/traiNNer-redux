@@ -6,6 +6,7 @@ import torchvision.transforms.functional as tf
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torchvision import models
+
 from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
 from traiNNer.utils.registry import LOSS_REGISTRY
 

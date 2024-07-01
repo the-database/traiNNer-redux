@@ -1,4 +1,5 @@
 from spandrel.architectures.SPAN import SPAN
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
