@@ -69,9 +69,9 @@ class DySample(nn.Module):
             .type(x.dtype)
             .to(x.device, non_blocking=True)
         )
-        normalizer = torch.tensor(
-            [W, H], dtype=x.dtype, device=x.device
-        ).view(1, 2, 1, 1, 1)
+        normalizer = torch.tensor([W, H], dtype=x.dtype, device=x.device).view(
+            1, 2, 1, 1, 1
+        )
         coords = 2 * (coords + offset) / normalizer - 1
 
         coords = (
