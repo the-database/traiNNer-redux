@@ -74,7 +74,7 @@ datasets:
 
     num_worker_per_gpu: 8
     batch_size_per_gpu: 6  # Increasing stabilizes training but going too high can cause issues
-    dataset_enlarge_ratio: 1  # Increase if the dataset is less than 1000 images to avoid slowdowns
+    dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
     prefetch_mode: ~
   # Settings for your validation dataset (optional). These settings will
   # be ignored if val_enabled is false in the Validation section below.

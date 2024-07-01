@@ -10,7 +10,7 @@ num_gpu: auto
 # manual_seed: 1024  # Deterministic mode, slows down training.
 
 high_order_degradation: true  # Enable on-the-fly (OTF) degradations, which generates LR tiles from HRs during training.
-high_order_degradations_debug: false  # Save the LR and HR tiles to debug/otf folder inside the root of the training directory.
+high_order_degradations_debug: true  # Save the LR and HR tiles to debug/otf folder inside the root of the training directory.
 high_order_degradations_debug_limit: 100  # The max number of iterations to save LR and HR tiles for.
 
 # The first degradation process.
@@ -74,7 +74,7 @@ datasets:
 
     num_worker_per_gpu: 8
     batch_size_per_gpu: 6  # Increasing stabilizes training but going too high can cause issues
-    dataset_enlarge_ratio: 1  # Increase if the dataset is less than 1000 images to avoid slowdowns
+    dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
     prefetch_mode: ~
   # Settings for your validation dataset (optional). These settings will
   # be ignored if val_enabled is false in the Validation section below.
@@ -196,8 +196,8 @@ train:
 # Validation
 #############
 val:
-  val_enabled: false  # Whether to enable validations. If disabled, all validation settings below are ignored.
-  val_freq: 1000  # How often to run validations, in iterations.
+  val_enabled: true  # Whether to enable validations. If disabled, all validation settings below are ignored.
+  val_freq: 10  # How often to run validations, in iterations.
   save_img: true  # Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
 
   metrics_enabled: true  # Whether to run metrics calculations during validation.
