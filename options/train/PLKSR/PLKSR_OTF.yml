@@ -9,9 +9,9 @@ fast_matmul: false  # Trade precision for performance.
 num_gpu: auto
 # manual_seed: 1024  # Deterministic mode, slows down training.
 
-high_order_degradation: true  # Enable on-the-fly (OTF) degradations, which generates LR images from HR during training.
-high_order_degradations_debug: false  # Save the LR images to debug/otf folder inside the root of the training directory.
-high_order_degradations_debug_limit: 100  # The max number of iterations to save LR images for.
+high_order_degradation: true  # Enable on-the-fly (OTF) degradations, which generates LR tiles from HR during training.
+high_order_degradations_debug: false  # Save the LR tiles to debug/otf folder inside the root of the training directory.
+high_order_degradations_debug_limit: 100  # The max number of iterations to save LR tiles for.
 
 # The first degradation process.
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep

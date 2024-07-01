@@ -1,7 +1,11 @@
+import os
 import random
+import sys
+from os import path as osp
 from typing import Any
 
 import torch
+import torchvision
 from torch import Tensor
 from torch.nn import functional as F  # noqa: N812
 
@@ -11,10 +15,14 @@ from traiNNer.data.degradations import (
 )
 from traiNNer.data.transforms import paired_random_crop
 from traiNNer.models.sr_model import SRModel
-from traiNNer.utils import RNG, DiffJPEG
+from traiNNer.utils import RNG, DiffJPEG, get_root_logger
 from traiNNer.utils.img_process_util import filter2d
 from traiNNer.utils.registry import MODEL_REGISTRY
 from traiNNer.utils.types import DataFeed
+
+OTF_DEBUG_PATH = osp.abspath(
+    osp.abspath(osp.join(osp.join(sys.argv[0], osp.pardir), "./debug/otf"))
+)
 
 
 @MODEL_REGISTRY.register(suffix="traiNNer")
@@ -40,6 +48,12 @@ class RealESRGANModel(SRModel):
             differentiable=False
         ).cuda()  # simulate JPEG compression artifacts
         self.queue_size = opt.get("queue_size", 180)
+
+        self.otf_debug = opt.get("high_order_degradations_debug", False)
+        self.otf_debug_limit = opt.get("high_order_degradations_debug_limit", 100)
+
+        logger = get_root_logger()
+        logger.info("OTF debugging enabled. LR tiles will be saved to: %s", OTF_DEBUG_PATH)
 
     @torch.no_grad()
     def _dequeue_and_enqueue(self) -> None:
@@ -241,6 +255,19 @@ class RealESRGANModel(SRModel):
             self._dequeue_and_enqueue()
             self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
 
+            i = 1
+            if self.otf_debug:
+                os.makedirs(OTF_DEBUG_PATH, exist_ok=True)
+                while os.path.exists(rf"{OTF_DEBUG_PATH}/{i:06d}_otf_lq.png"):
+                    i += 1
+
+                if i <= self.otf_debug_limit or self.otf_debug_limit == 0:
+                    torchvision.utils.save_image(
+                        self.lq,
+                        os.path.join(OTF_DEBUG_PATH, f"{i:06d}_otf_lq.png"),
+                        padding=0,
+                    )
+
             # moa
             if self.is_train and self.batch_augment:
                 self.gt, self.lq = self.batch_augment(self.gt, self.lq)
@@ -250,4 +277,3 @@ class RealESRGANModel(SRModel):
             self.lq = data["lq"].to(self.device)
             if "gt" in data:
                 self.gt = data["gt"].to(self.device)
-
