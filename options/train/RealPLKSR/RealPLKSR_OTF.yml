@@ -15,22 +15,22 @@ high_order_degradations_debug_limit: 100  # The max number of iterations to save
 
 # The first degradation process.
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
-resize_range: [0.15, 1.5]
-gaussian_noise_prob: 0.5
-noise_range: [1, 30]
-poisson_scale_range: [0.05, 3]
-gray_noise_prob: 0.4
-jpeg_range: [30, 95]
+resize_range: [0.4, 1.5]
+gaussian_noise_prob: 0
+noise_range: [0, 0]
+poisson_scale_range: [0, 0]
+gray_noise_prob: 0
+jpeg_range: [75, 95]
 
 # The second degradation process.
 second_blur_prob: 0.8
 resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
-resize_range2: [0.3, 1.2]
-gaussian_noise_prob2: 0.5
-noise_range2: [1, 25]
-poisson_scale_range2: [0.05, 2.5]
-gray_noise_prob2: 0.4
-jpeg_range2: [30, 95]
+resize_range2: [0.6, 1.2]
+gaussian_noise_prob2: 0
+noise_range2: [0, 0]
+poisson_scale_range2: [0, 0]
+gray_noise_prob2: 0
+jpeg_range2: [75, 95]
 
 gt_size: 128
 queue_size: 180
