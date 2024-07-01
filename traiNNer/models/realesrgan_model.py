@@ -52,8 +52,9 @@ class RealESRGANModel(SRModel):
         self.otf_debug = opt.get("high_order_degradations_debug", False)
         self.otf_debug_limit = opt.get("high_order_degradations_debug_limit", 100)
 
-        logger = get_root_logger()
-        logger.info("OTF debugging enabled. LR tiles will be saved to: %s", OTF_DEBUG_PATH)
+        if self.otf_debug:
+            logger = get_root_logger()
+            logger.info("OTF debugging enabled. LR tiles will be saved to: %s", OTF_DEBUG_PATH)
 
     @torch.no_grad()
     def _dequeue_and_enqueue(self) -> None:
