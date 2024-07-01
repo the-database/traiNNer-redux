@@ -6,6 +6,7 @@ import requests
 from requests import Response
 from torch.hub import download_url_to_file, get_dir
 from tqdm import tqdm
+
 from traiNNer.utils.misc import sizeof_fmt
 
 

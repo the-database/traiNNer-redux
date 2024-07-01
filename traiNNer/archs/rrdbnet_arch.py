@@ -1,4 +1,5 @@
 from spandrel.architectures.ESRGAN import RRDBNet
+
 from traiNNer.utils.logger import get_root_logger
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 

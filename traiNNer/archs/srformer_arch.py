@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 from spandrel_extra_arches.architectures.SRFormer import SRFormer
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

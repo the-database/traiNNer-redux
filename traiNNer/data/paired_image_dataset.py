@@ -2,6 +2,7 @@ from typing import Any
 
 import numpy as np
 from torchvision.transforms.functional import normalize
+
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_util import (
     paired_paths_from_folder,

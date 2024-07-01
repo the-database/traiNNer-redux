@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor, nn
+
 from traiNNer.archs.vgg_arch import VGGFeatureExtractor
 from traiNNer.losses.basic_loss import charbonnier_loss
 from traiNNer.utils.registry import LOSS_REGISTRY

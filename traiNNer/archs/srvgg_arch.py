@@ -1,4 +1,5 @@
 from spandrel.architectures.Compact import SRVGGNetCompact
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

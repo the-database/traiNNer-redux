@@ -1,6 +1,7 @@
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torch.nn.utils import spectral_norm
+
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 

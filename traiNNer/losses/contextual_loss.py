@@ -3,6 +3,7 @@ from typing import overload
 import torch
 from torch import Size, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
+
 from traiNNer.archs.vgg_arch import VGGFeatureExtractor
 from traiNNer.utils.registry import LOSS_REGISTRY
 

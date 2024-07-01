@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import nn
 from torch.nn.init import trunc_normal_
+
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
@@ -69,7 +70,7 @@ class DySample(nn.Module):
             .to(x.device, non_blocking=True)
         )
         normalizer = torch.tensor(
-            [W, H], dtype=x.dtype, device=x.device, pin_memory=True
+            [W, H], dtype=x.dtype, device=x.device
         ).view(1, 2, 1, 1, 1)
         coords = 2 * (coords + offset) / normalizer - 1
 

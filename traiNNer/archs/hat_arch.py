@@ -1,4 +1,5 @@
 from spandrel.architectures.HAT import HAT
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

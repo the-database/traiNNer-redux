@@ -11,6 +11,7 @@ import torch
 import torchvision
 from torch import Size, Tensor
 from torch.nn import functional as F  # noqa: N812
+
 from traiNNer.utils import RNG
 from traiNNer.utils.config import Config
 

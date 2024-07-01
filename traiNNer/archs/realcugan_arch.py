@@ -4,6 +4,7 @@ from spandrel.architectures.RealCUGAN import (
     UpCunet3x,
     UpCunet4x,
 )
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 

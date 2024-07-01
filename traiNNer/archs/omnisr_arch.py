@@ -1,4 +1,5 @@
 from spandrel.architectures.OmniSR import OmniSR
+
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
