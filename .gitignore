@@ -1,10 +1,11 @@
 # ignored folders
-# datasets/*
+datasets/*
 experiments/*
 results/*
 tb_logger/*
 wandb/*
 tmp/*
+debug/*
 
 !datasets/train/
 !datasets/train/dataset1/
@@ -25,13 +26,13 @@ scripts/__init__.py
 version.py
 
 # ignored files with suffix
-*.html
-*.png
-*.jpeg
-*.jpg
-*.gif
-*.pth
-*.zip
+# *.html
+# *.png
+# *.jpeg
+# *.jpg
+# *.gif
+# *.pth
+# *.zip
 
 # template
 
