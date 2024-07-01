@@ -6,6 +6,15 @@ tb_logger/*
 wandb/*
 tmp/*
 
+!datasets/train/
+!datasets/train/dataset1/
+!datasets/train/dataset1/hr/
+!datasets/train/dataset1/lr/
+!datasets/val/
+!datasets/val/dataset1/
+!datasets/val/dataset1/hr/
+!datasets/val/dataset1/lr/
+
 docs/api
 scripts/__init__.py
 
