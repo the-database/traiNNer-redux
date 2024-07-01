@@ -53,7 +53,7 @@ class TestArchData(TypedDict):
 
 @pytest.fixture
 def data() -> TestArchData:
-    device = "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     input_shape = (1, 3, 16, 16)
     use_fp16 = False
     dtype = torch.float16 if use_fp16 else torch.float32
