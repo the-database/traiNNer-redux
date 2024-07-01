@@ -140,6 +140,22 @@ class TestArchs:
         loss_fn = L1Loss()
 
         output = model(lq)
+        assert not torch.isnan(output).any(), "NaN detected in model output"
+
         l_g_l1 = loss_fn(output, gt)
+        assert not torch.isnan(l_g_l1).any(), "NaN detected in loss"
+
         l_g_l1.backward()
+
+        for param in model.parameters():
+            if param.grad is not None:
+                assert not torch.isnan(
+                    param.grad
+                ).any(), f"NaN detected in gradients of parameter {param}"
+
         optimizer.step()
+
+        for param in model.parameters():
+            assert not torch.isnan(
+                param
+            ).any(), f"NaN detected in parameter {param} after optimizer step"
