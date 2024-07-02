@@ -1,6 +1,5 @@
-import itertools
 from collections.abc import Callable
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import pytest
 import torch
@@ -29,9 +28,26 @@ FILTERED_REGISTRY = [
 
 ALL_SCALES = [1, 2, 3, 4]
 
-# A list of tuples in the format of (name, arch, scale).
-FILTERED_REGISTRIES_SCALES = [
-    (*a, b) for a, b in itertools.product(FILTERED_REGISTRY, ALL_SCALES)
+# For archs that have extra parameters, list all combinations that need to be tested.
+ARCH_EXTRA_PARAMS: dict[str, list[dict[str, Any]]] = {
+    k: [] for k, _ in FILTERED_REGISTRY
+}
+ARCH_EXTRA_PARAMS["realplksr"] = [{"dysample": True}, {"dysample": False}]
+ARCH_EXTRA_PARAMS["esrgan"] = [
+    {"use_pixel_unshuffle": True},
+    {"use_pixel_unshuffle": False},
+]
+ARCH_EXTRA_PARAMS["esrgan_lite"] = [
+    {"use_pixel_unshuffle": True},
+    {"use_pixel_unshuffle": False},
+]
+
+# A list of tuples in the format of (name, arch, scale, extra_params).
+FILTERED_REGISTRIES_SCALES_PARAMS = [
+    (name, arch, scale, extra_params)
+    for (name, arch) in FILTERED_REGISTRY
+    for scale in ALL_SCALES
+    for extra_params in (ARCH_EXTRA_PARAMS[name] if ARCH_EXTRA_PARAMS[name] else [{}])
 ]
 
 # A dict of archs mapped to a list of scales that arch doesn't support.
@@ -53,7 +69,7 @@ class TestArchData(TypedDict):
 
 @pytest.fixture
 def data() -> TestArchData:
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cpu"
     input_shape = (1, 3, 16, 16)
     use_fp16 = False
     dtype = torch.float16 if use_fp16 else torch.float32
@@ -66,10 +82,16 @@ def data() -> TestArchData:
 
 class TestArchs:
     @pytest.mark.parametrize(
-        "name,arch,scale",
+        "name,arch,scale,extra_arch_params",
         [
-            pytest.param(name, arch, scale, id=f"test_{name}_{scale}x")
-            for name, arch, scale in FILTERED_REGISTRIES_SCALES
+            pytest.param(
+                name,
+                arch,
+                scale,
+                extra_arch_params,
+                id=f"test_{name}_{scale}x_{extra_arch_params}",
+            )
+            for name, arch, scale, extra_arch_params in FILTERED_REGISTRIES_SCALES_PARAMS
         ],
     )
     def test_arch_inference(
@@ -78,6 +100,7 @@ class TestArchs:
         name: str,
         arch: Callable[..., nn.Module],
         scale: int,
+        extra_arch_params: dict[str, Any],
     ) -> None:
         if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
             pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
@@ -85,7 +108,7 @@ class TestArchs:
         device = data["device"]
         lq = data["lq"]
         dtype = data["dtype"]
-        model = arch(scale=scale).eval().to(device, dtype=dtype)
+        model = arch(scale=scale, **extra_arch_params).eval().to(device, dtype=dtype)
 
         # For performance reasons, we try to use 1x3x16x16 input tensors by default,
         # but this is too small for some networks. Double the resolution to 1x3x32x32
@@ -101,10 +124,16 @@ class TestArchs:
             ), f"{name}: {output.shape} is not {scale}x {lq.shape}"
 
     @pytest.mark.parametrize(
-        "name,arch,scale",
+        "name,arch,scale,extra_arch_params",
         [
-            pytest.param(name, arch, scale, id=f"train_{name}_{scale}x")
-            for name, arch, scale in FILTERED_REGISTRIES_SCALES
+            pytest.param(
+                name,
+                arch,
+                scale,
+                extra_arch_params,
+                id=f"train_{name}_{scale}x_{extra_arch_params}",
+            )
+            for name, arch, scale, extra_arch_params in FILTERED_REGISTRIES_SCALES_PARAMS
         ],
     )
     def test_arch_training(
@@ -113,6 +142,7 @@ class TestArchs:
         name: str,
         arch: Callable[..., nn.Module],
         scale: int,
+        extra_arch_params: dict[str, Any],
     ) -> None:
         if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
             pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
@@ -134,8 +164,7 @@ class TestArchs:
         gt_shape = (lq.shape[0], lq.shape[1], lq.shape[2] * scale, lq.shape[3] * scale)
         dtype = data["dtype"]
         gt = torch.rand(gt_shape, device=device, dtype=dtype)
-        model_args = {}
-        model = arch(scale=scale, **model_args).train().to(device, dtype=dtype)
+        model = arch(scale=scale, **extra_arch_params).train().to(device, dtype=dtype)
 
         optimizer = torch.optim.AdamW(model.parameters())
         loss_fn = L1Loss()
