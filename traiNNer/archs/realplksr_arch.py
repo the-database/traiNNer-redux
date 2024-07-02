@@ -1,3 +1,4 @@
+# https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py
 # from spandrel.architectures.PLKSR import PLKSR, RealPLKSR
 from functools import partial
 
