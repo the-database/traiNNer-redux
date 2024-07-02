@@ -44,11 +44,6 @@ REQUIRE_BATCH_2 = {"dat_2"}
 # image size of 32x32 to do training or inference with.
 REQUIRE_32_HW = {"realcugan"}
 
-EXTRA_ARGS = {
-    "esrgan": {"use_pixel_unshuffle": True},
-    "esrgan_lite": {"use_pixel_unshuffle": True},
-}
-
 
 class TestArchData(TypedDict):
     device: str
@@ -140,8 +135,6 @@ class TestArchs:
         dtype = data["dtype"]
         gt = torch.rand(gt_shape, device=device, dtype=dtype)
         model_args = {}
-        if name in EXTRA_ARGS:
-            model_args = EXTRA_ARGS[name]
         model = arch(scale=scale, **model_args).train().to(device, dtype=dtype)
 
         optimizer = torch.optim.AdamW(model.parameters())

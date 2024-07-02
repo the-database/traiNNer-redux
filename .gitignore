@@ -5,6 +5,16 @@ results/*
 tb_logger/*
 wandb/*
 tmp/*
+debug/*
+
+!datasets/train/
+!datasets/train/dataset1/
+!datasets/train/dataset1/hr/
+!datasets/train/dataset1/lr/
+!datasets/val/
+!datasets/val/dataset1/
+!datasets/val/dataset1/hr/
+!datasets/val/dataset1/lr/
 
 docs/api
 scripts/__init__.py
@@ -16,13 +26,13 @@ scripts/__init__.py
 version.py
 
 # ignored files with suffix
-*.html
-*.png
-*.jpeg
-*.jpg
-*.gif
-*.pth
-*.zip
+# *.html
+# *.png
+# *.jpeg
+# *.jpg
+# *.gif
+# *.pth
+# *.zip
 
 # template
 

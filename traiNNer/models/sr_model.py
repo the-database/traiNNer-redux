@@ -461,7 +461,10 @@ class SRModel(BaseModel):
         assert isinstance(dataloader.dataset, BaseDataset)
 
         dataset_name = dataloader.dataset.opt["name"]
-        with_metrics = self.opt["val"].get("metrics") is not None
+        with_metrics = (
+            self.opt["val"].get("metrics_enabled", True)
+            and self.opt["val"].get("metrics") is not None
+        )
         use_pbar = self.opt["val"].get("pbar", False)
 
         if with_metrics:

@@ -14,12 +14,13 @@ num_gpu: auto
 # Dataset and Dataloader Settings
 #################################
 datasets:
+  # Settings for the training dataset.
   train:
     name: Train Dataset
     type: PairedImageDataset
-    # Path to the HR (high res) images in your dataset.
+    # Path to the HR (high res) images in your training dataset.
     dataroot_gt: datasets/train/dataset1/hr
-    # Path to the LR (low res) images in your dataset.
+    # Path to the LR (low res) images in your training dataset.
     dataroot_lq: datasets/train/dataset1/lr
     # meta_info: data/meta_info/dataset1.txt
     io_backend:
@@ -31,16 +32,17 @@ datasets:
 
     num_worker_per_gpu: 8
     batch_size_per_gpu: 6  # Increasing stabilizes training but going too high can cause issues
-    dataset_enlarge_ratio: 1  # Increase if the dataset is less than 1000 images to avoid slowdowns
+    dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
     prefetch_mode: ~
-  # Uncomment these for validation
-  # val:
-  #   name: Val Dataset
-  #   type: PairedImageDataset
-  #   dataroot_gt: datasets\val\dataset1\hr
-  #   dataroot_lq: datasets\val\dataset1\lr
-  #   io_backend:
-  #     type: disk
+  # Settings for your validation dataset (optional). These settings will
+  # be ignored if val_enabled is false in the Validation section below.
+  val:
+    name: Val Dataset
+    type: PairedImageDataset
+    dataroot_gt: datasets/val/dataset1/hr
+    dataroot_lq: datasets/val/dataset1/lr
+    io_backend:
+      type: disk
 
 #####################
 # Network Settings
@@ -55,7 +57,7 @@ network_d:
   type: UNetDiscriminatorSN
   num_in_ch: 3
   num_feat: 64
-  skip_connection: True
+  skip_connection: true
 
 ############################
 # Pretrain and Resume Paths
@@ -151,23 +153,24 @@ train:
 #############
 # Validation
 #############
-# Uncomment these for validation.
-# val:
-#   val_freq: 1000
-#   save_img: True
+val:
+  val_enabled: false  # Whether to enable validations. If disabled, all validation settings below are ignored.
+  val_freq: 1000  # How often to run validations, in iterations.
+  save_img: true  # Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
 
-#   metrics:
-#     psnr:
-#       type: calculate_psnr
-#       crop_border: 4
-#       test_y_channel: false
-#     ssim:
-#       type: calculate_ssim
-#       crop_border: 4  # Whether to crop border during validation.
-#       test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
-#     dists:
-#       type: calculate_dists
-#       better: lower
+  metrics_enabled: true  # Whether to run metrics calculations during validation.
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4  # Whether to crop border during validation.
+      test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
+    dists:
+      type: calculate_dists
+      better: lower
 
 ##########
 # Logging

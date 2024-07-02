@@ -11,7 +11,7 @@ pixel_unshuffle_scales = (1, 2)
 @SPANDREL_REGISTRY.register()
 def esrgan(
     scale: int = 4,
-    use_pixel_unshuffle: bool = False,
+    use_pixel_unshuffle: bool = True,
     in_nc: int = 3,
     out_nc: int = 3,
     **kwargs,
@@ -25,7 +25,7 @@ def esrgan(
             )
         else:
             logger = get_root_logger()
-            logger.warning(
+            logger.info(
                 "Pixel unshuffle option is ignored since scale is not %s",
                 " or ".join([str(x) for x in pixel_unshuffle_scales]),
             )
@@ -34,7 +34,7 @@ def esrgan(
 
 
 @SPANDREL_REGISTRY.register()
-def esrgan_lite(scale: int = 4, use_pixel_unshuffle: bool = False, **kwargs) -> RRDBNet:
+def esrgan_lite(scale: int = 4, use_pixel_unshuffle: bool = True, **kwargs) -> RRDBNet:
     return esrgan(
         scale=scale,
         use_pixel_unshuffle=use_pixel_unshuffle,

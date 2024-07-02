@@ -12,6 +12,24 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "justMyCode": false
+    },
+    {
+      "name": "Train ESRGAN",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "train.py",
+      "args": ["-opt", "./options/train/esrgan/esrgan.yml"],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Train ESRGAN OTF",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "train.py",
+      "args": ["-opt", "./options/train/esrgan/esrgan_otf.yml"],
+      "console": "integratedTerminal",
+      "justMyCode": false
     }
   ]
 }
