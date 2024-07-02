@@ -135,10 +135,8 @@ class RealESRGANDataset(BaseDataset):
         img_gt = augment(img_gt, self.opt["use_hflip"], self.opt["use_rot"])
         assert isinstance(img_gt, np.ndarray)
 
-        # crop or pad to 400
-        # TODO: 400 is hard-coded. You may change it accordingly
         h, w = img_gt.shape[0:2]
-        crop_pad_size = 400
+        crop_pad_size = self.opt["gt_size"] + 32
         # pad
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)

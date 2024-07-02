@@ -24,6 +24,8 @@ OTF_DEBUG_PATH = osp.abspath(
     osp.abspath(osp.join(osp.join(sys.argv[0], osp.pardir), "./debug/otf"))
 )
 
+ANTIALIAS_MODES = {"bicubic", "bilinear"}
+
 
 @MODEL_REGISTRY.register(suffix="traiNNer")
 class RealESRGANModel(SRModel):
@@ -54,7 +56,9 @@ class RealESRGANModel(SRModel):
 
         if self.otf_debug:
             logger = get_root_logger()
-            logger.info("OTF debugging enabled. LR tiles will be saved to: %s", OTF_DEBUG_PATH)
+            logger.info(
+                "OTF debugging enabled. LR tiles will be saved to: %s", OTF_DEBUG_PATH
+            )
 
     @torch.no_grad()
     def _dequeue_and_enqueue(self) -> None:
@@ -128,8 +132,10 @@ class RealESRGANModel(SRModel):
             ori_h, ori_w = self.gt.size()[2:4]
 
             # ----------------------- The first degradation process ----------------------- #
+            out = self.gt
             # blur
-            out = filter2d(self.gt, self.kernel1)
+            if RNG.get_rng().uniform() < self.opt["blur_prob"]:
+                out = filter2d(out, self.kernel1)
             # random resize
             updown_type = random.choices(
                 ["up", "down", "keep"], self.opt["resize_prob"]
@@ -140,8 +146,12 @@ class RealESRGANModel(SRModel):
                 scale = RNG.get_rng().uniform(self.opt["resize_range"][0], 1)
             else:
                 scale = 1
-            mode = random.choice(["area", "bilinear", "bicubic"])
-            out = F.interpolate(out, scale_factor=scale, mode=mode)
+            mode = random.choices(
+                self.opt["resize_mode_list"], weights=self.opt["resize_mode_prob"]
+            )[0]
+            out = F.interpolate(
+                out, scale_factor=scale, mode=mode, antialias=mode in ANTIALIAS_MODES
+            )
             # add noise
             gray_noise_prob = self.opt["gray_noise_prob"]
             if RNG.get_rng().uniform() < self.opt["gaussian_noise_prob"]:
@@ -169,7 +179,7 @@ class RealESRGANModel(SRModel):
 
             # ----------------------- The second degradation process ----------------------- #
             # blur
-            if RNG.get_rng().uniform() < self.opt["second_blur_prob"]:
+            if RNG.get_rng().uniform() < self.opt["blur_prob2"]:
                 out = filter2d(out, self.kernel2)
             # random resize
             updown_type = random.choices(
@@ -181,7 +191,9 @@ class RealESRGANModel(SRModel):
                 scale = RNG.get_rng().uniform(self.opt["resize_range2"][0], 1)
             else:
                 scale = 1
-            mode = random.choice(["area", "bilinear", "bicubic"])
+            mode = random.choices(
+                self.opt["resize_mode_list2"], weights=self.opt["resize_mode_prob2"]
+            )[0]
             out = F.interpolate(
                 out,
                 size=(
@@ -189,6 +201,7 @@ class RealESRGANModel(SRModel):
                     int(ori_w / self.opt["scale"] * scale),
                 ),
                 mode=mode,
+                antialias=mode in ANTIALIAS_MODES,
             )
             # add noise
             gray_noise_prob = self.opt["gray_noise_prob2"]
@@ -216,13 +229,16 @@ class RealESRGANModel(SRModel):
             #   1. [resize back + sinc filter] + JPEG compression
             #   2. JPEG compression + [resize back + sinc filter]
             # Empirically, we find other combinations (sinc + JPEG + Resize) will introduce twisted lines.
+            mode = random.choices(
+                self.opt["resize_mode_list3"], weights=self.opt["resize_mode_prob3"]
+            )[0]
             if RNG.get_rng().uniform() < 0.5:
                 # resize back + the final sinc filter
-                mode = random.choice(["area", "bilinear", "bicubic"])
                 out = F.interpolate(
                     out,
                     size=(ori_h // self.opt["scale"], ori_w // self.opt["scale"]),
                     mode=mode,
+                    antialias=mode in ANTIALIAS_MODES,
                 )
                 out = filter2d(out, self.sinc_kernel)
                 # JPEG compression
@@ -235,11 +251,11 @@ class RealESRGANModel(SRModel):
                 out = torch.clamp(out, 0, 1)
                 out = self.jpeger(out, quality=jpeg_p)
                 # resize back + the final sinc filter
-                mode = random.choice(["area", "bilinear", "bicubic"])
                 out = F.interpolate(
                     out,
                     size=(ori_h // self.opt["scale"], ori_w // self.opt["scale"]),
                     mode=mode,
+                    antialias=mode in ANTIALIAS_MODES,
                 )
                 out = filter2d(out, self.sinc_kernel)
 
@@ -247,7 +263,7 @@ class RealESRGANModel(SRModel):
             self.lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.0
 
             # random crop
-            gt_size = self.opt["gt_size"]
+            gt_size = self.opt["datasets"]["train"]["gt_size"]
             self.gt, self.lq = paired_random_crop(
                 self.gt, self.lq, gt_size, self.opt["scale"]
             )
