@@ -47,14 +47,6 @@ EXTRA_ARCH_PARAMS["realplksr"] = [
     {"upsampler": "pixelshuffle"},
     {"upsampler": "conv"},
 ]
-EXTRA_ARCH_PARAMS["esrgan"] = [
-    {"use_pixel_unshuffle": True},
-    {"use_pixel_unshuffle": False},
-]
-EXTRA_ARCH_PARAMS["esrgan_lite"] = [
-    {"use_pixel_unshuffle": True},
-    {"use_pixel_unshuffle": False},
-]
 
 # A list of tuples in the format of (name, arch, extra_params).
 FILTERED_REGISTRIES_PARAMS = [
@@ -101,7 +93,7 @@ def get_line(
     separator = "|" if print_markdown else ",    "
     edge_separator = "|" if print_markdown else ""
     unsupported_value = "-"
-    name_str = f"{name} {scale}x {format_extra_params(extra_arch_params)}"
+    name_str = f"{name} {format_extra_params(extra_arch_params)} {scale}x"
 
     fps_label = "" if print_markdown else "FPS: "
     sec_img_label = "" if print_markdown else "sec/img: "
