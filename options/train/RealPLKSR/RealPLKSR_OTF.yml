@@ -98,7 +98,7 @@ datasets:
 # Generator model settings
 network_g:
   type: RealPLKSR
-  dysample: true
+  upsampler: dysample  # dysample, pixelshuffle, conv (1x only)
 
 # Discriminator model settings
 network_d:

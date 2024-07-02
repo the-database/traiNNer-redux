@@ -29,15 +29,19 @@ FILTERED_REGISTRY = [
 ALL_SCALES = [1, 2, 3, 4]
 
 # For archs that have extra parameters, list all combinations that need to be tested.
-ARCH_EXTRA_PARAMS: dict[str, list[dict[str, Any]]] = {
+EXTRA_ARCH_PARAMS: dict[str, list[dict[str, Any]]] = {
     k: [] for k, _ in FILTERED_REGISTRY
 }
-ARCH_EXTRA_PARAMS["realplksr"] = [{"dysample": True}, {"dysample": False}]
-ARCH_EXTRA_PARAMS["esrgan"] = [
+EXTRA_ARCH_PARAMS["realplksr"] = [
+    {"upsampler": "dysample"},
+    {"upsampler": "pixelshuffle"},
+    {"upsampler": "conv"},
+]
+EXTRA_ARCH_PARAMS["esrgan"] = [
     {"use_pixel_unshuffle": True},
     {"use_pixel_unshuffle": False},
 ]
-ARCH_EXTRA_PARAMS["esrgan_lite"] = [
+EXTRA_ARCH_PARAMS["esrgan_lite"] = [
     {"use_pixel_unshuffle": True},
     {"use_pixel_unshuffle": False},
 ]
@@ -47,11 +51,19 @@ FILTERED_REGISTRIES_SCALES_PARAMS = [
     (name, arch, scale, extra_params)
     for (name, arch) in FILTERED_REGISTRY
     for scale in ALL_SCALES
-    for extra_params in (ARCH_EXTRA_PARAMS[name] if ARCH_EXTRA_PARAMS[name] else [{}])
+    for extra_params in (EXTRA_ARCH_PARAMS[name] if EXTRA_ARCH_PARAMS[name] else [{}])
 ]
 
-# A dict of archs mapped to a list of scales that arch doesn't support.
-EXCLUDE_ARCH_SCALES = {"swinir_l": [3], "realcugan": [1]}
+# A dict of archs mapped to a list of scale + arch params that arch doesn't support.
+EXCLUDE_ARCH_SCALES = {
+    "swinir_l": [{"scale": 3, "extra_arch_params": {}}],
+    "realcugan": [{"scale": 1, "extra_arch_params": {}}],
+    "realplksr": [
+        {"scale": 2, "extra_arch_params": {"upsampler": "conv"}},
+        {"scale": 3, "extra_arch_params": {"upsampler": "conv"}},
+        {"scale": 4, "extra_arch_params": {"upsampler": "conv"}},
+    ],
+}
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
 REQUIRE_BATCH_2 = {"dat_2"}
@@ -102,7 +114,11 @@ class TestArchs:
         scale: int,
         extra_arch_params: dict[str, Any],
     ) -> None:
-        if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
+        if (
+            name in EXCLUDE_ARCH_SCALES
+            and {"scale": scale, "extra_arch_params": extra_arch_params}
+            in EXCLUDE_ARCH_SCALES[name]
+        ):
             pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
 
         device = data["device"]
@@ -144,7 +160,11 @@ class TestArchs:
         scale: int,
         extra_arch_params: dict[str, Any],
     ) -> None:
-        if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
+        if (
+            name in EXCLUDE_ARCH_SCALES
+            and {"scale": scale, "extra_arch_params": extra_arch_params}
+            in EXCLUDE_ARCH_SCALES[name]
+        ):
             pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
 
         device = data["device"]

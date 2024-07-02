@@ -49,7 +49,7 @@ archs: list[ArchInfo] = [
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": ALL_SCALES},
     {"names": ["PLKSR"], "scales": ALL_SCALES},
-    {"names": ["RealPLKSR"], "scales": ALL_SCALES, "extras": {"dysample": "true"}},
+    {"names": ["RealPLKSR"], "scales": ALL_SCALES, "extras": {"upsampler": "dysample  # dysample, pixelshuffle, conv (1x only)"}},
     {
         "names": ["RealCUGAN"],
         "scales": [2, 3, 4],

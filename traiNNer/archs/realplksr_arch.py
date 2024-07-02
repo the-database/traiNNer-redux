@@ -1,4 +1,5 @@
 # https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py
+# Modified by umzi2 to support dysample, conv upsamplers
 # from spandrel.architectures.PLKSR import PLKSR, RealPLKSR
 from functools import partial
 
@@ -113,13 +114,12 @@ class RealPLKSR(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
-        dysample: bool = False,
+        upsampler: str = "",  # dysample, pixelshuffle, conv
         **kwargs,
     ) -> None:
         super().__init__()
 
         self.upscale = upscaling_factor
-        self.dysample = dysample
         if not self.training:
             dropout = 0
 
@@ -139,7 +139,7 @@ class RealPLKSR(nn.Module):
             torch.repeat_interleave, repeats=upscaling_factor**2, dim=1
         )
 
-        if dysample:
+        if upsampler == "dysample":
             groups = out_ch if upscaling_factor % 2 != 0 else 4
             self.to_img = DySample(
                 in_ch * upscaling_factor**2,
@@ -148,14 +148,19 @@ class RealPLKSR(nn.Module):
                 groups=groups,
                 end_convolution=True if upscaling_factor != 1 else False,
             )
-        else:
+        elif upsampler == "conv":
+            if upscaling_factor != 1:
+                msg = "conv supports only 1x"
+                raise ValueError(msg)
+            self.to_img = nn.Identity()
+        elif upsampler == "pixelshuffle":
             self.to_img = nn.PixelShuffle(upscaling_factor)
+        else:
+            raise ValueError(f"Invalid upsampler: {upsampler}")
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
-        if not self.dysample or (self.dysample and self.upscale != 1):
-            x = self.to_img(x)
-        return x
+        return self.to_img(x)
 
 
 @ARCH_REGISTRY.register()
