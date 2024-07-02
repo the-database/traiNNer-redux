@@ -1,4 +1,3 @@
-import itertools
 from collections.abc import Callable
 from typing import Any, TypedDict
 
@@ -30,10 +29,18 @@ FILTERED_REGISTRY = [
 ALL_SCALES = [1, 2, 3, 4]
 
 # For archs that have extra parameters, list all combinations that need to be tested.
-ARCH_EXTRA_PARAMS : dict[str, list[dict[str, Any]]] = {k: [] for k, _ in FILTERED_REGISTRY}
+ARCH_EXTRA_PARAMS: dict[str, list[dict[str, Any]]] = {
+    k: [] for k, _ in FILTERED_REGISTRY
+}
 ARCH_EXTRA_PARAMS["realplksr"] = [{"dysample": True}, {"dysample": False}]
-ARCH_EXTRA_PARAMS["esrgan"] = [{"use_pixel_unshuffle": True}, {"use_pixel_unshuffle": False}]
-ARCH_EXTRA_PARAMS["esrgan_lite"] = [{"use_pixel_unshuffle": True}, {"use_pixel_unshuffle": False}]
+ARCH_EXTRA_PARAMS["esrgan"] = [
+    {"use_pixel_unshuffle": True},
+    {"use_pixel_unshuffle": False},
+]
+ARCH_EXTRA_PARAMS["esrgan_lite"] = [
+    {"use_pixel_unshuffle": True},
+    {"use_pixel_unshuffle": False},
+]
 
 # A list of tuples in the format of (name, arch, scale, extra_params).
 FILTERED_REGISTRIES_SCALES_PARAMS = [
@@ -77,7 +84,13 @@ class TestArchs:
     @pytest.mark.parametrize(
         "name,arch,scale,extra_arch_params",
         [
-            pytest.param(name, arch, scale, extra_arch_params, id=f"test_{name}_{scale}x_{extra_arch_params}")
+            pytest.param(
+                name,
+                arch,
+                scale,
+                extra_arch_params,
+                id=f"test_{name}_{scale}x_{extra_arch_params}",
+            )
             for name, arch, scale, extra_arch_params in FILTERED_REGISTRIES_SCALES_PARAMS
         ],
     )
@@ -87,7 +100,7 @@ class TestArchs:
         name: str,
         arch: Callable[..., nn.Module],
         scale: int,
-        extra_arch_params: dict[str, Any]
+        extra_arch_params: dict[str, Any],
     ) -> None:
         if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
             pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
@@ -113,7 +126,13 @@ class TestArchs:
     @pytest.mark.parametrize(
         "name,arch,scale,extra_arch_params",
         [
-            pytest.param(name, arch, scale, extra_arch_params, id=f"train_{name}_{scale}x_{extra_arch_params}")
+            pytest.param(
+                name,
+                arch,
+                scale,
+                extra_arch_params,
+                id=f"train_{name}_{scale}x_{extra_arch_params}",
+            )
             for name, arch, scale, extra_arch_params in FILTERED_REGISTRIES_SCALES_PARAMS
         ],
     )
@@ -123,7 +142,7 @@ class TestArchs:
         name: str,
         arch: Callable[..., nn.Module],
         scale: int,
-        extra_arch_params: dict[str, Any]
+        extra_arch_params: dict[str, Any],
     ) -> None:
         if name in EXCLUDE_ARCH_SCALES and scale in EXCLUDE_ARCH_SCALES[name]:
             pytest.skip(f"Skipping known unsupported {scale}x scale for {name}")
