@@ -1,5 +1,5 @@
 # https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py
-# Modified by umzi2 to support dysample, conv upsamplers
+# With modifications by umzi2 to support dysample, conv upsamplers
 # from spandrel.architectures.PLKSR import PLKSR, RealPLKSR
 from functools import partial
 
