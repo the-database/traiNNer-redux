@@ -98,6 +98,7 @@ datasets:
 # Generator model settings
 network_g:
   type: RealPLKSR
+  dysample: true
 
 # Discriminator model settings
 network_d:

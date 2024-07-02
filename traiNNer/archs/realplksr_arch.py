@@ -2,10 +2,10 @@
 from functools import partial
 
 import torch
-from spandrel.util import store_hyperparameters
 from torch import nn
 from torch.nn.init import trunc_normal_
 
+from traiNNer.archs.arch_util import DySample
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
@@ -95,16 +95,15 @@ class PLKBlock(nn.Module):
         return x + x_skip
 
 
-@store_hyperparameters()
 class RealPLKSR(nn.Module):
     """Partial Large Kernel CNNs for Efficient Super-Resolution:
     https://arxiv.org/abs/2404.11848
     """
 
-    hyperparameters = {}  # noqa: RUF012
-
     def __init__(
         self,
+        in_ch: int = 3,
+        out_ch: int = 3,
         dim: int = 64,
         n_blocks: int = 28,
         upscaling_factor: int = 4,
@@ -113,20 +112,24 @@ class RealPLKSR(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
+        dysample: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__()
 
+        self.upscale = upscaling_factor
+        self.dysample = dysample
         if not self.training:
             dropout = 0
 
         self.feats = nn.Sequential(
-            *[nn.Conv2d(3, dim, 3, 1, 1)]
+            *[nn.Conv2d(in_ch, dim, 3, 1, 1)]
             + [
                 PLKBlock(dim, kernel_size, split_ratio, norm_groups, use_ea)
                 for _ in range(n_blocks)
             ]
             + [nn.Dropout2d(dropout)]
-            + [nn.Conv2d(dim, 3 * upscaling_factor**2, 3, 1, 1)]
+            + [nn.Conv2d(dim, out_ch * upscaling_factor**2, 3, 1, 1)]
         )
         trunc_normal_(self.feats[0].weight, std=0.02)
         trunc_normal_(self.feats[-1].weight, std=0.02)
@@ -135,11 +138,23 @@ class RealPLKSR(nn.Module):
             torch.repeat_interleave, repeats=upscaling_factor**2, dim=1
         )
 
-        self.to_img = nn.PixelShuffle(upscaling_factor)
+        if dysample:
+            groups = out_ch if upscaling_factor % 2 != 0 else 4
+            self.to_img = DySample(
+                in_ch * upscaling_factor**2,
+                out_ch,
+                upscaling_factor,
+                groups=groups,
+                end_convolution=True if upscaling_factor != 1 else False,
+            )
+        else:
+            self.to_img = nn.PixelShuffle(upscaling_factor)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
-        return self.to_img(x)
+        if not self.dysample or (self.dysample and self.upscale != 1):
+            x = self.to_img(x)
+        return x
 
 
 @ARCH_REGISTRY.register()

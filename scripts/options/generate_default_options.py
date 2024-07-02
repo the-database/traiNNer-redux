@@ -49,7 +49,7 @@ archs: list[ArchInfo] = [
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": ALL_SCALES},
     {"names": ["PLKSR"], "scales": ALL_SCALES},
-    {"names": ["RealPLKSR"], "scales": ALL_SCALES},
+    {"names": ["RealPLKSR"], "scales": ALL_SCALES, "extras": {"dysample": "true"}},
     {
         "names": ["RealCUGAN"],
         "scales": [2, 3, 4],
@@ -62,7 +62,7 @@ archs: list[ArchInfo] = [
     {"names": ["RGT", "RGT_S"], "scales": ALL_SCALES},
     {"names": ["DRCT", "DRCT_L", "DRCT_XL"], "scales": ALL_SCALES},
     {
-        "names": ["SpanPlus", "SpanPlus_STS", "SpanPlus_S", "SpanPlus_ST"],
+        "names": ["SPANPlus", "SPANPlus_STS", "SPANPlus_S", "SPANPlus_ST"],
         "scales": ALL_SCALES,
     },
 ]
