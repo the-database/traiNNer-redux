@@ -485,7 +485,7 @@ class BaseModel:
                                 "Loading: %s does not exist, using None.", param_key
                             )
                             param_key = None
-                    else:
+                    if param_key in load_net:
                         load_net = load_net[param_key]
             else:
                 raise ValueError(f"Unsupported model: {load_path}") from e

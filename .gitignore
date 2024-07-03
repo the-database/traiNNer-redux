@@ -7,11 +7,9 @@ wandb/*
 tmp/*
 debug/*
 
-!datasets/train/
 !datasets/train/dataset1/
 !datasets/train/dataset1/hr/
 !datasets/train/dataset1/lr/
-!datasets/val/
 !datasets/val/dataset1/
 !datasets/val/dataset1/hr/
 !datasets/val/dataset1/lr/
