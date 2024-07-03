@@ -18,10 +18,13 @@ from traiNNer.losses.mssim_loss import MSSIMLoss
 from traiNNer.losses.perceptual_loss import PerceptualLoss
 
 LOSS_FUNCTIONS = [
-    MSSIMLoss(),
     L1Loss(),
-    ADISTSLoss(),
-    DISTSLoss(),
+    CharbonnierLoss(),
+    MSELoss(),
+    MSSIMLoss(),
+    HSLuvLoss(criterion="charbonnier"),
+    ColorLoss(criterion="charbonnier"),
+    LumaLoss(criterion="charbonnier"),
     PerceptualLoss(
         layer_weights={
             "conv1_2": 0.1,
@@ -32,11 +35,8 @@ LOSS_FUNCTIONS = [
         },
         criterion="charbonnier",
     ),
-    ColorLoss(criterion="charbonnier"),
-    LumaLoss(criterion="charbonnier"),
-    CharbonnierLoss(),
-    MSELoss(),
-    HSLuvLoss(criterion="charbonnier"),
+    ADISTSLoss(),
+    DISTSLoss(),
 ]
 
 EPSILON = 1e-5  # torch.finfo(torch.float32).eps
