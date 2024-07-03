@@ -20,7 +20,6 @@ class DySample(nn.Module):
         end_convolution: bool = True,
     ) -> None:
         super().__init__()
-        print("dysample", in_channels, groups)
         try:
             assert in_channels >= groups and in_channels % groups == 0
         except:  # noqa: E722
