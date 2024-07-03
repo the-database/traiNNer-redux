@@ -20,7 +20,7 @@ def calculate_dists(img: np.ndarray, img2: np.ndarray, **kwargs) -> Tensor:
     # add dim
     img_t, img2_t = img_t.unsqueeze_(0), img2_t.unsqueeze_(0)
     # to cuda
-    device = torch.device("cuda")
+    device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     img_t, img2_t = img_t.to(device), img2_t.to(device)
 
     loss = DISTSLoss(as_loss=False).to(device)
