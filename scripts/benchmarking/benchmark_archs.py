@@ -76,7 +76,7 @@ def format_extra_params(extra_arch_params: dict[str, Any]) -> str:
         else:
             out += f"{k}={v} "
 
-    return out
+    return out.strip()
 
 
 def get_line(
