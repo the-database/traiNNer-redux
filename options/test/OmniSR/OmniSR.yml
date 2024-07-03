@@ -1,0 +1,55 @@
+####################
+# General Settings
+####################
+name: 4x_OmniSR
+scale: 4  # 1, 2, 3, 4, 8
+use_amp: true  # Speed up training and reduce VRAM usage.
+amp_bf16: true  # Use bf16 for AMP, RTX 3000 series or newer only.
+num_gpu: auto
+
+
+#################################
+# Dataset and Dataloader Settings
+#################################
+datasets:
+  val:
+    name: Val Dataset
+    type: SingleImageDataset
+    dataroot_lq: datasets/val/dataset1/lr
+    io_backend:
+      type: disk
+
+#####################
+# Network Settings
+#####################
+# Generator model settings
+network_g:
+  type: OmniSR
+
+############################
+# Pretrain and Resume Paths
+############################
+path:
+  pretrain_network_g: experiments/4x_OmniSR/models/net_g_1000.safetensors
+
+#############
+# Validation
+#############
+val:
+  val_enabled: true  # Whether to enable validations. If disabled, all validation settings below are ignored.
+  save_img: true  # Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
+  suffix: ~  # add suffix to saved images, if None, use exp name
+
+  metrics_enabled: false  # Whether to run metrics calculations during validation.
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4  # Whether to crop border during validation.
+      test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
+    dists:
+      type: calculate_dists
+      better: lower

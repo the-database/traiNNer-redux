@@ -457,7 +457,7 @@ class BaseModel:
                 load_path,
             )
         except Exception as e:
-            print(e)
+            logger.warning("Error loading from Spandrel: %s. Falling back to traiNNer-redux loader", e)
 
             net = self.get_bare_model(net)
             if load_path.endswith(".safetensors"):

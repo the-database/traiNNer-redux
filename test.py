@@ -5,12 +5,13 @@ import torch
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.models import build_model
 from traiNNer.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs
-from traiNNer.utils.options import dict2str, parse_options
+from traiNNer.utils.config import Config
+from traiNNer.utils.options import dict2str
 
 
 def test_pipeline(root_path: str) -> None:
     # parse options, set distributed setting, set ramdom seed
-    opt, _ = parse_options(root_path, is_train=False)
+    opt, _ = Config.load_config_from_file(root_path, is_train=False)
 
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
@@ -56,5 +57,5 @@ def test_pipeline(root_path: str) -> None:
 
 
 if __name__ == "__main__":
-    root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
+    root_path = osp.abspath(osp.join(__file__, osp.pardir))
     test_pipeline(root_path)
