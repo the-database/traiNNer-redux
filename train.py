@@ -73,7 +73,7 @@ def create_train_val_dataloader(
             train_set = build_dataset(dataset_opt)
             dataset_enlarge_ratio = dataset_opt.get("dataset_enlarge_ratio", 1)
             if dataset_enlarge_ratio == "auto":
-                dataset_enlarge_ratio = 2000 // len(train_set)
+                dataset_enlarge_ratio = max(2000 // len(train_set), 1)
             train_sampler = EnlargedSampler(
                 train_set, opt["world_size"], opt["rank"], dataset_enlarge_ratio
             )
