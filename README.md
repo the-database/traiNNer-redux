@@ -21,7 +21,7 @@ A modern community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and
 For more detailed information, refer to the wiki (under construction). The most commonly used settings are documented here. 
 
 #### Do a quick test run
-The repository comes with several configs that are ready to use out of the box, as well as a tiny dataset for testing purposes only. To confirm that your PC can run the training software successfully, run the following command:
+The repository comes with several configs that are ready to use out of the box, as well as a tiny dataset for testing purposes only. To confirm that your PC can run the training software successfully, run the following command from the `traiNNer-redux` folder:
 
 ```
 python train.py --auto_resume -opt ./options/train/SPAN/SPAN.yml
