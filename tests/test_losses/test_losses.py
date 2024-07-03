@@ -8,6 +8,7 @@ from traiNNer.losses.adists_loss import ADISTSLoss
 from traiNNer.losses.basic_loss import (
     CharbonnierLoss,
     ColorLoss,
+    HSLuvLoss,
     L1Loss,
     LumaLoss,
     MSELoss,
@@ -35,6 +36,7 @@ LOSS_FUNCTIONS = [
     LumaLoss(criterion="charbonnier"),
     CharbonnierLoss(),
     MSELoss(),
+    HSLuvLoss(criterion="charbonnier"),
 ]
 
 EPSILON = 1e-5  # torch.finfo(torch.float32).eps
@@ -95,15 +97,10 @@ class TestLosses:
 
     @pytest.mark.parametrize(
         "loss_fn",
-        [
-            pytest.param(loss_fn, id=f"{loss_fn}")
-            for loss_fn in LOSS_FUNCTIONS
-        ],
+        [pytest.param(loss_fn, id=f"{loss_fn}") for loss_fn in LOSS_FUNCTIONS],
     )
     def test_black_vs_black(self, data: TestLossData, loss_fn: nn.Module) -> None:
-        print(loss_fn)
         loss_value = loss_fn(data["black_image"], data["black_image"])
-        print(loss_value)
 
         if type(loss_value) is tuple:
             assert loss_value[0] <= EPSILON
