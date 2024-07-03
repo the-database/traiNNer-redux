@@ -525,7 +525,9 @@ class SRModel(BaseModel):
             if with_metrics:
                 # calculate metrics
                 for name, opt_ in self.opt["val"]["metrics"].items():
-                    self.metric_results[name] += calculate_metric(metric_data, opt_)
+                    self.metric_results[name] += calculate_metric(
+                        metric_data, opt_, self.device
+                    )
             if pbar is not None:
                 pbar.update(1)
                 pbar.set_description(f"Test {img_name}")
