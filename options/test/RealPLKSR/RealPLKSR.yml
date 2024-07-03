@@ -31,7 +31,7 @@ network_g:
 # Pretrain and Resume Paths
 ############################
 path:
-  pretrain_network_g: D:\file\traiNNer-redux\experiments\4x_RealPLKSR\models\net_g_65000.safetensors
+  pretrain_network_g: experiments/4x_RealPLKSR/models/net_g_1000.safetensors
 
 #############
 # Validation
