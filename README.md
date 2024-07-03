@@ -18,7 +18,7 @@ A modern community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and
    pip install -r requirements.txt
    ```
 ### Training a Model
-For more detailed information, refer to the wiki (under construction). The most commonly used settings are documented here. 
+Refer to the [wiki](https://github.com/the-database/traiNNer-redux/wiki) for [benchmarks](https://github.com/the-database/traiNNer-redux/wiki/PyTorch-Inference-Benchmarks-by-Architecture) and other information (currently under construction).
 
 #### Do a quick test run
 The repository comes with several configs that are ready to use out of the box, as well as a tiny dataset for testing purposes only. To confirm that your PC can run the training software successfully, run the following command from the `traiNNer-redux` folder:
