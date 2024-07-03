@@ -39,7 +39,7 @@ path:
 #############
 val:
   val_enabled: true  # Whether to enable validations. If disabled, all validation settings below are ignored.
-  save_img: true  # Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
+  save_img: true  # Whether to save the validation images during validation, in the results/<name>/visualization folder.
   suffix: ~  # add suffix to saved images, if None, use exp name
 
   metrics_enabled: false  # Whether to run metrics calculations during validation.

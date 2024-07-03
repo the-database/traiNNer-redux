@@ -1,98 +1,36 @@
+import sys
 import tempfile
+from os import path as osp
 
 import torch
-import yaml
+from pytest import MonkeyPatch
 from spandrel.architectures.ESRGAN import RRDBNet
 from torch.utils.data import DataLoader
 from traiNNer.data.paired_image_dataset import PairedImageDataset
-from traiNNer.losses.basic_loss import L1Loss
+from traiNNer.losses.mssim_loss import MSSIMLoss
 from traiNNer.losses.perceptual_loss import PerceptualLoss
 from traiNNer.models.sr_model import SRModel
+from traiNNer.utils.config import Config
 from traiNNer.utils.types import DataFeed
 
 
-def test_srmodel() -> None:
-    """Test model: SRModel"""
+def test_srmodel(monkeypatch: MonkeyPatch) -> None:
+    args = ["", "-opt", "./options/train/ESRGAN/ESRGAN.yml"]
+    monkeypatch.setattr(sys, "argv", args)
 
-    opt_str = r"""
-scale: 4
-num_gpu: 1
-manual_seed: 0
-is_train: True
-dist: False
-
-# network structures
-network_g:
-  type: MSRResNet
-  num_in_ch: 3
-  num_out_ch: 3
-  num_feat: 4
-  num_block: 1
-  upscale: 4
-
-# path
-path:
-  pretrain_network_g: ~
-  strict_load_g: true
-  resume_state: ~
-
-# training settings
-train:
-  ema_decay: 0.999
-  optim_g:
-    type: Adam
-    lr: !!float 2e-4
-    weight_decay: 0
-    betas: [0.9, 0.99]
-
-  scheduler:
-    type: CosineAnnealingRestartLR
-    periods: [250000, 250000, 250000, 250000]
-    restart_weights: [1, 1, 1, 1]
-    eta_min: !!float 1e-7
-
-  total_iter: 1000000
-  warmup_iter: -1  # no warm up
-
-  # losses
-  pixel_opt:
-    type: L1Loss
-    loss_weight: 1.0
-    reduction: mean
-  perceptual_opt:
-    type: PerceptualLoss
-    layer_weights:
-      'conv5_4': 1  # before relu
-    vgg_type: vgg19
-    use_input_norm: true
-    range_norm: false
-    perceptual_weight: 1.0
-    style_weight: 1.0
-    criterion: l1
-
-# validation settings
-val:
-  val_freq: !!float 5e3
-  save_img: True
-
-  metrics:
-    psnr: # metric name
-      type: calculate_psnr
-      crop_border: 4
-      test_y_channel: false
-      better: higher  # the higher, the better. Default: higher
-"""
-
-    opt = yaml.safe_load(opt_str)
+    root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir, osp.pardir))
+    opt, _ = Config.load_config_from_file(root_path, is_train=True)
+    opt["num_gpu"] = 0
+    opt["use_amp"] = False
 
     # build model
     model = SRModel(opt)
     # test attributes
     assert model.__class__.__name__ == "SRModel"
     assert isinstance(model.net_g, RRDBNet)
-    assert isinstance(model.cri_pix, L1Loss)
+    assert isinstance(model.cri_mssim, MSSIMLoss)
     assert isinstance(model.cri_perceptual, PerceptualLoss)
-    assert isinstance(model.optimizers[0], torch.optim.Adam)
+    assert isinstance(model.optimizers[0], torch.optim.AdamW)
     assert model.ema_decay == 0.999
 
     # prepare data
@@ -112,7 +50,7 @@ val:
     assert model.output.shape == (1, 3, 32, 32)
     assert isinstance(model.log_dict, dict)
     # check returned keys
-    expected_keys = ["l_pix", "l_percep", "l_style"]
+    expected_keys = ["l_g_mssim", "l_g_percep", "l_g_hsluv", "l_g_gan", "l_g_total"]
     assert set(expected_keys).issubset(set(model.log_dict.keys()))
 
     # ----------------- test save -------------------- #
@@ -125,7 +63,7 @@ val:
     model.test()
     assert model.output.shape == (1, 3, 32, 32)
     # delete net_g_ema
-    model.__delattr__("net_g_ema")
+    model.net_g_ema = None
     model.test()
     assert model.output.shape == (1, 3, 32, 32)
     assert model.net_g.training is True  # should back to training mode after testing
@@ -134,8 +72,8 @@ val:
     # construct dataloader
     dataset_opt = {
         "name": "Test",
-        "dataroot_gt": "tests/data/gt",
-        "dataroot_lq": "tests/data/lq",
+        "dataroot_gt": "datasets/val/dataset1/hr",
+        "dataroot_lq": "datasets/val/dataset1/lr",
         "io_backend": {"type": "disk"},
         "scale": 4,
         "phase": "val",
