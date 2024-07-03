@@ -20,6 +20,24 @@ A modern community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and
 ### Training a Model
 For more detailed information, refer to the wiki (under construction). The most commonly used settings are documented here. 
 
+#### Do a quick test run
+The repository comes with several configs that are ready to use out of the box, as well as a tiny dataset for testing purposes only. To confirm that your PC can run the training software successfully, run the following command from the `traiNNer-redux` folder:
+
+```
+python train.py --auto_resume -opt ./options/train/SPAN/SPAN.yml
+```
+
+You should see the following output within a few minutes, depending on your GPU speed:
+
+```
+...
+2024-07-02 21:40:56,593 INFO: Model [SRModel] is created.
+2024-07-02 21:40:56,668 INFO: Start training from epoch: 0, iter: 0
+2024-07-02 21:41:17,816 INFO: [4x_SP..][epoch:  0, iter:     100, lr:(1.000e-04,)] [performance: 4.729] [eta: 14:11:33] l_g_mssim: 1.0000e+00 l_g_percep: 3.5436e+00 l_g_hsluv: 4.3935e-01 l_g_gan: 2.4346e+00 l_g_total: 7.4175e+00 l_d_real: 2.4136e-01 out_d_real: 2.9309e+00 l_d_fake: 5.2773e-02 out_d_fake: -2.4104e+01
+```
+
+The last line shows the progress of training after 100 iterations. If you get this far without any errors, your PC is able to train successfully. Press `ctrl+C` to end the training run.
+
 #### Set up config file
 1. Navigate to `traiNNer-redux/options/train`, select the architecture you want to train, and open the `yml` file in that folder in a text editor. A text editor that supports YAML syntax highlighting is recommended, such as [VS Code](https://code.visualstudio.com/) or [Notepad++](https://notepad-plus-plus.org/). For example, to train SPAN, open `traiNNer-redux/options/train/SPAN/SPAN.yml`.
 2. At the top of the file, set the `name` to the name of the model you want to train. Give it a unique name so you can differentiate it from other training runs.
