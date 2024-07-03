@@ -21,6 +21,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir, osp.pardir))
     opt, _ = Config.load_config_from_file(root_path, is_train=True)
     opt["num_gpu"] = 0
+    opt["use_amp"] = False
 
     # build model
     model = SRModel(opt)
