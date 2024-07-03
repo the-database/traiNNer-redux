@@ -73,28 +73,48 @@ archs: list[ArchInfo] = [
 
 for arch in archs:
     folder_name = arch["names"][0].split("_")[0]
-    folder_path = osp.normpath(
+    train_folder_path = osp.normpath(
         osp.join(
             __file__, osp.pardir, osp.pardir, osp.pardir, "./options/train", folder_name
         )
     )
-    # print(folder_name, folder_path)
-    os.makedirs(folder_path, exist_ok=True)
+    test_folder_path = osp.normpath(
+        osp.join(
+            __file__, osp.pardir, osp.pardir, osp.pardir, "./options/test", folder_name
+        )
+    )
+
+    os.makedirs(train_folder_path, exist_ok=True)
+    os.makedirs(test_folder_path, exist_ok=True)
 
     template_path_paired = osp.normpath(
-        osp.join(__file__, osp.pardir, "./default_options_paired.yml")
+        osp.join(__file__, osp.pardir, "./train_default_options_paired.yml")
     )
 
     template_path_otf = osp.normpath(
-        osp.join(__file__, osp.pardir, "./default_options_otf.yml")
+        osp.join(__file__, osp.pardir, "./train_default_options_otf.yml")
     )
 
-    with open(template_path_paired) as fp, open(template_path_otf) as fo:
+    template_path_single = osp.normpath(
+        osp.join(__file__, osp.pardir, "./test_default_options_single.yml")
+    )
+
+    with (
+        open(template_path_paired) as fp,
+        open(template_path_otf) as fo,
+        open(template_path_single) as fts,
+    ):
         template_paired = fp.read()
         template_otf = fo.read()
+        template_test_single = fts.read()
 
-        with open(osp.join(folder_path, f"{folder_name}.yml"), mode="w") as fw:
+        with open(osp.join(train_folder_path, f"{folder_name}.yml"), mode="w") as fw:
             fw.write(final_template(template_paired, arch))
 
-        with open(osp.join(folder_path, f"{folder_name}_OTF.yml"), mode="w") as fw:
+        with open(
+            osp.join(train_folder_path, f"{folder_name}_OTF.yml"), mode="w"
+        ) as fw:
             fw.write(final_template(template_otf, arch))
+
+        with open(osp.join(test_folder_path, f"{folder_name}.yml"), mode="w") as fw:
+            fw.write(final_template(template_test_single, arch))

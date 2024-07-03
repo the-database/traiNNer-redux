@@ -61,6 +61,10 @@ class SRModel(BaseModel):
                     param_key,
                 )
 
+        self.lq: Tensor | None = None
+        self.gt: Tensor | None = None
+        self.output: Tensor | None = None
+
         if self.is_train:
             self.cri_pix = None
             self.cri_mssim = None
@@ -77,10 +81,6 @@ class SRModel(BaseModel):
 
             self.ema_decay = 0
             self.net_g_ema: nn.Module | None = None
-
-            self.lq: Tensor | None = None
-            self.gt: Tensor | None = None
-            self.output: Tensor | None = None
 
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
@@ -566,14 +566,15 @@ class SRModel(BaseModel):
                 )
 
     def get_current_visuals(self) -> dict[str, Tensor]:
-        assert isinstance(self.output, Tensor)
-        assert isinstance(self.lq, Tensor)
-        assert isinstance(self.gt, Tensor)
+        assert self.output is not None
+        assert self.lq is not None
 
         out_dict = OrderedDict()
         out_dict["lq"] = self.lq.detach().cpu()
         out_dict["result"] = self.output.detach().cpu()
-        out_dict["gt"] = self.gt.detach().cpu()
+
+        if self.gt is not None:
+            out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
     def save(self, epoch: int, current_iter: int) -> None:
