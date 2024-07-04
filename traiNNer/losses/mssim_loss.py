@@ -1,9 +1,10 @@
 from collections.abc import Sequence
 
 import torch
-from torch import SymInt, nn
+from torch import SymInt, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
+from traiNNer.losses.basic_loss import CharbonnierLoss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 ####################################
@@ -42,20 +43,20 @@ class GaussianFilter2D(nn.Module):
             name="gaussian_window", tensor=kernel.repeat(in_channels, 1, 1, 1)
         )
 
-    def _get_gaussian_window1d(self) -> torch.Tensor:
+    def _get_gaussian_window1d(self) -> Tensor:
         sigma2 = self.sigma * self.sigma
         x = torch.arange(-(self.window_size // 2), self.window_size // 2 + 1)
         w = torch.exp(-0.5 * x**2 / sigma2)
         w = w / w.sum()
         return w.reshape(1, 1, 1, self.window_size)
 
-    def _get_gaussian_window2d(self, gaussian_window_1d: torch.Tensor) -> torch.Tensor:
+    def _get_gaussian_window2d(self, gaussian_window_1d: Tensor) -> Tensor:
         w = torch.matmul(
             gaussian_window_1d.transpose(dim0=-1, dim1=-2), gaussian_window_1d
         )
         return w
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x = F.conv2d(
             input=x,
             weight=self.gaussian_window,
@@ -109,6 +110,7 @@ class MSSIMLoss(nn.Module):
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
+        self.charbonnier = CharbonnierLoss()
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -118,7 +120,7 @@ class MSSIMLoss(nn.Module):
         )
 
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
         """x, y (Tensor): tensors of shape (N,C,H,W)
         Returns: Tensor
         """
@@ -135,9 +137,12 @@ class MSSIMLoss(nn.Module):
         if self.cosim:
             loss += self.cosim_penalty(x, y)
 
+        if loss >= 1:
+            loss += self.charbonnier(x, y)
+
         return self.loss_weight * loss
 
-    def msssim(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def msssim(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(x, 1e-12, 1)
 
@@ -158,16 +163,14 @@ class MSSIMLoss(nn.Module):
 
         return msssim
 
-    def cosim_penalty(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def cosim_penalty(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.where(torch.abs(x) < 1e-12, 1e-12, x)
         y = torch.where(torch.abs(y) < 1e-12, 1e-12, y)
 
         distance = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
         return self.cosim_lambda * distance
 
-    def _ssim(
-        self, x: torch.Tensor, y: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def _ssim(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
         mu_x = self.gaussian_filter(x)  # equ 14
         mu_y = self.gaussian_filter(y)  # equ 14
         sigma2_x = self.gaussian_filter(x * x) - mu_x * mu_x  # equ 15
