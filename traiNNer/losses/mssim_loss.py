@@ -12,9 +12,11 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 # https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
 ####################################
 
-def smoothstep(x: Tensor, min: int = 0, max: int = 1):
+
+def smoothstep(x: Tensor, min: int = 0, max: int = 1) -> Tensor:
     t = torch.clamp((x - min) / (max - min), 0.0, 1.0)
     return t * t * (3 - 2 * t)
+
 
 class GaussianFilter2D(nn.Module):
     def __init__(
