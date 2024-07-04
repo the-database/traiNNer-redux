@@ -137,7 +137,12 @@ class MSSIMLoss(nn.Module):
     def msssim(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         cosine_term = 0
         if self.cosim:
-            cosine_term = 1 - torch.round(self.similarity(x.clamp(1e-12), y.clamp(1e-12)), decimals=20).mean()
+            cosine_term = (
+                1
+                - torch.round(
+                    self.similarity(x.clamp(1e-12), y.clamp(1e-12)), decimals=20
+                ).mean()
+            )
 
         msssim = torch.tensor(1.0, device=x.device)
 
