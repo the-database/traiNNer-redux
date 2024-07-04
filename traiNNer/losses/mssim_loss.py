@@ -132,17 +132,14 @@ class MSSIMLoss(nn.Module):
 
         loss = 1 - self.msssim(x, y)
 
+        if self.cosim:
+            loss += self.cosim_penalty(x, y)
+
         return self.loss_weight * loss
 
     def msssim(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        cosine_term = 0
-        if self.cosim:
-            cosine_term = (
-                1
-                - torch.round(
-                    self.similarity(x.clamp(1e-12), y.clamp(1e-12)), decimals=20
-                ).mean()
-            )
+        x = torch.clamp(x, 1e-12, 1)
+        y = torch.clamp(x, 1e-12, 1)
 
         msssim = torch.tensor(1.0, device=x.device)
 
@@ -159,11 +156,14 @@ class MSSIMLoss(nn.Module):
                 x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
 
-        if self.cosim:
-            msssim -= self.cosim_lambda * cosine_term
-            msssim = torch.clamp(msssim, 0)
-
         return msssim
+
+    def cosim_penalty(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        x = torch.where(torch.abs(x) < 1e-12, 1e-12, x)
+        y = torch.where(torch.abs(y) < 1e-12, 1e-12, y)
+
+        distance = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
+        return self.cosim_lambda * distance
 
     def _ssim(
         self, x: torch.Tensor, y: torch.Tensor
