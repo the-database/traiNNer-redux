@@ -12,6 +12,9 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 # https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
 ####################################
 
+def smoothstep(x: Tensor, min: int = 0, max: int = 1):
+    t = torch.clamp((x - min) / (max - min), 0.0, 1.0)
+    return t * t * (3 - 2 * t)
 
 class GaussianFilter2D(nn.Module):
     def __init__(
@@ -134,18 +137,17 @@ class MSSIMLoss(nn.Module):
 
         charbonnier = 0
         charbonnier_weight = torch.mean(torch.abs(x - x.clamp(1e-12, 1))).clamp(0, 1)
-        # print("WEIGHT",charbonnier_weight)
+        # print("WEIGHT BEFORE",charbonnier_weight)
+        charbonnier_weight = smoothstep(charbonnier_weight, 0.1, 0.9)
+        # print("WEIGHT AFTER", charbonnier_weight)
         if charbonnier_weight > 0:
-            print("CHEAT WITH CHARBONNIER WEIGHT", charbonnier_weight)
             charbonnier = self.charbonnier(x, y)
             if charbonnier_weight >= 1:  # skip mssim
                 return charbonnier
-        else:
-            print("no charb", x.min().item(), x.max().item())
 
         loss = 1 - self.msssim(x, y)
 
-        print("?", loss, charbonnier, charbonnier_weight, 1-charbonnier_weight, loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight)
+        # print("?", loss, charbonnier, charbonnier_weight, 1-charbonnier_weight, loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight)
         loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
 
         if self.cosim:
@@ -154,7 +156,6 @@ class MSSIMLoss(nn.Module):
         return self.loss_weight * loss
 
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
-        print("x", x.min().item(), x.max().item())
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
 
