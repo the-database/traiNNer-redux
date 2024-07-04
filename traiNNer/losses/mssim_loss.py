@@ -144,7 +144,7 @@ class MSSIMLoss(nn.Module):
 
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.clamp(x, 1e-12, 1)
-        y = torch.clamp(x, 1e-12, 1)
+        y = torch.clamp(y, 1e-12, 1)
 
         msssim = torch.tensor(1.0, device=x.device)
 
