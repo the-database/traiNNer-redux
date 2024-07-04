@@ -13,7 +13,7 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 ####################################
 
 
-def smoothstep(x: Tensor, min: int = 0, max: int = 1) -> Tensor:
+def smoothstep(x: Tensor, min: float = 0, max: float = 1) -> Tensor:
     t = torch.clamp((x - min) / (max - min), 0.0, 1.0)
     return t * t * (3 - 2 * t)
 
