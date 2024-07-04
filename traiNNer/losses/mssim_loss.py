@@ -139,9 +139,7 @@ class MSSIMLoss(nn.Module):
 
         charbonnier = 0
         charbonnier_weight = torch.mean(torch.abs(x - x.clamp(1e-12, 1))).clamp(0, 1)
-        # print("WEIGHT BEFORE",charbonnier_weight)
         charbonnier_weight = smoothstep(charbonnier_weight, 0.1, 0.9)
-        # print("WEIGHT AFTER", charbonnier_weight)
         if charbonnier_weight > 0:
             charbonnier = self.charbonnier(x, y)
             if charbonnier_weight >= 1:  # skip mssim
@@ -149,7 +147,6 @@ class MSSIMLoss(nn.Module):
 
         loss = 1 - self.msssim(x, y)
 
-        # print("?", loss, charbonnier, charbonnier_weight, 1-charbonnier_weight, loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight)
         loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
 
         if self.cosim:
