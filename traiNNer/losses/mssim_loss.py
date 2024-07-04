@@ -132,10 +132,21 @@ class MSSIMLoss(nn.Module):
         if y.type() != self.gaussian_filter.gaussian_window.type():
             y = y.type_as(self.gaussian_filter.gaussian_window)
 
+        charbonnier = 0
+        charbonnier_weight = torch.mean(torch.abs(x - x.clamp(1e-12, 1))).clamp(0, 1)
+        # print("WEIGHT",charbonnier_weight)
+        if charbonnier_weight > 0:
+            print("CHEAT WITH CHARBONNIER WEIGHT", charbonnier_weight)
+            charbonnier = self.charbonnier(x, y)
+            if charbonnier_weight >= 1:  # skip mssim
+                return charbonnier
+        else:
+            print("no charb", x.min().item(), x.max().item())
+
         loss = 1 - self.msssim(x, y)
 
-        if loss >= 1:
-            loss += self.charbonnier(x, y)
+        print("?", loss, charbonnier, charbonnier_weight, 1-charbonnier_weight, loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight)
+        loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
 
         if self.cosim:
             loss += self.cosim_penalty(x, y)
@@ -143,6 +154,7 @@ class MSSIMLoss(nn.Module):
         return self.loss_weight * loss
 
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
+        print("x", x.min().item(), x.max().item())
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
 
