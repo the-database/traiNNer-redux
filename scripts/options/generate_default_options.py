@@ -14,7 +14,14 @@ class ArchInfo(TypedDict):
 ALL_SCALES = [1, 2, 3, 4, 8]
 
 
-def final_template(template: str, arch: ArchInfo, template_otf1: str = "", template_otf2: str = "", name_suffix: str = "") -> str:
+def final_template(
+    template: str,
+    arch: ArchInfo,
+    template_otf1: str = "",
+    template_otf2: str = "",
+    name_suffix: str = "",
+    mssim_only: bool = False,
+) -> str:
     default_scale = 4
 
     template = template.replace(
@@ -31,7 +38,9 @@ def final_template(template: str, arch: ArchInfo, template_otf1: str = "", templ
             arch_type_str += f"\n  {k}: {v}"
 
     if name_suffix:
-        template = template.replace("name: %scale%_%archname%", f"name: %scale%_%archname%_{name_suffix}")
+        template = template.replace(
+            "name: %scale%_%archname%", f"name: %scale%_%archname%_{name_suffix}"
+        )
 
     template = template.replace(
         "type: %archname%",
@@ -51,6 +60,14 @@ def final_template(template: str, arch: ArchInfo, template_otf1: str = "", templ
         template = template.replace("%traindatasettype%", "RealESRGANDataset")
     else:
         template = template.replace("%traindatasettype%", "PairedImageDataset")
+
+    if mssim_only:
+        template = re.sub("loss_weight: [0-9.]+", "loss_weight: 0", template)
+        template = template.replace("perceptual_weight: 0.03", "perceptual_weight: 0")
+        template = template.replace(
+            "type: MSSIMLoss\n    loss_weight: 0",
+            "type: MSSIMLoss\n    loss_weight: 1.0",
+        )
 
     return template
 
@@ -150,12 +167,26 @@ for arch in archs:
         with open(
             osp.join(train_folder_path, f"{folder_name}_OTF.yml"), mode="w"
         ) as fw:
-            fw.write(final_template(template_paired, arch, template_otf1, template_otf2, "OTF"))
+            fw.write(
+                final_template(
+                    template_paired, arch, template_otf1, template_otf2, "OTF"
+                )
+            )
 
         with open(
-            osp.join(train_folder_path, f"{folder_name}_OTF_bicubic.yml"), mode="w"
+            osp.join(train_folder_path, f"{folder_name}_OTF_bicubic_mssim.yml"),
+            mode="w",
         ) as fw:
-            fw.write(final_template(template_paired, arch, template_otfbicubic1, template_otfbicubic2, "OTF_bicubic"))
+            fw.write(
+                final_template(
+                    template_paired,
+                    arch,
+                    template_otfbicubic1,
+                    template_otfbicubic2,
+                    "OTF_bicubic_mssim",
+                    True,
+                )
+            )
 
         with open(osp.join(test_folder_path, f"{folder_name}.yml"), mode="w") as fw:
             fw.write(final_template(template_test_single, arch))

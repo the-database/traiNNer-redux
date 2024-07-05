@@ -153,7 +153,10 @@ class RealESRGANModel(SRModel):
                 )[0]
 
                 out = F.interpolate(
-                    out, scale_factor=scale, mode=mode, antialias=mode in ANTIALIAS_MODES
+                    out,
+                    scale_factor=scale,
+                    mode=mode,
+                    antialias=mode in ANTIALIAS_MODES,
                 )
 
             # add noise
@@ -250,13 +253,17 @@ class RealESRGANModel(SRModel):
                 out = filter2d(out, self.sinc_kernel)
                 # JPEG compression
                 if RNG.get_rng().uniform() < self.opt["jpeg_prob2"]:
-                    jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
+                    jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                        *self.opt["jpeg_range2"]
+                    )
                     out = torch.clamp(out, 0, 1)
                     out = self.jpeger(out, quality=jpeg_p)
             else:
                 # JPEG compression
                 if RNG.get_rng().uniform() < self.opt["jpeg_prob2"]:
-                    jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
+                    jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                        *self.opt["jpeg_range2"]
+                    )
                     out = torch.clamp(out, 0, 1)
                     out = self.jpeger(out, quality=jpeg_p)
                 # resize back + the final sinc filter

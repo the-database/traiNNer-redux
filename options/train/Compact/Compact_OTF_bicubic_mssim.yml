@@ -1,7 +1,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_DAT_2_OTF_bicubic
+name: 4x_Compact_OTF_bicubic_mssim
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage.
 amp_bf16: true  # Use bf16 for AMP, RTX 3000 series or newer only.
@@ -100,7 +100,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: DAT_2
+  type: Compact  # Compact, UltraCompact, SuperUltraCompact
 
 # Discriminator model settings
 network_d:
@@ -163,34 +163,34 @@ train:
     style_weight: 0
     range_norm: false
     criterion: charbonnier
-    perceptual_weight: 0.03
+    perceptual_weight: 0
   # DISTS loss
   # dists_opt:
   #   type: DISTSLoss  # DISTSLoss, ADISTSLoss
   #   use_input_norm: true
-  #   loss_weight: 0.25
+  #   loss_weight: 0
   # HSLuv loss (hue, saturation, lightness). Use one of HSLuv loss or ColorLoss + LumaLoss, not both.
   hsluv_opt:
     type: HSLuvLoss
     criterion: charbonnier
-    loss_weight: 1.0
+    loss_weight: 0
   # GAN loss
   gan_opt:
     type: GANLoss
     gan_type: vanilla
     real_label_val: 1.0
     fake_label_val: 0.0
-    loss_weight: 0.1
+    loss_weight: 0
   # Color loss (ITU-R BT.601)
   # color_opt:
   #   type: ColorLoss
   #   criterion: charbonnier
-  #   loss_weight: 1.0
+  #   loss_weight: 0
   # Luma loss (RGB to CIELAB L*)
   # luma_opt:
   #   type: LumaLoss
   #   criterion: charbonnier
-  #   loss_weight: 1.0
+  #   loss_weight: 0
 
   # Mix of Augmentations (MoA)
   use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
