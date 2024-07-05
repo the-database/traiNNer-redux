@@ -1,4 +1,5 @@
 import os
+import re
 from os import path as osp
 from typing import NotRequired, TypedDict
 
@@ -7,6 +8,7 @@ class ArchInfo(TypedDict):
     names: list[str]
     scales: list[int]
     extras: NotRequired[dict[str, str]]
+    gt_override: NotRequired[int]
 
 
 ALL_SCALES = [1, 2, 3, 4, 8]
@@ -35,6 +37,10 @@ def final_template(template: str, arch: ArchInfo) -> str:
 
     template = template.replace("%archname%", f"{arch['names'][0]}")
     template = template.replace("%scale%", f"{default_scale}x")
+
+    if "gt_override" in arch:
+        template = re.sub(r"gt_size: \d+", f"gt_size: {arch['gt_override']}", template)
+
     return template
 
 
@@ -48,11 +54,12 @@ archs: list[ArchInfo] = [
     {"names": ["DAT_2"], "scales": ALL_SCALES},
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": ALL_SCALES},
-    {"names": ["PLKSR"], "scales": ALL_SCALES},
+    {"names": ["PLKSR"], "scales": ALL_SCALES, "gt_override": 192},
     {
         "names": ["RealPLKSR"],
         "scales": ALL_SCALES,
         "extras": {"upsampler": "dysample  # dysample, pixelshuffle, conv (1x only)"},
+        "gt_override": 192,
     },
     {
         "names": ["RealCUGAN"],
