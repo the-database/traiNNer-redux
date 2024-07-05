@@ -146,8 +146,8 @@ class MSSIMLoss(nn.Module):
                 return charbonnier
 
         loss = 1 - self.msssim(x, y)
-
-        loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
+        if charbonnier_weight > 0:
+            loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
 
         if self.cosim:
             loss += self.cosim_penalty(x, y)
