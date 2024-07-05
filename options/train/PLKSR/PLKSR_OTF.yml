@@ -42,16 +42,18 @@ resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact']  # See modes: https:
 resize_mode_prob3: [0.3333, 0.3333, 0.3333]  # Probability each resize mode is selected.
 
 queue_size: 180
-
 #################################
 # Dataset and Dataloader Settings
 #################################
 datasets:
+  # Settings for the training dataset.
   train:
     name: Train Dataset
     type: RealESRGANDataset
-    # Path to the HR (high res) images in your dataset.
+    # Path to the HR (high res) images in your training dataset.
     dataroot_gt: datasets/train/dataset1/hr
+    # Path to the LR (low res) images in your training dataset.
+    dataroot_lq: datasets/train/dataset1/lr
     # meta_info: data/meta_info/dataset1.txt
     io_backend:
       type: disk
@@ -73,7 +75,6 @@ datasets:
     betap_range2: [1, 2]
 
     final_sinc_prob: 0
-
     gt_size: 192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
