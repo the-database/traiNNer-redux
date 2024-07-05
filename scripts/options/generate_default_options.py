@@ -14,7 +14,7 @@ class ArchInfo(TypedDict):
 ALL_SCALES = [1, 2, 3, 4, 8]
 
 
-def final_template(template: str, arch: ArchInfo) -> str:
+def final_template(template: str, arch: ArchInfo, template_otf1: str = "", template_otf2: str = "", name_suffix: str = "") -> str:
     default_scale = 4
 
     template = template.replace(
@@ -30,6 +30,9 @@ def final_template(template: str, arch: ArchInfo) -> str:
         for k, v in arch["extras"].items():
             arch_type_str += f"\n  {k}: {v}"
 
+    if name_suffix:
+        template = template.replace("name: %scale%_%archname%", f"name: %scale%_%archname%_{name_suffix}")
+
     template = template.replace(
         "type: %archname%",
         arch_type_str,
@@ -40,6 +43,14 @@ def final_template(template: str, arch: ArchInfo) -> str:
 
     if "gt_override" in arch:
         template = re.sub(r"gt_size: \d+", f"gt_size: {arch['gt_override']}", template)
+
+    template = template.replace("%otf1%\n", template_otf1)
+    template = template.replace("    %otf2%\n", template_otf2)
+
+    if template_otf1 and template_otf2:
+        template = template.replace("%traindatasettype%", "RealESRGANDataset")
+    else:
+        template = template.replace("%traindatasettype%", "PairedImageDataset")
 
     return template
 
@@ -98,8 +109,12 @@ for arch in archs:
         osp.join(__file__, osp.pardir, "./train_default_options_paired.yml")
     )
 
-    template_path_otf = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_otf.yml")
+    template_path_otf1 = osp.normpath(
+        osp.join(__file__, osp.pardir, "./train_default_options_otf1.yml")
+    )
+
+    template_path_otf2 = osp.normpath(
+        osp.join(__file__, osp.pardir, "./train_default_options_otf2.yml")
     )
 
     template_path_single = osp.normpath(
@@ -108,11 +123,13 @@ for arch in archs:
 
     with (
         open(template_path_paired) as fp,
-        open(template_path_otf) as fo,
+        open(template_path_otf1) as fo1,
+        open(template_path_otf2) as fo2,
         open(template_path_single) as fts,
     ):
         template_paired = fp.read()
-        template_otf = fo.read()
+        template_otf1 = fo1.read()
+        template_otf2 = fo2.read()
         template_test_single = fts.read()
 
         with open(osp.join(train_folder_path, f"{folder_name}.yml"), mode="w") as fw:
@@ -121,7 +138,7 @@ for arch in archs:
         with open(
             osp.join(train_folder_path, f"{folder_name}_OTF.yml"), mode="w"
         ) as fw:
-            fw.write(final_template(template_otf, arch))
+            fw.write(final_template(template_paired, arch, template_otf1, template_otf2, "OTF"))
 
         with open(osp.join(test_folder_path, f"{folder_name}.yml"), mode="w") as fw:
             fw.write(final_template(template_test_single, arch))

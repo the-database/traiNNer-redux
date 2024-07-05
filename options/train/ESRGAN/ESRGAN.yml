@@ -26,6 +26,7 @@ datasets:
     io_backend:
       type: disk
 
+
     gt_size: 128  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
