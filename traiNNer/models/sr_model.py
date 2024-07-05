@@ -230,7 +230,7 @@ class SRModel(BaseModel):
 
         if not self.has_gan:
             # warn that discriminator network / optimizer won't be used if enabled
-            if self.net_d:
+            if "network_d" in self.opt:
                 logger.warning(
                     "Discriminator network (network_d) is defined but GAN loss is disabled. Discriminator network will have no effect."
                 )
