@@ -99,7 +99,6 @@ train:
   # MSSIM loss
   mssim_opt:
     type: MSSIMLoss
-    cosim: true    # Disable when training a model from scratch with MSSIM loss only.
     loss_weight: 1.0
   # Perceptual loss
   perceptual_opt:
