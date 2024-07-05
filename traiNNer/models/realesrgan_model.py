@@ -146,12 +146,16 @@ class RealESRGANModel(SRModel):
                 scale = RNG.get_rng().uniform(self.opt["resize_range"][0], 1)
             else:
                 scale = 1
-            mode = random.choices(
-                self.opt["resize_mode_list"], weights=self.opt["resize_mode_prob"]
-            )[0]
-            out = F.interpolate(
-                out, scale_factor=scale, mode=mode, antialias=mode in ANTIALIAS_MODES
-            )
+
+            if scale != 1:
+                mode = random.choices(
+                    self.opt["resize_mode_list"], weights=self.opt["resize_mode_prob"]
+                )[0]
+
+                out = F.interpolate(
+                    out, scale_factor=scale, mode=mode, antialias=mode in ANTIALIAS_MODES
+                )
+
             # add noise
             gray_noise_prob = self.opt["gray_noise_prob"]
             if RNG.get_rng().uniform() < self.opt["gaussian_noise_prob"]:
@@ -171,11 +175,12 @@ class RealESRGANModel(SRModel):
                     rounds=False,
                 )
             # JPEG compression
-            jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range"])
-            out = torch.clamp(
-                out, 0, 1
-            )  # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
-            out = self.jpeger(out, quality=jpeg_p)
+            if RNG.get_rng().uniform() < self.opt["jpeg_prob"]:
+                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range"])
+                out = torch.clamp(
+                    out, 0, 1
+                )  # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
+                out = self.jpeger(out, quality=jpeg_p)
 
             # ----------------------- The second degradation process ----------------------- #
             # blur
@@ -242,14 +247,16 @@ class RealESRGANModel(SRModel):
                 )
                 out = filter2d(out, self.sinc_kernel)
                 # JPEG compression
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
-                out = torch.clamp(out, 0, 1)
-                out = self.jpeger(out, quality=jpeg_p)
+                if RNG.get_rng().uniform() < self.opt["jpeg_prob2"]:
+                    jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
+                    out = torch.clamp(out, 0, 1)
+                    out = self.jpeger(out, quality=jpeg_p)
             else:
                 # JPEG compression
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
-                out = torch.clamp(out, 0, 1)
-                out = self.jpeger(out, quality=jpeg_p)
+                if RNG.get_rng().uniform() < self.opt["jpeg_prob2"]:
+                    jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt["jpeg_range2"])
+                    out = torch.clamp(out, 0, 1)
+                    out = self.jpeger(out, quality=jpeg_p)
                 # resize back + the final sinc filter
                 out = F.interpolate(
                     out,

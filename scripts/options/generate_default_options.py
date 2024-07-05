@@ -117,6 +117,14 @@ for arch in archs:
         osp.join(__file__, osp.pardir, "./train_default_options_otf2.yml")
     )
 
+    template_path_otfbicubic1 = osp.normpath(
+        osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic1.yml")
+    )
+
+    template_path_otfbicubic2 = osp.normpath(
+        osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic2.yml")
+    )
+
     template_path_single = osp.normpath(
         osp.join(__file__, osp.pardir, "./test_default_options_single.yml")
     )
@@ -125,11 +133,15 @@ for arch in archs:
         open(template_path_paired) as fp,
         open(template_path_otf1) as fo1,
         open(template_path_otf2) as fo2,
+        open(template_path_otfbicubic1) as fob1,
+        open(template_path_otfbicubic2) as fob2,
         open(template_path_single) as fts,
     ):
         template_paired = fp.read()
         template_otf1 = fo1.read()
         template_otf2 = fo2.read()
+        template_otfbicubic1 = fob1.read()
+        template_otfbicubic2 = fob2.read()
         template_test_single = fts.read()
 
         with open(osp.join(train_folder_path, f"{folder_name}.yml"), mode="w") as fw:
@@ -139,6 +151,11 @@ for arch in archs:
             osp.join(train_folder_path, f"{folder_name}_OTF.yml"), mode="w"
         ) as fw:
             fw.write(final_template(template_paired, arch, template_otf1, template_otf2, "OTF"))
+
+        with open(
+            osp.join(train_folder_path, f"{folder_name}_OTF_bicubic.yml"), mode="w"
+        ) as fw:
+            fw.write(final_template(template_paired, arch, template_otfbicubic1, template_otfbicubic2, "OTF_bicubic"))
 
         with open(osp.join(test_folder_path, f"{folder_name}.yml"), mode="w") as fw:
             fw.write(final_template(template_test_single, arch))
