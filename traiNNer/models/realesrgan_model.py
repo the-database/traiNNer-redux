@@ -196,18 +196,20 @@ class RealESRGANModel(SRModel):
                 scale = RNG.get_rng().uniform(self.opt["resize_range2"][0], 1)
             else:
                 scale = 1
-            mode = random.choices(
-                self.opt["resize_mode_list2"], weights=self.opt["resize_mode_prob2"]
-            )[0]
-            out = F.interpolate(
-                out,
-                size=(
-                    int(ori_h / self.opt["scale"] * scale),
-                    int(ori_w / self.opt["scale"] * scale),
-                ),
-                mode=mode,
-                antialias=mode in ANTIALIAS_MODES,
-            )
+
+            if scale != 1:
+                mode = random.choices(
+                    self.opt["resize_mode_list2"], weights=self.opt["resize_mode_prob2"]
+                )[0]
+                out = F.interpolate(
+                    out,
+                    size=(
+                        int(ori_h / self.opt["scale"] * scale),
+                        int(ori_w / self.opt["scale"] * scale),
+                    ),
+                    mode=mode,
+                    antialias=mode in ANTIALIAS_MODES,
+                )
             # add noise
             gray_noise_prob = self.opt["gray_noise_prob2"]
             if RNG.get_rng().uniform() < self.opt["gaussian_noise_prob2"]:
