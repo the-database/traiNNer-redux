@@ -42,30 +42,45 @@ class SRModel(BaseModel):
                 param_key,
             )
 
-        # define network net_d
-        self.net_d = None
-        net_d_opt = self.opt.get("network_d", None)
-        if net_d_opt is not None:
-            self.net_d = build_network(net_d_opt)
-            self.net_d = self.model_to_device(self.net_d)
-            # self.print_network(self.net_d)
-
-            # load pretrained models
-            load_path = self.opt["path"].get("pretrain_network_d", None)
-            if load_path is not None:
-                param_key = self.opt["path"].get("param_key_d", "params")
-                self.load_network(
-                    self.net_d,
-                    load_path,
-                    self.opt["path"].get("strict_load_d", True),
-                    param_key,
-                )
-
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
         self.output: Tensor | None = None
 
         if self.is_train:
+            # define network net_d if GAN is enabled
+            self.has_gan = False
+            gan_opt = self.opt["train"].get("gan_opt")
+            if gan_opt:
+                if gan_opt.get("loss_weight", 0) > 0:
+                    self.has_gan = True
+
+            self.net_d = None
+            if self.has_gan:
+                if "optim_d" not in self.opt["train"]:
+                    raise ValueError(
+                        "GAN loss requires discriminator optimizer (optim_d). Define optim_d or disable GAN loss."
+                    )
+                net_d_opt = self.opt.get("network_d", None)
+                if net_d_opt is None:
+                    raise ValueError(
+                        "GAN loss requires discriminator network (network_d). Define network_d or disable GAN loss."
+                    )
+                else:
+                    self.net_d = build_network(net_d_opt)
+                    self.net_d = self.model_to_device(self.net_d)
+                    # self.print_network(self.net_d)
+
+                    # load pretrained models
+                    load_path = self.opt["path"].get("pretrain_network_d", None)
+                    if load_path is not None:
+                        param_key = self.opt["path"].get("param_key_d", "params")
+                        self.load_network(
+                            self.net_d,
+                            load_path,
+                            self.opt["path"].get("strict_load_d", True),
+                            param_key,
+                        )
+
             self.cri_pix = None
             self.cri_mssim = None
             self.cri_ldl = None
@@ -209,23 +224,13 @@ class SRModel(BaseModel):
         gan_opt = train_opt.get("gan_opt")
         if gan_opt:
             if gan_opt.get("loss_weight", 0) > 0:
-                # validate discriminator network and discriminator optimizer are defined
-                if not self.net_d:
-                    raise ValueError(
-                        "GAN loss requires discriminator network (network_d). Define network_d or disable GAN loss."
-                    )
-
-                if "optim_d" not in self.opt["train"]:
-                    raise ValueError(
-                        "GAN loss requires discriminator optimizer (optim_d). Define optim_d or disable GAN loss."
-                    )
-
                 self.cri_gan = build_loss(train_opt["gan_opt"]).to(self.device)
         else:
             self.cri_gan = None
 
+        if not self.has_gan:
             # warn that discriminator network / optimizer won't be used if enabled
-            if self.net_d:
+            if "network_d" in self.opt:
                 logger.warning(
                     "Discriminator network (network_d) is defined but GAN loss is disabled. Discriminator network will have no effect."
                 )

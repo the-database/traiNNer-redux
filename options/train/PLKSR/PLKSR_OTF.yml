@@ -74,7 +74,7 @@ datasets:
 
     final_sinc_prob: 0
 
-    gt_size: 128  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM.
+    gt_size: 192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
 
@@ -145,7 +145,6 @@ train:
   # MSSIM loss
   mssim_opt:
     type: MSSIMLoss
-    cosim: true    # Disable when training a model from scratch with MSSIM loss only.
     loss_weight: 1.0
   # Perceptual loss
   perceptual_opt:
