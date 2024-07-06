@@ -52,8 +52,6 @@ datasets:
     type: RealESRGANDataset
     # Path to the HR (high res) images in your training dataset.
     dataroot_gt: datasets/train/dataset1/hr
-    # Path to the LR (low res) images in your training dataset.
-    dataroot_lq: datasets/train/dataset1/lr
     # meta_info: data/meta_info/dataset1.txt
     io_backend:
       type: disk
