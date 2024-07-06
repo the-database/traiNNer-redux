@@ -457,8 +457,8 @@ class BaseModel:
                 load_path,
             )
         except Exception as e:
-            logger.warning(
-                "Error loading from Spandrel: %s. Falling back to traiNNer-redux loader.",
+            logger.info(
+                "Unable to load with Spandrel: %s. Falling back to traiNNer-redux loader.",
                 e,
             )
 

@@ -51,7 +51,7 @@ datasets:
 # Generator model settings
 network_g:
   type: RealPLKSR
-  upsampler: dysample  # dysample, pixelshuffle, conv (1x only)
+  upsampler: dysample  # dysample (best on even number scales), pixelshuffle
 
 # Discriminator model settings
 network_d:
@@ -64,7 +64,7 @@ network_d:
 # Pretrain and Resume Paths
 ############################
 path:
-  #pretrain_network_g: experiments\pretrained_models\pretrain.pth
+  #pretrain_network_g: experiments/pretrained_models/pretrain.pth
   param_key_g: params_ema
   strict_load_g: true    # Disable strict loading to partially load a pretrain model with a different scale
   resume_state: ~
