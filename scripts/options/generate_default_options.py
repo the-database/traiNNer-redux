@@ -58,7 +58,9 @@ def final_template(
 
     if template_otf1 and template_otf2:
         template = template.replace("%traindatasettype%", "RealESRGANDataset")
-        template = template.replace("    # Path to the LR (low res) images in your training dataset.\n", "")
+        template = template.replace(
+            "    # Path to the LR (low res) images in your training dataset.\n", ""
+        )
         template = template.replace("    dataroot_lq: datasets/train/dataset1/lr\n", "")
     else:
         template = template.replace("%traindatasettype%", "PairedImageDataset")
