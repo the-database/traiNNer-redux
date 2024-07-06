@@ -114,7 +114,7 @@ class RealPLKSR(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
-        upsampler: str = "",  # dysample, pixelshuffle, conv
+        upsampler: str = "",  # dysample, pixelshuffle
         **kwargs,
     ) -> None:
         super().__init__()
@@ -148,11 +148,6 @@ class RealPLKSR(nn.Module):
                 groups=groups,
                 end_convolution=True if upscaling_factor != 1 else False,
             )
-        elif upsampler == "conv":
-            if upscaling_factor != 1:
-                msg = "conv supports only 1x"
-                raise ValueError(msg)
-            self.to_img = nn.Identity()
         elif upsampler == "pixelshuffle":
             self.to_img = nn.PixelShuffle(upscaling_factor)
         else:

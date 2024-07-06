@@ -90,7 +90,7 @@ archs: list[ArchInfo] = [
     {
         "names": ["RealPLKSR"],
         "scales": ALL_SCALES,
-        "extras": {"upsampler": "dysample  # dysample, pixelshuffle, conv (1x only)"},
+        "extras": {"upsampler": "dysample  # dysample (best on even number scales), pixelshuffle"},
         "gt_override": 192,
     },
     {
