@@ -35,7 +35,6 @@ EXTRA_ARCH_PARAMS: dict[str, list[dict[str, Any]]] = {
 EXTRA_ARCH_PARAMS["realplksr"] = [
     {"upsampler": "dysample"},
     {"upsampler": "pixelshuffle"},
-    {"upsampler": "conv"},
 ]
 EXTRA_ARCH_PARAMS["esrgan"] = [
     {"use_pixel_unshuffle": True},
@@ -58,11 +57,6 @@ FILTERED_REGISTRIES_SCALES_PARAMS = [
 EXCLUDE_ARCH_SCALES = {
     "swinir_l": [{"scale": 3, "extra_arch_params": {}}],
     "realcugan": [{"scale": 1, "extra_arch_params": {}}],
-    "realplksr": [
-        {"scale": 2, "extra_arch_params": {"upsampler": "conv"}},
-        {"scale": 3, "extra_arch_params": {"upsampler": "conv"}},
-        {"scale": 4, "extra_arch_params": {"upsampler": "conv"}},
-    ],
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
