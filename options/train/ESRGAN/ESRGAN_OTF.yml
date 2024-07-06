@@ -110,7 +110,7 @@ network_d:
 # Pretrain and Resume Paths
 ############################
 path:
-  #pretrain_network_g: experiments\pretrained_models\pretrain.pth
+  #pretrain_network_g: experiments/pretrained_models/pretrain.pth
   param_key_g: params_ema
   strict_load_g: true    # Disable strict loading to partially load a pretrain model with a different scale
   resume_state: ~
