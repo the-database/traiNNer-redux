@@ -45,6 +45,34 @@ class SRModel(BaseModel):
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
         self.output: Tensor | None = None
+        logger = get_root_logger()
+
+        # use amp
+        self.use_amp = self.opt.get("use_amp", False)
+        self.amp_dtype = (
+            torch.bfloat16 if self.opt.get("amp_bf16", False) else torch.float16
+        )
+
+
+        if self.use_amp:
+            if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
+                logger.warning(
+                    "bf16 was enabled for AMP but the current GPU does not support bf16. Falling back to float16 for AMP. Disable bf16 to hide this warning (amp_bf16: false)."
+                )
+                self.amp_dtype = torch.float16
+            logger.info(
+                "Using Automatic Mixed Precision (AMP) with fp32 and %s.",
+                "bf16" if self.amp_dtype == torch.bfloat16 else "fp16",
+            )
+        elif self.amp_dtype == torch.bfloat16:
+            logger.warning(
+                "bf16 was enabled without AMP and will have no effect. Enable AMP to use bf16 (use_amp: true)."
+            )
+
+        if self.opt.get("fast_matmul", False):
+            logger.info(
+                "Fast matrix multiplication and convolution operations (fast_matmul) enabled, trading precision for performance."
+            )
 
         if self.is_train:
             # define network net_d if GAN is enabled
@@ -111,6 +139,9 @@ class SRModel(BaseModel):
 
         logger = get_root_logger()
 
+        self.scaler_g = GradScaler(enabled=self.use_amp)
+        self.scaler_d = GradScaler(enabled=self.use_amp)
+
         self.ema_decay = train_opt.get("ema_decay", 0)
         if self.ema_decay > 0:
             logger.info(
@@ -132,34 +163,6 @@ class SRModel(BaseModel):
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
-
-        # use amp
-        self.use_amp = self.opt.get("use_amp", False)
-        self.scaler_g = GradScaler(enabled=self.use_amp)
-        self.scaler_d = GradScaler(enabled=self.use_amp)
-        self.amp_dtype = (
-            torch.bfloat16 if self.opt.get("amp_bf16", False) else torch.float16
-        )
-
-        if self.use_amp:
-            if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
-                logger.warning(
-                    "bf16 was enabled for AMP but the current GPU does not support bf16. Falling back to float16 for AMP. Disable bf16 to hide this warning (amp_bf16: false)."
-                )
-                self.amp_dtype = torch.float16
-            logger.info(
-                "Using Automatic Mixed Precision (AMP) with fp32 and %s.",
-                "bf16" if self.amp_dtype == torch.bfloat16 else "fp16",
-            )
-        elif self.amp_dtype == torch.bfloat16:
-            logger.warning(
-                "bf16 was enabled without AMP and will have no effect. Enable AMP to use bf16 (use_amp: true)."
-            )
-
-        if self.opt.get("fast_matmul", False):
-            logger.info(
-                "Fast matrix multiplication and convolution operations (fast_matmul) enabled, trading precision for performance."
-            )
 
         # define losses
         pixel_opt = train_opt.get("pixel_opt")
@@ -434,15 +437,18 @@ class SRModel(BaseModel):
             self.model_ema(decay=self.ema_decay)
 
     def test(self) -> None:
-        if self.net_g_ema is not None:
-            self.net_g_ema.eval()
-            with torch.no_grad():
-                self.output = self.net_g_ema(self.lq)
-        else:
-            self.net_g.eval()
-            with torch.no_grad():
-                self.output = self.net_g(self.lq)
-            self.net_g.train()
+        with torch.autocast(
+            device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
+        ):
+            if self.net_g_ema is not None:
+                self.net_g_ema.eval()
+                with torch.inference_mode():
+                    self.output = self.net_g_ema(self.lq)
+            else:
+                self.net_g.eval()
+                with torch.inference_mode():
+                    self.output = self.net_g(self.lq)
+                self.net_g.train()
 
     def dist_validation(
         self,
