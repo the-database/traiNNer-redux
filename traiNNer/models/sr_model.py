@@ -53,7 +53,6 @@ class SRModel(BaseModel):
             torch.bfloat16 if self.opt.get("amp_bf16", False) else torch.float16
         )
 
-
         if self.use_amp:
             if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
                 logger.warning(

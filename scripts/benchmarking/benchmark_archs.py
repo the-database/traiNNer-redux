@@ -135,12 +135,13 @@ if __name__ == "__main__":
     warmup_runs = 1
     num_runs = 5
     lightweight_num_runs = 250
-    use_fp16 = False
+    use_amp = True
+    amp_bf16 = True
     print_markdown = True
 
-    dtype_str = "fp16" if use_fp16 else "fp32"
-    dtype = torch.float16 if use_fp16 else torch.float32
-    random_input = torch.rand(input_shape, device=device, dtype=dtype)
+    dtype_str = "fp32" if not use_amp else ("bf16" if amp_bf16 else "fp16")
+    dtype = torch.bfloat16 if amp_bf16 else torch.float16
+    random_input = torch.rand(input_shape, device=device)
     n, c, h, w = input_shape
     results_by_scale: dict[
         int, list[tuple[str, float, float, float, int, int, dict[str, Any]]]
@@ -154,44 +155,50 @@ if __name__ == "__main__":
 
         for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
             try:
-                arch_key = f"{name} {format_extra_params(extra_arch_params)}"
-                if arch_key not in results_by_arch:
-                    results_by_arch[arch_key] = {}
                 model = (
                     arch(scale=scale, **extra_arch_params)
                     .eval()
-                    .to(device, dtype=dtype)
-                )
-                total_params = sum(p[1].numel() for p in model.named_parameters())
-                runs = lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
-                torch.cuda.empty_cache()
-                torch.cuda.reset_peak_memory_stats()
-
-                avg_time, output = benchmark_model(
-                    model, random_input, warmup_runs, runs
+                    .to(
+                        device,
+                    )
                 )
 
-                if not (
-                    output.shape[2] == random_input.shape[2] * scale
-                    and output.shape[3] == random_input.shape[3] * scale
-                ):
-                    msg = f"{name}: {output.shape} is not {scale}x {random_input.shape}"
-                    print(msg)
-                    raise ValueError(msg)
+                with torch.autocast(device_type=device, dtype=dtype, enabled=use_amp):
+                    arch_key = f"{name} {format_extra_params(extra_arch_params)}"
+                    if arch_key not in results_by_arch:
+                        results_by_arch[arch_key] = {}
+                    total_params = sum(p[1].numel() for p in model.named_parameters())
+                    runs = (
+                        lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
+                    )
+                    torch.cuda.empty_cache()
+                    torch.cuda.reset_peak_memory_stats()
 
-                vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
-                row = (
-                    name,
-                    avg_time,
-                    1 / avg_time,
-                    vram_usage,
-                    total_params,
-                    scale,
-                    extra_arch_params,
-                )
+                    avg_time, output = benchmark_model(
+                        model, random_input, warmup_runs, runs
+                    )
 
-                results_by_scale[scale].append(row)
-                results_by_arch[arch_key][scale] = row
+                    if not (
+                        output.shape[2] == random_input.shape[2] * scale
+                        and output.shape[3] == random_input.shape[3] * scale
+                    ):
+                        msg = f"{name}: {output.shape} is not {scale}x {random_input.shape}"
+                        print(msg)
+                        raise ValueError(msg)
+
+                    vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
+                    row = (
+                        name,
+                        avg_time,
+                        1 / avg_time,
+                        vram_usage,
+                        total_params,
+                        scale,
+                        extra_arch_params,
+                    )
+
+                    results_by_scale[scale].append(row)
+                    results_by_arch[arch_key][scale] = row
             except ValueError:
                 row = (
                     name,
