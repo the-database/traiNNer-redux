@@ -53,6 +53,7 @@ def test_pipeline(root_path: str) -> None:
             current_iter=opt["name"],
             tb_logger=None,
             save_img=opt["val"]["save_img"],
+            log_save_img=True,
         )
 
 
