@@ -11,6 +11,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 
 from traiNNer.archs import build_network
+from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
 from traiNNer.losses.loss_util import get_refined_artifact_map
@@ -59,13 +60,33 @@ class SRModel(BaseModel):
                     "bf16 was enabled for AMP but the current GPU does not support bf16. Falling back to float16 for AMP. Disable bf16 to hide this warning (amp_bf16: false)."
                 )
                 self.amp_dtype = torch.float16
-            logger.info(
-                "Using Automatic Mixed Precision (AMP) with fp32 and %s.",
-                "bf16" if self.amp_dtype == torch.bfloat16 else "fp16",
-            )
+
+            network_g_name = opt["network_g"]["type"]
+            if (
+                self.amp_dtype == torch.float16
+                and network_g_name.lower() in ARCHS_WITHOUT_FP16
+            ):
+                if torch.cuda.is_bf16_supported():
+                    logger.warning(
+                        "AMP with fp16 was enabled but network_g [%s] does not support fp16. Falling back to bf16.",
+                        network_g_name,
+                    )
+                    self.amp_dtype = torch.bfloat16
+                else:
+                    logger.warning(
+                        "AMP with fp16 was enabled but network_g [%s] does not support fp16. Disabling AMP.",
+                        network_g_name,
+                    )
+                    self.use_amp = False
         elif self.amp_dtype == torch.bfloat16:
             logger.warning(
                 "bf16 was enabled without AMP and will have no effect. Enable AMP to use bf16 (use_amp: true)."
+            )
+
+        if self.use_amp:
+            logger.info(
+                "Using Automatic Mixed Precision (AMP) with fp32 and %s.",
+                "bf16" if self.amp_dtype == torch.bfloat16 else "fp16",
             )
 
         if self.opt.get("fast_matmul", False):
