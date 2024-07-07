@@ -83,7 +83,9 @@ def scandir(
                 if full_path:
                     return_path = entry.path
                 else:
-                    return_path = osp.relpath(entry.path, root)
+                    return_path = (
+                        entry.name if not recursive else osp.relpath(entry.path, root)
+                    )
 
                 if suffix is None:
                     yield return_path

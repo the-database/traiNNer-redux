@@ -15,6 +15,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 # sys.path.append(osp.dirname(SCRIPT_DIR))
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.data.data_sampler import EnlargedSampler
+from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
 from traiNNer.models import build_model
 from traiNNer.utils import (
@@ -217,8 +218,9 @@ def train_pipeline(root_path: str) -> None:
     val = opt.get("val")
     if val:
         val_enabled = val.get("val_enabled", False)
-    result = create_train_val_dataloader(opt, args, val_enabled, logger)
-    train_loader, train_sampler, val_loaders, total_epochs, total_iters = result
+    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
+        create_train_val_dataloader(opt, args, val_enabled, logger)
+    )
 
     if train_loader is None or train_sampler is None:
         raise ValueError(
@@ -231,6 +233,13 @@ def train_pipeline(root_path: str) -> None:
 
     # create model
     model = build_model(opt)
+    if model.with_metrics:
+        for val_loader in val_loaders:
+            if not isinstance(val_loader.dataset, PairedImageDataset):
+                raise ValueError(
+                    "Validation metrics are enabled, all validation datasets must have type PairedImageDataset."
+                )
+
     if resume_state:  # resume training
         model.resume_training(resume_state)  # handle optimizers and schedulers
         logger.info(
@@ -318,7 +327,11 @@ def train_pipeline(root_path: str) -> None:
                     )
                 for val_loader in val_loaders:
                     model.validation(
-                        val_loader, current_iter, tb_logger, opt["val"]["save_img"]
+                        val_loader,
+                        current_iter,
+                        tb_logger,
+                        opt["val"]["save_img"],
+                        False,
                     )
 
             data_timer.start()
@@ -335,7 +348,7 @@ def train_pipeline(root_path: str) -> None:
     if opt.get("val") is not None:
         for val_loader in val_loaders:
             model.validation(
-                val_loader, current_iter, tb_logger, opt["val"]["save_img"]
+                val_loader, current_iter, tb_logger, opt["val"]["save_img"], False
             )
     if tb_logger:
         tb_logger.close()

@@ -450,9 +450,12 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        log_save_img: bool = False,
     ) -> None:
         if self.opt["rank"] == 0:
-            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(
+                dataloader, current_iter, tb_logger, save_img, log_save_img
+            )
 
     def nondist_validation(
         self,
@@ -460,19 +463,15 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        log_save_img: bool,
     ) -> None:
         self.is_train = False
 
         assert isinstance(dataloader.dataset, BaseDataset)
 
         dataset_name = dataloader.dataset.opt["name"]
-        with_metrics = (
-            self.opt["val"].get("metrics_enabled", True)
-            and self.opt["val"].get("metrics") is not None
-        )
-        use_pbar = self.opt["val"].get("pbar", False)
 
-        if with_metrics:
+        if self.with_metrics:
             if len(self.metric_results) == 0:  # only execute in the first run
                 self.metric_results: dict[str, Any] = {
                     metric: 0 for metric in self.opt["val"]["metrics"].keys()
@@ -480,13 +479,15 @@ class SRModel(BaseModel):
             # initialize the best metric results for each dataset_name (supporting multiple validation datasets)
             self._initialize_best_metric_results(dataset_name)
         # zero self.metric_results
-        if with_metrics:
+        if self.with_metrics:
             self.metric_results = {metric: 0 for metric in self.metric_results}
 
         metric_data = {}
         pbar = None
-        if use_pbar:
+        if self.use_pbar:
             pbar = tqdm(total=len(dataloader), unit="image")
+
+        logger = get_root_logger()
 
         for val_data in dataloader:
             img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
@@ -499,11 +500,11 @@ class SRModel(BaseModel):
             if "gt" in visuals:
                 gt_img = tensor2img(visuals["gt"])
                 metric_data["img2"] = gt_img
-                del self.gt
+                self.gt = None
 
             # tentative for out of GPU memory
-            del self.lq
-            del self.output
+            self.lq = None
+            self.output = None
             torch.cuda.empty_cache()
 
             if save_img:
@@ -526,8 +527,10 @@ class SRModel(BaseModel):
                         f'{img_name}_{self.opt["name"]}.png',
                     )
                 imwrite(sr_img, save_img_path)
+                if log_save_img:
+                    logger.info("Saved validation image: %s", save_img_path)
 
-            if with_metrics:
+            if self.with_metrics:
                 # calculate metrics
                 for name, opt_ in self.opt["val"]["metrics"].items():
                     self.metric_results[name] += calculate_metric(
@@ -539,7 +542,7 @@ class SRModel(BaseModel):
         if pbar is not None:
             pbar.close()
 
-        if with_metrics:
+        if self.with_metrics:
             for metric in self.metric_results.keys():
                 self.metric_results[metric] /= len(dataloader)
                 # update the best metric result
