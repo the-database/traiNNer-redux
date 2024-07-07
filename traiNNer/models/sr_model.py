@@ -450,12 +450,9 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
-        log_save_img: bool = False,
     ) -> None:
         if self.opt["rank"] == 0:
-            self.nondist_validation(
-                dataloader, current_iter, tb_logger, save_img, log_save_img
-            )
+            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(
         self,
@@ -463,7 +460,6 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
-        log_save_img: bool,
     ) -> None:
         self.is_train = False
 
@@ -488,6 +484,12 @@ class SRModel(BaseModel):
             pbar = tqdm(total=len(dataloader), unit="image")
 
         logger = get_root_logger()
+        if save_img and len(dataloader) > 0:
+            logger.info(
+                "Saving %d validation images to: %s",
+                len(dataloader),
+                self.opt["path"]["visualization"],
+            )
 
         for val_data in dataloader:
             img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
@@ -527,8 +529,6 @@ class SRModel(BaseModel):
                         f'{img_name}_{self.opt["name"]}.png',
                     )
                 imwrite(sr_img, save_img_path)
-                if log_save_img:
-                    logger.info("Saved validation image: %s", save_img_path)
 
             if self.with_metrics:
                 # calculate metrics

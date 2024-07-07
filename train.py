@@ -331,7 +331,6 @@ def train_pipeline(root_path: str) -> None:
                         current_iter,
                         tb_logger,
                         opt["val"]["save_img"],
-                        False,
                     )
 
             data_timer.start()
@@ -348,7 +347,7 @@ def train_pipeline(root_path: str) -> None:
     if opt.get("val") is not None:
         for val_loader in val_loaders:
             model.validation(
-                val_loader, current_iter, tb_logger, opt["val"]["save_img"], False
+                val_loader, current_iter, tb_logger, opt["val"]["save_img"]
             )
     if tb_logger:
         tb_logger.close()
