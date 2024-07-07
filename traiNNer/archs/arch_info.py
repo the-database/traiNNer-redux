@@ -16,6 +16,4 @@ ARCHS_WITHOUT_FP16 = {
     "swinir_l",
     "swinir_m",
     "swinir_s",
-    "plksr",
-    "realplksr",
 }
