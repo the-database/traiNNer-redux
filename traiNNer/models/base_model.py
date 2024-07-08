@@ -42,7 +42,7 @@ class BaseModel:
             and opt["val"].get("metrics_enabled", False)
             and opt["val"].get("metrics") is not None
         )
-        self.use_pbar = opt["val"].get("pbar", False)
+        self.use_pbar = opt.get("val") is not None and opt["val"].get("pbar", False)
         self.metric_results: dict[str, Any] = {}
         self.best_metric_results: dict[str, Any] = {}
         self.model_loader = ModelLoader()
