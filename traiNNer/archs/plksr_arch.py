@@ -348,5 +348,7 @@ class PLKSR(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def plksr(scale: int = 4, ccm_type: Literal["CCM", "ICCM", "DCCM"] = "DCCM", **kwargs) -> PLKSR:
+def plksr(
+    scale: int = 4, ccm_type: Literal["CCM", "ICCM", "DCCM"] = "DCCM", **kwargs
+) -> PLKSR:
     return PLKSR(upscaling_factor=scale, ccm_type=ccm_type, **kwargs)

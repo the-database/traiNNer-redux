@@ -133,15 +133,8 @@ def check_resume(opt: Mapping[str, Any], resume_iter: int) -> None:
 
                     if osp.exists(f"{basepath}.{ext}"):
                         opt["path"][name] = f"{basepath}.{ext}"
-                        model_exists = True
+                        print(f"Set {name} to {opt['path'][name]}")
                         break
-
-                if not model_exists:
-                    raise RuntimeError(
-                        f"Unable to resume, model not found at path: {basepath}.{model_extensions[0]}"
-                    )
-
-                print(f"Set {name} to {opt['path'][name]}")
 
         # change param_key to params in resume
         param_keys = [key for key in opt["path"].keys() if key.startswith("param_key")]
