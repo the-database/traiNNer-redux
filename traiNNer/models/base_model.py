@@ -38,7 +38,8 @@ class BaseModel:
         self.log_dict = {}
         self.loss_samples = 0
         self.with_metrics = (
-            opt["val"].get("metrics_enabled", False)
+            opt.get("val") is not None
+            and opt["val"].get("metrics_enabled", False)
             and opt["val"].get("metrics") is not None
         )
         self.use_pbar = opt["val"].get("pbar", False)

@@ -125,7 +125,6 @@ def check_resume(opt: Mapping[str, Any], resume_iter: int) -> None:
             if opt["path"].get("ignore_resume_networks") is None or (
                 network not in opt["path"]["ignore_resume_networks"]
             ):
-                model_exists = False
                 for ext in model_extensions:
                     basepath = osp.join(
                         opt["path"]["models"], f"net_{basename}_{resume_iter}"
