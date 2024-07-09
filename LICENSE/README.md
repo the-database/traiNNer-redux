@@ -26,7 +26,7 @@ This BasicSR project is released under the Apache 2.0 license.
 - [PLKSR](https://github.com/dslisleedh/PLKSR)
   - The arch implementation of PLKSR is from [PLKSR](https://github.com/dslisleedh/PLKSR) with modifications by [neosr](https://github.com/muslll/neosr). The LICENSE is [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE).
 - [HiT-SR](https://github.com/XiangZ-0/HiT-SR)
-  - The arch implementation of HiT-SR is from [PLKSR](https://github.com/XiangZ-0/HiT-SR). The LICENSE is [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE).
+  - The arch implementation of HiT-SR is from [HiT-SR](https://github.com/XiangZ-0/HiT-SR). The LICENSE is [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE).
 
 
 ## References
