@@ -64,7 +64,8 @@ REQUIRE_BATCH_2 = {"dat_2"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
-REQUIRE_32_HW = {"realcugan"}
+REQUIRE_32_HW = {"realcugan", "hit_srf"}
+REQUIRE_64_HW = {"hit_sir", "hit_sng"}
 
 
 class TestArchData(TypedDict):
@@ -123,7 +124,9 @@ class TestArchs:
         # For performance reasons, we try to use 1x3x16x16 input tensors by default,
         # but this is too small for some networks. Double the resolution to 1x3x32x32
         # for any networks that require a larger input size.
-        if name in REQUIRE_32_HW:
+        if name in REQUIRE_64_HW:
+            lq = F.interpolate(lq, scale_factor=4)
+        elif name in REQUIRE_32_HW:
             lq = F.interpolate(lq, scale_factor=2)
 
         with torch.inference_mode():
@@ -172,7 +175,9 @@ class TestArchs:
         # For performance reasons, we try to use 1x3x16x16 input tensors by default,
         # but this is too small for some networks. Double the resolution to 1x3x32x32
         # for any networks that require a larger input size.
-        if name in REQUIRE_32_HW:
+        if name in REQUIRE_64_HW:
+            lq = F.interpolate(lq, scale_factor=4)
+        elif name in REQUIRE_32_HW:
             lq = F.interpolate(lq, scale_factor=2)
 
         gt_shape = (lq.shape[0], lq.shape[1], lq.shape[2] * scale, lq.shape[3] * scale)

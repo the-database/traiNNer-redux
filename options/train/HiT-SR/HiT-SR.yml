@@ -1,7 +1,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_DRCT
+name: 4x_HiT_SRF
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage.
 amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only.
@@ -50,7 +50,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: DRCT  # DRCT, DRCT_L, DRCT_XL
+  type: HiT_SRF  # HiT_SRF, HiT_SNG, HiT_SIR
 
 # Discriminator model settings
 network_d:
