@@ -9,6 +9,7 @@ class ArchInfo(TypedDict):
     scales: list[int]
     extras: NotRequired[dict[str, str]]
     gt_override: NotRequired[int]
+    folder_name_override: NotRequired[str]
 
 
 ALL_SCALES = [1, 2, 3, 4, 8]
@@ -110,11 +111,19 @@ archs: list[ArchInfo] = [
         "names": ["SPANPlus", "SPANPlus_STS", "SPANPlus_S", "SPANPlus_ST"],
         "scales": ALL_SCALES,
     },
-    {"names": ["HiT_SRF", "HiT_SNG", "HiT_SIR"], "scales": ALL_SCALES},
+    {
+        "names": ["HiT_SRF", "HiT_SNG", "HiT_SIR"],
+        "folder_name_override": "HiT-SR",
+        "scales": ALL_SCALES,
+    },
 ]
 
 for arch in archs:
     folder_name = arch["names"][0].split("_")[0]
+
+    if "folder_name_override" in arch:
+        folder_name = arch["folder_name_override"]
+
     train_folder_path = osp.normpath(
         osp.join(
             __file__, osp.pardir, osp.pardir, osp.pardir, "./options/train", folder_name
