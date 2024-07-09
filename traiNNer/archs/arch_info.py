@@ -16,4 +16,7 @@ ARCHS_WITHOUT_FP16 = {
     "swinir_l",
     "swinir_m",
     "swinir_s",
+    "hit_srf",
+    "hit_sng",
+    "hit_sir",
 }
