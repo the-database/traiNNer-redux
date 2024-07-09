@@ -64,7 +64,7 @@ REQUIRE_BATCH_2 = {"dat_2"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
-REQUIRE_32_HW = {"realcugan", "hit_srf"}
+REQUIRE_32_HW = {"realcugan", "hit_sir", "hit_sng", "hit_srf"}
 
 
 class TestArchData(TypedDict):
