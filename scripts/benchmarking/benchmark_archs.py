@@ -45,7 +45,6 @@ EXTRA_ARCH_PARAMS: dict[str, list[dict[str, Any]]] = {
 EXTRA_ARCH_PARAMS["realplksr"] = [
     {"upsampler": "dysample"},
     {"upsampler": "pixelshuffle"},
-    {"upsampler": "conv"},
 ]
 
 # A list of tuples in the format of (name, arch, extra_params).
@@ -59,11 +58,6 @@ FILTERED_REGISTRIES_PARAMS = [
 EXCLUDE_ARCH_SCALES = {
     "swinir_l": [{"scale": 3, "extra_arch_params": {}}],
     "realcugan": [{"scale": 1, "extra_arch_params": {}}],
-    "realplksr": [
-        {"scale": 2, "extra_arch_params": {"upsampler": "conv"}},
-        {"scale": 3, "extra_arch_params": {"upsampler": "conv"}},
-        {"scale": 4, "extra_arch_params": {"upsampler": "conv"}},
-    ],
 }
 
 
@@ -136,7 +130,7 @@ if __name__ == "__main__":
     num_runs = 5
     lightweight_num_runs = 250
     use_amp = True
-    amp_bf16 = True
+    amp_bf16 = False
     print_markdown = True
 
     dtype_str = "fp32" if not use_amp else ("bf16" if amp_bf16 else "fp16")
@@ -155,6 +149,9 @@ if __name__ == "__main__":
 
         for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
             try:
+                # if "hit" not in name and "realplksr" != name:
+                #     continue
+
                 model = (
                     arch(scale=scale, **extra_arch_params)
                     .eval()
