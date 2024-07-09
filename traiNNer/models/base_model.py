@@ -2,13 +2,13 @@ import os
 import time
 from abc import abstractmethod
 from collections import OrderedDict
-from copy import deepcopy
+from collections.abc import Sequence
 from typing import Any
 
 import pytorch_optimizer
 import torch
 from safetensors.torch import load_file, save_file
-from spandrel import ModelLoader
+from spandrel import ModelLoader, StateDict
 from torch import nn
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -452,66 +452,89 @@ class BaseModel:
                 None, use the root 'path'.
                 Default: 'params'.
         """
-
         logger = get_root_logger()
-        try:
-            load_net = self.model_loader.load_from_file(load_path).model.state_dict()
-            # net.load_state_dict(load_net.model.state_dict(), strict=strict)
-            logger.info(
-                "Loading %s model from %s, with spandrel.",
-                net.__class__.__name__,
-                load_path,
-            )
-        except Exception as e:
-            logger.info(
-                "Unable to load with Spandrel: %s. Falling back to traiNNer-redux loader.",
-                e,
-            )
 
-            net = self.get_bare_model(net)
-            if load_path.endswith(".safetensors"):
-                load_net = load_file(load_path, device=str(self.device))
-            elif load_path.endswith(".pth"):
-                load_net = torch.load(
-                    load_path, map_location=lambda storage, loc: storage
+        net = self.get_bare_model(net)
+        if load_path.endswith(".safetensors"):
+            load_net: StateDict = load_file(load_path, device=str(self.device))
+        elif load_path.endswith(".pth"):
+            load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
+        else:
+            raise ValueError(f"Unsupported model: {load_path}")
+
+        if param_key is not None:
+            if param_key in load_net:
+                load_net = self.remove_common_prefix(load_net[param_key])
+            if param_key not in load_net:
+                load_net, new_param_key = self.canonicalize_state_dict(load_net)
+                logger.info(
+                    "Loading: %s does not exist, using %s.", param_key, new_param_key
                 )
+                param_key = new_param_key
+        else:
+            load_net, param_key = self.canonicalize_state_dict(load_net)
 
-                if param_key is not None:
-                    if param_key not in load_net:
-                        if "params_ema" in load_net:
-                            logger.info(
-                                "Loading: %s does not exist, using params_ema.",
-                                param_key,
-                            )
-                            param_key = "params_ema"
-                        elif "params" in load_net:
-                            logger.info(
-                                "Loading: %s does not exist, using params.", param_key
-                            )
-                            param_key = "params"
-                        else:
-                            logger.info(
-                                "Loading: %s does not exist, using None.", param_key
-                            )
-                            param_key = None
-                    if param_key in load_net:
-                        load_net = load_net[param_key]
-            else:
-                raise ValueError(f"Unsupported model: {load_path}") from e
-            logger.info(
-                "Loading %s model from %s, with param key: [%s].",
-                net.__class__.__name__,
-                load_path,
-                param_key,
-            )
-        # remove unnecessary 'module.'
-        for k, v in deepcopy(load_net).items():
-            if k.startswith("module."):
-                load_net[k[7:]] = v
-                load_net.pop(k)
+        logger.info(
+            "Loading %s model from %s, with param key: [%s].",
+            net.__class__.__name__,
+            load_path,
+            param_key,
+        )
+
         self._print_different_keys_loading(net, load_net, load_path, strict)
 
         net.load_state_dict(load_net, strict=strict)
+
+    # https://github.com/chaiNNer-org/spandrel/blob/ebf11bab4bc3fabccc80fcc377eaabb8cecbf8cd/libs/spandrel/spandrel/__helpers/canonicalize.py#L14
+    def canonicalize_state_dict(
+        self, state_dict: StateDict
+    ) -> tuple[StateDict, str | None]:
+        """
+        Canonicalize a state dict.
+
+        This function is used to canonicalize a state dict, so that it can be
+        used for architecture detection and loading.
+
+        This function is not intended to be used in production code.
+        """
+
+        used_unwrap_key = None
+
+        # the real state dict might be inside a dict with a known key
+        unwrap_keys = [
+            "model_state_dict",
+            "state_dict",
+            "params_ema",
+            "params-ema",
+            "params",
+            "model",
+            "net",
+        ]
+        for unwrap_key in unwrap_keys:
+            if unwrap_key in state_dict and isinstance(state_dict[unwrap_key], dict):
+                state_dict = state_dict[unwrap_key]
+                used_unwrap_key = unwrap_key
+                break
+
+        # unwrap single key
+        if len(state_dict) == 1:
+            single = next(iter(state_dict.values()))
+            if isinstance(single, dict):
+                state_dict = single
+
+        # remove known common prefixes
+        state_dict = self.remove_common_prefix(state_dict, ["module.", "netG."])
+
+        return state_dict, used_unwrap_key
+
+    def remove_common_prefix(
+        self, state_dict: StateDict, prefixes: Sequence[str] = ("module.", "netG.")
+    ) -> StateDict:
+        if len(state_dict) > 0:
+            for prefix in prefixes:
+                if all(i.startswith(prefix) for i in state_dict.keys()):
+                    state_dict = {k[len(prefix) :]: v for k, v in state_dict.items()}
+        return state_dict
 
     @master_only
     def save_training_state(self, epoch: int, current_iter: int) -> None:
