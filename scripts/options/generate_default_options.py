@@ -101,7 +101,11 @@ archs: list[ArchInfo] = [
         "scales": [2, 3, 4],
         "extras": {"pro": "true", "fast": "false"},
     },
-    {"names": ["SPAN"], "scales": ALL_SCALES},
+    {
+        "names": ["SPAN"],
+        "scales": ALL_SCALES,
+        "extras": {"norm": "false  # some pretrains require norm: true"},
+    },
     {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
     {"names": ["Compact", "UltraCompact", "SuperUltraCompact"], "scales": ALL_SCALES},
     {"names": ["SwinIR_L", "SwinIR_M", "SwinIR_S"], "scales": ALL_SCALES},

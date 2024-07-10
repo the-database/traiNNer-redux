@@ -1,3 +1,5 @@
+import os
+import shutil
 from collections import OrderedDict
 from os import path as osp
 from typing import Any
@@ -537,10 +539,9 @@ class SRModel(BaseModel):
 
             if save_img:
                 if self.opt["is_train"]:
+                    save_img_dir = osp.join(self.opt["path"]["visualization"], img_name)
                     save_img_path = osp.join(
-                        self.opt["path"]["visualization"],
-                        img_name,
-                        f"{img_name}_{current_iter}.png",
+                        save_img_dir, f"{img_name}_{current_iter:06d}.png"
                     )
                 elif self.opt["val"]["suffix"]:
                     save_img_path = osp.join(
@@ -555,6 +556,10 @@ class SRModel(BaseModel):
                         f'{img_name}_{self.opt["name"]}.png',
                     )
                 imwrite(sr_img, save_img_path)
+                if self.opt["is_train"] and not self.first_val_completed:
+                    lr_img_target_path = osp.join(save_img_dir, f"{img_name}_lr.png")
+                    if not os.path.exists(lr_img_target_path):
+                        shutil.copy(val_data["lq_path"][0], lr_img_target_path)
 
             if self.with_metrics:
                 # calculate metrics
@@ -578,6 +583,7 @@ class SRModel(BaseModel):
 
             self._log_validation_metric_values(current_iter, dataset_name, tb_logger)
 
+        self.first_val_completed = True
         self.is_train = True
 
     def _log_validation_metric_values(

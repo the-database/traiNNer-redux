@@ -527,10 +527,12 @@ def generate_gaussian_noise(
             float32.
     """
     if gray_noise:
-        noise = np.float32(RNG.get_rng().randn(*(img.shape[0:2]))) * sigma / 255.0  # type: ignore
+        noise = (
+            np.float32(RNG.get_rng().standard_normal(img.shape[0:2])) * sigma / 255.0
+        )
         noise = np.expand_dims(noise, axis=2).repeat(3, axis=2)
     else:
-        noise = np.float32(RNG.get_rng().randn(*(img.shape))) * sigma / 255.0  # type: ignore
+        noise = np.float32(RNG.get_rng().standard_normal(img.shape)) * sigma / 255.0
     assert isinstance(noise, np.ndarray)
     return noise
 
