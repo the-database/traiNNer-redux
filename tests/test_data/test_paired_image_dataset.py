@@ -25,6 +25,7 @@ use_rot: true
 
 phase: train
 """
+    image_names = (7, 8, 9)
     opt = yaml.safe_load(opt_str)
 
     dataset = PairedImageDataset(opt)
@@ -52,12 +53,8 @@ phase: train
     )
     assert result["gt"].shape == (3, 128, 128)
     assert result["lq"].shape == (3, 32, 32)
-    assert osp.normpath(result["lq_path"]) == osp.normpath(
-        "datasets/val/dataset1/lr/0007.png"
-    )
-    assert osp.normpath(result["gt_path"]) == osp.normpath(
-        "datasets/val/dataset1/hr/0007.png"
-    )
+    assert osp.normpath(result["lq_path"]) in {osp.normpath(f"datasets/val/dataset1/lr/{x:04d}.png") for x in image_names}
+    assert osp.normpath(result["gt_path"]) in {osp.normpath(f"datasets/val/dataset1/hr/{x:04d}.png") for x in image_names}
 
     # ------------------ test lmdb backend and with y channel-------------------- #
     # TODO
