@@ -51,6 +51,7 @@ datasets:
 # Generator model settings
 network_g:
   type: SPAN
+  norm: false  # some pretrains require norm: true
 
 # Discriminator model settings
 network_d:

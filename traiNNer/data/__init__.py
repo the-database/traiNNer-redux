@@ -17,6 +17,7 @@ from traiNNer.utils import get_root_logger, scandir
 from traiNNer.utils.dist_util import get_dist_info
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.rng import RNG
+from traiNNer.utils.types import DataLoaderArgs
 
 __all__ = ["build_dataset", "build_dataloader"]
 
@@ -88,7 +89,7 @@ def build_dataloader(
             multiplier = 1 if num_gpu == 0 else num_gpu
             batch_size = dataset_opt["batch_size_per_gpu"] * multiplier
             num_workers = dataset_opt["num_worker_per_gpu"] * multiplier
-        dataloader_args = {
+        dataloader_args: DataLoaderArgs = {
             "dataset": dataset,
             "batch_size": batch_size,
             "shuffle": False,
@@ -140,7 +141,7 @@ def build_dataloader(
     else:
         # prefetch_mode=None: Normal dataloader
         # prefetch_mode='cuda': dataloader for CUDAPrefetcher
-        return torch.utils.data.DataLoader(**dataloader_args)  # type: ignore -- TODO: use TypedDict
+        return torch.utils.data.DataLoader(**dataloader_args)
 
 
 def worker_init_fn(

@@ -45,6 +45,7 @@ class BaseModel:
         self.use_pbar = opt.get("val") is not None and opt["val"].get("pbar", False)
         self.metric_results: dict[str, Any] = {}
         self.best_metric_results: dict[str, Any] = {}
+        self.first_val_completed = False
         self.model_loader = ModelLoader()
         self.net_g = None
         self.net_g_ema = None

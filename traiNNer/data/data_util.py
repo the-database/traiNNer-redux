@@ -6,7 +6,7 @@ import torch
 from torch import Tensor
 
 from traiNNer.data.transforms import mod_crop
-from traiNNer.utils import imgs2tensors, scandir
+from traiNNer.utils import get_root_logger, imgs2tensors, scandir
 
 
 def check_missing_paths(missing_from_paths: set[str], key: str, folder: str) -> None:
@@ -237,7 +237,7 @@ def paired_paths_from_meta_info_file(
 
 
 def paired_paths_from_folder(
-    folders: list[str], keys: list[str], filename_tmpl: str
+    folders: tuple[str, str], keys: tuple[str, str], filename_tmpl: str
 ) -> list[dict[str, str]]:
     """Generate paired paths from folders.
 
@@ -253,15 +253,18 @@ def paired_paths_from_folder(
     Returns:
         list[str]: Returned path list.
     """
-    assert len(folders) == 2, (
-        "The len of folders should be 2 with [input_folder, gt_folder]. "
-        f"But got {len(folders)}"
-    )
-    assert (
-        len(keys) == 2
-    ), f"The len of keys should be 2 with [input_key, gt_key]. But got {len(keys)}"
+
     input_folder, gt_folder = folders
     input_key, gt_key = keys
+
+    if input_folder == gt_folder:
+        logger = get_root_logger()
+        logger.warning(
+            "%s and %s datasets have the same path, this may be unintentional: %s",
+            input_key,
+            gt_key,
+            gt_folder,
+        )
 
     gt_names = list(scandir(gt_folder))
     gt_paths = [(f"{gt_key}_path", osp.join(gt_folder, f)) for f in gt_names]

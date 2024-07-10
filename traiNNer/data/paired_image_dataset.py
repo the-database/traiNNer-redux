@@ -73,7 +73,7 @@ class PairedImageDataset(BaseDataset):
             )
         else:
             self.paths = paired_paths_from_folder(
-                [self.lq_folder, self.gt_folder], ["lq", "gt"], self.filename_tmpl
+                (self.lq_folder, self.gt_folder), ("lq", "gt"), self.filename_tmpl
             )
 
     def __getitem__(self, index: int) -> DataFeed:
