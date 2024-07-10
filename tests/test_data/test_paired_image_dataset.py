@@ -53,8 +53,12 @@ phase: train
     )
     assert result["gt"].shape == (3, 128, 128)
     assert result["lq"].shape == (3, 32, 32)
-    assert osp.normpath(result["lq_path"]) in {osp.normpath(f"datasets/val/dataset1/lr/{x:04d}.png") for x in image_names}
-    assert osp.normpath(result["gt_path"]) in {osp.normpath(f"datasets/val/dataset1/hr/{x:04d}.png") for x in image_names}
+    assert osp.normpath(result["lq_path"]) in {
+        osp.normpath(f"datasets/val/dataset1/lr/{x:04d}.png") for x in image_names
+    }
+    assert osp.normpath(result["gt_path"]) in {
+        osp.normpath(f"datasets/val/dataset1/hr/{x:04d}.png") for x in image_names
+    }
 
     # ------------------ test lmdb backend and with y channel-------------------- #
     # TODO
