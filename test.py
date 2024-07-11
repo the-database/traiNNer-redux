@@ -56,7 +56,7 @@ def test_pipeline(root_path: str) -> None:
         logger.info("Testing %s...", test_set_name)
         model.validation(
             test_loader,
-            current_iter=-1,  # TODO test
+            current_iter=-1,
             tb_logger=None,
             save_img=opt.val.save_img,
         )
