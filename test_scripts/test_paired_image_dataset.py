@@ -45,6 +45,8 @@ def main(mode: str = "folder") -> None:
     dataset = build_dataset(opt)
     data_loader = build_dataloader(dataset, opt, num_gpu=0, dist=False, sampler=None)
 
+    assert opt.batch_size_per_gpu is not None
+
     nrow = int(math.sqrt(opt.batch_size_per_gpu))
     padding = 2 if opt.phase == "train" else 0
 

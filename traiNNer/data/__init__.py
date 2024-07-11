@@ -81,6 +81,9 @@ def build_dataloader(
     """
     rank, _ = get_dist_info()
     if dataset_opt.phase == "train":
+        assert dataset_opt.batch_size_per_gpu is not None
+        assert dataset_opt.num_worker_per_gpu is not None
+
         if dist:  # distributed training
             batch_size = dataset_opt.batch_size_per_gpu
             num_workers = dataset_opt.num_worker_per_gpu

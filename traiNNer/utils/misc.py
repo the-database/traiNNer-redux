@@ -7,7 +7,7 @@ from os import path as osp
 import torch
 
 from traiNNer.utils.dist_util import master_only
-from traiNNer.utils.options import obj2dict
+from traiNNer.utils.options import struct2dict
 from traiNNer.utils.optionsfile import ReduxOptions
 
 
@@ -37,7 +37,7 @@ def mkdir_and_rename(path: str) -> None:
 @master_only
 def make_exp_dirs(opt: ReduxOptions) -> None:
     """Make dirs for experiments."""
-    path_opt = obj2dict(opt.path)
+    path_opt = struct2dict(opt.path)
     if opt.is_train:
         mkdir_and_rename(path_opt.pop("experiments_root"))
     else:

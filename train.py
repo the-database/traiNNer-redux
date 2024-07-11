@@ -33,13 +33,15 @@ from traiNNer.utils import (
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.misc import set_random_seed
-from traiNNer.utils.options import copy_opt_file, dict2str, obj2dict
+from traiNNer.utils.options import copy_opt_file, dict2str, struct2dict
 from traiNNer.utils.optionsfile import ReduxOptions
 
 
 def init_tb_loggers(opt: ReduxOptions) -> SummaryWriter | None:
     # initialize wandb logger before tensorboard logger to allow proper sync
     assert opt.logger is not None
+    assert opt.root_path is not None
+
     if (
         (opt.logger.wandb is not None)
         and (opt.logger.wandb.project is not None)
@@ -62,6 +64,9 @@ def create_train_val_dataloader(
     logger: logging.Logger,
 ) -> tuple[DataLoader | None, EnlargedSampler | None, list[DataLoader], int, int]:
     assert isinstance(opt.num_gpu, int)
+    assert opt.world_size is not None
+    assert opt.dist is not None
+
     # create train and val dataloaders
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
         None,
@@ -73,6 +78,8 @@ def create_train_val_dataloader(
     for phase, dataset_opt in opt.datasets.items():
         if phase == "train":
             assert opt.train is not None
+            assert dataset_opt.batch_size_per_gpu is not None
+
             train_set = build_dataset(dataset_opt)
             dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
             if dataset_enlarge_ratio == "auto":
@@ -174,6 +181,10 @@ def train_pipeline(root_path: str) -> None:
 
     assert opt.train is not None
     assert opt.logger is not None
+    assert opt.manual_seed is not None
+    assert opt.rank is not None
+    assert opt.path.experiments_root is not None
+    assert opt.path.log is not None
 
     if opt.deterministic:
         torch.backends.cudnn.benchmark = False
@@ -202,7 +213,7 @@ def train_pipeline(root_path: str) -> None:
         logger_name="traiNNer", log_level=logging.INFO, log_file=log_file
     )
     logger.info(get_env_info())
-    logger.info(dict2str(obj2dict(opt)))
+    logger.info(dict2str(struct2dict(opt)))
 
     if opt.deterministic:
         logger.info(

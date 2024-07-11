@@ -9,7 +9,7 @@ from traiNNer.losses.gan_loss import (
     r1_penalty,
 )
 from traiNNer.utils import get_root_logger, scandir
-from traiNNer.utils.options import obj2dict
+from traiNNer.utils.options import struct2dict
 from traiNNer.utils.optionsfile import LossOptions
 from traiNNer.utils.registry import LOSS_REGISTRY
 
@@ -37,7 +37,7 @@ def build_loss(loss_opt: LossOptions) -> nn.Module:
         opt (dict): Configuration. It must contain:
             type (str): Model type.
     """
-    opt = obj2dict(loss_opt)
+    opt = struct2dict(loss_opt)
     loss_type = opt.pop("type")
     loss = LOSS_REGISTRY.get(loss_type)(**opt)
     logger = get_root_logger()

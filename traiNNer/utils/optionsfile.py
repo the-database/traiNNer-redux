@@ -13,9 +13,9 @@ class PixelOptions(LossOptions):
 
 
 class MSSIMOptions(LossOptions):
-    cosim: bool
-    cosim_lambda: int
     loss_weight: float = 0
+    cosim: bool = True
+    cosim_lambda: int = 5
 
 
 class PerceptualOptions(LossOptions):
@@ -90,7 +90,7 @@ class SchedulerOptions(Struct):
 
 
 class WandbOptions(Struct):
-    resume_id: str
+    resume_id: str | None = None
     project: str | None = None
 
 

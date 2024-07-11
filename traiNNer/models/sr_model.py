@@ -20,7 +20,7 @@ from traiNNer.losses.loss_util import get_refined_artifact_map
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
-from traiNNer.utils.options import obj2dict
+from traiNNer.utils.options import struct2dict
 from traiNNer.utils.optionsfile import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
@@ -269,7 +269,7 @@ class SRModel(BaseModel):
                 logger = get_root_logger()
                 logger.warning("Params %s will not be optimized.", k)
 
-        optim_g_opts = obj2dict(train_opt.optim_g)
+        optim_g_opts = struct2dict(train_opt.optim_g)
         optim_type = optim_g_opts.pop("type")
         self.optimizer_g = self.get_optimizer(optim_type, optim_params, **optim_g_opts)
         self.optimizers.append(self.optimizer_g)
@@ -277,7 +277,7 @@ class SRModel(BaseModel):
 
         # optimizer d
         if self.net_d is not None:
-            optim_d_opts = obj2dict(train_opt.optim_d)
+            optim_d_opts = struct2dict(train_opt.optim_d)
             optim_type = optim_d_opts.pop("type")
             self.optimizer_d = self.get_optimizer(
                 optim_type, self.net_d.parameters(), **optim_d_opts

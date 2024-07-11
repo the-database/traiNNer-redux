@@ -6,13 +6,15 @@ from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.models import build_model
 from traiNNer.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs
 from traiNNer.utils.config import Config
-from traiNNer.utils.options import dict2str, obj2dict
+from traiNNer.utils.options import dict2str, struct2dict
 
 
 def test_pipeline(root_path: str) -> None:
     # parse options, set distributed setting, set ramdom seed
     opt, _ = Config.load_config_from_file(root_path, is_train=False)
     assert opt.val is not None
+    assert opt.dist is not None
+    assert opt.path.log is not None
     assert isinstance(opt.num_gpu, int)
 
     torch.backends.cudnn.benchmark = True
@@ -25,7 +27,7 @@ def test_pipeline(root_path: str) -> None:
         logger_name="traiNNer", log_level=logging.INFO, log_file=log_file
     )
     logger.info(get_env_info())
-    logger.info(dict2str(obj2dict(opt)))
+    logger.info(dict2str(struct2dict(opt)))
 
     # create test dataset and dataloader
     test_loaders = []

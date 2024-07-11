@@ -21,7 +21,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
-from traiNNer.utils.options import obj2dict
+from traiNNer.utils.options import struct2dict
 from traiNNer.utils.optionsfile import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
@@ -222,7 +222,7 @@ class BaseModel:
 
         """Set up schedulers."""
         assert self.opt.train is not None
-        scheduler_opts = obj2dict(self.opt.train.scheduler)
+        scheduler_opts = struct2dict(self.opt.train.scheduler)
         scheduler_type = scheduler_opts.pop("type")
         # uppercase scheduler_type to make it case insensitive
         sch_typ_upper = scheduler_type.upper()

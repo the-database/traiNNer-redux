@@ -57,8 +57,12 @@ def yaml_load(file_path: str) -> ReduxOptions:
         return msgspec.yaml.decode(contents, type=ReduxOptions, strict=True)
 
 
-def obj2dict(obj: object) -> dict[str, Any]:
-    return {key: value for key, value in vars(obj).items() if not key.startswith("_")}
+def struct2dict(obj: msgspec.Struct) -> dict[str, Any]:
+    return {
+        field: getattr(obj, field)
+        for field in obj.__struct_fields__
+        if not field.startswith("_")
+    }
 
 
 def dict2str(opt: dict[str, Any], indent_level: int = 1) -> str:
