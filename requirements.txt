@@ -7,6 +7,7 @@ pytest
 pytorch-optimizer
 pyyaml
 requests
+rich
 ruff
 safetensors
 scikit-image
