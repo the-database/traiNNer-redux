@@ -12,7 +12,6 @@ from torch import Size, Tensor
 from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.utils import RNG
-from traiNNer.utils.config import Config
 from traiNNer.utils.redux_options import TrainOptions
 
 MOA_DEBUG_PATH = osp.abspath(
@@ -21,10 +20,10 @@ MOA_DEBUG_PATH = osp.abspath(
 
 
 class BatchAugment:
-    def __init__(self, train_opt: TrainOptions) -> None:
+    def __init__(self, scale: int, train_opt: TrainOptions) -> None:
         self.moa_augs = train_opt.moa_augs
         self.moa_probs = train_opt.moa_probs
-        self.scale = Config.get_scale()
+        self.scale = scale
         self.debug = train_opt.moa_debug
         self.debug_limit = train_opt.moa_debug_limit
 

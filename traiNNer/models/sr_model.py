@@ -32,7 +32,7 @@ class SRModel(BaseModel):
         super().__init__(opt)
 
         # define network
-        self.net_g = build_network(opt.network_g)
+        self.net_g = build_network({**opt.network_g, "scale": opt.scale})
         self.net_g = self.model_to_device(self.net_g)
         # self.print_network(self.net_g)
 
@@ -168,7 +168,9 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = build_network(self.opt.network_g).to(self.device)
+            self.net_g_ema = build_network(
+                {**self.opt.network_g, "scale": self.opt.scale}
+            ).to(self.device)
             # load pretrained model
             if self.opt.path.pretrain_network_g is not None:
                 self.load_network(

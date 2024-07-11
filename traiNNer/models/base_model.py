@@ -657,7 +657,7 @@ class BaseModel:
         assert self.opt.train is not None
         logger = get_root_logger()
         if self.opt.train.use_moa:
-            self.batch_augment = BatchAugment(self.opt.train)
+            self.batch_augment = BatchAugment(self.opt.scale, self.opt.train)
             logger.info(
                 "Mixture of augmentations (MoA) enabled with augs: %s and probs: %s",
                 self.batch_augment.moa_augs,
