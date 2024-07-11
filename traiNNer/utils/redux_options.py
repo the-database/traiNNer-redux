@@ -7,77 +7,6 @@ class StrictStruct(Struct, forbid_unknown_fields=True):
     pass
 
 
-class LossOptions(Struct):
-    type: str
-
-
-class PixelOptions(LossOptions):
-    criterion: str
-    loss_weight: float = 0
-
-
-class MSSIMOptions(LossOptions):
-    loss_weight: float = 0
-
-
-class PerceptualOptions(LossOptions):
-    layer_weights: dict[str, float]
-    vgg_type: str
-    range_norm: bool
-    criterion: str
-    style_weight: float = 0
-    perceptual_weight: float = 0
-
-
-class ContextualOptions(LossOptions):
-    layer_weights: dict[str, float]
-    vgg_type: str
-    range_norm: bool
-    criterion: str
-    style_weight: float = 0
-    loss_weight: float = 0
-
-
-class AverageOptions(LossOptions):
-    loss_weight: float = 0
-
-
-class BicubicOptions(LossOptions):
-    scale: int = 4
-    loss_weight: float = 0
-
-
-class DISTSOptions(LossOptions):
-    use_input_norm: bool
-    loss_weight: float = 0
-
-
-class LDLOptions(LossOptions):
-    loss_weight: float = 0
-
-
-class HSLuvOptions(LossOptions):
-    criterion: str
-    loss_weight: float = 0
-
-
-class GANOptions(LossOptions):
-    gan_type: str
-    real_label_val: float
-    fake_label_val: float
-    loss_weight: float = 0
-
-
-class ColorOptions(LossOptions):
-    criterion: str
-    loss_weight: float = 0
-
-
-class LumaOptions(LossOptions):
-    criterion: str
-    loss_weight: float = 0
-
-
 class OptimizerOptions(StrictStruct):
     type: str
     lr: float
@@ -191,18 +120,18 @@ class TrainOptions(StrictStruct):
     warmup_iter: int = -1
     optim_d: OptimizerOptions | None = None
 
-    pixel_opt: PixelOptions | None = None
-    mssim_opt: MSSIMOptions | None = None
-    perceptual_opt: PerceptualOptions | None = None
-    contextual_opt: ContextualOptions | None = None
-    dists_opt: DISTSOptions | None = None
-    ldl_opt: LDLOptions | None = None
-    hsluv_opt: HSLuvOptions | None = None
-    gan_opt: GANOptions | None = None
-    color_opt: ColorOptions | None = None
-    luma_opt: LumaOptions | None = None
-    avg_opt: AverageOptions | None = None
-    bicubic_opt: BicubicOptions | None = None
+    pixel_opt: dict[str, Any] | None = None
+    mssim_opt: dict[str, Any] | None = None
+    perceptual_opt: dict[str, Any] | None = None
+    contextual_opt: dict[str, Any] | None = None
+    dists_opt: dict[str, Any] | None = None
+    ldl_opt: dict[str, Any] | None = None
+    hsluv_opt: dict[str, Any] | None = None
+    gan_opt: dict[str, Any] | None = None
+    color_opt: dict[str, Any] | None = None
+    luma_opt: dict[str, Any] | None = None
+    avg_opt: dict[str, Any] | None = None
+    bicubic_opt: dict[str, Any] | None = None
 
     use_moa: bool = False
     moa_augs: list[str] = field(
@@ -217,8 +146,8 @@ class TrainOptions(StrictStruct):
 
 class ValOptions(StrictStruct):
     val_enabled: bool
-    val_freq: int
     save_img: bool
+    val_freq: int | None = None
     suffix: str | None = None
 
     metrics_enabled: bool = False

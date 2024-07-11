@@ -228,6 +228,7 @@ def train_pipeline(root_path: str) -> None:
     val_enabled = False
     if opt.val:
         val_enabled = opt.val.val_enabled
+
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
         create_train_val_dataloader(opt, args, val_enabled, logger)
     )
@@ -326,18 +327,22 @@ def train_pipeline(root_path: str) -> None:
                 model.save(epoch, current_iter)
 
             # validation
-            if opt.val is not None and (current_iter % opt.val.val_freq == 0):
-                if len(val_loaders) > 1:
-                    logger.warning(
-                        "Multiple validation datasets are *only* supported by SRModel."
-                    )
-                for val_loader in val_loaders:
-                    model.validation(
-                        val_loader,
-                        current_iter,
-                        tb_logger,
-                        opt.val.save_img,
-                    )
+            if opt.val is not None:
+                assert (
+                    opt.val.val_freq is not None
+                ), "val_freq must be defined under the val section"
+                if current_iter % opt.val.val_freq == 0:
+                    if len(val_loaders) > 1:
+                        logger.warning(
+                            "Multiple validation datasets are *only* supported by SRModel."
+                        )
+                    for val_loader in val_loaders:
+                        model.validation(
+                            val_loader,
+                            current_iter,
+                            tb_logger,
+                            opt.val.save_img,
+                        )
 
             data_timer.start()
             iter_timer.start()

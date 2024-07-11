@@ -2,7 +2,10 @@ import logging
 from os import path as osp
 
 import torch
+from torch.utils.data import DataLoader
 from traiNNer.data import build_dataloader, build_dataset
+from traiNNer.data.base_dataset import BaseDataset
+from traiNNer.data.prefetch_dataloader import PrefetchDataLoader
 from traiNNer.models import build_model
 from traiNNer.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs
 from traiNNer.utils.config import Config
@@ -30,7 +33,7 @@ def test_pipeline(root_path: str) -> None:
     logger.info(dict2str(struct2dict(opt)))
 
     # create test dataset and dataloader
-    test_loaders = []
+    test_loaders: list[PrefetchDataLoader | DataLoader] = []
     for _, dataset_opt in sorted(opt.datasets.items()):
         test_set = build_dataset(dataset_opt)
         test_loader = build_dataloader(
@@ -48,7 +51,8 @@ def test_pipeline(root_path: str) -> None:
     model = build_model(opt)
 
     for test_loader in test_loaders:
-        test_set_name = test_loader.dataset.opt["name"]
+        assert isinstance(test_loader.dataset, BaseDataset)
+        test_set_name = test_loader.dataset.opt.name
         logger.info("Testing %s...", test_set_name)
         model.validation(
             test_loader,

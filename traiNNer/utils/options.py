@@ -61,7 +61,7 @@ def struct2dict(obj: msgspec.Struct) -> dict[str, Any]:
     return {
         field: getattr(obj, field)
         for field in obj.__struct_fields__
-        if not field.startswith("_")
+        if not field.startswith("_") and getattr(obj, field) is not None
     }
 
 

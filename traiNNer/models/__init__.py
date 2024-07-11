@@ -18,7 +18,7 @@ def build_model(opt: ReduxOptions) -> BaseModel:
     """
     opt = deepcopy(opt)
 
-    if not opt.high_order_degradation:
+    if opt.high_order_degradation:
         model = RealESRGANModel(opt)
     else:
         model = SRModel(opt)

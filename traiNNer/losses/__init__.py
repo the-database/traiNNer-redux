@@ -1,5 +1,7 @@
 import importlib
+from copy import deepcopy
 from os import path as osp
+from typing import Any
 
 from torch import nn
 
@@ -9,8 +11,6 @@ from traiNNer.losses.gan_loss import (
     r1_penalty,
 )
 from traiNNer.utils import get_root_logger, scandir
-from traiNNer.utils.options import struct2dict
-from traiNNer.utils.redux_options import LossOptions
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 __all__ = ["build_loss", "gradient_penalty_loss", "r1_penalty", "g_path_regularize"]
@@ -30,14 +30,14 @@ _model_modules = [
 ]
 
 
-def build_loss(loss_opt: LossOptions) -> nn.Module:
+def build_loss(loss_opt: dict[str, Any]) -> nn.Module:
     """Build loss from options.
 
     Args:
         opt (dict): Configuration. It must contain:
             type (str): Model type.
     """
-    opt = struct2dict(loss_opt)
+    opt = deepcopy(loss_opt)
     loss_type = opt.pop("type")
     loss = LOSS_REGISTRY.get(loss_type)(**opt)
     logger = get_root_logger()

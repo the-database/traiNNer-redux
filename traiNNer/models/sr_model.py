@@ -99,7 +99,7 @@ class SRModel(BaseModel):
             self.has_gan = False
             gan_opt = self.opt.train.gan_opt
             if gan_opt:
-                if gan_opt.loss_weight > 0:
+                if gan_opt.get("loss_weight", 0) > 0:
                     self.has_gan = True
 
             self.net_d = None
@@ -183,58 +183,58 @@ class SRModel(BaseModel):
 
         # define losses
         if train_opt.pixel_opt:
-            if train_opt.pixel_opt.loss_weight > 0:
+            if train_opt.pixel_opt.get("loss_weight", 0) > 0:
                 self.cri_pix = build_loss(train_opt.pixel_opt).to(self.device)
 
         if train_opt.mssim_opt:
-            if train_opt.mssim_opt.loss_weight > 0:
+            if train_opt.mssim_opt.get("loss_weight", 0) > 0:
                 self.cri_mssim = build_loss(train_opt.mssim_opt).to(self.device)
 
         if train_opt.ldl_opt:
-            if train_opt.ldl_opt.loss_weight > 0:
+            if train_opt.ldl_opt.get("loss_weight", 0) > 0:
                 self.cri_ldl = build_loss(train_opt.ldl_opt).to(self.device)
 
         if train_opt.perceptual_opt:
             if (
-                train_opt.perceptual_opt.perceptual_weight > 0
-                or train_opt.perceptual_opt.style_weight > 0
+                train_opt.perceptual_opt.get("perceptual_weight", 0) > 0
+                or train_opt.perceptual_opt.get("style_weight", 0) > 0
             ):
                 self.cri_perceptual = build_loss(train_opt.perceptual_opt).to(
                     self.device
                 )
 
         if train_opt.dists_opt:
-            if train_opt.dists_opt.loss_weight > 0:
+            if train_opt.dists_opt.get("loss_weight", 0) > 0:
                 self.cri_dists = build_loss(train_opt.dists_opt).to(self.device)
 
         if train_opt.contextual_opt:
-            if train_opt.contextual_opt.loss_weight > 0:
+            if train_opt.contextual_opt.get("loss_weight", 0) > 0:
                 self.cri_contextual = build_loss(train_opt.contextual_opt).to(
                     self.device
                 )
 
         if train_opt.color_opt:
-            if train_opt.color_opt.loss_weight > 0:
+            if train_opt.color_opt.get("loss_weight", 0) > 0:
                 self.cri_color = build_loss(train_opt.color_opt).to(self.device)
 
         if train_opt.luma_opt:
-            if train_opt.luma_opt.loss_weight > 0:
+            if train_opt.luma_opt.get("loss_weight", 0) > 0:
                 self.cri_luma = build_loss(train_opt.luma_opt).to(self.device)
 
         if train_opt.hsluv_opt:
-            if train_opt.hsluv_opt.loss_weight > 0:
+            if train_opt.hsluv_opt.get("loss_weight", 0) > 0:
                 self.cri_hsluv = build_loss(train_opt.hsluv_opt).to(self.device)
 
         if train_opt.avg_opt:
-            if train_opt.avg_opt.loss_weight > 0:
+            if train_opt.avg_opt.get("loss_weight", 0) > 0:
                 self.cri_avg = build_loss(train_opt.avg_opt).to(self.device)
 
         if train_opt.bicubic_opt:
-            if train_opt.bicubic_opt.loss_weight > 0:
+            if train_opt.bicubic_opt.get("loss_weight", 0) > 0:
                 self.cri_bicubic = build_loss(train_opt.bicubic_opt).to(self.device)
 
         if train_opt.gan_opt:
-            if train_opt.gan_opt.loss_weight > 0:
+            if train_opt.gan_opt.get("loss_weight", 0) > 0:
                 self.cri_gan = build_loss(train_opt.gan_opt).to(self.device)
         else:
             self.cri_gan = None
