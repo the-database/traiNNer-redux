@@ -14,19 +14,20 @@ high_order_degradations_debug: false  # Save the LR and HR tiles to debug/otf fo
 high_order_degradations_debug_limit: 100  # The max number of iterations to save LR and HR tiles for.
 
 # The first degradation process.
-blur_prob: 0
+blur_prob: 0.0
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
 resize_mode_list: ['bilinear', 'bicubic', 'nearest-exact']  # See modes: https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
 resize_mode_prob: [0.3333, 0.3333, 0.3333]  # Probability each resize mode is selected.
 resize_range: [0.4, 1.5]
-gaussian_noise_prob: 0
+gaussian_noise_prob: 0.0
 noise_range: [0, 0]
 poisson_scale_range: [0, 0]
-gray_noise_prob: 0
+gray_noise_prob: 0.0
+jpeg_prob: 1.0
 jpeg_range: [75, 95]
 
 # The second degradation process.
-blur_prob2: 0
+blur_prob2: 0.0
 resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
 resize_mode_list2: ['bilinear', 'bicubic', 'nearest-exact']  # See modes: https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
 resize_mode_prob2: [0.3333, 0.3333, 0.3333]  # Probability each resize mode is selected.
@@ -34,7 +35,8 @@ resize_range2: [0.6, 1.2]
 gaussian_noise_prob2: 0
 noise_range2: [0, 0]
 poisson_scale_range2: [0, 0]
-gray_noise_prob2: 0
+gray_noise_prob2: 0.0
+jpeg_prob2: 1.0
 jpeg_range2: [75, 95]
 
 # The final resize to the target resolution.
@@ -59,7 +61,7 @@ datasets:
     blur_kernel_size: 12
     kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
     kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-    sinc_prob: 0
+    sinc_prob: 0.0
     blur_sigma: [0.2, 2]
     betag_range: [0.5, 4]
     betap_range: [1, 2]
@@ -67,12 +69,12 @@ datasets:
     blur_kernel_size2: 12
     kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
     kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-    sinc_prob2: 0
+    sinc_prob2: 0.0
     blur_sigma2: [0.2, 1]
     betag_range2: [0.5, 4]
     betap_range2: [1, 2]
 
-    final_sinc_prob: 0
+    final_sinc_prob: 0.0
     gt_size: 128  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.

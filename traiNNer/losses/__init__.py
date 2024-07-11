@@ -30,14 +30,14 @@ _model_modules = [
 ]
 
 
-def build_loss(opt: dict[str, Any]) -> nn.Module:
+def build_loss(loss_opt: dict[str, Any]) -> nn.Module:
     """Build loss from options.
 
     Args:
         opt (dict): Configuration. It must contain:
             type (str): Model type.
     """
-    opt = deepcopy(opt)
+    opt = deepcopy(loss_opt)
     loss_type = opt.pop("type")
     loss = LOSS_REGISTRY.get(loss_type)(**opt)
     logger = get_root_logger()

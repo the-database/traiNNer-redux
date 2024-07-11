@@ -3,7 +3,6 @@ import os
 import os.path as osp
 import random
 import time
-from typing import Any
 
 import cv2
 import numpy as np
@@ -20,6 +19,7 @@ from traiNNer.utils import (
     img2tensor,
     scandir,
 )
+from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 
@@ -43,11 +43,15 @@ class RealESRGANDataset(BaseDataset):
             Please see more options in the codes.
     """
 
-    def __init__(self, opt: dict[str, Any]) -> None:
+    def __init__(self, opt: DatasetOptions) -> None:
         super().__init__(opt)
         self.file_client = None
-        self.io_backend_opt = opt["io_backend"]
-        self.gt_folder = opt["dataroot_gt"]
+        self.io_backend_opt = opt.io_backend
+        self.gt_folder = opt.dataroot_gt
+
+        assert (
+            self.gt_folder is not None
+        ), f"dataroot_gt must be defined for dataset {opt.name}"
 
         # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
@@ -59,37 +63,37 @@ class RealESRGANDataset(BaseDataset):
                 )
             with open(osp.join(self.gt_folder, "meta_info.txt")) as fin:
                 self.paths = [line.split(".")[0] for line in fin]
-        elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
+        elif self.opt.meta_info is not None:
             # disk backend with meta_info
             # Each line in the meta_info describes the relative path to an image
-            with open(self.opt["meta_info"]) as fin:
+            with open(self.opt.meta_info) as fin:
                 paths = [line.strip().split(" ")[0] for line in fin]
                 self.paths = [os.path.join(self.gt_folder, v) for v in paths]
         else:
             self.paths = sorted(scandir(self.gt_folder, full_path=True))
 
         # blur settings for the first degradation
-        self.blur_kernel_size = opt["blur_kernel_size"]
-        self.kernel_list = opt["kernel_list"]
-        self.kernel_prob = opt["kernel_prob"]  # a list for each kernel probability
-        self.blur_sigma = opt["blur_sigma"]
-        self.betag_range = opt[
-            "betag_range"
-        ]  # betag used in generalized Gaussian blur kernels
-        self.betap_range = opt["betap_range"]  # betap used in plateau blur kernels
-        self.sinc_prob = opt["sinc_prob"]  # the probability for sinc filters
+        self.blur_kernel_size = opt.blur_kernel_size
+        self.kernel_list = opt.kernel_list
+        self.kernel_prob = opt.kernel_prob  # a list for each kernel probability
+        self.blur_sigma = opt.blur_sigma
+        self.betag_range = (
+            opt.betag_range
+        )  # betag used in generalized Gaussian blur kernels
+        self.betap_range = opt.betap_range  # betap used in plateau blur kernels
+        self.sinc_prob = opt.sinc_prob  # the probability for sinc filters
 
         # blur settings for the second degradation
-        self.blur_kernel_size2 = opt["blur_kernel_size2"]
-        self.kernel_list2 = opt["kernel_list2"]
-        self.kernel_prob2 = opt["kernel_prob2"]
-        self.blur_sigma2 = opt["blur_sigma2"]
-        self.betag_range2 = opt["betag_range2"]
-        self.betap_range2 = opt["betap_range2"]
-        self.sinc_prob2 = opt["sinc_prob2"]
+        self.blur_kernel_size2 = opt.blur_kernel_size2
+        self.kernel_list2 = opt.kernel_list2
+        self.kernel_prob2 = opt.kernel_prob2
+        self.blur_sigma2 = opt.blur_sigma2
+        self.betag_range2 = opt.betag_range2
+        self.betap_range2 = opt.betap_range2
+        self.sinc_prob2 = opt.sinc_prob2
 
         # a final sinc filter
-        self.final_sinc_prob = opt["final_sinc_prob"]
+        self.final_sinc_prob = opt.final_sinc_prob
 
         self.kernel_range = [
             2 * v + 1 for v in range(3, 11)
@@ -129,14 +133,18 @@ class RealESRGANDataset(BaseDataset):
             finally:
                 retry -= 1
         assert img_bytes is not None
+        assert self.opt.use_hflip is not None
+        assert self.opt.use_rot is not None
+
         img_gt = imfrombytes(img_bytes, float32=True)
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
-        img_gt = augment(img_gt, self.opt["use_hflip"], self.opt["use_rot"])
+        img_gt = augment(img_gt, self.opt.use_hflip, self.opt.use_rot)
         assert isinstance(img_gt, np.ndarray)
 
         h, w = img_gt.shape[0:2]
-        crop_pad_size = self.opt["gt_size"] + 32
+        assert self.opt.gt_size is not None
+        crop_pad_size = self.opt.gt_size + 32
         # pad
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)
@@ -154,7 +162,7 @@ class RealESRGANDataset(BaseDataset):
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if RNG.get_rng().uniform() < self.opt["sinc_prob"]:
+        if RNG.get_rng().uniform() < self.opt.sinc_prob:
             # this sinc filter setting is for kernels ranging from [7, 21]
             if kernel_size < 13:
                 omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
@@ -179,7 +187,7 @@ class RealESRGANDataset(BaseDataset):
 
         # ------------------------ Generate kernels (used in the second degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
-        if RNG.get_rng().uniform() < self.opt["sinc_prob2"]:
+        if RNG.get_rng().uniform() < self.opt.sinc_prob2:
             if kernel_size < 13:
                 omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
             else:
@@ -203,7 +211,7 @@ class RealESRGANDataset(BaseDataset):
         kernel2 = np.pad(kernel2, ((pad_size, pad_size), (pad_size, pad_size)))
 
         # ------------------------------------- the final sinc kernel ------------------------------------- #
-        if RNG.get_rng().uniform() < self.opt["final_sinc_prob"]:
+        if RNG.get_rng().uniform() < self.opt.final_sinc_prob:
             kernel_size = random.choice(self.kernel_range)
             omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(omega_c, kernel_size, pad_to=21)

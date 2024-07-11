@@ -6,6 +6,8 @@ from typing import Any
 import torch
 from torch.utils.data import DataLoader
 
+from traiNNer.utils.redux_options import ReduxOptions
+
 
 class PrefetchGenerator(threading.Thread):
     """A general prefetch generator.
@@ -94,12 +96,12 @@ class CUDAPrefetcher:
         opt (dict): Options.
     """
 
-    def __init__(self, loader: DataLoader, opt: dict[str, Any]) -> None:
+    def __init__(self, loader: DataLoader, opt: ReduxOptions) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
         self.opt = opt
         self.stream = torch.cuda.Stream()
-        self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
+        self.device = torch.device("cuda" if opt.num_gpu != 0 else "cpu")
         self.batch = None
         self.preload()
 

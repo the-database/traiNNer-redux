@@ -1,3 +1,4 @@
+msgspec
 numpy
 opencv-python
 Pillow

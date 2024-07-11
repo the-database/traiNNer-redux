@@ -3,29 +3,29 @@ high_order_degradations_debug: false  # Save the LR and HR tiles to debug/otf fo
 high_order_degradations_debug_limit: 100  # The max number of iterations to save LR and HR tiles for.
 
 # The first degradation process.
-blur_prob: 0
+blur_prob: 0.0
 resize_prob: [0, 0, 1]  # up, down, keep
 resize_mode_list: []  # See modes: https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
 resize_mode_prob: []  # Probability each resize mode is selected.
 resize_range: [1, 1]
-gaussian_noise_prob: 0
+gaussian_noise_prob: 0.0
 noise_range: [0, 0]
 poisson_scale_range: [0, 0]
-gray_noise_prob: 0
-jpeg_prob: 0
+gray_noise_prob: 0.0
+jpeg_prob: 0.0
 jpeg_range: [75, 95]
 
 # The second degradation process.
-blur_prob2: 0
+blur_prob2: 0.0
 resize_prob2: [0, 0, 1]  # up, down, keep
 resize_mode_list2: []  # See modes: https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
 resize_mode_prob2: []  # Probability each resize mode is selected.
 resize_range2: [1, 1]
-gaussian_noise_prob2: 0
+gaussian_noise_prob2: 0.0
 noise_range2: [0, 0]
 poisson_scale_range2: [0, 0]
-gray_noise_prob2: 0
-jpeg_prob2: 0
+gray_noise_prob2: 0.0
+jpeg_prob2: 0.0
 jpeg_range2: [75, 95]
 
 # The final resize to the target resolution.

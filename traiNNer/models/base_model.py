@@ -21,16 +21,18 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
+from traiNNer.utils.options import struct2dict
+from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
 
 class BaseModel:
     """Base model."""
 
-    def __init__(self, opt: dict[str, Any]) -> None:
+    def __init__(self, opt: ReduxOptions) -> None:
         self.opt = opt
-        self.device = torch.device("cuda" if opt["num_gpu"] != 0 else "cpu")
-        self.is_train = opt["is_train"]
+        self.device = torch.device("cuda" if opt.num_gpu != 0 else "cpu")
+        self.is_train = opt.is_train
         self.schedulers: list[LRScheduler] = []
         self.optimizers: list[Optimizer] = []
         self.optimizers_skipped: list[bool] = []
@@ -38,11 +40,11 @@ class BaseModel:
         self.log_dict = {}
         self.loss_samples = 0
         self.with_metrics = (
-            opt.get("val") is not None
-            and opt["val"].get("metrics_enabled", False)
-            and opt["val"].get("metrics") is not None
+            opt.val is not None
+            and opt.val.metrics_enabled
+            and opt.val.metrics is not None
         )
-        self.use_pbar = opt.get("val") is not None and opt["val"].get("pbar", False)
+        self.use_pbar = opt.val is not None and opt.val.pbar
         self.metric_results: dict[str, Any] = {}
         self.best_metric_results: dict[str, Any] = {}
         self.first_val_completed = False
@@ -86,7 +88,7 @@ class BaseModel:
             tb_logger (tensorboard logger): Tensorboard logger.
             save_img (bool): Whether to save images. Default: False.
         """
-        if self.opt["dist"]:
+        if self.opt.dist:
             self.dist_validation(dataloader, current_iter, tb_logger, save_img)
         else:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
@@ -117,8 +119,10 @@ class BaseModel:
             return
 
         # add a dataset record
+        assert self.opt.val is not None
+        assert self.opt.val.metrics is not None
         record = {}
-        for metric, content in self.opt["val"]["metrics"].items():
+        for metric, content in self.opt.val.metrics.items():
             better = content.get("better", "higher")
             init_val = float("-inf") if better == "higher" else float("inf")
             record[metric] = {"better": better, "val": init_val, "iter": -1}
@@ -163,15 +167,16 @@ class BaseModel:
         Args:
             net (nn.Module)
         """
+        assert isinstance(self.opt.num_gpu, int)
         net = net.to(self.device)
-        if self.opt["dist"]:
-            find_unused_parameters = self.opt.get("find_unused_parameters", False)
+        if self.opt.dist:
+            find_unused_parameters = self.opt.find_unused_parameters
             net = DistributedDataParallel(
                 net,
                 device_ids=[torch.cuda.current_device()],
                 find_unused_parameters=find_unused_parameters,
             )
-        elif self.opt["num_gpu"] > 1:
+        elif self.opt.num_gpu > 1:
             net = DataParallel(net)
         return net
 
@@ -216,8 +221,9 @@ class BaseModel:
         # https://github.com/Corpsecreate/neosr/blob/a29e509dae5cd39aea94ac82d1347d2a54e1175c/neosr/models/default.py#L276
 
         """Set up schedulers."""
-        train_opt = self.opt["train"]
-        scheduler_type = train_opt["scheduler"].pop("type")
+        assert self.opt.train is not None
+        scheduler_opts = struct2dict(self.opt.train.scheduler)
+        scheduler_type = scheduler_opts.pop("type")
         # uppercase scheduler_type to make it case insensitive
         sch_typ_upper = scheduler_type.upper()
         sch_map: dict[str, type[LRScheduler]] = {
@@ -240,7 +246,7 @@ class BaseModel:
         if sch_typ_upper in sch_map:
             for optimizer in self.optimizers:
                 self.schedulers.append(
-                    sch_map[sch_typ_upper](optimizer, **train_opt["scheduler"])
+                    sch_map[sch_typ_upper](optimizer, **scheduler_opts)
                 )
         else:
             raise NotImplementedError(
@@ -337,11 +343,12 @@ class BaseModel:
             param_key (str | list[str]): The parameter key(s) to save network.
                 Default: 'params'.
         """
+        assert self.opt.path.models is not None
 
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
 
         save_filename = f"{net_label}_{current_iter_str}.safetensors"
-        save_path = os.path.join(self.opt["path"]["models"], save_filename)
+        save_path = os.path.join(self.opt.path.models, save_filename)
 
         bare_net_ = self.get_bare_model(net)
         state_dict = bare_net_.state_dict()
@@ -546,6 +553,8 @@ class BaseModel:
             epoch (int): Current epoch.
             current_iter (int): Current iteration.
         """
+        assert self.opt.path.training_states is not None
+
         if current_iter != -1:
             assert self.scaler_g is not None
             assert self.scaler_d is not None
@@ -565,7 +574,7 @@ class BaseModel:
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
             save_filename = f"{current_iter}.state"
-            save_path = os.path.join(self.opt["path"]["training_states"], save_filename)
+            save_path = os.path.join(self.opt.path.training_states, save_filename)
 
             # avoid occasional writing errors
             retry = 3
@@ -626,7 +635,7 @@ class BaseModel:
             loss_dict (OrderedDict): Loss dict.
         """
         with torch.no_grad():
-            if self.opt["dist"]:
+            if self.opt.dist:
                 keys = []
                 losses = []
                 for name, value in loss_dict.items():
@@ -634,8 +643,8 @@ class BaseModel:
                     losses.append(value)
                 losses = torch.stack(losses, 0)
                 torch.distributed.reduce(losses, dst=0)  # type: ignore
-                if self.opt["rank"] == 0:
-                    losses /= self.opt["world_size"]
+                if self.opt.rank == 0:
+                    losses /= self.opt.world_size
                 loss_dict = dict(zip(keys, losses, strict=False))
 
             log_dict = OrderedDict()
@@ -645,10 +654,10 @@ class BaseModel:
             return log_dict
 
     def setup_batchaug(self) -> None:
-        train_opt = self.opt["train"]
+        assert self.opt.train is not None
         logger = get_root_logger()
-        if train_opt.get("use_moa", False):
-            self.batch_augment = BatchAugment(train_opt)
+        if self.opt.train.use_moa:
+            self.batch_augment = BatchAugment(self.opt.scale, self.opt.train)
             logger.info(
                 "Mixture of augmentations (MoA) enabled with augs: %s and probs: %s",
                 self.batch_augment.moa_augs,

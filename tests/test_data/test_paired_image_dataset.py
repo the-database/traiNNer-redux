@@ -1,7 +1,8 @@
 from os import path as osp
 
-import yaml
+import msgspec
 from traiNNer.data.paired_image_dataset import PairedImageDataset
+from traiNNer.utils.redux_options import DatasetOptions
 
 
 def test_pairedimagedataset() -> None:
@@ -26,7 +27,7 @@ use_rot: true
 phase: train
 """
     image_names = (7, 8, 9)
-    opt = yaml.safe_load(opt_str)
+    opt = msgspec.yaml.decode(opt_str, type=DatasetOptions, strict=True)
 
     dataset = PairedImageDataset(opt)
     assert dataset.io_backend_opt["type"] == "disk"  # io backend
@@ -34,7 +35,7 @@ phase: train
     assert dataset.mean == [0.5, 0.5, 0.5]
 
     # ------------------ test scan folder mode -------------------- #
-    opt["io_backend"] = {"type": "disk"}
+    opt.io_backend = {"type": "disk"}
     dataset = PairedImageDataset(opt)
     assert dataset.io_backend_opt["type"] == "disk"  # io backend
     assert len(dataset) == 3  # whether to correctly scan folders

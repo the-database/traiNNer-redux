@@ -11,6 +11,7 @@ from traiNNer.losses.mssim_loss import MSSIMLoss
 from traiNNer.losses.perceptual_loss import PerceptualLoss
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils.config import Config
+from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.types import DataFeed
 
 
@@ -20,8 +21,8 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
 
     root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir, osp.pardir))
     opt, _ = Config.load_config_from_file(root_path, is_train=True)
-    opt["num_gpu"] = 0
-    opt["use_amp"] = False
+    opt.num_gpu = 0
+    opt.use_amp = False
 
     # build model
     model = SRModel(opt)
@@ -55,8 +56,8 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
 
     # ----------------- test save -------------------- #
     with tempfile.TemporaryDirectory() as tmpdir:
-        model.opt["path"]["models"] = tmpdir
-        model.opt["path"]["training_states"] = tmpdir
+        model.opt.path.models = tmpdir
+        model.opt.path.training_states = tmpdir
         model.save(0, 1)
 
     # ----------------- test the test function -------------------- #
@@ -70,19 +71,24 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
 
     # ----------------- test nondist_validation -------------------- #
     # construct dataloader
-    dataset_opt = {
-        "name": "Test",
-        "dataroot_gt": "datasets/val/dataset1/hr",
-        "dataroot_lq": "datasets/val/dataset1/lr",
-        "io_backend": {"type": "disk"},
-        "scale": 4,
-        "phase": "val",
-    }
+    dataset_opt = DatasetOptions(
+        name="Test",
+        dataroot_gt="datasets/val/dataset1/hr",
+        dataroot_lq="datasets/val/dataset1/lr",
+        io_backend={"type": "disk"},
+        scale=4,
+        phase="val",
+        batch_size_per_gpu=6,
+        use_hflip=True,
+        use_rot=True,
+        num_worker_per_gpu=8,
+        type="PairedImageDataset",
+    )
     dataset = PairedImageDataset(dataset_opt)
     dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=False, num_workers=0)
     assert model.is_train is True
     with tempfile.TemporaryDirectory() as tmpdir:
-        model.opt["path"]["visualization"] = tmpdir
+        model.opt.path.visualization = tmpdir
         model.nondist_validation(dataloader, 1, None, save_img=True)
         assert model.is_train is True
         # check metric_results
@@ -91,19 +97,20 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
 
     # in validation mode
     with tempfile.TemporaryDirectory() as tmpdir:
-        model.opt["is_train"] = False
-        model.opt["val"]["suffix"] = "test"
-        model.opt["path"]["visualization"] = tmpdir
-        model.opt["val"]["pbar"] = True
+        assert model.opt.val is not None
+        model.opt.is_train = False
+        model.opt.val.suffix = "test"
+        model.opt.path.visualization = tmpdir
+        model.opt.val.pbar = True
         model.nondist_validation(dataloader, 1, None, save_img=True)
         # check metric_results
         assert "psnr" in model.metric_results
         assert isinstance(model.metric_results["psnr"], float)
 
         # if opt['val']['suffix'] is None
-        model.opt["val"]["suffix"] = None
-        model.opt["name"] = "demo"
-        model.opt["path"]["visualization"] = tmpdir
+        model.opt.val.suffix = None
+        model.opt.name = "demo"
+        model.opt.path.visualization = tmpdir
         model.nondist_validation(dataloader, 1, None, save_img=True)
         # check metric_results
         assert "psnr" in model.metric_results
