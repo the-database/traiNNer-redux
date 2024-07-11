@@ -99,6 +99,7 @@ train:
   # MSSIM loss
   mssim_opt:
     type: MSSIMLoss
+    cosim: false
     loss_weight: 1.0
   # Perceptual loss
   perceptual_opt:

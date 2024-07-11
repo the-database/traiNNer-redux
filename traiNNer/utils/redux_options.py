@@ -3,6 +3,10 @@ from typing import Any, Literal
 from msgspec import Struct, field
 
 
+class StrictStruct(Struct, forbid_unknown_fields=True):
+    pass
+
+
 class LossOptions(Struct):
     type: str
 
@@ -14,8 +18,6 @@ class PixelOptions(LossOptions):
 
 class MSSIMOptions(LossOptions):
     loss_weight: float = 0
-    cosim: bool = True
-    cosim_lambda: int = 5
 
 
 class PerceptualOptions(LossOptions):
@@ -76,25 +78,25 @@ class LumaOptions(LossOptions):
     loss_weight: float = 0
 
 
-class OptimizerOptions(Struct):
+class OptimizerOptions(StrictStruct):
     type: str
     lr: float
     weight_decay: float
     betas: list[float]
 
 
-class SchedulerOptions(Struct):
+class SchedulerOptions(StrictStruct):
     type: str
     milestones: list[int]
     gamma: float
 
 
-class WandbOptions(Struct):
+class WandbOptions(StrictStruct):
     resume_id: str | None = None
     project: str | None = None
 
 
-class DatasetOptions(Struct):
+class DatasetOptions(StrictStruct):
     name: str
     type: str
     io_backend: dict[str, Any]
@@ -162,7 +164,7 @@ class DatasetOptions(Struct):
     final_sinc_prob: float = 0
 
 
-class PathOptions(Struct):
+class PathOptions(StrictStruct):
     experiments_root: str | None = None
     models: str | None = None
     training_states: str | None = None
@@ -181,7 +183,7 @@ class PathOptions(Struct):
     ignore_resume_networks: list[str] | None = None
 
 
-class TrainOptions(Struct):
+class TrainOptions(StrictStruct):
     scheduler: SchedulerOptions
     total_iter: int
     optim_g: OptimizerOptions
@@ -213,7 +215,7 @@ class TrainOptions(Struct):
     moa_debug_limit: int = 100
 
 
-class ValOptions(Struct):
+class ValOptions(StrictStruct):
     val_enabled: bool
     val_freq: int
     save_img: bool
@@ -224,14 +226,14 @@ class ValOptions(Struct):
     pbar: bool = False
 
 
-class LogOptions(Struct):
+class LogOptions(StrictStruct):
     print_freq: int
     save_checkpoint_freq: int
     use_tb_logger: bool
     wandb: WandbOptions | None = None
 
 
-class ReduxOptions(Struct):
+class ReduxOptions(StrictStruct):
     name: str
     scale: int
     num_gpu: Literal["auto"] | int
