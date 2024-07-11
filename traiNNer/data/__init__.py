@@ -1,6 +1,5 @@
 import importlib
 import random
-from copy import deepcopy
 from functools import partial
 from os import path as osp
 
@@ -45,7 +44,6 @@ def build_dataset(dataset_opt: DatasetOptions) -> BaseDataset:
             type (str): Dataset type.
     """
     logger = get_root_logger()
-    dataset_opt = deepcopy(dataset_opt)
     logger.info("Building Dataset %s...", dataset_opt.name)
 
     dataset = DATASET_REGISTRY.get(dataset_opt.type)(dataset_opt)

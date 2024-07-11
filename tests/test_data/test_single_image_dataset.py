@@ -1,7 +1,8 @@
 from os import path as osp
 
-import yaml
+import msgspec
 from traiNNer.data.single_image_dataset import SingleImageDataset
+from traiNNer.utils.redux_options import DatasetOptions
 
 
 def test_singleimagedataset() -> None:
@@ -17,12 +18,12 @@ io_backend:
 mean: [0.5, 0.5, 0.5]
 std: [0.5, 0.5, 0.5]
 """
-    opt = yaml.safe_load(opt_str)
+    opt = msgspec.yaml.decode(opt_str, type=DatasetOptions, strict=True)
 
     dataset = SingleImageDataset(opt)
 
     # ------------------ test scan folder mode -------------------- #
-    opt["io_backend"] = {"type": "disk"}
+    opt.io_backend = {"type": "disk"}
     dataset = SingleImageDataset(opt)
     assert dataset.io_backend_opt["type"] == "disk"  # io backend
     assert len(dataset) == 3  # whether to correctly scan folders
