@@ -197,7 +197,7 @@ def parse_options(
         opt.path.pretrain_network_d = osp.expanduser(opt.path.pretrain_network_d)
 
     if is_train:
-        assert opt.logger is not None
+        assert opt.logger is not None, "logger section must be defined when training"
         experiments_root = osp.join(root_path, "experiments", opt.name)
         opt.path.experiments_root = experiments_root
         opt.path.models = osp.join(experiments_root, "models")

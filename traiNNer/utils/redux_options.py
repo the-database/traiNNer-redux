@@ -167,6 +167,11 @@ class ReduxOptions(StrictStruct):
     scale: int
     num_gpu: Literal["auto"] | int
     path: PathOptions
+    datasets: dict[str, DatasetOptions]
+
+    network_g: dict[str, Any]
+    network_d: dict[str, Any] | None = None
+
     manual_seed: int | None = None
     deterministic: bool | None = None
     dist: bool | None = None
@@ -225,12 +230,6 @@ class ReduxOptions(StrictStruct):
     )
 
     queue_size: int = 180
-
-    datasets: dict[str, DatasetOptions] = {}
-
-    network_g: dict[str, Any] = {}
-    network_d: dict[str, Any] | None = None
-
     train: TrainOptions | None = None
     val: ValOptions | None = None
     logger: LogOptions | None = None
