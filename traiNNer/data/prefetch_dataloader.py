@@ -6,7 +6,7 @@ from typing import Any
 import torch
 from torch.utils.data import DataLoader
 
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 
 
 class PrefetchGenerator(threading.Thread):

@@ -19,7 +19,7 @@ from traiNNer.utils import (
     img2tensor,
     scandir,
 )
-from traiNNer.utils.optionsfile import DatasetOptions
+from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 

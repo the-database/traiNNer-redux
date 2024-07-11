@@ -3,7 +3,7 @@ import os
 
 import torchvision.utils
 from traiNNer.data import build_dataloader, build_dataset
-from traiNNer.utils.optionsfile import DatasetOptions
+from traiNNer.utils.redux_options import DatasetOptions
 
 
 def main(mode: str = "folder") -> None:

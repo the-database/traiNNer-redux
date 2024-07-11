@@ -16,7 +16,7 @@ from traiNNer.data.transforms import paired_random_crop
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils import RNG, DiffJPEG, get_root_logger
 from traiNNer.utils.img_process_util import filter2d
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.registry import MODEL_REGISTRY
 from traiNNer.utils.types import DataFeed
 

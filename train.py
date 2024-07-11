@@ -34,7 +34,7 @@ from traiNNer.utils import (
 from traiNNer.utils.config import Config
 from traiNNer.utils.misc import set_random_seed
 from traiNNer.utils.options import copy_opt_file, dict2str, struct2dict
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 
 
 def init_tb_loggers(opt: ReduxOptions) -> SummaryWriter | None:

@@ -8,7 +8,7 @@ import torch
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.utils.dist_util import get_dist_info, master_only
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 
 initialized_logger = {}
 

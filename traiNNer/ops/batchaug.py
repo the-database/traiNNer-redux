@@ -13,7 +13,7 @@ from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.utils import RNG
 from traiNNer.utils.config import Config
-from traiNNer.utils.optionsfile import TrainOptions
+from traiNNer.utils.redux_options import TrainOptions
 
 MOA_DEBUG_PATH = osp.abspath(
     osp.abspath(osp.join(osp.join(sys.argv[0], osp.pardir), "./debug/moa"))

@@ -4,7 +4,7 @@ from traiNNer.models.base_model import BaseModel
 from traiNNer.models.realesrgan_model import RealESRGANModel
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils import get_root_logger
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 
 __all__ = ["build_model"]
 

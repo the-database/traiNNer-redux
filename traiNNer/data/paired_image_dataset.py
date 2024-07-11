@@ -9,7 +9,7 @@ from traiNNer.data.data_util import (
 )
 from traiNNer.data.transforms import augment, paired_random_crop
 from traiNNer.utils import FileClient, imfrombytes, imgs2tensors
-from traiNNer.utils.optionsfile import DatasetOptions
+from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 

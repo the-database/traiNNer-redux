@@ -14,7 +14,7 @@ from traiNNer.data.data_sampler import EnlargedSampler
 from traiNNer.data.prefetch_dataloader import PrefetchDataLoader
 from traiNNer.utils import get_root_logger, scandir
 from traiNNer.utils.dist_util import get_dist_info
-from traiNNer.utils.optionsfile import DatasetOptions
+from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.rng import RNG
 from traiNNer.utils.types import DataLoaderArgs

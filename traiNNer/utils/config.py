@@ -1,7 +1,7 @@
 import argparse
 
 from traiNNer.utils.options import parse_options
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 
 
 class Config:

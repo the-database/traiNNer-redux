@@ -10,7 +10,7 @@ from traiNNer.losses.gan_loss import (
 )
 from traiNNer.utils import get_root_logger, scandir
 from traiNNer.utils.options import struct2dict
-from traiNNer.utils.optionsfile import LossOptions
+from traiNNer.utils.redux_options import LossOptions
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 __all__ = ["build_loss", "gradient_penalty_loss", "r1_penalty", "g_path_regularize"]

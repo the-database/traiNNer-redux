@@ -22,7 +22,7 @@ from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.options import struct2dict
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
 

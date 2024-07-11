@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from torch.utils import data
 
-from traiNNer.utils.optionsfile import DatasetOptions
+from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 

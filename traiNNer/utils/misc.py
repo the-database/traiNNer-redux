@@ -8,7 +8,7 @@ import torch
 
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.options import struct2dict
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 
 
 def set_random_seed(seed: int) -> None:

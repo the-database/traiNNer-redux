@@ -21,7 +21,7 @@ from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
 from traiNNer.utils.options import struct2dict
-from traiNNer.utils.optionsfile import ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
 
@@ -277,6 +277,7 @@ class SRModel(BaseModel):
 
         # optimizer d
         if self.net_d is not None:
+            assert train_opt.optim_d is not None
             optim_d_opts = struct2dict(train_opt.optim_d)
             optim_type = optim_d_opts.pop("type")
             self.optimizer_d = self.get_optimizer(

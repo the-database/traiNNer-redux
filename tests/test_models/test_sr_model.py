@@ -11,7 +11,7 @@ from traiNNer.losses.mssim_loss import MSSIMLoss
 from traiNNer.losses.perceptual_loss import PerceptualLoss
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils.config import Config
-from traiNNer.utils.optionsfile import DatasetOptions
+from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.types import DataFeed
 
 
