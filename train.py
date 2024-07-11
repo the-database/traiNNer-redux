@@ -8,6 +8,7 @@ from os import path as osp
 from typing import Any
 
 import torch
+from rich.traceback import install
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -174,6 +175,7 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
 
 
 def train_pipeline(root_path: str) -> None:
+    install()
     # torch.autograd.set_detect_anomaly(True)
     # parse options, set distributed setting, set random seed
     opt, args = Config.load_config_from_file(root_path, is_train=True)

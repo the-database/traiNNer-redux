@@ -2,6 +2,7 @@ import logging
 from os import path as osp
 
 import torch
+from rich.traceback import install
 from torch.utils.data import DataLoader
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.data.base_dataset import BaseDataset
@@ -13,6 +14,7 @@ from traiNNer.utils.options import dict2str, struct2dict
 
 
 def test_pipeline(root_path: str) -> None:
+    install()
     # parse options, set distributed setting, set ramdom seed
     opt, _ = Config.load_config_from_file(root_path, is_train=False)
     assert opt.val is not None

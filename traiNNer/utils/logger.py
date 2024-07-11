@@ -5,6 +5,7 @@ from logging import Logger
 from typing import Any
 
 import torch
+from rich.logging import RichHandler
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.utils.dist_util import get_dist_info, master_only
@@ -204,10 +205,10 @@ def get_root_logger(
         return logger
 
     format_str = "%(asctime)s %(levelname)s: %(message)s"
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(logging.Formatter(format_str))
-    logger.addHandler(stream_handler)
+    rich_handler = RichHandler(markup=True, rich_tracebacks=True, omit_repeated_times=False)
+    logger.addHandler(rich_handler)
     logger.propagate = False
+
     rank, _ = get_dist_info()
     if rank != 0:
         logger.setLevel("ERROR")
