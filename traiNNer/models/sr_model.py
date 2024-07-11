@@ -20,29 +20,29 @@ from traiNNer.losses.loss_util import get_refined_artifact_map
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.utils.options import obj2dict
+from traiNNer.utils.optionsfile import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
 
 class SRModel(BaseModel):
     """Base SR model for single image super-resolution."""
 
-    def __init__(self, opt: dict[str, Any]) -> None:
+    def __init__(self, opt: ReduxOptions) -> None:
         super().__init__(opt)
 
         # define network
-        self.net_g = build_network(opt["network_g"])
+        self.net_g = build_network(opt.network_g)
         self.net_g = self.model_to_device(self.net_g)
         # self.print_network(self.net_g)
 
         # load pretrained models
-        load_path = self.opt["path"].get("pretrain_network_g", None)
-        if load_path is not None:
-            param_key = self.opt["path"].get("param_key_g", None)
+        if self.opt.path.pretrain_network_g is not None:
             self.load_network(
                 self.net_g,
-                load_path,
-                self.opt["path"].get("strict_load_g", True),
-                param_key,
+                self.opt.path.pretrain_network_g,
+                self.opt.path.strict_load_g,
+                self.opt.path.param_key_g,
             )
 
         self.lq: Tensor | None = None
@@ -51,10 +51,8 @@ class SRModel(BaseModel):
         logger = get_root_logger()
 
         # use amp
-        self.use_amp = self.opt.get("use_amp", False)
-        self.amp_dtype = (
-            torch.bfloat16 if self.opt.get("amp_bf16", False) else torch.float16
-        )
+        self.use_amp = self.opt.use_amp
+        self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
 
         if self.use_amp:
             if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
@@ -63,7 +61,7 @@ class SRModel(BaseModel):
                 )
                 self.amp_dtype = torch.float16
 
-            network_g_name = opt["network_g"]["type"]
+            network_g_name = opt.network_g["type"]
             if (
                 self.amp_dtype == torch.float16
                 and network_g_name.lower() in ARCHS_WITHOUT_FP16
@@ -91,44 +89,41 @@ class SRModel(BaseModel):
                 "bf16" if self.amp_dtype == torch.bfloat16 else "fp16",
             )
 
-        if self.opt.get("fast_matmul", False):
+        if self.opt.fast_matmul:
             logger.info(
                 "Fast matrix multiplication and convolution operations (fast_matmul) enabled, trading precision for performance."
             )
 
-        if self.is_train:
+        if self.is_train and self.opt.train:
             # define network net_d if GAN is enabled
             self.has_gan = False
-            gan_opt = self.opt["train"].get("gan_opt")
+            gan_opt = self.opt.train.gan_opt
             if gan_opt:
-                if gan_opt.get("loss_weight", 0) > 0:
+                if gan_opt.loss_weight > 0:
                     self.has_gan = True
 
             self.net_d = None
             if self.has_gan:
-                if "optim_d" not in self.opt["train"]:
+                if self.opt.train.optim_d is None:
                     raise ValueError(
                         "GAN loss requires discriminator optimizer (optim_d). Define optim_d or disable GAN loss."
                     )
-                net_d_opt = self.opt.get("network_d", None)
-                if net_d_opt is None:
+                if self.opt.network_d is None:
                     raise ValueError(
                         "GAN loss requires discriminator network (network_d). Define network_d or disable GAN loss."
                     )
                 else:
-                    self.net_d = build_network(net_d_opt)
+                    self.net_d = build_network(self.opt.network_d)
                     self.net_d = self.model_to_device(self.net_d)
                     # self.print_network(self.net_d)
 
                     # load pretrained models
-                    load_path = self.opt["path"].get("pretrain_network_d", None)
-                    if load_path is not None:
-                        param_key = self.opt["path"].get("param_key_d", "params")
+                    if self.opt.path.pretrain_network_d is not None:
                         self.load_network(
                             self.net_d,
-                            load_path,
-                            self.opt["path"].get("strict_load_d", True),
-                            param_key,
+                            self.opt.path.pretrain_network_d,
+                            self.opt.path.strict_load_d,
+                            self.opt.path.param_key_d,
                         )
 
             self.cri_pix = None
@@ -157,14 +152,15 @@ class SRModel(BaseModel):
         if self.net_d is not None:
             self.net_d.train()
 
-        train_opt = self.opt["train"]
+        train_opt = self.opt.train
+        assert train_opt is not None
 
         logger = get_root_logger()
 
         self.scaler_g = GradScaler(enabled=self.use_amp)
         self.scaler_d = GradScaler(enabled=self.use_amp)
 
-        self.ema_decay = train_opt.get("ema_decay", 0)
+        self.ema_decay = train_opt.ema_decay
         if self.ema_decay > 0:
             logger.info(
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
@@ -172,14 +168,13 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = build_network(self.opt["network_g"]).to(self.device)
+            self.net_g_ema = build_network(self.opt.network_g).to(self.device)
             # load pretrained model
-            load_path = self.opt["path"].get("pretrain_network_g", None)
-            if load_path is not None:
+            if self.opt.path.pretrain_network_g is not None:
                 self.load_network(
                     self.net_g_ema,
-                    load_path,
-                    self.opt["path"].get("strict_load_g", True),
+                    self.opt.path.pretrain_network_g,
+                    self.opt.path.strict_load_g,
                     "params_ema",
                 )
             else:
@@ -187,80 +182,71 @@ class SRModel(BaseModel):
             self.net_g_ema.eval()
 
         # define losses
-        pixel_opt = train_opt.get("pixel_opt")
-        if pixel_opt:
-            if pixel_opt.get("loss_weight", 0) > 0:
-                self.cri_pix = build_loss(train_opt["pixel_opt"]).to(self.device)
+        if train_opt.pixel_opt:
+            if train_opt.pixel_opt.loss_weight > 0:
+                self.cri_pix = build_loss(train_opt.pixel_opt).to(self.device)
 
-        mssim_opt = train_opt.get("mssim_opt")
-        if mssim_opt:
-            if mssim_opt.get("loss_weight", 0) > 0:
-                self.cri_mssim = build_loss(train_opt["mssim_opt"]).to(self.device)
+        if train_opt.mssim_opt:
+            if train_opt.mssim_opt.loss_weight > 0:
+                self.cri_mssim = build_loss(train_opt.mssim_opt).to(self.device)
 
-        ldl_opt = train_opt.get("ldl_opt")
-        if ldl_opt:
-            if ldl_opt.get("loss_weight", 0) > 0:
-                self.cri_ldl = build_loss(train_opt["ldl_opt"]).to(self.device)
+        if train_opt.ldl_opt:
+            if train_opt.ldl_opt.loss_weight > 0:
+                self.cri_ldl = build_loss(train_opt.ldl_opt).to(self.device)
 
-        perceptual_opt = train_opt.get("perceptual_opt")
-        if perceptual_opt:
-            if perceptual_opt.get("perceptual_weight", 0) > 0:
-                self.cri_perceptual = build_loss(train_opt["perceptual_opt"]).to(
+        if train_opt.perceptual_opt:
+            if (
+                train_opt.perceptual_opt.perceptual_weight > 0
+                or train_opt.perceptual_opt.style_weight > 0
+            ):
+                self.cri_perceptual = build_loss(train_opt.perceptual_opt).to(
                     self.device
                 )
 
-        dists_opt = train_opt.get("dists_opt")
-        if dists_opt:
-            if dists_opt.get("loss_weight", 0) > 0:
-                self.cri_dists = build_loss(train_opt["dists_opt"]).to(self.device)
+        if train_opt.dists_opt:
+            if train_opt.dists_opt.loss_weight > 0:
+                self.cri_dists = build_loss(train_opt.dists_opt).to(self.device)
 
-        contextual_opt = train_opt.get("contextual_opt")
-        if contextual_opt:
-            if contextual_opt.get("loss_weight", 0) > 0:
-                self.cri_contextual = build_loss(train_opt["contextual_opt"]).to(
+        if train_opt.contextual_opt:
+            if train_opt.contextual_opt.loss_weight > 0:
+                self.cri_contextual = build_loss(train_opt.contextual_opt).to(
                     self.device
                 )
 
-        color_opt = train_opt.get("color_opt")
-        if color_opt:
-            if color_opt.get("loss_weight", 0) > 0:
-                self.cri_color = build_loss(train_opt["color_opt"]).to(self.device)
+        if train_opt.color_opt:
+            if train_opt.color_opt.loss_weight > 0:
+                self.cri_color = build_loss(train_opt.color_opt).to(self.device)
 
-        luma_opt = train_opt.get("luma_opt")
-        if luma_opt:
-            if luma_opt.get("loss_weight", 0) > 0:
-                self.cri_luma = build_loss(train_opt["luma_opt"]).to(self.device)
+        if train_opt.luma_opt:
+            if train_opt.luma_opt.loss_weight > 0:
+                self.cri_luma = build_loss(train_opt.luma_opt).to(self.device)
 
-        hsluv_opt = train_opt.get("hsluv_opt")
-        if hsluv_opt:
-            if hsluv_opt.get("loss_weight", 0) > 0:
-                self.cri_hsluv = build_loss(train_opt["hsluv_opt"]).to(self.device)
+        if train_opt.hsluv_opt:
+            if train_opt.hsluv_opt.loss_weight > 0:
+                self.cri_hsluv = build_loss(train_opt.hsluv_opt).to(self.device)
 
-        avg_opt = train_opt.get("avg_opt")
-        if avg_opt:
-            if avg_opt.get("loss_weight", 0) > 0:
-                self.cri_avg = build_loss(train_opt["avg_opt"]).to(self.device)
+        if train_opt.avg_opt:
+            if train_opt.avg_opt.loss_weight > 0:
+                self.cri_avg = build_loss(train_opt.avg_opt).to(self.device)
 
-        bicubic_opt = train_opt.get("bicubic_opt")
-        if bicubic_opt:
-            if bicubic_opt.get("loss_weight", 0) > 0:
-                self.cri_bicubic = build_loss(train_opt["bicubic_opt"]).to(self.device)
+        if train_opt.bicubic_opt:
+            if train_opt.bicubic_opt.loss_weight > 0:
+                self.cri_bicubic = build_loss(train_opt.bicubic_opt).to(self.device)
 
-        gan_opt = train_opt.get("gan_opt")
-        if gan_opt:
-            if gan_opt.get("loss_weight", 0) > 0:
-                self.cri_gan = build_loss(train_opt["gan_opt"]).to(self.device)
+        if train_opt.gan_opt:
+            if train_opt.gan_opt.loss_weight > 0:
+                self.cri_gan = build_loss(train_opt.gan_opt).to(self.device)
         else:
             self.cri_gan = None
 
         if not self.has_gan:
             # warn that discriminator network / optimizer won't be used if enabled
-            if "network_d" in self.opt:
+            if self.opt.network_d is not None:
                 logger.warning(
                     "Discriminator network (network_d) is defined but GAN loss is disabled. Discriminator network will have no effect."
                 )
 
-            if "optim_d" in self.opt["train"]:
+            if train_opt.optim_d is not None:
                 logger.warning(
                     "Discriminator optimizer (optim_d) is defined but GAN loss is disabled. Discriminator optimizer will have no effect."
                 )
@@ -273,7 +259,8 @@ class SRModel(BaseModel):
         self.setup_schedulers()
 
     def setup_optimizers(self) -> None:
-        train_opt = self.opt["train"]
+        train_opt = self.opt.train
+        assert train_opt is not None
         optim_params = []
         for k, v in self.net_g.named_parameters():
             if v.requires_grad:
@@ -282,18 +269,18 @@ class SRModel(BaseModel):
                 logger = get_root_logger()
                 logger.warning("Params %s will not be optimized.", k)
 
-        optim_type = train_opt["optim_g"].pop("type")
-        self.optimizer_g = self.get_optimizer(
-            optim_type, optim_params, **train_opt["optim_g"]
-        )
+        optim_g_opts = obj2dict(train_opt.optim_g)
+        optim_type = optim_g_opts.pop("type")
+        self.optimizer_g = self.get_optimizer(optim_type, optim_params, **optim_g_opts)
         self.optimizers.append(self.optimizer_g)
         self.optimizers_skipped.append(False)
 
         # optimizer d
         if self.net_d is not None:
-            optim_type = train_opt["optim_d"].pop("type")
+            optim_d_opts = obj2dict(train_opt.optim_d)
+            optim_type = optim_d_opts.pop("type")
             self.optimizer_d = self.get_optimizer(
-                optim_type, self.net_d.parameters(), **train_opt["optim_d"]
+                optim_type, self.net_d.parameters(), **optim_d_opts
             )
             self.optimizers.append(self.optimizer_d)
             self.optimizers_skipped.append(False)
@@ -479,7 +466,7 @@ class SRModel(BaseModel):
         tb_logger: SummaryWriter | None,
         save_img: bool,
     ) -> None:
-        if self.opt["rank"] == 0:
+        if self.opt.rank == 0:
             self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(
@@ -492,13 +479,16 @@ class SRModel(BaseModel):
         self.is_train = False
 
         assert isinstance(dataloader.dataset, BaseDataset)
+        assert self.opt.val is not None
+        assert self.opt.path.visualization is not None
 
-        dataset_name = dataloader.dataset.opt["name"]
+        dataset_name = dataloader.dataset.opt.name
 
         if self.with_metrics:
+            assert self.opt.val.metrics is not None
             if len(self.metric_results) == 0:  # only execute in the first run
                 self.metric_results: dict[str, Any] = {
-                    metric: 0 for metric in self.opt["val"]["metrics"].keys()
+                    metric: 0 for metric in self.opt.val.metrics.keys()
                 }
             # initialize the best metric results for each dataset_name (supporting multiple validation datasets)
             self._initialize_best_metric_results(dataset_name)
@@ -516,7 +506,7 @@ class SRModel(BaseModel):
             logger.info(
                 "Saving %d validation images to: %s",
                 len(dataloader),
-                self.opt["path"]["visualization"],
+                self.opt.path.visualization,
             )
 
         for val_data in dataloader:
@@ -538,32 +528,33 @@ class SRModel(BaseModel):
             torch.cuda.empty_cache()
 
             if save_img:
-                if self.opt["is_train"]:
-                    save_img_dir = osp.join(self.opt["path"]["visualization"], img_name)
+                if self.opt.is_train:
+                    save_img_dir = osp.join(self.opt.path.visualization, img_name)
                     save_img_path = osp.join(
                         save_img_dir, f"{img_name}_{current_iter:06d}.png"
                     )
-                elif self.opt["val"]["suffix"]:
+                elif self.opt.val.suffix:
                     save_img_path = osp.join(
-                        self.opt["path"]["visualization"],
+                        self.opt.path.visualization,
                         dataset_name,
-                        f'{img_name}_{self.opt["val"]["suffix"]}.png',
+                        f"{img_name}_{self.opt.val.suffix}.png",
                     )
                 else:
                     save_img_path = osp.join(
-                        self.opt["path"]["visualization"],
+                        self.opt.path.visualization,
                         dataset_name,
-                        f'{img_name}_{self.opt["name"]}.png',
+                        f"{img_name}_{self.opt.name}.png",
                     )
                 imwrite(sr_img, save_img_path)
-                if self.opt["is_train"] and not self.first_val_completed:
+                if self.opt.is_train and not self.first_val_completed:
                     lr_img_target_path = osp.join(save_img_dir, f"{img_name}_lr.png")
                     if not os.path.exists(lr_img_target_path):
                         shutil.copy(val_data["lq_path"][0], lr_img_target_path)
 
             if self.with_metrics:
                 # calculate metrics
-                for name, opt_ in self.opt["val"]["metrics"].items():
+                assert self.opt.val.metrics is not None
+                for name, opt_ in self.opt.val.metrics.items():
                     self.metric_results[name] += calculate_metric(
                         metric_data, opt_, self.device
                     )

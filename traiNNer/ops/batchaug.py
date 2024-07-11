@@ -4,7 +4,6 @@ import os
 import random
 import sys
 from os import path as osp
-from typing import Any
 
 import numpy as np
 import torch
@@ -14,6 +13,7 @@ from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.utils import RNG
 from traiNNer.utils.config import Config
+from traiNNer.utils.optionsfile import TrainOptions
 
 MOA_DEBUG_PATH = osp.abspath(
     osp.abspath(osp.join(osp.join(sys.argv[0], osp.pardir), "./debug/moa"))
@@ -21,16 +21,12 @@ MOA_DEBUG_PATH = osp.abspath(
 
 
 class BatchAugment:
-    def __init__(self, train_opt: dict[str, Any]) -> None:
-        self.moa_augs = train_opt.get(
-            "moa_augs", ["none", "mixup", "cutmix", "resizemix"]
-        )  # , "cutblur"]
-        self.moa_probs = train_opt.get(
-            "moa_probs", [0.4, 0.084, 0.084, 0.084, 0.348]
-        )  # , 1.0]
+    def __init__(self, train_opt: TrainOptions) -> None:
+        self.moa_augs = train_opt.moa_augs
+        self.moa_probs = train_opt.moa_probs
         self.scale = Config.get_scale()
-        self.debug = train_opt.get("moa_debug", False)
-        self.debug_limit = train_opt.get("moa_debug_limit", 0)
+        self.debug = train_opt.moa_debug
+        self.debug_limit = train_opt.moa_debug_limit
 
     def __call__(self, img1: Tensor, img2: Tensor) -> tuple[Tensor, Tensor]:
         """Apply the configured augmentations.

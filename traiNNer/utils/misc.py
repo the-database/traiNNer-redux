@@ -1,13 +1,14 @@
 import os
 import random
 import time
-from collections.abc import Generator, Mapping
+from collections.abc import Generator
 from os import path as osp
-from typing import Any
 
 import torch
 
 from traiNNer.utils.dist_util import master_only
+from traiNNer.utils.options import obj2dict
+from traiNNer.utils.optionsfile import ReduxOptions
 
 
 def set_random_seed(seed: int) -> None:
@@ -34,10 +35,10 @@ def mkdir_and_rename(path: str) -> None:
 
 
 @master_only
-def make_exp_dirs(opt: Mapping[str, Any]) -> None:
+def make_exp_dirs(opt: ReduxOptions) -> None:
     """Make dirs for experiments."""
-    path_opt = opt["path"].copy()
-    if opt["is_train"]:
+    path_opt = obj2dict(opt.path)
+    if opt.is_train:
         mkdir_and_rename(path_opt.pop("experiments_root"))
     else:
         mkdir_and_rename(path_opt.pop("results_root"))
@@ -99,48 +100,50 @@ def scandir(
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
-def check_resume(opt: Mapping[str, Any], resume_iter: int) -> None:
+def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
     """Check resume states and pretrain_network paths.
 
     Args:
         opt (dict): Options.
         resume_iter (int): Resume iteration.
     """
-
+    assert opt.path.models is not None
     model_extensions = ["safetensors", "pth"]
 
-    if opt["path"]["resume_state"]:
-        # get all the networks
-        networks = [key for key in opt.keys() if key.startswith("network_")]
-        flag_pretrain = False
-        for network in networks:
-            if opt["path"].get(f"pretrain_{network}") is not None:
-                flag_pretrain = True
+    if opt.path.resume_state:
+        flag_pretrain = (opt.path.pretrain_network_g is not None) or (
+            opt.network_d and opt.path.pretrain_network_d is not None
+        )
         if flag_pretrain:
             print("pretrain_network path will be ignored during resuming.")
         # set pretrained model paths
-        for network in networks:
-            name = f"pretrain_{network}"
-            basename = network.replace("network_", "")
-            if opt["path"].get("ignore_resume_networks") is None or (
-                network not in opt["path"]["ignore_resume_networks"]
-            ):
-                for ext in model_extensions:
-                    basepath = osp.join(
-                        opt["path"]["models"], f"net_{basename}_{resume_iter}"
-                    )
+        if (
+            opt.path.ignore_resume_networks is None
+            or "network_g" not in opt.path.ignore_resume_networks
+        ):
+            for ext in model_extensions:
+                basepath = osp.join(opt.path.models, f"net_g_{resume_iter}")
+                if osp.exists(f"{basepath}.{ext}"):
+                    opt.path.pretrain_network_g = f"{basepath}.{ext}"
+                    print(f"Set pretrain_network_g to {opt.path.pretrain_network_g}")
 
-                    if osp.exists(f"{basepath}.{ext}"):
-                        opt["path"][name] = f"{basepath}.{ext}"
-                        print(f"Set {name} to {opt['path'][name]}")
-                        break
+        if opt.network_d is not None and (
+            opt.path.ignore_resume_networks is None
+            or "network_d" not in opt.path.ignore_resume_networks
+        ):
+            for ext in model_extensions:
+                basepath = osp.join(opt.path.models, f"net_d_{resume_iter}")
+                if osp.exists(f"{basepath}.{ext}"):
+                    opt.path.pretrain_network_d = f"{basepath}.{ext}"
+                    print(f"Set pretrain_network_d to {opt.path.pretrain_network_d}")
 
-        # change param_key to params in resume
-        param_keys = [key for key in opt["path"].keys() if key.startswith("param_key")]
-        for param_key in param_keys:
-            if opt["path"][param_key] == "params_ema":
-                opt["path"][param_key] = "params"
-                print(f"Set {param_key} to params")
+        if opt.path.param_key_g == "params_ema":
+            opt.path.param_key_g = "params"
+            print("Set param_key_g to params")
+
+        if opt.path.param_key_d == "params_ema":
+            opt.path.param_key_d = "params"
+            print("Set param_key_d to params")
 
 
 def sizeof_fmt(size: float, suffix: str = "B") -> str:

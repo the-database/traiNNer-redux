@@ -1,5 +1,3 @@
-from typing import Any
-
 import numpy as np
 from torchvision.transforms.functional import normalize
 
@@ -11,6 +9,7 @@ from traiNNer.data.data_util import (
 )
 from traiNNer.data.transforms import augment, paired_random_crop
 from traiNNer.utils import FileClient, imfrombytes, imgs2tensors
+from traiNNer.utils.optionsfile import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 
@@ -43,20 +42,25 @@ class PairedImageDataset(BaseDataset):
         phase (str): 'train' or 'val'.
     """
 
-    def __init__(self, opt: dict[str, Any]) -> None:
+    def __init__(self, opt: DatasetOptions) -> None:
         super().__init__(opt)
         # file client (io backend)
         self.file_client = None
-        self.io_backend_opt = opt["io_backend"]
-        self.mean = opt["mean"] if "mean" in opt else None
-        self.std = opt["std"] if "std" in opt else None
-        self.color = False if "color" in self.opt and self.opt["color"] == "y" else True
+        self.io_backend_opt = opt.io_backend
+        self.mean = opt.mean
+        self.std = opt.std
+        self.color = opt.color != "y"
 
-        self.gt_folder, self.lq_folder = opt["dataroot_gt"], opt["dataroot_lq"]
-        if "filename_tmpl" in opt:
-            self.filename_tmpl = opt["filename_tmpl"]
-        else:
-            self.filename_tmpl = "{}"
+        self.gt_folder, self.lq_folder = opt.dataroot_gt, opt.dataroot_lq
+
+        assert (
+            self.lq_folder is not None
+        ), f"dataroot_lq must be defined for dataset {opt.name}"
+        assert (
+            self.gt_folder is not None
+        ), f"dataroot_gt must be defined for dataset {opt.name}"
+
+        self.filename_tmpl = opt.filename_tmpl
 
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = [self.lq_folder, self.gt_folder]
@@ -64,11 +68,11 @@ class PairedImageDataset(BaseDataset):
             self.paths = paired_paths_from_lmdb(
                 [self.lq_folder, self.gt_folder], ["lq", "gt"]
             )
-        elif "meta_info" in self.opt and self.opt["meta_info"] is not None:
+        elif self.opt.meta_info is not None:
             self.paths = paired_paths_from_meta_info_file(
                 [self.lq_folder, self.gt_folder],
                 ["lq", "gt"],
-                self.opt["meta_info"],
+                self.opt.meta_info,
                 self.filename_tmpl,
             )
         else:
@@ -82,7 +86,8 @@ class PairedImageDataset(BaseDataset):
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
             )
 
-        scale = self.opt["scale"]
+        scale = self.opt.scale
+        assert scale is not None
 
         # Load gt and lq images. Dimension order: HWC; channel order: BGR;
         # image range: [0, 1], float32.
@@ -103,20 +108,24 @@ class PairedImageDataset(BaseDataset):
             raise AttributeError(lq_path) from err
 
         # augmentation for training
-        if self.opt["phase"] == "train":
-            gt_size = self.opt["gt_size"]
+        if self.opt.phase == "train":
+            assert self.opt.gt_size is not None
+            assert self.opt.use_hflip is not None
+            assert self.opt.use_rot is not None
             # random crop
-            img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
+            img_gt, img_lq = paired_random_crop(
+                img_gt, img_lq, self.opt.gt_size, scale, gt_path
+            )
             # flip, rotation
             img_gt, img_lq = augment(
-                [img_gt, img_lq], self.opt["use_hflip"], self.opt["use_rot"]
+                [img_gt, img_lq], self.opt.use_hflip, self.opt.use_rot
             )
             assert isinstance(img_gt, np.ndarray)
             assert isinstance(img_lq, np.ndarray)
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop
-        if self.opt["phase"] != "train":
+        if self.opt.phase != "train":
             img_gt = img_gt[0 : img_lq.shape[0] * scale, 0 : img_lq.shape[1] * scale, :]
 
         # BGR to RGB, HWC to CHW, numpy to tensor

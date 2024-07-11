@@ -1,15 +1,15 @@
 from abc import abstractmethod
-from typing import Any
 
 from torch.utils import data
 
+from traiNNer.utils.optionsfile import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 
 
 @DATASET_REGISTRY.register()
 class BaseDataset(data.Dataset):
-    def __init__(self, opt: dict[str, Any]) -> None:
+    def __init__(self, opt: DatasetOptions) -> None:
         super().__init__()
         self.opt = opt
 

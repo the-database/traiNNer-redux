@@ -1,5 +1,4 @@
 from os import path as osp
-from typing import Any
 
 from torch import Tensor
 from torchvision.transforms.functional import normalize
@@ -7,6 +6,7 @@ from torchvision.transforms.functional import normalize
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_util import paths_from_lmdb
 from traiNNer.utils import FileClient, imfrombytes, img2tensor, rgb2ycbcr, scandir
+from traiNNer.utils.optionsfile import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
 
@@ -28,21 +28,25 @@ class SingleImageDataset(BaseDataset):
             io_backend (dict): IO backend type and other kwarg.
     """
 
-    def __init__(self, opt: dict[str, Any]) -> None:
+    def __init__(self, opt: DatasetOptions) -> None:
         super().__init__(opt)
         # file client (io backend)
         self.file_client = None
-        self.io_backend_opt = opt["io_backend"]
-        self.mean = opt["mean"] if "mean" in opt else None
-        self.std = opt["std"] if "std" in opt else None
-        self.lq_folder = opt["dataroot_lq"]
+        self.io_backend_opt = opt.io_backend
+        self.mean = opt.mean
+        self.std = opt.std
+        self.lq_folder = opt.dataroot_lq
+
+        assert (
+            self.lq_folder is not None
+        ), f"dataroot_lq must be defined for dataset {opt.name}"
 
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = [self.lq_folder]
             self.io_backend_opt["client_keys"] = ["lq"]
             self.paths = paths_from_lmdb(self.lq_folder)
-        elif "meta_info" in self.opt:
-            with open(self.opt["meta_info"]) as fin:
+        elif self.opt.meta_info is not None:
+            with open(self.opt.meta_info) as fin:
                 self.paths = [
                     osp.join(self.lq_folder, line.rstrip().split(" ")[0])
                     for line in fin
@@ -62,7 +66,7 @@ class SingleImageDataset(BaseDataset):
         img_lq = imfrombytes(img_bytes, float32=True)
 
         # color space transform
-        if "color" in self.opt and self.opt["color"] == "y":
+        if self.opt.color == "y":
             img_lq = rgb2ycbcr(img_lq, y_only=True)[..., None]
 
         # BGR to RGB, HWC to CHW, numpy to tensor

@@ -3,6 +3,7 @@ import os
 
 import torchvision.utils
 from traiNNer.data import build_dataloader, build_dataset
+from traiNNer.utils.optionsfile import DatasetOptions
 
 
 def main(mode: str = "folder") -> None:
@@ -11,47 +12,41 @@ def main(mode: str = "folder") -> None:
     Args:
         mode: There are three modes: 'lmdb', 'folder', 'meta_info'.
     """
-    opt = {}
-    opt["dist"] = False
-    opt["phase"] = "train"
+    opt = DatasetOptions(
+        phase="train",
+        name="DIV2K",
+        type="PairedImageDataset",
+        gt_size=128,
+        use_hflip=True,
+        use_rot=True,
+        num_worker_per_gpu=2,
+        batch_size_per_gpu=16,
+        scale=4,
+        dataset_enlarge_ratio=1,
+        dataroot_gt="datasets/DIV2K/DIV2K_train_HR_sub",
+        dataroot_lq="datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub",
+        filename_tmpl="{}",
+        io_backend={"type": "disk"},
+    )
 
-    opt["name"] = "DIV2K"
-    opt["type"] = "PairedImageDataset"
-    if mode == "folder":
-        opt["dataroot_gt"] = "datasets/DIV2K/DIV2K_train_HR_sub"
-        opt["dataroot_lq"] = "datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"
-        opt["filename_tmpl"] = "{}"
-        opt["io_backend"] = {"type": "disk"}
-    elif mode == "meta_info":
-        opt["dataroot_gt"] = "datasets/DIV2K/DIV2K_train_HR_sub"
-        opt["dataroot_lq"] = "datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"
-        opt["meta_info"] = "traiNNer/data/meta_info/meta_info_DIV2K800sub_GT.txt"
-        opt["filename_tmpl"] = "{}"
-        opt["io_backend"] = {"type": "disk"}
+    if mode == "meta_info":
+        opt.dataroot_gt = "datasets/DIV2K/DIV2K_train_HR_sub"
+        opt.dataroot_lq = "datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"
+        opt.meta_info = "traiNNer/data/meta_info/meta_info_DIV2K800sub_GT.txt"
+        opt.filename_tmpl = "{}"
+        opt.io_backend = {"type": "disk"}
     elif mode == "lmdb":
-        opt["dataroot_gt"] = "datasets/DIV2K/DIV2K_train_HR_sub.lmdb"
-        opt["dataroot_lq"] = "datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb"
-        opt["io_backend"] = {"type": "lmdb"}
-
-    opt["gt_size"] = 128
-    opt["use_hflip"] = True
-    opt["use_rot"] = True
-
-    opt["num_worker_per_gpu"] = 2
-    opt["batch_size_per_gpu"] = 16
-    opt["scale"] = 4
-
-    opt["dataset_enlarge_ratio"] = 1
+        opt.dataroot_gt = "datasets/DIV2K/DIV2K_train_HR_sub.lmdb"
+        opt.dataroot_lq = "datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb"
+        opt.io_backend = {"type": "lmdb"}
 
     os.makedirs("tmp", exist_ok=True)
 
     dataset = build_dataset(opt)
-    data_loader = build_dataloader(
-        dataset, opt, num_gpu=0, dist=opt["dist"], sampler=None
-    )
+    data_loader = build_dataloader(dataset, opt, num_gpu=0, dist=False, sampler=None)
 
-    nrow = int(math.sqrt(opt["batch_size_per_gpu"]))
-    padding = 2 if opt["phase"] == "train" else 0
+    nrow = int(math.sqrt(opt.batch_size_per_gpu))
+    padding = 2 if opt.phase == "train" else 0
 
     print("start...")
     for i, data in enumerate(data_loader):

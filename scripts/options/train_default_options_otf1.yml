@@ -12,6 +12,7 @@ gaussian_noise_prob: 0
 noise_range: [0, 0]
 poisson_scale_range: [0, 0]
 gray_noise_prob: 0
+jpeg_prob: 1
 jpeg_range: [75, 95]
 
 # The second degradation process.
@@ -24,6 +25,7 @@ gaussian_noise_prob2: 0
 noise_range2: [0, 0]
 poisson_scale_range2: [0, 0]
 gray_noise_prob2: 0
+jpeg_prob2: 1
 jpeg_range2: [75, 95]
 
 # The final resize to the target resolution.

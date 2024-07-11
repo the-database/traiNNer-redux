@@ -1,7 +1,6 @@
 import datetime
 import logging
 import time
-from collections.abc import Mapping
 from logging import Logger
 from typing import Any
 
@@ -9,6 +8,7 @@ import torch
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.utils.dist_util import get_dist_info, master_only
+from traiNNer.utils.optionsfile import ReduxOptions
 
 initialized_logger = {}
 
@@ -67,15 +67,17 @@ class MessageLogger:
 
     def __init__(
         self,
-        opt: Mapping[str, Any],
+        opt: ReduxOptions,
         start_iter: int = 1,
         tb_logger: SummaryWriter | None = None,
     ) -> None:
-        self.exp_name = opt["name"]
-        self.interval = opt["logger"]["print_freq"]
+        assert opt.logger is not None
+        assert opt.train is not None
+        self.exp_name = opt.name
+        self.interval = opt.logger.print_freq
         self.start_iter = start_iter
-        self.max_iters = opt["train"]["total_iter"]
-        self.use_tb_logger = opt["logger"]["use_tb_logger"]
+        self.max_iters = opt.train.total_iter
+        self.use_tb_logger = opt.logger.use_tb_logger
         self.tb_logger = tb_logger
 
         if self.use_tb_logger:
@@ -144,14 +146,16 @@ def init_tb_logger(log_dir: str) -> SummaryWriter:
 
 
 @master_only
-def init_wandb_logger(opt: Mapping[str, Any]) -> None:
+def init_wandb_logger(opt: ReduxOptions) -> None:
     """We now only use wandb to sync tensorboard log."""
     import wandb  # type: ignore
 
+    assert opt.logger is not None
+    assert opt.logger.wandb is not None
     logger = get_root_logger()
 
-    project = opt["logger"]["wandb"]["project"]
-    resume_id = opt["logger"]["wandb"].get("resume_id")
+    project = opt.logger.wandb.project
+    resume_id = opt.logger.wandb.resume_id
     if resume_id:
         wandb_id = resume_id
         resume = "allow"
@@ -163,7 +167,7 @@ def init_wandb_logger(opt: Mapping[str, Any]) -> None:
     wandb.init(
         id=wandb_id,
         resume=resume,
-        name=opt["name"],
+        name=opt.name,
         config=opt,  # type: ignore
         project=project,
         sync_tensorboard=True,

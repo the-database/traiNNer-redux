@@ -5,11 +5,13 @@ from collections import OrderedDict
 from os import path as osp
 from typing import Any
 
+import msgspec
 import torch
 import yaml
 from yaml import MappingNode
 
 from traiNNer.utils.dist_util import get_dist_info, init_dist, master_only
+from traiNNer.utils.optionsfile import ReduxOptions
 
 try:
     from yaml import CDumper as Dumper
@@ -38,7 +40,7 @@ def ordered_yaml() -> tuple[type[Loader], type[Dumper]]:
     return Loader, Dumper
 
 
-def yaml_load(file_path: str) -> dict[str, Any]:
+def yaml_load(file_path: str) -> ReduxOptions:
     """Load yaml file or string.
 
     Args:
@@ -51,7 +53,12 @@ def yaml_load(file_path: str) -> dict[str, Any]:
         raise FileNotFoundError(f"Options file does not exist: {file_path}")
 
     with open(file_path) as f:
-        return yaml.load(f, Loader=ordered_yaml()[0])
+        contents = f.read()
+        return msgspec.yaml.decode(contents, type=ReduxOptions, strict=True)
+
+
+def obj2dict(obj: object) -> dict[str, Any]:
+    return {key: value for key, value in vars(obj).items() if not key.startswith("_")}
 
 
 def dict2str(opt: dict[str, Any], indent_level: int = 1) -> str:
@@ -101,7 +108,7 @@ def _postprocess_yml_value(value: str) -> None | bool | float | int | list[Any] 
 
 def parse_options(
     root_path: str, is_train: bool = True
-) -> tuple[dict[str, Any], argparse.Namespace]:
+) -> tuple[ReduxOptions, argparse.Namespace]:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-opt", type=str, required=True, help="Path to option YAML file."
@@ -128,22 +135,20 @@ def parse_options(
 
     # distributed settings
     if args.launcher == "none":
-        opt["dist"] = False
+        opt.dist = False
         print("Disable distributed.", flush=True)
     else:
-        opt["dist"] = True
-        if args.launcher == "slurm" and "dist_params" in opt:
-            init_dist(args.launcher, **opt["dist_params"])
+        opt.dist = True
+        if args.launcher == "slurm" and opt.dist_params is not None:
+            init_dist(args.launcher, **opt.dist_params)
         else:
             init_dist(args.launcher)
-    opt["rank"], opt["world_size"] = get_dist_info()
+    opt.rank, opt.world_size = get_dist_info()
 
     # random seed
-    seed = opt.get("manual_seed")
-    opt["deterministic"] = seed is not None and seed > 0
-    if not opt["deterministic"]:
-        seed = random.randint(1024, 10000)
-        opt["manual_seed"] = seed
+    opt.deterministic = opt.manual_seed is not None and opt.manual_seed > 0
+    if not opt.deterministic:
+        opt.manual_seed = random.randint(1024, 10000)
 
     # force to update yml options
     if args.force_yml is not None:
@@ -159,52 +164,54 @@ def parse_options(
             # using exec function
             exec(eval_str)
 
-    opt["auto_resume"] = args.auto_resume
-    opt["is_train"] = is_train
+    opt.auto_resume = args.auto_resume
+    opt.is_train = is_train
 
     # debug setting
-    if args.debug and not opt["name"].startswith("debug"):
-        opt["name"] = "debug_" + opt["name"]
+    if args.debug and not opt.name.startswith("debug"):
+        opt.name = "debug_" + opt.name
 
-    if opt["num_gpu"] == "auto":
-        opt["num_gpu"] = torch.cuda.device_count()
+    if opt.num_gpu == "auto":
+        opt.num_gpu = torch.cuda.device_count()
 
     # datasets
-    for full_phase, dataset in opt["datasets"].items():
+    for full_phase, dataset in opt.datasets.items():
         # for multiple datasets, e.g., val_1, val_2; test_1, test_2
         phase = full_phase.split("_")[0]
-        dataset["phase"] = phase
-        if "scale" in opt:
-            dataset["scale"] = opt["scale"]
-        if dataset.get("dataroot_gt") is not None:
-            dataset["dataroot_gt"] = osp.expanduser(dataset["dataroot_gt"])
-        if dataset.get("dataroot_lq") is not None:
-            dataset["dataroot_lq"] = osp.expanduser(dataset["dataroot_lq"])
+        dataset.phase = phase
+        dataset.scale = opt.scale
+        if dataset.dataroot_gt is not None:
+            dataset.dataroot_gt = osp.expanduser(dataset.dataroot_gt)
+        if dataset.dataroot_lq is not None:
+            dataset.dataroot_lq = osp.expanduser(dataset.dataroot_lq)
 
-    # paths
-    for key, val in opt["path"].items():
-        if (val is not None) and ("resume_state" in key or "pretrain_network" in key):
-            opt["path"][key] = osp.expanduser(val)
+    if opt.path.resume_state is not None:
+        opt.path.resume_state = osp.expanduser(opt.path.resume_state)
+    if opt.path.pretrain_network_g is not None:
+        opt.path.pretrain_network_g = osp.expanduser(opt.path.pretrain_network_g)
+    if opt.path.pretrain_network_d is not None:
+        opt.path.pretrain_network_d = osp.expanduser(opt.path.pretrain_network_d)
 
     if is_train:
-        experiments_root = osp.join(root_path, "experiments", opt["name"])
-        opt["path"]["experiments_root"] = experiments_root
-        opt["path"]["models"] = osp.join(experiments_root, "models")
-        opt["path"]["training_states"] = osp.join(experiments_root, "training_states")
-        opt["path"]["log"] = experiments_root
-        opt["path"]["visualization"] = osp.join(experiments_root, "visualization")
+        assert opt.logger is not None
+        experiments_root = osp.join(root_path, "experiments", opt.name)
+        opt.path.experiments_root = experiments_root
+        opt.path.models = osp.join(experiments_root, "models")
+        opt.path.training_states = osp.join(experiments_root, "training_states")
+        opt.path.log = experiments_root
+        opt.path.visualization = osp.join(experiments_root, "visualization")
 
         # change some options for debug mode
-        if "debug" in opt["name"]:
-            if "val" in opt:
-                opt["val"]["val_freq"] = 8
-            opt["logger"]["print_freq"] = 1
-            opt["logger"]["save_checkpoint_freq"] = 8
+        if "debug" in opt.name:
+            if opt.val is not None:
+                opt.val.val_freq = 8
+            opt.logger.print_freq = 1
+            opt.logger.save_checkpoint_freq = 8
     else:  # test
-        results_root = osp.join(root_path, "results", opt["name"])
-        opt["path"]["results_root"] = results_root
-        opt["path"]["log"] = results_root
-        opt["path"]["visualization"] = osp.join(results_root, "visualization")
+        results_root = osp.join(root_path, "results", opt.name)
+        opt.path.results_root = results_root
+        opt.path.log = results_root
+        opt.path.visualization = osp.join(results_root, "visualization")
 
     return opt, args
 

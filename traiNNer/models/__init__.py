@@ -1,15 +1,15 @@
 from copy import deepcopy
-from typing import Any
 
 from traiNNer.models.base_model import BaseModel
 from traiNNer.models.realesrgan_model import RealESRGANModel
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils import get_root_logger
+from traiNNer.utils.optionsfile import ReduxOptions
 
 __all__ = ["build_model"]
 
 
-def build_model(opt: dict[str, Any]) -> BaseModel:
+def build_model(opt: ReduxOptions) -> BaseModel:
     """Build model from options.
 
     Args:
@@ -18,7 +18,7 @@ def build_model(opt: dict[str, Any]) -> BaseModel:
     """
     opt = deepcopy(opt)
 
-    if opt.get("high_order_degradation", False):
+    if not opt.high_order_degradation:
         model = RealESRGANModel(opt)
     else:
         model = SRModel(opt)
