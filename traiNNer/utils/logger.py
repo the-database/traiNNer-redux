@@ -205,7 +205,7 @@ def get_root_logger(
         return logger
 
     format_str = "%(asctime)s %(levelname)s: %(message)s"
-    rich_handler = RichHandler(markup=True, rich_tracebacks=True, omit_repeated_times=False)
+    rich_handler = RichHandler(rich_tracebacks=True, omit_repeated_times=False)
     logger.addHandler(rich_handler)
     logger.propagate = False
 
