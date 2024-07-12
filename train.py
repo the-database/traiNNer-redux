@@ -295,9 +295,7 @@ def train_pipeline(root_path: str) -> None:
 
     def handle_keyboard_interrupt(signum: int, frame: FrameType | None) -> None:
         nonlocal interrupt_received
-        logger.info(
-            "User interrupted. Preparing to save state..."
-        )
+        logger.info("User interrupted. Preparing to save state...")
         interrupt_received = True
 
     signal.signal(signal.SIGINT, handle_keyboard_interrupt)
