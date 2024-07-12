@@ -49,7 +49,10 @@ def build_dataset(dataset_opt: DatasetOptions) -> BaseDataset:
     dataset = DATASET_REGISTRY.get(dataset_opt.type)(dataset_opt)
 
     logger.info(
-        "Dataset [%s] - %s is built.", dataset.__class__.__name__, dataset_opt.name
+        "Dataset [bold]%s[/bold] - %s is built.",
+        dataset.__class__.__name__,
+        dataset_opt.name,
+        extra={"markup": True},
     )
     return dataset
 

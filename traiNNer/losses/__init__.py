@@ -41,5 +41,9 @@ def build_loss(loss_opt: dict[str, Any]) -> nn.Module:
     loss_type = opt.pop("type")
     loss = LOSS_REGISTRY.get(loss_type)(**opt)
     logger = get_root_logger()
-    logger.info("Loss [%s] is created.", loss.__class__.__name__)
+    logger.info(
+        "Loss [bold]%s[/bold] is created.",
+        loss.__class__.__name__,
+        extra={"markup": True},
+    )
     return loss

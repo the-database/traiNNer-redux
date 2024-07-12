@@ -68,14 +68,16 @@ class SRModel(BaseModel):
             ):
                 if torch.cuda.is_bf16_supported():
                     logger.warning(
-                        "AMP with fp16 was enabled but network_g [%s] does not support fp16. Falling back to bf16.",
+                        "AMP with fp16 was enabled but network_g [bold]%s[/bold] does not support fp16. Falling back to bf16.",
                         network_g_name,
+                        extra={"markup": True},
                     )
                     self.amp_dtype = torch.bfloat16
                 else:
                     logger.warning(
-                        "AMP with fp16 was enabled but network_g [%s] does not support fp16. Disabling AMP.",
+                        "AMP with fp16 was enabled but network_g [bold]%s[/bold] does not support fp16. Disabling AMP.",
                         network_g_name,
+                        extra={"markup": True},
                     )
                     self.use_amp = False
         elif self.amp_dtype == torch.bfloat16:

@@ -415,10 +415,12 @@ class BaseModel:
             for k in common_keys:
                 if crt_net_state_dict[k].size() != load_net[k].size():
                     logger.warning(
-                        "Size different, ignore [%s]: crt_net: " "%s; load_net: %s",
+                        "Size different, ignore [bold]%s[/bold]: crt_net: "
+                        "%s; load_net: %s",
                         k,
                         crt_net_state_dict[k].shape,
                         load_net[k].shape,
+                        extra={"markup": True},
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
@@ -483,10 +485,11 @@ class BaseModel:
             load_net, param_key = self.canonicalize_state_dict(load_net)
 
         logger.info(
-            "Loading %s model from %s, with param key: [%s].",
+            "Loading %s model from %s, with param key: [bold]%s[/bold].",
             net.__class__.__name__,
             load_path,
             param_key,
+            extra={"markup": True},
         )
 
         self._print_different_keys_loading(net, load_net, load_path, strict)
