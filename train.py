@@ -311,7 +311,6 @@ def train_pipeline(root_path: str) -> None:
             data_timer.record()
 
             current_iter += 1
-            print(current_iter)
             if current_iter > total_iters:
                 break
             # training
