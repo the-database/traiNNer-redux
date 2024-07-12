@@ -481,7 +481,6 @@ class BaseModel:
 
         # TODO refactor, messy hack to support the different ESRGAN versions
         if isinstance(net, RRDBNet):
-            print(type(net))
             load_net_wrapper = self.model_loader.load_from_file(load_path)
             net.load_state_dict(load_net_wrapper.model.state_dict(), strict=strict)
             logger.info(
