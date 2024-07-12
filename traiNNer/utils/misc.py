@@ -36,13 +36,14 @@ def mkdir_and_rename(path: str) -> None:
 
 
 @master_only
-def make_exp_dirs(opt: ReduxOptions) -> None:
+def make_exp_dirs(opt: ReduxOptions, is_resume: bool = False) -> None:
     """Make dirs for experiments."""
     path_opt = struct2dict(opt.path)
-    if opt.is_train:
-        mkdir_and_rename(path_opt.pop("experiments_root"))
-    else:
-        mkdir_and_rename(path_opt.pop("results_root"))
+    if not is_resume:
+        if opt.is_train:
+            mkdir_and_rename(path_opt.pop("experiments_root"))
+        else:
+            mkdir_and_rename(path_opt.pop("results_root"))
     for key, path in path_opt.items():
         if (
             ("strict_load" in key)

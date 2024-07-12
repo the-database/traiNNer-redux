@@ -202,9 +202,9 @@ def train_pipeline(root_path: str) -> None:
 
     # load resume states if necessary
     resume_state = load_resume_state(opt)
+    make_exp_dirs(opt, resume_state is not None)
     # mkdir for experiments and logger
     if resume_state is None:
-        make_exp_dirs(opt)
         if opt.logger.use_tb_logger and "debug" not in opt.name and opt.rank == 0:
             mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
 
