@@ -14,7 +14,6 @@ on:
             - '**.py'
             - '.github/workflows/**'
             - 'pyproject.toml'
-            - 'requirements.txt'
     push:
         branches: [main]
 
@@ -31,7 +30,7 @@ jobs:
               with:
                   python-version: '3.11'
                   cache: 'pip'
-            - run: pip install -r requirements.txt
+            - run: pip install .[dev]
             - run: ruff format --check
 
     lint:
@@ -42,7 +41,7 @@ jobs:
               with:
                   python-version: '3.11'
                   cache: 'pip'
-            - run: pip install -r requirements.txt
+            - run: pip install .[dev]
             - run: ruff check
 
     pyright:
@@ -53,5 +52,5 @@ jobs:
               with:
                   python-version: '3.11'
                   cache: 'pip'
-            - run: pip install -r requirements.txt
+            - run: pip install .[dev]
             - run: pyright
