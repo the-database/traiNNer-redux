@@ -193,6 +193,7 @@ def parse_options(
         opt.path.resume_state = osp.expanduser(opt.path.resume_state)
     if opt.path.pretrain_network_g is not None:
         opt.path.pretrain_network_g = osp.expanduser(opt.path.pretrain_network_g)
+        opt.path.pretrain_network_g_ema = opt.path.pretrain_network_g
     if opt.path.pretrain_network_d is not None:
         opt.path.pretrain_network_d = osp.expanduser(opt.path.pretrain_network_d)
 
@@ -201,6 +202,7 @@ def parse_options(
         experiments_root = osp.join(root_path, "experiments", opt.name)
         opt.path.experiments_root = experiments_root
         opt.path.models = osp.join(experiments_root, "models")
+        opt.path.resume_models = osp.join(opt.path.models, "resume_models")
         opt.path.training_states = osp.join(experiments_root, "training_states")
         opt.path.log = experiments_root
         opt.path.visualization = osp.join(experiments_root, "visualization")

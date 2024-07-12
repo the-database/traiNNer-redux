@@ -96,6 +96,7 @@ class DatasetOptions(StrictStruct):
 class PathOptions(StrictStruct):
     experiments_root: str | None = None
     models: str | None = None
+    resume_models: str | None = None
     training_states: str | None = None
     log: str | None = None
     visualization: str | None = None
@@ -105,6 +106,7 @@ class PathOptions(StrictStruct):
     param_key_g: str | None = None
     strict_load_g: bool = True
     resume_state: str | None = None
+    pretrain_network_g_ema: str | None = None
 
     pretrain_network_d: str | None = None
     param_key_d: str | None = None

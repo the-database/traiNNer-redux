@@ -331,8 +331,8 @@ class BaseModel:
         self,
         net: nn.Module,
         net_label: str,
+        save_dir: str,
         current_iter: int,
-        param_key: str = "params",
     ) -> None:
         """Save networks.
 
@@ -343,12 +343,10 @@ class BaseModel:
             param_key (str | list[str]): The parameter key(s) to save network.
                 Default: 'params'.
         """
-        assert self.opt.path.models is not None
-
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
 
         save_filename = f"{net_label}_{current_iter_str}.safetensors"
-        save_path = os.path.join(self.opt.path.models, save_filename)
+        save_path = os.path.join(save_dir, save_filename)
 
         bare_net_ = self.get_bare_model(net)
         state_dict = bare_net_.state_dict()
