@@ -68,14 +68,16 @@ class SRModel(BaseModel):
             ):
                 if torch.cuda.is_bf16_supported():
                     logger.warning(
-                        "AMP with fp16 was enabled but network_g [%s] does not support fp16. Falling back to bf16.",
+                        "AMP with fp16 was enabled but network_g [bold]%s[/bold] does not support fp16. Falling back to bf16.",
                         network_g_name,
+                        extra={"markup": True},
                     )
                     self.amp_dtype = torch.bfloat16
                 else:
                     logger.warning(
-                        "AMP with fp16 was enabled but network_g [%s] does not support fp16. Disabling AMP.",
+                        "AMP with fp16 was enabled but network_g [bold]%s[/bold] does not support fp16. Disabling AMP.",
                         network_g_name,
+                        extra={"markup": True},
                     )
                     self.use_amp = False
         elif self.amp_dtype == torch.bfloat16:
@@ -172,10 +174,10 @@ class SRModel(BaseModel):
                 {**self.opt.network_g, "scale": self.opt.scale}
             ).to(self.device)
             # load pretrained model
-            if self.opt.path.pretrain_network_g is not None:
+            if self.opt.path.pretrain_network_g_ema is not None:
                 self.load_network(
                     self.net_g_ema,
-                    self.opt.path.pretrain_network_g,
+                    self.opt.path.pretrain_network_g_ema,
                     self.opt.path.strict_load_g,
                     "params_ema",
                 )
@@ -614,17 +616,23 @@ class SRModel(BaseModel):
         return out_dict
 
     def save(self, epoch: int, current_iter: int) -> None:
+        assert self.opt.path.models is not None
+        assert self.opt.path.resume_models is not None
+
         if self.net_g_ema is not None:
             self.save_network(
-                self.net_g_ema,
-                "net_g",
-                current_iter,
-                param_key="params_ema",
+                self.net_g_ema, "net_g_ema", self.opt.path.models, current_iter
+            )
+
+            self.save_network(
+                self.net_g_ema, "net_g", self.opt.path.resume_models, current_iter
             )
         else:
-            self.save_network(self.net_g, "net_g", current_iter)
+            self.save_network(self.net_g, "net_g", self.opt.path.models, current_iter)
 
         if self.net_d is not None:
-            self.save_network(self.net_d, "net_d", current_iter)
+            self.save_network(
+                self.net_d, "net_d", self.opt.path.resume_models, current_iter
+            )
 
         self.save_training_state(epoch, current_iter)

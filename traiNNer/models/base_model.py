@@ -331,8 +331,8 @@ class BaseModel:
         self,
         net: nn.Module,
         net_label: str,
+        save_dir: str,
         current_iter: int,
-        param_key: str = "params",
     ) -> None:
         """Save networks.
 
@@ -343,12 +343,10 @@ class BaseModel:
             param_key (str | list[str]): The parameter key(s) to save network.
                 Default: 'params'.
         """
-        assert self.opt.path.models is not None
-
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
 
         save_filename = f"{net_label}_{current_iter_str}.safetensors"
-        save_path = os.path.join(self.opt.path.models, save_filename)
+        save_path = os.path.join(save_dir, save_filename)
 
         bare_net_ = self.get_bare_model(net)
         state_dict = bare_net_.state_dict()
@@ -415,10 +413,12 @@ class BaseModel:
             for k in common_keys:
                 if crt_net_state_dict[k].size() != load_net[k].size():
                     logger.warning(
-                        "Size different, ignore [%s]: crt_net: " "%s; load_net: %s",
+                        "Size different, ignore [bold]%s[/bold]: crt_net: "
+                        "%s; load_net: %s",
                         k,
                         crt_net_state_dict[k].shape,
                         load_net[k].shape,
+                        extra={"markup": True},
                     )
                     load_net[k + ".ignore"] = load_net.pop(k)
 
@@ -483,10 +483,11 @@ class BaseModel:
             load_net, param_key = self.canonicalize_state_dict(load_net)
 
         logger.info(
-            "Loading %s model from %s, with param key: [%s].",
+            "Loading %s model from %s, with param key: [bold]%s[/bold].",
             net.__class__.__name__,
             load_path,
             param_key,
+            extra={"markup": True},
         )
 
         self._print_different_keys_loading(net, load_net, load_path, strict)

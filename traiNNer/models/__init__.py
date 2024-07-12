@@ -24,5 +24,9 @@ def build_model(opt: ReduxOptions) -> BaseModel:
         model = SRModel(opt)
 
     logger = get_root_logger()
-    logger.info("Model [%s] is created.", model.__class__.__name__)
+    logger.info(
+        "Model [bold]%s[/bold] is created.",
+        model.__class__.__name__,
+        extra={"markup": True},
+    )
     return model

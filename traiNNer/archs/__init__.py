@@ -35,18 +35,20 @@ def build_network(opt: dict[str, Any]) -> nn.Module:
     if network_type in SPANDREL_REGISTRY:
         net = SPANDREL_REGISTRY.get(network_type)(**opt)
         logger.info(
-            "Network [%s](%s) is created from %s v%s.",
+            "Network [bold]%s[/bold](%s) is created from [bold]%s[/bold] v%s.",
             net.__class__.__name__,
             opt,
             spandrel_name,
             version(spandrel_name),
+            extra={"markup": True},
         )
     else:
         net = ARCH_REGISTRY.get(network_type)(**opt)
         logger.info(
-            "Network [%s](%s) is created from traiNNer-redux.",
+            "Network [bold]%s[/bold](%s) is created from [bold]traiNNer-redux[/bold].",
             net.__class__.__name__,
             opt,
+            extra={"markup": True},
         )
 
     return net
