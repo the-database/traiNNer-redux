@@ -295,8 +295,9 @@ def train_pipeline(root_path: str) -> None:
 
     def handle_keyboard_interrupt(signum: int, frame: FrameType | None) -> None:
         nonlocal interrupt_received
-        logger.info("User interrupted. Preparing to save state...")
-        interrupt_received = True
+        if not interrupt_received:
+            logger.info("User interrupted. Preparing to save state...")
+            interrupt_received = True
 
     signal.signal(signal.SIGINT, handle_keyboard_interrupt)
 
@@ -317,9 +318,8 @@ def train_pipeline(root_path: str) -> None:
             # update learning rate
             model.update_learning_rate(current_iter, warmup_iter=opt.train.warmup_iter)
             iter_timer.record()
-            if current_iter == 1:
+            if current_iter == msg_logger.start_iter + 1:
                 # reset start time in msg_logger for more accurate eta_time
-                # not work in resume mode
                 msg_logger.reset_start_time()
             # log
             if current_iter % opt.logger.print_freq == 0:
