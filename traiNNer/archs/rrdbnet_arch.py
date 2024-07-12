@@ -2,7 +2,6 @@ import math
 
 from spandrel.architectures.ESRGAN import RRDBNet
 
-from traiNNer.utils.logger import get_root_logger
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 pixel_unshuffle_scales = (1, 2)
@@ -22,12 +21,6 @@ def esrgan(
             shuffle_factor = int(math.sqrt(in_nc / out_nc))
             return RRDBNet(
                 scale=4, in_nc=in_nc, shuffle_factor=shuffle_factor, **kwargs
-            )
-        else:
-            logger = get_root_logger()
-            logger.info(
-                "Pixel unshuffle option is ignored since scale is not %s",
-                " or ".join([str(x) for x in pixel_unshuffle_scales]),
             )
 
     return RRDBNet(scale=scale, **kwargs)
