@@ -26,7 +26,6 @@ datasets:
 # Generator model settings
 network_g:
   type: ESRGAN  # ESRGAN, ESRGAN_lite
-  use_pixel_unshuffle: true
 
 ############################
 # Pretrain and Resume Paths

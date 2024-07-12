@@ -9,6 +9,7 @@ import pytorch_optimizer
 import torch
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
+from spandrel.architectures.ESRGAN.arch.RRDB import RRDBNet
 from torch import nn
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -381,7 +382,7 @@ class BaseModel:
         load_net: dict[str, Any],
         file_path: str,
         strict: bool = True,
-    ) -> None:
+    ) -> bool:
         """Print keys with different name or different size when loading models.
 
         1. Print keys with different names.
@@ -397,15 +398,30 @@ class BaseModel:
         crt_net_state_dict = crt_net.state_dict()
         crt_net_keys = set(crt_net_state_dict.keys())
         load_net_keys = set(load_net.keys())
+        valid = True
 
         logger = get_root_logger()
         if crt_net_keys != load_net_keys:
-            logger.warning("Current net - loaded net:")
-            for v in sorted(crt_net_keys - load_net_keys):
-                logger.warning("  %s", v)
-            logger.warning("Loaded net - current net:")
-            for v in sorted(load_net_keys - crt_net_keys):
-                logger.warning("  %s", v)
+            current_minus_loaded = crt_net_keys - load_net_keys
+            if len(current_minus_loaded) > 0:
+                if strict:
+                    valid = False
+                logger.warning(
+                    "Pretrain network is missing %d keys from current network, up to 10 shown:",
+                    len(current_minus_loaded),
+                )
+                for v in sorted(current_minus_loaded)[:10]:
+                    logger.warning("    %s", v)
+            loaded_minus_current = load_net_keys - crt_net_keys
+            if len(loaded_minus_current) > 0:
+                if strict:
+                    valid = False
+                logger.warning(
+                    "Current network is missing %d keys from pretrain network, up to 10 shown:",
+                    len(loaded_minus_current),
+                )
+                for v in sorted(loaded_minus_current)[:10]:
+                    logger.warning("    %s", v)
 
         # check the size for the same keys
         if not strict:
@@ -442,6 +458,7 @@ class BaseModel:
                     file_path,
                     overlap,
                 )
+        return valid
 
     def load_network(
         self,
@@ -462,37 +479,57 @@ class BaseModel:
         """
         logger = get_root_logger()
 
-        net = self.get_bare_model(net)
-        if load_path.endswith(".safetensors"):
-            load_net: StateDict = load_file(load_path, device=str(self.device))
-        elif load_path.endswith(".pth"):
-            load_net = torch.load(load_path, map_location=lambda storage, loc: storage)
+        # TODO refactor, messy hack to support the different ESRGAN versions
+        if isinstance(net, RRDBNet):
+            print(type(net))
+            load_net_wrapper = self.model_loader.load_from_file(load_path)
+            net.load_state_dict(load_net_wrapper.model.state_dict(), strict=strict)
+            logger.info(
+                "Loading %s model from %s, with spandrel.",
+                net.__class__.__name__,
+                load_path,
+            )
         else:
-            raise ValueError(f"Unsupported model: {load_path}")
-
-        if param_key is not None:
-            if param_key in load_net:
-                load_net = self.remove_common_prefix(load_net[param_key])
-            if param_key not in load_net:
-                load_net, new_param_key = self.canonicalize_state_dict(load_net)
-                logger.info(
-                    "Loading: %s does not exist, using %s.", param_key, new_param_key
+            net = self.get_bare_model(net)
+            if load_path.endswith(".safetensors"):
+                load_net: StateDict = load_file(load_path, device=str(self.device))
+            elif load_path.endswith(".pth"):
+                load_net = torch.load(
+                    load_path, map_location=lambda storage, loc: storage
                 )
-                param_key = new_param_key
-        else:
-            load_net, param_key = self.canonicalize_state_dict(load_net)
+            else:
+                raise ValueError(f"Unsupported model: {load_path}")
 
-        logger.info(
-            "Loading %s model from %s, with param key: [bold]%s[/bold].",
-            net.__class__.__name__,
-            load_path,
-            param_key,
-            extra={"markup": True},
-        )
+            if param_key is not None:
+                if param_key in load_net:
+                    load_net = self.remove_common_prefix(load_net[param_key])
+                if param_key not in load_net:
+                    load_net, new_param_key = self.canonicalize_state_dict(load_net)
+                    logger.info(
+                        "Loading: %s does not exist, using %s.",
+                        param_key,
+                        new_param_key,
+                    )
+                    param_key = new_param_key
+            else:
+                load_net, param_key = self.canonicalize_state_dict(load_net)
 
-        self._print_different_keys_loading(net, load_net, load_path, strict)
+            logger.info(
+                "Loading %s model from %s, with param key: [bold]%s[/bold].",
+                net.__class__.__name__,
+                load_path,
+                param_key,
+                extra={"markup": True},
+            )
 
-        net.load_state_dict(load_net, strict=strict)
+            valid = self._print_different_keys_loading(net, load_net, load_path, strict)
+
+            if not valid:
+                raise ValueError(
+                    f"Unable to load pretrain network due to mismatched state dict keys (see above for missing keys): {load_path}"
+                )
+
+            net.load_state_dict(load_net, strict=strict)
 
     # https://github.com/chaiNNer-org/spandrel/blob/ebf11bab4bc3fabccc80fcc377eaabb8cecbf8cd/libs/spandrel/spandrel/__helpers/canonicalize.py#L14
     def canonicalize_state_dict(
@@ -544,6 +581,18 @@ class BaseModel:
                 if all(i.startswith(prefix) for i in state_dict.keys()):
                     state_dict = {k[len(prefix) :]: v for k, v in state_dict.items()}
         return state_dict
+
+    def load_network_spandrel(
+        self, net: nn.Module, load_path: str, strict: bool = True
+    ) -> None:
+        logger = get_root_logger()
+        load_net = self.model_loader.load_from_file(load_path)
+        net.load_state_dict(load_net.model.state_dict(), strict=strict)
+        logger.info(
+            "Loading %s model from %s, with spandrel.",
+            net.__class__.__name__,
+            load_path,
+        )
 
     @master_only
     def save_training_state(self, epoch: int, current_iter: int) -> None:
