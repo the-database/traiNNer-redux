@@ -3,6 +3,7 @@ import datetime
 import logging
 import math
 import os
+import sys
 import time
 from os import path as osp
 from typing import Any
@@ -284,74 +285,85 @@ def train_pipeline(root_path: str) -> None:
         )
 
     # training
-    logger.info("Start training from epoch: %d, iter: %d", start_epoch, current_iter)
+    logger.info("Start training from epoch: %d, iter: %d.", start_epoch, current_iter)
     data_timer, iter_timer = AvgTimer(), AvgTimer()
     start_time = time.time()
 
-    for epoch in range(start_epoch, total_epochs + 1):
-        train_sampler.set_epoch(epoch)
-        prefetcher.reset()
-        train_data = prefetcher.next()
-
-        while train_data is not None:
-            data_timer.record()
-
-            current_iter += 1
-            if current_iter > total_iters:
-                break
-            # training
-            model.feed_data(train_data)
-            model.optimize_parameters(current_iter)
-            # update learning rate
-            model.update_learning_rate(current_iter, warmup_iter=opt.train.warmup_iter)
-            iter_timer.record()
-            if current_iter == 1:
-                # reset start time in msg_logger for more accurate eta_time
-                # not work in resume mode
-                msg_logger.reset_start_time()
-            # log
-            if current_iter % opt.logger.print_freq == 0:
-                log_vars = {"epoch": epoch, "iter": current_iter}
-                log_vars.update({"lrs": model.get_current_learning_rate()})
-                log_vars.update(
-                    {
-                        "time": iter_timer.get_avg_time(),
-                        "data_time": data_timer.get_avg_time(),
-                    }
-                )
-                log_vars.update(model.get_current_log())
-                model.reset_current_log()
-                msg_logger(log_vars)
-
-            # save models and training states
-            if current_iter % opt.logger.save_checkpoint_freq == 0:
-                logger.info("Saving models and training states.")
-                model.save(epoch, current_iter)
-
-            # validation
-            if opt.val is not None:
-                assert (
-                    opt.val.val_freq is not None
-                ), "val_freq must be defined under the val section"
-                if current_iter % opt.val.val_freq == 0:
-                    if len(val_loaders) > 1:
-                        logger.warning(
-                            "Multiple validation datasets are *only* supported by SRModel."
-                        )
-                    for val_loader in val_loaders:
-                        model.validation(
-                            val_loader,
-                            current_iter,
-                            tb_logger,
-                            opt.val.save_img,
-                        )
-
-            data_timer.start()
-            iter_timer.start()
+    try:
+        for epoch in range(start_epoch, total_epochs + 1):
+            train_sampler.set_epoch(epoch)
+            prefetcher.reset()
             train_data = prefetcher.next()
-        # end of iter
 
-    # end of epoch
+            while train_data is not None:
+                data_timer.record()
+
+                current_iter += 1
+                if current_iter > total_iters:
+                    break
+                # training
+                model.feed_data(train_data)
+                model.optimize_parameters(current_iter)
+                # update learning rate
+                model.update_learning_rate(
+                    current_iter, warmup_iter=opt.train.warmup_iter
+                )
+                iter_timer.record()
+                if current_iter == 1:
+                    # reset start time in msg_logger for more accurate eta_time
+                    # not work in resume mode
+                    msg_logger.reset_start_time()
+                # log
+                if current_iter % opt.logger.print_freq == 0:
+                    log_vars = {"epoch": epoch, "iter": current_iter}
+                    log_vars.update({"lrs": model.get_current_learning_rate()})
+                    log_vars.update(
+                        {
+                            "time": iter_timer.get_avg_time(),
+                            "data_time": data_timer.get_avg_time(),
+                        }
+                    )
+                    log_vars.update(model.get_current_log())
+                    model.reset_current_log()
+                    msg_logger(log_vars)
+
+                # save models and training states
+                if current_iter % opt.logger.save_checkpoint_freq == 0:
+                    logger.info("Saving models and training states.")
+                    model.save(epoch, current_iter)
+
+                # validation
+                if opt.val is not None:
+                    assert (
+                        opt.val.val_freq is not None
+                    ), "val_freq must be defined under the val section"
+                    if current_iter % opt.val.val_freq == 0:
+                        if len(val_loaders) > 1:
+                            logger.warning(
+                                "Multiple validation datasets are *only* supported by SRModel."
+                            )
+                        for val_loader in val_loaders:
+                            model.validation(
+                                val_loader,
+                                current_iter,
+                                tb_logger,
+                                opt.val.save_img,
+                            )
+
+                data_timer.start()
+                iter_timer.start()
+                train_data = prefetcher.next()
+            # end of iter
+
+        # end of epoch
+    except KeyboardInterrupt:
+        logger.info(
+            "User interrupted. Saving models and training states for epoch: %d, iter: %d.",
+            epoch,
+            current_iter,
+        )
+        model.save(epoch, current_iter)
+        sys.exit(0)
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
     logger.info("End of training. Time consumed: %s", consumed_time)

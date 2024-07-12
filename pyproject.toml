@@ -1,8 +1,38 @@
 [project]
 name = "traiNNer-redux"
-# Support Python 3.11+.
 requires-python = ">=3.11"
 dynamic = ["version"]
+dependencies = [
+"msgspec",
+"numpy",
+"opencv-python",
+"Pillow",
+"pyright",
+"pytest",
+"pytorch-optimizer",
+"pyyaml",
+"requests",
+"rich",
+"ruff",
+"safetensors",
+"scikit-image",
+"scipy",
+"spandrel",
+"spandrel-extra-arches",
+"tb-nightly",
+"timm",
+"torch>=2.3",
+"torchvision",
+"tqdm"
+]
+authors = [{name = "the-database"}]
+description = "Deep learning training framework for image super resolution and restoration."
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+keywords = ["machine learning", "deep learning", "neural network", "pytorch", "super resolution", "upscale", "image restoration" ]
+
+[project.urls]
+Repository = "https://github.com/the-database/traiNNer-redux.git"
 
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
@@ -87,3 +117,6 @@ skip-magic-trailing-comma = false
 
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
+
+[tool.uv.pip]
+extra-index-url = ["https://download.pytorch.org/whl/cu121"]
