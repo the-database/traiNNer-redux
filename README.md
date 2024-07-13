@@ -73,7 +73,7 @@ Models are saved in `traiNNer-redux/experiments/<name>/models`, where `name` is 
 
 ## License and Acknowledgement
 
-This project is released under the [Apache 2.0 license](LICENSE.txt). More details about **license** and **acknowledgement** are in [LICENSE](LICENSE/README.md).
+traiNNer-redux is released under the [Apache License 2.0](LICENSE.txt). More details about license and acknowledgements are in [LICENSE](LICENSE/README.md).
 
 - This repository is a fork of [traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) which itself is a fork of [BasicSR](https://github.com/XPixelGroup/BasicSR).
 - Network architectures are imported from [Spandrel](https://github.com/chaiNNer-org/spandrel).
