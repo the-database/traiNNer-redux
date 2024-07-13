@@ -1,4 +1,6 @@
 {
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": false,
     "files.trimTrailingWhitespace": true,
     "editor.wordWrap": "on",
     "editor.rulers": [
@@ -12,4 +14,13 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "[python]": {
+      "editor.defaultFormatter": "charliermarsh.ruff",
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit",
+        "source.fixAll": "always"
+      }
+    }
 }
