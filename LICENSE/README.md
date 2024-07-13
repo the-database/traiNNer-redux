@@ -1,38 +1,35 @@
 # License and Acknowledgement
 
-This BasicSR project is released under the Apache 2.0 license.
+traiNNer-redux is released under Apache License 2.0.
 
-- StyleGAN2
-  - The codes are modified from the repository [stylegan2-pytorch](https://github.com/rosinality/stylegan2-pytorch). Many thanks to the author - [Kim Seonghyeon](https://rosinality.github.io/)  :blush: for translating from the official TensorFlow codes to PyTorch ones. Here is the [license](LICENSE-stylegan2-pytorch) of stylegan2-pytorch.
-  - The official repository is <https://github.com/NVlabs/stylegan2>, and here is the [NVIDIA license](./LICENSE-NVIDIA).
-- DFDNet
-  - The codes are largely modified from the repository [DFDNet](https://github.com/csxmli2016/DFDNet). Their license is [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
-- DiffJPEG
-  - Modified from <https://github.com/mlomnitz/DiffJPEG>.
-- [pytorch-image-models](https://github.com/rwightman/pytorch-image-models/)
-  - We use the implementation of `DropPath` and `trunc_normal_` from [pytorch-image-models](https://github.com/rwightman/pytorch-image-models/). The LICENSE is included as [LICENSE_pytorch-image-models](LICENSE/LICENSE_pytorch-image-models).
-- [DISTS](https://github.com/dingkeyan93/DISTS)
-  -  The loss implementation of DISTS is from [DISTS](https://github.com/dingkeyan93/DISTS). The LICENSE is [MIT](https://github.com/dingkeyan93/DISTS/blob/master/LICENSE).
-- [SwinIR](https://github.com/JingyunLiang/SwinIR)
-  - The arch implementation of SwinIR is from [SwinIR](https://github.com/JingyunLiang/SwinIR). The LICENSE is included as [LICENSE_SwinIR](LICENSE/LICENSE_SwinIR).
-- [ECBSR](https://github.com/xindongzhang/ECBSR)
-  - The arch implementation of ECBSR is from [ECBSR](https://github.com/xindongzhang/ECBSR). The LICENSE of ECBSR is [Apache License 2.0](https://github.com/xindongzhang/ECBSR/blob/main/LICENSE)
-- [Omnisr](https://github.com/Francis0625/Omni-SR)
-  - The arch implementation of Omnisr is from [Omnisr](https://github.com/Francis0625/Omni-SR). The LICENSE of Omnisr is [Apache License 2.0]. The LICENSE is included as [LICENSE_Omnisr](LICENSE/LICENSE_Omnisr).
-- [DAT](https://github.com/zhengchen1999/dat)
-  - The arch implementation of DAT is from [DAT](https://github.com/zhengchen1999/dat). The LICENSE is [Apache License 2.0](https://github.com/zhengchen1999/DAT/blob/main/LICENSE).
-- [SPAN](https://github.com/hongyuanyu/SPAN)
-  - The arch implementation of SPAN is from [SPAN](https://github.com/hongyuanyu/SPAN) with modifications by [neosr](https://github.com/muslll/neosr). The LICENSE is [Apache 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt).
-- [PLKSR](https://github.com/dslisleedh/PLKSR)
-  - The arch implementation of PLKSR is from [PLKSR](https://github.com/dslisleedh/PLKSR) with modifications by [neosr](https://github.com/muslll/neosr). The LICENSE is [MIT](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE).
-- [HiT-SR](https://github.com/XiangZ-0/HiT-SR)
-  - The arch implementation of HiT-SR is from [HiT-SR](https://github.com/XiangZ-0/HiT-SR). The LICENSE is [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE).
+|Project|License|
+|-|-|
+|[ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary) | [Apache License 2.0](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary/blob/main/LICENSE.txt)|
+|[BasicSR](https://github.com/XPixelGroup/BasicSR) | [Apache License 2.0](https://github.com/XPixelGroup/BasicSR/blob/master/LICENSE.txt)|
+|[CutBlur](https://github.com/clovaai/cutblur/) | [MIT License](https://github.com/clovaai/cutblur/blob/master/LICENSE)|
+|[DAT](https://github.com/zhengchen1999/dat) | [Apache License 2.0](https://github.com/zhengchen1999/DAT/blob/main/LICENSE)|
+|[DiffJPEG](https://github.com/mlomnitz/DiffJPEG) | [MIT License](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE) |
+|[DISTS](https://github.com/dingkeyan93/DISTS) | [MIT License](https://github.com/dingkeyan93/DISTS/blob/master/LICENSE)|
+|[DRCT](https://github.com/ming053l/DRCT) | [MIT License](https://github.com/ming053l/DRCT/blob/main/LICENSE)|
+|[DySample](https://github.com/tiny-smart/dysample)| [MIT License](https://github.com/tiny-smart/dysample/blob/main/LICENSE)|
+|[HAT](https://github.com/XPixelGroup/HAT) | [Apache License 2.0](https://github.com/XPixelGroup/HAT/blob/main/LICENSE)|
+|[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|
+|[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
+|[mssim.pytorch](https://github.com/lartpang/mssim.pytorch) | [MIT License](https://github.com/lartpang/mssim.pytorch/blob/main/LICENSE)|
+|[Corpsecreate/neosr](https://github.com/Corpsecreate/neosr) | [Apache License 2.0](https://github.com/Corpsecreate/neosr/blob/master/license.txt)|
+|[neosr](https://github.com/muslll/neosr) | [Apache License 2.0](https://github.com/muslll/neosr/blob/master/license.txt)|
+|[OmniSR](https://github.com/Francis0625/Omni-SR) | [Apache License 2.0](https://github.com/Francis0625/Omni-SR#license)|
+|[PLKSR](https://github.com/dslisleedh/PLKSR) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
+|[Real-CUGAN](https://github.com/bilibili/ailab) | [MIT License](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)|
+|[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | [BSD 3-Clause "New" or "Revised" License](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)|
+|[RealPLKSR](https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
+|[RGT](https://github.com/zhengchen1999/RGT) | [Apache License 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)|
+|[Spandrel](https://github.com/chaiNNer-org/spandrel) | [MIT License](https://github.com/chaiNNer-org/spandrel/blob/main/LICENSE)
+|[SPAN](https://github.com/hongyuanyu/SPAN) | [Apache License 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)|
+|[SPANPlus](https://github.com/umzi2/SPANPlus) | [Apache License 2.0](https://github.com/umzi2/SPANPlus/blob/master/license.txt)|
+|[SRFormer](https://github.com/HVision-NKU/SRFormer) | [CC-NC 4.0](https://github.com/HVision-NKU/SRFormer/blob/main/LICENSE.txt)|
+|[SRVGGNetCompact](https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/srvgg_arch.py) | [Apache License 2.0](https://github.com/XPixelGroup/BasicSR/blob/master/LICENSE.txt)|
+|[SwinIR](https://github.com/JingyunLiang/SwinIR) | [Apache License 2.0](https://github.com/JingyunLiang/SwinIR/blob/main/LICENSE)|
+|[joeyballentine/traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) | [Apache License 2.0](https://github.com/joeyballentine/traiNNer-redux/blob/master/LICENSE.txt)|
 
 
-## References
-
-1. NIQE metric: the codes are translated from the [official MATLAB codes](http://live.ece.utexas.edu/research/quality/niqe_release.zip)
-
-    > A. Mittal, R. Soundararajan and A. C. Bovik, "Making a Completely Blind Image Quality Analyzer", IEEE Signal Processing Letters, 2012.
-
-1. FID metric: the codes are modified from [pytorch-fid](https://github.com/mseitzer/pytorch-fid) and [stylegan2-pytorch](https://github.com/rosinality/stylegan2-pytorch).
