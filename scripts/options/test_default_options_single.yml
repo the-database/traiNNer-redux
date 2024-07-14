@@ -32,7 +32,7 @@ network_g:
 ############################
 path:
   # Path of the model to run on the validation images.
-  pretrain_network_g: experiments/%scale%_%archname%/models/net_g_1000.safetensors
+  pretrain_network_g: experiments/%scale%_%archname%/models/net_g_ema_1000.safetensors
 
 #############
 # Validation
