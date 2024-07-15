@@ -524,7 +524,7 @@ class SRModel(BaseModel):
             self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
             self.optimizer_d.zero_grad()
 
-            self.live_emas = dict(self.loss_emas.items())
+        self.live_emas = dict(self.loss_emas.items())
 
         for key, value in loss_dict.items():
             val = (
