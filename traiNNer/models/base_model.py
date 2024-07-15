@@ -626,6 +626,9 @@ class BaseModel:
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
+
+            state["loss_emas"] = self.loss_emas
+
             save_filename = f"{current_iter}.state"
             save_path = os.path.join(self.opt.path.training_states, save_filename)
 
@@ -678,6 +681,9 @@ class BaseModel:
             self.scaler_g.load_state_dict(resume_state["scaler_g"])
         if "scaler_d" in resume_state:
             self.scaler_d.load_state_dict(resume_state["scaler_d"])
+
+        if "loss_emas" in resume_state:
+            self.loss_emas = resume_state["loss_emas"]
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
