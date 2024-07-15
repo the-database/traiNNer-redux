@@ -491,6 +491,8 @@ class SRModel(BaseModel):
         self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
         self.optimizer_g.zero_grad()
 
+        self.live_emas = dict(self.loss_emas.items())
+
         if (
             self.net_d is not None
             and self.cri_gan is not None
@@ -523,8 +525,6 @@ class SRModel(BaseModel):
             self.scaler_d.update()
             self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
             self.optimizer_d.zero_grad()
-
-        self.live_emas = dict(self.loss_emas.items())
 
         for key, value in loss_dict.items():
             val = (
