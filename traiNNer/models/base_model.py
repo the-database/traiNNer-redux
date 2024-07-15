@@ -61,7 +61,6 @@ class BaseModel:
         self.normalize_losses = True  # TODO opt
         self.loss_alpha = 0.996  # TODO opt
         self.loss_emas: dict[str, Tensor] = {}
-        self.live_emas: dict[str, Tensor] = {}
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:

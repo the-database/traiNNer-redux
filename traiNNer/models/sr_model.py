@@ -341,6 +341,7 @@ class SRModel(BaseModel):
                 loss_key = "l_g_mssim"
                 l_g_mssim = self.cri_mssim(self.output, self.gt)
                 self.update_loss_emas(loss_key, l_g_mssim)
+                # print("l_g_mssim", l_g_mssim, self.loss_emas[loss_key])
                 l_g_mssim_normalized = self.get_normalized_loss(
                     loss_key, l_g_mssim, self.cri_mssim.loss_weight
                 )
@@ -491,8 +492,6 @@ class SRModel(BaseModel):
         self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
         self.optimizer_g.zero_grad()
 
-        self.live_emas = dict(self.loss_emas.items())
-
         if (
             self.net_d is not None
             and self.cri_gan is not None
@@ -550,9 +549,7 @@ class SRModel(BaseModel):
         loss_weight: float,
     ) -> Tensor:
         if self.normalize_losses:
-            return (loss * loss_weight) / abs(
-                self.live_emas.get(loss_key, self.loss_emas[loss_key])
-            )
+            return (loss * loss_weight) / abs(self.loss_emas[loss_key])
         return loss * loss_weight
 
     def test(self) -> None:
