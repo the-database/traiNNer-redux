@@ -335,7 +335,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_pix_normalized
                 loss_dict[loss_key] = l_g_pix
-                # loss_dict[f"{loss_key}_normalized"] = l_g_pix_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_pix_normalized
             # MS-SSIM loss
             if self.cri_mssim:
                 loss_key = "l_g_mssim"
@@ -346,7 +346,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_mssim_normalized
                 loss_dict[loss_key] = l_g_mssim
-                # loss_dict[f"{loss_key}_normalized"] = l_g_mssim_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_mssim_normalized
             # LDL loss
             if self.cri_ldl:
                 assert self.net_g_ema is not None
@@ -365,7 +365,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_ldl_normalized
                 loss_dict[loss_key] = l_g_ldl
-                # loss_dict[f"{loss_key}_normalized"] = l_g_ldl_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_ldl_normalized
             # Perceptual loss
             if self.cri_perceptual:
                 l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
@@ -380,7 +380,7 @@ class SRModel(BaseModel):
                     )
                     l_g_total += l_g_percep_normalized
                     loss_dict[loss_key] = l_g_percep
-                    # loss_dict[f"{loss_key}_normalized"] = l_g_percep_normalized
+                    loss_dict[f"{loss_key}_normalized"] = l_g_percep_normalized
                 if l_g_style is not None:
                     loss_key = "l_g_style"
                     self.update_loss_emas(loss_key, l_g_style)
@@ -389,7 +389,7 @@ class SRModel(BaseModel):
                     )
                     l_g_total += l_g_style_normalized
                     loss_dict[loss_key] = l_g_style
-                    # loss_dict[f"{loss_key}_normalized"] = l_g_style_normalized
+                    loss_dict[f"{loss_key}_normalized"] = l_g_style_normalized
 
             # DISTS loss
             if self.cri_dists:
@@ -401,7 +401,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_dists_normalized
                 loss_dict[loss_key] = l_g_dists
-                # loss_dict[f"{loss_key}_normalized"] = l_g_dists_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_dists_normalized
 
             # Contextual loss
             if self.cri_contextual:
@@ -413,7 +413,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_contextual_normalized
                 loss_dict[loss_key] = l_g_contextual
-                # loss_dict[f"{loss_key}_normalized"] = l_g_contextual_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_contextual_normalized
             # Color loss
             if self.cri_color:
                 loss_key = "l_g_color"
@@ -424,7 +424,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_color_normalized
                 loss_dict[loss_key] = l_g_color
-                # loss_dict[f"{loss_key}_normalized"] = l_g_color_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_color_normalized
             # Luma loss
             if self.cri_luma:
                 loss_key = "l_g_luma"
@@ -435,7 +435,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_luma_normalized
                 loss_dict[loss_key] = l_g_luma
-                # loss_dict[f"{loss_key}_normalized"] = l_g_luma_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_luma_normalized
             # HSLuv loss
             if self.cri_hsluv:
                 loss_key = "l_g_hsluv"
@@ -446,7 +446,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_hsluv_normalized
                 loss_dict[loss_key] = l_g_hsluv
-                # loss_dict[f"{loss_key}_normalized"] = l_g_hsluv_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_hsluv_normalized
             # Average loss
             if self.cri_avg:
                 loss_key = "l_g_avg"
@@ -457,7 +457,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_avg_normalized
                 loss_dict[loss_key] = l_g_avg
-                # loss_dict[f"{loss_key}_normalized"] = l_g_avg_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_avg_normalized
             # Bicubic loss
             if self.cri_bicubic:
                 loss_key = "l_g_bicubic"
@@ -468,7 +468,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_bicubic_normalized
                 loss_dict[loss_key] = l_g_bicubic
-                # loss_dict[f"{loss_key}_normalized"] = l_g_bicubic_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_bicubic_normalized
             # GAN loss
             if self.cri_gan and self.net_d:
                 loss_key = "l_g_gan"
@@ -480,7 +480,7 @@ class SRModel(BaseModel):
                 )
                 l_g_total += l_g_gan_normalized
                 loss_dict[loss_key] = l_g_gan
-                # loss_dict[f"{loss_key}_normalized"] = l_g_gan_normalized
+                loss_dict[f"{loss_key}_normalized"] = l_g_gan_normalized
 
             # add total generator loss for tensorboard tracking
             loss_dict["l_g_total"] = l_g_total
