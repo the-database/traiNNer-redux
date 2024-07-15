@@ -1,8 +1,10 @@
+import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 import argparse
 import datetime
 import logging
 import math
-import os
 import signal
 import sys
 import time
@@ -14,9 +16,6 @@ import torch
 from rich.traceback import install
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
-
-# SCRIPT_DIR = osp.dirname(osp.abspath(__file__))
-# sys.path.append(osp.dirname(SCRIPT_DIR))
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.data.data_sampler import EnlargedSampler
 from traiNNer.data.paired_image_dataset import PairedImageDataset
