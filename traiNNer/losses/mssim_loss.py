@@ -152,7 +152,7 @@ class MSSIMLoss(nn.Module):
         if self.cosim:
             loss += self.cosim_penalty(x, y)
 
-        return self.loss_weight * loss
+        return loss
 
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.clamp(x, 1e-12, 1)
