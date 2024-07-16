@@ -363,6 +363,7 @@ class BaseModel:
 
         # avoid occasional writing errors
         retry = 3
+        logger = None
         while retry > 0:
             try:
                 save_file(state_dict, save_path)
@@ -377,6 +378,7 @@ class BaseModel:
             finally:
                 retry -= 1
         if retry == 0:
+            assert logger is not None
             logger.warning("Still cannot save %s. Just ignore it.", save_path)
             # raise IOError(f'Cannot save {save_path}.')
 
@@ -632,6 +634,7 @@ class BaseModel:
             save_filename = f"{current_iter}.state"
             save_path = os.path.join(self.opt.path.training_states, save_filename)
 
+            logger = None
             # avoid occasional writing errors
             retry = 3
             while retry > 0:
@@ -650,6 +653,7 @@ class BaseModel:
                 finally:
                     retry -= 1
             if retry == 0:
+                assert logger is not None
                 logger.warning("Still cannot save %s. Just ignore it.", save_path)
                 # raise IOError(f'Cannot save {save_path}.')
 

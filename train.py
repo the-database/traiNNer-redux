@@ -299,6 +299,7 @@ def train_pipeline(root_path: str) -> None:
             interrupt_received = True
 
     signal.signal(signal.SIGINT, handle_keyboard_interrupt)
+    epoch = start_epoch
 
     for epoch in range(start_epoch, total_epochs + 1):
         train_sampler.set_epoch(epoch)
