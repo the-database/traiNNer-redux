@@ -129,6 +129,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             or "network_g_ema" not in opt.path.ignore_resume_networks
         ):
             model_exists = False
+            basepath = ""
             for ext in model_extensions:
                 for net_label in ["net_g_ema", "net_g"]:
                     basepath = osp.join(opt.path.models, f"{net_label}_{resume_iter}")
@@ -148,6 +149,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             or "network_g" not in opt.path.ignore_resume_networks
         ):
             model_exists = False
+            basepath = ""
             for ext in model_extensions:
                 for model_dir in model_dirs:
                     basepath = osp.join(model_dir, f"net_g_{resume_iter}")
@@ -168,6 +170,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             or "network_d" not in opt.path.ignore_resume_networks
         ):
             model_exists = False
+            basepath = ""
             for ext in model_extensions:
                 for model_dir in model_dirs:
                     basepath = osp.join(model_dir, f"net_d_{resume_iter}")

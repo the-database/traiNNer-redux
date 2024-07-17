@@ -62,7 +62,17 @@ To pause training, press `ctrl+C` or close the command window. To resume trainin
 
 #### Test models
 
-Models are saved in `traiNNer-redux/experiments/<name>/models`, where `name` is whatever was used in the config file. [chaiNNer](https://github.com/chaiNNer-org/chaiNNer) can be used to run the model. If you want to run the model on images during training to monitor the progress of the model, set up validation in the config file, and find the validation results in `traiNNer-redux/experiments/<name>/visualization`.
+Models are saved in the `safetensors` format to `traiNNer-redux/experiments/<name>/models`, where `name` is whatever was used in the config file. [chaiNNer](https://github.com/chaiNNer-org/chaiNNer) can be used to run most models. If you want to run the model on images during training to monitor the progress of the model, set up validation in the config file, and find the validation results in `traiNNer-redux/experiments/<name>/visualization`.
+
+The test script can also be used to test trained models, which is required to test models with architectures not yet supported by chaiNNer. For example, to test SPANPlus model, open the config file at `./options/test/SPANPlus/SPANPlus.yml`, and update the following:
+1. Edit the `dataroot_lq` option to point to a folder that contains the images you want to run the model on.
+2. Make sure the options under `network_g` match the options under `network_g` in the training config file that you used. For example, if you trained `SPANPlus_STS`, then set the type to `SPANPlus_STS` under `network_g` in the test config file as well.
+3. Update `pretrain_network_g` to point to the path of the model you want to test.
+
+Then run this command to run the model on the images as specified in the config file:
+```
+python test.py -opt ./options/test/SPANPlus/SPANPlus.yml
+```
 
 ## Resources
 - [OpenModelDB](https://openmodeldb.info/): Repository of AI upscaling models, which can be used as pretrain models to train new models. Models trained with this repo can be submitted to OMDB.
@@ -73,7 +83,7 @@ Models are saved in `traiNNer-redux/experiments/<name>/models`, where `name` is 
 
 ## License and Acknowledgement
 
-traiNNer-redux is released under the [Apache License 2.0](LICENSE.txt). More details about license and acknowledgements are in [LICENSE](LICENSE/README.md).
+traiNNer-redux is released under the [Apache License 2.0](LICENSE.txt). See [LICENSE](LICENSE/README.md) for individual licenses and acknowledgements.
 
 - This repository is a fork of [traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) which itself is a fork of [BasicSR](https://github.com/XPixelGroup/BasicSR).
 - Network architectures are imported from [Spandrel](https://github.com/chaiNNer-org/spandrel).
