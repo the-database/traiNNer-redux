@@ -323,7 +323,7 @@ class SRModel(BaseModel):
         ):
             self.output = self.net_g(self.lq)
             assert isinstance(self.output, Tensor)
-            l_g_total_normalized = torch.tensor(0.0, device=self.output.device)
+            l_g_total = torch.tensor(0.0, device=self.output.device)
             loss_dict = OrderedDict()
             # Pixel loss
             if self.cri_pix:
@@ -333,7 +333,7 @@ class SRModel(BaseModel):
                 l_g_pix_normalized = self.get_normalized_loss(
                     loss_key, l_g_pix, self.cri_pix.loss_weight
                 )
-                l_g_total_normalized += l_g_pix_normalized
+                l_g_total += l_g_pix_normalized
                 loss_dict[loss_key] = l_g_pix
                 loss_dict[f"normalized/{loss_key}"] = l_g_pix_normalized
             # MS-SSIM loss
@@ -344,7 +344,7 @@ class SRModel(BaseModel):
                 l_g_mssim_normalized = self.get_normalized_loss(
                     loss_key, l_g_mssim, self.cri_mssim.loss_weight
                 )
-                l_g_total_normalized += l_g_mssim_normalized
+                l_g_total += l_g_mssim_normalized
                 loss_dict[loss_key] = l_g_mssim
                 loss_dict[f"normalized/{loss_key}"] = l_g_mssim_normalized
             # LDL loss
@@ -363,7 +363,7 @@ class SRModel(BaseModel):
                 l_g_ldl_normalized = self.get_normalized_loss(
                     loss_key, l_g_ldl, self.cri_ldl.loss_weight
                 )
-                l_g_total_normalized += l_g_ldl_normalized
+                l_g_total += l_g_ldl_normalized
                 loss_dict[loss_key] = l_g_ldl
                 loss_dict[f"normalized/{loss_key}"] = l_g_ldl_normalized
             # Perceptual loss
@@ -377,7 +377,7 @@ class SRModel(BaseModel):
                         l_g_percep,
                         self.cri_perceptual.perceptual_weight,
                     )
-                    l_g_total_normalized += l_g_percep_normalized
+                    l_g_total += l_g_percep_normalized
                     loss_dict[loss_key] = l_g_percep
                     loss_dict[f"normalized/{loss_key}"] = l_g_percep_normalized
                 if l_g_style is not None:
@@ -386,7 +386,7 @@ class SRModel(BaseModel):
                     l_g_style_normalized = self.get_normalized_loss(
                         loss_key, l_g_style, self.cri_perceptual.style_weight
                     )
-                    l_g_total_normalized += l_g_style_normalized
+                    l_g_total += l_g_style_normalized
                     loss_dict[loss_key] = l_g_style
                     loss_dict[f"normalized/{loss_key}"] = l_g_style_normalized
 
@@ -398,7 +398,7 @@ class SRModel(BaseModel):
                 l_g_dists_normalized = self.get_normalized_loss(
                     loss_key, l_g_dists, self.cri_dists.loss_weight
                 )
-                l_g_total_normalized += l_g_dists_normalized
+                l_g_total += l_g_dists_normalized
                 loss_dict[loss_key] = l_g_dists
                 loss_dict[f"normalized/{loss_key}"] = l_g_dists_normalized
 
@@ -410,7 +410,7 @@ class SRModel(BaseModel):
                 l_g_contextual_normalized = self.get_normalized_loss(
                     loss_key, l_g_contextual, self.cri_contextual.loss_weight
                 )
-                l_g_total_normalized += l_g_contextual_normalized
+                l_g_total += l_g_contextual_normalized
                 loss_dict[loss_key] = l_g_contextual
                 loss_dict[f"normalized/{loss_key}"] = l_g_contextual_normalized
             # Color loss
@@ -421,7 +421,7 @@ class SRModel(BaseModel):
                 l_g_color_normalized = self.get_normalized_loss(
                     loss_key, l_g_color, self.cri_color.loss_weight
                 )
-                l_g_total_normalized += l_g_color_normalized
+                l_g_total += l_g_color_normalized
                 loss_dict[loss_key] = l_g_color
                 loss_dict[f"normalized/{loss_key}"] = l_g_color_normalized
             # Luma loss
@@ -432,7 +432,7 @@ class SRModel(BaseModel):
                 l_g_luma_normalized = self.get_normalized_loss(
                     loss_key, l_g_luma, self.cri_luma.loss_weight
                 )
-                l_g_total_normalized += l_g_luma_normalized
+                l_g_total += l_g_luma_normalized
                 loss_dict[loss_key] = l_g_luma
                 loss_dict[f"normalized/{loss_key}"] = l_g_luma_normalized
             # HSLuv loss
@@ -443,7 +443,7 @@ class SRModel(BaseModel):
                 l_g_hsluv_normalized = self.get_normalized_loss(
                     loss_key, l_g_hsluv, self.cri_hsluv.loss_weight
                 )
-                l_g_total_normalized += l_g_hsluv_normalized
+                l_g_total += l_g_hsluv_normalized
                 loss_dict[loss_key] = l_g_hsluv
                 loss_dict[f"normalized/{loss_key}"] = l_g_hsluv_normalized
             # Average loss
@@ -454,7 +454,7 @@ class SRModel(BaseModel):
                 l_g_avg_normalized = self.get_normalized_loss(
                     loss_key, l_g_avg, self.cri_avg.loss_weight
                 )
-                l_g_total_normalized += l_g_avg_normalized
+                l_g_total += l_g_avg_normalized
                 loss_dict[loss_key] = l_g_avg
                 loss_dict[f"normalized/{loss_key}"] = l_g_avg_normalized
             # Bicubic loss
@@ -465,7 +465,7 @@ class SRModel(BaseModel):
                 l_g_bicubic_normalized = self.get_normalized_loss(
                     loss_key, l_g_bicubic, self.cri_bicubic.loss_weight
                 )
-                l_g_total_normalized += l_g_bicubic_normalized
+                l_g_total += l_g_bicubic_normalized
                 loss_dict[loss_key] = l_g_bicubic
                 loss_dict[f"normalized/{loss_key}"] = l_g_bicubic_normalized
             # GAN loss
@@ -477,14 +477,14 @@ class SRModel(BaseModel):
                 l_g_gan_normalized = self.get_normalized_loss(
                     loss_key, l_g_gan, self.cri_gan.loss_weight
                 )
-                l_g_total_normalized += l_g_gan_normalized
+                l_g_total += l_g_gan_normalized
                 loss_dict[loss_key] = l_g_gan
                 loss_dict[f"normalized/{loss_key}"] = l_g_gan_normalized
 
             # add total generator loss for tensorboard tracking
-            loss_dict["normalized/l_g_total"] = l_g_total_normalized
+            loss_dict["l_g_total"] = l_g_total
 
-        self.scaler_g.scale(l_g_total_normalized).backward()
+        self.scaler_g.scale(l_g_total).backward()
         scale_before = self.scaler_g.get_scale()
         self.scaler_g.step(self.optimizer_g)
         self.scaler_g.update()
