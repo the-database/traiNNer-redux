@@ -177,6 +177,7 @@ val:
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000
+  save_checkpoint_format: safetensors
   use_tb_logger: true
   wandb:
     project: ~

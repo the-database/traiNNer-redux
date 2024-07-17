@@ -20,6 +20,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.data.data_sampler import EnlargedSampler
 from traiNNer.data.paired_image_dataset import PairedImageDataset
+from traiNNer.data.paired_video_dataset import PairedVideoDataset
 from traiNNer.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
 from traiNNer.models import build_model
 from traiNNer.utils import (
@@ -251,7 +252,10 @@ def train_pipeline(root_path: str) -> None:
     model = build_model(opt)
     if model.with_metrics:
         for val_loader in val_loaders:
-            if not isinstance(val_loader.dataset, PairedImageDataset):
+            if not (
+                isinstance(val_loader.dataset, PairedImageDataset)
+                or isinstance(val_loader.dataset, PairedVideoDataset)
+            ):
                 raise ValueError(
                     "Validation metrics are enabled, all validation datasets must have type PairedImageDataset."
                 )
