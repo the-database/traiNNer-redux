@@ -424,4 +424,4 @@ class ContextualLoss(nn.Module):
         if torch.isnan(cx_loss):
             raise ValueError("NaN in computing CX_loss")
 
-        return cx_loss
+        return cx_loss * self.loss_weight

@@ -56,7 +56,9 @@ class L1Loss(nn.Module):
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
-        return l1_loss(pred, target, weight, reduction=self.reduction)
+        return self.loss_weight * l1_loss(
+            pred, target, weight, reduction=self.reduction
+        )
 
 
 @LOSS_REGISTRY.register()
@@ -88,7 +90,9 @@ class MSELoss(nn.Module):
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
-        return mse_loss(pred, target, weight, reduction=self.reduction)
+        return self.loss_weight * mse_loss(
+            pred, target, weight, reduction=self.reduction
+        )
 
 
 @LOSS_REGISTRY.register()
@@ -128,7 +132,7 @@ class CharbonnierLoss(nn.Module):
             target (Tensor): of shape (N, C, H, W). Ground truth tensor.
             weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
         """
-        return charbonnier_loss(
+        return self.loss_weight * charbonnier_loss(
             pred, target, weight, eps=self.eps, reduction=self.reduction
         )
 
@@ -161,7 +165,9 @@ class ColorLoss(nn.Module):
         target_uv = target_yuv[:, 1:, :, :]
         input_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
         target_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
-        return self.criterion(input_uv_downscale, target_uv_downscale)
+        return (
+            self.criterion(input_uv_downscale, target_uv_downscale) * self.loss_weight
+        )
 
 
 @LOSS_REGISTRY.register()
@@ -183,7 +189,7 @@ class AverageLoss(nn.Module):
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        return self.criterion(self.ds_f(x), self.ds_f(y))
+        return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
 
 
 @LOSS_REGISTRY.register()
@@ -214,7 +220,7 @@ class BicubicLoss(nn.Module):
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        return self.criterion(self.ds_f(x), self.ds_f(y))
+        return self.criterion(self.ds_f(x), self.ds_f(y)) * self.loss_weight
 
 
 @LOSS_REGISTRY.register()
@@ -236,7 +242,7 @@ class LumaLoss(nn.Module):
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         x_luma = rgb_to_luma(x)
         y_luma = rgb_to_luma(y)
-        loss = self.criterion(x_luma, y_luma)
+        loss = self.criterion(x_luma, y_luma) * self.loss_weight
         return loss
 
 
@@ -297,4 +303,4 @@ class HSLuvLoss(nn.Module):
         saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
         lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
 
-        return hue_loss + saturation_loss + lightness_loss
+        return (hue_loss + saturation_loss + lightness_loss) * self.loss_weight

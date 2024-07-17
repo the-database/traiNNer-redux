@@ -106,6 +106,7 @@ class PerceptualLoss(nn.Module):
                         self.criterion(x_features[k], gt_features[k])
                         * self.layer_weights[k]
                     )
+            percep_loss *= self.perceptual_weight
         else:
             percep_loss = None
 
@@ -130,6 +131,7 @@ class PerceptualLoss(nn.Module):
                         )
                         * self.layer_weights[k]
                     )
+            style_loss *= self.style_weight
         else:
             style_loss = None
 
