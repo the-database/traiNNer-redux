@@ -10,7 +10,7 @@ import torch
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN.arch.RRDB import RRDBNet
-from torch import Tensor, nn
+from torch import nn
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim import Optimizer
@@ -57,11 +57,6 @@ class BaseModel:
         self.amp_dtype = torch.float16
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
-
-        self.normalize_losses = True  # TODO opt
-        self.loss_alpha = 0.996  # TODO opt
-        self.loss_emas: dict[str, Tensor] = {}
-        self.live_emas: dict[str, Tensor] = {}
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:

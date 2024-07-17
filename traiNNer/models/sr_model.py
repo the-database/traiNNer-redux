@@ -301,7 +301,6 @@ class SRModel(BaseModel):
             self.gt, self.lq = self.batch_augment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter: int) -> None:
-        print("optimize_parameters", current_iter)
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         assert self.optimizer_g is not None
@@ -327,24 +326,15 @@ class SRModel(BaseModel):
             loss_dict = OrderedDict()
             # pixel loss
             if self.cri_pix:
-                loss_key = "l_g_pix"
                 l_g_pix = self.cri_pix(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_pix)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_pix, self.cri_pix.loss_weight
-                )
-                loss_dict[loss_key] = l_g_pix
+                l_g_total += l_g_pix
+                loss_dict["l_g_pix"] = l_g_pix
             if self.cri_mssim:
-                loss_key = "l_g_mssim"
                 l_g_mssim = self.cri_mssim(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_mssim)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_mssim, self.cri_mssim.loss_weight
-                )
-                loss_dict[loss_key] = l_g_mssim
+                l_g_total += l_g_mssim
+                loss_dict["l_g_mssim"] = l_g_mssim
             if self.cri_ldl:
                 assert self.net_g_ema is not None
-                loss_key = "l_g_ldl"
                 # TODO support LDL without ema
                 pixel_weight = get_refined_artifact_map(
                     self.gt, self.output, self.net_g_ema(self.lq), 7
@@ -353,101 +343,58 @@ class SRModel(BaseModel):
                     torch.mul(pixel_weight, self.output),
                     torch.mul(pixel_weight, self.gt),
                 )
-                self.update_loss_emas(loss_key, l_g_ldl)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_ldl, self.cri_ldl.loss_weight
-                )
-                loss_dict[loss_key] = l_g_ldl
+                l_g_total += l_g_ldl
+                loss_dict["l_g_ldl"] = l_g_ldl
             # perceptual loss
             if self.cri_perceptual:
                 l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                 if l_g_percep is not None:
-                    loss_key = "l_g_percep"
-                    self.update_loss_emas(loss_key, l_g_percep)
-                    l_g_total += self.get_normalized_loss(
-                        loss_key, l_g_percep, self.cri_perceptual.perceptual_weight
-                    )
-                    loss_dict[loss_key] = l_g_percep
+                    l_g_total += l_g_percep
+                    loss_dict["l_g_percep"] = l_g_percep
                 if l_g_style is not None:
-                    loss_key = "l_g_style"
-                    self.update_loss_emas(loss_key, l_g_style)
-                    l_g_total += self.get_normalized_loss(
-                        loss_key, l_g_style, self.cri_perceptual.style_weight
-                    )
-                    loss_dict[loss_key] = l_g_style
+                    l_g_total += l_g_style
+                    loss_dict["l_g_style"] = l_g_style
             # dists loss
             if self.cri_dists:
-                loss_key = "l_g_dists"
                 l_g_dists = self.cri_dists(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_dists)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_dists, self.cri_dists.loss_weight
-                )
-                loss_dict[loss_key] = l_g_dists
+                l_g_total += l_g_dists
+                loss_dict["l_g_dists"] = l_g_dists
             # contextual loss
             if self.cri_contextual:
-                loss_key = "l_g_contextual"
                 l_g_contextual = self.cri_contextual(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_dists)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_contextual, self.cri_contextual.loss_weight
-                )
-                loss_dict[loss_key] = l_g_contextual
+                l_g_total += l_g_contextual
+                loss_dict["l_g_contextual"] = l_g_contextual
             # color loss
             if self.cri_color:
-                loss_key = "l_g_color"
                 l_g_color = self.cri_color(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_color)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_color, self.cri_color.loss_weight
-                )
-                loss_dict[loss_key] = l_g_color
+                l_g_total += l_g_color
+                loss_dict["l_g_color"] = l_g_color
             # luma loss
             if self.cri_luma:
-                loss_key = "l_g_luma"
                 l_g_luma = self.cri_luma(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_luma)
-                l_g_total += self.get_normalized_loss(
-                    "l_g_luma", l_g_luma, self.cri_luma.loss_weight
-                )
+                l_g_total += l_g_luma
                 loss_dict["l_g_luma"] = l_g_luma
             # hsluv loss
             if self.cri_hsluv:
-                loss_key = "l_g_hsluv"
                 l_g_hsluv = self.cri_hsluv(self.output, self.gt)
-                self.update_loss_emas("l_g_hsluv", l_g_hsluv)
-                l_g_total += self.get_normalized_loss(
-                    "l_g_hsluv", l_g_hsluv, self.cri_hsluv.loss_weight
-                )
-                loss_dict[loss_key] = l_g_hsluv
+                l_g_total += l_g_hsluv
+                loss_dict["l_g_hsluv"] = l_g_hsluv
             # avg loss
             if self.cri_avg:
-                loss_key = "l_g_avg"
                 l_g_avg = self.cri_avg(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_avg)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_avg, self.cri_avg.loss_weight
-                )
-                loss_dict[loss_key] = l_g_avg
+                l_g_total += l_g_avg
+                loss_dict["l_g_avg"] = l_g_avg
             # bicubic loss
             if self.cri_bicubic:
-                loss_key = "l_g_bicubic"
                 l_g_bicubic = self.cri_bicubic(self.output, self.gt)
-                self.update_loss_emas(loss_key, l_g_bicubic)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_bicubic, self.cri_bicubic.loss_weight
-                )
-                loss_dict[loss_key] = l_g_bicubic
+                l_g_total += l_g_bicubic
+                loss_dict["l_g_bicubic"] = l_g_bicubic
             # gan loss
             if self.cri_gan and self.net_d:
-                loss_key = "l_g_gan"
                 fake_g_pred = self.net_d(self.output)
                 l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                self.update_loss_emas(loss_key, l_g_gan)
-                l_g_total += self.get_normalized_loss(
-                    loss_key, l_g_gan, self.cri_gan.loss_weight
-                )
-                loss_dict[loss_key] = l_g_gan
+                l_g_total += l_g_gan
+                loss_dict["l_g_gan"] = l_g_gan
 
             # add total generator loss for tensorboard tracking
             loss_dict["l_g_total"] = l_g_total
@@ -502,19 +449,6 @@ class SRModel(BaseModel):
 
         if self.ema_decay > 0:
             self.model_ema(decay=self.ema_decay)
-
-    def update_loss_emas(self, loss_key: str, loss: Tensor) -> None:
-        if self.normalize_losses:
-            self.loss_emas[loss_key] = (
-                self.loss_alpha * self.loss_emas.get(loss_key, loss.detach())
-            ) + (1 - self.loss_alpha) * loss.detach()
-
-    def get_normalized_loss(
-        self, loss_key: str, loss: Tensor, loss_weight: float
-    ) -> Tensor:
-        sf = 1.0 / abs(self.live_emas.get(loss_key, self.loss_emas[loss_key]))
-        print(loss_key, sf)
-        return (loss * loss_weight) * (sf if self.normalize_losses else 1.0)
 
     def test(self) -> None:
         with torch.autocast(
