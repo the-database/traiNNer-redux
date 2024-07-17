@@ -58,7 +58,7 @@ class BaseModel:
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
 
-        self.normalize_losses = True  # TODO opt
+        self.normalize_losses = False  # TODO opt
         self.loss_alpha = 0.996  # TODO opt
         self.loss_emas: dict[str, Tensor] = {}
 
