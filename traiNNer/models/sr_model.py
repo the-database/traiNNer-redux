@@ -301,7 +301,7 @@ class SRModel(BaseModel):
             self.gt, self.lq = self.batch_augment(self.gt, self.lq)
 
     def optimize_parameters(self, current_iter: int) -> None:
-        # print("optimize_parameters", current_iter)
+        print("optimize_parameters", current_iter)
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         assert self.optimizer_g is not None
@@ -543,7 +543,7 @@ class SRModel(BaseModel):
         self, loss_key: str, loss: Tensor, loss_weight: float
     ) -> Tensor:
         sf = 1.0 / abs(self.live_emas.get(loss_key, self.loss_emas[loss_key]))
-        # print(loss_key, sf)
+        print(loss_key, sf)
         return (loss * loss_weight) * (sf if self.normalize_losses else 1.0)
 
     def test(self) -> None:
