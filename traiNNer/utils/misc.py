@@ -103,7 +103,7 @@ def scandir(
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
-def check_resume(opt: ReduxOptions, resume_iter: int, has_gan: bool) -> None:
+def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
     """Check resume states and pretrain_network paths.
 
     Args:
