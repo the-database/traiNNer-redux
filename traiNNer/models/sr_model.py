@@ -515,7 +515,7 @@ class SRModel(BaseModel):
             )
 
         for val_data in dataloader:
-            img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
+            img_name = osp.splitext(osp.basename(val_data["gt_path"][0]))[0]
             self.feed_data(val_data)
             self.test()
 
@@ -553,7 +553,11 @@ class SRModel(BaseModel):
                         f"{img_name}_{self.opt.name}.png",
                     )
                 imwrite(sr_img, save_img_path)
-                if self.opt.is_train and not self.first_val_completed:
+                if (
+                    self.opt.is_train
+                    and not self.first_val_completed
+                    and "lq_path" in val_data
+                ):
                     assert save_img_dir is not None
                     lr_img_target_path = osp.join(save_img_dir, f"{img_name}_lr.png")
                     if not os.path.exists(lr_img_target_path):

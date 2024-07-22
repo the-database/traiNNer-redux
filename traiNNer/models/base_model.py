@@ -345,8 +345,11 @@ class BaseModel:
                 Default: 'params'.
         """
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
+        assert self.opt.logger is not None
 
-        save_filename = f"{net_label}_{current_iter_str}.safetensors"
+        save_filename = (
+            f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
+        )
         save_path = os.path.join(save_dir, save_filename)
 
         bare_net_ = self.get_bare_model(net)
@@ -362,7 +365,10 @@ class BaseModel:
         logger = None
         while retry > 0:
             try:
-                save_file(state_dict, save_path)
+                if self.opt.logger.save_checkpoint_format == "safetensors":
+                    save_file(state_dict, save_path)
+                else:
+                    torch.save(state_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(

@@ -1,7 +1,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_Compact
+name: 4x_TSCUNet
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage.
 amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only.
@@ -17,11 +17,12 @@ datasets:
   # Settings for the training dataset.
   train:
     name: Train Dataset
-    type: PairedImageDataset
+    type: PairedVideoDataset
     # Path to the HR (high res) images in your training dataset.
     dataroot_gt: datasets/train/dataset1/hr
     # Path to the LR (low res) images in your training dataset.
     dataroot_lq: datasets/train/dataset1/lr
+    clip_size: 5
     # meta_info: data/meta_info/dataset1.txt
     io_backend:
       type: disk
@@ -39,9 +40,10 @@ datasets:
   # be ignored if val_enabled is false in the Validation section below.
   val:
     name: Val Dataset
-    type: PairedImageDataset
+    type: PairedVideoDataset
     dataroot_gt: datasets/val/dataset1/hr
     dataroot_lq: datasets/val/dataset1/lr
+    clip_size: 5
     io_backend:
       type: disk
 
@@ -50,7 +52,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: Compact  # Compact, UltraCompact, SuperUltraCompact
+  type: TSCUNet
 
 # Discriminator model settings
 network_d:
@@ -177,7 +179,7 @@ val:
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000
-  save_checkpoint_format: safetensors
+  save_checkpoint_format: pth
   use_tb_logger: true
   wandb:
     project: ~

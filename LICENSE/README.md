@@ -24,12 +24,15 @@ traiNNer-redux is released under Apache License 2.0.
 |[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | [BSD 3-Clause "New" or "Revised" License](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)|
 |[RealPLKSR](https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
 |[RGT](https://github.com/zhengchen1999/RGT) | [Apache License 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)|
+|[aaf6aa/SCUNet](https://github.com/aaf6aa/SCUNet) | [Apache License 2.0](https://github.com/aaf6aa/SCUNet/blob/main/LICENSE)|
+|[SCUNet](https://github.com/cszn/SCUNet) | [Apache License 2.0](https://github.com/cszn/SCUNet/blob/main/LICENSE)|
 |[Spandrel](https://github.com/chaiNNer-org/spandrel) | [MIT License](https://github.com/chaiNNer-org/spandrel/blob/main/LICENSE)
 |[SPAN](https://github.com/hongyuanyu/SPAN) | [Apache License 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)|
 |[SPANPlus](https://github.com/umzi2/SPANPlus) | [Apache License 2.0](https://github.com/umzi2/SPANPlus/blob/master/license.txt)|
 |[SRFormer](https://github.com/HVision-NKU/SRFormer) | [CC BY-NC 4.0](https://github.com/HVision-NKU/SRFormer/blob/main/LICENSE.txt)|
 |[SRVGGNetCompact](https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/srvgg_arch.py) | [Apache License 2.0](https://github.com/XPixelGroup/BasicSR/blob/master/LICENSE.txt)|
 |[SwinIR](https://github.com/JingyunLiang/SwinIR) | [Apache License 2.0](https://github.com/JingyunLiang/SwinIR/blob/main/LICENSE)|
+|[TSCUNet_Trainer](https://github.com/Demetter/TSCUNet_Trainer) | [Apache License 2.0](https://github.com/Demetter/TSCUNet_Trainer/blob/main/LICENSE)|
 |[joeyballentine/traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) | [Apache License 2.0](https://github.com/joeyballentine/traiNNer-redux/blob/master/LICENSE.txt)|
 |[VQGAN-CLIP-Video](https://github.com/robobeebop/VQGAN-CLIP-Video) (Lanczos resample) | [MIT License](https://github.com/robobeebop/VQGAN-CLIP-Video/blob/main/LICENSE)|
 

@@ -10,6 +10,8 @@ class ArchInfo(TypedDict):
     extras: NotRequired[dict[str, str]]
     gt_override: NotRequired[int]
     folder_name_override: NotRequired[str]
+    video_override: NotRequired[bool]
+    pth_override: NotRequired[bool]
 
 
 ALL_SCALES = [1, 2, 3, 4, 8]
@@ -54,6 +56,11 @@ def final_template(
     if "gt_override" in arch:
         template = re.sub(r"gt_size: \d+", f"gt_size: {arch['gt_override']}", template)
 
+    if "pth_override" in arch:
+        template = template.replace(
+            "save_checkpoint_format: safetensors", "save_checkpoint_format: pth"
+        )
+
     template = template.replace("%otf1%\n", template_otf1)
     template = template.replace("    %otf2%\n", template_otf2)
 
@@ -65,6 +72,17 @@ def final_template(
         template = template.replace("    dataroot_lq: datasets/train/dataset1/lr\n", "")
     else:
         template = template.replace("%traindatasettype%", "PairedImageDataset")
+
+    if "video_override" in arch:
+        template = template.replace(
+            "type: PairedImageDataset", "type: PairedVideoDataset"
+        )
+
+        template = template.replace(
+            "type: SingleImageDataset", "type: SingleVideoDataset"
+        )
+
+        template = re.sub(r"(\s+)(dataroot_lq:.+)", r"\1\2\1clip_size: 5", template)
 
     if mssim_only:
         template = re.sub("loss_weight: [0-9.]+", "loss_weight: 0", template)
@@ -118,6 +136,18 @@ archs: list[ArchInfo] = [
         "names": ["HiT_SRF", "HiT_SNG", "HiT_SIR"],
         "folder_name_override": "HiT-SR",
         "scales": ALL_SCALES,
+    },
+    {
+        "names": ["TSCUNet"],
+        "scales": ALL_SCALES,
+        "pth_override": True,
+        "video_override": True,
+    },
+    {
+        "names": ["SCUNet_aaf6aa"],
+        "scales": ALL_SCALES,
+        "pth_override": True,
+        "folder_name_override": "SCUNet_aaf6aa",
     },
 ]
 

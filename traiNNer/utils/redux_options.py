@@ -47,6 +47,8 @@ class DatasetOptions(StrictStruct):
     persistent_workers: bool = True
     num_prefetch_queue: int = 1
 
+    clip_size: int | None = None
+
     dataroot_gt: str | None = None
     dataroot_lq: str | None = None
     meta_info: str | None = None
@@ -161,6 +163,7 @@ class LogOptions(StrictStruct):
     print_freq: int
     save_checkpoint_freq: int
     use_tb_logger: bool
+    save_checkpoint_format: Literal["safetensors", "pth"] = "safetensors"
     wandb: WandbOptions | None = None
 
 
