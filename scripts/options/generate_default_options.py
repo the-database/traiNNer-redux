@@ -139,13 +139,13 @@ archs: list[ArchInfo] = [
     },
     {
         "names": ["TSCUNet"],
-        "scales": ALL_SCALES,
+        "scales": [1, 2, 4, 8],
         "pth_override": True,
         "video_override": True,
     },
     {
         "names": ["SCUNet_aaf6aa"],
-        "scales": ALL_SCALES,
+        "scales": [1, 2, 4, 8],
         "pth_override": True,
         "folder_name_override": "SCUNet_aaf6aa",
     },
