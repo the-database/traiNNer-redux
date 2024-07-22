@@ -8,6 +8,7 @@ import torch
 from scipy import special
 from scipy.stats import multivariate_normal
 from torch import Tensor
+from torch.nn import functional as F  # noqa: N812
 from torchvision.transforms.functional import rgb_to_grayscale
 
 from traiNNer.utils import RNG
@@ -949,3 +950,70 @@ def random_add_jpg_compression(
     """
     quality = RNG.get_rng().uniform(quality_range[0], quality_range[1])
     return add_jpg_compression(img, quality)
+
+
+# ------------------------------------------------------------------------ #
+# -------------------------------- Resize -------------------------------- #
+# ------------------------------------------------------------------------ #
+ANTIALIAS_MODES = {"bicubic", "bilinear"}
+
+
+def _sinc(x: Tensor) -> Tensor:
+    return torch.where(x != 0, torch.sin(math.pi * x) / (math.pi * x), x.new_ones([]))
+
+
+def _lanczos(x: Tensor, a: int) -> Tensor:
+    cond = torch.logical_and(-a < x, x < a)
+    out = torch.where(cond, _sinc(x) * _sinc(x / a), x.new_zeros([]))
+    return out / out.sum()
+
+
+def _ramp(ratio: float, width: int) -> Tensor:
+    n = math.ceil(width / ratio + 1)
+    out = torch.empty([n])
+    cur = 0
+    for i in range(out.shape[0]):
+        out[i] = cur
+        cur += ratio
+    return torch.cat([-out[1:].flip([0]), out])[1:-1]
+
+
+# https://github.com/robobeebop/VQGAN-CLIP-Video/blob/72414dee1764397654121c75dbb576b038da68e4/utils.py#L41
+def _resample(input: Tensor, size: tuple[int, int], a: int = 3) -> Tensor:
+    n, c, h, w = input.shape
+    dh, dw = size
+
+    input = input.view([n * c, 1, h, w])
+
+    if dh < h:
+        kernel_h = _lanczos(_ramp(dh / h, a), a).to(input.device, input.dtype)
+        pad_h = (kernel_h.shape[0] - 1) // 2
+        input = F.pad(input, (0, 0, pad_h, pad_h), "reflect")
+        input = F.conv2d(input, kernel_h[None, None, :, None], padding=0)
+
+    if dw < w:
+        kernel_w = _lanczos(_ramp(dw / w, a), a).to(input.device, input.dtype)
+        pad_w = (kernel_w.shape[0] - 1) // 2
+        input = F.pad(input, (pad_w, pad_w, 0, 0), "reflect")
+        input = F.conv2d(input, kernel_w[None, None, None, :], padding=0)
+
+    input = input.view([n, c, h, w])
+    return F.interpolate(input, size, mode="bicubic", align_corners=False)
+
+
+def resize_pt(
+    img: Tensor, mode: str, scale_factor: float = 0, size: tuple[int, int] = (0, 0)
+) -> Tensor:
+    if scale_factor == 0 and size == (0, 0):
+        raise ValueError("scale_factor or size is required")
+
+    if scale_factor != 0:
+        size = (round(img.shape[2] * scale_factor), round(img.shape[3] * scale_factor))
+
+    if mode == "lanczos":
+        return _resample(
+            img,
+            size,
+        )
+
+    return F.interpolate(img, size=size, mode=mode, antialias=mode in ANTIALIAS_MODES)

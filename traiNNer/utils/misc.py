@@ -129,6 +129,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             or "network_g_ema" not in opt.path.ignore_resume_networks
         ):
             model_exists = False
+            basepath = ""
             for ext in model_extensions:
                 for net_label in ["net_g_ema", "net_g"]:
                     basepath = osp.join(opt.path.models, f"{net_label}_{resume_iter}")
@@ -148,6 +149,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             or "network_g" not in opt.path.ignore_resume_networks
         ):
             model_exists = False
+            basepath = ""
             for ext in model_extensions:
                 for model_dir in model_dirs:
                     basepath = osp.join(model_dir, f"net_g_{resume_iter}")
@@ -167,21 +169,29 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             opt.path.ignore_resume_networks is None
             or "network_d" not in opt.path.ignore_resume_networks
         ):
-            model_exists = False
-            for ext in model_extensions:
-                for model_dir in model_dirs:
-                    basepath = osp.join(model_dir, f"net_d_{resume_iter}")
-                    if osp.exists(f"{basepath}.{ext}"):
-                        opt.path.pretrain_network_d = f"{basepath}.{ext}"
-                        model_exists = True
-                        print(
-                            f"Set pretrain_network_d to {opt.path.pretrain_network_d}",
-                        )
+            has_gan = False
+            gan_opt = opt.train.gan_opt
+            if gan_opt:
+                if gan_opt.get("loss_weight", 0) > 0:
+                    has_gan = True
 
-            if not model_exists:
-                raise FileNotFoundError(
-                    f"Unable to resume, pretrain_network_d not found at path: {basepath}.{model_extensions[0]}"
-                )
+            if has_gan:
+                model_exists = False
+                basepath = ""
+                for ext in model_extensions:
+                    for model_dir in model_dirs:
+                        basepath = osp.join(model_dir, f"net_d_{resume_iter}")
+                        if osp.exists(f"{basepath}.{ext}"):
+                            opt.path.pretrain_network_d = f"{basepath}.{ext}"
+                            model_exists = True
+                            print(
+                                f"Set pretrain_network_d to {opt.path.pretrain_network_d}",
+                            )
+
+                if not model_exists:
+                    raise FileNotFoundError(
+                        f"Unable to resume, pretrain_network_d not found at path: {basepath}.{model_extensions[0]}"
+                    )
 
         if opt.path.param_key_g == "params_ema":
             opt.path.param_key_g = "params"

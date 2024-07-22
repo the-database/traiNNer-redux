@@ -6,11 +6,11 @@ from os import path as osp
 import torch
 import torchvision
 from torch import Tensor
-from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.data.degradations import (
     random_add_gaussian_noise_pt,
     random_add_poisson_noise_pt,
+    resize_pt,
 )
 from traiNNer.data.transforms import paired_random_crop
 from traiNNer.models.sr_model import SRModel
@@ -152,11 +152,10 @@ class RealESRGANModel(SRModel):
                     self.opt.resize_mode_list, weights=self.opt.resize_mode_prob
                 )[0]
 
-                out = F.interpolate(
+                out = resize_pt(
                     out,
                     scale_factor=scale,
                     mode=mode,
-                    antialias=mode in ANTIALIAS_MODES,
                 )
 
             # add noise
@@ -204,14 +203,13 @@ class RealESRGANModel(SRModel):
                 mode = random.choices(
                     self.opt.resize_mode_list2, weights=self.opt.resize_mode_prob2
                 )[0]
-                out = F.interpolate(
+                out = resize_pt(
                     out,
                     size=(
                         int(ori_h / self.opt.scale * scale),
                         int(ori_w / self.opt.scale * scale),
                     ),
                     mode=mode,
-                    antialias=mode in ANTIALIAS_MODES,
                 )
             # add noise
             gray_noise_prob = self.opt.gray_noise_prob2
@@ -244,11 +242,10 @@ class RealESRGANModel(SRModel):
             )[0]
             if RNG.get_rng().uniform() < 0.5:
                 # resize back + the final sinc filter
-                out = F.interpolate(
+                out = resize_pt(
                     out,
                     size=(ori_h // self.opt.scale, ori_w // self.opt.scale),
                     mode=mode,
-                    antialias=mode in ANTIALIAS_MODES,
                 )
                 out = filter2d(out, self.sinc_kernel)
                 # JPEG compression
@@ -263,11 +260,10 @@ class RealESRGANModel(SRModel):
                     out = torch.clamp(out, 0, 1)
                     out = self.jpeger(out, quality=jpeg_p)
                 # resize back + the final sinc filter
-                out = F.interpolate(
+                out = resize_pt(
                     out,
                     size=(ori_h // self.opt.scale, ori_w // self.opt.scale),
                     mode=mode,
-                    antialias=mode in ANTIALIAS_MODES,
                 )
                 out = filter2d(out, self.sinc_kernel)
 

@@ -532,6 +532,8 @@ class SRModel(BaseModel):
             self.output = None
             torch.cuda.empty_cache()
 
+            save_img_dir = None
+
             if save_img:
                 if self.opt.is_train:
                     save_img_dir = osp.join(self.opt.path.visualization, img_name)
@@ -556,6 +558,7 @@ class SRModel(BaseModel):
                     and not self.first_val_completed
                     and "lq_path" in val_data
                 ):
+                    assert save_img_dir is not None
                     lr_img_target_path = osp.join(save_img_dir, f"{img_name}_lr.png")
                     if not os.path.exists(lr_img_target_path):
                         shutil.copy(val_data["lq_path"][0], lr_img_target_path)

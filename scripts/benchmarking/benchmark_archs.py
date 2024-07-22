@@ -107,6 +107,7 @@ def benchmark_model(
         with torch.inference_mode():
             model(input_tensor)
 
+    output = None
     torch.cuda.synchronize()
     start_time = time.time()
 
@@ -117,6 +118,7 @@ def benchmark_model(
 
     end_time = time.time()
     avg_time = (end_time - start_time) / num_runs
+    assert output is not None
     return avg_time, output
 
 
@@ -148,8 +150,10 @@ if __name__ == "__main__":
         results_by_scale[scale] = []
 
         for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
+            arch_key = f"{name} {format_extra_params(extra_arch_params)}"
+
             try:
-                # if "hit" not in name and "realplksr" != name:
+                # if "realplksr" != name:
                 #     continue
 
                 model = (
@@ -161,7 +165,6 @@ if __name__ == "__main__":
                 )
 
                 with torch.autocast(device_type=device, dtype=dtype, enabled=use_amp):
-                    arch_key = f"{name} {format_extra_params(extra_arch_params)}"
                     if arch_key not in results_by_arch:
                         results_by_arch[arch_key] = {}
                     total_params = sum(p[1].numel() for p in model.named_parameters())
@@ -212,12 +215,7 @@ if __name__ == "__main__":
 
         results_by_scale[scale].sort(key=lambda x: x[1])
 
-    if not print_markdown:
-        print(
-            f"\n{w}x{h} {c} channel input, {scale}x scale, {dtype_str}, {warmup_runs} warmup + {num_runs} ({lightweight_num_runs} for lightweight) runs averaged"
-        )
-    else:
-        print("## By Scale")
+    print("## By Scale")
 
     for scale in ALL_SCALES:
         if print_markdown:

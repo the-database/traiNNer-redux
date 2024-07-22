@@ -16,7 +16,7 @@ high_order_degradations_debug_limit: 100  # The max number of iterations to save
 # The first degradation process.
 blur_prob: 0.0
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
-resize_mode_list: ['bilinear', 'bicubic', 'nearest-exact']  # See modes: https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
+resize_mode_list: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
 resize_mode_prob: [0.3333, 0.3333, 0.3333]  # Probability each resize mode is selected.
 resize_range: [0.4, 1.5]
 gaussian_noise_prob: 0.0
@@ -29,7 +29,7 @@ jpeg_range: [75, 95]
 # The second degradation process.
 blur_prob2: 0.0
 resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
-resize_mode_list2: ['bilinear', 'bicubic', 'nearest-exact']  # See modes: https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
+resize_mode_list2: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
 resize_mode_prob2: [0.3333, 0.3333, 0.3333]  # Probability each resize mode is selected.
 resize_range2: [0.6, 1.2]
 gaussian_noise_prob2: 0
@@ -40,10 +40,11 @@ jpeg_prob2: 1.0
 jpeg_range2: [75, 95]
 
 # The final resize to the target resolution.
-resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact']  # See modes: https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
+resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
 resize_mode_prob3: [0.3333, 0.3333, 0.3333]  # Probability each resize mode is selected.
 
 queue_size: 180
+
 #################################
 # Dataset and Dataloader Settings
 #################################

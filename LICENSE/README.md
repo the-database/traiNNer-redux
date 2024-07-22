@@ -29,10 +29,10 @@ traiNNer-redux is released under Apache License 2.0.
 |[Spandrel](https://github.com/chaiNNer-org/spandrel) | [MIT License](https://github.com/chaiNNer-org/spandrel/blob/main/LICENSE)
 |[SPAN](https://github.com/hongyuanyu/SPAN) | [Apache License 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)|
 |[SPANPlus](https://github.com/umzi2/SPANPlus) | [Apache License 2.0](https://github.com/umzi2/SPANPlus/blob/master/license.txt)|
-|[SRFormer](https://github.com/HVision-NKU/SRFormer) | [CC-NC 4.0](https://github.com/HVision-NKU/SRFormer/blob/main/LICENSE.txt)|
+|[SRFormer](https://github.com/HVision-NKU/SRFormer) | [CC BY-NC 4.0](https://github.com/HVision-NKU/SRFormer/blob/main/LICENSE.txt)|
 |[SRVGGNetCompact](https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/srvgg_arch.py) | [Apache License 2.0](https://github.com/XPixelGroup/BasicSR/blob/master/LICENSE.txt)|
 |[SwinIR](https://github.com/JingyunLiang/SwinIR) | [Apache License 2.0](https://github.com/JingyunLiang/SwinIR/blob/main/LICENSE)|
 |[TSCUNet_Trainer](https://github.com/Demetter/TSCUNet_Trainer) | [Apache License 2.0](https://github.com/Demetter/TSCUNet_Trainer/blob/main/LICENSE)|
 |[joeyballentine/traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) | [Apache License 2.0](https://github.com/joeyballentine/traiNNer-redux/blob/master/LICENSE.txt)|
-
+|[VQGAN-CLIP-Video](https://github.com/robobeebop/VQGAN-CLIP-Video) (Lanczos resample) | [MIT License](https://github.com/robobeebop/VQGAN-CLIP-Video/blob/main/LICENSE)|
 

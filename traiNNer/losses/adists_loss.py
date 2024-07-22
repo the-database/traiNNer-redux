@@ -184,6 +184,7 @@ class ADISTSLoss(torch.nn.Module):
                     interpolation=tf.InterpolationMode.BICUBIC,
                     antialias=True,
                 )
+            h = x
         else:
             h = x
 
