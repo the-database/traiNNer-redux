@@ -49,15 +49,18 @@ FILTERED_REGISTRIES_SCALES_PARAMS = [
 EXCLUDE_ARCH_SCALES = {
     "swinir_l": [{"scale": 3, "extra_arch_params": {}}],
     "realcugan": [{"scale": 1, "extra_arch_params": {}}],
+    "tscunet": [{"scale": 3, "extra_arch_params": {}}],
+    "scunet_aaf6aa": [{"scale": 3, "extra_arch_params": {}}],
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
 REQUIRE_BATCH_2 = {"dat_2"}
+ADD_VSR_DIM = {"tscunet"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
 REQUIRE_32_HW = {"realcugan", "hit_srf"}
-REQUIRE_64_HW = {"hit_sir", "hit_sng"}
+REQUIRE_64_HW = {"hit_sir", "hit_sng", "scunet_aaf6aa", "tscunet"}
 
 
 class TestArchData(TypedDict):
@@ -121,11 +124,15 @@ class TestArchs:
         elif name in REQUIRE_32_HW:
             lq = F.interpolate(lq, scale_factor=2)
 
+        if name in ADD_VSR_DIM:
+            lq = lq.repeat(5, 1, 1, 1).unsqueeze(0)
+            # assert False, lq.shape
+
         with torch.inference_mode():
             output = model(lq)
             assert (
-                output.shape[2] == lq.shape[2] * scale
-                and output.shape[3] == lq.shape[3] * scale
+                output.shape[-2] == lq.shape[-2] * scale
+                and output.shape[-1] == lq.shape[-1] * scale
             ), f"{name}: {output.shape} is not {scale}x {lq.shape}"
 
     @pytest.mark.parametrize(
@@ -172,7 +179,16 @@ class TestArchs:
         elif name in REQUIRE_32_HW:
             lq = F.interpolate(lq, scale_factor=2)
 
-        gt_shape = (lq.shape[0], lq.shape[1], lq.shape[2] * scale, lq.shape[3] * scale)
+        if name in ADD_VSR_DIM:
+            lq = lq.repeat(5, 1, 1, 1).unsqueeze(0)
+            # assert False, lq.shape
+
+        gt_shape = (
+            lq.shape[0],
+            lq.shape[-3],
+            lq.shape[-2] * scale,
+            lq.shape[-1] * scale,
+        )
         dtype = data["dtype"]
         gt = torch.rand(gt_shape, device=device, dtype=dtype)
         model = arch(scale=scale, **extra_arch_params).train().to(device, dtype=dtype)
