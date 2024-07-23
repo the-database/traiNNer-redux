@@ -266,10 +266,10 @@ def paired_paths_from_folder(
             gt_folder,
         )
 
-    gt_names = list(scandir(gt_folder))
+    gt_names = list(scandir(gt_folder, recursive=True))
     gt_paths = [(f"{gt_key}_path", osp.join(gt_folder, f)) for f in gt_names]
 
-    input_names = list(scandir(input_folder))
+    input_names = list(scandir(input_folder, recursive=True))
 
     assert len(input_names) == len(gt_names), (
         f"{input_key} and {gt_key} datasets have different number of images: "

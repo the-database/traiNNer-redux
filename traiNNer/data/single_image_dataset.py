@@ -52,7 +52,7 @@ class SingleImageDataset(BaseDataset):
                     for line in fin
                 ]
         else:
-            self.paths = sorted(scandir(self.lq_folder, full_path=True))
+            self.paths = sorted(scandir(self.lq_folder, recursive=True, full_path=True))
 
     def __getitem__(self, index: int) -> DataFeed:
         if self.file_client is None:
