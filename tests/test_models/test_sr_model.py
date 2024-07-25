@@ -31,7 +31,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert isinstance(model.net_g, RRDBNet)
     assert isinstance(model.cri_mssim, MSSIMLoss)
     assert isinstance(model.cri_perceptual, PerceptualLoss)
-    assert isinstance(model.optimizers[0], torch.optim.AdamW)
+    assert isinstance(model.optimizers[0], torch.optim.AdamW)  # pyright: ignore [reportPrivateImportUsage]
     assert model.ema_decay == 0.999
 
     # prepare data
