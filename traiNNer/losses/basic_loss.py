@@ -262,7 +262,7 @@ class HSLuvLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportAttributeAccessIssue]
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         x_hsluv = rgb_to_hsluv(x)
         y_hsluv = rgb_to_hsluv(y)

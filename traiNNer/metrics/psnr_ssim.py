@@ -217,8 +217,7 @@ def _ssim(img1: np.ndarray, img2: np.ndarray) -> float:
     mu1_mu2 = np.multiply(mu1, mu2)
     sigma1_sq = cv2.filter2D(img1**2, -1, window)[5:-5, 5:-5] - mu1_sq
     sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
-    img_prod: np.ndarray = img1 * img2
-    sigma12 = cv2.filter2D(img_prod, -1, window)[5:-5, 5:-5] - mu1_mu2
+    sigma12 = cv2.filter2D(img1 * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
 
     ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / (
         (mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2)
