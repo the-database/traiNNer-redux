@@ -13,8 +13,9 @@ from spandrel.architectures.ESRGAN.arch.RRDB import RRDBNet
 from torch import nn
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
+from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
-from torch.optim.optimizer import Optimizer, ParamsT
+from torch.optim.optimizer import ParamsT
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -200,19 +201,19 @@ class BaseModel:
         elif optim_type == "Adan":
             optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
         elif optim_type == "Adam":
-            optimizer = torch.optim.Adam(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            optimizer = torch.optim.Adam(params, lr, **kwargs)
         elif optim_type == "AdamW":
-            optimizer = torch.optim.AdamW(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage]
+            optimizer = torch.optim.AdamW(params, lr, **kwargs)
         elif optim_type == "Adamax":
-            optimizer = torch.optim.Adamax(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage]
+            optimizer = torch.optim.Adamax(params, lr, **kwargs)
         elif optim_type == "SGD":
-            optimizer = torch.optim.SGD(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage]
+            optimizer = torch.optim.SGD(params, lr, **kwargs)
         elif optim_type == "ASGD":
-            optimizer = torch.optim.ASGD(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage]
+            optimizer = torch.optim.ASGD(params, lr, **kwargs)
         elif optim_type == "RMSprop":
-            optimizer = torch.optim.RMSprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage]
+            optimizer = torch.optim.RMSprop(params, lr, **kwargs)
         elif optim_type == "Rprop":
-            optimizer = torch.optim.Rprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage]
+            optimizer = torch.optim.Rprop(params, lr, **kwargs)
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
         return optimizer

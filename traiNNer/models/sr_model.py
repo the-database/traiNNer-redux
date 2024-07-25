@@ -7,7 +7,7 @@ from typing import Any
 import torch
 from torch import Tensor, nn
 from torch.cuda.amp import GradScaler
-from torch.optim.optimizer import Optimizer
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
