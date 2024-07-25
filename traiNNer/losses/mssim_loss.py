@@ -124,7 +124,7 @@ class MSSIMLoss(nn.Module):
             padding=padding,
         )
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportAttributeAccessIssue] (https://github.com/pytorch/pytorch/issues/131765)
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         """x, y (Tensor): tensors of shape (N,C,H,W)
         Returns: Tensor
