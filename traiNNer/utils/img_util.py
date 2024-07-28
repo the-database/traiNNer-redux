@@ -30,11 +30,14 @@ def img2tensor(
 
     # def _totensor(img: np.ndarray, color: bool, bgr2rgb: bool, float32: bool) -> Tensor:
     if color:
-        if img.shape[2] == 3 and bgr2rgb:
+        if img.ndim == 2:
+            # Gray to RGB and to BGR are the same.
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        elif img.shape[2] == 3 and bgr2rgb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         out = torch.from_numpy(img.transpose(2, 0, 1))
     else:
-        if img.shape[2] == 3:
+        if img.ndim >= 3 and img.shape[2] == 3:
             if bgr2rgb:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             else:
