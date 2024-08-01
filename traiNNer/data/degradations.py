@@ -983,7 +983,7 @@ def _resample(input: Tensor, size: tuple[int, int], a: int = 3) -> Tensor:
     n, c, h, w = input.shape
     dh, dw = size
 
-    input = input.view([n * c, 1, h, w])
+    input = input.reshape([n * c, 1, h, w])
 
     if dh < h:
         kernel_h = _lanczos(_ramp(dh / h, a), a).to(input.device, input.dtype)

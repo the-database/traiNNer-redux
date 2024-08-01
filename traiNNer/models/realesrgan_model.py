@@ -148,6 +148,9 @@ class RealESRGANModel(SRModel):
                 scale = 1
 
             if scale != 1:
+                assert len(self.opt.resize_mode_list) == len(
+                    self.opt.resize_mode_prob
+                ), "resize_mode_list and resize_mode_prob must be the same length"
                 mode = random.choices(
                     self.opt.resize_mode_list, weights=self.opt.resize_mode_prob
                 )[0]
@@ -200,6 +203,9 @@ class RealESRGANModel(SRModel):
                 scale = 1
 
             if scale != 1:
+                assert len(self.opt.resize_mode_list2) == len(
+                    self.opt.resize_mode_prob2
+                ), "resize_mode_list2 and resize_mode_prob2 must be the same length"
                 mode = random.choices(
                     self.opt.resize_mode_list2, weights=self.opt.resize_mode_prob2
                 )[0]
@@ -237,6 +243,11 @@ class RealESRGANModel(SRModel):
             #   1. [resize back + sinc filter] + JPEG compression
             #   2. JPEG compression + [resize back + sinc filter]
             # Empirically, we find other combinations (sinc + JPEG + Resize) will introduce twisted lines.
+
+            assert len(self.opt.resize_mode_list3) == len(
+                self.opt.resize_mode_prob3
+            ), "resize_mode_list3 and resize_mode_prob3 must be the same length"
+
             mode = random.choices(
                 self.opt.resize_mode_list3, weights=self.opt.resize_mode_prob3
             )[0]
