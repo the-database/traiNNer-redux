@@ -90,6 +90,7 @@ class PairedVideoDataset(BaseDataset):
                     "lq": torch.stack(lr_clip),
                     "gt": hr_clip[self.clip_size // 2],
                     "gt_path": clips[self.clip_size // 2][1],
+                    "lq_path": clips[self.clip_size // 2][0],
                 }
             idx -= len(clips) - self.clip_size + 1
 
