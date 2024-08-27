@@ -515,7 +515,7 @@ class SRModel(BaseModel):
             )
 
         for val_data in dataloader:
-            img_name = osp.splitext(osp.basename(val_data["gt_path"][0]))[0]
+            img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
             self.feed_data(val_data)
             self.test()
 
