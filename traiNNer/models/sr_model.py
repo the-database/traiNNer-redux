@@ -302,7 +302,9 @@ class SRModel(BaseModel):
         if self.is_train and self.batch_augment and self.gt is not None:
             self.gt, self.lq = self.batch_augment(self.gt, self.lq)
 
-    def optimize_parameters(self, current_iter: int) -> None:
+    def optimize_parameters(
+        self, current_iter: int, current_accum_iter: int, apply_gradient: bool
+    ) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         assert self.optimizer_g is not None
@@ -318,14 +320,6 @@ class SRModel(BaseModel):
 
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
-
-        # increment accumulation counter and check if accumulation limit has been reached
-        self.n_accumulated += 1
-        apply_gradient = self.n_accumulated >= self.accum_iters
-
-        # after setting the flag for applying gradients, reset the counter back to zero
-        if apply_gradient:
-            self.n_accumulated = 0
 
         # TODO refactor self.accum_iters
         with torch.autocast(
@@ -644,24 +638,54 @@ class SRModel(BaseModel):
             out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
-    def save(self, epoch: int, current_iter: int) -> None:
+    def save(
+        self,
+        epoch: int,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+    ) -> None:
         assert self.opt.path.models is not None
         assert self.opt.path.resume_models is not None
 
         if self.net_g_ema is not None:
             self.save_network(
-                self.net_g_ema, "net_g_ema", self.opt.path.models, current_iter
+                self.net_g_ema,
+                "net_g_ema",
+                self.opt.path.models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
             )
 
             self.save_network(
-                self.net_g_ema, "net_g", self.opt.path.resume_models, current_iter
+                self.net_g_ema,
+                "net_g",
+                self.opt.path.resume_models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
             )
         else:
-            self.save_network(self.net_g, "net_g", self.opt.path.models, current_iter)
+            self.save_network(
+                self.net_g,
+                "net_g",
+                self.opt.path.models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
+            )
 
         if self.net_d is not None:
             self.save_network(
-                self.net_d, "net_d", self.opt.path.resume_models, current_iter
+                self.net_d,
+                "net_d",
+                self.opt.path.resume_models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
             )
 
-        self.save_training_state(epoch, current_iter)
+        self.save_training_state(
+            epoch, current_iter, current_accum_iter, apply_gradient
+        )

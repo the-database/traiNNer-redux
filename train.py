@@ -268,9 +268,11 @@ def train_pipeline(root_path: str) -> None:
         )
         start_epoch = resume_state["epoch"]
         current_iter = resume_state["iter"]
+        current_accum_iter = resume_state["accum_iter"]
     else:
         start_epoch = 0
         current_iter = 0
+        current_accum_iter = 0
 
     # create message logger (formatted outputs)
     msg_logger = MessageLogger(opt, current_iter, tb_logger)
@@ -304,6 +306,7 @@ def train_pipeline(root_path: str) -> None:
 
     signal.signal(signal.SIGINT, handle_keyboard_interrupt)
     epoch = start_epoch
+    apply_gradient = False
 
     for epoch in range(start_epoch, total_epochs + 1):
         train_sampler.set_epoch(epoch)
@@ -313,20 +316,30 @@ def train_pipeline(root_path: str) -> None:
         while train_data is not None:
             data_timer.record()
 
-            current_iter += 1
+            if current_accum_iter >= model.accum_iters:
+                current_accum_iter = 0
+                current_iter += 1
+                apply_gradient = True
+            else:
+                current_accum_iter += 1
+                apply_gradient = False
+
             if current_iter > total_iters:
                 break
             # training
             model.feed_data(train_data)
-            model.optimize_parameters(current_iter)
+            model.optimize_parameters(current_iter, current_accum_iter, apply_gradient)
             # update learning rate
-            model.update_learning_rate(current_iter, warmup_iter=opt.train.warmup_iter)
+            if apply_gradient:
+                model.update_learning_rate(
+                    current_iter, warmup_iter=opt.train.warmup_iter
+                )
             iter_timer.record()
             if current_iter == msg_logger.start_iter + 1:
                 # reset start time in msg_logger for more accurate eta_time
                 msg_logger.reset_start_time()
             # log
-            if current_iter % opt.logger.print_freq == 0:
+            if current_iter % opt.logger.print_freq == 0 and apply_gradient:
                 log_vars = {"epoch": epoch, "iter": current_iter}
                 log_vars.update({"lrs": model.get_current_learning_rate()})
                 log_vars.update(
@@ -340,16 +353,16 @@ def train_pipeline(root_path: str) -> None:
                 msg_logger(log_vars)
 
             # save models and training states
-            if current_iter % opt.logger.save_checkpoint_freq == 0:
+            if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
                 logger.info("Saving models and training states.")
-                model.save(epoch, current_iter)
+                model.save(epoch, current_iter, current_accum_iter)
 
             # validation
             if opt.val is not None:
                 assert (
                     opt.val.val_freq is not None
                 ), "val_freq must be defined under the val section"
-                if current_iter % opt.val.val_freq == 0:
+                if current_iter % opt.val.val_freq == 0 and apply_gradient:
                     if len(val_loaders) > 1:
                         logger.warning(
                             "Multiple validation datasets are *only* supported by SRModel."
@@ -378,13 +391,15 @@ def train_pipeline(root_path: str) -> None:
             epoch,
             current_iter,
         )
-        model.save(epoch, current_iter)
+        model.save(epoch, current_iter, current_accum_iter)
         sys.exit(0)
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
     logger.info("End of training. Time consumed: %s", consumed_time)
     logger.info("Save the latest model.")
-    model.save(epoch=-1, current_iter=-1)  # -1 stands for the latest
+    model.save(
+        epoch=-1, current_iter=-1, current_accum_iter=-1
+    )  # -1 stands for the latest
     if opt.val is not None:
         for val_loader in val_loaders:
             model.validation(val_loader, current_iter, tb_logger, opt.val.save_img)

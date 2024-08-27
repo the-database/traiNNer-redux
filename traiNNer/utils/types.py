@@ -20,6 +20,8 @@ class DataFeed(TypedDict):
 class TrainingState(TypedDict):
     epoch: int
     iter: int
+    accum_iter: int
+    apply_gradient: bool
     optimizers: list[StateDict]
     schedulers: list[StateDict]
     scaler_g: NotRequired[StateDict]
