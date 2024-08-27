@@ -57,6 +57,8 @@ class BaseModel:
         self.amp_dtype = torch.float16
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
+        self.n_accumulated: int = 0
+        self.accum_iters: int = 1
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
