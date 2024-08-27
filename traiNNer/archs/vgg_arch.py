@@ -208,8 +208,7 @@ class VGGFeatureExtractor(nn.Module):
         max_idx = 0
         for v in layer_name_list:
             idx = self.names.index(v)
-            if idx > max_idx:
-                max_idx = idx
+            max_idx = max(idx, max_idx)
 
         if os.path.exists(VGG_PRETRAIN_PATH):
             vgg_net = getattr(vgg, vgg_type)(pretrained=False)
