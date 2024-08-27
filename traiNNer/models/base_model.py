@@ -74,7 +74,13 @@ class BaseModel:
         pass
 
     @abstractmethod
-    def save(self, epoch: int, current_iter: int, current_accum_iter: int) -> None:
+    def save(
+        self,
+        epoch: int,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+    ) -> None:
         """Save networks and training state."""
 
     def validation(

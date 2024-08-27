@@ -355,7 +355,7 @@ def train_pipeline(root_path: str) -> None:
             # save models and training states
             if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
                 logger.info("Saving models and training states.")
-                model.save(epoch, current_iter, current_accum_iter)
+                model.save(epoch, current_iter, current_accum_iter, apply_gradient)
 
             # validation
             if opt.val is not None:
@@ -391,14 +391,14 @@ def train_pipeline(root_path: str) -> None:
             epoch,
             current_iter,
         )
-        model.save(epoch, current_iter, current_accum_iter)
+        model.save(epoch, current_iter, current_accum_iter, apply_gradient)
         sys.exit(0)
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
     logger.info("End of training. Time consumed: %s", consumed_time)
     logger.info("Save the latest model.")
     model.save(
-        epoch=-1, current_iter=-1, current_accum_iter=-1
+        epoch=-1, current_iter=-1, current_accum_iter=-1, apply_gradient=apply_gradient
     )  # -1 stands for the latest
     if opt.val is not None:
         for val_loader in val_loaders:
