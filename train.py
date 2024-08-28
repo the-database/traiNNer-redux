@@ -316,7 +316,7 @@ def train_pipeline(root_path: str) -> None:
         while train_data is not None:
             data_timer.record()
 
-            if current_accum_iter >= model.accum_iter:
+            if current_accum_iter >= model.accum_iters:
                 current_accum_iter = 0
                 current_iter += 1
                 apply_gradient = True
