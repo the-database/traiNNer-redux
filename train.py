@@ -1,5 +1,7 @@
 import os
 
+from traiNNer.utils.types import TrainingState
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 import argparse
 import datetime
@@ -160,20 +162,31 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
                 scandir(state_path, suffix="state", recursive=False, full_path=False)
             )
             if len(states) != 0:
-                states = [float(v.split(".state")[0]) for v in states]
-                resume_state_path = osp.join(state_path, f"{max(states):.0f}.state")
+                states = [
+                    [int(x) for x in v.split(".state")[0].split("_")] for v in states
+                ]
+
+                resume_state_path = osp.join(
+                    state_path, f"{'_'.join([str(x) for x in max(states)])}.state"
+                )
                 opt.path.resume_state = resume_state_path
     elif opt.path.resume_state:
         resume_state_path = opt.path.resume_state
 
     if resume_state_path is None:
-        resume_state = None
+        resume_state: TrainingState | None = None
     else:
         device_id = torch.cuda.current_device()
         resume_state = torch.load(
             resume_state_path, map_location=lambda storage, _: storage.cuda(device_id)
         )
-        check_resume(opt, resume_state["iter"])
+        assert resume_state is not None
+        check_resume(
+            opt,
+            resume_state["iter"],
+            resume_state["accum_iter"],
+            resume_state["apply_gradient"],
+        )
     return resume_state
 
 
@@ -316,12 +329,13 @@ def train_pipeline(root_path: str) -> None:
         while train_data is not None:
             data_timer.record()
 
+            current_accum_iter += 1
+
             if current_accum_iter >= model.accum_iters:
                 current_accum_iter = 0
                 current_iter += 1
                 apply_gradient = True
             else:
-                current_accum_iter += 1
                 apply_gradient = False
 
             if current_iter > total_iters:
