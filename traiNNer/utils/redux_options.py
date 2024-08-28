@@ -32,7 +32,7 @@ class DatasetOptions(StrictStruct):
 
     num_worker_per_gpu: int | None = None
     batch_size_per_gpu: int | None = None
-    accum_iters: int = 1
+    accum_iter: int = 1
 
     use_hflip: bool | None = None
     use_rot: bool | None = None

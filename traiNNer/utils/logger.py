@@ -77,7 +77,7 @@ class MessageLogger:
         self.exp_name = opt.name
         self.interval = opt.logger.print_freq
         self.start_iter = start_iter
-        self.max_iters = opt.train.total_iter * opt.datasets["train"].accum_iters
+        self.max_iters = opt.train.total_iter * opt.datasets["train"].accum_iter
         self.use_tb_logger = opt.logger.use_tb_logger
         self.tb_logger = tb_logger
 

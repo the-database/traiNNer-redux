@@ -162,7 +162,7 @@ class SRModel(BaseModel):
         self.scaler_g = GradScaler(enabled=self.use_amp)
         self.scaler_d = GradScaler(enabled=self.use_amp)
 
-        self.accum_iters = self.opt.datasets["train"].accum_iters
+        self.accum_iters = self.opt.datasets["train"].accum_iter
 
         self.ema_decay = train_opt.ema_decay
         if self.ema_decay > 0:
