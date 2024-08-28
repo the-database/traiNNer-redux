@@ -46,7 +46,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert model.gt.shape == (1, 3, 32, 32)
 
     # ----------------- test optimize_parameters -------------------- #
-    model.optimize_parameters(1)
+    model.optimize_parameters(1, 0, True)
     assert model.output is not None
     assert model.output.shape == (1, 3, 32, 32)
     assert isinstance(model.log_dict, dict)
@@ -58,7 +58,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt.path.models = tmpdir
         model.opt.path.training_states = tmpdir
-        model.save(0, 1)
+        model.save(0, 1, 0, True)
 
     # ----------------- test the test function -------------------- #
     model.test()
