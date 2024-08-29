@@ -89,7 +89,9 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert model.is_train is True
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt.path.visualization = tmpdir
-        model.nondist_validation(dataloader, 1, None, save_img=True)
+        model.nondist_validation(
+            dataloader, 1, None, save_img=True, multi_val_datasets=False
+        )
         assert model.is_train is True
         # check metric_results
         assert "psnr" in model.metric_results
@@ -102,7 +104,9 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
         model.opt.val.suffix = "test"
         model.opt.path.visualization = tmpdir
         model.opt.val.pbar = True
-        model.nondist_validation(dataloader, 1, None, save_img=True)
+        model.nondist_validation(
+            dataloader, 1, None, save_img=True, multi_val_datasets=False
+        )
         # check metric_results
         assert "psnr" in model.metric_results
         assert isinstance(model.metric_results["psnr"], float)
@@ -111,7 +115,9 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
         model.opt.val.suffix = None
         model.opt.name = "demo"
         model.opt.path.visualization = tmpdir
-        model.nondist_validation(dataloader, 1, None, save_img=True)
+        model.nondist_validation(
+            dataloader, 1, None, save_img=True, multi_val_datasets=False
+        )
         # check metric_results
         assert "psnr" in model.metric_results
         assert isinstance(model.metric_results["psnr"], float)
