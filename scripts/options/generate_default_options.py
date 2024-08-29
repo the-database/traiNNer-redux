@@ -131,6 +131,7 @@ archs: list[ArchInfo] = [
     {
         "names": ["SPANPlus", "SPANPlus_STS", "SPANPlus_S", "SPANPlus_ST"],
         "scales": ALL_SCALES,
+        "pth_override": True,
     },
     {
         "names": ["HiT_SRF", "HiT_SNG", "HiT_SIR"],
