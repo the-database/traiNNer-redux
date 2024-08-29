@@ -162,6 +162,8 @@ class SRModel(BaseModel):
         self.scaler_g = GradScaler(enabled=self.use_amp)
         self.scaler_d = GradScaler(enabled=self.use_amp)
 
+        self.accum_iters = self.opt.datasets["train"].accum_iter
+
         self.ema_decay = train_opt.ema_decay
         if self.ema_decay > 0:
             logger.info(
@@ -300,7 +302,9 @@ class SRModel(BaseModel):
         if self.is_train and self.batch_augment and self.gt is not None:
             self.gt, self.lq = self.batch_augment(self.gt, self.lq)
 
-    def optimize_parameters(self, current_iter: int) -> None:
+    def optimize_parameters(
+        self, current_iter: int, current_accum_iter: int, apply_gradient: bool
+    ) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
 
         assert self.optimizer_g is not None
@@ -317,6 +321,7 @@ class SRModel(BaseModel):
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
 
+        # TODO refactor self.accum_iters
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
@@ -326,11 +331,11 @@ class SRModel(BaseModel):
             loss_dict = OrderedDict()
             # pixel loss
             if self.cri_pix:
-                l_g_pix = self.cri_pix(self.output, self.gt)
+                l_g_pix = self.cri_pix(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_pix
                 loss_dict["l_g_pix"] = l_g_pix
             if self.cri_mssim:
-                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_mssim = self.cri_mssim(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_mssim
                 loss_dict["l_g_mssim"] = l_g_mssim
             if self.cri_ldl:
@@ -339,9 +344,12 @@ class SRModel(BaseModel):
                 pixel_weight = get_refined_artifact_map(
                     self.gt, self.output, self.net_g_ema(self.lq), 7
                 )
-                l_g_ldl = self.cri_ldl(
-                    torch.mul(pixel_weight, self.output),
-                    torch.mul(pixel_weight, self.gt),
+                l_g_ldl = (
+                    self.cri_ldl(
+                        torch.mul(pixel_weight, self.output),
+                        torch.mul(pixel_weight, self.gt),
+                    )
+                    / self.accum_iters
                 )
                 l_g_total += l_g_ldl
                 loss_dict["l_g_ldl"] = l_g_ldl
@@ -349,50 +357,56 @@ class SRModel(BaseModel):
             if self.cri_perceptual:
                 l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                 if l_g_percep is not None:
+                    l_g_percep /= self.accum_iters
                     l_g_total += l_g_percep
                     loss_dict["l_g_percep"] = l_g_percep
                 if l_g_style is not None:
+                    l_g_total /= self.accum_iters
                     l_g_total += l_g_style
                     loss_dict["l_g_style"] = l_g_style
             # dists loss
             if self.cri_dists:
-                l_g_dists = self.cri_dists(self.output, self.gt)
+                l_g_dists = self.cri_dists(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_dists
                 loss_dict["l_g_dists"] = l_g_dists
             # contextual loss
             if self.cri_contextual:
-                l_g_contextual = self.cri_contextual(self.output, self.gt)
+                l_g_contextual = (
+                    self.cri_contextual(self.output, self.gt) / self.accum_iters
+                )
                 l_g_total += l_g_contextual
                 loss_dict["l_g_contextual"] = l_g_contextual
             # color loss
             if self.cri_color:
-                l_g_color = self.cri_color(self.output, self.gt)
+                l_g_color = self.cri_color(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_color
                 loss_dict["l_g_color"] = l_g_color
             # luma loss
             if self.cri_luma:
-                l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_luma = self.cri_luma(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_luma
                 loss_dict["l_g_luma"] = l_g_luma
             # hsluv loss
             if self.cri_hsluv:
-                l_g_hsluv = self.cri_hsluv(self.output, self.gt)
+                l_g_hsluv = self.cri_hsluv(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_hsluv
                 loss_dict["l_g_hsluv"] = l_g_hsluv
             # avg loss
             if self.cri_avg:
-                l_g_avg = self.cri_avg(self.output, self.gt)
+                l_g_avg = self.cri_avg(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_avg
                 loss_dict["l_g_avg"] = l_g_avg
             # bicubic loss
             if self.cri_bicubic:
-                l_g_bicubic = self.cri_bicubic(self.output, self.gt)
+                l_g_bicubic = self.cri_bicubic(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_bicubic
                 loss_dict["l_g_bicubic"] = l_g_bicubic
             # gan loss
             if self.cri_gan and self.net_d:
                 fake_g_pred = self.net_d(self.output)
-                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                l_g_gan = (
+                    self.cri_gan(fake_g_pred, True, is_disc=False) / self.accum_iters
+                )
                 l_g_total += l_g_gan
                 loss_dict["l_g_gan"] = l_g_gan
 
@@ -400,11 +414,12 @@ class SRModel(BaseModel):
             loss_dict["l_g_total"] = l_g_total
 
         self.scaler_g.scale(l_g_total).backward()
-        scale_before = self.scaler_g.get_scale()
-        self.scaler_g.step(self.optimizer_g)
-        self.scaler_g.update()
-        self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
-        self.optimizer_g.zero_grad()
+        if apply_gradient:
+            scale_before = self.scaler_g.get_scale()
+            self.scaler_g.step(self.optimizer_g)
+            self.scaler_g.update()
+            self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
+            self.optimizer_g.zero_grad()
 
         if (
             self.net_d is not None
@@ -431,13 +446,14 @@ class SRModel(BaseModel):
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
-            self.scaler_d.scale(l_d_real).backward()  # retain_graph?
+            self.scaler_d.scale(l_d_real).backward()
             self.scaler_d.scale(l_d_fake).backward()
-            scale_before = self.scaler_d.get_scale()
-            self.scaler_d.step(self.optimizer_d)
-            self.scaler_d.update()
-            self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
-            self.optimizer_d.zero_grad()
+            if apply_gradient:
+                scale_before = self.scaler_d.get_scale()
+                self.scaler_d.step(self.optimizer_d)
+                self.scaler_d.update()
+                self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
+                self.optimizer_d.zero_grad()
 
         for key, value in loss_dict.items():
             val = (
@@ -470,9 +486,12 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         if self.opt.rank == 0:
-            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(
+                dataloader, current_iter, tb_logger, save_img, multi_val_datasets
+            )
 
     def nondist_validation(
         self,
@@ -480,6 +499,7 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         self.is_train = False
 
@@ -536,7 +556,12 @@ class SRModel(BaseModel):
 
             if save_img:
                 if self.opt.is_train:
-                    save_img_dir = osp.join(self.opt.path.visualization, img_name)
+                    if multi_val_datasets:
+                        save_img_dir = osp.join(
+                            self.opt.path.visualization, f"{dataset_name} - {img_name}"
+                        )
+                    else:
+                        save_img_dir = osp.join(self.opt.path.visualization, img_name)
                     save_img_path = osp.join(
                         save_img_dir, f"{img_name}_{current_iter:06d}.png"
                     )
@@ -622,24 +647,54 @@ class SRModel(BaseModel):
             out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
-    def save(self, epoch: int, current_iter: int) -> None:
+    def save(
+        self,
+        epoch: int,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+    ) -> None:
         assert self.opt.path.models is not None
         assert self.opt.path.resume_models is not None
 
         if self.net_g_ema is not None:
             self.save_network(
-                self.net_g_ema, "net_g_ema", self.opt.path.models, current_iter
+                self.net_g_ema,
+                "net_g_ema",
+                self.opt.path.models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
             )
 
             self.save_network(
-                self.net_g_ema, "net_g", self.opt.path.resume_models, current_iter
+                self.net_g_ema,
+                "net_g",
+                self.opt.path.resume_models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
             )
         else:
-            self.save_network(self.net_g, "net_g", self.opt.path.models, current_iter)
+            self.save_network(
+                self.net_g,
+                "net_g",
+                self.opt.path.models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
+            )
 
         if self.net_d is not None:
             self.save_network(
-                self.net_d, "net_d", self.opt.path.resume_models, current_iter
+                self.net_d,
+                "net_d",
+                self.opt.path.resume_models,
+                current_iter,
+                current_accum_iter,
+                apply_gradient,
             )
 
-        self.save_training_state(epoch, current_iter)
+        self.save_training_state(
+            epoch, current_iter, current_accum_iter, apply_gradient
+        )

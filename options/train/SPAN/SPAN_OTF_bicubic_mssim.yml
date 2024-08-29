@@ -82,6 +82,7 @@ datasets:
 
     num_worker_per_gpu: 8
     batch_size_per_gpu: 6  # Increasing stabilizes training but going too high can cause issues
+    accum_iter: 1  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
     dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
     prefetch_mode: ~
   # Settings for your validation dataset (optional). These settings will
@@ -164,11 +165,6 @@ train:
     range_norm: false
     criterion: charbonnier
     perceptual_weight: 0
-  # DISTS loss
-  # dists_opt:
-  #   type: DISTSLoss  # DISTSLoss, ADISTSLoss
-  #   use_input_norm: true
-  #   loss_weight: 0
   # HSLuv loss (hue, saturation, lightness). Use one of HSLuv loss or ColorLoss + LumaLoss, not both.
   hsluv_opt:
     type: HSLuvLoss
@@ -181,16 +177,24 @@ train:
     real_label_val: 1.0
     fake_label_val: 0.0
     loss_weight: 0
+  # Additional losses - disabled by default.
+  # To enable, change the loss_weight from 0 to the recommended loss_weight which appears as a comment next to the loss weight.
+  # For example to enable DISTS loss, change the loss weight from 0 to 0.25; to enable color loss change loss weight from 0 to 1.
+  # DISTS loss
+  dists_opt:
+    type: DISTSLoss  # DISTSLoss, ADISTSLoss
+    use_input_norm: true
+    loss_weight: 0  #0.25
   # Color loss (ITU-R BT.601)
-  # color_opt:
-  #   type: ColorLoss
-  #   criterion: charbonnier
-  #   loss_weight: 0
+  color_opt:
+    type: ColorLoss
+    criterion: charbonnier
+    loss_weight: 0  #1.0
   # Luma loss (RGB to CIELAB L*)
-  # luma_opt:
-  #   type: LumaLoss
-  #   criterion: charbonnier
-  #   loss_weight: 0
+  luma_opt:
+    type: LumaLoss
+    criterion: charbonnier
+    loss_weight: 0  #1.0
 
   # Mix of Augmentations (MoA)
   use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.

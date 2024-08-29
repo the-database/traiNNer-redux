@@ -77,6 +77,7 @@ class MessageLogger:
         self.exp_name = opt.name
         self.interval = opt.logger.print_freq
         self.start_iter = start_iter
+        self.accum_iters = opt.datasets["train"].accum_iter
         self.max_iters = opt.train.total_iter
         self.use_tb_logger = opt.logger.use_tb_logger
         self.tb_logger = tb_logger
@@ -117,7 +118,7 @@ class MessageLogger:
 
         # time and estimated time
         if "time" in log_vars.keys():
-            iter_time = 1 / log_vars.pop("time")
+            iter_time = 1 / (log_vars.pop("time") * self.accum_iters)
             log_vars.pop("data_time")
 
             total_time = time.time() - self.start_time

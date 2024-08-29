@@ -46,7 +46,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert model.gt.shape == (1, 3, 32, 32)
 
     # ----------------- test optimize_parameters -------------------- #
-    model.optimize_parameters(1)
+    model.optimize_parameters(1, 0, True)
     assert model.output is not None
     assert model.output.shape == (1, 3, 32, 32)
     assert isinstance(model.log_dict, dict)
@@ -58,7 +58,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt.path.models = tmpdir
         model.opt.path.training_states = tmpdir
-        model.save(0, 1)
+        model.save(0, 1, 0, True)
 
     # ----------------- test the test function -------------------- #
     model.test()
@@ -89,7 +89,9 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert model.is_train is True
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt.path.visualization = tmpdir
-        model.nondist_validation(dataloader, 1, None, save_img=True)
+        model.nondist_validation(
+            dataloader, 1, None, save_img=True, multi_val_datasets=False
+        )
         assert model.is_train is True
         # check metric_results
         assert "psnr" in model.metric_results
@@ -102,7 +104,9 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
         model.opt.val.suffix = "test"
         model.opt.path.visualization = tmpdir
         model.opt.val.pbar = True
-        model.nondist_validation(dataloader, 1, None, save_img=True)
+        model.nondist_validation(
+            dataloader, 1, None, save_img=True, multi_val_datasets=False
+        )
         # check metric_results
         assert "psnr" in model.metric_results
         assert isinstance(model.metric_results["psnr"], float)
@@ -111,7 +115,9 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
         model.opt.val.suffix = None
         model.opt.name = "demo"
         model.opt.path.visualization = tmpdir
-        model.nondist_validation(dataloader, 1, None, save_img=True)
+        model.nondist_validation(
+            dataloader, 1, None, save_img=True, multi_val_datasets=False
+        )
         # check metric_results
         assert "psnr" in model.metric_results
         assert isinstance(model.metric_results["psnr"], float)

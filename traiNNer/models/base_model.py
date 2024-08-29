@@ -57,13 +57,16 @@ class BaseModel:
         self.amp_dtype = torch.float16
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
+        self.accum_iters: int = 1
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
         pass
 
     @abstractmethod
-    def optimize_parameters(self, current_iter: int) -> None:
+    def optimize_parameters(
+        self, current_iter: int, current_accum_iter: int, apply_gradient: bool
+    ) -> None:
         pass
 
     @abstractmethod
@@ -71,7 +74,13 @@ class BaseModel:
         pass
 
     @abstractmethod
-    def save(self, epoch: int, current_iter: int) -> None:
+    def save(
+        self,
+        epoch: int,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+    ) -> None:
         """Save networks and training state."""
 
     def validation(
@@ -80,6 +89,7 @@ class BaseModel:
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool = False,
+        multi_val_datasets: bool = False,
     ) -> None:
         """Validation function.
 
@@ -90,9 +100,13 @@ class BaseModel:
             save_img (bool): Whether to save images. Default: False.
         """
         if self.opt.dist:
-            self.dist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.dist_validation(
+                dataloader, current_iter, tb_logger, save_img, multi_val_datasets
+            )
         else:
-            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(
+                dataloader, current_iter, tb_logger, save_img, multi_val_datasets
+            )
 
     @abstractmethod
     def dist_validation(
@@ -101,6 +115,7 @@ class BaseModel:
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         pass
 
@@ -111,6 +126,7 @@ class BaseModel:
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         pass
 
@@ -334,6 +350,8 @@ class BaseModel:
         net_label: str,
         save_dir: str,
         current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
     ) -> None:
         """Save networks.
 
@@ -347,9 +365,10 @@ class BaseModel:
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
         assert self.opt.logger is not None
 
-        save_filename = (
-            f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
-        )
+        if apply_gradient:
+            save_filename = f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
+        else:
+            save_filename = f"{net_label}_{current_iter_str}_{current_accum_iter}.{self.opt.logger.save_checkpoint_format}"
         save_path = os.path.join(save_dir, save_filename)
 
         bare_net_ = self.get_bare_model(net)
@@ -602,7 +621,13 @@ class BaseModel:
         )
 
     @master_only
-    def save_training_state(self, epoch: int, current_iter: int) -> None:
+    def save_training_state(
+        self,
+        epoch: int,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+    ) -> None:
         """Save training states during training, which will be used for
         resuming.
 
@@ -618,6 +643,8 @@ class BaseModel:
             state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
+                "accum_iter": current_accum_iter,
+                "apply_gradient": apply_gradient,
                 "optimizers": [],
                 "schedulers": [],
             }
@@ -630,7 +657,10 @@ class BaseModel:
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
-            save_filename = f"{current_iter}.state"
+            if apply_gradient:
+                save_filename = f"{current_iter}.state"
+            else:
+                save_filename = f"{current_iter}_{current_accum_iter}.state"
             save_path = os.path.join(self.opt.path.training_states, save_filename)
 
             logger = None
