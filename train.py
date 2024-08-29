@@ -105,7 +105,11 @@ def create_train_val_dataloader(
             num_iter_per_epoch = math.ceil(
                 len(train_set)
                 * dataset_enlarge_ratio
-                / (dataset_opt.batch_size_per_gpu * opt.world_size)
+                / (
+                    dataset_opt.batch_size_per_gpu
+                    * dataset_opt.accum_iter
+                    * opt.world_size
+                )
             )
             total_iters = int(opt.train.total_iter)
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
@@ -114,12 +118,14 @@ def create_train_val_dataloader(
                 "\n\tNumber of train images: %d"
                 "\n\tDataset enlarge ratio: %d"
                 "\n\tBatch size per gpu: %d"
+                "\n\tAccumulate iterations: %d"
                 "\n\tWorld size (gpu number): %d"
                 "\n\tRequire iter number per epoch: %d"
                 "\n\tTotal epochs: %d; iters: %d.",
                 len(train_set),
                 dataset_enlarge_ratio,
                 dataset_opt.batch_size_per_gpu,
+                dataset_opt.accum_iter,
                 opt.world_size,
                 num_iter_per_epoch,
                 total_epochs,
@@ -377,16 +383,14 @@ def train_pipeline(root_path: str) -> None:
                     opt.val.val_freq is not None
                 ), "val_freq must be defined under the val section"
                 if current_iter % opt.val.val_freq == 0 and apply_gradient:
-                    if len(val_loaders) > 1:
-                        logger.warning(
-                            "Multiple validation datasets are *only* supported by SRModel."
-                        )
+                    multi_val_datasets = len(val_loaders) > 1
                     for val_loader in val_loaders:
                         model.validation(
                             val_loader,
                             current_iter,
                             tb_logger,
                             opt.val.save_img,
+                            multi_val_datasets,
                         )
 
             data_timer.start()

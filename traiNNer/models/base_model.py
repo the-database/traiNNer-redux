@@ -89,6 +89,7 @@ class BaseModel:
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool = False,
+        multi_val_datasets: bool = False,
     ) -> None:
         """Validation function.
 
@@ -99,9 +100,13 @@ class BaseModel:
             save_img (bool): Whether to save images. Default: False.
         """
         if self.opt.dist:
-            self.dist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.dist_validation(
+                dataloader, current_iter, tb_logger, save_img, multi_val_datasets
+            )
         else:
-            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(
+                dataloader, current_iter, tb_logger, save_img, multi_val_datasets
+            )
 
     @abstractmethod
     def dist_validation(
@@ -110,6 +115,7 @@ class BaseModel:
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         pass
 
@@ -120,6 +126,7 @@ class BaseModel:
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         pass
 

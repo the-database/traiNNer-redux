@@ -486,9 +486,12 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         if self.opt.rank == 0:
-            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(
+                dataloader, current_iter, tb_logger, save_img, multi_val_datasets
+            )
 
     def nondist_validation(
         self,
@@ -496,6 +499,7 @@ class SRModel(BaseModel):
         current_iter: int,
         tb_logger: SummaryWriter | None,
         save_img: bool,
+        multi_val_datasets: bool,
     ) -> None:
         self.is_train = False
 
@@ -552,7 +556,12 @@ class SRModel(BaseModel):
 
             if save_img:
                 if self.opt.is_train:
-                    save_img_dir = osp.join(self.opt.path.visualization, img_name)
+                    if multi_val_datasets:
+                        save_img_dir = osp.join(
+                            self.opt.path.visualization, f"{dataset_name} - {img_name}"
+                        )
+                    else:
+                        save_img_dir = osp.join(self.opt.path.visualization, img_name)
                     save_img_path = osp.join(
                         save_img_dir, f"{img_name}_{current_iter:06d}.png"
                     )
