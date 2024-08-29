@@ -561,7 +561,13 @@ class SRModel(BaseModel):
                             self.opt.path.visualization, f"{dataset_name} - {img_name}"
                         )
                     else:
-                        save_img_dir = osp.join(self.opt.path.visualization, img_name)
+                        save_img_dir = osp.join(
+                            self.opt.path.visualization,
+                            osp.relpath(
+                                osp.splitext(val_data["lq_path"][0])[0],
+                                dataloader.dataset.opt.dataroot_lq,
+                            ),
+                        )
                     save_img_path = osp.join(
                         save_img_dir, f"{img_name}_{current_iter:06d}.png"
                     )
