@@ -13,6 +13,12 @@ debug/*
 !datasets/val/dataset1/
 !datasets/val/dataset1/hr/
 !datasets/val/dataset1/lr/
+!datasets/train/video/
+!datasets/train/video/hr/
+!datasets/train/video/lr/
+!datasets/val/video/
+!datasets/val/video/hr/
+!datasets/val/video/lr/
 
 docs/api
 scripts/__init__.py
