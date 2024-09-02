@@ -10,7 +10,7 @@
     "editor.renderWhitespace": "all",
     "editor.renderControlCharacters": true,
     "python.testing.pytestArgs": [
-        "tests"
+        "tests", "-s"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,

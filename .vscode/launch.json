@@ -6,6 +6,7 @@
   "configurations": [
 
 
+
     {
       "name": "Python Debugger: Current File",
       "type": "debugpy",
@@ -29,6 +30,15 @@
       "request": "launch",
       "program": "train.py",
       "args": ["-opt", "./options/train/span/span.yml"],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Train TSCUNet",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "train.py",
+      "args": ["-opt", "./options/train/tscunet/tscunet.yml"],
       "console": "integratedTerminal",
       "justMyCode": false
     },
