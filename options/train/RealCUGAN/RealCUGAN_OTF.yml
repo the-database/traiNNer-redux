@@ -13,6 +13,10 @@ high_order_degradation: true  # Enable on-the-fly (OTF) degradations, which gene
 high_order_degradations_debug: false  # Save the LR and HR tiles to debug/otf folder inside the root of the training directory.
 high_order_degradations_debug_limit: 100  # The max number of iterations to save LR and HR tiles for.
 
+# USM degradation options.
+lq_usm: false  # Apply unsharp mask to LQ image before all other degradations.
+lq_usm_radius_range: [1, 25]  # Range of randomly selected unsharp mask radius to apply.
+
 # The first degradation process.
 blur_prob: 0.0
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep

@@ -196,6 +196,9 @@ class ReduxOptions(StrictStruct):
     high_order_degradations_debug: bool = False
     high_order_degradations_debug_limit: int = 100
 
+    lq_usm: bool = False
+    lq_usm_radius_range: tuple[int, int] = (1, 25)
+
     blur_prob: float = 0
     resize_prob: list[float] = field(default_factory=lambda: [0.2, 0.7, 0.1])
     resize_mode_list: list[str] = field(
