@@ -69,6 +69,7 @@ class DatasetOptions(StrictStruct):
     kernel_prob: list[float] = field(
         default_factory=lambda: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
     )
+    kernel_range: tuple[int, int] = (5, 17)
     sinc_prob: float = 0
     blur_sigma: tuple[float, float] = (0.2, 2)
     betag_range: tuple[float, float] = (0.5, 4)
@@ -88,12 +89,14 @@ class DatasetOptions(StrictStruct):
     kernel_prob2: list[float] = field(
         default_factory=lambda: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
     )
+    kernel_range2: tuple[int, int] = (5, 17)
     sinc_prob2: float = 0
     blur_sigma2: tuple[float, float] = (0.2, 1)
     betag_range2: tuple[float, float] = (0.5, 4)
     betap_range2: tuple[float, float] = (1, 2)
 
     final_sinc_prob: float = 0
+    final_kernel_range: tuple[int, int] = (5, 17)
 
 
 class PathOptions(StrictStruct):

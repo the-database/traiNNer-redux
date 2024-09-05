@@ -95,10 +95,13 @@ class RealESRGANDataset(BaseDataset):
         # a final sinc filter
         self.final_sinc_prob = opt.final_sinc_prob
 
-        self.kernel_range = [
-            2 * v + 1 for v in range(3, 11)
-        ]  # kernel size ranges from 7 to 21
-        # TODO: kernel range is now hard-coded, should be in the configure file
+        self.kernel_range = list(range(opt.kernel_range[0], opt.kernel_range[1] + 1, 2))
+        self.kernel_range2 = list(
+            range(opt.kernel_range2[0], opt.kernel_range2[1] + 1, 2)
+        )
+        self.final_kernel_range = list(
+            range(opt.final_kernel_range[0], opt.final_kernel_range[1] + 1, 2)
+        )
         self.pulse_tensor = torch.zeros(
             21, 21
         ).float()  # convolving with pulse tensor brings no blurry effect
@@ -186,7 +189,7 @@ class RealESRGANDataset(BaseDataset):
         kernel = np.pad(kernel, ((pad_size, pad_size), (pad_size, pad_size)))
 
         # ------------------------ Generate kernels (used in the second degradation) ------------------------ #
-        kernel_size = random.choice(self.kernel_range)
+        kernel_size = random.choice(self.kernel_range2)
         if RNG.get_rng().uniform() < self.opt.sinc_prob2:
             if kernel_size < 13:
                 omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
@@ -212,7 +215,7 @@ class RealESRGANDataset(BaseDataset):
 
         # ------------------------------------- the final sinc kernel ------------------------------------- #
         if RNG.get_rng().uniform() < self.opt.final_sinc_prob:
-            kernel_size = random.choice(self.kernel_range)
+            kernel_size = random.choice(self.final_kernel_range)
             omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(omega_c, kernel_size, pad_to=21)
             sinc_kernel = torch.FloatTensor(sinc_kernel)
