@@ -15,7 +15,7 @@ from traiNNer.data.degradations import (
 from traiNNer.data.transforms import paired_random_crop
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils import RNG, DiffJPEG, get_root_logger
-from traiNNer.utils.img_process_util import filter2d
+from traiNNer.utils.img_process_util import USMSharp, filter2d
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.registry import MODEL_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -132,7 +132,13 @@ class RealESRGANModel(SRModel):
             ori_h, ori_w = self.gt.size()[2:4]
 
             # ----------------------- The first degradation process ----------------------- #
-            out = self.gt
+            if self.opt.lq_usm:
+                usm_sharpener = USMSharp(
+                    RNG.get_rng().integers(*self.opt.lq_usm_radius_range, endpoint=True)
+                ).to(self.device)
+                out = usm_sharpener(self.gt)
+            else:
+                out = self.gt
             # blur
             if RNG.get_rng().uniform() < self.opt.blur_prob:
                 out = filter2d(out, self.kernel1)

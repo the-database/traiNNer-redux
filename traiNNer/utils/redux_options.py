@@ -69,6 +69,7 @@ class DatasetOptions(StrictStruct):
     kernel_prob: list[float] = field(
         default_factory=lambda: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
     )
+    kernel_range: tuple[int, int] = (5, 17)
     sinc_prob: float = 0
     blur_sigma: tuple[float, float] = (0.2, 2)
     betag_range: tuple[float, float] = (0.5, 4)
@@ -88,12 +89,14 @@ class DatasetOptions(StrictStruct):
     kernel_prob2: list[float] = field(
         default_factory=lambda: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
     )
+    kernel_range2: tuple[int, int] = (5, 17)
     sinc_prob2: float = 0
     blur_sigma2: tuple[float, float] = (0.2, 1)
     betag_range2: tuple[float, float] = (0.5, 4)
     betap_range2: tuple[float, float] = (1, 2)
 
     final_sinc_prob: float = 0
+    final_kernel_range: tuple[int, int] = (5, 17)
 
 
 class PathOptions(StrictStruct):
@@ -195,6 +198,9 @@ class ReduxOptions(StrictStruct):
     high_order_degradation: bool = False
     high_order_degradations_debug: bool = False
     high_order_degradations_debug_limit: int = 100
+
+    lq_usm: bool = False
+    lq_usm_radius_range: tuple[int, int] = (1, 25)
 
     blur_prob: float = 0
     resize_prob: list[float] = field(default_factory=lambda: [0.2, 0.7, 0.1])
