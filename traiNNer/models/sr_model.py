@@ -674,7 +674,7 @@ class SRModel(BaseModel):
             )
 
             self.save_network(
-                self.net_g_ema,
+                self.net_g,
                 "net_g",
                 self.opt.path.resume_models,
                 current_iter,
