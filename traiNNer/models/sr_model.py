@@ -5,9 +5,10 @@ from os import path as osp
 from typing import Any
 
 import torch
-from torch import Tensor, nn
-from torch.cuda.amp import GradScaler
+from torch import Tensor
+from torch.amp.grad_scaler import GradScaler
 from torch.optim.optimizer import Optimizer
+from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
@@ -142,7 +143,7 @@ class SRModel(BaseModel):
             self.cri_bicubic = None
 
             self.ema_decay = 0
-            self.net_g_ema: nn.Module | None = None
+            self.net_g_ema: AveragedModel | None = None
 
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
@@ -159,8 +160,8 @@ class SRModel(BaseModel):
 
         logger = get_root_logger()
 
-        self.scaler_g = GradScaler(enabled=self.use_amp)
-        self.scaler_d = GradScaler(enabled=self.use_amp)
+        self.scaler_g = GradScaler(enabled=self.use_amp, device="cuda")
+        self.scaler_d = GradScaler(enabled=self.use_amp, device="cuda")
 
         self.accum_iters = self.opt.datasets["train"].accum_iter
 
@@ -172,8 +173,8 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = build_network(
-                {**self.opt.network_g, "scale": self.opt.scale}
+            self.net_g_ema = AveragedModel(
+                self.net_g, multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay)
             ).to(self.device)
             # load pretrained model
             if self.opt.path.pretrain_network_g_ema is not None:
@@ -183,9 +184,6 @@ class SRModel(BaseModel):
                     self.opt.path.strict_load_g,
                     "params_ema",
                 )
-            else:
-                self.model_ema(0)  # copy net_g weight
-            self.net_g_ema.eval()
 
         # define losses
         if train_opt.pixel_opt:
@@ -463,8 +461,9 @@ class SRModel(BaseModel):
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
-        if self.ema_decay > 0:
-            self.model_ema(decay=self.ema_decay)
+        if self.net_g_ema is not None and apply_gradient:
+            if not (self.use_amp and self.optimizers_skipped[0]):
+                self.net_g_ema.update_parameters(self.net_g)
 
     def test(self) -> None:
         with torch.autocast(
@@ -659,6 +658,7 @@ class SRModel(BaseModel):
         current_iter: int,
         current_accum_iter: int,
         apply_gradient: bool,
+        dataloader: DataLoader | None,
     ) -> None:
         assert self.opt.path.models is not None
         assert self.opt.path.resume_models is not None
@@ -667,6 +667,7 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_g_ema,
                 "net_g_ema",
+                dataloader,
                 self.opt.path.models,
                 current_iter,
                 current_accum_iter,
@@ -676,6 +677,7 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_g,
                 "net_g",
+                dataloader,
                 self.opt.path.resume_models,
                 current_iter,
                 current_accum_iter,
@@ -685,6 +687,7 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_g,
                 "net_g",
+                dataloader,
                 self.opt.path.models,
                 current_iter,
                 current_accum_iter,
@@ -695,6 +698,7 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_d,
                 "net_d",
+                dataloader,
                 self.opt.path.resume_models,
                 current_iter,
                 current_accum_iter,

@@ -58,7 +58,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt.path.models = tmpdir
         model.opt.path.training_states = tmpdir
-        model.save(0, 1, 0, True)
+        model.save(0, 1, 0, True, None)
 
     # ----------------- test the test function -------------------- #
     model.test()

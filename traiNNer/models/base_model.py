@@ -11,10 +11,11 @@ from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN.arch.RRDB import RRDBNet
 from torch import nn
-from torch.cuda.amp import GradScaler
+from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import Optimizer, ParamsT
+from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -79,6 +80,7 @@ class BaseModel:
         current_iter: int,
         current_accum_iter: int,
         apply_gradient: bool,
+        dataloader: DataLoader | None,
     ) -> None:
         """Save networks and training state."""
 
@@ -154,20 +156,6 @@ class BaseModel:
         elif val <= self.best_metric_results[dataset_name][metric]["val"]:
             self.best_metric_results[dataset_name][metric]["val"] = val
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
-
-    def model_ema(self, decay: float = 0.999) -> None:
-        assert self.net_g is not None
-        assert self.net_g_ema is not None
-
-        net_g = self.get_bare_model(self.net_g)
-
-        net_g_params = dict(net_g.named_parameters())
-        net_g_ema_params = dict(self.net_g_ema.named_parameters())
-
-        for k in net_g_ema_params.keys():
-            net_g_ema_params[k].data.mul_(decay).add_(
-                net_g_params[k].data, alpha=1 - decay
-            )
 
     def get_current_log(self) -> dict[str, float | torch.Tensor]:
         return {k: v / self.loss_samples for k, v in self.log_dict.items()}
@@ -347,6 +335,7 @@ class BaseModel:
         self,
         net: nn.Module,
         net_label: str,
+        dataloader: DataLoader | None,
         save_dir: str,
         current_iter: int,
         current_accum_iter: int,
@@ -363,6 +352,10 @@ class BaseModel:
         """
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
         assert self.opt.logger is not None
+
+        if isinstance(net, AveragedModel):
+            assert dataloader is not None, "dataloader is required to save EMA model"
+            torch.optim.swa_utils.update_bn(dataloader, net)
 
         if apply_gradient:
             save_filename = f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
