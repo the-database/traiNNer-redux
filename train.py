@@ -184,7 +184,8 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
     else:
         device_id = torch.cuda.current_device()
         resume_state = torch.load(
-            resume_state_path, map_location=lambda storage, _: storage.cuda(device_id)
+            resume_state_path,
+            map_location=lambda storage, _: storage.cuda(device_id),  # pyright: ignore[reportAttributeAccessIssue] (https://github.com/pytorch/pytorch/issues/131765)
         )
         assert resume_state is not None
         check_resume(
