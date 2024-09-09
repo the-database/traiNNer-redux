@@ -155,6 +155,13 @@ archs: list[ArchInfo] = [
         "scales": ALL_SCALES,
         "extras": {"filters": str(96), "n_block": str(15), "kernel_size": str(3)},
     },
+    {
+        "names": ["MoSR", "MoSR_T"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "dysample  # dysample (best on even number scales), pixelshuffle, geoensemblepixelshuffle"
+        },
+    },
 ]
 
 for arch in archs:

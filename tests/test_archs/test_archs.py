@@ -37,6 +37,18 @@ EXTRA_ARCH_PARAMS["realplksr"] = [
     {"upsampler": "pixelshuffle"},
 ]
 
+EXTRA_ARCH_PARAMS["mosr"] = [
+    {"upsampler": "dysample"},
+    {"upsampler": "pixelshuffle"},
+    {"upsampler": "geoensemblepixelshuffle"},
+]
+
+EXTRA_ARCH_PARAMS["mosr_t"] = [
+    {"upsampler": "dysample"},
+    {"upsampler": "pixelshuffle"},
+    {"upsampler": "geoensemblepixelshuffle"},
+]
+
 # A list of tuples in the format of (name, arch, scale, extra_params).
 FILTERED_REGISTRIES_SCALES_PARAMS = [
     (name, arch, scale, extra_params)
