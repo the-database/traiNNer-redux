@@ -128,7 +128,7 @@ class DISTSLoss(nn.Module):
 
         if load_weights:
             if osp.exists(weights_path):
-                weights = torch.load(weights_path)
+                weights = torch.load(weights_path, weights_only=True)
             else:
                 raise FileNotFoundError(weights_path)
 

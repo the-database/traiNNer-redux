@@ -186,6 +186,7 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
         resume_state = torch.load(
             resume_state_path,
             map_location=lambda storage, _: storage.cuda(device_id),  # pyright: ignore[reportAttributeAccessIssue] (https://github.com/pytorch/pytorch/issues/131765)
+            weights_only=True,
         )
         assert resume_state is not None
         check_resume(
@@ -376,7 +377,12 @@ def train_pipeline(root_path: str) -> None:
             # save models and training states
             if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
                 logger.info("Saving models and training states.")
-                model.save(epoch, current_iter, current_accum_iter, apply_gradient)
+                model.save(
+                    epoch,
+                    current_iter,
+                    current_accum_iter,
+                    apply_gradient,
+                )
 
             # validation
             if opt.val is not None:
@@ -417,7 +423,10 @@ def train_pipeline(root_path: str) -> None:
     logger.info("End of training. Time consumed: %s", consumed_time)
     logger.info("Save the latest model.")
     model.save(
-        epoch=-1, current_iter=-1, current_accum_iter=-1, apply_gradient=apply_gradient
+        epoch=-1,
+        current_iter=-1,
+        current_accum_iter=-1,
+        apply_gradient=apply_gradient,
     )  # -1 stands for the latest
     if opt.val is not None:
         for val_loader in val_loaders:
