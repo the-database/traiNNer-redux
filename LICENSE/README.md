@@ -4,6 +4,8 @@ traiNNer-redux is released under Apache License 2.0.
 
 |Project|License|
 |-|-|
+|[ArtCNN](https://github.com/Artoriuz/ArtCNN) | [MIT License](https://github.com/Artoriuz/ArtCNN/blob/main/LICENSE)|
+|[ArtCNN-PyTorch](https://github.com/umzi2/ArtCNN-PyTorch) | [MIT License](https://github.com/umzi2/ArtCNN-PyTorch/blob/master/LICENSE)|
 |[ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary) | [Apache License 2.0](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary/blob/main/LICENSE.txt)|
 |[BasicSR](https://github.com/XPixelGroup/BasicSR) | [Apache License 2.0](https://github.com/XPixelGroup/BasicSR/blob/master/LICENSE.txt)|
 |[CutBlur](https://github.com/clovaai/cutblur/) | [MIT License](https://github.com/clovaai/cutblur/blob/master/LICENSE)|

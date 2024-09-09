@@ -150,6 +150,11 @@ archs: list[ArchInfo] = [
         "pth_override": True,
         "folder_name_override": "SCUNet_aaf6aa",
     },
+    {
+        "names": ["ArtCNN"],
+        "scales": ALL_SCALES,
+        "extras": {"filters": str(96), "n_block": str(15), "kernel_size": str(3)},
+    },
 ]
 
 for arch in archs:
