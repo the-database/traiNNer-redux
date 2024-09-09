@@ -10,7 +10,7 @@ import torch
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN.arch.RRDB import RRDBNet
-from torch import nn
+from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
@@ -51,13 +51,14 @@ class BaseModel:
         self.first_val_completed = False
         self.model_loader = ModelLoader()
         self.net_g = None
-        self.net_g_ema = None
+        self.net_g_ema: AveragedModel | None = None
         self.net_d = None
         self.use_amp = False
         self.amp_dtype = torch.float16
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
         self.accum_iters: int = 1
+        self.ema_n_averaged: Tensor | None = None
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
@@ -80,7 +81,6 @@ class BaseModel:
         current_iter: int,
         current_accum_iter: int,
         apply_gradient: bool,
-        dataloader: DataLoader | None,
     ) -> None:
         """Save networks and training state."""
 
@@ -335,7 +335,6 @@ class BaseModel:
         self,
         net: nn.Module,
         net_label: str,
-        dataloader: DataLoader | None,
         save_dir: str,
         current_iter: int,
         current_accum_iter: int,
@@ -353,10 +352,6 @@ class BaseModel:
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
         assert self.opt.logger is not None
 
-        if isinstance(net, AveragedModel):
-            assert dataloader is not None, "dataloader is required to save EMA model"
-            torch.optim.swa_utils.update_bn(dataloader, net)
-
         if apply_gradient:
             save_filename = f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
         else:
@@ -365,11 +360,15 @@ class BaseModel:
 
         bare_net_ = self.get_bare_model(net)
         state_dict = bare_net_.state_dict()
+        new_state_dict = OrderedDict()
+
         for full_key, param in state_dict.items():
             key = full_key
             if key.startswith("module."):  # remove unnecessary 'module.'
                 key = key[7:]
-            state_dict[key] = param.cpu()
+            if key == "n_averaged":  # ema key, breaks compatibility
+                continue
+            new_state_dict[key] = param.cpu()
 
         # avoid occasional writing errors
         retry = 3
@@ -377,9 +376,9 @@ class BaseModel:
         while retry > 0:
             try:
                 if self.opt.logger.save_checkpoint_format == "safetensors":
-                    save_file(state_dict, save_path)
+                    save_file(new_state_dict, save_path)
                 else:
-                    torch.save(state_dict, save_path)
+                    torch.save(new_state_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(
@@ -513,7 +512,9 @@ class BaseModel:
                 load_net: StateDict = load_file(load_path, device=str(self.device))
             elif load_path.endswith(".pth"):
                 load_net = torch.load(
-                    load_path, map_location=lambda storage, loc: storage
+                    load_path,
+                    map_location=lambda storage, loc: storage,
+                    weights_only=True,
                 )
             else:
                 raise ValueError(f"Unsupported model: {load_path}")
@@ -649,6 +650,9 @@ class BaseModel:
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
+            if self.net_g_ema is not None:
+                state["ema_n_averaged"] = self.net_g_ema.state_dict()["n_averaged"]
+
             if apply_gradient:
                 save_filename = f"{current_iter}.state"
             else:
@@ -706,6 +710,9 @@ class BaseModel:
             self.scaler_g.load_state_dict(resume_state["scaler_g"])
         if "scaler_d" in resume_state:
             self.scaler_d.load_state_dict(resume_state["scaler_d"])
+
+        if "ema_n_averaged" in resume_state and self.net_g_ema is not None:
+            self.net_g_ema.register_buffer("n_averaged", resume_state["ema_n_averaged"])
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.

@@ -143,7 +143,7 @@ class SRModel(BaseModel):
             self.cri_bicubic = None
 
             self.ema_decay = 0
-            self.net_g_ema: AveragedModel | None = None
+            self.net_g_ema = None
 
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
@@ -170,20 +170,27 @@ class SRModel(BaseModel):
             logger.info(
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
             )
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = AveragedModel(
-                self.net_g, multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay)
-            ).to(self.device)
+
             # load pretrained model
+            init_net_g_ema = build_network(
+                {**self.opt.network_g, "scale": self.opt.scale}
+            ).to(self.device)
             if self.opt.path.pretrain_network_g_ema is not None:
                 self.load_network(
-                    self.net_g_ema,
+                    init_net_g_ema,
                     self.opt.path.pretrain_network_g_ema,
                     self.opt.path.strict_load_g,
                     "params_ema",
                 )
+
+            # define network net_g with Exponential Moving Average (EMA)
+            # net_g_ema is used only for testing on one GPU and saving
+            # There is no need to wrap with DistributedDataParallel
+            self.net_g_ema = AveragedModel(
+                init_net_g_ema,
+                multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
+                device=self.device,
+            )
 
         # define losses
         if train_opt.pixel_opt:
@@ -658,7 +665,6 @@ class SRModel(BaseModel):
         current_iter: int,
         current_accum_iter: int,
         apply_gradient: bool,
-        dataloader: DataLoader | None,
     ) -> None:
         assert self.opt.path.models is not None
         assert self.opt.path.resume_models is not None
@@ -667,7 +673,6 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_g_ema,
                 "net_g_ema",
-                dataloader,
                 self.opt.path.models,
                 current_iter,
                 current_accum_iter,
@@ -677,7 +682,6 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_g,
                 "net_g",
-                dataloader,
                 self.opt.path.resume_models,
                 current_iter,
                 current_accum_iter,
@@ -687,7 +691,6 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_g,
                 "net_g",
-                dataloader,
                 self.opt.path.models,
                 current_iter,
                 current_accum_iter,
@@ -698,7 +701,6 @@ class SRModel(BaseModel):
             self.save_network(
                 self.net_d,
                 "net_d",
-                dataloader,
                 self.opt.path.resume_models,
                 current_iter,
                 current_accum_iter,
