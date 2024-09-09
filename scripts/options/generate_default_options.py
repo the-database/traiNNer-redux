@@ -159,7 +159,8 @@ archs: list[ArchInfo] = [
         "names": ["MoSR", "MoSR_T"],
         "scales": ALL_SCALES,
         "extras": {
-            "upsampler": "dysample  # dysample (best on even number scales), pixelshuffle, geoensemblepixelshuffle"
+            "upsampler": "dysample  # dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle, geoensemblepixelshuffle",
+            "drop_path": "0  # 0.05",
         },
     },
 ]
