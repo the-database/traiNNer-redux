@@ -1,6 +1,6 @@
 # https://github.com/umzi2/MoSR/blob/master/neosr/archs/mosr_arch.py
 import torch
-from timm.models.layers import DropPath
+from timm.layers import DropPath
 from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
 

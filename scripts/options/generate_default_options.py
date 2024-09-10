@@ -163,6 +163,7 @@ archs: list[ArchInfo] = [
             "drop_path": "0  # 0.05",
         },
     },
+    {"names": ["LMLT_Base", "LMLT_Large", "LMLT_Tiny"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:

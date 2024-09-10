@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange
 from timm.models import register_notrace_function
-from timm.models.layers import DropPath, _assert, to_2tuple, trunc_normal_
+from timm.layers import DropPath, _assert, to_2tuple, trunc_normal_
 from torch import nn
 from torch.utils import checkpoint
 from torchvision.transforms import functional as TF
