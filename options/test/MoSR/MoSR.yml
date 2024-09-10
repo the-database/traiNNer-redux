@@ -26,7 +26,8 @@ datasets:
 # Generator model settings
 network_g:
   type: MoSR  # MoSR, MoSR_T
-  upsampler: dysample  # dysample (best on even number scales), pixelshuffle, geoensemblepixelshuffle
+  upsampler: dysample  # dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle, geoensemblepixelshuffle
+  drop_path: 0  # 0.05
 
 ############################
 # Pretrain and Resume Paths
