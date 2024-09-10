@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from einops import rearrange
 from einops.layers.torch import Rearrange
-from timm.models.layers import DropPath, trunc_normal_
+from timm.layers import DropPath, trunc_normal_
 from torch import nn
 
 from traiNNer.utils.registry import ARCH_REGISTRY

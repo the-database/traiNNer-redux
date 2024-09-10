@@ -16,6 +16,7 @@ EXCLUDE_ARCHS = {
     "dat",
     "hat",
     "swinir",
+    "lmlt",
     "vggstylediscriminator",
     "unetdiscriminatorsn_traiNNer",
     "vggfeatureextractor",
@@ -72,7 +73,15 @@ ADD_VSR_DIM = {"tscunet"}
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
 REQUIRE_32_HW = {"realcugan", "hit_srf"}
-REQUIRE_64_HW = {"hit_sir", "hit_sng", "scunet_aaf6aa", "tscunet"}
+REQUIRE_64_HW = {
+    "hit_sir",
+    "hit_sng",
+    "lmlt_base",
+    "lmlt_large",
+    "lmlt_tiny",
+    "scunet_aaf6aa",
+    "tscunet",
+}
 
 
 class TestArchData(TypedDict):
