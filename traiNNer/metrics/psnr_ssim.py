@@ -213,7 +213,7 @@ def _ssim(img: np.ndarray, img2: np.ndarray) -> np.ndarray:
 
     c1 = (0.01 * 255) ** 2
     c2 = (0.03 * 255) ** 2
-    kernel = cv2.getGaussianKernel(11, 1.5)
+    kernel: np.ndarray = cv2.getGaussianKernel(11, 1.5)
     window = np.outer(kernel, kernel.transpose())
 
     mu1 = cv2.filter2D(img, -1, window)[5:-5, 5:-5]  # valid mode for window size 11
