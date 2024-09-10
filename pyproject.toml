@@ -4,7 +4,7 @@ requires-python = ">=3.11"
 dynamic = ["version"]
 dependencies = [
 "msgspec",
-"numpy",
+"numpy>=2",
 "opencv-python",
 "Pillow",
 "pytorch-optimizer",
@@ -18,7 +18,7 @@ dependencies = [
 "spandrel-extra-arches",
 "tb-nightly",
 "timm",
-"torch>=2.4",
+"torch>=2.4.1",
 "torchvision",
 "tqdm"
 ]
