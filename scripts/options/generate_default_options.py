@@ -104,7 +104,7 @@ archs: list[ArchInfo] = [
     {"names": ["DAT_2"], "scales": ALL_SCALES},
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": ALL_SCALES},
-    {"names": ["PLKSR"], "scales": ALL_SCALES, "gt_override": 192},
+    {"names": ["PLKSR", "PLKSR_Tiny"], "scales": ALL_SCALES, "gt_override": 192},
     {
         "names": ["RealPLKSR"],
         "scales": ALL_SCALES,
