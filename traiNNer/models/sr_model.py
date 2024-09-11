@@ -7,6 +7,7 @@ from typing import Any
 import torch
 from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
+from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
 from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
@@ -191,6 +192,10 @@ class SRModel(BaseModel):
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
                 device=self.device,
             )
+
+        self.grad_clip = train_opt.grad_clip
+        if self.grad_clip:
+            logger.info("Gradient clipping is enabled.")
 
         # define losses
         if train_opt.pixel_opt:
@@ -420,6 +425,10 @@ class SRModel(BaseModel):
 
         self.scaler_g.scale(l_g_total).backward()
         if apply_gradient:
+            if self.grad_clip:
+                self.scaler_g.unscale_(self.optimizer_g)
+                clip_grad_norm_(self.net_g.parameters(), 1.0)
+
             scale_before = self.scaler_g.get_scale()
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
@@ -454,6 +463,9 @@ class SRModel(BaseModel):
             self.scaler_d.scale(l_d_real).backward()
             self.scaler_d.scale(l_d_fake).backward()
             if apply_gradient:
+                if self.grad_clip:
+                    self.scaler_d.unscale_(self.optimizer_d)
+                    clip_grad_norm_(self.net_d.parameters(), 1.0)
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()

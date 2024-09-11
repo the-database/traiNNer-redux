@@ -125,6 +125,7 @@ class TrainOptions(StrictStruct):
     total_iter: int
     optim_g: OptimizerOptions
     ema_decay: float = 0
+    grad_clip: bool = False
     warmup_iter: int = -1
     optim_d: OptimizerOptions | None = None
 
