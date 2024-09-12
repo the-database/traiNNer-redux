@@ -132,6 +132,7 @@ class SRModel(BaseModel):
 
             self.cri_pix = None
             self.cri_mssim = None
+            self.cri_mssim_l1 = None
             self.cri_ldl = None
             self.cri_dists = None
             self.cri_perceptual = None
@@ -205,6 +206,10 @@ class SRModel(BaseModel):
         if train_opt.mssim_opt:
             if train_opt.mssim_opt.get("loss_weight", 0) > 0:
                 self.cri_mssim = build_loss(train_opt.mssim_opt).to(self.device)
+
+        if train_opt.mssim_l1_opt:
+            if train_opt.mssim_l1_opt.get("loss_weight", 0) > 0:
+                self.cri_mssim_l1 = build_loss(train_opt.mssim_l1_opt).to(self.device)
 
         if train_opt.ldl_opt:
             if train_opt.ldl_opt.get("loss_weight", 0) > 0:
@@ -348,6 +353,12 @@ class SRModel(BaseModel):
                 l_g_mssim = self.cri_mssim(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_mssim
                 loss_dict["l_g_mssim"] = l_g_mssim
+            if self.cri_mssim_l1:
+                l_g_mssim_l1 = (
+                    self.cri_mssim_l1(self.output, self.gt) / self.accum_iters
+                )
+                l_g_total += l_g_mssim_l1
+                loss_dict["l_g_mssim_l1"] = l_g_mssim_l1
             if self.cri_ldl:
                 assert self.net_g_ema is not None
                 # TODO support LDL without ema
