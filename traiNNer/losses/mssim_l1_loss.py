@@ -23,6 +23,7 @@ class MSSSIML1Loss(nn.Module):
         alpha: float = 0.025,
         compensation: float = 200.0,
         cuda_dev: int = 0,
+        loss_weight: float = 1.0,
     ) -> None:
         if gaussian_sigmas is None:
             gaussian_sigmas = [0.5, 1.0, 2.0, 4.0, 8.0]
@@ -41,6 +42,7 @@ class MSSSIML1Loss(nn.Module):
             g_masks[3 * idx + 1, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
             g_masks[3 * idx + 2, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
         self.g_masks = g_masks.cuda(cuda_dev)
+        self.loss_weight = loss_weight
 
     def _fspecial_gauss_1d(self, size: int, sigma: float) -> Tensor:
         """Create 1-D gauss kernel
@@ -102,4 +104,4 @@ class MSSSIML1Loss(nn.Module):
         loss_mix = self.alpha * loss_ms_ssim + (1 - self.alpha) * gaussian_l1 / self.DR
         loss_mix = self.compensation * loss_mix
 
-        return loss_mix.mean()
+        return self.loss_weight * loss_mix.mean()
