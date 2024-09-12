@@ -21,7 +21,6 @@ class MSSSIML1Loss(nn.Module):
         data_range: float = 1.0,
         k: tuple[float, float] = (0.01, 0.03),
         alpha: float = 0.025,
-        compensation: float = 200.0,
         cuda_dev: int = 0,
         loss_weight: float = 1.0,
     ) -> None:
@@ -33,7 +32,6 @@ class MSSSIML1Loss(nn.Module):
         self.C2 = (k[1] * data_range) ** 2
         self.pad = int(2 * gaussian_sigmas[-1])
         self.alpha = alpha
-        self.compensation = compensation
         filter_size = int(4 * gaussian_sigmas[-1] + 1)
         g_masks = torch.zeros((3 * len(gaussian_sigmas), 1, filter_size, filter_size))
         for idx, sigma in enumerate(gaussian_sigmas):
@@ -103,6 +101,5 @@ class MSSSIML1Loss(nn.Module):
         ).mean(1)  # [B, H, W]
 
         loss_mix = self.alpha * loss_ms_ssim + (1 - self.alpha) * gaussian_l1 / self.DR
-        loss_mix = self.compensation * loss_mix
 
         return self.loss_weight * loss_mix.mean()
