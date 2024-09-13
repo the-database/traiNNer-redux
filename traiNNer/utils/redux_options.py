@@ -109,6 +109,7 @@ class PathOptions(StrictStruct):
     results_root: str | None = None
 
     pretrain_network_g: str | None = None
+    pretrain_network_g_path: str | None = None
     param_key_g: str | None = None
     strict_load_g: bool = True
     resume_state: str | None = None
