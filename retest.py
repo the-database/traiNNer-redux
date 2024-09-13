@@ -4,10 +4,7 @@ from traiNNer.utils.types import TrainingState
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 import argparse
-import datetime
 import logging
-import sys
-import time
 from os import path as osp
 from typing import Any
 
@@ -21,7 +18,6 @@ from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.data.paired_video_dataset import PairedVideoDataset
 from traiNNer.models import build_model
 from traiNNer.utils import (
-    AvgTimer,
     check_resume,
     get_env_info,
     get_root_logger,
@@ -224,17 +220,9 @@ def train_pipeline(root_path: str) -> None:
 
     start_epoch = 0
     current_iter = 0
-    current_accum_iter = 0
+    start_iter = 0
 
-    # training
-    logger.info("Start training from epoch: %d, iter: %d.", start_epoch, current_iter)
-    data_timer, iter_timer = AvgTimer(), AvgTimer()
-    start_time = time.time()
-
-    interrupt_received = False
-
-    epoch = start_epoch
-    apply_gradient = False
+    logger.info("Start testing from epoch: %d, iter: %d.", start_epoch, current_iter)
 
     ext = "safetensors"
 
@@ -254,6 +242,8 @@ def train_pipeline(root_path: str) -> None:
         nets = sorted([int(v.split(f".{ext}")[0].split("_")[-1]) for v in nets])
 
         for net_iter in nets:
+            if net_iter < start_iter:
+                continue
             net_path = osp.join(
                 opt.path.pretrain_network_g_path, f"net_g_ema_{net_iter}.{ext}"
             )
@@ -277,110 +267,6 @@ def train_pipeline(root_path: str) -> None:
                         opt.val.save_img,
                         multi_val_datasets,
                     )
-    sys.exit(1)
-
-    for epoch in range(start_epoch, total_epochs + 1):
-        train_sampler.set_epoch(epoch)
-        prefetcher.reset()
-        train_data = prefetcher.next()
-
-        while train_data is not None:
-            data_timer.record()
-
-            current_accum_iter += 1
-
-            if current_accum_iter >= model.accum_iters:
-                current_accum_iter = 0
-                current_iter += 1
-                apply_gradient = True
-            else:
-                apply_gradient = False
-
-            if current_iter > total_iters:
-                break
-            # training
-            model.feed_data(train_data)
-            model.optimize_parameters(current_iter, current_accum_iter, apply_gradient)
-            # update learning rate
-            if apply_gradient:
-                model.update_learning_rate(
-                    current_iter, warmup_iter=opt.train.warmup_iter
-                )
-            iter_timer.record()
-            if current_iter == msg_logger.start_iter + 1:
-                # reset start time in msg_logger for more accurate eta_time
-                msg_logger.reset_start_time()
-            # log
-            if current_iter % opt.logger.print_freq == 0 and apply_gradient:
-                log_vars = {"epoch": epoch, "iter": current_iter}
-                log_vars.update({"lrs": model.get_current_learning_rate()})
-                log_vars.update(
-                    {
-                        "time": iter_timer.get_avg_time(),
-                        "data_time": data_timer.get_avg_time(),
-                    }
-                )
-                log_vars.update(model.get_current_log())
-                model.reset_current_log()
-                msg_logger(log_vars)
-
-            # save models and training states
-            if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
-                logger.info("Saving models and training states.")
-                model.save(
-                    epoch,
-                    current_iter,
-                    current_accum_iter,
-                    apply_gradient,
-                )
-
-            # validation
-            if opt.val is not None:
-                assert (
-                    opt.val.val_freq is not None
-                ), "val_freq must be defined under the val section"
-                if current_iter % opt.val.val_freq == 0 and apply_gradient:
-                    multi_val_datasets = len(val_loaders) > 1
-                    for val_loader in val_loaders:
-                        model.validation(
-                            val_loader,
-                            current_iter,
-                            tb_logger,
-                            opt.val.save_img,
-                            multi_val_datasets,
-                        )
-
-            data_timer.start()
-            iter_timer.start()
-            train_data = prefetcher.next()
-            if interrupt_received:
-                break
-        # end of iter
-        if interrupt_received:
-            break
-    # end of epoch
-
-    if interrupt_received:
-        logger.info(
-            "Saving models and training states for epoch: %d, iter: %d.",
-            epoch,
-            current_iter,
-        )
-        model.save(epoch, current_iter, current_accum_iter, apply_gradient)
-        sys.exit(0)
-
-    consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
-    logger.info("End of training. Time consumed: %s", consumed_time)
-    logger.info("Save the latest model.")
-    model.save(
-        epoch=-1,
-        current_iter=-1,
-        current_accum_iter=-1,
-        apply_gradient=apply_gradient,
-    )  # -1 stands for the latest
-    if opt.val is not None:
-        for val_loader in val_loaders:
-            model.validation(val_loader, current_iter, tb_logger, opt.val.save_img)
     if tb_logger:
         tb_logger.close()
 
