@@ -198,8 +198,8 @@ def train_pipeline(root_path: str) -> None:
     if opt.val:
         val_enabled = opt.val.val_enabled
 
-    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
-        create_train_val_dataloader(opt, args, val_enabled, logger)
+    _, _, val_loaders, _, _ = create_train_val_dataloader(
+        opt, args, val_enabled, logger
     )
 
     if opt.fast_matmul:

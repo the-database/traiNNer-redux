@@ -1,7 +1,7 @@
 from typing import Any
 
 import torch
-from torch import autocast, nn
+from torch import Tensor, autocast, nn
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
 from traiNNer.losses.basic_loss import L1Loss
 
@@ -37,28 +37,19 @@ FILTERED_REGISTRIES_PARAMS = [
 ]
 
 
-# Function to check if model supports fp16
-def supports_fp16(model, input_tensor):
-    try:
-        with autocast(dtype=torch.float16, device_type="cuda"):
-            output = model(input_tensor.half())
-        return True
-    except Exception as e:
-        print(f"FP16 support failed: {e}")
-        return False
-
-
 # Function to test inference performance in bf16 vs fp16 compared to fp32
-def compare_precision(model, input_tensor, criterion):
+def compare_precision(
+    net: nn.Module, input_tensor: Tensor, criterion: nn.Module
+) -> tuple[float, float]:
     # Compute fp32 output as the baseline
     with torch.no_grad():
-        fp32_output = model(input_tensor)
+        fp32_output = net(input_tensor)
 
     # Test fp16 inference
     fp16_loss = None
     try:
         with autocast(dtype=torch.float16, device_type="cuda"):
-            fp16_output = model(input_tensor)
+            fp16_output = net(input_tensor)
             print(fp16_output)
         fp16_loss = criterion(fp16_output.float(), fp32_output).item()
     except Exception as e:
@@ -69,7 +60,7 @@ def compare_precision(model, input_tensor, criterion):
     bf16_loss = None
     try:
         with autocast(dtype=torch.bfloat16, device_type="cuda"):
-            bf16_output = model(input_tensor)
+            bf16_output = net(input_tensor)
         bf16_loss = criterion(bf16_output.float(), fp32_output).item()
     except Exception as e:
         print(f"Error in BF16 inference: {e}")
@@ -80,19 +71,17 @@ def compare_precision(model, input_tensor, criterion):
 
 if __name__ == "__main__":
     for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
-        # Example model and input setup
-        # model = SPAN(num_in_ch=3, num_out_ch=3)
         try:
             if name != "dat_2":
                 continue
 
             net: nn.Module = arch(scale=4, **extra_arch_params).eval().to("cuda")
-            net.load_state_dict(
-                torch.load(
-                    r"C:\Users\jsoos\Documents\programming\DAT\experiments\pretrained_models\DAT-2\DAT_2_x4.pth",
-                    weights_only=True,
-                )["params"]
-            )
+            # net.load_state_dict(
+            #     torch.load(
+            #         r"DAT_2_x4.pth",
+            #         weights_only=True,
+            #     )["params"]
+            # )
 
             input_tensor = torch.randn((1, 3, 64, 64), device="cuda")
             criterion = L1Loss()
