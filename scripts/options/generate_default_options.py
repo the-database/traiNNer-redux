@@ -3,6 +3,8 @@ import re
 from os import path as osp
 from typing import NotRequired, TypedDict
 
+from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
+
 
 class ArchInfo(TypedDict):
     names: list[str]
@@ -49,6 +51,9 @@ def final_template(
         "type: %archname%",
         arch_type_str,
     )
+
+    if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:
+        template = template.replace("amp_bf16: false", "amp_bf16: true")
 
     template = template.replace("%archname%", f"{arch['names'][0]}")
     template = template.replace("%scale%", f"{default_scale}x")
