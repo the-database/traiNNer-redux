@@ -9,7 +9,7 @@ ARCHS_WITHOUT_FP16 = {
     "hat_l",
     "hat_m",
     "hat_s",
-    "realplksr",
+    # "realplksr",
     "rgt",
     "rgt_s",
     "srformer",

@@ -37,26 +37,21 @@ FILTERED_REGISTRIES_PARAMS = [
 ]
 
 
-# Function to test inference performance in bf16 vs fp16 compared to fp32
 def compare_precision(
     net: nn.Module, input_tensor: Tensor, criterion: nn.Module
 ) -> tuple[float, float]:
-    # Compute fp32 output as the baseline
     with torch.no_grad():
         fp32_output = net(input_tensor)
 
-    # Test fp16 inference
     fp16_loss = None
     try:
         with autocast(dtype=torch.float16, device_type="cuda"):
             fp16_output = net(input_tensor)
-            print(fp16_output)
         fp16_loss = criterion(fp16_output.float(), fp32_output).item()
     except Exception as e:
         print(f"Error in FP16 inference: {e}")
         fp16_loss = float("inf")
 
-    # Test bf16 inference
     bf16_loss = None
     try:
         with autocast(dtype=torch.bfloat16, device_type="cuda"):
@@ -72,8 +67,8 @@ def compare_precision(
 if __name__ == "__main__":
     for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
         try:
-            if name != "dat_2":
-                continue
+            # if name != "dat_2":
+            #     continue
 
             net: nn.Module = arch(scale=4, **extra_arch_params).eval().to("cuda")
             # net.load_state_dict(
@@ -86,20 +81,16 @@ if __name__ == "__main__":
             input_tensor = torch.randn((1, 3, 64, 64), device="cuda")
             criterion = L1Loss()
 
-            # Compare inference performance in fp16 and bf16 to fp32
             fp16_loss, bf16_loss = compare_precision(net, input_tensor, criterion)
+            diff = abs(fp16_loss - bf16_loss)
 
             if fp16_loss < bf16_loss:
                 print(
-                    f"{name}: FP16 is closer to FP32 with loss {fp16_loss} vs BF16 loss {bf16_loss}"
-                )
-            elif bf16_loss < fp16_loss:
-                print(
-                    f"{name}: BF16 is closer to FP32 with loss {bf16_loss} vs FP16 loss {fp16_loss}"
+                    f"{name:>20s}: FP16: {fp16_loss:.6f}; BF16: {bf16_loss:.6f}; diff = {diff}"
                 )
             else:
                 print(
-                    f"{name}: Both have similar performance: FP16 loss {fp16_loss}, BF16 loss {bf16_loss}"
+                    f"{name:>20s}: BF16: {bf16_loss:.6f}; FP16: {fp16_loss:.6f}; diff = {diff}"
                 )
         except Exception as e:
             print(f"skip {name}", e)

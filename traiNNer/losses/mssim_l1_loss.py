@@ -20,7 +20,7 @@ class MSSSIML1Loss(nn.Module):
         gaussian_sigmas: list[float] | None = None,
         data_range: float = 1.0,
         k: tuple[float, float] = (0.01, 0.03),
-        alpha: float = 0.84,
+        alpha: float = 0.025,
         cuda_dev: int = 0,
         loss_weight: float = 1.0,
     ) -> None:
