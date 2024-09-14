@@ -102,15 +102,16 @@ def create_train_val_dataloader(
                 seed=opt.manual_seed,
             )
 
-            num_iter_per_epoch = math.ceil(
+            num_iter_per_epoch = (
                 len(train_set)
                 * dataset_enlarge_ratio
-                / (
+                // (
                     dataset_opt.batch_size_per_gpu
                     * dataset_opt.accum_iter
                     * opt.world_size
                 )
             )
+
             total_iters = int(opt.train.total_iter)
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
             logger.info(
