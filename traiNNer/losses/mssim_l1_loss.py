@@ -7,7 +7,7 @@ Created on Thu Dec  3 00:28:15 2020
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from torch import Tensor, autocast, nn
+from torch import Tensor, nn
 
 from traiNNer.utils.registry import LOSS_REGISTRY
 
@@ -69,27 +69,27 @@ class MSSSIML1Loss(nn.Module):
         gaussian_vec = self._fspecial_gauss_1d(size, sigma)
         return torch.outer(gaussian_vec, gaussian_vec)
 
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportAttributeAccessIssue] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        with autocast(enabled=True, dtype=torch.float32, device_type="cuda"):
-            mux = F.conv2d(x, self.g_masks, groups=3, padding=self.pad)
-            muy = F.conv2d(y, self.g_masks, groups=3, padding=self.pad)
+        mux = F.conv2d(x, self.g_masks, groups=3, padding=self.pad)
+        muy = F.conv2d(y, self.g_masks, groups=3, padding=self.pad)
 
-            mux2 = mux * mux
-            muy2 = muy * muy
-            muxy = mux * muy
+        mux2 = mux * mux
+        muy2 = muy * muy
+        muxy = mux * muy
 
-            sigmax2 = F.conv2d(x * x, self.g_masks, groups=3, padding=self.pad) - mux2
-            sigmay2 = F.conv2d(y * y, self.g_masks, groups=3, padding=self.pad) - muy2
-            sigmaxy = F.conv2d(x * y, self.g_masks, groups=3, padding=self.pad) - muxy
+        sigmax2 = F.conv2d(x * x, self.g_masks, groups=3, padding=self.pad) - mux2
+        sigmay2 = F.conv2d(y * y, self.g_masks, groups=3, padding=self.pad) - muy2
+        sigmaxy = F.conv2d(x * y, self.g_masks, groups=3, padding=self.pad) - muxy
 
-            # l(j), cs(j) in MS-SSIM
-            l = (2 * muxy + self.C1) / (mux2 + muy2 + self.C1)  # [B, 15, H, W]
-            cs = (2 * sigmaxy + self.C2) / (sigmax2 + sigmay2 + self.C2)
+        # l(j), cs(j) in MS-SSIM
+        l = (2 * muxy + self.C1) / (mux2 + muy2 + self.C1)  # [B, 15, H, W]
+        cs = (2 * sigmaxy + self.C2) / (sigmax2 + sigmay2 + self.C2)
 
-            lm = l[:, -1, :, :] * l[:, -2, :, :] * l[:, -3, :, :]
-            pics = cs.prod(dim=1)
+        lm = l[:, -1, :, :] * l[:, -2, :, :] * l[:, -3, :, :]
+        pics = cs.prod(dim=1)
 
-            loss_ms_ssim = 1 - lm * pics  # [B, H, W]
+        loss_ms_ssim = 1 - lm * pics  # [B, H, W]
 
         loss_l1 = F.l1_loss(x, y, reduction="none")  # [B, 3, H, W]
         # average l1 loss in 3 channels
