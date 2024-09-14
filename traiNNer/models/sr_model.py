@@ -5,7 +5,7 @@ from os import path as osp
 from typing import Any
 
 import torch
-from torch import Tensor
+from torch import Tensor, autocast
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
@@ -337,7 +337,7 @@ class SRModel(BaseModel):
         self.loss_samples += n_samples
 
         # TODO refactor self.accum_iters
-        with torch.autocast(
+        with autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
             self.output = self.net_g(self.lq)
@@ -455,7 +455,7 @@ class SRModel(BaseModel):
             for p in self.net_d.parameters():
                 p.requires_grad = True
 
-            with torch.autocast(
+            with autocast(
                 device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
             ):
                 # real
@@ -494,7 +494,7 @@ class SRModel(BaseModel):
                 self.net_g_ema.update_parameters(self.net_g)
 
     def test(self) -> None:
-        with torch.autocast(
+        with autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
             if self.net_g_ema is not None:
