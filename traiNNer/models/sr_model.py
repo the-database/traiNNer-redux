@@ -5,6 +5,7 @@ from os import path as osp
 from typing import Any
 
 import torch
+from schedulefree import AdamWScheduleFree
 from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
@@ -295,6 +296,7 @@ class SRModel(BaseModel):
         self.optimizer_g = self.get_optimizer(optim_type, optim_params, **optim_g_opts)
         self.optimizers.append(self.optimizer_g)
         self.optimizers_skipped.append(False)
+        self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
 
         # optimizer d
         if self.net_d is not None:
@@ -306,6 +308,7 @@ class SRModel(BaseModel):
             )
             self.optimizers.append(self.optimizer_d)
             self.optimizers_skipped.append(False)
+            self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
 
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data
@@ -497,6 +500,10 @@ class SRModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
+            if self.optimizers_schedule_free[0]:
+                assert isinstance(self.optimizer_g, AdamWScheduleFree)
+                self.optimizer_g.eval()
+
             if self.net_g_ema is not None:
                 self.net_g_ema.eval()
                 with torch.inference_mode():
@@ -506,6 +513,10 @@ class SRModel(BaseModel):
                 with torch.inference_mode():
                     self.output = self.net_g(self.lq)
                 self.net_g.train()
+
+            if self.optimizers_schedule_free[0]:
+                assert isinstance(self.optimizer_g, AdamWScheduleFree)
+                self.optimizer_g.train()
 
     def dist_validation(
         self,

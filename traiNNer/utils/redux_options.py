@@ -12,6 +12,7 @@ class OptimizerOptions(StrictStruct):
     lr: float
     weight_decay: float
     betas: list[float]
+    warmup_steps: int | None = None
 
 
 class SchedulerOptions(StrictStruct):

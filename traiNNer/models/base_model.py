@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import Any
 
 import pytorch_optimizer
+import schedulefree
 import torch
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
@@ -37,6 +38,7 @@ class BaseModel:
         self.schedulers: list[LRScheduler] = []
         self.optimizers: list[Optimizer] = []
         self.optimizers_skipped: list[bool] = []
+        self.optimizers_schedule_free: list[bool] = []
         self.batch_augment = None
         self.log_dict = {}
         self.loss_samples = 0
@@ -218,6 +220,9 @@ class BaseModel:
             optimizer = torch.optim.RMSprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
         elif optim_type == "Rprop":
             optimizer = torch.optim.Rprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+        elif optim_type == "AdamWScheduleFree":
+            optimizer = schedulefree.AdamWScheduleFree(params, lr, **kwargs)
+            optimizer.train()  # required if schedule free
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
         return optimizer
@@ -248,11 +253,18 @@ class BaseModel:
             "COSINEANNEALING": torch.optim.lr_scheduler.CosineAnnealingLR,
             "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
         }
+        logger = get_root_logger()
         if sch_typ_upper in sch_map:
-            for optimizer in self.optimizers:
-                self.schedulers.append(
-                    sch_map[sch_typ_upper](optimizer, **scheduler_opts)
-                )
+            for i, optimizer in enumerate(self.optimizers):
+                if not self.optimizers_schedule_free[i]:
+                    self.schedulers.append(
+                        sch_map[sch_typ_upper](optimizer, **scheduler_opts)
+                    )
+                else:
+                    logger.warning(
+                        "Scheduler is ignored when using schedule free optimizer."
+                    )
+
         else:
             raise NotImplementedError(
                 f"Scheduler {scheduler_type} is not implemented yet."
