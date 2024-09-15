@@ -12,6 +12,7 @@ dependencies = [
 "requests",
 "rich",
 "safetensors",
+"schedulefree",
 "scikit-image",
 "scipy",
 "spandrel",
