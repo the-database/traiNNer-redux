@@ -500,7 +500,10 @@ class SRModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
-            if self.optimizers_schedule_free[0]:
+            if (
+                len(self.optimizers_schedule_free) > 0
+                and self.optimizers_schedule_free[0]
+            ):
                 assert isinstance(self.optimizer_g, AdamWScheduleFree)
                 self.optimizer_g.eval()
 
@@ -514,7 +517,10 @@ class SRModel(BaseModel):
                     self.output = self.net_g(self.lq)
                 self.net_g.train()
 
-            if self.optimizers_schedule_free[0]:
+            if (
+                len(self.optimizers_schedule_free) > 0
+                and self.optimizers_schedule_free[0]
+            ):
                 assert isinstance(self.optimizer_g, AdamWScheduleFree)
                 self.optimizer_g.train()
 
