@@ -123,7 +123,7 @@ path:
 #####################
 train:
   ema_decay: 0.999
-  grad_clip: true  # Gradient clipping allows more stable training when using higher learning rates.
+  grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:
     type: AdamW
