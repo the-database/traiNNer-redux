@@ -7,6 +7,7 @@ from typing import Any
 import torch
 from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
+from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
 from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
@@ -131,6 +132,7 @@ class SRModel(BaseModel):
 
             self.cri_pix = None
             self.cri_mssim = None
+            self.cri_mssim_l1 = None
             self.cri_ldl = None
             self.cri_dists = None
             self.cri_perceptual = None
@@ -192,6 +194,10 @@ class SRModel(BaseModel):
                 device=self.device,
             )
 
+        self.grad_clip = train_opt.grad_clip
+        if self.grad_clip:
+            logger.info("Gradient clipping is enabled.")
+
         # define losses
         if train_opt.pixel_opt:
             if train_opt.pixel_opt.get("loss_weight", 0) > 0:
@@ -200,6 +206,10 @@ class SRModel(BaseModel):
         if train_opt.mssim_opt:
             if train_opt.mssim_opt.get("loss_weight", 0) > 0:
                 self.cri_mssim = build_loss(train_opt.mssim_opt).to(self.device)
+
+        if train_opt.mssim_l1_opt:
+            if train_opt.mssim_l1_opt.get("loss_weight", 0) > 0:
+                self.cri_mssim_l1 = build_loss(train_opt.mssim_l1_opt).to(self.device)
 
         if train_opt.ldl_opt:
             if train_opt.ldl_opt.get("loss_weight", 0) > 0:
@@ -343,6 +353,12 @@ class SRModel(BaseModel):
                 l_g_mssim = self.cri_mssim(self.output, self.gt) / self.accum_iters
                 l_g_total += l_g_mssim
                 loss_dict["l_g_mssim"] = l_g_mssim
+            if self.cri_mssim_l1:
+                l_g_mssim_l1 = (
+                    self.cri_mssim_l1(self.output, self.gt) / self.accum_iters
+                )
+                l_g_total += l_g_mssim_l1
+                loss_dict["l_g_mssim_l1"] = l_g_mssim_l1
             if self.cri_ldl:
                 assert self.net_g_ema is not None
                 # TODO support LDL without ema
@@ -420,6 +436,10 @@ class SRModel(BaseModel):
 
         self.scaler_g.scale(l_g_total).backward()
         if apply_gradient:
+            if self.grad_clip:
+                self.scaler_g.unscale_(self.optimizer_g)
+                clip_grad_norm_(self.net_g.parameters(), 1.0)
+
             scale_before = self.scaler_g.get_scale()
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
@@ -444,9 +464,7 @@ class SRModel(BaseModel):
                 loss_dict["l_d_real"] = l_d_real
                 loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
                 # fake
-                fake_d_pred = self.net_d(
-                    self.output.detach().clone()
-                )  # clone for pt1.9
+                fake_d_pred = self.net_d(self.output.detach())
                 l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
@@ -454,6 +472,9 @@ class SRModel(BaseModel):
             self.scaler_d.scale(l_d_real).backward()
             self.scaler_d.scale(l_d_fake).backward()
             if apply_gradient:
+                if self.grad_clip:
+                    self.scaler_d.unscale_(self.optimizer_d)
+                    clip_grad_norm_(self.net_d.parameters(), 1.0)
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()

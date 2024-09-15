@@ -109,6 +109,7 @@ class PathOptions(StrictStruct):
     results_root: str | None = None
 
     pretrain_network_g: str | None = None
+    pretrain_network_g_path: str | None = None
     param_key_g: str | None = None
     strict_load_g: bool = True
     resume_state: str | None = None
@@ -125,11 +126,13 @@ class TrainOptions(StrictStruct):
     total_iter: int
     optim_g: OptimizerOptions
     ema_decay: float = 0
+    grad_clip: bool = False
     warmup_iter: int = -1
     optim_d: OptimizerOptions | None = None
 
     pixel_opt: dict[str, Any] | None = None
     mssim_opt: dict[str, Any] | None = None
+    mssim_l1_opt: dict[str, Any] | None = None
     perceptual_opt: dict[str, Any] | None = None
     contextual_opt: dict[str, Any] | None = None
     dists_opt: dict[str, Any] | None = None

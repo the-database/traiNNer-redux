@@ -281,10 +281,10 @@ def paired_paths_from_folder(
     missing_from_gt_paths = input_set - gt_set
     missing_from_input_paths = gt_set - input_set
 
-    check_missing_paths(missing_from_gt_paths, gt_key, gt_folder)
-    check_missing_paths(missing_from_input_paths, input_key, input_folder)
-
     if filename_tmpl == "{}":
+        check_missing_paths(missing_from_gt_paths, gt_key, gt_folder)
+        check_missing_paths(missing_from_input_paths, input_key, input_folder)
+
         input_paths = [
             (f"{input_key}_path", osp.join(input_folder, f)) for f in gt_names
         ]

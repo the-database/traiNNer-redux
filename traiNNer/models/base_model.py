@@ -59,6 +59,7 @@ class BaseModel:
         self.scaler_d: GradScaler | None = None
         self.accum_iters: int = 1
         self.ema_n_averaged: Tensor | None = None
+        self.grad_clip: bool = False
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:

@@ -17,6 +17,7 @@ EXCLUDE_BENCHMARK_ARCHS = {
     "dat",
     "hat",
     "swinir",
+    "lmlt",
     "vggstylediscriminator",
     "unetdiscriminatorsn_traiNNer",
     "vggfeatureextractor",
@@ -131,7 +132,7 @@ if __name__ == "__main__":
     warmup_runs = 1
     num_runs = 5
     lightweight_num_runs = 250
-    use_amp = True
+    use_amp = False
     amp_bf16 = False
     print_markdown = True
 
