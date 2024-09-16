@@ -1,6 +1,6 @@
 import math
 
-from spandrel.architectures.ESRGAN import RRDBNet
+from spandrel.architectures.ESRGAN import ESRGAN
 
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
@@ -14,20 +14,18 @@ def esrgan(
     in_nc: int = 3,
     out_nc: int = 3,
     **kwargs,
-) -> RRDBNet:
+) -> ESRGAN:
     if use_pixel_unshuffle:
         if scale in pixel_unshuffle_scales:
             in_nc *= 4 ** (3 - scale)
             shuffle_factor = int(math.sqrt(in_nc / out_nc))
-            return RRDBNet(
-                scale=4, in_nc=in_nc, shuffle_factor=shuffle_factor, **kwargs
-            )
+            return ESRGAN(scale=4, in_nc=in_nc, shuffle_factor=shuffle_factor, **kwargs)
 
-    return RRDBNet(scale=scale, **kwargs)
+    return ESRGAN(scale=scale, **kwargs)
 
 
 @SPANDREL_REGISTRY.register()
-def esrgan_lite(scale: int = 4, use_pixel_unshuffle: bool = True, **kwargs) -> RRDBNet:
+def esrgan_lite(scale: int = 4, use_pixel_unshuffle: bool = True, **kwargs) -> ESRGAN:
     return esrgan(
         scale=scale,
         use_pixel_unshuffle=use_pixel_unshuffle,

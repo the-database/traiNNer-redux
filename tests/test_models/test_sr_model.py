@@ -4,7 +4,7 @@ from os import path as osp
 
 import torch
 from pytest import MonkeyPatch
-from spandrel.architectures.ESRGAN import RRDBNet
+from spandrel.architectures.ESRGAN import ESRGAN
 from torch.utils.data import DataLoader
 from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.losses.mssim_loss import MSSIMLoss
@@ -28,7 +28,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     model = SRModel(opt)
     # test attributes
     assert model.__class__.__name__ == "SRModel"
-    assert isinstance(model.net_g, RRDBNet)
+    assert isinstance(model.net_g, ESRGAN)
     assert isinstance(model.cri_mssim, MSSIMLoss)
     assert isinstance(model.cri_perceptual, PerceptualLoss)
     assert isinstance(model.optimizers[0], torch.optim.AdamW)  # pyright: ignore [reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765

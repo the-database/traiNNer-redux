@@ -6,11 +6,10 @@ from collections.abc import Sequence
 from typing import Any
 
 import pytorch_optimizer
-import schedulefree
 import torch
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
-from spandrel.architectures.ESRGAN.arch.RRDB import RRDBNet
+from spandrel.architectures.ESRGAN import ESRGAN
 from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -221,6 +220,8 @@ class BaseModel:
         elif optim_type == "Rprop":
             optimizer = torch.optim.Rprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
         elif optim_type == "AdamWScheduleFree":
+            import schedulefree
+
             optimizer = schedulefree.AdamWScheduleFree(params, lr, **kwargs)
             optimizer.train()  # required if schedule free
         else:
@@ -232,43 +233,44 @@ class BaseModel:
 
         """Set up schedulers."""
         assert self.opt.train is not None
-        scheduler_opts = struct2dict(self.opt.train.scheduler)
-        scheduler_type = scheduler_opts.pop("type")
-        # uppercase scheduler_type to make it case insensitive
-        sch_typ_upper = scheduler_type.upper()
-        sch_map: dict[str, type[LRScheduler]] = {
-            "CONSTANTLR": torch.optim.lr_scheduler.ConstantLR,
-            "LINEARLR": torch.optim.lr_scheduler.LinearLR,
-            "EXPONENTIALLR": torch.optim.lr_scheduler.ExponentialLR,
-            "CYCLICLR": torch.optim.lr_scheduler.CyclicLR,
-            "STEPLR": torch.optim.lr_scheduler.StepLR,
-            "MULTISTEPLR": torch.optim.lr_scheduler.MultiStepLR,
-            "LAMBDALR": torch.optim.lr_scheduler.LambdaLR,
-            "MULTIPLICATIVELR": torch.optim.lr_scheduler.MultiplicativeLR,
-            "SEQUENTIALLR": torch.optim.lr_scheduler.SequentialLR,
-            "CHAINEDSCHEDULER": torch.optim.lr_scheduler.ChainedScheduler,
-            "ONECYCLELR": torch.optim.lr_scheduler.OneCycleLR,
-            "POLYNOMIALLR": torch.optim.lr_scheduler.PolynomialLR,
-            "COSINEANNEALINGWARMRESTARTS": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
-            "COSINEANNEALING": torch.optim.lr_scheduler.CosineAnnealingLR,
-            "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
-        }
-        logger = get_root_logger()
-        if sch_typ_upper in sch_map:
-            for i, optimizer in enumerate(self.optimizers):
-                if not self.optimizers_schedule_free[i]:
-                    self.schedulers.append(
-                        sch_map[sch_typ_upper](optimizer, **scheduler_opts)
-                    )
-                else:
-                    logger.warning(
-                        "Scheduler is ignored when using schedule free optimizer."
-                    )
+        if self.opt.train.scheduler is not None:
+            scheduler_opts = struct2dict(self.opt.train.scheduler)
+            scheduler_type = scheduler_opts.pop("type")
+            # uppercase scheduler_type to make it case insensitive
+            sch_typ_upper = scheduler_type.upper()
+            sch_map: dict[str, type[LRScheduler]] = {
+                "CONSTANTLR": torch.optim.lr_scheduler.ConstantLR,
+                "LINEARLR": torch.optim.lr_scheduler.LinearLR,
+                "EXPONENTIALLR": torch.optim.lr_scheduler.ExponentialLR,
+                "CYCLICLR": torch.optim.lr_scheduler.CyclicLR,
+                "STEPLR": torch.optim.lr_scheduler.StepLR,
+                "MULTISTEPLR": torch.optim.lr_scheduler.MultiStepLR,
+                "LAMBDALR": torch.optim.lr_scheduler.LambdaLR,
+                "MULTIPLICATIVELR": torch.optim.lr_scheduler.MultiplicativeLR,
+                "SEQUENTIALLR": torch.optim.lr_scheduler.SequentialLR,
+                "CHAINEDSCHEDULER": torch.optim.lr_scheduler.ChainedScheduler,
+                "ONECYCLELR": torch.optim.lr_scheduler.OneCycleLR,
+                "POLYNOMIALLR": torch.optim.lr_scheduler.PolynomialLR,
+                "COSINEANNEALINGWARMRESTARTS": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
+                "COSINEANNEALING": torch.optim.lr_scheduler.CosineAnnealingLR,
+                "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
+            }
+            logger = get_root_logger()
+            if sch_typ_upper in sch_map:
+                for i, optimizer in enumerate(self.optimizers):
+                    if not self.optimizers_schedule_free[i]:
+                        self.schedulers.append(
+                            sch_map[sch_typ_upper](optimizer, **scheduler_opts)
+                        )
+                    else:
+                        logger.warning(
+                            "Scheduler is ignored when using schedule free optimizer."
+                        )
 
-        else:
-            raise NotImplementedError(
-                f"Scheduler {scheduler_type} is not implemented yet."
-            )
+            else:
+                raise NotImplementedError(
+                    f"Scheduler {scheduler_type} is not implemented yet."
+                )
 
     def get_bare_model(
         self, net: DataParallel | DistributedDataParallel | nn.Module
@@ -511,7 +513,7 @@ class BaseModel:
         logger = get_root_logger()
 
         # TODO refactor, messy hack to support the different ESRGAN versions
-        if isinstance(net, RRDBNet):
+        if isinstance(net, ESRGAN):
             load_net_wrapper = self.model_loader.load_from_file(load_path)
             net.load_state_dict(load_net_wrapper.model.state_dict(), strict=strict)
             logger.info(
