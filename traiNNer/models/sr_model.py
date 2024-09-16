@@ -1,4 +1,3 @@
-import locale
 import os
 import shutil
 from collections import OrderedDict
@@ -52,7 +51,6 @@ class SRModel(BaseModel):
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
         self.output: Tensor | None = None
-        locale.setlocale(locale.LC_ALL, "")
         logger = get_root_logger()
 
         # use amp
@@ -675,7 +673,7 @@ class SRModel(BaseModel):
             if len(self.best_metric_results) > 0:
                 log_str += (
                     f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:7.4f} @ '
-                    f'{self.best_metric_results[dataset_name][metric]["iter"]:9n} iter'
+                    f'{self.best_metric_results[dataset_name][metric]["iter"]:9,} iter'
                 )
             log_str += "\n"
 
