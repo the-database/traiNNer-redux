@@ -1,12 +1,12 @@
 import importlib.metadata
+import tomllib
 
-import toml
 from packaging.version import InvalidVersion, Version
 
 
 def get_min_versions_from_pyproject() -> dict[str, str | None]:
-    with open("pyproject.toml") as f:
-        pyproject = toml.load(f)
+    with open("pyproject.toml", "rb") as f:
+        pyproject = tomllib.load(f)
 
     try:
         dependencies = pyproject["project"]["dependencies"]
