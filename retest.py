@@ -3,12 +3,17 @@ import os
 from traiNNer.utils.types import TrainingState
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+from traiNNer.utils.check_dependencies import check_dependencies
+
+if __name__ == "__main__":
+    check_dependencies()
 import argparse
 import logging
 from os import path as osp
 from typing import Any
 
 import torch
+from rich.pretty import pretty_repr
 from rich.traceback import install
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -30,7 +35,7 @@ from traiNNer.utils import (
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.misc import set_random_seed
-from traiNNer.utils.options import copy_opt_file, dict2str, struct2dict
+from traiNNer.utils.options import copy_opt_file
 from traiNNer.utils.redux_options import ReduxOptions
 
 
@@ -165,10 +170,9 @@ def train_pipeline(root_path: str) -> None:
     set_random_seed(opt.manual_seed + opt.rank)
 
     # load resume states if necessary
-    resume_state = load_resume_state(opt)
-    make_exp_dirs(opt, resume_state is not None)
+    make_exp_dirs(opt, bool(opt.auto_resume))
     # mkdir for experiments and logger
-    if resume_state is None:
+    if not bool(opt.auto_resume):
         if opt.logger.use_tb_logger and "debug" not in opt.name and opt.rank == 0:
             mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
 
@@ -182,7 +186,7 @@ def train_pipeline(root_path: str) -> None:
         logger_name="traiNNer", log_level=logging.INFO, log_file=log_file
     )
     logger.info(get_env_info())
-    logger.info(dict2str(struct2dict(opt)))
+    logger.info(pretty_repr(opt))
 
     if opt.deterministic:
         logger.info(
@@ -220,11 +224,11 @@ def train_pipeline(root_path: str) -> None:
 
     start_epoch = 0
     current_iter = 0
-    start_iter = 0
+    start_iter = 0  # 1295000
 
     logger.info("Start testing from epoch: %d, iter: %d.", start_epoch, current_iter)
 
-    ext = "safetensors"
+    ext = opt.logger.save_checkpoint_format
 
     if opt.path.pretrain_network_g_path is not None and osp.isdir(
         opt.path.pretrain_network_g_path

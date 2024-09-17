@@ -12,6 +12,7 @@ class OptimizerOptions(StrictStruct):
     lr: float
     weight_decay: float
     betas: list[float]
+    warmup_steps: int | None = None
 
 
 class SchedulerOptions(StrictStruct):
@@ -122,12 +123,12 @@ class PathOptions(StrictStruct):
 
 
 class TrainOptions(StrictStruct):
-    scheduler: SchedulerOptions
     total_iter: int
     optim_g: OptimizerOptions
     ema_decay: float = 0
     grad_clip: bool = False
     warmup_iter: int = -1
+    scheduler: SchedulerOptions | None = None
     optim_d: OptimizerOptions | None = None
 
     pixel_opt: dict[str, Any] | None = None

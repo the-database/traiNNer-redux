@@ -1,7 +1,12 @@
+from traiNNer.utils.check_dependencies import check_dependencies
+
+if __name__ == "__main__":
+    check_dependencies()
 import logging
 from os import path as osp
 
 import torch
+from rich.pretty import pretty_repr
 from rich.traceback import install
 from torch.utils.data import DataLoader
 from traiNNer.data import build_dataloader, build_dataset
@@ -10,7 +15,6 @@ from traiNNer.data.prefetch_dataloader import PrefetchDataLoader
 from traiNNer.models import build_model
 from traiNNer.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs
 from traiNNer.utils.config import Config
-from traiNNer.utils.options import dict2str, struct2dict
 
 
 def test_pipeline(root_path: str) -> None:
@@ -32,7 +36,7 @@ def test_pipeline(root_path: str) -> None:
         logger_name="traiNNer", log_level=logging.INFO, log_file=log_file
     )
     logger.info(get_env_info())
-    logger.info(dict2str(struct2dict(opt)))
+    logger.info(pretty_repr(opt))
 
     # create test dataset and dataloader
     test_loaders: list[PrefetchDataLoader | DataLoader] = []

@@ -295,6 +295,7 @@ class SRModel(BaseModel):
         self.optimizer_g = self.get_optimizer(optim_type, optim_params, **optim_g_opts)
         self.optimizers.append(self.optimizer_g)
         self.optimizers_skipped.append(False)
+        self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
 
         # optimizer d
         if self.net_d is not None:
@@ -306,6 +307,7 @@ class SRModel(BaseModel):
             )
             self.optimizers.append(self.optimizer_d)
             self.optimizers_skipped.append(False)
+            self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
 
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data
@@ -652,11 +654,11 @@ class SRModel(BaseModel):
     ) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():
-            log_str += f"\t # {metric}: {value:.4f}"
+            log_str += f"\t # {metric}: {value:7.4f}"
             if len(self.best_metric_results) > 0:
                 log_str += (
-                    f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
-                    f'{self.best_metric_results[dataset_name][metric]["iter"]} iter'
+                    f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:7.4f} @ '
+                    f'{self.best_metric_results[dataset_name][metric]["iter"]:9,} iter'
                 )
             log_str += "\n"
 

@@ -1,8 +1,10 @@
 import os
 
-from traiNNer.utils.types import TrainingState
-
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+from traiNNer.utils.check_dependencies import check_dependencies
+
+if __name__ == "__main__":
+    check_dependencies()
 import argparse
 import datetime
 import logging
@@ -15,6 +17,7 @@ from types import FrameType
 from typing import Any
 
 import torch
+from rich.pretty import pretty_repr
 from rich.traceback import install
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -39,8 +42,9 @@ from traiNNer.utils import (
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.misc import set_random_seed
-from traiNNer.utils.options import copy_opt_file, dict2str, struct2dict
+from traiNNer.utils.options import copy_opt_file
 from traiNNer.utils.redux_options import ReduxOptions
+from traiNNer.utils.types import TrainingState
 
 
 def init_tb_loggers(opt: ReduxOptions) -> SummaryWriter | None:
@@ -240,7 +244,7 @@ def train_pipeline(root_path: str) -> None:
         logger_name="traiNNer", log_level=logging.INFO, log_file=log_file
     )
     logger.info(get_env_info())
-    logger.info(dict2str(struct2dict(opt)))
+    logger.info(pretty_repr(opt))
 
     if opt.deterministic:
         logger.info(

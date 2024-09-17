@@ -2,10 +2,10 @@
 
 import torch
 import torch.nn.functional as F  # noqa: N812
+from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import nn
 from torch.nn.init import trunc_normal_
 
-from traiNNer.archs.arch_util import DySample
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
