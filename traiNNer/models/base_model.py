@@ -219,11 +219,6 @@ class BaseModel:
             optimizer = torch.optim.RMSprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
         elif optim_type == "Rprop":
             optimizer = torch.optim.Rprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-        elif optim_type == "AdamWScheduleFree":
-            import schedulefree
-
-            optimizer = schedulefree.AdamWScheduleFree(params, lr, **kwargs)
-            optimizer.train()  # required if schedule free
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
         return optimizer
