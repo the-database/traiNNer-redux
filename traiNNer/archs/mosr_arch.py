@@ -44,5 +44,13 @@ def mosr(
 
 
 @ARCH_REGISTRY.register()
-def mosr_t(**kwargs) -> MoSR:
-    return MoSR(n_block=5, dim=48, expansion_ratio=1.5, conv_ratio=1.00, **kwargs)
+def mosr_t(scale: int = 4, upsampler: str = "pixelshuffle", **kwargs) -> MoSR:
+    return MoSR(
+        upscale=scale,
+        upsampler=upsampler_map[upsampler],
+        n_block=5,
+        dim=48,
+        expansion_ratio=1.5,
+        conv_ratio=1.00,
+        **kwargs,
+    )
