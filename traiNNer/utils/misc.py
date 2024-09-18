@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import time
 from collections.abc import Generator
 from os import path as osp
@@ -237,3 +238,7 @@ def sizeof_fmt(size: float, suffix: str = "B") -> str:
             return f"{size:3.1f} {unit}{suffix}"
         size /= 1024.0
     return f"{size:3.1f} Y{suffix}"
+
+
+def free_space_gb_str() -> str:
+    return f"{shutil.disk_usage(__file__).free / (1 << 30):,.2f} GB"

@@ -9,6 +9,7 @@ from rich.logging import RichHandler
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.utils.dist_util import get_dist_info, master_only
+from traiNNer.utils.misc import free_space_gb_str
 from traiNNer.utils.redux_options import ReduxOptions
 
 initialized_logger = {}
@@ -232,6 +233,8 @@ def get_env_info() -> str:
     import torch
     import torchvision
 
+    device_info = torch.cuda.get_device_properties(torch.cuda.current_device())
+
     # from traiNNer.version import __version__
     msg = r"""
    __             _ _   ___   __                              __
@@ -246,8 +249,15 @@ def get_env_info() -> str:
   \____/ \____/ \____/ \____/  /_____/\____/ \___//_/|_|  (_)
     """
     msg += (
+        "\nSystem Information: "
+        f"\n\tCurrent GPU: "
+        f"\n\t\tName: {device_info.name}"
+        f"\n\t\tTotal VRAM: {device_info.total_memory / (1024 ** 3):.2f} GB"
+        f"\n\t\tCompute Capability: {device_info.major}.{device_info.minor}"
+        f"\n\t\tMultiprocessors: {device_info.multi_processor_count}"
+        f"\n\tStorage:"
+        f"\n\t\tFree Space: {free_space_gb_str()}"
         "\nVersion Information: "
-        # f'\n\ttraiNNer: {__version__}'
         f"\n\tPyTorch: {torch.__version__}"
         f"\n\tTorchVision: {torchvision.__version__}"
     )
