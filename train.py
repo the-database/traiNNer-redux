@@ -1,5 +1,4 @@
 import os
-import shutil
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 from traiNNer.utils.check_dependencies import check_dependencies
@@ -42,7 +41,7 @@ from traiNNer.utils import (
     scandir,
 )
 from traiNNer.utils.config import Config
-from traiNNer.utils.misc import set_random_seed
+from traiNNer.utils.misc import free_space_gb_str, set_random_seed
 from traiNNer.utils.options import copy_opt_file
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import TrainingState
@@ -383,8 +382,8 @@ def train_pipeline(root_path: str) -> None:
             # save models and training states
             if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
                 logger.info(
-                    "Saving models and training states. Free space: %s GB",
-                    format(shutil.disk_usage(__file__).free / (1 << 30), ",.2f"),
+                    "Saving models and training states. Free space: %s",
+                    free_space_gb_str(),
                 )
                 model.save(
                     epoch,
