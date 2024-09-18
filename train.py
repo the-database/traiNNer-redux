@@ -1,4 +1,5 @@
 import os
+import shutil
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 from traiNNer.utils.check_dependencies import check_dependencies
@@ -381,7 +382,10 @@ def train_pipeline(root_path: str) -> None:
 
             # save models and training states
             if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
-                logger.info("Saving models and training states.")
+                logger.info(
+                    "Saving models and training states. Free space: %s GB",
+                    format(shutil.disk_usage(__file__).free / (1 << 30), ",.2f"),
+                )
                 model.save(
                     epoch,
                     current_iter,

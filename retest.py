@@ -224,7 +224,7 @@ def train_pipeline(root_path: str) -> None:
 
     start_epoch = 0
     current_iter = 0
-    start_iter = 0  # 1295000
+    start_iter = 0
 
     logger.info("Start testing from epoch: %d, iter: %d.", start_epoch, current_iter)
 
@@ -241,9 +241,8 @@ def train_pipeline(root_path: str) -> None:
                 full_path=False,
             )
         )
-        print(nets)
-
-        nets = sorted([int(v.split(f".{ext}")[0].split("_")[-1]) for v in nets])
+        nets = [v.split(f".{ext}")[0].split("_")[-1] for v in nets]
+        nets = sorted([int(v) for v in nets if v.isnumeric()])
 
         for net_iter in nets:
             if net_iter < start_iter:
