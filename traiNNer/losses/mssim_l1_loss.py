@@ -1,10 +1,4 @@
-# https://github.com/psyrocloud/MS-SSIM_L1_LOSS/blob/main/MS_SSIM_L1_loss.py
-"""
-Created on Thu Dec  3 00:28:15 2020
-
-@author: Yunpeng Li, Tianjin University
-"""
-
+# Modified from https://github.com/psyrocloud/MS-SSIM_L1_LOSS/blob/main/MS_SSIM_L1_loss.py
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
@@ -20,7 +14,7 @@ class MSSSIML1Loss(nn.Module):
         gaussian_sigmas: list[float] | None = None,
         data_range: float = 1.0,
         k: tuple[float, float] = (0.01, 0.03),
-        alpha: float = 0.2,
+        alpha: float = 0.1,
         cuda_dev: int = 0,
         loss_weight: float = 1.0,
     ) -> None:

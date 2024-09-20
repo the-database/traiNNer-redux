@@ -124,6 +124,7 @@ def parse_options(
         help="job launcher",
     )
     parser.add_argument("--auto_resume", action="store_true")
+    parser.add_argument("--resume", type=int, default=0)
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--local_rank", type=int, default=0)
     parser.add_argument(
@@ -169,6 +170,7 @@ def parse_options(
             exec(eval_str)
 
     opt.auto_resume = args.auto_resume
+    opt.resume = args.resume
     opt.is_train = is_train
 
     # debug setting

@@ -192,6 +192,7 @@ class ReduxOptions(StrictStruct):
     rank: int | None = None
     world_size: int | None = None
     auto_resume: bool | None = None
+    resume: int = 0
     is_train: bool | None = None
     root_path: str | None = None
 
