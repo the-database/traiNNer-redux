@@ -654,7 +654,7 @@ class SRModel(BaseModel):
     ) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():
-            log_str += f"\t # {metric}: {value:7.4f}"
+            log_str += f"\t # {metric:<5}: {value:7.4f}"
             if len(self.best_metric_results) > 0:
                 log_str += (
                     f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:7.4f} @ '
