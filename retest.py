@@ -1,7 +1,5 @@
 import os
 
-from traiNNer.utils.types import TrainingState
-
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 from traiNNer.utils.check_dependencies import check_dependencies
 
@@ -10,7 +8,6 @@ if __name__ == "__main__":
 import argparse
 import logging
 from os import path as osp
-from typing import Any
 
 import torch
 from rich.pretty import pretty_repr
@@ -23,7 +20,6 @@ from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.data.paired_video_dataset import PairedVideoDataset
 from traiNNer.models import build_model
 from traiNNer.utils import (
-    check_resume,
     get_env_info,
     get_root_logger,
     get_time_str,
@@ -108,45 +104,6 @@ def create_train_val_dataloader(
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
-def load_resume_state(opt: ReduxOptions) -> Any | None:
-    resume_state_path = None
-    if opt.auto_resume:
-        state_path = osp.join("experiments", opt.name, "training_states")
-        if osp.isdir(state_path):
-            states = list(
-                scandir(state_path, suffix="state", recursive=False, full_path=False)
-            )
-            if len(states) != 0:
-                states = [
-                    [int(x) for x in v.split(".state")[0].split("_")] for v in states
-                ]
-
-                resume_state_path = osp.join(
-                    state_path, f"{'_'.join([str(x) for x in max(states)])}.state"
-                )
-                opt.path.resume_state = resume_state_path
-    elif opt.path.resume_state:
-        resume_state_path = opt.path.resume_state
-
-    if resume_state_path is None:
-        resume_state: TrainingState | None = None
-    else:
-        device_id = torch.cuda.current_device()
-        resume_state = torch.load(
-            resume_state_path,
-            map_location=lambda storage, _: storage.cuda(device_id),  # pyright: ignore[reportAttributeAccessIssue] (https://github.com/pytorch/pytorch/issues/131765)
-            weights_only=True,
-        )
-        assert resume_state is not None
-        check_resume(
-            opt,
-            resume_state["iter"],
-            resume_state["accum_iter"],
-            resume_state["apply_gradient"],
-        )
-    return resume_state
-
-
 def train_pipeline(root_path: str) -> None:
     install()
     # torch.autograd.set_detect_anomaly(True)
@@ -170,9 +127,9 @@ def train_pipeline(root_path: str) -> None:
     set_random_seed(opt.manual_seed + opt.rank)
 
     # load resume states if necessary
-    make_exp_dirs(opt, bool(opt.auto_resume))
+    make_exp_dirs(opt, opt.resume > 0)
     # mkdir for experiments and logger
-    if not bool(opt.auto_resume):
+    if opt.resume == 0:
         if opt.logger.use_tb_logger and "debug" not in opt.name and opt.rank == 0:
             mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
 
@@ -222,11 +179,10 @@ def train_pipeline(root_path: str) -> None:
                     "Validation metrics are enabled, all validation datasets must have type PairedImageDataset."
                 )
 
-    start_epoch = 0
     current_iter = 0
-    start_iter = 0
+    start_iter = opt.resume
 
-    logger.info("Start testing from epoch: %d, iter: %d.", start_epoch, current_iter)
+    logger.info("Start testing from iter: %d.", start_iter)
 
     ext = opt.logger.save_checkpoint_format
 

@@ -348,18 +348,16 @@ class SRModel(BaseModel):
             loss_dict = OrderedDict()
             # pixel loss
             if self.cri_pix:
-                l_g_pix = self.cri_pix(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_pix
+                l_g_pix = self.cri_pix(self.output, self.gt)
+                l_g_total += l_g_pix / self.accum_iters
                 loss_dict["l_g_pix"] = l_g_pix
             if self.cri_mssim:
-                l_g_mssim = self.cri_mssim(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_mssim
+                l_g_mssim = self.cri_mssim(self.output, self.gt)
+                l_g_total += l_g_mssim / self.accum_iters
                 loss_dict["l_g_mssim"] = l_g_mssim
             if self.cri_mssim_l1:
-                l_g_mssim_l1 = (
-                    self.cri_mssim_l1(self.output, self.gt) / self.accum_iters
-                )
-                l_g_total += l_g_mssim_l1
+                l_g_mssim_l1 = self.cri_mssim_l1(self.output, self.gt)
+                l_g_total += l_g_mssim_l1 / self.accum_iters
                 loss_dict["l_g_mssim_l1"] = l_g_mssim_l1
             if self.cri_ldl:
                 assert self.net_g_ema is not None
@@ -367,70 +365,61 @@ class SRModel(BaseModel):
                 pixel_weight = get_refined_artifact_map(
                     self.gt, self.output, self.net_g_ema(self.lq), 7
                 )
-                l_g_ldl = (
-                    self.cri_ldl(
-                        torch.mul(pixel_weight, self.output),
-                        torch.mul(pixel_weight, self.gt),
-                    )
-                    / self.accum_iters
+                l_g_ldl = self.cri_ldl(
+                    torch.mul(pixel_weight, self.output),
+                    torch.mul(pixel_weight, self.gt),
                 )
-                l_g_total += l_g_ldl
+                l_g_total += l_g_ldl / self.accum_iters
                 loss_dict["l_g_ldl"] = l_g_ldl
             # perceptual loss
             if self.cri_perceptual:
                 l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
                 if l_g_percep is not None:
-                    l_g_percep /= self.accum_iters
-                    l_g_total += l_g_percep
+                    l_g_total += l_g_percep / self.accum_iters
                     loss_dict["l_g_percep"] = l_g_percep
                 if l_g_style is not None:
-                    l_g_total /= self.accum_iters
-                    l_g_total += l_g_style
+                    l_g_total += l_g_style / self.accum_iters
                     loss_dict["l_g_style"] = l_g_style
             # dists loss
             if self.cri_dists:
-                l_g_dists = self.cri_dists(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_dists
+                l_g_dists = self.cri_dists(self.output, self.gt)
+                l_g_total += l_g_dists / self.accum_iters
                 loss_dict["l_g_dists"] = l_g_dists
             # contextual loss
             if self.cri_contextual:
-                l_g_contextual = (
-                    self.cri_contextual(self.output, self.gt) / self.accum_iters
-                )
+                l_g_contextual = self.cri_contextual(self.output, self.gt)
                 l_g_total += l_g_contextual
-                loss_dict["l_g_contextual"] = l_g_contextual
+                loss_dict["l_g_contextual"] = l_g_contextual / self.accum_iters
             # color loss
             if self.cri_color:
-                l_g_color = self.cri_color(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_color
+                l_g_color = self.cri_color(self.output, self.gt)
+                l_g_total += l_g_color / self.accum_iters
                 loss_dict["l_g_color"] = l_g_color
             # luma loss
             if self.cri_luma:
-                l_g_luma = self.cri_luma(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_luma
+                l_g_luma = self.cri_luma(self.output, self.gt)
+                l_g_total += l_g_luma / self.accum_iters
                 loss_dict["l_g_luma"] = l_g_luma
             # hsluv loss
             if self.cri_hsluv:
-                l_g_hsluv = self.cri_hsluv(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_hsluv
+                l_g_hsluv = self.cri_hsluv(self.output, self.gt)
+                l_g_total += l_g_hsluv / self.accum_iters
                 loss_dict["l_g_hsluv"] = l_g_hsluv
             # avg loss
             if self.cri_avg:
-                l_g_avg = self.cri_avg(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_avg
+                l_g_avg = self.cri_avg(self.output, self.gt)
+                l_g_total += l_g_avg / self.accum_iters
                 loss_dict["l_g_avg"] = l_g_avg
             # bicubic loss
             if self.cri_bicubic:
-                l_g_bicubic = self.cri_bicubic(self.output, self.gt) / self.accum_iters
-                l_g_total += l_g_bicubic
+                l_g_bicubic = self.cri_bicubic(self.output, self.gt)
+                l_g_total += l_g_bicubic / self.accum_iters
                 loss_dict["l_g_bicubic"] = l_g_bicubic
             # gan loss
             if self.cri_gan and self.net_d:
                 fake_g_pred = self.net_d(self.output)
-                l_g_gan = (
-                    self.cri_gan(fake_g_pred, True, is_disc=False) / self.accum_iters
-                )
-                l_g_total += l_g_gan
+                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
+                l_g_total += l_g_gan / self.accum_iters
                 loss_dict["l_g_gan"] = l_g_gan
 
             # add total generator loss for tensorboard tracking
@@ -471,8 +460,8 @@ class SRModel(BaseModel):
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
-            self.scaler_d.scale(l_d_real).backward()
-            self.scaler_d.scale(l_d_fake).backward()
+            self.scaler_d.scale(l_d_real / self.accum_iters).backward()
+            self.scaler_d.scale(l_d_fake / self.accum_iters).backward()
             if apply_gradient:
                 if self.grad_clip:
                     self.scaler_d.unscale_(self.optimizer_d)
@@ -654,7 +643,7 @@ class SRModel(BaseModel):
     ) -> None:
         log_str = f"Validation {dataset_name}\n"
         for metric, value in self.metric_results.items():
-            log_str += f"\t # {metric}: {value:7.4f}"
+            log_str += f"\t # {metric:<5}: {value:7.4f}"
             if len(self.best_metric_results) > 0:
                 log_str += (
                     f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:7.4f} @ '
