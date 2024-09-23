@@ -165,7 +165,7 @@ train:
     style_weight: 0
     range_norm: false
     criterion: charbonnier
-    perceptual_weight: 0
+    perceptual_weight: 05
   # HSLuv loss (hue, saturation, lightness).
   hsluv_opt:
     type: HSLuvLoss
@@ -185,7 +185,7 @@ train:
   dists_opt:
     type: DISTSLoss  # DISTSLoss, ADISTSLoss
     use_input_norm: true
-    loss_weight: 0  #0.25
+    loss_weight: 0  #0.3
 
   # Mix of Augmentations (MoA)
   use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
