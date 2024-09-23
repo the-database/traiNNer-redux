@@ -8,7 +8,6 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class MSSSIML1Loss(nn.Module):
-    # Have to use cuda, otherwise the speed is too slow.
     def __init__(
         self,
         gaussian_sigmas: list[float] | None = None,
@@ -33,7 +32,9 @@ class MSSSIML1Loss(nn.Module):
             g_masks[3 * idx + 0, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
             g_masks[3 * idx + 1, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
             g_masks[3 * idx + 2, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
-        self.g_masks = g_masks.cuda(cuda_dev)
+        self.g_masks = g_masks.to(
+            torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        )
         self.loss_weight = loss_weight
 
     def _fspecial_gauss_1d(self, size: int, sigma: float) -> Tensor:

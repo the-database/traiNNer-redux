@@ -358,9 +358,9 @@ class SRModel(BaseModel):
                 l_g_total += l_g_mssim / self.accum_iters
                 loss_dict["l_g_mssim"] = l_g_mssim
             if self.cri_ms_ssim_l1:
-                l_g_mssim_l1 = self.cri_ms_ssim_l1(self.output, self.gt)
-                l_g_total += l_g_mssim_l1 / self.accum_iters
-                loss_dict["l_g_mssim_l1"] = l_g_mssim_l1
+                l_g_ms_ssim_l1 = self.cri_ms_ssim_l1(self.output, self.gt)
+                l_g_total += l_g_ms_ssim_l1 / self.accum_iters
+                loss_dict["l_g_ms_ssim_l1"] = l_g_ms_ssim_l1
             if self.cri_ldl:
                 assert self.net_g_ema is not None
                 # TODO support LDL without ema
