@@ -160,6 +160,7 @@ train:
   ms_ssim_l1_opt:
     type: MSSSIML1Loss
     alpha: 0.1
+    loss_weight: 0.85
   # Perceptual loss
   perceptual_opt:
     type: PerceptualLoss
