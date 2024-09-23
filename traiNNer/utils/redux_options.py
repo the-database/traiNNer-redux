@@ -133,7 +133,7 @@ class TrainOptions(StrictStruct):
 
     pixel_opt: dict[str, Any] | None = None
     mssim_opt: dict[str, Any] | None = None
-    mssim_l1_opt: dict[str, Any] | None = None
+    ms_ssim_l1_opt: dict[str, Any] | None = None
     perceptual_opt: dict[str, Any] | None = None
     contextual_opt: dict[str, Any] | None = None
     dists_opt: dict[str, Any] | None = None
