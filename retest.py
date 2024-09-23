@@ -179,11 +179,10 @@ def train_pipeline(root_path: str) -> None:
                     "Validation metrics are enabled, all validation datasets must have type PairedImageDataset."
                 )
 
-    start_epoch = 0
     current_iter = 0
     start_iter = opt.resume
 
-    logger.info("Start testing from epoch: %d, iter: %d.", start_epoch, current_iter)
+    logger.info("Start testing from iter: %d.", start_iter)
 
     ext = opt.logger.save_checkpoint_format
 
