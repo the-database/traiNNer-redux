@@ -1,7 +1,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_SRFormer_OTF_bicubic_mssim
+name: 4x_HiT_SRF_OTF_bicubic_ms_ssim_l1
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
@@ -100,7 +100,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: SRFormer  # SRFormer, SRFormer_light
+  type: HiT_SRF  # HiT_SRF, HiT_SNG, HiT_SIR
 
 # Discriminator model settings
 network_d:
@@ -147,9 +147,9 @@ train:
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
   # MSSIM loss
-  mssim_opt:
-    type: MSSIMLoss
-    loss_weight: 1.0
+  ms_ssim_l1_opt:
+    type: MSSSIML1Loss
+    alpha: 0.1
   # Perceptual loss
   perceptual_opt:
     type: PerceptualLoss

@@ -99,9 +99,9 @@ train:
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
   # MSSIM loss
-  mssim_opt:
-    type: MSSIMLoss
-    loss_weight: 1.0
+  ms_ssim_l1_opt:
+    type: MSSSIML1Loss
+    alpha: 0.1
   # Perceptual loss
   perceptual_opt:
     type: PerceptualLoss

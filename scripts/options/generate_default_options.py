@@ -97,8 +97,8 @@ def final_template(
         template = re.sub("loss_weight: [0-9.]+", "loss_weight: 0", template)
         template = template.replace("perceptual_weight: 0.03", "perceptual_weight: 0")
         template = template.replace(
-            "type: MSSIMLoss\n    loss_weight: 0",
-            "type: MSSIMLoss\n    loss_weight: 1.0",
+            "type: MSSSIML1Loss\n    loss_weight: 0",
+            "type: MSSSIML1Loss\n    loss_weight: 1.0",
         )
 
     return template
@@ -251,7 +251,7 @@ for arch in archs:
             )
 
         with open(
-            osp.join(train_folder_path, f"{folder_name}_OTF_bicubic_mssim.yml"),
+            osp.join(train_folder_path, f"{folder_name}_OTF_bicubic_ms_ssim_l1.yml"),
             mode="w",
         ) as fw:
             fw.write(
@@ -260,7 +260,7 @@ for arch in archs:
                     arch,
                     template_otfbicubic1,
                     template_otfbicubic2,
-                    "OTF_bicubic_mssim",
+                    "OTF_bicubic_ms_ssim_l1",
                     True,
                 )
             )
