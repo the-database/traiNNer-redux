@@ -174,7 +174,11 @@ class BaseModel:
             net (nn.Module)
         """
         assert isinstance(self.opt.num_gpu, int)
-        net = net.to(self.device)
+        net = net.to(
+            self.device,
+            memory_format=torch.channels_last,
+            non_blocking=True,
+        )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters
             net = DistributedDataParallel(
@@ -378,7 +382,9 @@ class BaseModel:
                 key = key[7:]
             if key == "n_averaged":  # ema key, breaks compatibility
                 continue
-            new_state_dict[key] = param.cpu()
+            new_state_dict[key] = param.to(
+                "cpu", memory_format=torch.contiguous_format, non_blocking=True
+            )
 
         # avoid occasional writing errors
         retry = 3

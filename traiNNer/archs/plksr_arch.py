@@ -2,17 +2,17 @@ from typing import Literal
 
 from spandrel.architectures.PLKSR import PLKSR
 
-from traiNNer.utils.registry import ARCH_REGISTRY
+from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
-@ARCH_REGISTRY.register()
+@SPANDREL_REGISTRY.register()
 def plksr(
     scale: int = 4, ccm_type: Literal["CCM", "ICCM", "DCCM"] = "DCCM", **kwargs
 ) -> PLKSR:
     return PLKSR(upscaling_factor=scale, ccm_type=ccm_type, **kwargs)
 
 
-@ARCH_REGISTRY.register()
+@SPANDREL_REGISTRY.register()
 def plksr_tiny(scale: int = 4) -> PLKSR:
     return PLKSR(
         upscaling_factor=scale,

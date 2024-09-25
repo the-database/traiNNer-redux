@@ -173,10 +173,15 @@ class SRModel(BaseModel):
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
             )
 
-            # load pretrained model
             init_net_g_ema = build_network(
                 {**self.opt.network_g, "scale": self.opt.scale}
-            ).to(self.device)
+            ).to(
+                self.device,
+                memory_format=torch.channels_last,
+                non_blocking=True,
+            )  # pyright: ignore[reportCallIssue]
+
+            # load pretrained model
             if self.opt.path.pretrain_network_g_ema is not None:
                 self.load_network(
                     init_net_g_ema,
@@ -201,21 +206,35 @@ class SRModel(BaseModel):
         # define losses
         if train_opt.pixel_opt:
             if train_opt.pixel_opt.get("loss_weight", 0) > 0:
-                self.cri_pix = build_loss(train_opt.pixel_opt).to(self.device)
+                self.cri_pix = build_loss(train_opt.pixel_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.mssim_opt:
             if train_opt.mssim_opt.get("loss_weight", 0) > 0:
-                self.cri_mssim = build_loss(train_opt.mssim_opt).to(self.device)
+                self.cri_mssim = build_loss(train_opt.mssim_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.ms_ssim_l1_opt:
             if train_opt.ms_ssim_l1_opt.get("loss_weight", 0) > 0:
                 self.cri_ms_ssim_l1 = build_loss(train_opt.ms_ssim_l1_opt).to(
-                    self.device
-                )
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.ldl_opt:
             if train_opt.ldl_opt.get("loss_weight", 0) > 0:
-                self.cri_ldl = build_loss(train_opt.ldl_opt).to(self.device)
+                self.cri_ldl = build_loss(train_opt.ldl_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.perceptual_opt:
             if (
@@ -223,42 +242,74 @@ class SRModel(BaseModel):
                 or train_opt.perceptual_opt.get("style_weight", 0) > 0
             ):
                 self.cri_perceptual = build_loss(train_opt.perceptual_opt).to(
-                    self.device
-                )
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.dists_opt:
             if train_opt.dists_opt.get("loss_weight", 0) > 0:
-                self.cri_dists = build_loss(train_opt.dists_opt).to(self.device)
+                self.cri_dists = build_loss(train_opt.dists_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.contextual_opt:
             if train_opt.contextual_opt.get("loss_weight", 0) > 0:
                 self.cri_contextual = build_loss(train_opt.contextual_opt).to(
-                    self.device
-                )
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.color_opt:
             if train_opt.color_opt.get("loss_weight", 0) > 0:
-                self.cri_color = build_loss(train_opt.color_opt).to(self.device)
+                self.cri_color = build_loss(train_opt.color_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.luma_opt:
             if train_opt.luma_opt.get("loss_weight", 0) > 0:
-                self.cri_luma = build_loss(train_opt.luma_opt).to(self.device)
+                self.cri_luma = build_loss(train_opt.luma_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.hsluv_opt:
             if train_opt.hsluv_opt.get("loss_weight", 0) > 0:
-                self.cri_hsluv = build_loss(train_opt.hsluv_opt).to(self.device)
+                self.cri_hsluv = build_loss(train_opt.hsluv_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.avg_opt:
             if train_opt.avg_opt.get("loss_weight", 0) > 0:
-                self.cri_avg = build_loss(train_opt.avg_opt).to(self.device)
+                self.cri_avg = build_loss(train_opt.avg_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.bicubic_opt:
             if train_opt.bicubic_opt.get("loss_weight", 0) > 0:
-                self.cri_bicubic = build_loss(train_opt.bicubic_opt).to(self.device)
+                self.cri_bicubic = build_loss(train_opt.bicubic_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.gan_opt:
             if train_opt.gan_opt.get("loss_weight", 0) > 0:
-                self.cri_gan = build_loss(train_opt.gan_opt).to(self.device)
+                self.cri_gan = build_loss(train_opt.gan_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
         else:
             self.cri_gan = None
 
@@ -313,9 +364,13 @@ class SRModel(BaseModel):
 
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data
-        self.lq = data["lq"].to(self.device)
+        self.lq = data["lq"].to(
+            self.device, memory_format=torch.channels_last, non_blocking=True
+        )
         if "gt" in data:
-            self.gt = data["gt"].to(self.device)
+            self.gt = data["gt"].to(
+                self.device, memory_format=torch.channels_last, non_blocking=True
+            )
 
         # moa
         if self.is_train and self.batch_augment and self.gt is not None:
