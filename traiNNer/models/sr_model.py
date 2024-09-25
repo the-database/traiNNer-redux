@@ -33,6 +33,10 @@ class SRModel(BaseModel):
     def __init__(self, opt: ReduxOptions) -> None:
         super().__init__(opt)
 
+        # use amp
+        self.use_amp = self.opt.use_amp
+        self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
+
         # define network
         self.net_g = build_network({**opt.network_g, "scale": opt.scale})
         self.net_g = self.model_to_device(self.net_g)
@@ -51,10 +55,6 @@ class SRModel(BaseModel):
         self.gt: Tensor | None = None
         self.output: Tensor | None = None
         logger = get_root_logger()
-
-        # use amp
-        self.use_amp = self.opt.use_amp
-        self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
 
         if self.use_amp:
             if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
@@ -177,7 +177,9 @@ class SRModel(BaseModel):
                 {**self.opt.network_g, "scale": self.opt.scale}
             ).to(
                 self.device,
-                memory_format=torch.channels_last,
+                memory_format=torch.channels_last
+                if self.use_amp
+                else torch.contiguous_format,
                 non_blocking=True,
             )  # pyright: ignore[reportCallIssue]
 
@@ -365,11 +367,15 @@ class SRModel(BaseModel):
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data
         self.lq = data["lq"].to(
-            self.device, memory_format=torch.channels_last, non_blocking=True
+            self.device,
+            # memory_format=torch.channels_last,
+            non_blocking=True,
         )
         if "gt" in data:
             self.gt = data["gt"].to(
-                self.device, memory_format=torch.channels_last, non_blocking=True
+                self.device,
+                # memory_format=torch.channels_last,
+                non_blocking=True,
             )
 
         # moa

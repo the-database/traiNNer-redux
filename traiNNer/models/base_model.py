@@ -176,7 +176,9 @@ class BaseModel:
         assert isinstance(self.opt.num_gpu, int)
         net = net.to(
             self.device,
-            memory_format=torch.channels_last,
+            memory_format=torch.channels_last
+            if self.use_amp
+            else torch.contiguous_format,
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
         if self.opt.dist:
