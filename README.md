@@ -6,17 +6,14 @@ A modern community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and
 
 ### Initial Setup
 1. Install [Python](https://www.python.org/) if it's not already installed. A minimum of version Python 3.11 is required.
-2. Install the [latest stable version of PyTorch](https://pytorch.org/get-started/locally/).
-3. Clone the repository:
+2. Clone the repository:
    - To use the git command line, navigate to where you want to install traiNNer-redux, and enter this command (install [git](https://git-scm.com/) first if it's not already installed):
       ```
       git clone https://github.com/the-database/traiNNer-redux.git
       ```
    - To use a GUI for git, follow the instructions for that git client. For [GitHub Desktop](https://desktop.github.com/), for example, click on the green Code button near the top of this page, click Open with GitHub Desktop and follow the instructions.
-4. Open a command window in the `traiNNer-redux` directory where you cloned the repository. Run this command to install the remaining Python dependencies:
-   ```
-   pip install .
-   ```
+3. For Windows users, double click `install.bat`, and for Linux users, from the terminal in the traiNNer-redux folder run `chmod +x install.sh && ./install.sh` to install all Python dependencies to a new virtual environment.
+
 ### Training a Model
 Refer to the [wiki](https://github.com/the-database/traiNNer-redux/wiki) for a [full training guide](https://github.com/the-database/traiNNer-redux/wiki/%F0%9F%93%88-Training%E2%80%90a%E2%80%90Model%E2%80%90in%E2%80%90traiNNer%E2%80%90redux) and [benchmarks](https://github.com/the-database/traiNNer-redux/wiki/PyTorch-Inference-Benchmarks-by-Architecture).
 
@@ -24,6 +21,7 @@ Refer to the [wiki](https://github.com/the-database/traiNNer-redux/wiki) for a [
 The repository comes with several configs that are ready to use out of the box, as well as a tiny dataset for testing purposes only. To confirm that your PC can run the training software successfully, run the following command from the `traiNNer-redux` folder:
 
 ```
+venv\Scripts\activate
 python train.py --auto_resume -opt ./options/train/SPAN/SPAN.yml
 ```
 
@@ -50,11 +48,13 @@ The last line shows the progress of training after 100 iterations. If you get th
 
 Run the following command to start training. Change `./options/train/arch/config.yml` to point to the config file you set up in the previous step.
 ```
+venv\Scripts\activate
 python train.py --auto_resume -opt ./options/train/arch/config.yml
 ```
 
 For example, to train with the SPAN config:
 ```
+venv\Scripts\activate
 python train.py --auto_resume -opt ./options/train/SPAN/SPAN.yml
 ```
 
@@ -71,6 +71,7 @@ The test script can also be used to test trained models, which is required to te
 
 Then run this command to run the model on the images as specified in the config file:
 ```
+venv\Scripts\activate
 python test.py -opt ./options/test/SPANPlus/SPANPlus.yml
 ```
 
