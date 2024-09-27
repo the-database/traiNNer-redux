@@ -1,13 +1,13 @@
 ####################
 # General Settings
 ####################
-name: 4x_ESRGAN_seed1024_lossandmodelchannelslast
+name: 4x_ESRGAN
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
 fast_matmul: false  # Trade precision for performance.
 num_gpu: auto
-manual_seed: 1024  # Deterministic mode, slows down training.
+# manual_seed: 1024  # Deterministic mode, slows down training.
 
 
 #################################
@@ -19,9 +19,9 @@ datasets:
     name: Train Dataset
     type: PairedImageDataset
     # Path to the HR (high res) images in your training dataset.
-    dataroot_gt: C:\traiNNer-redux\datasets\train\DF2K\HR
+    dataroot_gt: datasets/train/dataset1/hr
     # Path to the LR (low res) images in your training dataset.
-    dataroot_lq: C:\traiNNer-redux\datasets\train\DF2K\LR_bicubic\X4
+    dataroot_lq: datasets/train/dataset1/lr
     # meta_info: data/meta_info/dataset1.txt
     io_backend:
       type: disk
@@ -64,7 +64,7 @@ path:
 #####################
 train:
   ema_decay: 0.999
-  grad_clip: true  # Gradient clipping allows more stable training when using higher learning rates.
+  grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:
     type: AdamW
@@ -77,7 +77,7 @@ train:
     milestones: [100000, 200000, 300000, 400000]
     gamma: 0.5
 
-  total_iter: 10  # Total number of iterations.
+  total_iter: 500000  # Total number of iterations.
   warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
@@ -113,9 +113,9 @@ val:
 # Logging
 ##########
 logger:
-  print_freq: 10
-  save_checkpoint_freq: 10
-  save_checkpoint_format: pth
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  save_checkpoint_format: safetensors
   use_tb_logger: true
   wandb:
     project: ~

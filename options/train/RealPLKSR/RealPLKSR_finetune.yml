@@ -27,7 +27,7 @@ datasets:
       type: disk
 
 
-    gt_size: 192  # paper: 384
+    gt_size: 192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
 
@@ -75,7 +75,7 @@ path:
 #####################
 train:
   ema_decay: 0.999
-  grad_clip: true  # Gradient clipping allows more stable training when using higher learning rates.
+  grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:
     type: AdamW

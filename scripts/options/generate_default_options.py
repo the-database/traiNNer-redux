@@ -117,7 +117,9 @@ archs: list[ArchInfo] = [
     {
         "names": ["PLKSR", "PLKSR_Tiny"],
         "scales": ALL_SCALES,
-        "overrides": {"gt_size": "192  # paper: 384"},
+        "overrides": {
+            "gt_size": "192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)"
+        },
     },
     {
         "names": ["RealPLKSR"],
@@ -125,7 +127,9 @@ archs: list[ArchInfo] = [
         "extras": {
             "upsampler": "dysample  # dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle"
         },
-        "overrides": {"gt_size": "192  # paper: 384"},
+        "overrides": {
+            "gt_size": "192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)"
+        },
     },
     {
         "names": ["RealCUGAN"],
