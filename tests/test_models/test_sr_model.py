@@ -16,13 +16,15 @@ from traiNNer.utils.types import DataFeed
 
 
 def test_srmodel(monkeypatch: MonkeyPatch) -> None:
-    args = ["", "-opt", "./options/train/ESRGAN/ESRGAN.yml"]
+    args = ["", "-opt", "./options/train/ESRGAN/ESRGAN_finetune.yml"]
     monkeypatch.setattr(sys, "argv", args)
 
     root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir, osp.pardir))
     opt, _ = Config.load_config_from_file(root_path, is_train=True)
     opt.num_gpu = 0
     opt.use_amp = False
+    opt.path.pretrain_network_g = None
+    opt.path.pretrain_network_g_ema = None
 
     # build model
     model = SRModel(opt)
