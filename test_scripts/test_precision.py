@@ -37,6 +37,18 @@ FILTERED_REGISTRIES_PARAMS = [
 ]
 
 
+def format_extra_params(extra_arch_params: dict[str, Any]) -> str:
+    out = ""
+
+    for k, v in extra_arch_params.items():
+        if isinstance(v, str):
+            out += f"{v} "
+        else:
+            out += f"{k}={v} "
+
+    return out.strip()
+
+
 def compare_precision(
     net: nn.Module, input_tensor: Tensor, criterion: nn.Module
 ) -> tuple[float, float]:
@@ -65,12 +77,15 @@ def compare_precision(
 
 
 if __name__ == "__main__":
+    scale = 4
     for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
-        try:
-            # if name != "dat_2":
-            #     continue
+        label = f"{name} {format_extra_params(extra_arch_params)} {scale}x"
 
-            net: nn.Module = arch(scale=4, **extra_arch_params).eval().to("cuda")
+        try:
+            if "plksr" not in name:
+                continue
+
+            net: nn.Module = arch(scale=scale, **extra_arch_params).eval().to("cuda")
             # net.load_state_dict(
             #     torch.load(
             #         r"DAT_2_x4.pth",
@@ -78,7 +93,7 @@ if __name__ == "__main__":
             #     )["params"]
             # )
 
-            input_tensor = torch.randn((1, 3, 64, 64), device="cuda")
+            input_tensor = torch.randn((1, 3, 192, 192), device="cuda")
             criterion = L1Loss()
 
             fp16_loss, bf16_loss = compare_precision(net, input_tensor, criterion)
@@ -86,11 +101,11 @@ if __name__ == "__main__":
 
             if fp16_loss < bf16_loss:
                 print(
-                    f"{name:>20s}: FP16: {fp16_loss:.6f}; BF16: {bf16_loss:.6f}; diff = {diff}"
+                    f"{label:>30s}: FP16: {fp16_loss:.6f}; BF16: {bf16_loss:.6f}; diff = {diff}"
                 )
             else:
                 print(
-                    f"{name:>20s}: BF16: {bf16_loss:.6f}; FP16: {fp16_loss:.6f}; diff = {diff}"
+                    f"{label:>30s}: BF16: {bf16_loss:.6f}; FP16: {fp16_loss:.6f}; diff = {diff}"
                 )
         except Exception as e:
-            print(f"skip {name}", e)
+            print(f"skip {label}", e)

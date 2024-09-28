@@ -123,11 +123,27 @@ class RealESRGANModel(SRModel):
                 and "sinc_kernel" in data
             )
             # training data synthesis
-            self.gt = data["gt"].to(self.device)
+            self.gt = data["gt"].to(
+                self.device,
+                memory_format=torch.channels_last,
+                non_blocking=True,
+            )
 
-            self.kernel1 = data["kernel1"].to(self.device)
-            self.kernel2 = data["kernel2"].to(self.device)
-            self.sinc_kernel = data["sinc_kernel"].to(self.device)
+            self.kernel1 = data["kernel1"].to(
+                self.device,
+                memory_format=torch.channels_last,
+                non_blocking=True,
+            )
+            self.kernel2 = data["kernel2"].to(
+                self.device,
+                memory_format=torch.channels_last,
+                non_blocking=True,
+            )
+            self.sinc_kernel = data["sinc_kernel"].to(
+                self.device,
+                memory_format=torch.channels_last,
+                non_blocking=True,
+            )
 
             ori_h, ori_w = self.gt.size()[2:4]
 
@@ -135,7 +151,11 @@ class RealESRGANModel(SRModel):
             if self.opt.lq_usm:
                 usm_sharpener = USMSharp(
                     RNG.get_rng().integers(*self.opt.lq_usm_radius_range, endpoint=True)
-                ).to(self.device)
+                ).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
                 out = usm_sharpener(self.gt)
             else:
                 out = self.gt
@@ -323,6 +343,14 @@ class RealESRGANModel(SRModel):
         else:
             # for paired training or validation
             assert "lq" in data
-            self.lq = data["lq"].to(self.device)
+            self.lq = data["lq"].to(
+                self.device,
+                memory_format=torch.channels_last,
+                non_blocking=True,
+            )
             if "gt" in data:
-                self.gt = data["gt"].to(self.device)
+                self.gt = data["gt"].to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )

@@ -205,7 +205,6 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
 
 def train_pipeline(root_path: str) -> None:
     install()
-    # torch.autograd.set_detect_anomaly(True)
     # parse options, set distributed setting, set random seed
     opt, args = Config.load_config_from_file(root_path, is_train=True)
     opt.root_path = root_path
@@ -216,6 +215,9 @@ def train_pipeline(root_path: str) -> None:
     assert opt.rank is not None
     assert opt.path.experiments_root is not None
     assert opt.path.log is not None
+
+    if opt.detect_anomaly:
+        torch.autograd.set_detect_anomaly(True)
 
     if opt.deterministic:
         torch.backends.cudnn.benchmark = False
@@ -250,6 +252,11 @@ def train_pipeline(root_path: str) -> None:
         logger.info(
             "Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.",
             opt.manual_seed,
+        )
+
+    if torch.is_anomaly_enabled():
+        logger.warning(
+            "Anomaly checking is enabled. This slows down training and should be used for testing only."
         )
 
     # initialize wandb and tb loggers

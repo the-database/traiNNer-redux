@@ -1,0 +1,29 @@
+####################
+# General Settings
+####################
+name: %scale%_%archname%
+scale: %scale%
+
+#####################
+# Network Settings
+#####################
+# Generator model settings
+network_g:
+  type: %archname%
+
+############################
+# Pretrain and Resume Paths
+############################
+path:
+  # Path of the model to convert to ONNX.
+  pretrain_network_g: experiments/%scale%_%archname%/models/net_g_ema_1000.safetensors
+
+#########################
+# ONNX conversion options
+#########################
+onnx:
+  dynamo: false  # Whether to use the new beta ONNX exporter. Currently not supported on most architectures.
+  opset: auto  # ONNX opset version, auto uses the latest supported opset which is currently 18 with dynamo and 17 otherwise.
+  use_static_shapes: false  # Whether to convert with static shapes or dynamic shapes. Dynamic shapes are more convenient for supporting a range of input resolutions, but not all architectures support dynamic shapes.
+  shape: 3x256x256  # The static shape to use in CxHxW format, only used if use_static_shapes is true.
+

@@ -10,11 +10,11 @@ class ArchInfo(TypedDict):
     names: list[str]
     scales: list[int]
     extras: NotRequired[dict[str, str]]
-    gt_override: NotRequired[int]
     folder_name_override: NotRequired[str]
     video_override: NotRequired[bool]
     pth_override: NotRequired[bool]
     disable_grad_clip: NotRequired[bool]
+    overrides: NotRequired[dict[str, str]]
 
 
 ALL_SCALES = [1, 2, 3, 4, 8]
@@ -59,8 +59,9 @@ def final_template(
     template = template.replace("%archname%", f"{arch['names'][0]}")
     template = template.replace("%scale%", f"{default_scale}x")
 
-    if "gt_override" in arch:
-        template = re.sub(r"gt_size: \d+", f"gt_size: {arch['gt_override']}", template)
+    if "overrides" in arch:
+        for k, v in arch["overrides"].items():
+            template = re.sub(rf"{k}: .+", rf"{k}: {v}", template)
 
     if "pth_override" in arch:
         template = template.replace(
@@ -113,14 +114,22 @@ archs: list[ArchInfo] = [
     {"names": ["DAT_2"], "scales": ALL_SCALES},
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": ALL_SCALES},
-    {"names": ["PLKSR", "PLKSR_Tiny"], "scales": ALL_SCALES, "gt_override": 192},
+    {
+        "names": ["PLKSR", "PLKSR_Tiny"],
+        "scales": ALL_SCALES,
+        "overrides": {
+            "gt_size": "192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)"
+        },
+    },
     {
         "names": ["RealPLKSR"],
         "scales": ALL_SCALES,
         "extras": {
             "upsampler": "dysample  # dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle"
         },
-        "gt_override": 192,
+        "overrides": {
+            "gt_size": "192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)"
+        },
     },
     {
         "names": ["RealCUGAN"],
@@ -199,8 +208,12 @@ for arch in archs:
     os.makedirs(train_folder_path, exist_ok=True)
     os.makedirs(test_folder_path, exist_ok=True)
 
-    template_path_paired = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_paired.yml")
+    template_path_paired_fromscratch = osp.normpath(
+        osp.join(__file__, osp.pardir, "./train_default_options_paired_fromscratch.yml")
+    )
+
+    template_path_paired_finetune = osp.normpath(
+        osp.join(__file__, osp.pardir, "./train_default_options_paired_finetune.yml")
     )
 
     template_path_otf1 = osp.normpath(
@@ -224,39 +237,68 @@ for arch in archs:
     )
 
     with (
-        open(template_path_paired) as fp,
+        open(template_path_paired_fromscratch) as fps,
+        open(template_path_paired_finetune) as fpf,
         open(template_path_otf1) as fo1,
         open(template_path_otf2) as fo2,
         open(template_path_otfbicubic1) as fob1,
         open(template_path_otfbicubic2) as fob2,
         open(template_path_single) as fts,
     ):
-        template_paired = fp.read()
+        template_paired_fromscratch = fps.read()
+        template_paired_finetune = fpf.read()
         template_otf1 = fo1.read()
         template_otf2 = fo2.read()
         template_otfbicubic1 = fob1.read()
         template_otfbicubic2 = fob2.read()
         template_test_single = fts.read()
 
-        with open(osp.join(train_folder_path, f"{folder_name}.yml"), mode="w") as fw:
-            fw.write(final_template(template_paired, arch))
+        with open(
+            osp.join(train_folder_path, f"{folder_name}_fromscratch.yml"), mode="w"
+        ) as fw:
+            fw.write(final_template(template_paired_fromscratch, arch))
 
         with open(
-            osp.join(train_folder_path, f"{folder_name}_OTF.yml"), mode="w"
+            osp.join(train_folder_path, f"{folder_name}_finetune.yml"), mode="w"
+        ) as fw:
+            fw.write(final_template(template_paired_finetune, arch))
+
+        with open(
+            osp.join(train_folder_path, f"{folder_name}_OTF_fromscratch.yml"), mode="w"
         ) as fw:
             fw.write(
                 final_template(
-                    template_paired, arch, template_otf1, template_otf2, "OTF"
+                    template_paired_fromscratch,
+                    arch,
+                    template_otf1,
+                    template_otf2,
+                    "OTF_fromscratch",
                 )
             )
 
         with open(
-            osp.join(train_folder_path, f"{folder_name}_OTF_bicubic_ms_ssim_l1.yml"),
+            osp.join(train_folder_path, f"{folder_name}_OTF_finetune.yml"), mode="w"
+        ) as fw:
+            fw.write(
+                final_template(
+                    template_paired_finetune,
+                    arch,
+                    template_otf1,
+                    template_otf2,
+                    "OTF_finetune",
+                )
+            )
+
+        with open(
+            osp.join(
+                train_folder_path,
+                f"{folder_name}_OTF_bicubic_ms_ssim_l1_fromscratch.yml",
+            ),
             mode="w",
         ) as fw:
             fw.write(
                 final_template(
-                    template_paired,
+                    template_paired_fromscratch,
                     arch,
                     template_otfbicubic1,
                     template_otfbicubic2,
