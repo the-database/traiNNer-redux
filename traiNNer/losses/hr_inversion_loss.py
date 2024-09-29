@@ -13,7 +13,6 @@ from timm.models.layers import ClassifierHead
 from timm.models.registry import register_model
 from torch import Tensor, nn
 
-from traiNNer.losses.basic_loss import charbonnier_loss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 
@@ -268,11 +267,11 @@ def _create_vgg(variant: str, pretrained: bool, **kwargs: Any) -> nn.Module:
     cfg = variant.split("_")[0]
     # NOTE: VGG is one of the only models with stride==1 features, so indices are offset from other models
     out_indices = kwargs.get("out_indices", (0, 1, 2, 3, 4, 5))
+    kwargs["pretrained_cfg"] = default_cfgs[variant]
     model = build_model_with_cfg(
         VGG,
         variant,
         pretrained,
-        default_cfg=default_cfgs[variant],
         model_cfg=cfgs[cfg],
         feature_cfg={"flatten_sequential": True, "out_indices": out_indices},
         pretrained_filter_fn=_filter_fn,
@@ -327,9 +326,8 @@ class VGG16ConvLoss(torch.nn.Module):
         net = timm.create_model("vgg16_conv", pretrained=True, features_only=True)
         self.net = FeatureExtractor(net, layers=layers)
 
-    def forward(self, x: Tensor, gt: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """
-
         :param x: [-1 , 1]
         :param downsample_size:
         :param fea_dict:
@@ -361,7 +359,7 @@ class VGG16ConvLoss(torch.nn.Module):
 class HRInversionLoss(nn.Module):
     def __init__(
         self,
-        criterion: str = "l1",
+        # criterion: str = "l2",  # TODO
         loss_weight: float = 1.0,
         downsample_size: int = -1,
         fea_dict: dict[str, Any] | None = None,
@@ -369,23 +367,16 @@ class HRInversionLoss(nn.Module):
         super().__init__()
         self.vgg16_conv_loss = (
             VGG16ConvLoss(downsample_size=downsample_size, fea_dict=fea_dict)
-            .cuda()
+            .to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
             .requires_grad_(False)
         )
         self.loss_weight = loss_weight
 
-        self.criterion_type = criterion
-        if self.criterion_type == "l1":
-            self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == "l2":
-            self.criterion = torch.nn.MSELoss()
-        elif self.criterion_type == "charbonnier":
-            self.criterion = charbonnier_loss
-        else:
-            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+        self.criterion = torch.nn.MSELoss(reduction="sum")
 
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportAttributeAccessIssue] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_features = self.vgg16_conv_loss(x)
         gt_features = self.vgg16_conv_loss(gt)
 
-        return self.criterion(x_features, gt_features) * self.loss_weight
+        return self.criterion(x_features, gt_features) / x.shape[0] * self.loss_weight
