@@ -136,6 +136,7 @@ class SRModel(BaseModel):
             self.cri_ldl = None
             self.cri_dists = None
             self.cri_perceptual = None
+            self.cri_hr_inversion = None
             self.cri_contextual = None
             self.cri_color = None
             self.cri_luma = None
@@ -252,6 +253,14 @@ class SRModel(BaseModel):
         if train_opt.dists_opt:
             if train_opt.dists_opt.get("loss_weight", 0) > 0:
                 self.cri_dists = build_loss(train_opt.dists_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+
+        if train_opt.hr_inversion_opt:
+            if train_opt.hr_inversion_opt.get("loss_weight", 0) > 0:
+                self.cri_hr_inversion = build_loss(train_opt.hr_inversion_opt).to(
                     self.device,
                     memory_format=torch.channels_last,
                     non_blocking=True,
@@ -448,6 +457,11 @@ class SRModel(BaseModel):
                 l_g_dists = self.cri_dists(self.output, self.gt)
                 l_g_total += l_g_dists / self.accum_iters
                 loss_dict["l_g_dists"] = l_g_dists
+            # hr inversion loss
+            if self.cri_hr_inversion:
+                l_g_hr_inversion = self.cri_hr_inversion(self.output, self.gt)
+                l_g_total += l_g_hr_inversion / self.accum_iters
+                loss_dict["l_g_hr_inversion"] = l_g_hr_inversion
             # contextual loss
             if self.cri_contextual:
                 l_g_contextual = self.cri_contextual(self.output, self.gt)
