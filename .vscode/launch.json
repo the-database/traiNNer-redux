@@ -4,10 +4,6 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-
-
-
-
     {
       "name": "Python Debugger: Current File",
       "type": "debugpy",
@@ -31,6 +27,15 @@
       "request": "launch",
       "program": "train.py",
       "args": ["-opt", "./options/train/SPAN/SPAN.yml"],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Train RealPLKSR",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "train.py",
+      "args": ["-opt", "./options/train/RealPLKSR/RealPLKSR_finetune.yml"],
       "console": "integratedTerminal",
       "justMyCode": false
     },
