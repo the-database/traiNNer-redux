@@ -13,6 +13,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[DiffJPEG](https://github.com/mlomnitz/DiffJPEG) | [MIT License](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE) |
 |[DISTS](https://github.com/dingkeyan93/DISTS) | [MIT License](https://github.com/dingkeyan93/DISTS/blob/master/LICENSE)|
 |[DRCT](https://github.com/ming053l/DRCT) | [MIT License](https://github.com/ming053l/DRCT/blob/main/LICENSE)|
+|[DUnet](https://github.com/umzi2/DUnet)| [MIT License](https://github.com/umzi2/DUnet/blob/master/LICENSE)|
 |[DySample](https://github.com/tiny-smart/dysample)| [MIT License](https://github.com/tiny-smart/dysample/blob/main/LICENSE)|
 |[HAT](https://github.com/XPixelGroup/HAT) | [Apache License 2.0](https://github.com/XPixelGroup/HAT/blob/main/LICENSE)|
 |[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|

@@ -56,10 +56,9 @@ network_g:
 
 # Discriminator model settings
 network_d:
-  type: UNetDiscriminatorSN
+  type: UNetDiscriminatorSN  # UNetDiscriminatorSN, DUnet
   num_in_ch: 3
   num_feat: 64
-  skip_connection: true
 
 ############################
 # Pretrain and Resume Paths
