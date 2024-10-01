@@ -14,6 +14,7 @@ from traiNNer.losses.basic_loss import L1Loss
 # require their own test cases.
 EXCLUDE_ARCHS = {
     "dat",
+    "dunet",
     "hat",
     "swinir",
     "lmlt",
