@@ -128,20 +128,16 @@ class RealESRGANModel(SRModel):
                 memory_format=torch.channels_last,
                 non_blocking=True,
             )
-
             self.kernel1 = data["kernel1"].to(
                 self.device,
-                memory_format=torch.channels_last,
                 non_blocking=True,
             )
             self.kernel2 = data["kernel2"].to(
                 self.device,
-                memory_format=torch.channels_last,
                 non_blocking=True,
             )
             self.sinc_kernel = data["sinc_kernel"].to(
                 self.device,
-                memory_format=torch.channels_last,
                 non_blocking=True,
             )
 
