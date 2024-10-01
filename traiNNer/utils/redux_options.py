@@ -137,6 +137,7 @@ class TrainOptions(StrictStruct):
     perceptual_opt: dict[str, Any] | None = None
     contextual_opt: dict[str, Any] | None = None
     dists_opt: dict[str, Any] | None = None
+    hr_inversion_opt: dict[str, Any] | None = None
     ldl_opt: dict[str, Any] | None = None
     hsluv_opt: dict[str, Any] | None = None
     gan_opt: dict[str, Any] | None = None

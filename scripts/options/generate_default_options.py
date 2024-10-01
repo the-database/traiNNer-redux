@@ -13,7 +13,6 @@ class ArchInfo(TypedDict):
     folder_name_override: NotRequired[str]
     video_override: NotRequired[bool]
     pth_override: NotRequired[bool]
-    disable_grad_clip: NotRequired[bool]
     overrides: NotRequired[dict[str, str]]
 
 
@@ -67,9 +66,6 @@ def final_template(
         template = template.replace(
             "save_checkpoint_format: safetensors", "save_checkpoint_format: pth"
         )
-
-    if arch.get("disable_grad_clip"):
-        template = template.replace("grad_clip: true", "grad_clip: false")
 
     template = template.replace("%otf1%\n", template_otf1)
     template = template.replace("    %otf2%\n", template_otf2)
@@ -145,7 +141,6 @@ archs: list[ArchInfo] = [
     {
         "names": ["Compact", "UltraCompact", "SuperUltraCompact"],
         "scales": ALL_SCALES,
-        "disable_grad_clip": True,
     },
     {"names": ["SwinIR_L", "SwinIR_M", "SwinIR_S"], "scales": ALL_SCALES},
     {"names": ["RGT", "RGT_S"], "scales": ALL_SCALES},
