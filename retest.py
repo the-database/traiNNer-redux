@@ -199,14 +199,15 @@ def train_pipeline(root_path: str) -> None:
         )
         nets = [v.split(f".{ext}")[0].split("_")[-1] for v in nets]
         nets = sorted([int(v) for v in nets if v.isnumeric()])
-
         for net_iter in nets:
             if net_iter < start_iter:
+                continue
+            if net_iter % opt.logger.save_checkpoint_freq != 0:
                 continue
             net_path = osp.join(
                 opt.path.pretrain_network_g_path, f"net_g_ema_{net_iter}.{ext}"
             )
-            print(net_path, osp.exists(net_path))
+            # print(net_path, osp.exists(net_path))
             if not osp.exists(net_path):
                 net_path = osp.join(
                     opt.path.pretrain_network_g_path, f"net_g_{net_iter}.{ext}"

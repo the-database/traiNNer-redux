@@ -1,5 +1,6 @@
 import os
 import shutil
+import warnings
 from collections import OrderedDict
 from os import path as osp
 from typing import Any
@@ -12,7 +13,8 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
-from tqdm import tqdm
+from tqdm import TqdmExperimentalWarning
+from tqdm.rich import tqdm
 
 from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
@@ -32,6 +34,8 @@ class SRModel(BaseModel):
 
     def __init__(self, opt: ReduxOptions) -> None:
         super().__init__(opt)
+
+        warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 
         # use amp
         self.use_amp = self.opt.use_amp
