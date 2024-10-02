@@ -165,7 +165,7 @@ class ValOptions(StrictStruct):
 
     metrics_enabled: bool = False
     metrics: dict[str, Any] | None = None
-    pbar: bool = False
+    pbar: bool = True
 
 
 class LogOptions(StrictStruct):
