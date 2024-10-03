@@ -40,6 +40,7 @@ class DatasetOptions(StrictStruct):
     mean: list[float] | None = None
     std: list[float] | None = None
     gt_size: int | None = None
+    lq_size: int | None = None
     color: Literal["y"] | None = None
     phase: str | None = None
     scale: int | None = None

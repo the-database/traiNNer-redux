@@ -90,6 +90,15 @@ def create_train_val_dataloader(
             assert opt.train is not None
             assert dataset_opt.batch_size_per_gpu is not None
 
+            if dataset_opt.gt_size is None and dataset_opt.lq_size is not None:
+                dataset_opt.gt_size = dataset_opt.lq_size * opt.scale
+            elif dataset_opt.lq_size is None and dataset_opt.gt_size is not None:
+                dataset_opt.lq_size = dataset_opt.gt_size // opt.scale
+            else:
+                raise ValueError(
+                    "Exactly one of gt_size or lq_size must be defined in the train dataset"
+                )
+
             train_set = build_dataset(dataset_opt)
             dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
             if dataset_enlarge_ratio == "auto":
@@ -118,24 +127,40 @@ def create_train_val_dataloader(
 
             total_iters = int(opt.train.total_iter)
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
+            assert dataset_opt.gt_size is not None, "gt_size is required for train set"
             logger.info(
-                "Training statistics:"
-                "\n\tNumber of train images: %d"
-                "\n\tDataset enlarge ratio: %d"
-                "\n\tBatch size per gpu: %d"
-                "\n\tAccumulate iterations: %d"
-                "\n\tWorld size (gpu number): %d"
-                "\n\tRequire iter number per epoch: %d"
-                "\n\tTotal epochs: %d; iters: %d.",
-                len(train_set),
-                dataset_enlarge_ratio,
-                dataset_opt.batch_size_per_gpu,
-                dataset_opt.accum_iter,
-                opt.world_size,
-                num_iter_per_epoch,
-                total_epochs,
-                total_iters,
+                "Training statistics:\n"
+                "\t%-25s %10s\t%-25s %10s\n"
+                "\t%-25s %10s\t%-25s %10s\n"
+                "\t%-25s %10s\t%-25s %10s\n"
+                "\t%-25s %10s\t%-25s %10s\n"
+                "\t%-25s %10s\t%-25s %10s",
+                "Number of train images:",
+                f"{len(train_set):,}",
+                "Dataset enlarge ratio:",
+                f"{dataset_enlarge_ratio:,}",
+                "Batch size per gpu:",
+                f"{dataset_opt.batch_size_per_gpu:,}",
+                "Accumulate iterations:",
+                f"{dataset_opt.accum_iter:,}",
+                "HR crop size:",
+                f"{dataset_opt.gt_size:,}",
+                "LR crop size:",
+                f"{dataset_opt.lq_size:,}",
+                "World size (gpu number):",
+                f"{opt.world_size:,}",
+                "Require iter per epoch:",
+                f"{num_iter_per_epoch:,}",
+                "Total epochs:",
+                f"{total_epochs:,}",
+                "Total iters:",
+                f"{total_iters:,}",
             )
+            if len(train_set) < 100:
+                logger.warning(
+                    "Number of train images is low: %d, training quality may be impacted. Please use more train images for best training results.",
+                    len(train_set),
+                )
         elif phase.split("_")[0] == "val":
             if val_enabled:
                 val_set = build_dataset(dataset_opt)
