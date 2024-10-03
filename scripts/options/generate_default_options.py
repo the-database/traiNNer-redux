@@ -114,7 +114,7 @@ archs: list[ArchInfo] = [
         "names": ["PLKSR", "PLKSR_Tiny"],
         "scales": ALL_SCALES,
         "overrides": {
-            "gt_size": "192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)"
+            "lq_size": "48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)"
         },
     },
     {
@@ -124,7 +124,7 @@ archs: list[ArchInfo] = [
             "upsampler": "dysample  # dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle"
         },
         "overrides": {
-            "gt_size": "192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)"
+            "lq_size": "48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)"
         },
     },
     {

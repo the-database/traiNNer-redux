@@ -84,12 +84,12 @@ datasets:
     final_sinc_prob: 0.0
     final_kernel_range: [5, 17]  # kernel range inclusive, must be odd numbers
 
-    gt_size: 192  # During training, it will crop a square of this size from your HR images. Larger is usually better but uses more VRAM. (Official default: 384)
+    lq_size: 48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
 
     num_worker_per_gpu: 8
-    batch_size_per_gpu: 8  # Increasing stabilizes training but going too high can cause issues. Use a multiple of 8 for best performance with AMP.
+    batch_size_per_gpu: 8  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
     accum_iter: 1  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
     dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
     prefetch_mode: ~
