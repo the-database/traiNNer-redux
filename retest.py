@@ -188,7 +188,7 @@ def train_pipeline(root_path: str) -> None:
 
     assert (
         opt.path.pretrain_network_g_path is not None
-    ), "pretrain_network_g_path is required. Please enter the path of the directory of models at pretrain_network_g_path."
+    ), "pretrain_network_g_path is required. Please enter the path to the directory of models at pretrain_network_g_path."
 
     if osp.isdir(opt.path.pretrain_network_g_path):
         nets = list(
