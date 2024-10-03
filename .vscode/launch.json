@@ -65,6 +65,15 @@
       "args": ["-opt", "./options/train/ESRGAN/ESRGAN_otf.yml"],
       "console": "integratedTerminal",
       "justMyCode": false
+    },
+    {
+      "name": "Test RealPLKSR",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "test.py",
+      "args": ["-opt", "./options/test/RealPLKSR/4x_boorujanaiv11_realplksr_finetune4xmssim_single.yml"],
+      "console": "integratedTerminal",
+      "justMyCode": false
     }
   ]
 }

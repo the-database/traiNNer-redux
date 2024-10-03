@@ -1,6 +1,7 @@
 import math
 import os
 from collections.abc import Sequence
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -229,11 +230,35 @@ def imwrite(
         dir_name = os.path.abspath(os.path.dirname(file_path))
         os.makedirs(dir_name, exist_ok=True)
     if params:
-        ok = cv2.imwrite(file_path, img, params)
+        cv_save_image(file_path, img, params)
     else:
-        ok = cv2.imwrite(file_path, img)
-    if not ok:
-        raise OSError("Failed in writing images.")
+        cv_save_image(file_path, img, [])
+
+
+# https://github.com/chaiNNer-org/chaiNNer/blob/171a31244064e0d90b9456b8ec0aebb80fe26511/backend/src/nodes/impl/image_utils.py#L330
+def split_file_path(path: Path | str) -> tuple[Path, str, str]:
+    """
+    Returns the base directory, file name, and extension of the given file path.
+    """
+    base, ext = os.path.splitext(path)
+    dirname, basename = os.path.split(base)
+    return Path(dirname), basename, ext
+
+
+# https://github.com/chaiNNer-org/chaiNNer/blob/171a31244064e0d90b9456b8ec0aebb80fe26511/backend/src/nodes/impl/image_utils.py#L330
+def cv_save_image(path: Path | str, img: np.ndarray, params: Sequence[int]) -> None:
+    """
+    A light wrapper around `cv2.imwrite` to support non-ASCII paths.
+    """
+
+    # We can't actually use `cv2.imwrite`, because it:
+    # 1. Doesn't support non-ASCII paths
+    # 2. Silently fails without doing anything if the path is invalid
+
+    _, _, extension = split_file_path(path)
+    _, buf_img = cv2.imencode(f".{extension}", img, params)
+    with open(path, "wb") as outf:
+        outf.write(buf_img)  # type: ignore
 
 
 def crop_border(
