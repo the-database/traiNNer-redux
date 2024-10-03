@@ -39,6 +39,9 @@ EXTRA_ARCH_PARAMS["realplksr"] = [
     {"upsampler": "pixelshuffle"},
 ]
 
+# TODO remove after finalizing
+EXTRA_ARCH_PARAMS["realplksrmod"] = EXTRA_ARCH_PARAMS["realplksr"]
+
 EXTRA_ARCH_PARAMS["mosr"] = [
     {"upsampler": "dysample"},
     {"upsampler": "pixelshuffle"},
