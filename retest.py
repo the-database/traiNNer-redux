@@ -186,9 +186,11 @@ def train_pipeline(root_path: str) -> None:
 
     ext = opt.logger.save_checkpoint_format
 
-    if opt.path.pretrain_network_g_path is not None and osp.isdir(
-        opt.path.pretrain_network_g_path
-    ):
+    assert (
+        opt.path.pretrain_network_g_path is not None
+    ), "pretrain_network_g_path is required. Please enter the path to the directory of models at pretrain_network_g_path."
+
+    if osp.isdir(opt.path.pretrain_network_g_path):
         nets = list(
             scandir(
                 opt.path.pretrain_network_g_path,
