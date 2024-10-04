@@ -188,7 +188,7 @@ def paired_paths_from_meta_info_file(
     meta_info_file: str,
     filename_tmpl: str,
 ) -> list[dict[str, str]]:
-    """Generate paired paths from a meta information file, with optimized performance.
+    """Generate paired paths from a meta information file.
 
     Each line in the meta information file contains the image names and
     image shape (usually for gt), separated by white space.
@@ -251,7 +251,7 @@ def paired_paths_from_folder(
     keys: tuple[str, str],
     filename_tmpl: str,
 ) -> list[dict[str, str]]:
-    """Generate paired paths from multiple folders with optimized performance.
+    """Generate paired paths from multiple folders.
 
     Args:
         folders (tuple[list[str], list[str]]): Two lists of folder paths.
