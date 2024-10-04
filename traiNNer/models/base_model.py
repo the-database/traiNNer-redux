@@ -518,7 +518,15 @@ class BaseModel:
         # TODO refactor, messy hack to support the different ESRGAN versions
         if isinstance(net, ESRGAN):
             load_net_wrapper = self.model_loader.load_from_file(load_path)
-            net.load_state_dict(load_net_wrapper.model.state_dict(), strict=strict)
+            load_net = load_net_wrapper.model.state_dict()
+            valid = self._print_different_keys_loading(net, load_net, load_path, strict)
+
+            if not valid:
+                raise ValueError(
+                    f"Unable to load pretrain network due to mismatched state dict keys (see above for missing keys): {load_path}"
+                )
+
+            net.load_state_dict(load_net, strict=strict)
             logger.info(
                 "Loading %s model from %s, with spandrel.",
                 net.__class__.__name__,
