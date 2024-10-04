@@ -17,7 +17,6 @@ datasets:
     type: SingleVideoDataset
     # Path of the LR (low res) images to run the model on.
     dataroot_lq: datasets/val/dataset1/lr
-    clip_size: 5
     io_backend:
       type: disk
 

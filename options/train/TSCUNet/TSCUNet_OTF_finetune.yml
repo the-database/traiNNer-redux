@@ -58,7 +58,10 @@ datasets:
     name: Train Dataset
     type: RealESRGANDataset
     # Path to the HR (high res) images in your training dataset.
-    dataroot_gt: datasets/train/dataset1/hr
+    dataroot_gt: [
+      datasets/train/dataset1/hr,
+      datasets/train/dataset1/hr2
+    ]
     # meta_info: data/meta_info/dataset1.txt
     io_backend:
       type: disk
@@ -98,8 +101,14 @@ datasets:
   val:
     name: Val Dataset
     type: PairedVideoDataset
-    dataroot_gt: datasets/val/dataset1/hr
-    dataroot_lq: datasets/val/dataset1/lr
+    dataroot_gt: [
+      datasets/val/dataset1/hr,
+      datasets/val/dataset1/hr2,
+    ]
+    dataroot_lq: [
+      datasets/val/dataset1/lr,
+      datasets/val/dataset1/lr2
+    ]
     clip_size: 5
     io_backend:
       type: disk
