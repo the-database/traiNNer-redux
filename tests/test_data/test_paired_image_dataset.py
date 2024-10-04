@@ -16,8 +16,8 @@ datasets/val/dataset1/hr,
 datasets/val/dataset1/hr2,
 ]
 dataroot_lq: [
-datasets/val/dataset1/lr2,
-datasets/val/dataset1/lr
+datasets/val/dataset1/lr,
+datasets/val/dataset1/lr2
 ]
 filename_tmpl: '{}'
 io_backend:
