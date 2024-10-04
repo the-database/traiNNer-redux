@@ -15,8 +15,8 @@ def test_pairedvideodataset() -> None:
     opt_str = rf"""
 name: Test
 type: PairedVideoDataset
-dataroot_gt: datasets/train/video/hr
-dataroot_lq: datasets/train/video/lr
+dataroot_gt: [datasets/train/video/hr]
+dataroot_lq: [datasets/train/video/lr]
 filename_tmpl: '{{}}'
 io_backend:
     type: disk
