@@ -230,6 +230,14 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
 
 def train_pipeline(root_path: str) -> None:
     install()
+
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA is not available. Please ensure that you have a GPU with CUDA support "
+            "and that you have installed the correct CUDA-enabled version of PyTorch. "
+            "You can check the installation guide at https://pytorch.org/get-started/locally/"
+        )
+
     # parse options, set distributed setting, set random seed
     opt, args = Config.load_config_from_file(root_path, is_train=True)
     opt.root_path = root_path
