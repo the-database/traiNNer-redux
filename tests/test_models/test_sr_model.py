@@ -81,8 +81,8 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     # construct dataloader
     dataset_opt = DatasetOptions(
         name="Test",
-        dataroot_gt="[datasets/val/dataset1/hr]",
-        dataroot_lq="[datasets/val/dataset1/lr]",
+        dataroot_gt=["datasets/val/dataset1/hr"],
+        dataroot_lq=["datasets/val/dataset1/lr"],
         io_backend={"type": "disk"},
         scale=4,
         phase="val",
