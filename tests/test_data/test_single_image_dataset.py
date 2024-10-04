@@ -11,7 +11,7 @@ def test_singleimagedataset() -> None:
     opt_str = r"""
 name: Test
 type: SingleImageDataset
-dataroot_lq: datasets/val/dataset1/lr
+dataroot_lq: [datasets/val/dataset1/lr]
 io_backend:
     type: disk
 

@@ -23,21 +23,21 @@ def main(mode: str = "folder") -> None:
         batch_size_per_gpu=16,
         scale=4,
         dataset_enlarge_ratio=1,
-        dataroot_gt="datasets/DIV2K/DIV2K_train_HR_sub",
-        dataroot_lq="datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub",
+        dataroot_gt=["datasets/DIV2K/DIV2K_train_HR_sub"],
+        dataroot_lq=["datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"],
         filename_tmpl="{}",
         io_backend={"type": "disk"},
     )
 
     if mode == "meta_info":
-        opt.dataroot_gt = "datasets/DIV2K/DIV2K_train_HR_sub"
-        opt.dataroot_lq = "datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"
+        opt.dataroot_gt = ["datasets/DIV2K/DIV2K_train_HR_sub"]
+        opt.dataroot_lq = ["datasets/DIV2K/DIV2K_train_LR_bicubic/X4_sub"]
         opt.meta_info = "traiNNer/data/meta_info/meta_info_DIV2K800sub_GT.txt"
         opt.filename_tmpl = "{}"
         opt.io_backend = {"type": "disk"}
     elif mode == "lmdb":
-        opt.dataroot_gt = "datasets/DIV2K/DIV2K_train_HR_sub.lmdb"
-        opt.dataroot_lq = "datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb"
+        opt.dataroot_gt = ["datasets/DIV2K/DIV2K_train_HR_sub.lmdb"]
+        opt.dataroot_lq = ["datasets/DIV2K/DIV2K_train_LR_bicubic_X4_sub.lmdb"]
         opt.io_backend = {"type": "lmdb"}
 
     os.makedirs("tmp", exist_ok=True)

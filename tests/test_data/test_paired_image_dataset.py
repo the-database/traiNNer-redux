@@ -11,8 +11,8 @@ def test_pairedimagedataset() -> None:
     opt_str = r"""
 name: Test
 type: PairedImageDataset
-dataroot_gt: datasets/val/dataset1/hr
-dataroot_lq: datasets/val/dataset1/lr
+dataroot_gt: [datasets/val/dataset1/hr]
+dataroot_lq: [datasets/val/dataset1/lr]
 filename_tmpl: '{}'
 io_backend:
     type: disk
