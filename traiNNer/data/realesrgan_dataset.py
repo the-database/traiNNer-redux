@@ -47,30 +47,37 @@ class RealESRGANDataset(BaseDataset):
         super().__init__(opt)
         self.file_client = None
         self.io_backend_opt = opt.io_backend
-        self.gt_folder = opt.dataroot_gt
+        self.gt_folders = opt.dataroot_gt
 
-        assert (
-            self.gt_folder is not None
-        ), f"dataroot_gt must be defined for dataset {opt.name}"
+        assert isinstance(
+            self.gt_folders, list
+        ), f"dataroot_gt must be a list of folders for dataset {opt.name}"
 
-        # file client (lmdb io backend)
         if self.io_backend_opt["type"] == "lmdb":
-            self.io_backend_opt["db_paths"] = [self.gt_folder]
-            self.io_backend_opt["client_keys"] = ["gt"]
-            if not self.gt_folder.endswith(".lmdb"):
-                raise ValueError(
-                    f"'dataroot_gt' should end with '.lmdb', but received {self.gt_folder}"
-                )
-            with open(osp.join(self.gt_folder, "meta_info.txt")) as fin:
-                self.paths = [line.split(".")[0] for line in fin]
+            self.io_backend_opt["db_paths"] = self.gt_folders
+            self.io_backend_opt["client_keys"] = ["gt"] * len(self.gt_folders)
+
+            for folder in self.gt_folders:
+                if not folder.endswith(".lmdb"):
+                    raise ValueError(
+                        f"Each 'dataroot_gt' should end with '.lmdb', but received {folder}"
+                    )
+
+            self.paths = []
+            for folder in self.gt_folders:
+                with open(osp.join(folder, "meta_info.txt")) as fin:
+                    self.paths.extend([line.split(".")[0] for line in fin])
+
         elif self.opt.meta_info is not None:
-            # disk backend with meta_info
-            # Each line in the meta_info describes the relative path to an image
-            with open(self.opt.meta_info) as fin:
-                paths = [line.strip().split(" ")[0] for line in fin]
-                self.paths = [os.path.join(self.gt_folder, v) for v in paths]
+            self.paths = []
+            for folder in self.gt_folders:
+                with open(self.opt.meta_info) as fin:
+                    paths = [line.strip().split(" ")[0] for line in fin]
+                    self.paths.extend([os.path.join(folder, v) for v in paths])
         else:
-            self.paths = sorted(scandir(self.gt_folder, full_path=True))
+            self.paths = []
+            for folder in self.gt_folders:
+                self.paths.extend(sorted(scandir(folder, full_path=True)))
 
         # blur settings for the first degradation
         self.blur_kernel_size = opt.blur_kernel_size

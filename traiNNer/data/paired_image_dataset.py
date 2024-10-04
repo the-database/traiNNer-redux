@@ -51,27 +51,26 @@ class PairedImageDataset(BaseDataset):
         self.std = opt.std
         self.color = opt.color != "y"
 
-        self.gt_folder, self.lq_folder = opt.dataroot_gt, opt.dataroot_lq
-
-        assert (
-            self.lq_folder is not None
+        assert isinstance(
+            opt.dataroot_lq, list
         ), f"dataroot_lq must be defined for dataset {opt.name}"
-        assert (
-            self.gt_folder is not None
+        assert isinstance(
+            opt.dataroot_gt, list
         ), f"dataroot_gt must be defined for dataset {opt.name}"
 
         self.filename_tmpl = opt.filename_tmpl
+        self.gt_folder, self.lq_folder = opt.dataroot_gt, opt.dataroot_lq
 
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = [self.lq_folder, self.gt_folder]
             self.io_backend_opt["client_keys"] = ["lq", "gt"]
             self.paths = paired_paths_from_lmdb(
-                [self.lq_folder, self.gt_folder], ["lq", "gt"]
+                (self.lq_folder, self.gt_folder), ("lq", "gt")
             )
         elif self.opt.meta_info is not None:
             self.paths = paired_paths_from_meta_info_file(
-                [self.lq_folder, self.gt_folder],
-                ["lq", "gt"],
+                (self.lq_folder, self.gt_folder),
+                ("lq", "gt"),
                 self.opt.meta_info,
                 self.filename_tmpl,
             )

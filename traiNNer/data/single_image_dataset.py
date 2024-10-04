@@ -37,22 +37,29 @@ class SingleImageDataset(BaseDataset):
         self.std = opt.std
         self.lq_folder = opt.dataroot_lq
 
-        assert (
-            self.lq_folder is not None
-        ), f"dataroot_lq must be defined for dataset {opt.name}"
+        assert self.lq_folder is not None and isinstance(
+            self.lq_folder, list
+        ), f"dataroot_lq must be defined as a list of paths for dataset {opt.name}"
 
         if self.io_backend_opt["type"] == "lmdb":
-            self.io_backend_opt["db_paths"] = [self.lq_folder]
-            self.io_backend_opt["client_keys"] = ["lq"]
+            self.io_backend_opt["db_paths"] = self.lq_folder
+            self.io_backend_opt["client_keys"] = ["lq"] * len(self.lq_folder)
             self.paths = paths_from_lmdb(self.lq_folder)
+
         elif self.opt.meta_info is not None:
+            self.paths = []
             with open(self.opt.meta_info) as fin:
-                self.paths = [
-                    osp.join(self.lq_folder, line.rstrip().split(" ")[0])
-                    for line in fin
-                ]
+                for line in fin:
+                    filename = line.rstrip().split(" ")[0]
+                    for folder in self.lq_folder:
+                        self.paths.append(osp.join(folder, filename))
+
         else:
-            self.paths = sorted(scandir(self.lq_folder, recursive=True, full_path=True))
+            self.paths = []
+            for folder in self.lq_folder:
+                self.paths.extend(
+                    sorted(scandir(folder, recursive=True, full_path=True))
+                )
 
     def __getitem__(self, index: int) -> DataFeed:
         if self.file_client is None:

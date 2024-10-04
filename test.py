@@ -28,6 +28,9 @@ def test_pipeline(root_path: str) -> None:
         opt.path.pretrain_network_g is not None
     ), "pretrain_network_g is required. Please enter the path to the model at pretrain_network_g."
     assert isinstance(opt.num_gpu, int)
+    assert (
+        opt.val.metrics_enabled or opt.val.save_img
+    ), "save_img and metrics_enabled are both disabled, please enable at least one of them."
 
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True

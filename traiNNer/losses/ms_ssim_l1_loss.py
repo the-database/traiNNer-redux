@@ -34,6 +34,7 @@ class MSSSIML1Loss(nn.Module):
             g_masks[3 * idx + 2, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
         self.g_masks = g_masks.to(
             torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            # "cpu"
         )
         self.loss_weight = loss_weight
 

@@ -187,9 +187,15 @@ def parse_options(
         dataset.phase = phase
         dataset.scale = opt.scale
         if dataset.dataroot_gt is not None:
-            dataset.dataroot_gt = osp.expanduser(dataset.dataroot_gt)
+            if isinstance(dataset.dataroot_gt, str):
+                dataset.dataroot_gt = [osp.expanduser(dataset.dataroot_gt)]
+            else:
+                dataset.dataroot_gt = [osp.expanduser(p) for p in dataset.dataroot_gt]
         if dataset.dataroot_lq is not None:
-            dataset.dataroot_lq = osp.expanduser(dataset.dataroot_lq)
+            if isinstance(dataset.dataroot_lq, str):
+                dataset.dataroot_lq = [osp.expanduser(dataset.dataroot_lq)]
+            else:
+                dataset.dataroot_lq = [osp.expanduser(p) for p in dataset.dataroot_lq]
 
     if opt.path.resume_state is not None:
         opt.path.resume_state = osp.expanduser(opt.path.resume_state)

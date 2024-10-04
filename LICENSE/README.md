@@ -38,6 +38,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[SRFormer](https://github.com/HVision-NKU/SRFormer) | [CC BY-NC 4.0](https://github.com/HVision-NKU/SRFormer/blob/main/LICENSE.txt)|
 |[SRVGGNetCompact](https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/srvgg_arch.py) | [Apache License 2.0](https://github.com/XPixelGroup/BasicSR/blob/master/LICENSE.txt)|
 |[SwinIR](https://github.com/JingyunLiang/SwinIR) | [Apache License 2.0](https://github.com/JingyunLiang/SwinIR/blob/main/LICENSE)|
+|[torch-felix](https://github.com/BurguerJohn/torch-felix)|[MIT License](https://github.com/BurguerJohn/torch-felix/blob/main/LICENSE)|
 |[TSCUNet_Trainer](https://github.com/Demetter/TSCUNet_Trainer) | [Apache License 2.0](https://github.com/Demetter/TSCUNet_Trainer/blob/main/LICENSE)|
 |[joeyballentine/traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) | [Apache License 2.0](https://github.com/joeyballentine/traiNNer-redux/blob/master/LICENSE.txt)|
 |[VQGAN-CLIP-Video](https://github.com/robobeebop/VQGAN-CLIP-Video) (Lanczos resample) | [MIT License](https://github.com/robobeebop/VQGAN-CLIP-Video/blob/main/LICENSE)|

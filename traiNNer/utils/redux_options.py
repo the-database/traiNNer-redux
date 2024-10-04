@@ -52,8 +52,8 @@ class DatasetOptions(StrictStruct):
 
     clip_size: int | None = None
 
-    dataroot_gt: str | None = None
-    dataroot_lq: str | None = None
+    dataroot_gt: str | list[str] | None = None
+    dataroot_lq: str | list[str] | None = None
     meta_info: str | None = None
     filename_tmpl: str = "{}"
 
@@ -139,6 +139,7 @@ class TrainOptions(StrictStruct):
     contextual_opt: dict[str, Any] | None = None
     dists_opt: dict[str, Any] | None = None
     hr_inversion_opt: dict[str, Any] | None = None
+    dinov2_opt: dict[str, Any] | None = None
     ldl_opt: dict[str, Any] | None = None
     hsluv_opt: dict[str, Any] | None = None
     gan_opt: dict[str, Any] | None = None

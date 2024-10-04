@@ -75,7 +75,10 @@ def final_template(
         template = template.replace(
             "    # Path to the LR (low res) images in your training dataset.\n", ""
         )
-        template = template.replace("    dataroot_lq: datasets/train/dataset1/lr\n", "")
+        template = template.replace(
+            "    dataroot_lq: [\n      datasets/train/dataset1/lr,\n      datasets/train/dataset1/lr2\n    ]\n",
+            "",
+        )
     else:
         template = template.replace("%traindatasettype%", "PairedImageDataset")
 
@@ -88,7 +91,9 @@ def final_template(
             "type: SingleImageDataset", "type: SingleVideoDataset"
         )
 
-        template = re.sub(r"(\s+)(dataroot_lq:.+)", r"\1\2\1clip_size: 5", template)
+        template = re.sub(
+            r"(\s+)(dataroot_lq:\s*\[\s*[^]]*])", r"\1\2\1clip_size: 5", template
+        )
 
     if mssim_only:
         template = re.sub("loss_weight: [0-9.]+", "loss_weight: 0", template)
