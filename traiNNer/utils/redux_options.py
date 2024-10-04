@@ -52,8 +52,8 @@ class DatasetOptions(StrictStruct):
 
     clip_size: int | None = None
 
-    dataroot_gt: str | None = None
-    dataroot_lq: str | None = None
+    dataroot_gt: str | list[str] | None = None
+    dataroot_lq: str | list[str] | None = None
     meta_info: str | None = None
     filename_tmpl: str = "{}"
 

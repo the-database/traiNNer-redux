@@ -17,7 +17,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "train.py",
-      "args": ["-opt", "./options/train/ESRGAN/ESRGAN.yml"],
+      "args": ["-opt", "./options/train/ESRGAN/ESRGAN_finetune.yml"],
       "console": "integratedTerminal",
       "justMyCode": false
     },

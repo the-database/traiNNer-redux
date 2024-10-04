@@ -660,11 +660,31 @@ class SRModel(BaseModel):
                             self.opt.path.visualization, f"{dataset_name} - {img_name}"
                         )
                     else:
+                        assert (
+                            dataloader.dataset.opt.dataroot_lq is not None
+                        ), "dataroot_lq is required for val set"
+                        lq_path = val_data["lq_path"][0]
+
+                        # multiple root paths are supported, find the correct root path for each lq_path
+                        normalized_lq_path = osp.normpath(lq_path)
+
+                        matching_root = None
+                        for root in dataloader.dataset.opt.dataroot_lq:
+                            normalized_root = osp.normpath(root)
+                            if normalized_lq_path.startswith(normalized_root + osp.sep):
+                                matching_root = root
+                                break
+
+                        if matching_root is None:
+                            raise ValueError(
+                                f"The lq_path {lq_path} does not match any of the provided dataroot_lq paths."
+                            )
+
                         save_img_dir = osp.join(
                             self.opt.path.visualization,
                             osp.relpath(
-                                osp.splitext(val_data["lq_path"][0])[0],
-                                dataloader.dataset.opt.dataroot_lq,
+                                osp.splitext(lq_path)[0],
+                                matching_root,
                             ),
                         )
                     save_img_path = osp.join(

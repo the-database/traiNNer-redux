@@ -10,9 +10,13 @@ debug/*
 !datasets/train/dataset1/
 !datasets/train/dataset1/hr/
 !datasets/train/dataset1/lr/
+!datasets/train/dataset1/hr2/
+!datasets/train/dataset1/lr2/
 !datasets/val/dataset1/
 !datasets/val/dataset1/hr/
 !datasets/val/dataset1/lr/
+!datasets/val/dataset1/hr2/
+!datasets/val/dataset1/lr2/
 !datasets/train/video/
 !datasets/train/video/hr/
 !datasets/train/video/lr/

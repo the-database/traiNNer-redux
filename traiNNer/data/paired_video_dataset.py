@@ -21,6 +21,13 @@ class PairedVideoDataset(BaseDataset):
         assert opt.dataroot_gt is not None
         assert opt.clip_size is not None
 
+        assert isinstance(
+            opt.dataroot_lq, list
+        ), f"dataroot_lq must be defined for dataset {opt.name}"
+        assert isinstance(
+            opt.dataroot_gt, list
+        ), f"dataroot_gt must be defined for dataset {opt.name}"
+
         self.file_client = None
         self.io_backend_opt = opt.io_backend
         self.dataroot_lq = opt.dataroot_lq
@@ -29,22 +36,23 @@ class PairedVideoDataset(BaseDataset):
         self.gt_size = opt.gt_size
         self.frames: dict[str, list[tuple[str, str]]] = {}
 
-        for f in sorted(os.listdir(self.dataroot_lq)):
-            if f.lower().endswith((".png", ".jpg", ".jpeg")):
-                show_prefix = f.split("_")[0]
-                lr_path = os.path.join(self.dataroot_lq, f)
-                hr_path = os.path.join(self.dataroot_gt, f)
+        for i, lq_path in enumerate(self.dataroot_lq):
+            for f in sorted(os.listdir(lq_path)):
+                if f.lower().endswith((".png", ".jpg", ".jpeg")):
+                    show_prefix = f.split("_")[0]
+                    lr_path = os.path.join(lq_path, f)
+                    hr_path = os.path.join(self.dataroot_gt[i], f)
 
-                if os.path.exists(hr_path):
-                    if show_prefix not in self.frames:
-                        self.frames[show_prefix] = []
-                    self.frames[show_prefix].append((lr_path, hr_path))
-                else:
-                    print(f"Warning: No matching HR file for {f}")
+                    if os.path.exists(hr_path):
+                        if show_prefix not in self.frames:
+                            self.frames[show_prefix] = []
+                        self.frames[show_prefix].append((lr_path, hr_path))
+                    else:
+                        print(f"Warning: No matching HR file for {f}")
 
-        print(
-            f"Found {sum(len(v) for v in self.frames.values())} valid file pairs across {len(self.frames)} shows"
-        )
+            print(
+                f"Found {sum(len(v) for v in self.frames.values())} valid file pairs across {len(self.frames)} shows"
+            )
 
     def __len__(self) -> int:
         return sum(max(0, len(v) - self.clip_size + 1) for v in self.frames.values())
