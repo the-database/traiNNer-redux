@@ -200,11 +200,15 @@ train:
   # Additional losses - disabled by default.
   # To enable, change the loss_weight from 0 to the recommended loss_weight which appears as a comment next to the loss weight.
   # For example to enable DISTS loss, change the loss weight from 0 to 0.25; to enable color loss change loss weight from 0 to 1.
-  # DISTS loss
+  # DISTS perceptual loss
   dists_opt:
     type: DISTSLoss  # DISTSLoss, ADISTSLoss
     use_input_norm: true
-    loss_weight: 0  #0.3
+    loss_weight: 0  # 0.3
+  # DINOv2 perceptual loss
+  dinov2_opt:
+    type: DinoV2Loss
+    loss_weight: 0  # 0.02
 
   # Mix of Augmentations (MoA)
   use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
