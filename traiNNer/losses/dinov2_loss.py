@@ -39,4 +39,4 @@ class DinoV2Loss(nn.Module):
         self.loss = FelixLoss(extractor)
 
     def forward(self, x: Tensor, gt: Tensor) -> tuple[Tensor | None, Tensor | None]:
-        return self.loss(x, gt)
+        return self.loss(x, gt) * self.loss_weight

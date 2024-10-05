@@ -87,10 +87,13 @@ class FelixLoss(torch.nn.Module):
         self.loss = loss
 
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        x = self.extractor(x)
-        y = self.extractor(y)
-        loss = torch.tensor(0, device=x.device)
-        for i in range(len(x)):
-            loss += self.loss(x[i], y[i].detach()) * self.extractor.weights[i]
+        loss = torch.tensor(0.0, device=x.device)
+        x_extracted: list[Tensor] = self.extractor(x)
+        y_extracted: list[Tensor] = self.extractor(y)
+        for i in range(len(x_extracted)):
+            loss += (
+                self.loss(x_extracted[i], y_extracted[i].detach())
+                * self.extractor.weights[i]
+            )
 
         return loss
