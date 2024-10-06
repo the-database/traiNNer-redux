@@ -645,6 +645,9 @@ class SRModel(BaseModel):
                 self.opt.path.visualization,
             )
 
+        gt_key = "img2"
+        run_metrics = self.with_metrics
+
         for val_data in dataloader:
             img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
             self.feed_data(val_data)
@@ -655,8 +658,10 @@ class SRModel(BaseModel):
             metric_data["img"] = sr_img
             if "gt" in visuals:
                 gt_img = tensor2img(visuals["gt"])
-                metric_data["img2"] = gt_img
+                metric_data[gt_key] = gt_img
                 self.gt = None
+            else:
+                run_metrics = False
 
             # tentative for out of GPU memory
             self.lq = None
@@ -725,7 +730,7 @@ class SRModel(BaseModel):
                     if not os.path.exists(lr_img_target_path):
                         shutil.copy(val_data["lq_path"][0], lr_img_target_path)
 
-            if self.with_metrics:
+            if run_metrics:
                 # calculate metrics
                 assert self.opt.val.metrics is not None
                 for name, opt_ in self.opt.val.metrics.items():
@@ -738,7 +743,7 @@ class SRModel(BaseModel):
         if pbar is not None:
             pbar.close()
 
-        if self.with_metrics:
+        if run_metrics:
             for metric in self.metric_results.keys():
                 self.metric_results[metric] /= len(dataloader)
                 # update the best metric result
