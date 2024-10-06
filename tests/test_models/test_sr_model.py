@@ -25,6 +25,9 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     opt.use_amp = False
     opt.path.pretrain_network_g = None
     opt.path.pretrain_network_g_ema = None
+    assert opt.val is not None
+    opt.val.val_enabled = True
+    opt.val.metrics_enabled = True
 
     # build model
     model = SRModel(opt)
