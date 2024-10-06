@@ -43,6 +43,7 @@ class BaseModel:
         self.loss_samples = 0
         self.with_metrics = (
             opt.val is not None
+            and opt.val.val_enabled
             and opt.val.metrics_enabled
             and opt.val.metrics is not None
         )

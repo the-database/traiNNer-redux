@@ -380,6 +380,7 @@ def train_pipeline(root_path: str) -> None:
     signal.signal(signal.SIGINT, handle_keyboard_interrupt)
     epoch = start_epoch
     apply_gradient = False
+    train_data = None
 
     for epoch in range(start_epoch, total_epochs + 1):
         train_sampler.set_epoch(epoch)
@@ -455,17 +456,20 @@ def train_pipeline(root_path: str) -> None:
                             multi_val_datasets,
                         )
 
-            if interrupt_received:
-                break
-
             data_timer.start()
             iter_timer.start()
             train_data = prefetcher.next()
+
+            if interrupt_received:
+                break
 
         # end of iter
         if interrupt_received:
             break
     # end of epoch
+
+    if train_data is None:
+        epoch += 1
 
     if interrupt_received:
         logger.info(
