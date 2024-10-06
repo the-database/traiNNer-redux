@@ -219,11 +219,19 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
             weights_only=True,
         )
         assert resume_state is not None
+
+        accum_iter = 1
+        apply_gradient = True
+        if "accum_iter" in resume_state:
+            accum_iter = resume_state["accum_iter"]
+        if "apply_gradient" in resume_state:
+            apply_gradient = resume_state["apply_gradient"]
+
         check_resume(
             opt,
             resume_state["iter"],
-            resume_state["accum_iter"],
-            resume_state["apply_gradient"],
+            accum_iter,
+            apply_gradient,
         )
     return resume_state
 
@@ -316,14 +324,13 @@ def train_pipeline(root_path: str) -> None:
     # create model
     model = build_model(opt)
     if model.with_metrics:
-        for val_loader in val_loaders:
-            if not (
-                isinstance(val_loader.dataset, PairedImageDataset)
-                or isinstance(val_loader.dataset, PairedVideoDataset)
-            ):
-                raise ValueError(
-                    "Validation metrics are enabled, all validation datasets must have type PairedImageDataset."
-                )
+        if not any(
+            isinstance(val_loader.dataset, (PairedImageDataset | PairedVideoDataset))
+            for val_loader in val_loaders
+        ):
+            raise ValueError(
+                "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
+            )
 
     if resume_state:  # resume training
         model.resume_training(resume_state)  # handle optimizers and schedulers
@@ -448,11 +455,13 @@ def train_pipeline(root_path: str) -> None:
                             multi_val_datasets,
                         )
 
+            if interrupt_received:
+                break
+
             data_timer.start()
             iter_timer.start()
             train_data = prefetcher.next()
-            if interrupt_received:
-                break
+
         # end of iter
         if interrupt_received:
             break
