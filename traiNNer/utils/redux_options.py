@@ -7,14 +7,6 @@ class StrictStruct(Struct, forbid_unknown_fields=True):
     pass
 
 
-class OptimizerOptions(StrictStruct):
-    type: str
-    lr: float
-    weight_decay: float
-    betas: list[float]
-    warmup_steps: int | None = None
-
-
 class SchedulerOptions(StrictStruct):
     type: str
     milestones: list[int]
@@ -125,12 +117,12 @@ class PathOptions(StrictStruct):
 
 class TrainOptions(StrictStruct):
     total_iter: int
-    optim_g: OptimizerOptions
+    optim_g: dict[str, Any]
     ema_decay: float = 0
     grad_clip: bool = False
     warmup_iter: int = -1
     scheduler: SchedulerOptions | None = None
-    optim_d: OptimizerOptions | None = None
+    optim_d: dict[str, Any] | None = None
 
     pixel_opt: dict[str, Any] | None = None
     mssim_opt: dict[str, Any] | None = None

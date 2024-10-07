@@ -24,7 +24,6 @@ from traiNNer.losses.loss_util import get_refined_artifact_map
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
-from traiNNer.utils.options import struct2dict
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
@@ -365,9 +364,10 @@ class SRModel(BaseModel):
                 logger = get_root_logger()
                 logger.warning("Params %s will not be optimized.", k)
 
-        optim_g_opts = struct2dict(train_opt.optim_g)
-        optim_type = optim_g_opts.pop("type")
-        self.optimizer_g = self.get_optimizer(optim_type, optim_params, **optim_g_opts)
+        optim_type = train_opt.optim_g.pop("type")
+        self.optimizer_g = self.get_optimizer(
+            optim_type, optim_params, **train_opt.optim_g
+        )
         self.optimizers.append(self.optimizer_g)
         self.optimizers_skipped.append(False)
         self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
@@ -375,10 +375,9 @@ class SRModel(BaseModel):
         # optimizer d
         if self.net_d is not None:
             assert train_opt.optim_d is not None
-            optim_d_opts = struct2dict(train_opt.optim_d)
-            optim_type = optim_d_opts.pop("type")
+            optim_type = train_opt.optim_d.pop("type")
             self.optimizer_d = self.get_optimizer(
-                optim_type, self.net_d.parameters(), **optim_d_opts
+                optim_type, self.net_d.parameters(), **train_opt.optim_d
             )
             self.optimizers.append(self.optimizer_d)
             self.optimizers_skipped.append(False)
