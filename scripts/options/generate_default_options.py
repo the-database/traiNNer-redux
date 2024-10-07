@@ -126,7 +126,8 @@ archs: list[ArchInfo] = [
         "names": ["RealPLKSR"],
         "scales": ALL_SCALES,
         "extras": {
-            "upsampler": "dysample  # dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle"
+            "upsampler": "pixelshuffle  # pixelshuffle, dysample (better quality on even number scales, but does not support dynamic ONNX)",
+            "layer_norm": "true  # better quality, not compatible with older models",
         },
         "overrides": {
             "lq_size": "48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)"

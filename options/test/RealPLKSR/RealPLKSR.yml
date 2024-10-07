@@ -26,7 +26,8 @@ datasets:
 # Generator model settings
 network_g:
   type: RealPLKSR
-  upsampler: dysample  # dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle
+  upsampler: pixelshuffle  # pixelshuffle, dysample (better quality on even number scales, but does not support dynamic ONNX)
+  layer_norm: true  # better quality, not compatible with older models
 
 ############################
 # Pretrain and Resume Paths
