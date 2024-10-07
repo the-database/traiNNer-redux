@@ -390,8 +390,6 @@ def train_pipeline(root_path: str) -> None:
             else:
                 apply_gradient = False
 
-            print(current_iter, current_accum_iter, apply_gradient)
-
             if current_iter > total_iters:
                 break
             # training
