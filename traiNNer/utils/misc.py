@@ -104,9 +104,7 @@ def scandir(
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
-def check_resume(
-    opt: ReduxOptions, resume_iter: int, resume_accum_iter: int, apply_gradient: bool
-) -> None:
+def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
     """Check resume states and pretrain_network paths.
 
     Args:
@@ -135,15 +133,7 @@ def check_resume(
             basepath = ""
             for ext in model_extensions:
                 for net_label in ["net_g_ema", "net_g"]:
-                    if apply_gradient:
-                        basepath = osp.join(
-                            opt.path.models, f"{net_label}_{resume_iter}"
-                        )
-                    else:
-                        basepath = osp.join(
-                            opt.path.models,
-                            f"{net_label}_{resume_iter}_{resume_accum_iter}",
-                        )
+                    basepath = osp.join(opt.path.models, f"{net_label}_{resume_iter}")
                     if osp.exists(f"{basepath}.{ext}"):
                         opt.path.pretrain_network_g_ema = f"{basepath}.{ext}"
                         model_exists = True
@@ -163,12 +153,7 @@ def check_resume(
             basepath = ""
             for ext in model_extensions:
                 for model_dir in model_dirs:
-                    if apply_gradient:
-                        basepath = osp.join(model_dir, f"net_g_{resume_iter}")
-                    else:
-                        basepath = osp.join(
-                            model_dir, f"net_g_{resume_iter}_{resume_accum_iter}"
-                        )
+                    basepath = osp.join(model_dir, f"net_g_{resume_iter}")
                     if osp.exists(f"{basepath}.{ext}"):
                         opt.path.pretrain_network_g = f"{basepath}.{ext}"
                         model_exists = True
@@ -196,12 +181,7 @@ def check_resume(
                 basepath = ""
                 for ext in model_extensions:
                     for model_dir in model_dirs:
-                        if apply_gradient:
-                            basepath = osp.join(model_dir, f"net_d_{resume_iter}")
-                        else:
-                            basepath = osp.join(
-                                model_dir, f"net_d_{resume_iter}_{resume_accum_iter}"
-                            )
+                        basepath = osp.join(model_dir, f"net_d_{resume_iter}")
                         if osp.exists(f"{basepath}.{ext}"):
                             opt.path.pretrain_network_d = f"{basepath}.{ext}"
                             model_exists = True

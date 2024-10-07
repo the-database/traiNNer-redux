@@ -82,8 +82,6 @@ class BaseModel:
         self,
         epoch: int,
         current_iter: int,
-        current_accum_iter: int,
-        apply_gradient: bool,
     ) -> None:
         """Save networks and training state."""
 
@@ -354,8 +352,6 @@ class BaseModel:
         net_label: str,
         save_dir: str,
         current_iter: int,
-        current_accum_iter: int,
-        apply_gradient: bool,
     ) -> None:
         """Save networks.
 
@@ -369,10 +365,9 @@ class BaseModel:
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
         assert self.opt.logger is not None
 
-        if apply_gradient:
-            save_filename = f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
-        else:
-            save_filename = f"{net_label}_{current_iter_str}_{current_accum_iter}.{self.opt.logger.save_checkpoint_format}"
+        save_filename = (
+            f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
+        )
         save_path = os.path.join(save_dir, save_filename)
 
         bare_net_ = self.get_bare_model(net)
@@ -645,8 +640,6 @@ class BaseModel:
         self,
         epoch: int,
         current_iter: int,
-        current_accum_iter: int,
-        apply_gradient: bool,
     ) -> None:
         """Save training states during training, which will be used for
         resuming.
@@ -663,8 +656,6 @@ class BaseModel:
             state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
-                "accum_iter": current_accum_iter,
-                "apply_gradient": apply_gradient,
                 "optimizers": [],
                 "schedulers": [],
             }
@@ -680,10 +671,7 @@ class BaseModel:
             if self.net_g_ema is not None:
                 state["ema_n_averaged"] = self.net_g_ema.state_dict()["n_averaged"]
 
-            if apply_gradient:
-                save_filename = f"{current_iter}.state"
-            else:
-                save_filename = f"{current_iter}_{current_accum_iter}.state"
+            save_filename = f"{current_iter}.state"
             save_path = os.path.join(self.opt.path.training_states, save_filename)
 
             logger = None
