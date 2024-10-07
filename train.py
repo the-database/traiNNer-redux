@@ -220,18 +220,9 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
         )
         assert resume_state is not None
 
-        accum_iter = 1
-        apply_gradient = True
-        if "accum_iter" in resume_state:
-            accum_iter = resume_state["accum_iter"]
-        if "apply_gradient" in resume_state:
-            apply_gradient = resume_state["apply_gradient"]
-
         check_resume(
             opt,
             resume_state["iter"],
-            accum_iter,
-            apply_gradient,
         )
     return resume_state
 
@@ -399,6 +390,8 @@ def train_pipeline(root_path: str) -> None:
             else:
                 apply_gradient = False
 
+            print(current_iter, current_accum_iter, apply_gradient)
+
             if current_iter > total_iters:
                 break
             # training
@@ -436,8 +429,6 @@ def train_pipeline(root_path: str) -> None:
                 model.save(
                     epoch,
                     current_iter,
-                    current_accum_iter,
-                    apply_gradient,
                 )
 
             # validation
@@ -468,16 +459,21 @@ def train_pipeline(root_path: str) -> None:
             break
     # end of epoch
 
+    # epoch was completed, increment it to set the correct epoch count when interrupted
     if train_data is None:
         epoch += 1
 
     if interrupt_received:
+        # discard partially accumulated iters
+        if not apply_gradient:
+            current_iter -= 1
+
         logger.info(
             "Saving models and training states for epoch: %d, iter: %d.",
             epoch,
             current_iter,
         )
-        model.save(epoch, current_iter, current_accum_iter, apply_gradient)
+        model.save(epoch, current_iter)
         sys.exit(0)
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
@@ -486,8 +482,6 @@ def train_pipeline(root_path: str) -> None:
     model.save(
         epoch=-1,
         current_iter=-1,
-        current_accum_iter=-1,
-        apply_gradient=apply_gradient,
     )  # -1 stands for the latest
     if opt.val is not None:
         for val_loader in val_loaders:

@@ -792,8 +792,6 @@ class SRModel(BaseModel):
         self,
         epoch: int,
         current_iter: int,
-        current_accum_iter: int,
-        apply_gradient: bool,
     ) -> None:
         assert self.opt.path.models is not None
         assert self.opt.path.resume_models is not None
@@ -804,8 +802,6 @@ class SRModel(BaseModel):
                 "net_g_ema",
                 self.opt.path.models,
                 current_iter,
-                current_accum_iter,
-                apply_gradient,
             )
 
             self.save_network(
@@ -813,8 +809,6 @@ class SRModel(BaseModel):
                 "net_g",
                 self.opt.path.resume_models,
                 current_iter,
-                current_accum_iter,
-                apply_gradient,
             )
         else:
             self.save_network(
@@ -822,8 +816,6 @@ class SRModel(BaseModel):
                 "net_g",
                 self.opt.path.models,
                 current_iter,
-                current_accum_iter,
-                apply_gradient,
             )
 
         if self.net_d is not None:
@@ -832,10 +824,6 @@ class SRModel(BaseModel):
                 "net_d",
                 self.opt.path.resume_models,
                 current_iter,
-                current_accum_iter,
-                apply_gradient,
             )
 
-        self.save_training_state(
-            epoch, current_iter, current_accum_iter, apply_gradient
-        )
+        self.save_training_state(epoch, current_iter)
