@@ -200,32 +200,32 @@ class BaseModel:
         lr: float,
         **kwargs,
     ) -> Optimizer:
-        if optim_type == "AdamP":
-            optimizer = pytorch_optimizer.AdamP(params, lr, **kwargs)
-        elif optim_type == "Lamb":
-            optimizer = pytorch_optimizer.Lamb(params, lr, **kwargs)
-        elif optim_type == "Prodigy":
-            optimizer = pytorch_optimizer.Prodigy(params, lr, **kwargs)
-        elif optim_type == "Lion":
-            optimizer = pytorch_optimizer.Lion(params, lr, **kwargs)
-        elif optim_type == "Tiger":
-            optimizer = pytorch_optimizer.Tiger(params, lr, **kwargs)
-        elif optim_type == "Adan":
-            optimizer = pytorch_optimizer.Adan(params, lr, **kwargs)
-        elif optim_type == "Adam":
-            optimizer = torch.optim.Adam(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-        elif optim_type == "AdamW":
-            optimizer = torch.optim.AdamW(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-        elif optim_type == "Adamax":
-            optimizer = torch.optim.Adamax(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-        elif optim_type == "SGD":
-            optimizer = torch.optim.SGD(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-        elif optim_type == "ASGD":
-            optimizer = torch.optim.ASGD(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-        elif optim_type == "RMSprop":
-            optimizer = torch.optim.RMSprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-        elif optim_type == "Rprop":
-            optimizer = torch.optim.Rprop(params, lr, **kwargs)  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+        # https://github.com/Corpsecreate/neosr/blob/dbb3d012880add41b6e49d4c5252c719c3236892/neosr/models/default.py#L247
+        # uppercase optim_type to make it case insensitive
+        optim_type_upper = optim_type.upper()
+        optim_map = {
+            "ADADELTA": torch.optim.Adadelta,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "ADAGRAD": torch.optim.Adagrad,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "ADAM": torch.optim.Adam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "ADAMW": torch.optim.AdamW,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "SPARSEADAM": torch.optim.SparseAdam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "ADAMAX": torch.optim.Adamax,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "ASGD": torch.optim.ASGD,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "SGD": torch.optim.SGD,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "RADAM": torch.optim.RAdam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "RPROP": torch.optim.Rprop,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "RMSPROP": torch.optim.RMSprop,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "NADAM": torch.optim.NAdam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "LBFGS": torch.optim.LBFGS,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "ADAN": pytorch_optimizer.Adan,
+            "LAMB": pytorch_optimizer.Lamb,
+            "PRODIGY": pytorch_optimizer.Prodigy,
+            "LION": pytorch_optimizer.Lion,
+            "TIGER": pytorch_optimizer.Tiger,
+            "ADAMP": pytorch_optimizer.AdamP,
+        }
+        if optim_type_upper in optim_map:
+            optimizer = optim_map[optim_type_upper](params, lr, **kwargs)
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
         return optimizer
