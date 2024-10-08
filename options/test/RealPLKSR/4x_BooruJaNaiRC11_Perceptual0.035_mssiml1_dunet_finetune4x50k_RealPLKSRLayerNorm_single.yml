@@ -1,0 +1,107 @@
+####################
+# General Settings
+####################
+name: 4x_BooruJaNaiRC11_Perceptual0.035_mssiml1_dunet_finetune4x50k_RealPLKSRLayerNorm_2k
+scale: 4  # 1, 2, 3, 4, 8
+use_amp: false  # Speed up training and reduce VRAM usage.
+amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only.
+num_gpu: auto
+
+
+#################################
+# Dataset and Dataloader Settings
+#################################
+datasets:
+  # test_0:
+  #   name: Set1
+  #   type: PairedImageDataset
+  #   dataroot_gt: datasets/benchmark/Set1/HR
+  #   dataroot_lq: datasets/benchmark/Set1/LR_bicubic/X4
+  #   filename_tmpl: '{}x4'
+  #   io_backend:
+  #     type: disk
+  test_1:  # the 1st test dataset
+    name: Set5
+    type: SingleImageDataset
+    # dataroot_gt: datasets/benchmark/Set5/HR
+    dataroot_lq: D:\file\chainner\4xBooruJaNai\original 4x
+    # filename_tmpl: '{}x2'
+    io_backend:
+      type: disk
+
+  # test_2:  # the 2st test dataset
+  #   name: Set14
+  #   type: PairedImageDataset
+  #   dataroot_gt: datasets/benchmark/Set14/HR
+  #   dataroot_lq: datasets/benchmark/Set14/LR_bicubic/X4
+  #   filename_tmpl: '{}x4'
+  #   io_backend:
+  #     type: disk
+
+  # test_3:  # the 3st test dataset
+  #   name: B100
+  #   type: PairedImageDataset
+  #   dataroot_gt: datasets/benchmark/B100/HR
+  #   dataroot_lq: datasets/benchmark/B100/LR_bicubic/X4
+  #   filename_tmpl: '{}x4'
+  #   io_backend:
+  #     type: disk
+
+  # test_4:  # the 4st test dataset
+  #   name: Urban100
+  #   type: PairedImageDataset
+  #   dataroot_gt: datasets/benchmark/Urban100/HR
+  #   dataroot_lq: datasets/benchmark/Urban100/LR_bicubic/X2
+  #   filename_tmpl: '{}x2'
+  #   io_backend:
+  #     type: disk
+
+  # test_5:  # the 5st test dataset
+  #   name: Manga109
+  #   type: PairedImageDataset
+  #   dataroot_gt: datasets/benchmark/Manga109/HR
+  #   dataroot_lq: datasets/benchmark/Manga109/LR_bicubic/X4
+  #   filename_tmpl: '{}_LRBI_x4'
+  #   io_backend:
+  #     type: disk
+
+#####################
+# Network Settings
+#####################
+# Generator model settings
+network_g:
+  type: realplksr
+  upsampler: pixelshuffle
+  layer_norm: true
+
+############################
+# Pretrain and Resume Paths
+############################
+path:
+  # Path of the model to run on the validation images.
+  pretrain_network_g: D:\file\traiNNer-redux\experiments\4x_BooruJaNaiRC11_Perceptual0.035_mssiml1_dunet_finetune4x50k_RealPLKSRLayerNorm\models\net_g_ema_2000.safetensors
+
+#############
+# Validation
+#############
+val:
+  val_enabled: true  # Whether to enable validations. If disabled, all validation settings below are ignored.
+  save_img: true  # Whether to save the validation images during validation, in the results/<name>/visualization folder.
+  suffix: ~  # add suffix to saved images, if None, use exp name
+  metrics_enabled: false  # Whether to run metrics calculations during validation.
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: true
+    ssim:
+      type: calculate_ssim
+      crop_border: 4  # Whether to crop border during validation.
+      test_y_channel: true  # Whether to convert to Y(CbCr) for validation.
+    dists:
+      type: calculate_dists
+      better: lower
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 5000
+  use_tb_logger: true

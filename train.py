@@ -332,11 +332,11 @@ def train_pipeline(root_path: str) -> None:
         )
         start_epoch = resume_state["epoch"]
         current_iter = resume_state["iter"]
-        current_accum_iter = resume_state["accum_iter"]
     else:
         start_epoch = 0
         current_iter = 0
-        current_accum_iter = 0
+
+    current_accum_iter = 0
 
     # create message logger (formatted outputs)
     msg_logger = MessageLogger(opt, current_iter, tb_logger)
