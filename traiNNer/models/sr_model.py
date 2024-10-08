@@ -182,9 +182,6 @@ class SRModel(BaseModel):
                 {**self.opt.network_g, "scale": self.opt.scale}
             ).to(
                 self.device,
-                memory_format=torch.channels_last
-                if self.use_amp
-                else torch.contiguous_format,
                 non_blocking=True,
             )  # pyright: ignore[reportCallIssue]
 
