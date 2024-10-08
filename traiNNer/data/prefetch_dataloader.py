@@ -117,7 +117,6 @@ class CUDAPrefetcher:
                 if torch.is_tensor(v):
                     self.batch[k] = self.batch[k].to(
                         device=self.device,
-                        memory_format=torch.channels_last,
                         non_blocking=True,
                     )
 
