@@ -12,10 +12,11 @@ from traiNNer.utils.registry import ARCH_REGISTRY
 
 
 class GeoEnsemblePixelShuffle(nn.Module):
-    def __init__(self,upscale:int):
+    def __init__(self, upscale: int) -> None:
         super().__init__()
         self.upscale = nn.PixelShuffle(upscale)
-    def forward(self,x):
+
+    def forward(self, x: Tensor) -> Tensor:
         x = x.reshape(x.shape[0], 8, -1, x.shape[-2], x.shape[-1])
         x = x.mean(dim=1)
         return self.upscale(x)
@@ -146,9 +147,8 @@ class RealPLKSR(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
-        upsampler: str = "pixelshuffle",  # dysample, pixelshuffle
+        upsampler: str = "pixelshuffle",  # dysample, pixelshuffle, geoensemblepixelshuffle
         layer_norm: bool = True,
-        **kwargs,
     ) -> None:
         super().__init__()
         geo_scale = 8 if upsampler == "geoensemblepixelshuffle" else 1
@@ -162,13 +162,13 @@ class RealPLKSR(nn.Module):
                 for _ in range(n_blocks)
             ]
             + [nn.Dropout2d(dropout)]
-            + [nn.Conv2d(dim, out_ch * upscaling_factor**2*geo_scale, 3, 1, 1)]
+            + [nn.Conv2d(dim, out_ch * upscaling_factor**2 * geo_scale, 3, 1, 1)]
         )
         trunc_normal_(self.feats[0].weight, std=0.02)
         trunc_normal_(self.feats[-1].weight, std=0.02)
 
         self.repeat_op = partial(
-            torch.repeat_interleave, repeats=upscaling_factor**2*geo_scale, dim=1
+            torch.repeat_interleave, repeats=upscaling_factor**2 * geo_scale, dim=1
         )
 
         if upsampler == "dysample":
@@ -184,7 +184,7 @@ class RealPLKSR(nn.Module):
         elif upsampler == "pixelshuffle":
             self.to_img = nn.PixelShuffle(upscaling_factor)
         elif upsampler == "geoensemblepixelshuffle":
-            self.to_img =GeoEnsemblePixelShuffle(upscaling_factor)
+            self.to_img = GeoEnsemblePixelShuffle(upscaling_factor)
         else:
             raise ValueError(f"Invalid upsampler: {upsampler}")
 
