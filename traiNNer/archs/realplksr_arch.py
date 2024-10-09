@@ -11,6 +11,35 @@ from torch.nn.init import trunc_normal_
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
+class GPS(nn.Module):
+    """Geo ensemble PixelShuffle"""
+
+    def __init__(
+        self,
+        dim: int,
+        scale: int,
+        out_ch: int = 3,
+        # Own parameters
+        kernel_size: int = 3,
+    ) -> None:
+        super().__init__()
+        self.in_to_k = nn.Conv2d(
+            dim, scale * scale * out_ch * 8, kernel_size, 1, kernel_size // 2
+        )
+        self.ps = nn.PixelShuffle(scale)
+
+    def forward(self, x: Tensor) -> Tensor:
+        rgb = self._geo_ensemble(x)
+        rgb = self.ps(rgb)
+        return rgb
+
+    def _geo_ensemble(self, x: Tensor) -> Tensor:
+        x = self.in_to_k(x)
+        x = x.reshape(x.shape[0], 8, -1, x.shape[-2], x.shape[-1])
+        x = x.mean(dim=1)
+        return x
+
+
 class LayerNorm(nn.Module):
     def __init__(self, dim: int, eps: float = 1e-6) -> None:
         super().__init__()
@@ -173,6 +202,8 @@ class RealPLKSR(nn.Module):
 
         elif upsampler == "pixelshuffle":
             self.to_img = nn.PixelShuffle(upscaling_factor)
+        elif upsampler == "geoensemblepixelshuffle":
+            self.to_img = GPS(dim, upscaling_factor, out_ch)
         else:
             raise ValueError(f"Invalid upsampler: {upsampler}")
 
