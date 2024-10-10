@@ -5,7 +5,7 @@ A modern community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and
 ## Usage Instructions
 
 ### Initial Setup
-1. Install [Python](https://www.python.org/) if it's not already installed. A minimum of version Python 3.11 is required, and Python 3.12 is also fully supported. **Python 3.13 is not supported yet**.
+1. Install [Python](https://www.python.org/) if it's not already installed. Python 3.12 is recommended, and Python 3.11 is also supported. **Python 3.13 is not supported yet**.
 2. Clone the repository:
    - To use the git command line, navigate to where you want to install traiNNer-redux, and enter this command (install [git](https://git-scm.com/) first if it's not already installed):
       ```
