@@ -1,8 +1,8 @@
 ####################
 # General Settings
 ####################
-name: %scale%_%archname%
-scale: %scale%
+name: 4x_RealCUGAN
+scale: 4  # 2, 3, 4
 num_gpu: auto
 
 #####################
@@ -10,14 +10,16 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: %archname%
+  type: RealCUGAN
+  pro: true
+  fast: false
 
 ############################
 # Pretrain and Resume Paths
 ############################
 path:
   # Path of the model to convert to ONNX.
-  pretrain_network_g: experiments/%scale%_%archname%/models/net_g_ema_1000.safetensors
+  pretrain_network_g: experiments/4x_RealCUGAN/models/net_g_ema_1000.safetensors
 
 #########################
 # ONNX conversion options

@@ -205,9 +205,15 @@ for arch in archs:
             __file__, osp.pardir, osp.pardir, osp.pardir, "./options/test", folder_name
         )
     )
+    onnx_folder_path = osp.normpath(
+        osp.join(
+            __file__, osp.pardir, osp.pardir, osp.pardir, "./options/onnx", folder_name
+        )
+    )
 
     os.makedirs(train_folder_path, exist_ok=True)
     os.makedirs(test_folder_path, exist_ok=True)
+    os.makedirs(onnx_folder_path, exist_ok=True)
 
     template_path_paired_fromscratch = osp.normpath(
         osp.join(__file__, osp.pardir, "./train_default_options_paired_fromscratch.yml")
@@ -237,6 +243,10 @@ for arch in archs:
         osp.join(__file__, osp.pardir, "./test_default_options_single.yml")
     )
 
+    template_path_onnx = osp.normpath(
+        osp.join(__file__, osp.pardir, "./onnx_default_options.yml")
+    )
+
     with (
         open(template_path_paired_fromscratch) as fps,
         open(template_path_paired_finetune) as fpf,
@@ -245,6 +255,7 @@ for arch in archs:
         open(template_path_otfbicubic1) as fob1,
         open(template_path_otfbicubic2) as fob2,
         open(template_path_single) as fts,
+        open(template_path_onnx) as fox,
     ):
         template_paired_fromscratch = fps.read()
         template_paired_finetune = fpf.read()
@@ -253,6 +264,7 @@ for arch in archs:
         template_otfbicubic1 = fob1.read()
         template_otfbicubic2 = fob2.read()
         template_test_single = fts.read()
+        template_onnx = fox.read()
 
         with open(
             osp.join(train_folder_path, f"{folder_name}_fromscratch.yml"), mode="w"
@@ -310,3 +322,6 @@ for arch in archs:
 
         with open(osp.join(test_folder_path, f"{folder_name}.yml"), mode="w") as fw:
             fw.write(final_template(template_test_single, arch))
+
+        with open(osp.join(onnx_folder_path, f"{folder_name}.yml"), mode="w") as fw:
+            fw.write(final_template(template_onnx, arch, template_otf1, template_otf2))
