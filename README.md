@@ -75,6 +75,32 @@ venv\Scripts\activate
 python test.py -opt ./options/test/SPANPlus/SPANPlus.yml
 ```
 
+### Convert models to ONNX
+
+If you want to convert your PyTorch models to ONNX format, you can use the `convert_to_onnx.py` script to do so. First install the additional dependencies for ONNX:
+```
+venv\Scripts\activate
+pip install .[onnx]
+```
+
+Then open a config file corresponding to the architecture of the model you trained. For example, if you trained `SPANPlus`, open the config file at `./options/onnx/SPANPlus/SPANPlus.yml`, and update the following:
+1. Set the `name` to the name of your model, the ONNX filename will include this name.
+2. Make sure the setting under `network_g` match the settings you used to train your model.
+3. Set `pretrain_network_g` to point to the path of your `.safetensors` or `.pth` model that you want to convert.
+4. Set the options in the `onnx` section of the config file as needed.
+
+Then run this command to do the conversion (make sure the path points to the `.yml` file you edited):
+
+```
+venv\Scripts\activate
+python convert_to_onnx.py -opt ./options/onnx/SPANPlus/SPANPlus.yml
+```
+
+The converted onnx files will be saved to the `onnx` directory. 
+
+## Contributing
+Please see the [contributing](https://github.com/the-database/traiNNer-redux/blob/master/CONTRIBUTING.md) page for more info on how to contribute.
+
 ## Resources
 - [OpenModelDB](https://openmodeldb.info/): Repository of AI upscaling models, which can be used as pretrain models to train new models. Models trained with this repo can be submitted to OMDB.
 - [chaiNNer](https://github.com/chaiNNer-org/chaiNNer): General purpose tool for AI upscaling and image processing, models trained with this repo can be run on chaiNNer. chaiNNer can also assist with dataset preparation.
