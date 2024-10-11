@@ -68,7 +68,7 @@ network_g:
 
 # Discriminator model settings
 network_d:
-  type: UNetDiscriminatorSN  # UNetDiscriminatorSN, DUnet
+  type: DUnet  # DUnet, UNetDiscriminatorSN
   num_in_ch: 3
   num_feat: 64
 
