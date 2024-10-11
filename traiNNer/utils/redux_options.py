@@ -117,10 +117,12 @@ class PathOptions(StrictStruct):
 
 class OnnxOptions(StrictStruct):
     dynamo: bool = False
-    opset: str | int = "auto"
+    opset: int = 20
     use_static_shapes: bool = False
     shape: str = "3x256x256"
     verify: bool = True
+    fp16: bool = False
+    optimize: bool = True
 
 
 class TrainOptions(StrictStruct):

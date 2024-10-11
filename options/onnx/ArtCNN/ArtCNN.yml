@@ -27,7 +27,9 @@ path:
 #########################
 onnx:
   dynamo: false  # Whether to use the new beta ONNX exporter. Currently not supported on most architectures.
-  opset: auto  # ONNX opset version, auto uses the latest supported opset which is currently 18 with dynamo and 17 otherwise.
+  fp16: true  # Whether to also export to reduced fp16 precision.
+  opset: 17  # ONNX opset version, higher is newer.
   use_static_shapes: false  # Whether to convert with static shapes or dynamic shapes. Dynamic shapes are more convenient for supporting a range of input resolutions, but not all architectures support dynamic shapes.
-  shape: 3x256x256  # The static shape to use in CxHxW format, only used if use_static_shapes is true.
-
+  shape: 1x3x256x256  # The static shape to use in NxCxHxW format, only used if use_static_shapes is true.
+  verify: true  # Verify the accuracy of the ONNX model after exporting it.
+  optimize: false  # Runs OnnxSlim on the model to potentially slim the model and improve inference speed.
