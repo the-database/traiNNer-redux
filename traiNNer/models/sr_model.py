@@ -180,7 +180,13 @@ class SRModel(BaseModel):
 
             init_net_g_ema = build_network(
                 {**self.opt.network_g, "scale": self.opt.scale}
-            ).to(self.device)  # pyright: ignore[reportCallIssue]
+            ).to(
+                self.device,
+                memory_format=torch.channels_last
+                if self.use_amp
+                else torch.contiguous_format,
+                non_blocking=True,
+            )  # pyright: ignore[reportCallIssue]
 
             # load pretrained model
             if self.opt.path.pretrain_network_g_ema is not None:
