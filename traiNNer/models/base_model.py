@@ -380,9 +380,7 @@ class BaseModel:
                 key = key[7:]
             if key == "n_averaged":  # ema key, breaks compatibility
                 continue
-            new_state_dict[key] = param.to(
-                "cpu", memory_format=torch.contiguous_format, non_blocking=True
-            )
+            new_state_dict[key] = param.to("cpu", memory_format=torch.contiguous_format)
 
         # avoid occasional writing errors
         retry = 3
