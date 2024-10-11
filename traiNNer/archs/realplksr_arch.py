@@ -1,5 +1,5 @@
 # https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py
-# With modifications by umzi2 to support dysample, gps upsampler and layer norm
+# With modifications by umzi2 to support dysample and layer norm
 # from spandrel.architectures.PLKSR import PLKSR, RealPLKSR
 from functools import partial
 
@@ -136,7 +136,7 @@ class RealPLKSR(nn.Module):
         use_ea: bool = True,
         norm_groups: int = 4,
         dropout: float = 0,
-        upsampler: str = "pixelshuffle",  # dysample, pixelshuffle, geoensemblepixelshuffle
+        upsampler: str = "pixelshuffle",  # dysample, pixelshuffle
         layer_norm: bool = True,
     ) -> None:
         super().__init__()
