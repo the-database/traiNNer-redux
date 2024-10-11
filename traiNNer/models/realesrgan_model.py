@@ -125,6 +125,7 @@ class RealESRGANModel(SRModel):
             # training data synthesis
             self.gt = data["gt"].to(
                 self.device,
+                memory_format=torch.channels_last,
                 non_blocking=True,
             )
             self.kernel1 = data["kernel1"].to(
@@ -148,6 +149,7 @@ class RealESRGANModel(SRModel):
                     RNG.get_rng().integers(*self.opt.lq_usm_radius_range, endpoint=True)
                 ).to(
                     self.device,
+                    memory_format=torch.channels_last,
                     non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
                 out = usm_sharpener(self.gt)
@@ -339,10 +341,12 @@ class RealESRGANModel(SRModel):
             assert "lq" in data
             self.lq = data["lq"].to(
                 self.device,
+                memory_format=torch.channels_last,
                 non_blocking=True,
             )
             if "gt" in data:
                 self.gt = data["gt"].to(
                     self.device,
+                    memory_format=torch.channels_last,
                     non_blocking=True,
                 )

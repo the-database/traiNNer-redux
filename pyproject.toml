@@ -20,7 +20,7 @@ dependencies = [
 "timm",
 "torch>=2.4.1",
 "torchvision",
-"tqdm"
+"tqdm",
 ]
 authors = [{name = "the-database"}]
 description = "Deep learning training framework for image super resolution and restoration."
@@ -30,6 +30,7 @@ keywords = ["machine learning", "deep learning", "neural network", "pytorch", "s
 
 [project.optional-dependencies]
 dev = ["ruff", "pyright", "pytest", "syrupy"]
+onnx = ["onnx", "onnxruntime", "onnxconverter-common", "onnxslim"]
 
 [project.urls]
 Repository = "https://github.com/the-database/traiNNer-redux.git"

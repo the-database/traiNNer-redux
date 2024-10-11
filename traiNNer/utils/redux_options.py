@@ -115,6 +115,16 @@ class PathOptions(StrictStruct):
     ignore_resume_networks: list[str] | None = None
 
 
+class OnnxOptions(StrictStruct):
+    dynamo: bool = False
+    opset: int = 20
+    use_static_shapes: bool = False
+    shape: str = "3x256x256"
+    verify: bool = True
+    fp16: bool = False
+    optimize: bool = True
+
+
 class TrainOptions(StrictStruct):
     total_iter: int
     optim_g: dict[str, Any]
@@ -175,7 +185,6 @@ class ReduxOptions(StrictStruct):
     scale: int
     num_gpu: Literal["auto"] | int
     path: PathOptions
-    datasets: dict[str, DatasetOptions]
 
     network_g: dict[str, Any]
     network_d: dict[str, Any] | None = None
@@ -243,9 +252,11 @@ class ReduxOptions(StrictStruct):
     )
 
     queue_size: int = 180
+    datasets: dict[str, DatasetOptions] = {}
     train: TrainOptions | None = None
     val: ValOptions | None = None
     logger: LogOptions | None = None
     dist_params: dict[str, Any] | None = None
+    onnx: OnnxOptions | None = None
 
     find_unused_parameters: bool = False
