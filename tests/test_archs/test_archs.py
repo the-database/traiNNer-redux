@@ -15,6 +15,7 @@ from traiNNer.losses.basic_loss import L1Loss
 EXCLUDE_ARCHS = {
     "dat",
     "dunet",
+    "eimn",
     "hat",
     "swinir",
     "lmlt",

@@ -187,6 +187,11 @@ archs: list[ArchInfo] = [
         },
     },
     {"names": ["LMLT_Base", "LMLT_Large", "LMLT_Tiny"], "scales": ALL_SCALES},
+    {
+        "names": ["EIMN_L", "EIMN_A"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "EIMN",
+    },
 ]
 
 for arch in archs:
