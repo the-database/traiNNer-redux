@@ -1,10 +1,10 @@
 ####################
 # General Settings
 ####################
-name: 4x_SCUNet_aaf6aa
-scale: 4  # 1, 2, 4, 8
-use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
-amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only.
+name: 4x_DCT_light
+scale: 4  # 1, 2, 3, 4, 8
+use_amp: false  # Speed up training and reduce VRAM usage. NVIDIA only.
+amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only.
 num_gpu: auto
 
 
@@ -12,30 +12,29 @@ num_gpu: auto
 # Dataset and Dataloader Settings
 #################################
 datasets:
-  val:
-    name: Val Dataset
-    type: SingleImageDataset
-    # Path of the LR (low res) images to run the model on.
-    dataroot_lq: [
-      datasets/val/dataset1/lr,
-      datasets/val/dataset1/lr2
-    ]
+  test_4:  # the 4st test dataset
+    name: Urban100
+    type: PairedImageDataset
+    dataroot_gt: datasets/benchmark/Urban100/HR
+    dataroot_lq: datasets/benchmark/Urban100/LR_bicubic/X4
+    filename_tmpl: '{}x4'
     io_backend:
       type: disk
+
 
 #####################
 # Network Settings
 #####################
 # Generator model settings
 network_g:
-  type: SCUNet_aaf6aa
+  type: DCT_light
 
 ############################
 # Pretrain and Resume Paths
 ############################
 path:
   # Path of the model to run on the validation images.
-  pretrain_network_g: experiments/4x_SCUNet_aaf6aa/models/net_g_ema_1000.safetensors
+  pretrain_network_g: C:\Users\jsoos\Downloads\DCT_light_x4.pth
 
 #############
 # Validation
@@ -44,17 +43,16 @@ val:
   val_enabled: true  # Whether to enable validations. If disabled, all validation settings below are ignored.
   save_img: true  # Whether to save the validation images during validation, in the results/<name>/visualization folder.
   suffix: ~  # add suffix to saved images, if None, use exp name
-
-  metrics_enabled: false  # Whether to run metrics calculations during validation.
+  metrics_enabled: true  # Whether to run metrics calculations during validation.
   metrics:
     psnr:
       type: calculate_psnr
       crop_border: 4
-      test_y_channel: true
+      test_y_channel: false
     ssim:
       type: calculate_ssim
       crop_border: 4  # Whether to crop border during validation.
-      test_y_channel: true  # Whether to convert to Y(CbCr) for validation.
-    dists:
-      type: calculate_dists
-      better: lower
+      test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
+    # dists:
+    #   type: calculate_dists
+    #   better: lower
