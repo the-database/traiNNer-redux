@@ -193,7 +193,7 @@ archs: list[ArchInfo] = [
         "folder_name_override": "EIMN",
     },
     {"names": ["MAN", "MAN_tiny", "MAN_light"], "scales": ALL_SCALES},
-    {"names": ["HiT_LMLT"], "scales": ALL_SCALES},
+    {"names": ["HiT_LMLT"], "scales": ALL_SCALES, "folder_name_override": "HiT_LMLT"},
 ]
 
 for arch in archs:
