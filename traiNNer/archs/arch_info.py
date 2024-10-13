@@ -24,6 +24,7 @@ ARCHS_WITHOUT_FP16 = {
     "hit_srf",
     "hit_sng",
     "hit_sir",
+    "hit_lmlt",
 }
 
 # Urban100
