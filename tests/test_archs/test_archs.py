@@ -13,7 +13,6 @@ from traiNNer.losses.basic_loss import L1Loss
 # VGG and UNet are not applicable to the tests in this test suite and may
 # require their own test cases.
 EXCLUDE_ARCHS = {
-    "dat",
     "dunet",
     "eimn",
     "hat",
@@ -72,13 +71,14 @@ EXCLUDE_ARCH_SCALES = {
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
-REQUIRE_BATCH_2 = {"dat_2"}
+REQUIRE_BATCH_2 = {"dat_2", "dat", "dat_light", "dat_s"}
 ADD_VSR_DIM = {"tscunet"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
 REQUIRE_32_HW = {"realcugan", "hit_srf"}
 REQUIRE_64_HW = {
+    "hit_lmlt",
     "hit_sir",
     "hit_sng",
     "lmlt_base",
