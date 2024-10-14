@@ -1,3 +1,4 @@
+# ruff: noqa
 # type: ignore
 import numpy as np
 import torch
