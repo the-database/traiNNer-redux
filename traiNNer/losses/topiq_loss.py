@@ -20,7 +20,6 @@ class TOPIQLoss(nn.Module):
         )
         self.resize_input = resize_input
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportAttributeAccessIssue] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> tuple[Tensor | None, Tensor | None]:
         if self.resize_input:
             if x.shape[2] != PATCH_SIZE_KADID or x.shape[3] != PATCH_SIZE_KADID:
