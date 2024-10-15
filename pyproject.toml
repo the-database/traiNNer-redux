@@ -21,6 +21,7 @@ dependencies = [
 "torch>=2.4.1",
 "torchvision",
 "tqdm",
+"pyiqa",
 ]
 authors = [{name = "the-database"}]
 description = "Deep learning training framework for image super resolution and restoration."
