@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 import collections.abc
 from collections import OrderedDict
 from itertools import repeat

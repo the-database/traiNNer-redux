@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 import hashlib
 import os
 import urllib

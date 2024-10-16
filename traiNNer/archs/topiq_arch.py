@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 """TOP-IQ metric, proposed by
 
 TOPIQ: A Top-down Approach from Semantics to Distortions for Image Quality Assessment.
