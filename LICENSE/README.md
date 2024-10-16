@@ -45,3 +45,9 @@ traiNNer-redux is released under Apache License 2.0.
 |[joeyballentine/traiNNer-redux](https://github.com/joeyballentine/traiNNer-redux) | [Apache License 2.0](https://github.com/joeyballentine/traiNNer-redux/blob/master/LICENSE.txt)|
 |[VQGAN-CLIP-Video](https://github.com/robobeebop/VQGAN-CLIP-Video) (Lanczos resample) | [MIT License](https://github.com/robobeebop/VQGAN-CLIP-Video/blob/main/LICENSE)|
 
+
+The following parts of traiNNer-redux are licensed under CC BY-NC-SA 4.0.
+
+|Project|License|Code|
+|-|-|-|
+|[IQA-PyTorch](https://github.com/chaofengc/IQA-PyTorch)|[CC BY-NC-SA 4.0](https://github.com/chaofengc/IQA-PyTorch/blob/main/LICENSE)|[arch_util.py](https://github.com/the-database/traiNNer-redux/blob/dev/traiNNer/archs/arch_util.py) (IQA utils)<br>[clip_model.py](https://github.com/the-database/traiNNer-redux/blob/dev/traiNNer/archs/clip_model.py)<br>[topiq_arch.py](https://github.com/the-database/traiNNer-redux/blob/dev/traiNNer/archs/topiq_arch.py)<br>[topiq_swin.py](https://github.com/the-database/traiNNer-redux/blob/dev/traiNNer/archs/topiq_swin.py)|
