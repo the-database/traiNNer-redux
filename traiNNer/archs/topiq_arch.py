@@ -18,7 +18,6 @@ import timm
 import torch
 import torch.nn.functional as F  # noqa: N812
 import torchvision.transforms.functional as TF  # noqa: N812
-from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 from torch import nn
 
 # from pyiqa.utils.registry import ARCH_REGISTRY
@@ -377,15 +376,7 @@ class CFANet(nn.Module):
         self.crops = num_crop
 
         if model_name == "topiq_nr_gfiqa_res50":
-            self.face_helper = FaceRestoreHelper(
-                1,
-                face_size=512,
-                crop_ratio=(1, 1),
-                det_model="retinaface_resnet50",
-                save_ext="png",
-                use_parse=True,
-                model_rootpath=DEFAULT_CACHE_DIR,
-            )
+            raise ValueError(f"Unsupported model: {model_name}")
 
     def _init_linear(self, m) -> None:
         for module in m.modules():
