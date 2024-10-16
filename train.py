@@ -286,11 +286,6 @@ def train_pipeline(root_path: str) -> None:
             opt.manual_seed,
         )
 
-    if torch.is_anomaly_enabled():
-        logger.warning(
-            "Anomaly checking is enabled. This slows down training and should be used for testing only."
-        )
-
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
 
@@ -322,6 +317,11 @@ def train_pipeline(root_path: str) -> None:
             raise ValueError(
                 "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
             )
+
+    if torch.is_anomaly_enabled():
+        logger.warning(
+            "!!!! Anomaly checking is enabled. This slows down training and should be used for testing only !!!!"
+        )
 
     if resume_state:  # resume training
         model.resume_training(resume_state)  # handle optimizers and schedulers

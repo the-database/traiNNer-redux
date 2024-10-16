@@ -142,6 +142,7 @@ class TrainOptions(StrictStruct):
     dists_opt: dict[str, Any] | None = None
     hr_inversion_opt: dict[str, Any] | None = None
     dinov2_opt: dict[str, Any] | None = None
+    topiq_opt: dict[str, Any] | None = None
     ldl_opt: dict[str, Any] | None = None
     hsluv_opt: dict[str, Any] | None = None
     gan_opt: dict[str, Any] | None = None
