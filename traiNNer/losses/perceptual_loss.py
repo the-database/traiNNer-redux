@@ -8,6 +8,45 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 VGG_PATCH_SIZE = 256
 
 
+class ProjectedDistributionLoss(nn.Module):
+    def __init__(self, num_projections: int = 32) -> None:
+        super().__init__()
+        self.num_projections = num_projections
+        self.criterion = nn.L1Loss()
+
+    """Projected Distribution Loss (https://arxiv.org/abs/2012.09289)
+    x.shape = B,M,N,...
+    """
+
+    def rand_projections(
+        self,
+        dim: int,
+        device: torch.device,
+        num_projections: int,
+    ) -> Tensor:
+        projections = torch.randn((dim, num_projections), device=device)
+        projections = projections / torch.sqrt(
+            torch.sum(projections**2, dim=0, keepdim=True)
+        )  # columns are unit length normalized
+        return projections
+
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+        x = x.reshape(x.shape[0], x.shape[1], -1)  # B,N,M
+        y = y.reshape(y.shape[0], y.shape[1], -1)
+        w = self.rand_projections(
+            x.shape[-1], device=x.device, num_projections=self.num_projections
+        )
+        e_x = torch.matmul(x, w)
+        e_y = torch.matmul(y, w)
+        loss = torch.tensor(0.0, device=x.device)
+        for ii in range(e_x.shape[2]):
+            loss += self.criterion(
+                torch.sort(e_x[:, :, ii], dim=1)[0], torch.sort(e_y[:, :, ii], dim=1)[0]
+            )
+
+        return loss * 2 / self.num_projections
+
+
 @LOSS_REGISTRY.register()
 class PerceptualLoss(nn.Module):
     """Perceptual loss with commonly used style loss.
@@ -73,6 +112,8 @@ class PerceptualLoss(nn.Module):
             self.criterion = torch.nn.MSELoss()
         elif self.criterion_type == "charbonnier":
             self.criterion = charbonnier_loss
+        elif self.criterion_type == "pdl":
+            self.criterion = ProjectedDistributionLoss()
         elif self.criterion_type == "fro":
             self.criterion = None
         else:

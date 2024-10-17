@@ -274,7 +274,9 @@ class SRModel(BaseModel):
         if train_opt.dinov2_opt:
             if train_opt.dinov2_opt.get("loss_weight", 0) > 0:
                 self.cri_dinov2 = build_loss(train_opt.dinov2_opt).to(
-                    self.device, memory_format=torch.channels_last, non_blocking=True
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if train_opt.topiq_opt:
@@ -553,7 +555,9 @@ class SRModel(BaseModel):
                 p.requires_grad = True
 
             with torch.autocast(
-                device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
+                device_type=self.device.type,
+                dtype=self.amp_dtype,
+                enabled=self.use_amp,
             ):
                 # real
                 real_d_pred = self.net_d(self.gt)
