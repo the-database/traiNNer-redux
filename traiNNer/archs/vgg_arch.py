@@ -1,11 +1,14 @@
 import os
 from collections import OrderedDict
 
+import numpy as np
 import torch
 from torch import Tensor, nn
+from torch.nn import functional as F  # noqa: N812
 from torchvision.models import VGG19_Weights, vgg
-from torchvision.transforms.functional import InterpolationMode, center_crop, resize
+from torchvision.transforms.functional import InterpolationMode, resize
 
+# from traiNNer.losses.dists_loss import L2pooling
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 VGG19_PATCH_SIZE = 256
@@ -155,6 +158,38 @@ def insert_bn(names: list[str]) -> list[str]:
     return names_bn
 
 
+class L2pooling(nn.Module):
+    def __init__(
+        self,
+        channels: int,
+        filter_size: int = 5,
+        stride: int = 2,
+        as_loss: bool = True,
+        pad_off: int = 0,
+    ) -> None:
+        super().__init__()
+        self.padding = (filter_size - 2) // 2
+        self.stride = stride
+        self.channels = channels
+        a = np.hanning(filter_size)[1:-1]
+        g = torch.Tensor(a[:, None] * a[None, :])
+        g = g / torch.sum(g)
+        self.register_buffer(
+            "filter", g[None, None, :, :].repeat((self.channels, 1, 1, 1))
+        )
+
+    def forward(self, input: Tensor) -> Tensor:
+        input = input**2
+        out = F.conv2d(
+            input,
+            self.filter,
+            stride=self.stride,
+            padding=self.padding,
+            groups=input.shape[1],
+        )
+        return (out + 1e-12).sqrt()
+
+
 @ARCH_REGISTRY.register()
 class VGGFeatureExtractor(nn.Module):
     """VGG network for feature extraction.
@@ -187,17 +222,16 @@ class VGGFeatureExtractor(nn.Module):
         range_norm: bool = False,
         requires_grad: bool = False,
         remove_pooling: bool = False,
-        crop_input: bool = False,
         resize_input: bool = False,
         use_replicate_padding: bool = False,
         pooling_stride: int = 2,
+        use_l2_pooling: bool = False,
     ) -> None:
         super().__init__()
 
         self.layer_name_list = layer_name_list
         self.use_input_norm = use_input_norm
         self.range_norm = range_norm
-        self.crop_input = crop_input
         self.resize_input = resize_input
 
         self.names = NAMES[vgg_type.replace("_bn", "")]
@@ -229,14 +263,27 @@ class VGGFeatureExtractor(nn.Module):
             features[0] = self._change_padding_mode(features[0], "replicate")
 
         modified_net = OrderedDict()
+        l2pooling_channels = [64, 128, 256, 512]
+        l2pooling_i = 0
         for k, v in zip(self.names, features, strict=False):
             if "pool" in k:
                 # if remove_pooling is true, pooling operation will be removed
                 if remove_pooling:
                     continue
-                else:
+                else:  # noqa: PLR5501
                     # in some cases, we may want to change the default stride
-                    modified_net[k] = nn.MaxPool2d(kernel_size=2, stride=pooling_stride)
+                    if use_l2_pooling:
+                        if l2pooling_i < len(l2pooling_channels):
+                            modified_net[k] = L2pooling(
+                                channels=l2pooling_channels[l2pooling_i]
+                            )
+                        l2pooling_i += 1
+                    else:
+                        modified_net[k] = nn.MaxPool2d(
+                            kernel_size=2, stride=pooling_stride
+                        )
+            # if "relu" in k:
+            #     modified_net[k] = nn.Mish()  # TODO SILU
             else:
                 modified_net[k] = v
 
@@ -260,6 +307,9 @@ class VGGFeatureExtractor(nn.Module):
             self.register_buffer(
                 "std", torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
             )
+        else:
+            self.register_buffer("mean", torch.Tensor([0.5, 0.5, 0.5]).view(1, 3, 1, 1))
+            self.register_buffer("std", torch.Tensor([0.5, 0.5, 0.5]).view(1, 3, 1, 1))
 
     @staticmethod
     def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
@@ -277,6 +327,7 @@ class VGGFeatureExtractor(nn.Module):
                 new_conv.bias.copy_(conv.bias)
         return new_conv
 
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportAttributeAccessIssue] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         """Forward function.
 
@@ -290,22 +341,18 @@ class VGGFeatureExtractor(nn.Module):
         if self.resize_input:
             # vgg19 patch size
             # skip resize if dimensions already match
-            if x.shape[2] != VGG19_PATCH_SIZE or x.shape[3] != VGG19_PATCH_SIZE:
+            if x.shape[2] != VGG19_CROP_SIZE or x.shape[3] != VGG19_CROP_SIZE:
                 x = resize(
                     x,
-                    [VGG19_PATCH_SIZE],
+                    [VGG19_CROP_SIZE],
                     interpolation=InterpolationMode.BICUBIC,
                     antialias=True,
                 )
 
-        if self.crop_input:
-            # vgg19 crop size
-            x = center_crop(x, [VGG19_CROP_SIZE])
-
         if self.range_norm:
             x = (x + 1) / 2
-        if self.use_input_norm:
-            x = (x - self.mean) / self.std
+
+        x = (x - self.mean) / self.std
 
         output = {}
         for key, layer in self.vgg_net._modules.items():  # noqa: SLF001
