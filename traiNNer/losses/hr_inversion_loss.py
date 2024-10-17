@@ -374,7 +374,7 @@ class HRInversionLoss(nn.Module):
 
         self.criterion = torch.nn.MSELoss(reduction="sum")
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportAttributeAccessIssue] # https://github.com/pytorch/pytorch/issues/131765
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_features = self.vgg16_conv_loss(x)
         gt_features = self.vgg16_conv_loss(gt)
