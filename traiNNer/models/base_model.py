@@ -202,19 +202,19 @@ class BaseModel:
         # uppercase optim_type to make it case insensitive
         optim_type_upper = optim_type.upper()
         optim_map = {
-            "ADADELTA": torch.optim.Adadelta,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "ADAGRAD": torch.optim.Adagrad,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "ADAM": torch.optim.Adam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "ADAMW": torch.optim.AdamW,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "SPARSEADAM": torch.optim.SparseAdam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "ADAMAX": torch.optim.Adamax,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "ASGD": torch.optim.ASGD,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "SGD": torch.optim.SGD,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "RADAM": torch.optim.RAdam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "RPROP": torch.optim.Rprop,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "RMSPROP": torch.optim.RMSprop,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "NADAM": torch.optim.NAdam,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
-            "LBFGS": torch.optim.LBFGS,  # pyright: ignore [reportPrivateImportUsage] (https://github.com/pytorch/pytorch/issues/131765)
+            "ADADELTA": torch.optim.Adadelta,
+            "ADAGRAD": torch.optim.Adagrad,
+            "ADAM": torch.optim.Adam,
+            "ADAMW": torch.optim.AdamW,
+            "SPARSEADAM": torch.optim.SparseAdam,
+            "ADAMAX": torch.optim.Adamax,
+            "ASGD": torch.optim.ASGD,
+            "SGD": torch.optim.SGD,
+            "RADAM": torch.optim.RAdam,
+            "RPROP": torch.optim.Rprop,
+            "RMSPROP": torch.optim.RMSprop,
+            "NADAM": torch.optim.NAdam,
+            "LBFGS": torch.optim.LBFGS,
             "ADAN": pytorch_optimizer.Adan,
             "LAMB": pytorch_optimizer.Lamb,
             "PRODIGY": pytorch_optimizer.Prodigy,

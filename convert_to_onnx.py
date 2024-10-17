@@ -36,43 +36,32 @@ def convert_and_save_onnx(
     assert model.net_g is not None
     assert opt.onnx is not None
 
-    if opt.onnx.dynamo:
-        onnx_program = torch.onnx.dynamo_export(
-            model.net_g,
-            torch_input,
-            export_options=torch.onnx.ExportOptions(
-                dynamic_shapes=not opt.onnx.use_static_shapes
-            ),
-        )
-        out_path = get_out_path(out_dir, opt.name, opt.onnx.opset, False)
-        onnx_program.save(out_path)
-        model_proto = onnx_program.model_proto
+    if opt.onnx.use_static_shapes:
+        dynamic_axes = None
+        input_names = None
+        output_names = None
     else:
-        if opt.onnx.use_static_shapes:
-            dynamic_axes = None
-            input_names = None
-            output_names = None
-        else:
-            dynamic_axes = {
-                "input": {0: "batch_size", 2: "width", 3: "height"},
-                "output": {0: "batch_size", 2: "width", 3: "height"},
-            }
-            input_names = ["input"]
-            output_names = ["output"]
+        dynamic_axes = {
+            "input": {0: "batch_size", 2: "width", 3: "height"},
+            "output": {0: "batch_size", 2: "width", 3: "height"},
+        }
+        input_names = ["input"]
+        output_names = ["output"]
 
-        out_path = get_out_path(out_dir, opt.name, opt.onnx.opset, False)
+    out_path = get_out_path(out_dir, opt.name, opt.onnx.opset, False)
 
-        torch.onnx.export(
-            model.net_g,
-            torch_input,
-            out_path,
-            verbose=False,
-            opset_version=opt.onnx.opset,
-            dynamic_axes=dynamic_axes,
-            input_names=input_names,
-            output_names=output_names,
-        )
-        model_proto = onnx.load(out_path)
+    torch.onnx.export(
+        model.net_g,
+        (torch_input,),
+        out_path,
+        dynamo=opt.onnx.dynamo,
+        verbose=False,
+        opset_version=opt.onnx.opset,
+        dynamic_axes=dynamic_axes,
+        input_names=input_names,
+        output_names=output_names,
+    )
+    model_proto = onnx.load(out_path)
 
     assert model_proto is not None
 

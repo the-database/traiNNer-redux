@@ -1,4 +1,5 @@
 import importlib.metadata
+import sys
 import tomllib
 
 from packaging.version import InvalidVersion, Version
@@ -36,12 +37,12 @@ def check_dependencies() -> None:
         if min_version:
             try:
                 if Version(installed_version) < Version(min_version):
-                    if "torch" in package:
-                        msg = "Please update PyTorch by first uninstalling it (pip uninstall torch torchvision) and then follow the instructions to install the latest stable version at https://pytorch.org/get-started/locally/"
+                    if sys.platform == "win32":
+                        cmd = "./install.bat"
                     else:
-                        msg = "Please run this command to update dependencies: pip install ."
+                        cmd = "./install.sh"
                     raise RuntimeError(
-                        f"{package} version {installed_version} is lower than the required version {min_version}. {msg}"
+                        f"{package} version {installed_version} is lower than the required version {min_version}. Please run this command to update dependencies: {cmd}"
                     )
             except InvalidVersion as err:
                 raise RuntimeError(
