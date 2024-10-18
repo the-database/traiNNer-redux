@@ -29,7 +29,7 @@ license = {file = "LICENSE.txt"}
 keywords = ["machine learning", "deep learning", "neural network", "pytorch", "super resolution", "upscale", "image restoration" ]
 
 [project.optional-dependencies]
-dev = ["ruff", "pyright", "pytest", "syrupy"]
+dev = ["ruff", "pyright", "pytest", "syrupy", "torchfix"]
 onnx = ["onnx", "onnxruntime", "onnxconverter-common", "onnxslim"]
 
 [project.urls]
