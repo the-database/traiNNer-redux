@@ -230,7 +230,7 @@ class LMLTVIT(nn.Module):
         x = x.reshape(-1, C, H_sp * W_sp).permute(0, 2, 1).contiguous()
         return x, lepe
 
-    def forward(self, x: Tensor, resolution: tuple[int, int]):
+    def forward(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
         _B, _N, C = x.shape  # noqa: N806
         H, W = resolution  # noqa: N806
         x = rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
