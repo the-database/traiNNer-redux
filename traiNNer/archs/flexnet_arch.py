@@ -7,13 +7,9 @@ import torch.nn.functional as F  # noqa: N812
 from einops import rearrange
 from torch import Tensor, nn
 
-from traiNNer.utils.registry import ARCH_REGISTRY
-
-T_att_type = Literal["lmlt", "Castling"]
-
 
 class Interpolate(nn.Module):
-    def __init__(self, scale_factor: int, mode: str = "nearest") -> None:
+    def __init__(self, scale_factor: int = 4, mode: str = "nearest") -> None:
         super().__init__()
         self.scale_factor = scale_factor
         self.mode = mode
@@ -23,7 +19,7 @@ class Interpolate(nn.Module):
 
 
 class InterpolateUpsampler(nn.Sequential):
-    def __init__(self, dim: int, out_ch: int, scale: int) -> None:
+    def __init__(self, dim: int = 64, out_ch: int = 3, scale: int = 4) -> None:
         m = []
         if (scale & (scale - 1)) == 0:
             for _ in range(int(math.log2(scale))):
@@ -44,7 +40,9 @@ class InterpolateUpsampler(nn.Sequential):
 class ConvBlock(nn.Module):
     r"""https://github.com/joshyZhou/AST/blob/main/model.py#L22"""
 
-    def __init__(self, in_channel: int, out_channel: int, strides: int = 1) -> None:
+    def __init__(
+        self, in_channel: int = 3, out_channel: int = 48, strides: int = 1
+    ) -> None:
         super().__init__()
         self.strides = strides
         self.in_channel = in_channel
@@ -70,7 +68,7 @@ class ConvBlock(nn.Module):
 
 
 class OmniShift(nn.Module):
-    def __init__(self, dim: int) -> None:
+    def __init__(self, dim: int = 48) -> None:
         super().__init__()
         # Define the layers for training
         self.conv1x1 = nn.Conv2d(
@@ -145,7 +143,7 @@ class OmniShift(nn.Module):
         if self.training:
             self.repram_flag = True
             out = self.forward_train(x)
-        elif self.repram_flag == True:
+        elif self.repram_flag:
             self.reparam_5x5()
             self.repram_flag = False
             out = self.conv5x5_reparam(x)
@@ -164,85 +162,10 @@ class MatMul(nn.Module):
         return out
 
 
-class LinAngularAttention(nn.Module):
+class LMLTVIT(nn.Module):
     def __init__(
         self,
-        in_channels: int = 64,
-        num_heads: int = 8,
-        qkv_bias: bool = True,
-        attn_drop: float = 0.0,
-        proj_drop: float = 0.0,
-        res_kernel_size: int = 9,
-    ) -> None:
-        super().__init__()
-        assert in_channels % num_heads == 0, "dim should be divisible by num_heads"
-        self.num_heads = num_heads
-        head_dim = in_channels // num_heads
-        self.omni_shift = OmniShift(in_channels)
-        self.scale = head_dim**-0.5
-
-        self.qkv = nn.Linear(in_channels, in_channels * 3, bias=qkv_bias)
-        self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(in_channels, in_channels)
-        self.proj_drop = nn.Dropout(proj_drop)
-
-        self.kq_matmul = MatMul()
-        self.kqv_matmul = MatMul()
-
-        self.dconv = nn.Conv2d(
-            in_channels=self.num_heads,
-            out_channels=self.num_heads,
-            kernel_size=(res_kernel_size, 1),
-            padding=(res_kernel_size // 2, 0),
-            bias=False,
-            groups=self.num_heads,
-        )
-
-    def forward(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
-        N, L, C = x.shape  # noqa: N806
-        H, W = resolution  # noqa: N806
-        x = rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
-        x = self.omni_shift(x)
-        x = rearrange(x, "b c h w -> b (h w) c")
-        qkv = (
-            self.qkv(x)
-            .reshape(N, L, 3, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
-        )
-        q, k, v = qkv.unbind(0)  # make torchscript happy (cannot use tensor as tuple)
-
-        sparse = None
-
-        if self.training:
-            attn = (q * self.scale) @ k.transpose(-2, -1)
-            attn = attn.softmax(dim=-1)
-            mask = (
-                attn > 0.02
-            )  # note that the threshold could be different; adapt to your codebases.
-            sparse = mask * attn
-
-        q = q / q.norm(dim=-1, keepdim=True)
-        k = k / k.norm(dim=-1, keepdim=True)
-        dconv_v = self.dconv(v)
-
-        attn = self.kq_matmul(k.transpose(-2, -1), v)
-
-        if sparse is not None:
-            x = sparse @ v + 0.5 * v + 1.0 / torch.pi * self.kqv_matmul(q, attn)
-        else:
-            x = 0.5 * v + 1.0 / torch.pi * self.kqv_matmul(q, attn)
-        x = x / x.norm(dim=-1, keepdim=True)
-        x += dconv_v
-        x = x.transpose(1, 2).reshape(N, L, C)
-        x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
-
-
-class LMLTViT(nn.Module):
-    def __init__(
-        self,
-        dim: int,
+        dim: int = 48,
         window_size: int = 8,
         attn_drop: float = 0.0,
         proj_drop: float = 0.0,
@@ -307,7 +230,7 @@ class LMLTViT(nn.Module):
         x = x.reshape(-1, C, H_sp * W_sp).permute(0, 2, 1).contiguous()
         return x, lepe
 
-    def forward(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
+    def forward(self, x: Tensor, resolution: tuple[int, int]):
         _B, _N, C = x.shape  # noqa: N806
         H, W = resolution  # noqa: N806
         x = rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
@@ -356,7 +279,7 @@ class LMLTViT(nn.Module):
 
 class ChannelMix(nn.Module):
     def __init__(
-        self, n_embd: int, hidden_rate: int = 4, key_norm: bool = False
+        self, n_embd: int = 48, hidden_rate: int = 4, key_norm: bool = False
     ) -> None:
         super().__init__()
         self.n_embd = n_embd
@@ -391,12 +314,20 @@ class ChannelMix(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, dim: int, att_type: T_att_type = "lmlt") -> None:
+    def __init__(
+        self,
+        dim: int,
+        window_size: int = 8,
+        hidden_rate: int = 4,
+        channel_norm: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
+    ) -> None:
         super().__init__()
         self.rn1 = nn.RMSNorm(dim)
         self.rn2 = nn.RMSNorm(dim)
-        self.att = LMLTViT(dim) if att_type == "lmlt" else LinAngularAttention(dim)
-        self.ffn = ChannelMix(dim)
+        self.att = LMLTVIT(dim, window_size, attn_drop, proj_drop)
+        self.ffn = ChannelMix(dim, hidden_rate, channel_norm)
         self.gamma1 = nn.Parameter(torch.ones(dim), requires_grad=True)
         self.gamma2 = nn.Parameter(torch.ones(dim), requires_grad=True)
 
@@ -407,10 +338,24 @@ class TransformerBlock(nn.Module):
 
 
 class LBlock(nn.Module):
-    def __init__(self, dim: int, n_block: int, att_type: T_att_type) -> None:
+    def __init__(
+        self,
+        dim: int = 48,
+        n_block: int = 1,
+        window_size: int = 8,
+        hidden_rate: int = 4,
+        channel_norm: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
+    ) -> None:
         super().__init__()
         self.t_blocks = nn.ModuleList(
-            [TransformerBlock(dim, att_type) for _ in range(n_block)]
+            [
+                TransformerBlock(
+                    dim, window_size, hidden_rate, channel_norm, attn_drop, proj_drop
+                )
+                for _ in range(n_block)
+            ]
         )
         self.conv = ConvBlock(dim * 2, dim)
 
@@ -427,10 +372,24 @@ class LBlock(nn.Module):
 
 
 class MBlock(nn.Module):
-    def __init__(self, dim: int, n_block: int, att_type: T_att_type) -> None:
+    def __init__(
+        self,
+        dim: int = 48,
+        n_block: int = 1,
+        window_size: int = 8,
+        hidden_rate: int = 4,
+        channel_norm: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
+    ) -> None:
         super().__init__()
         self.t_blocks = nn.ModuleList(
-            [TransformerBlock(dim, att_type) for _ in range(n_block)]
+            [
+                TransformerBlock(
+                    dim, window_size, hidden_rate, channel_norm, attn_drop, proj_drop
+                )
+                for _ in range(n_block)
+            ]
         )
         self.conv = ConvBlock(dim * 2, dim)
 
@@ -449,11 +408,29 @@ class MBlock(nn.Module):
 
 class LinearPipeline(nn.Module):
     def __init__(
-        self, dim: int, num_blocks: Sequence[int], att_type: T_att_type
+        self,
+        dim: int = 48,
+        num_blocks: Sequence[int] = (4, 6, 6, 8),
+        window_size: int = 8,
+        hidden_rate: int = 4,
+        channel_norm: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
     ) -> None:
         super().__init__()
         self.att = nn.ModuleList(
-            [LBlock(dim, num_block, att_type) for num_block in num_blocks]
+            [
+                LBlock(
+                    dim,
+                    num_block,
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+                for num_block in num_blocks
+            ]
         )
 
     def forward(self, x: Tensor) -> Tensor:
@@ -467,9 +444,8 @@ class LinearPipeline(nn.Module):
 
 
 class Downsample(nn.Module):
-    def __init__(self, n_feat: int) -> None:
+    def __init__(self, n_feat: int = 48) -> None:
         super().__init__()
-
         self.body = nn.Sequential(
             nn.Conv2d(
                 n_feat, n_feat // 2, kernel_size=3, stride=1, padding=1, bias=False
@@ -482,7 +458,7 @@ class Downsample(nn.Module):
 
 
 class Upsample(nn.Module):
-    def __init__(self, n_feat: int) -> None:
+    def __init__(self, n_feat: int = 48) -> None:
         super().__init__()
 
         self.body = nn.Sequential(
@@ -496,13 +472,68 @@ class Upsample(nn.Module):
 
 class MetaPipeline(nn.Module):
     def __init__(
-        self, dim: int, num_blocks: Sequence[int], att_type: T_att_type
+        self,
+        dim: int = 48,
+        num_blocks: Sequence[int] = (4, 6, 6, 8),
+        window_size: int = 8,
+        hidden_rate: int = 4,
+        channel_norm: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
     ) -> None:
         super().__init__()
-        self.enc0 = nn.Sequential(*[MBlock(dim, num_blocks[0], att_type)])
-        self.enc1 = nn.Sequential(*[MBlock(dim * 2, num_blocks[1], att_type)])
-        self.enc2 = nn.Sequential(*[MBlock(dim * 4, num_blocks[2], att_type)])
-        self.enc3 = nn.Sequential(*[MBlock(dim * 8, num_blocks[3], att_type)])
+        self.enc0 = nn.Sequential(
+            *[
+                MBlock(
+                    dim,
+                    num_blocks[0],
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+            ]
+        )
+        self.enc1 = nn.Sequential(
+            *[
+                MBlock(
+                    dim * 2,
+                    num_blocks[1],
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+            ]
+        )
+        self.enc2 = nn.Sequential(
+            *[
+                MBlock(
+                    dim * 4,
+                    num_blocks[2],
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+            ]
+        )
+        self.enc3 = nn.Sequential(
+            *[
+                MBlock(
+                    dim * 8,
+                    num_blocks[3],
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+            ]
+        )
 
         self.down1 = Downsample(dim)
         self.down2 = Downsample(dim * 2)
@@ -512,9 +543,45 @@ class MetaPipeline(nn.Module):
         self.up2 = Upsample(dim * 8)
         self.up3 = Upsample(dim * 4)
 
-        self.dec0 = nn.Sequential(*[MBlock(dim * 4, num_blocks[2], att_type)])
-        self.dec1 = nn.Sequential(*[MBlock(dim * 2, num_blocks[1], att_type)])
-        self.dec2 = nn.Sequential(*[MBlock(dim, num_blocks[0], att_type)])
+        self.dec0 = nn.Sequential(
+            *[
+                MBlock(
+                    dim * 4,
+                    num_blocks[2],
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+            ]
+        )
+        self.dec1 = nn.Sequential(
+            *[
+                MBlock(
+                    dim * 2,
+                    num_blocks[1],
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+            ]
+        )
+        self.dec2 = nn.Sequential(
+            *[
+                MBlock(
+                    dim,
+                    num_blocks[0],
+                    window_size,
+                    hidden_rate,
+                    channel_norm,
+                    attn_drop,
+                    proj_drop,
+                )
+            ]
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         enc0 = self.enc0(x)
@@ -542,7 +609,6 @@ class MetaPipeline(nn.Module):
         return x
 
 
-@ARCH_REGISTRY.register()
 class FlexNet(nn.Module):
     def __init__(
         self,
@@ -551,30 +617,50 @@ class FlexNet(nn.Module):
         scale: int = 4,
         dim: int = 64,
         num_blocks: Sequence[int] = (
-            6,
-            6,
-            6,
-            6,
-            6,
-            6,
-        ),  # meta = (4,6,6,8), # linear = (6, 6, 6, 6, 6, 6),
-        att_type: T_att_type = "lmlt",
-        pipeline_type: Literal["meta", "linear"] = "linear",
+            8,
+            8,
+            8,
+            8,
+        ),  # meta = (8,8,8,8), # linear = (6, 6, 6, 6, 6, 6),
+        window_size: int = 8,
+        hidden_rate: int = 4,
+        channel_norm: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
+        pipeline_type: Literal["meta", "linear"] = "meta",
         upsampler: Literal["ps", "n+c"] = "ps",
     ) -> None:
         super().__init__()
-        self.window_size = 8
-        self.att_type = att_type
+        self.register_buffer(
+            "window_size", torch.tensor(window_size, dtype=torch.uint8)
+        )
         self.pipeline_type = pipeline_type
         self.scale = scale
         self.short_cut = ConvBlock(inp_channels, dim)
         self.in_to_feat = nn.Conv2d(inp_channels, dim, 3, 1, 1)
         self.pipeline = (
-            LinearPipeline(dim, num_blocks, att_type)
+            LinearPipeline(
+                dim,
+                num_blocks,
+                window_size,
+                hidden_rate,
+                channel_norm,
+                attn_drop,
+                proj_drop,
+            )
             if pipeline_type == "linear"
-            else MetaPipeline(dim, num_blocks, att_type)
+            else MetaPipeline(
+                dim,
+                num_blocks,
+                window_size,
+                hidden_rate,
+                channel_norm,
+                attn_drop,
+                proj_drop,
+            )
         )
         if upsampler == "n+c":
+            self.register_buffer("scale_factor", torch.tensor(scale, dtype=torch.uint8))
             self.to_img = nn.Sequential(
                 nn.Conv2d(dim * 2, dim, 3, 1, 1),
                 InterpolateUpsampler(dim, out_channels, scale),
@@ -587,12 +673,9 @@ class FlexNet(nn.Module):
 
     def check_img_size(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
         h, w = resolution
-        scaled_size = 1
+        scaled_size = self.window_size.to(int)
         if self.pipeline_type == "meta":
             scaled_size *= 8
-        if self.att_type == "lmlt":
-            scaled_size *= 8
-
         mod_pad_h = (scaled_size - h % scaled_size) % scaled_size
         mod_pad_w = (scaled_size - w % scaled_size) % scaled_size
         return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
