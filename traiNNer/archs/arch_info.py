@@ -11,6 +11,7 @@ ARCHS_WITHOUT_FP16 = {
     "drct",
     "drct_l",
     "drct_xl",
+    "flexnet",
     "hat_l",
     "hat_m",
     "hat_s",
