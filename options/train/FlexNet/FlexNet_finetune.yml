@@ -63,8 +63,8 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: FlexNet
-  pipeline_type: linear  # linear, meta
+  type: FlexNet  # FlexNet, MetaFlexNet
+  upsampler: pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)
 
 # Discriminator model settings
 network_d:
