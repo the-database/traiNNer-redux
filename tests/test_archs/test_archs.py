@@ -84,6 +84,7 @@ REQUIRE_64_HW = {
     "lmlt_base",
     "lmlt_large",
     "lmlt_tiny",
+    "metaflexnet",
     "scunet_aaf6aa",
     "tscunet",
 }
