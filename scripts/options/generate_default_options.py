@@ -193,7 +193,14 @@ archs: list[ArchInfo] = [
         "folder_name_override": "EIMN",
     },
     {"names": ["MAN", "MAN_tiny", "MAN_light"], "scales": ALL_SCALES},
-    # {"names": ["HiT_LMLT"], "scales": ALL_SCALES, "folder_name_override": "HiT_LMLT"},
+    {
+        "names": ["FlexNet", "MetaFlexNet"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)"
+        },
+    },
+    {"names": ["HMA"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:

@@ -1,12 +1,14 @@
 import math
 from collections.abc import Callable, Sequence
-from typing import Literal
+from typing import Literal, get_args
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from einops import rearrange
 from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import Tensor, nn
+
+from traiNNer.utils.registry import ARCH_REGISTRY
 
 
 class Interpolate(nn.Module):
@@ -610,6 +612,10 @@ class MetaPipeline(nn.Module):
         return x
 
 
+T_upsampler = Literal["pixelshuffle", "nearest+conv", "dysample"]
+
+
+@ARCH_REGISTRY.register()
 class FlexNet(nn.Module):
     def __init__(
         self,
@@ -631,7 +637,7 @@ class FlexNet(nn.Module):
         attn_drop: float = 0.0,
         proj_drop: float = 0.0,
         pipeline_type: Literal["meta", "linear"] = "linear",
-        upsampler: Literal["pixelshuffle", "nearest+conv", "dysample"] = "pixelshuffle",
+        upsampler: T_upsampler = "pixelshuffle",
     ) -> None:
         super().__init__()
         self.register_buffer(
@@ -670,10 +676,14 @@ class FlexNet(nn.Module):
             )
         elif upsampler == "dysample":
             self.to_img = DySample(dim * 2, out_channels, scale)
-        else:
+        elif upsampler == "pixelshuffle":
             self.to_img = nn.Sequential(
                 nn.Conv2d(dim * 2, out_channels * (scale**2), 3, 1, 1),
                 nn.PixelShuffle(scale),
+            )
+        else:
+            raise ValueError(
+                f"upsampler {upsampler} not supported, choose one of these options: {get_args(T_upsampler)}"
             )
 
     def check_img_size(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
@@ -696,5 +706,6 @@ class FlexNet(nn.Module):
         return x[:, :, : h * self.scale, : w * self.scale]
 
 
+@ARCH_REGISTRY.register()
 def metaflexnet(**kwargs) -> FlexNet:
     return FlexNet(dim=48, num_blocks=(4, 6, 6, 8), pipeline_type="meta", **kwargs)

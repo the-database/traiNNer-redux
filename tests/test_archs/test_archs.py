@@ -219,7 +219,7 @@ class TestArchs:
         gt = torch.rand(gt_shape, device=device, dtype=dtype)
         model = arch(scale=scale, **extra_arch_params).train().to(device, dtype=dtype)
 
-        optimizer = torch.optim.AdamW(model.parameters())  # pyright: ignore [reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+        optimizer = torch.optim.AdamW(model.parameters())
         loss_fn = L1Loss()
 
         output = model(lq)
