@@ -20,7 +20,6 @@ from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
-from traiNNer.losses.loss_util import get_refined_artifact_map
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -454,14 +453,7 @@ class SRModel(BaseModel):
                 loss_dict["l_g_ms_ssim_l1"] = l_g_ms_ssim_l1
             if self.cri_ldl:
                 assert self.net_g_ema is not None
-                # TODO support LDL without ema
-                pixel_weight = get_refined_artifact_map(
-                    self.gt, self.output, self.net_g_ema(self.lq), 7
-                )
-                l_g_ldl = self.cri_ldl(
-                    torch.mul(pixel_weight, self.output),
-                    torch.mul(pixel_weight, self.gt),
-                )
+                l_g_ldl = self.cri_ldl(self.output, self.gt)
                 l_g_total += l_g_ldl / self.accum_iters
                 loss_dict["l_g_ldl"] = l_g_ldl
             # perceptual loss

@@ -151,6 +151,10 @@ train:
     type: DISTSLoss  # DISTSLoss, ADISTSLoss
     use_input_norm: true
     loss_weight: 0  # 0.3
+  # LDL loss
+  ldl_opt:
+    type: LDLLoss
+    loss_weight: 0  # 1.0
   # DINOv2 perceptual loss
   dinov2_opt:
     type: DinoV2Loss
