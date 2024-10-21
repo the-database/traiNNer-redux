@@ -8,8 +8,8 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 import torchvision.transforms as tv_trans
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from timm.layers import ClassifierHead
 from timm.models import build_model_with_cfg, register_model
-from timm.models.layers import ClassifierHead
 from torch import Tensor, nn
 
 from traiNNer.utils.registry import LOSS_REGISTRY
