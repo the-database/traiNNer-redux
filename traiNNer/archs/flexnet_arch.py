@@ -1,11 +1,14 @@
 import math
 from collections.abc import Callable, Sequence
-from typing import Literal
+from typing import Literal, get_args
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from einops import rearrange
+from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import Tensor, nn
+
+from traiNNer.utils.registry import ARCH_REGISTRY
 
 
 class Interpolate(nn.Module):
@@ -31,6 +34,8 @@ class InterpolateUpsampler(nn.Sequential):
         elif scale == 3:
             m.append(nn.Conv2d(dim, dim, 3, 1, 1))
             m.append(Interpolate(scale))
+            m.append(nn.LeakyReLU(negative_slope=0.2, inplace=True))
+            m.append(nn.Conv2d(dim, dim, 3, 1, 1))
             m.append(nn.LeakyReLU(negative_slope=0.2, inplace=True))
 
         m.append(nn.Conv2d(dim, out_ch, 3, 1, 1))
@@ -107,8 +112,6 @@ class OmniShift(nn.Module):
         out1x1 = self.conv1x1(x)
         out3x3 = self.conv3x3(x)
         out5x5 = self.conv5x5(x)
-        # import pdb
-        # pdb.set_trace()
 
         out = (
             self.alpha[0] * x
@@ -290,7 +293,7 @@ class ChannelMix(nn.Module):
         self.omni_shift = OmniShift(dim=n_embd)
 
         if key_norm:
-            self.key_norm = nn.LayerNorm(hidden_sz)
+            self.key_norm = nn.RMSNorm(hidden_sz)
         else:
             self.key_norm = None
         self.receptance = nn.Linear(n_embd, n_embd, bias=False)
@@ -609,6 +612,10 @@ class MetaPipeline(nn.Module):
         return x
 
 
+T_upsampler = Literal["pixelshuffle", "nearest+conv", "dysample"]
+
+
+@ARCH_REGISTRY.register()
 class FlexNet(nn.Module):
     def __init__(
         self,
@@ -617,18 +624,20 @@ class FlexNet(nn.Module):
         scale: int = 4,
         dim: int = 64,
         num_blocks: Sequence[int] = (
-            8,
-            8,
-            8,
-            8,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
         ),  # meta = (8,8,8,8), # linear = (6, 6, 6, 6, 6, 6),
         window_size: int = 8,
         hidden_rate: int = 4,
         channel_norm: bool = False,
         attn_drop: float = 0.0,
         proj_drop: float = 0.0,
-        pipeline_type: Literal["meta", "linear"] = "meta",
-        upsampler: Literal["ps", "n+c"] = "ps",
+        pipeline_type: Literal["meta", "linear"] = "linear",
+        upsampler: T_upsampler = "pixelshuffle",
     ) -> None:
         super().__init__()
         self.register_buffer(
@@ -659,16 +668,22 @@ class FlexNet(nn.Module):
                 proj_drop,
             )
         )
-        if upsampler == "n+c":
+        if upsampler == "nearest+conv":
             self.register_buffer("scale_factor", torch.tensor(scale, dtype=torch.uint8))
             self.to_img = nn.Sequential(
                 nn.Conv2d(dim * 2, dim, 3, 1, 1),
                 InterpolateUpsampler(dim, out_channels, scale),
             )
-        else:
+        elif upsampler == "dysample":
+            self.to_img = DySample(dim * 2, out_channels, scale)
+        elif upsampler == "pixelshuffle":
             self.to_img = nn.Sequential(
                 nn.Conv2d(dim * 2, out_channels * (scale**2), 3, 1, 1),
                 nn.PixelShuffle(scale),
+            )
+        else:
+            raise ValueError(
+                f"upsampler {upsampler} not supported, choose one of these options: {get_args(T_upsampler)}"
             )
 
     def check_img_size(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
@@ -689,3 +704,8 @@ class FlexNet(nn.Module):
         x = torch.cat([x, short_cut], dim=1)
         x = self.to_img(x)
         return x[:, :, : h * self.scale, : w * self.scale]
+
+
+@ARCH_REGISTRY.register()
+def metaflexnet(**kwargs) -> FlexNet:
+    return FlexNet(dim=48, num_blocks=(4, 6, 6, 8), pipeline_type="meta", **kwargs)

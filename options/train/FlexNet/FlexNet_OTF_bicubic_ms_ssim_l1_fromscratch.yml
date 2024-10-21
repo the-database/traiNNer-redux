@@ -109,8 +109,8 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: FlexNet
-  pipeline_type: linear  # linear, meta
+  type: FlexNet  # FlexNet, MetaFlexNet
+  upsampler: pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)
 
 ############################
 # Pretrain and Resume Paths
