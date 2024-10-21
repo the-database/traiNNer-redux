@@ -6,7 +6,7 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torchvision.models import VGG19_Weights, vgg
-from torchvision.transforms.functional import InterpolationMode, resize
+from torchvision.transforms.functional import InterpolationMode, center_crop, resize
 
 # from traiNNer.losses.dists_loss import L2pooling
 from traiNNer.utils.registry import ARCH_REGISTRY
@@ -223,6 +223,7 @@ class VGGFeatureExtractor(nn.Module):
         requires_grad: bool = False,
         remove_pooling: bool = False,
         resize_input: bool = False,
+        crop_input: bool = True,  # TODO testing
         use_replicate_padding: bool = False,
         pooling_stride: int = 2,
         use_l2_pooling: bool = False,
@@ -233,6 +234,7 @@ class VGGFeatureExtractor(nn.Module):
         self.use_input_norm = use_input_norm
         self.range_norm = range_norm
         self.resize_input = resize_input
+        self.crop_input = crop_input
 
         self.names = NAMES[vgg_type.replace("_bn", "")]
         if "bn" in vgg_type:
@@ -341,13 +343,16 @@ class VGGFeatureExtractor(nn.Module):
         if self.resize_input:
             # vgg19 patch size
             # skip resize if dimensions already match
-            if x.shape[2] != VGG19_CROP_SIZE or x.shape[3] != VGG19_CROP_SIZE:
+            if x.shape[2] != VGG19_PATCH_SIZE or x.shape[3] != VGG19_PATCH_SIZE:
                 x = resize(
                     x,
-                    [VGG19_CROP_SIZE],
+                    [VGG19_PATCH_SIZE],  # TODO testing
                     interpolation=InterpolationMode.BICUBIC,
                     antialias=True,
                 )
+        if self.crop_input:
+            # vgg19 crop size
+            x = center_crop(x, [VGG19_CROP_SIZE])
 
         if self.range_norm:
             x = (x + 1) / 2
