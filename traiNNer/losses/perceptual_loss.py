@@ -78,7 +78,6 @@ class PerceptualLoss(nn.Module):
         use_input_norm: bool = True,
         range_norm: bool = False,
         normalize_layer_weights: bool = False,
-        resize_input: bool = True,
         use_replicate_padding: bool = True,
         use_l2_pooling: bool = True,
         perceptual_weight: float = 1.0,
@@ -101,7 +100,6 @@ class PerceptualLoss(nn.Module):
             use_input_norm=use_input_norm,
             range_norm=range_norm,
             use_l2_pooling=use_l2_pooling,
-            resize_input=resize_input,
             use_replicate_padding=use_replicate_padding,
         )
 
