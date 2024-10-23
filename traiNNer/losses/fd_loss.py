@@ -1,7 +1,8 @@
 import torch
-import torch.nn.functional as F  # noqa: N812
-from geomloss import SamplesLoss
+
+# from geomloss import SamplesLoss
 from torch import Tensor, nn
+from torch.nn import functional as F  # noqa: N812
 from torchvision.models import (
     EfficientNet_B7_Weights,
     Inception_V3_Weights,
@@ -275,14 +276,13 @@ class FDLoss(nn.Module):
             ).unsqueeze(2).unsqueeze(3)
             self.register_buffer(f"rand_{i}", rand)
 
-        self.geomloss = SamplesLoss()
+        # self.geomloss = SamplesLoss()
         # print all the parameters
 
-    def forward_once(self, x: Tensor, y: Tensor, idx: int) -> Tensor:
+    def forward_once(self, x: Tensor, y: Tensor, idx: int = -1) -> Tensor:
         """
         x, y: input image tensors with the shape of (N, C, H, W)
         """
-        # print("forward_once", x.shape, x.min(), x.max(), x.mean())
         rand = self.__getattr__(f"rand_{idx}")
         projx = F.conv2d(x, rand, stride=self.stride)
         projx = projx.reshape(projx.shape[0], projx.shape[1], -1)
@@ -295,7 +295,6 @@ class FDLoss(nn.Module):
 
         # compute the mean of the sorted convolved input
         s = torch.abs(projx - projy).mean([1, 2])
-        # print("forward_once result", s.shape, s.min(), s.max(), s.mean())
         return s
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
@@ -319,8 +318,8 @@ class FDLoss(nn.Module):
             x_phase = x_phase.reshape(x_phase.shape[0], x_phase.shape[1], -1)  # B,N,M
             y_phase = y_phase.reshape(y_phase.shape[0], y_phase.shape[1], -1)
 
-            s_amplitude = self.geomloss(x_mag, y_mag)
-            s_phase = self.geomloss(x_phase, y_phase)
+            s_amplitude = self.forward_once(x_mag, y_mag)
+            s_phase = self.forward_once(x_phase, y_phase)
 
             # score += s_amplitude + s_phase * self.phase_weight
             score.append(s_amplitude + s_phase * self.phase_weight)
