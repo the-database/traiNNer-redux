@@ -254,6 +254,9 @@ class FDLoss(nn.Module):
         """
 
         super().__init__()
+
+        self.loss_weight = loss_weight
+
         if model == "ResNet":
             self.model = ResNet()
         elif model == "EffNet":
@@ -324,6 +327,5 @@ class FDLoss(nn.Module):
             # score += s_amplitude + s_phase * self.phase_weight
             score.append(s_amplitude + s_phase * self.phase_weight)
 
-        return (
-            sum(score).mean()
-        )  # the bigger the score, the bigger the difference between the two images
+        # the bigger the score, the bigger the difference between the two images
+        return self.loss_weight * sum(score).mean()
