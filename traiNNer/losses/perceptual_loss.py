@@ -1,4 +1,5 @@
 import torch
+import torchvision
 from torch import Tensor, nn
 
 from traiNNer.archs.vgg_arch import VGGFeatureExtractor
@@ -8,8 +9,220 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 VGG_PATCH_SIZE = 256
 
 
+class PDLoss(nn.Module):
+    def __init__(self, w_lambda: float = 0.01) -> None:
+        super().__init__()
+        self.w_lambda = w_lambda
+
+    def w_distance(self, x_feat: Tensor, y_feat: Tensor) -> Tensor:
+        # print(
+        #     "w_distance 0",
+        #     x_feat.shape,
+        #     y_feat.shape,
+        #     x_feat.min(),
+        #     x_feat.max(),
+        #     y_feat.min(),
+        #     y_feat.max(),
+        # )
+        x_feat = x_feat / (torch.sum(x_feat, dim=(2, 3), keepdim=True) + 1e-14)
+        y_feat = y_feat / (torch.sum(y_feat, dim=(2, 3), keepdim=True) + 1e-14)
+
+        # print(
+        #     "w_distance 1",
+        #     x_feat.shape,
+        #     y_feat.shape,
+        #     x_feat.min(),
+        #     x_feat.max(),
+        #     y_feat.min(),
+        #     y_feat.max(),
+        # )
+
+        x_feat = x_feat.view(x_feat.size()[0], x_feat.size()[1], -1).contiguous()
+        y_feat = y_feat.view(y_feat.size()[0], y_feat.size()[1], -1).contiguous()
+
+        # print(
+        #     "w_distance 2",
+        #     x_feat.shape,
+        #     y_feat.shape,
+        #     x_feat.min(),
+        #     x_feat.max(),
+        #     y_feat.min(),
+        #     y_feat.max(),
+        # )
+
+        cdf_x_feat = torch.cumsum(x_feat, dim=-1)
+        cdf_y_feat = torch.cumsum(y_feat, dim=-1)
+
+        # print(
+        #     "w_distance 3 (cdf feat)",
+        #     cdf_x_feat.shape,
+        #     cdf_y_feat.shape,
+        #     cdf_x_feat.min(),
+        #     cdf_x_feat.max(),
+        #     cdf_y_feat.min(),
+        #     cdf_y_feat.max(),
+        # )
+
+        cdf_distance = torch.sum(torch.abs(cdf_x_feat - cdf_y_feat), dim=-1)
+        # print(
+        #     "w_distance 4 (cdf dist)",
+        #     cdf_distance.shape,
+        #     cdf_distance.min(),
+        #     cdf_distance.max(),
+        # )
+        cdf_loss = cdf_distance.mean()
+        # print("?", cdf_loss)
+        return cdf_loss
+
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+        out = self.w_distance(x, y) * self.w_lambda
+        # print("?", out)
+        return out
+
+
+@LOSS_REGISTRY.register()
+class PDLossStandalone(nn.Module):
+    def __init__(self, l1_lambda=1.5, w_lambda=0.01, loss_weight=1) -> None:
+        super().__init__()
+        # self.vgg = Vgg19Conv4().cuda()
+        # self.layer_weights = {
+        #     "conv1_2": 0.1,
+        #     "conv2_2": 0.1,
+        #     "conv3_4": 1,
+        #     "conv4_4": 1,
+        #     "conv5_4": 1,
+        # }
+        # self.vgg = VGGFeatureExtractor(layer_name_list=list(self.layer_weights.keys()))
+        self.vgg = Vgg19Conv4().cuda()
+        self.criterionL1 = nn.L1Loss()
+        self.w_lambda = w_lambda
+        self.l1_lambda = l1_lambda
+
+        mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
+        std = torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
+        self.register_buffer("mean", mean)
+        self.register_buffer("std", std)
+
+    def w_distance(self, xvgg, yvgg):
+        # print(
+        #     "w_distance 0",
+        #     xvgg.shape,
+        #     yvgg.shape,
+        #     xvgg.min(),
+        #     xvgg.max(),
+        #     yvgg.min(),
+        #     yvgg.max(),
+        # )
+        xvgg = xvgg / (torch.sum(xvgg, dim=(2, 3), keepdim=True) + 1e-14)
+        yvgg = yvgg / (torch.sum(yvgg, dim=(2, 3), keepdim=True) + 1e-14)
+
+        # print(
+        #     "w_distance 1",
+        #     xvgg.shape,
+        #     yvgg.shape,
+        #     xvgg.min(),
+        #     xvgg.max(),
+        #     yvgg.min(),
+        #     yvgg.max(),
+        # )
+
+        xvgg = xvgg.view(xvgg.size()[0], xvgg.size()[1], -1).contiguous()
+        yvgg = yvgg.view(yvgg.size()[0], yvgg.size()[1], -1).contiguous()
+
+        # print(
+        #     "w_distance 2",
+        #     xvgg.shape,
+        #     yvgg.shape,
+        #     xvgg.min(),
+        #     xvgg.max(),
+        #     yvgg.min(),
+        #     yvgg.max(),
+        # )
+
+        cdf_xvgg = torch.cumsum(xvgg, dim=-1)
+        cdf_yvgg = torch.cumsum(yvgg, dim=-1)
+
+        # print(
+        #     "w_distance 3 (cdf feat)",
+        #     cdf_xvgg.shape,
+        #     cdf_yvgg.shape,
+        #     cdf_xvgg.min(),
+        #     cdf_xvgg.max(),
+        #     cdf_yvgg.min(),
+        #     cdf_yvgg.max(),
+        # )
+
+        cdf_distance = torch.sum(torch.abs(cdf_xvgg - cdf_yvgg), dim=-1)
+
+        # print(
+        #     "w_distance 4 (cdf mean)",
+        #     cdf_distance.shape,
+        #     cdf_distance.min(),
+        #     cdf_distance.max(),
+        # )
+
+        cdf_loss = cdf_distance.mean()
+
+        return cdf_loss
+
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    def forward(self, x, y):
+        print("standalone 0", x.shape, x.min(), x.max())
+        # L1loss = self.criterionL1(x, y) * self.l1_lambda
+        # L1loss = 0
+        x = (x - self.mean) / self.std
+        y = (y - self.mean) / self.std
+        print("standalone 1", x.shape, x.min(), x.max())
+        x_vgg, y_vgg = self.vgg(x), self.vgg(y)
+        print("standalone 2", x_vgg.shape, x_vgg.min(), x_vgg.max())
+
+        # percep_loss = torch.tensor(0.0, device=x.device)
+        # for k in x_vgg.keys():
+        #     percep_loss += self.w_distance(x_vgg[k], y_vgg[k]) * self.layer_weights[k]
+
+        WdLoss = self.w_distance(x_vgg, y_vgg) * self.w_lambda
+        print("?", WdLoss)
+        return WdLoss
+
+
+# ### Define Vgg19 for projected distribution loss
+class Vgg19Conv4(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        vgg_pretrained_features = torchvision.models.vgg19(pretrained=True).features
+        assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
+        self.slice1 = nn.Sequential()
+
+        for x in range(23):
+            self.slice1.add_module(str(x), vgg_pretrained_features[x])
+        # for x in range(4):
+        #     self.slice1.add_module(str(x), vgg_pretrained_features[x])
+        # self.slice1.add_module(str(4), L2pooling(channels=64, as_loss=True))
+        # for x in range(5, 9):
+        #     self.slice1.add_module(str(x), vgg_pretrained_features[x])
+        # self.slice1.add_module(str(9), L2pooling(channels=128, as_loss=True))
+        # for x in range(10, 18):
+        #     self.slice1.add_module(str(x), vgg_pretrained_features[x])
+        # self.slice1.add_module(str(16), L2pooling(channels=256, as_loss=True))
+        # for x in range(19, 27):
+        #     self.slice1.add_module(str(x), vgg_pretrained_features[x])
+        # self.slice1.add_module(str(23), L2pooling(channels=512, as_loss=True))
+        # for x in range(28, 36):
+        #     self.slice1.add_module(str(x), vgg_pretrained_features[x])
+
+        # fixed pretrained vgg19 model for feature extraction
+        for param in self.parameters():
+            param.requires_grad = False
+
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    def forward(self, x):
+        out = self.slice1(x)
+        return out
+
+
 class ProjectedDistributionLoss(nn.Module):
-    def __init__(self, num_projections: int = 32) -> None:
+    def __init__(self, num_projections: int = 256) -> None:
         super().__init__()
         self.num_projections = num_projections
         self.criterion = nn.L1Loss()
@@ -111,6 +324,7 @@ class PerceptualLoss(nn.Module):
         elif self.criterion_type == "charbonnier":
             self.criterion = charbonnier_loss
         elif self.criterion_type == "pdl":
+            # self.criterion = PDLoss()
             self.criterion = ProjectedDistributionLoss()
         elif self.criterion_type == "fro":
             self.criterion = None
@@ -142,6 +356,16 @@ class PerceptualLoss(nn.Module):
                         * self.layer_weights[k]
                     )
                 else:
+                    # print("perceptual", x.shape, x.min(), x.max())
+                    # print(
+                    #     f"feat {k}",
+                    #     x_features[k].shape,
+                    #     x_features[k].min(),
+                    #     x_features[k].max(),
+                    #     gt_features[k].shape,
+                    #     gt_features[k].min(),
+                    #     gt_features[k].max(),
+                    # )
                     percep_loss += (
                         self.criterion(x_features[k], gt_features[k])
                         * self.layer_weights[k]
