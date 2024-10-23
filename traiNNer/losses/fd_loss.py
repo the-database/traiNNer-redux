@@ -256,6 +256,9 @@ class FDLoss(nn.Module):
         super().__init__()
 
         self.loss_weight = loss_weight
+        self.num_proj = num_proj
+        self.patch_size = patch_size
+        self.stride = stride
 
         if model == "ResNet":
             self.model = ResNet()
@@ -272,12 +275,12 @@ class FDLoss(nn.Module):
 
         self.phase_weight = phase_weight
         self.stride = stride
-        for i in range(len(self.model.chns)):
-            rand = torch.randn(num_proj, self.model.chns[i], patch_size, patch_size)
-            rand = rand / rand.view(rand.shape[0], -1).norm(dim=1).unsqueeze(
-                1
-            ).unsqueeze(2).unsqueeze(3)
-            self.register_buffer(f"rand_{i}", rand)
+        # for i in range(len(self.model.chns)):
+        #     rand = torch.randn(num_proj, self.model.chns[i], patch_size, patch_size)
+        #     rand = rand / rand.view(rand.shape[0], -1).norm(dim=1).unsqueeze(
+        #         1
+        #     ).unsqueeze(2).unsqueeze(3)
+        #     self.register_buffer(f"rand_{i}", rand)
 
         # self.geomloss = SamplesLoss()
         # print all the parameters
@@ -286,7 +289,19 @@ class FDLoss(nn.Module):
         """
         x, y: input image tensors with the shape of (N, C, H, W)
         """
-        rand = self.__getattr__(f"rand_{idx}")
+        # rand = self.__getattr__(f"rand_{idx}")
+
+        rand = torch.randn(
+            self.num_proj,
+            self.model.chns[idx],
+            self.patch_size,
+            self.patch_size,
+            device=x.device,
+        )
+        rand = rand / rand.view(rand.shape[0], -1).norm(dim=1).unsqueeze(1).unsqueeze(
+            2
+        ).unsqueeze(3)
+
         projx = F.conv2d(x, rand, stride=self.stride)
         projx = projx.reshape(projx.shape[0], projx.shape[1], -1)
         projy = F.conv2d(y, rand, stride=self.stride)
