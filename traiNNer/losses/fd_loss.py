@@ -316,10 +316,10 @@ class FDLoss(nn.Module):
             y_mag = torch.abs(fft_y)
             y_phase = torch.angle(fft_y)
 
-            x_mag = x_mag.reshape(x_mag.shape[0], x_mag.shape[1], -1)  # B,N,M
-            y_mag = y_mag.reshape(y_mag.shape[0], y_mag.shape[1], -1)
-            x_phase = x_phase.reshape(x_phase.shape[0], x_phase.shape[1], -1)  # B,N,M
-            y_phase = y_phase.reshape(y_phase.shape[0], y_phase.shape[1], -1)
+            # x_mag = x_mag.reshape(x_mag.shape[0], x_mag.shape[1], -1)  # B,N,M
+            # y_mag = y_mag.reshape(y_mag.shape[0], y_mag.shape[1], -1)
+            # x_phase = x_phase.reshape(x_phase.shape[0], x_phase.shape[1], -1)  # B,N,M
+            # y_phase = y_phase.reshape(y_phase.shape[0], y_phase.shape[1], -1)
 
             s_amplitude = self.forward_once(x_mag, y_mag, i)
             s_phase = self.forward_once(x_phase, y_phase, i)
