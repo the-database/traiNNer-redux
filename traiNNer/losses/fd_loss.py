@@ -282,7 +282,7 @@ class FDLoss(nn.Module):
         # self.geomloss = SamplesLoss()
         # print all the parameters
 
-    def forward_once(self, x: Tensor, y: Tensor, idx: int = -1) -> Tensor:
+    def forward_once(self, x: Tensor, y: Tensor, idx: int) -> Tensor:
         """
         x, y: input image tensors with the shape of (N, C, H, W)
         """
@@ -321,8 +321,8 @@ class FDLoss(nn.Module):
             x_phase = x_phase.reshape(x_phase.shape[0], x_phase.shape[1], -1)  # B,N,M
             y_phase = y_phase.reshape(y_phase.shape[0], y_phase.shape[1], -1)
 
-            s_amplitude = self.forward_once(x_mag, y_mag)
-            s_phase = self.forward_once(x_phase, y_phase)
+            s_amplitude = self.forward_once(x_mag, y_mag, i)
+            s_phase = self.forward_once(x_phase, y_phase, i)
 
             # score += s_amplitude + s_phase * self.phase_weight
             score.append(s_amplitude + s_phase * self.phase_weight)
