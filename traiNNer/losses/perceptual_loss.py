@@ -222,7 +222,7 @@ class Vgg19Conv4(nn.Module):
 
 
 class ProjectedDistributionLoss(nn.Module):
-    def __init__(self, num_projections: int = 256) -> None:
+    def __init__(self, num_projections: int = 1000) -> None:
         super().__init__()
         self.num_projections = num_projections
         self.criterion = nn.L1Loss()
