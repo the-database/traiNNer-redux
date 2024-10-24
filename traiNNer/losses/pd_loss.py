@@ -5,18 +5,68 @@ from torchvision.models import VGG19_Weights
 
 from traiNNer.utils.registry import LOSS_REGISTRY
 
+VGG19_LAYERS = [
+    "conv1_1",
+    "relu1_1",
+    "conv1_2",
+    "relu1_2",
+    "pool1",
+    "conv2_1",
+    "relu2_1",
+    "conv2_2",
+    "relu2_2",
+    "pool2",
+    "conv3_1",
+    "relu3_1",
+    "conv3_2",
+    "relu3_2",
+    "conv3_3",
+    "relu3_3",
+    "conv3_4",
+    "relu3_4",
+    "pool3",
+    "conv4_1",
+    "relu4_1",
+    "conv4_2",
+    "relu4_2",
+    "conv4_3",
+    "relu4_3",
+    "conv4_4",
+    "relu4_4",
+    "pool4",
+    "conv5_1",
+    "relu5_1",
+    "conv5_2",
+    "relu5_2",
+    "conv5_3",
+    "relu5_3",
+    "conv5_4",
+    "relu5_4",
+    "pool5",
+]
+
 
 @LOSS_REGISTRY.register()
 class PDLoss(nn.Module):
-    def __init__(self, w_lambda: float = 0.01, loss_weight: float = 1) -> None:
+    def __init__(
+        self,
+        layer_weights: dict[str, float] | None = None,
+        w_lambda: float = 0.01,
+        loss_weight: float = 1,
+    ) -> None:
         super().__init__()
-        self.vgg = VGG().cuda()
+        if layer_weights is None:
+            layer_weights = {
+                "relu1_2": 0.1,
+                "relu2_2": 0.1,
+                "relu3_4": 1,
+                "relu4_4": 1,
+                "relu5_4": 1,
+            }
+        self.vgg = VGG(list(layer_weights.keys())).cuda()
         self.loss_weight = loss_weight * w_lambda
-
-        mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
-        std = torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
-        self.register_buffer("mean", mean)
-        self.register_buffer("std", std)
+        self.layer_weights = layer_weights
+        self.criterion = self.w_distance
 
     def w_distance(self, x_vgg: Tensor, y_vgg: Tensor) -> Tensor:
         x_vgg = x_vgg / (torch.sum(x_vgg, dim=(2, 3), keepdim=True) + 1e-14)
@@ -34,34 +84,54 @@ class PDLoss(nn.Module):
 
         return cdf_loss
 
-    def forward_once(self, x: Tensor) -> Tensor:
-        x = (x - self.mean) / self.std
+    def forward_once(self, x: Tensor) -> dict[str, Tensor]:
         return self.vgg(x)
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
-        return self.w_distance(x_vgg, gt_vgg) * self.loss_weight
+        score = torch.tensor(0.0, device=x.device)
+        for k in x_vgg:
+            score += self.criterion(x_vgg[k], gt_vgg[k]) * self.layer_weights[k]
+        return score * self.loss_weight
 
 
 class VGG(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, layer_name_list: list[str]) -> None:
         super().__init__()
+
         vgg_pretrained_features = torchvision.models.vgg19(
             weights=VGG19_Weights.DEFAULT
         ).features
         assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
-        self.vgg = nn.Sequential()
 
-        for x in range(23):
-            self.vgg.add_module(str(x), vgg_pretrained_features[x])
+        self.stages: nn.ModuleDict = nn.ModuleDict()
+        stage_breakpoints = {}
 
-        self.vgg[0] = self._change_padding_mode(self.vgg[0], "replicate")
+        for v in layer_name_list:
+            stage_breakpoints[v] = VGG19_LAYERS.index(v) + 1
+
+        prev_breakpoint = 0
+        for layer_name, idx in stage_breakpoints.items():
+            self.stages[layer_name] = nn.Sequential()
+            for x in range(prev_breakpoint, idx):
+                self.stages[layer_name].add_module(str(x), vgg_pretrained_features[x])
+            prev_breakpoint = idx
+
+        for _layer_name, stage in self.stages.items():
+            stage[0] = self._change_padding_mode(stage[0], "replicate")  # pyright: ignore[reportIndexIssue]
+            break
 
         for param in self.parameters():
             param.requires_grad = False
 
-        self.vgg.eval()
+        for _, stage in self.stages.items():
+            stage.eval()
+
+        mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
+        std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
+        self.register_buffer("mean", mean)
+        self.register_buffer("std", std)
 
     @staticmethod
     def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
@@ -80,5 +150,12 @@ class VGG(nn.Module):
         return new_conv
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: Tensor) -> Tensor:
-        return self.vgg(x)
+    def forward(self, x: Tensor) -> dict[str, Tensor]:
+        x = (x - self.mean) / self.std
+
+        feats = {}
+        for layer_name, stage in self.stages.items():
+            x = stage(x)
+            feats[layer_name] = x.clone()
+
+        return feats
