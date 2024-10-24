@@ -290,7 +290,7 @@ class SRModel(BaseModel):
 
         if train_opt.pd_opt:
             if train_opt.pd_opt.get("loss_weight", 0) > 0:
-                self.cri_topiq = build_loss(train_opt.pd_opt).to(
+                self.cri_pd = build_loss(train_opt.pd_opt).to(
                     self.device,
                     memory_format=torch.channels_last,
                     non_blocking=True,
@@ -298,7 +298,7 @@ class SRModel(BaseModel):
 
         if train_opt.fd_opt:
             if train_opt.fd_opt.get("loss_weight", 0) > 0:
-                self.cri_topiq = build_loss(train_opt.fd_opt).to(
+                self.cri_fd = build_loss(train_opt.fd_opt).to(
                     self.device,
                     memory_format=torch.channels_last,
                     non_blocking=True,
