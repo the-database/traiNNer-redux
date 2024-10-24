@@ -301,25 +301,20 @@ class FDLoss(nn.Module):
         return s
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: list[Tensor], y: list[Tensor]) -> Tensor:
-        x = self.model(x)
-        y = self.model(y)
+    def forward(self, x: Tensor, gt: Tensor) -> Tensor:
+        x_features: list[Tensor] = self.model(x)
+        gt_features: list[Tensor] = self.model(gt.detach())
         score = []  # torch.tensor(0.0, device=x[0].device)
-        for i in range(len(x)):
+        for i in range(len(x_features)):
             # Transform to Fourier Space
-            fft_x = torch.fft.fftn(x[i], dim=(-2, -1))
-            fft_y = torch.fft.fftn(y[i], dim=(-2, -1))
+            fft_x = torch.fft.fftn(x_features[i], dim=(-2, -1))
+            fft_y = torch.fft.fftn(gt_features[i], dim=(-2, -1))
 
             # get the magnitude and phase of the extracted features
             x_mag = torch.abs(fft_x)
             x_phase = torch.angle(fft_x)
             y_mag = torch.abs(fft_y)
             y_phase = torch.angle(fft_y)
-
-            # x_mag = x_mag.reshape(x_mag.shape[0], x_mag.shape[1], -1)  # B,N,M
-            # y_mag = y_mag.reshape(y_mag.shape[0], y_mag.shape[1], -1)
-            # x_phase = x_phase.reshape(x_phase.shape[0], x_phase.shape[1], -1)  # B,N,M
-            # y_phase = y_phase.reshape(y_phase.shape[0], y_phase.shape[1], -1)
 
             s_amplitude = self.forward_once(x_mag, y_mag, i)
             s_phase = self.forward_once(x_phase, y_phase, i)
