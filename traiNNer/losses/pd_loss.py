@@ -5,8 +5,6 @@ from torchvision.models import VGG19_Weights
 
 from traiNNer.utils.registry import LOSS_REGISTRY
 
-VGG_CROP_SIZE = 224
-
 
 @LOSS_REGISTRY.register()
 class PDLoss(nn.Module):
