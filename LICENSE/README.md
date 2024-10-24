@@ -17,6 +17,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[DUnet](https://github.com/umzi2/DUnet)| [MIT License](https://github.com/umzi2/DUnet/blob/master/LICENSE)|
 |[DySample](https://github.com/tiny-smart/dysample)| [MIT License](https://github.com/tiny-smart/dysample/blob/main/LICENSE)|
 |[EIMN](https://github.com/liux520/EIMN)|[MIT License](https://github.com/liux520/EIMN/blob/main/LICENSE)|
+|[FDL](https://github.com/eezkni/FDL)| [MIT License](https://github.com/eezkni/FDL?tab=readme-ov-file#license)|
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
 |[HAT](https://github.com/XPixelGroup/HAT) | [Apache License 2.0](https://github.com/XPixelGroup/HAT/blob/main/LICENSE)|
 |[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|
@@ -36,6 +37,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[RGT](https://github.com/zhengchen1999/RGT) | [Apache License 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)|
 |[aaf6aa/SCUNet](https://github.com/aaf6aa/SCUNet) | [Apache License 2.0](https://github.com/aaf6aa/SCUNet/blob/main/LICENSE)|
 |[SCUNet](https://github.com/cszn/SCUNet) | [Apache License 2.0](https://github.com/cszn/SCUNet/blob/main/LICENSE)|
+|[See360](https://github.com/Holmes-Alan/See360)| [MIT License](https://github.com/Holmes-Alan/See360/blob/main/LICENSE)|
 |[Spandrel](https://github.com/chaiNNer-org/spandrel) | [MIT License](https://github.com/chaiNNer-org/spandrel/blob/main/LICENSE)
 |[SPAN](https://github.com/hongyuanyu/SPAN) | [Apache License 2.0](https://github.com/hongyuanyu/SPAN/blob/main/LICENSE.txt)|
 |[SPANPlus](https://github.com/umzi2/SPANPlus) | [Apache License 2.0](https://github.com/umzi2/SPANPlus/blob/master/license.txt)|

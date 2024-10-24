@@ -11,8 +11,7 @@ class PDLoss(nn.Module):
     def __init__(self, w_lambda: float = 0.01, loss_weight: float = 1) -> None:
         super().__init__()
         self.vgg = VGG().cuda()
-        self.w_lambda = w_lambda
-        self.loss_weight = loss_weight
+        self.loss_weight = loss_weight * w_lambda
 
         mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
         std = torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
@@ -42,7 +41,7 @@ class PDLoss(nn.Module):
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
-        return self.w_distance(x_vgg, gt_vgg) * self.w_lambda * self.loss_weight
+        return self.w_distance(x_vgg, gt_vgg) * self.loss_weight
 
 
 class VGG(nn.Module):
