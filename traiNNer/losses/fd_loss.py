@@ -304,7 +304,7 @@ class FDLoss(nn.Module):
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_features: list[Tensor] = self.model(x)
         gt_features: list[Tensor] = self.model(gt.detach())
-        score = []  # torch.tensor(0.0, device=x[0].device)
+        score: list[Tensor] = []  # torch.tensor(0.0, device=x[0].device)
         for i in range(len(x_features)):
             # Transform to Fourier Space
             fft_x = torch.fft.fftn(x_features[i], dim=(-2, -1))
@@ -323,4 +323,4 @@ class FDLoss(nn.Module):
             score.append(s_amplitude + s_phase * self.phase_weight)
 
         # the bigger the score, the bigger the difference between the two images
-        return self.loss_weight * sum(score).mean()
+        return self.loss_weight * sum(score).mean()  # type: ignore  # TODO
