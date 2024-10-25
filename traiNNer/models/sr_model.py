@@ -20,7 +20,6 @@ from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
-from traiNNer.losses.loss_util import get_refined_artifact_map
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -142,6 +141,8 @@ class SRModel(BaseModel):
             self.cri_hr_inversion = None
             self.cri_dinov2 = None
             self.cri_topiq = None
+            self.cri_pd = None
+            self.cri_fd = None
             self.cri_contextual = None
             self.cri_color = None
             self.cri_luma = None
@@ -282,6 +283,22 @@ class SRModel(BaseModel):
         if train_opt.topiq_opt:
             if train_opt.topiq_opt.get("loss_weight", 0) > 0:
                 self.cri_topiq = build_loss(train_opt.topiq_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+
+        if train_opt.pd_opt:
+            if train_opt.pd_opt.get("loss_weight", 0) > 0:
+                self.cri_pd = build_loss(train_opt.pd_opt).to(
+                    self.device,
+                    memory_format=torch.channels_last,
+                    non_blocking=True,
+                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+
+        if train_opt.fd_opt:
+            if train_opt.fd_opt.get("loss_weight", 0) > 0:
+                self.cri_fd = build_loss(train_opt.fd_opt).to(
                     self.device,
                     memory_format=torch.channels_last,
                     non_blocking=True,
@@ -454,14 +471,7 @@ class SRModel(BaseModel):
                 loss_dict["l_g_ms_ssim_l1"] = l_g_ms_ssim_l1
             if self.cri_ldl:
                 assert self.net_g_ema is not None
-                # TODO support LDL without ema
-                pixel_weight = get_refined_artifact_map(
-                    self.gt, self.output, self.net_g_ema(self.lq), 7
-                )
-                l_g_ldl = self.cri_ldl(
-                    torch.mul(pixel_weight, self.output),
-                    torch.mul(pixel_weight, self.gt),
-                )
+                l_g_ldl = self.cri_ldl(self.output, self.gt)
                 l_g_total += l_g_ldl / self.accum_iters
                 loss_dict["l_g_ldl"] = l_g_ldl
             # perceptual loss
@@ -493,6 +503,16 @@ class SRModel(BaseModel):
                 l_g_topiq = self.cri_topiq(self.output, self.gt)
                 l_g_total += l_g_topiq / self.accum_iters
                 loss_dict["l_g_topiq"] = l_g_topiq
+            # pd loss
+            if self.cri_pd:
+                l_g_pd = self.cri_pd(self.output, self.gt)
+                l_g_total += l_g_pd / self.accum_iters
+                loss_dict["l_g_pd"] = l_g_pd
+            # fd loss
+            if self.cri_fd:
+                l_g_fd = self.cri_fd(self.output, self.gt)
+                l_g_total += l_g_fd / self.accum_iters
+                loss_dict["l_g_fd"] = l_g_fd
             # contextual loss
             if self.cri_contextual:
                 l_g_contextual = self.cri_contextual(self.output, self.gt)

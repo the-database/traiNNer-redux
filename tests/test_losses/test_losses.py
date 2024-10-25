@@ -14,6 +14,7 @@ from traiNNer.losses.basic_loss import (
     MSELoss,
 )
 from traiNNer.losses.dists_loss import DISTSLoss
+from traiNNer.losses.ldl_loss import LDLLoss
 from traiNNer.losses.mssim_loss import MSSIMLoss
 from traiNNer.losses.perceptual_loss import PerceptualLoss
 
@@ -38,6 +39,7 @@ LOSS_FUNCTIONS = [
     ),
     ADISTSLoss(),
     DISTSLoss(),
+    LDLLoss(),
 ]
 
 EPSILON = 1e-5  # torch.finfo(torch.float32).eps
