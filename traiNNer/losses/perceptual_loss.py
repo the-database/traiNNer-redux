@@ -65,8 +65,8 @@ VGG19_RELU_LAYER_WEIGHTS = {
     "relu5_4": 1,
 }
 
-VGG19_CONV_CRITERION = {"l1", "charbonnier", "pdl+l1", "fdl+l1"}
-VGG19_RELU_CRITERION = {"pdl", "fdl", "pdl+l1", "fdl+l1"}
+VGG19_CONV_CRITERION = {"l1", "charbonnier", "pd+l1", "fd+l1"}
+VGG19_RELU_CRITERION = {"pd", "fd", "pd+l1", "fd+l1"}
 
 VGG19_CHANNELS = [64, 128, 256, 512, 512]
 
@@ -79,12 +79,10 @@ class PerceptualLoss(nn.Module):
         w_lambda: float = 0.01,
         loss_weight: float = 1,
         alpha: list[float] | None = None,
-        criterion: Literal[
-            "pdl+l1", "fdl+l1" "pdl", "fdl", "charbonnier", "l1"
-        ] = "pdl+l1",
-        num_proj_fdl: int = 256,
-        phase_weight_fdl: float = 1.0,
-        stride_fdl: int = 1,
+        criterion: Literal["pd+l1", "fd+l1" "pd", "fd", "charbonnier", "l1"] = "pd+l1",
+        num_proj_fd: int = 256,
+        phase_weight_fd: float = 1.0,
+        stride_fd: int = 1,
     ) -> None:
         super().__init__()
 
@@ -116,8 +114,8 @@ class PerceptualLoss(nn.Module):
         self.w_lambda = w_lambda
         self.layer_weights = layer_weights
         self.alpha = alpha
-        self.phase_weight_fdl = phase_weight_fdl
-        self.stride_fdl = stride_fdl
+        self.phase_weight_fd = phase_weight_fd
+        self.stride_fd = stride_fd
 
         self.criterion1 = None
         self.criterion2 = None
@@ -134,17 +132,17 @@ class PerceptualLoss(nn.Module):
                     f"{criterion} criterion has not been supported."
                 )
         if any(x > 0 for x in self.alpha) and use_relu_layers:
-            if "pdl" in criterion.lower():
-                self.criterion2 = self.pdl
-            elif "fdl" in criterion.lower():
-                self.criterion2 = self.fdl
-                self.init_random_projections_fdl(num_proj_fdl)
+            if "pd" in criterion.lower():
+                self.criterion2 = self.pd
+            elif "fd" in criterion.lower():
+                self.criterion2 = self.fd
+                self.init_random_projections_fd(num_proj_fd)
             else:
                 raise NotImplementedError(
                     f"{criterion} criterion has not been supported."
                 )
 
-    def init_random_projections_fdl(self, num_proj: int, patch_size: int = 5) -> None:
+    def init_random_projections_fd(self, num_proj: int, patch_size: int = 5) -> None:
         for i in range(len(VGG19_CHANNELS)):
             rand = torch.randn(num_proj, VGG19_CHANNELS[i], patch_size, patch_size)
             rand = rand / rand.view(rand.shape[0], -1).norm(dim=1).unsqueeze(
@@ -152,14 +150,14 @@ class PerceptualLoss(nn.Module):
             ).unsqueeze(2).unsqueeze(3)
             self.register_buffer(f"rand_{i}", rand)
 
-    def forward_once_fdl(self, x: Tensor, y: Tensor, idx: int) -> Tensor:
+    def forward_once_fd(self, x: Tensor, y: Tensor, idx: int) -> Tensor:
         """
         x, y: input image tensors with the shape of (N, C, H, W)
         """
         rand = self.__getattr__(f"rand_{idx}")
-        projx = F.conv2d(x, rand, stride=self.stride_fdl)
+        projx = F.conv2d(x, rand, stride=self.stride_fd)
         projx = projx.reshape(projx.shape[0], projx.shape[1], -1)
-        projy = F.conv2d(y, rand, stride=self.stride_fdl)
+        projy = F.conv2d(y, rand, stride=self.stride_fd)
         projy = projy.reshape(projy.shape[0], projy.shape[1], -1)
 
         # sort the convolved input
@@ -170,7 +168,7 @@ class PerceptualLoss(nn.Module):
         s = torch.abs(projx - projy).mean([1, 2])
         return s
 
-    def fdl(self, x_vgg: Tensor, y_vgg: Tensor, i: int) -> Tensor:
+    def fd(self, x_vgg: Tensor, y_vgg: Tensor, i: int) -> Tensor:
         # Transform to Fourier Space
         fft_x = torch.fft.fftn(x_vgg, dim=(-2, -1))
         fft_y = torch.fft.fftn(y_vgg, dim=(-2, -1))
@@ -181,12 +179,12 @@ class PerceptualLoss(nn.Module):
         y_mag = torch.abs(fft_y)
         y_phase = torch.angle(fft_y)
 
-        s_amplitude = self.forward_once_fdl(x_mag, y_mag, i)
-        s_phase = self.forward_once_fdl(x_phase, y_phase, i)
+        s_amplitude = self.forward_once_fd(x_mag, y_mag, i)
+        s_phase = self.forward_once_fd(x_phase, y_phase, i)
 
-        return s_amplitude + s_phase * self.phase_weight_fdl
+        return s_amplitude + s_phase * self.phase_weight_fd
 
-    def pdl(self, x_vgg: Tensor, y_vgg: Tensor, _: int = -1) -> Tensor:
+    def pd(self, x_vgg: Tensor, y_vgg: Tensor, _: int = -1) -> Tensor:
         x_vgg = x_vgg / (torch.sum(x_vgg, dim=(2, 3), keepdim=True) + 1e-14)
         y_vgg = y_vgg / (torch.sum(y_vgg, dim=(2, 3), keepdim=True) + 1e-14)
 

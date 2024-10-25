@@ -107,7 +107,7 @@ class TestLosses:
 
     @pytest.mark.parametrize(
         "criterion",
-        ["pdl+l1", "fdl+l1", "pdl", "fdl", "l1", "charbonnier"],
+        ["pd+l1", "fd+l1", "pd", "fd", "l1", "charbonnier"],
     )
     def test_perceptual_loss(self, criterion: str) -> None:
         # Set random seed for reproducibility
@@ -127,7 +127,7 @@ class TestLosses:
         # Initialize both versions of the loss
         perceptual_loss_fn = PerceptualLoss(criterion=criterion).to(device=device)  # type: ignore
 
-        if "pdl" in criterion or "fdl" in criterion:
+        if "pd" in criterion or "fd" in criterion:
             # relu layer weights
             assert (
                 len(
