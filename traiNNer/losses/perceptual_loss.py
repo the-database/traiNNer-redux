@@ -282,10 +282,12 @@ class VGG(nn.Module):
         for _, stage in self.stages.items():
             stage.eval()
 
-        mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
-        std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
-        self.register_buffer("mean", mean)
-        self.register_buffer("std", std)
+        self.register_buffer(
+            "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+        )
+        self.register_buffer(
+            "std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+        )
 
     @staticmethod
     def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
