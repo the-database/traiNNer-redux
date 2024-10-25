@@ -154,4 +154,4 @@ class TestLosses:
             assert len(perceptual_loss_fn.vgg.stages) == len(VGG19_CONV_LAYER_WEIGHTS)
 
         # Compute losses
-        loss = perceptual_loss_fn(x, y).item()
+        _loss = perceptual_loss_fn(x, y).item()
