@@ -102,7 +102,7 @@ class PerceptualLoss(nn.Module):
                 use_relu_layers = True
                 layer_weights |= VGG19_RELU_LAYER_WEIGHTS
 
-        self.vgg = VGG(list(layer_weights.keys())).cuda()
+        self.vgg = VGG(list(layer_weights.keys()))
 
         if alpha is None:
             alpha = []
