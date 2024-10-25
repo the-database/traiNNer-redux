@@ -240,7 +240,7 @@ class SRModel(BaseModel):
             assert "loss_weight" in loss, f"{loss['type']} must define loss_weight"
             if float(loss["loss_weight"]) > 0:
                 label = loss_type_to_label(loss["type"])
-                if label == "gan_loss":
+                if label == "l_g_gan":
                     self.has_gan = True
                 self.losses[label] = build_loss(loss).to(
                     self.device,
