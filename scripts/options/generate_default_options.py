@@ -97,10 +97,9 @@ def final_template(
 
     if mssim_only:
         template = re.sub("loss_weight: [0-9.]+", "loss_weight: 0", template)
-        template = template.replace("perceptual_weight: 0.03", "perceptual_weight: 0")
         template = template.replace(
-            "type: MSSSIML1Loss\n    loss_weight: 0",
-            "type: MSSSIML1Loss\n    loss_weight: 1.0",
+            "type: MSSSIML1Loss\n      alpha: 0.1\n      loss_weight: 0",
+            "type: MSSSIML1Loss\n      alpha: 0.1\n      loss_weight: 1.0",
         )
 
     return template

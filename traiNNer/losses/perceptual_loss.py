@@ -1,152 +1,321 @@
-import torch
-from torch import Tensor, nn
+from typing import Literal
 
-from traiNNer.archs.vgg_arch import VGGFeatureExtractor
+import torch
+import torchvision
+from torch import Tensor, nn
+from torch.nn import functional as F  # noqa: N812
+from torchvision.models import VGG19_Weights
+
 from traiNNer.losses.basic_loss import charbonnier_loss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
-VGG_PATCH_SIZE = 256
+VGG19_LAYERS = [
+    "conv1_1",
+    "relu1_1",
+    "conv1_2",
+    "relu1_2",
+    "pool1",
+    "conv2_1",
+    "relu2_1",
+    "conv2_2",
+    "relu2_2",
+    "pool2",
+    "conv3_1",
+    "relu3_1",
+    "conv3_2",
+    "relu3_2",
+    "conv3_3",
+    "relu3_3",
+    "conv3_4",
+    "relu3_4",
+    "pool3",
+    "conv4_1",
+    "relu4_1",
+    "conv4_2",
+    "relu4_2",
+    "conv4_3",
+    "relu4_3",
+    "conv4_4",
+    "relu4_4",
+    "pool4",
+    "conv5_1",
+    "relu5_1",
+    "conv5_2",
+    "relu5_2",
+    "conv5_3",
+    "relu5_3",
+    "conv5_4",
+    "relu5_4",
+    "pool5",
+]
+
+VGG19_CONV_LAYER_WEIGHTS = {
+    "conv1_2": 0.1,
+    "conv2_2": 0.1,
+    "conv3_4": 1,
+    "conv4_4": 1,
+    "conv5_4": 1,
+}
+
+VGG19_RELU_LAYER_WEIGHTS = {
+    "relu1_2": 0.1,
+    "relu2_2": 0.1,
+    "relu3_4": 1,
+    "relu4_4": 1,
+    "relu5_4": 1,
+}
+
+VGG19_CONV_CRITERION = {"l1", "charbonnier", "pdl+l1", "fdl+l1"}
+VGG19_RELU_CRITERION = {"pdl", "fdl", "pdl+l1", "fdl+l1"}
+
+VGG19_CHANNELS = [64, 128, 256, 512, 512]
 
 
 @LOSS_REGISTRY.register()
 class PerceptualLoss(nn.Module):
-    """Perceptual loss with commonly used style loss.
-
-    Args:
-        layer_weights (dict): The weight for each layer of vgg feature.
-            Here is an example: {'conv5_4': 1.}, which means the conv5_4
-            feature layer (before relu5_4) will be extracted with weight
-            1.0 in calculating losses.
-        vgg_type (str): The type of vgg network used as feature extractor.
-            Default: 'vgg19'.
-        use_input_norm (bool):  If True, normalize the input image in vgg.
-            Default: True.
-        range_norm (bool): If True, norm images with range [-1, 1] to [0, 1].
-            Default: False.
-        perceptual_weight (float): If `perceptual_weight > 0`, the perceptual
-            loss will be calculated and the loss will multiplied by the
-            weight. Default: 1.0.
-        style_weight (float): If `style_weight > 0`, the style loss will be
-            calculated and the loss will multiplied by the weight.
-            Default: 0.
-        criterion (str): Criterion used for perceptual loss. Default: 'l1'.
-    """
-
     def __init__(
         self,
-        layer_weights: dict[str, float],
-        vgg_type: str = "vgg19",
-        use_input_norm: bool = True,
-        range_norm: bool = False,
-        normalize_layer_weights: bool = False,
-        use_replicate_padding: bool = True,
-        use_l2_pooling: bool = False,
-        perceptual_weight: float = 1.0,
-        style_weight: float = 0.0,
-        criterion: str = "l1",
+        layer_weights: dict[str, float] | None = None,
+        w_lambda: float = 0.01,
+        loss_weight: float = 1,
+        alpha: list[float] | None = None,
+        criterion: Literal[
+            "pdl+l1", "fdl+l1" "pdl", "fdl", "charbonnier", "l1"
+        ] = "pdl+l1",
+        num_proj_fdl: int = 256,
+        phase_weight_fdl: float = 1.0,
+        stride_fdl: int = 1,
     ) -> None:
         super().__init__()
-        self.perceptual_weight = perceptual_weight
-        self.style_weight = style_weight
 
-        if normalize_layer_weights:
-            layer_weights_sum = sum(layer_weights.values())
-            for k, v in layer_weights.items():
-                layer_weights[k] = v / layer_weights_sum
+        use_conv_layers = False
+        use_relu_layers = False
 
+        if layer_weights is None:
+            layer_weights = {}
+
+            if criterion in VGG19_CONV_CRITERION:
+                use_conv_layers = True
+                layer_weights |= VGG19_CONV_LAYER_WEIGHTS
+
+            if criterion in VGG19_RELU_CRITERION:
+                use_relu_layers = True
+                layer_weights |= VGG19_RELU_LAYER_WEIGHTS
+
+        self.vgg = VGG(list(layer_weights.keys())).cuda()
+
+        if alpha is None:
+            alpha = []
+            for k in self.vgg.stages:
+                if k.startswith("conv"):
+                    alpha.append(0.0)
+                else:
+                    alpha.append(1.0)
+
+        self.loss_weight = loss_weight
+        self.w_lambda = w_lambda
         self.layer_weights = layer_weights
-        self.vgg = VGGFeatureExtractor(
-            layer_name_list=list(layer_weights.keys()),
-            vgg_type=vgg_type,
-            use_input_norm=use_input_norm,
-            range_norm=range_norm,
-            use_l2_pooling=use_l2_pooling,
-            use_replicate_padding=use_replicate_padding,
-        )
+        self.alpha = alpha
+        self.phase_weight_fdl = phase_weight_fdl
+        self.stride_fdl = stride_fdl
 
-        self.criterion_type = criterion
-        if self.criterion_type == "l1":
-            self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == "l2":
-            self.criterion = torch.nn.MSELoss()
-        elif self.criterion_type == "charbonnier":
-            self.criterion = charbonnier_loss
-        elif self.criterion_type == "fro":
-            self.criterion = None
-        else:
-            raise NotImplementedError(f"{criterion} criterion has not been supported.")
+        self.criterion1 = None
+        self.criterion2 = None
+
+        if any(x < 1 for x in self.alpha) and use_conv_layers:
+            if use_relu_layers:
+                self.criterion1 = nn.L1Loss()
+            elif criterion == "l1":
+                self.criterion1 = nn.L1Loss()
+            elif criterion == "charbonnier":
+                self.criterion1 = charbonnier_loss
+            else:
+                raise NotImplementedError(
+                    f"{criterion} criterion has not been supported."
+                )
+        if any(x > 0 for x in self.alpha) and use_relu_layers:
+            if "pdl" in criterion.lower():
+                self.criterion2 = self.pdl
+            elif "fdl" in criterion.lower():
+                self.criterion2 = self.fdl
+                self.init_random_projections_fdl(num_proj_fdl)
+            else:
+                raise NotImplementedError(
+                    f"{criterion} criterion has not been supported."
+                )
+
+    def init_random_projections_fdl(self, num_proj: int, patch_size: int = 5) -> None:
+        for i in range(len(VGG19_CHANNELS)):
+            rand = torch.randn(num_proj, VGG19_CHANNELS[i], patch_size, patch_size)
+            rand = rand / rand.view(rand.shape[0], -1).norm(dim=1).unsqueeze(
+                1
+            ).unsqueeze(2).unsqueeze(3)
+            self.register_buffer(f"rand_{i}", rand)
+
+    def forward_once_fdl(self, x: Tensor, y: Tensor, idx: int) -> Tensor:
+        """
+        x, y: input image tensors with the shape of (N, C, H, W)
+        """
+        rand = self.__getattr__(f"rand_{idx}")
+        projx = F.conv2d(x, rand, stride=self.stride_fdl)
+        projx = projx.reshape(projx.shape[0], projx.shape[1], -1)
+        projy = F.conv2d(y, rand, stride=self.stride_fdl)
+        projy = projy.reshape(projy.shape[0], projy.shape[1], -1)
+
+        # sort the convolved input
+        projx, _ = torch.sort(projx, dim=-1)
+        projy, _ = torch.sort(projy, dim=-1)
+
+        # compute the mean of the sorted convolved input
+        s = torch.abs(projx - projy).mean([1, 2])
+        return s
+
+    def fdl(self, x_vgg: Tensor, y_vgg: Tensor, i: int) -> Tensor:
+        # Transform to Fourier Space
+        fft_x = torch.fft.fftn(x_vgg, dim=(-2, -1))
+        fft_y = torch.fft.fftn(y_vgg, dim=(-2, -1))
+
+        # get the magnitude and phase of the extracted features
+        x_mag = torch.abs(fft_x)
+        x_phase = torch.angle(fft_x)
+        y_mag = torch.abs(fft_y)
+        y_phase = torch.angle(fft_y)
+
+        s_amplitude = self.forward_once_fdl(x_mag, y_mag, i)
+        s_phase = self.forward_once_fdl(x_phase, y_phase, i)
+
+        return s_amplitude + s_phase * self.phase_weight_fdl
+
+    def pdl(self, x_vgg: Tensor, y_vgg: Tensor, _: int = -1) -> Tensor:
+        x_vgg = x_vgg / (torch.sum(x_vgg, dim=(2, 3), keepdim=True) + 1e-14)
+        y_vgg = y_vgg / (torch.sum(y_vgg, dim=(2, 3), keepdim=True) + 1e-14)
+
+        x_vgg = x_vgg.view(x_vgg.size()[0], x_vgg.size()[1], -1).contiguous()
+        y_vgg = y_vgg.view(y_vgg.size()[0], y_vgg.size()[1], -1).contiguous()
+
+        cdf_x_vgg = torch.cumsum(x_vgg, dim=-1)
+        cdf_y_vgg = torch.cumsum(y_vgg, dim=-1)
+
+        cdf_distance = torch.sum(torch.abs(cdf_x_vgg - cdf_y_vgg), dim=-1)
+
+        cdf_loss = cdf_distance.mean()
+
+        return cdf_loss
+
+    def forward_once(self, x: Tensor) -> dict[str, Tensor]:
+        return self.vgg(x)
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: Tensor, gt: Tensor) -> tuple[Tensor | None, Tensor | None]:
-        """Forward function.
+    def forward(self, x: Tensor, gt: Tensor) -> Tensor:
+        x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
+        score1 = torch.tensor(0.0, device=x.device)
+        score2 = None  # torch.tensor(0.0, device=x.device)
+        criterion2_i = 0
+        for i, k in enumerate(x_vgg):
+            alpha = self.alpha[i]
+            s1 = torch.tensor(0.0, device=x.device)
+            s2 = None
+            if alpha < 1:
+                assert self.criterion1 is not None
+                temp = self.criterion1(x_vgg[k], gt_vgg[k]) * (1 - alpha)
+                print("l1", k, temp)
+                s1 += temp
+            if alpha > 0:
+                assert self.criterion2 is not None
+                temp = (
+                    self.criterion2(x_vgg[k], gt_vgg[k], criterion2_i)
+                    * alpha
+                    * self.w_lambda
+                )
+                if score2 is None:
+                    score2 = torch.zeros(temp.shape, device=x.device)
+                if s2 is None:
+                    s2 = torch.zeros(temp.shape, device=x.device)
+                print("fd", k, temp)
+                s2 += temp
+                criterion2_i += 1
 
-        Args:
-            x (Tensor): Input tensor with shape (n, c, h, w).
-            gt (Tensor): Ground-truth tensor with shape (n, c, h, w).
+            s1 *= self.layer_weights[k]
+            score1 += s1
+            if s2 is not None:
+                s2 *= self.layer_weights[k]
+                score2 += s2
 
-        Returns:
-            Tensor: Forward results.
-        """
-        # extract vgg features
-        x_features = self.vgg(x)
-        gt_features = self.vgg(gt.detach())
+        score = score1
+        if score2 is not None:
+            score += score2.mean()
 
-        # calculate perceptual loss
-        if self.perceptual_weight > 0:
-            percep_loss = torch.tensor(0.0, device=x.device)
-            for k in x_features.keys():
-                if self.criterion is None:
-                    percep_loss += (
-                        torch.norm(x_features[k] - gt_features[k], p="fro")
-                        * self.layer_weights[k]
-                    )
-                else:
-                    percep_loss += (
-                        self.criterion(x_features[k], gt_features[k])
-                        * self.layer_weights[k]
-                    )
-            percep_loss *= self.perceptual_weight
-        else:
-            percep_loss = None
+        return score * self.loss_weight
 
-        # calculate style loss
-        if self.style_weight > 0:
-            style_loss = torch.tensor(0.0, device=x.device)
-            for k in x_features.keys():
-                if self.criterion is None:
-                    style_loss += (
-                        torch.norm(
-                            self._gram_mat(x_features[k])
-                            - self._gram_mat(gt_features[k]),
-                            p="fro",
-                        )
-                        * self.layer_weights[k]
-                    )
-                else:
-                    style_loss += (
-                        self.criterion(
-                            self._gram_mat(x_features[k]),
-                            self._gram_mat(gt_features[k]),
-                        )
-                        * self.layer_weights[k]
-                    )
-            style_loss *= self.style_weight
-        else:
-            style_loss = None
 
-        return percep_loss, style_loss
+class VGG(nn.Module):
+    def __init__(self, layer_name_list: list[str]) -> None:
+        super().__init__()
 
-    def _gram_mat(self, x: Tensor) -> Tensor:
-        """Calculate Gram matrix.
+        vgg_pretrained_features = torchvision.models.vgg19(
+            weights=VGG19_Weights.DEFAULT
+        ).features
+        assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
 
-        Args:
-            x (torch.Tensor): Tensor with shape of (n, c, h, w).
+        self._disable_inplace_relu(vgg_pretrained_features)
 
-        Returns:
-            torch.Tensor: Gram matrix.
-        """
-        n, c, h, w = x.size()
-        features = x.view(n, c, w * h)
-        features_t = features.transpose(1, 2)
-        gram = features.bmm(features_t) / (c * h * w)
-        return gram
+        self.stages: nn.ModuleDict = nn.ModuleDict()
+        stage_breakpoints = {}
+
+        for v in layer_name_list:
+            stage_breakpoints[v] = VGG19_LAYERS.index(v) + 1
+
+        prev_breakpoint = 0
+        for layer_name, idx in sorted(stage_breakpoints.items(), key=lambda x: x[1]):
+            self.stages[layer_name] = nn.Sequential()
+            for x in range(prev_breakpoint, idx):
+                self.stages[layer_name].add_module(str(x), vgg_pretrained_features[x])
+            prev_breakpoint = idx
+
+        for _layer_name, stage in self.stages.items():
+            stage[0] = self._change_padding_mode(stage[0], "replicate")  # pyright: ignore[reportIndexIssue]
+            break
+
+        for param in self.parameters():
+            param.requires_grad = False
+
+        for _, stage in self.stages.items():
+            stage.eval()
+
+        mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
+        std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
+        self.register_buffer("mean", mean)
+        self.register_buffer("std", std)
+
+    @staticmethod
+    def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
+        new_conv = nn.Conv2d(
+            conv.in_channels,
+            conv.out_channels,
+            conv.kernel_size,
+            stride=conv.stride,
+            padding=conv.padding,
+            padding_mode=padding_mode,
+        )
+        with torch.no_grad():
+            new_conv.weight.copy_(conv.weight)
+            if new_conv.bias is not None:
+                new_conv.bias.copy_(conv.bias)
+        return new_conv
+
+    @staticmethod
+    def _disable_inplace_relu(model: nn.Module) -> None:
+        for module in model.modules():
+            if isinstance(module, nn.ReLU):
+                module.inplace = False
+
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    def forward(self, x: Tensor) -> dict[str, Tensor]:
+        h = (x - self.mean) / self.std
+
+        feats = {}
+        for layer_name, stage in self.stages.items():
+            last_h = h if not feats else feats[next(reversed(feats))]
+            feats[layer_name] = stage(last_h)
+
+        return feats
