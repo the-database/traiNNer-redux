@@ -181,7 +181,7 @@ train:
     style_weight: 0
     range_norm: false
     criterion: charbonnier
-    perceptual_weight: 0.035
+    perceptual_weight: 0.01
   # HSLuv loss (hue, saturation, lightness).
   hsluv_opt:
     type: HSLuvLoss
