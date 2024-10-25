@@ -40,7 +40,7 @@ class PerceptualLoss(nn.Module):
         range_norm: bool = False,
         normalize_layer_weights: bool = False,
         use_replicate_padding: bool = True,
-        use_l2_pooling: bool = True,
+        use_l2_pooling: bool = False,
         perceptual_weight: float = 1.0,
         style_weight: float = 0.0,
         criterion: str = "l1",
