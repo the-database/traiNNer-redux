@@ -249,6 +249,7 @@ def underscore(word: str) -> str:
 
 
 def loss_type_to_label(loss_type: str) -> str:
-    label = underscore(loss_type)
+    label = loss_type.replace("HSLuvLoss", "HSLUVLoss")  # hack for HSLuv
+    label = underscore(label)
     label = label.replace("_loss", "")
     return f"l_g_{label}"

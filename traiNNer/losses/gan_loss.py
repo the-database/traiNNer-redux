@@ -22,7 +22,7 @@ class GANLoss(nn.Module):
 
     def __init__(
         self,
-        gan_type: str,
+        gan_type: str = "vanilla",
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
         loss_weight: float = 1.0,

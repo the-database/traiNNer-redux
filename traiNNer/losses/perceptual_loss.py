@@ -218,7 +218,7 @@ class PerceptualLoss(nn.Module):
             if alpha < 1:
                 assert self.criterion1 is not None
                 temp = self.criterion1(x_vgg[k], gt_vgg[k]) * (1 - alpha)
-                print("l1", k, temp)
+                # print("l1", k, temp)
                 s1 += temp
             if alpha > 0:
                 assert self.criterion2 is not None
@@ -231,7 +231,7 @@ class PerceptualLoss(nn.Module):
                     score2 = torch.zeros(temp.shape, device=x.device)
                 if s2 is None:
                     s2 = torch.zeros(temp.shape, device=x.device)
-                print("fd", k, temp)
+                # print("fd", k, temp)
                 s2 += temp
                 criterion2_i += 1
 
