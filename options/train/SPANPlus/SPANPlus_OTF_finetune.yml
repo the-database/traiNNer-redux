@@ -169,7 +169,7 @@ train:
       loss_weight: 1.0
     # Perceptual loss
     - type: PerceptualLoss
-      criterion: pdl+l1  # pdl+l1 (good quality), fdl+l1 (best quality, slower), pdl, fdl, charbonnier, l1 (lower quality, legacy)
+      criterion: pdl+l1  # pdl+l1 (good quality), fdl+l1 (slower), pdl, fdl, charbonnier, l1 (lower quality, legacy)
       loss_weight: 0.01
     # HSLuv loss (hue, saturation, lightness)
     - type: HSLuvLoss
