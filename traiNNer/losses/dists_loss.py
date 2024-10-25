@@ -2,12 +2,10 @@ from os import path as osp
 
 import numpy as np
 import torch
-import torchvision.transforms.functional as tf
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torchvision import models
 
-from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 ###################################################
@@ -68,7 +66,6 @@ class DISTSLoss(nn.Module):
         loss_weight: float = 1.0,
         load_weights: bool = True,
         use_input_norm: bool = True,
-        resize_input: bool = False,
         clip_min: int = 0,
         **kwargs,
     ) -> None:
@@ -76,7 +73,6 @@ class DISTSLoss(nn.Module):
         self.as_loss = as_loss
         self.loss_weight = loss_weight
         self.use_input_norm = use_input_norm
-        self.resize_input = resize_input
         self.clip_min = clip_min
 
         vgg_pretrained_features = models.vgg16(weights="DEFAULT").features
@@ -136,20 +132,7 @@ class DISTSLoss(nn.Module):
             self.beta.data = weights["beta"]
 
     def forward_once(self, x: Tensor) -> list[Tensor]:
-        if (
-            self.resize_input
-            and x.shape[2] != VGG_PATCH_SIZE
-            or x.shape[3] != VGG_PATCH_SIZE
-        ):
-            # skip resize if dimensions already match
-            h = tf.resize(
-                x,
-                [VGG_PATCH_SIZE],
-                interpolation=tf.InterpolationMode.BICUBIC,
-                antialias=True,
-            )
-        else:
-            h = x
+        h = x
 
         if self.use_input_norm:
             h = (h - self.mean) / self.std

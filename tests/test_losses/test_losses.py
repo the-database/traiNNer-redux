@@ -16,7 +16,11 @@ from traiNNer.losses.basic_loss import (
 from traiNNer.losses.dists_loss import DISTSLoss
 from traiNNer.losses.ldl_loss import LDLLoss
 from traiNNer.losses.mssim_loss import MSSIMLoss
-from traiNNer.losses.perceptual_loss import PerceptualLoss
+from traiNNer.losses.perceptual_loss import (
+    VGG19_CONV_LAYER_WEIGHTS,
+    VGG19_RELU_LAYER_WEIGHTS,
+    PerceptualLoss,
+)
 
 LOSS_FUNCTIONS = [
     L1Loss(),
@@ -27,16 +31,7 @@ LOSS_FUNCTIONS = [
     HSLuvLoss(criterion="charbonnier"),
     ColorLoss(criterion="charbonnier"),
     LumaLoss(criterion="charbonnier"),
-    PerceptualLoss(
-        layer_weights={
-            "conv1_2": 0.1,
-            "conv2_2": 0.1,
-            "conv3_4": 1,
-            "conv4_4": 1,
-            "conv5_4": 1,
-        },
-        criterion="charbonnier",
-    ),
+    PerceptualLoss(),
     ADISTSLoss(),
     DISTSLoss(),
     LDLLoss(),
@@ -109,3 +104,54 @@ class TestLosses:
             assert loss_value[0] <= EPSILON
         else:
             assert loss_value <= EPSILON
+
+    @pytest.mark.parametrize(
+        "criterion",
+        ["pd+l1", "fd+l1", "pd", "fd", "l1", "charbonnier"],
+    )
+    def test_perceptual_loss(self, criterion: str) -> None:
+        # Set random seed for reproducibility
+        torch.manual_seed(42)
+
+        batch_size = 1
+        num_channels = 3
+        height = 128
+        width = 128
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Generate random input tensors
+        x = torch.randn((batch_size, num_channels, height, width), device=device)
+        y = torch.randn((batch_size, num_channels, height, width), device=device)
+
+        # Initialize both versions of the loss
+        perceptual_loss_fn = PerceptualLoss(criterion=criterion).to(device=device)  # type: ignore
+
+        if "pd" in criterion or "fd" in criterion:
+            # relu layer weights
+            assert (
+                len(
+                    set(VGG19_RELU_LAYER_WEIGHTS.keys())
+                    - set(perceptual_loss_fn.vgg.stages.keys())
+                )
+                == 0
+            )
+        if "l1" in criterion or "charbonnier" in criterion:
+            # conv layer weights
+            assert (
+                len(
+                    set(VGG19_CONV_LAYER_WEIGHTS.keys())
+                    - set(perceptual_loss_fn.vgg.stages.keys())
+                )
+                == 0
+            )
+
+        if "+" in criterion:
+            assert len(perceptual_loss_fn.vgg.stages) == len(
+                VGG19_CONV_LAYER_WEIGHTS
+            ) + len(VGG19_RELU_LAYER_WEIGHTS)
+        else:
+            assert len(perceptual_loss_fn.vgg.stages) == len(VGG19_CONV_LAYER_WEIGHTS)
+
+        # Compute losses
+        _loss = perceptual_loss_fn(x, y).item()

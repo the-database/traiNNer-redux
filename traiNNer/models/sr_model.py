@@ -23,6 +23,7 @@ from traiNNer.losses import build_loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
@@ -104,6 +105,15 @@ class SRModel(BaseModel):
             # define network net_d if GAN is enabled
             self.has_gan = False
             gan_opt = self.opt.train.gan_opt
+
+            if not gan_opt:
+                if self.opt.train.losses:
+                    gan_opts = filter(
+                        lambda x: x["type"] == "GANLoss", self.opt.train.losses
+                    )
+                    if gan_opts:
+                        gan_opt = next(gan_opts)
+
             if gan_opt:
                 if gan_opt.get("loss_weight", 0) > 0:
                     self.has_gan = True
@@ -132,24 +142,7 @@ class SRModel(BaseModel):
                             self.opt.path.param_key_d,
                         )
 
-            self.cri_pix = None
-            self.cri_mssim = None
-            self.cri_ms_ssim_l1 = None
-            self.cri_ldl = None
-            self.cri_dists = None
-            self.cri_perceptual = None
-            self.cri_hr_inversion = None
-            self.cri_dinov2 = None
-            self.cri_topiq = None
-            self.cri_pd = None
-            self.cri_fd = None
-            self.cri_contextual = None
-            self.cri_color = None
-            self.cri_luma = None
-            self.cri_hsluv = None
-            self.cri_gan = None
-            self.cri_avg = None
-            self.cri_bicubic = None
+            self.losses = {}
 
             self.ema_decay = 0
             self.net_g_ema = None
@@ -213,154 +206,49 @@ class SRModel(BaseModel):
             logger.info("Gradient clipping is enabled.")
 
         # define losses
-        if train_opt.pixel_opt:
-            if train_opt.pixel_opt.get("loss_weight", 0) > 0:
-                self.cri_pix = build_loss(train_opt.pixel_opt).to(
+
+        if train_opt.losses is None:
+            train_opt.losses = []
+            # old loss format
+            old_loss_opts = [
+                "pixel_opt",
+                "mssim_opt",
+                "ms_ssim_l1_opt",
+                "perceptual_opt",
+                "contextual_opt",
+                "dists_opt",
+                "hr_inversion_opt",
+                "dinov2_opt",
+                "topiq_opt",
+                "pd_opt",
+                "fd_opt",
+                "ldl_opt",
+                "hsluv_opt",
+                "gan_opt",
+                "color_opt",
+                "luma_opt",
+                "avg_opt",
+                "bicubic_opt",
+            ]
+            for opt in old_loss_opts:
+                loss = getattr(train_opt, opt)
+                if loss is not None:
+                    train_opt.losses.append(loss)
+
+        for loss in train_opt.losses:
+            assert "type" in loss, "all losses must define type"
+            assert "loss_weight" in loss, f"{loss['type']} must define loss_weight"
+            if float(loss["loss_weight"]) > 0:
+                label = loss_type_to_label(loss["type"])
+                if label == "l_g_gan":
+                    self.has_gan = True
+                self.losses[label] = build_loss(loss).to(
                     self.device,
                     memory_format=torch.channels_last,
                     non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
-        if train_opt.mssim_opt:
-            if train_opt.mssim_opt.get("loss_weight", 0) > 0:
-                self.cri_mssim = build_loss(train_opt.mssim_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.ms_ssim_l1_opt:
-            if train_opt.ms_ssim_l1_opt.get("loss_weight", 0) > 0:
-                self.cri_ms_ssim_l1 = build_loss(train_opt.ms_ssim_l1_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.ldl_opt:
-            if train_opt.ldl_opt.get("loss_weight", 0) > 0:
-                self.cri_ldl = build_loss(train_opt.ldl_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.perceptual_opt:
-            if (
-                train_opt.perceptual_opt.get("perceptual_weight", 0) > 0
-                or train_opt.perceptual_opt.get("style_weight", 0) > 0
-            ):
-                self.cri_perceptual = build_loss(train_opt.perceptual_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.dists_opt:
-            if train_opt.dists_opt.get("loss_weight", 0) > 0:
-                self.cri_dists = build_loss(train_opt.dists_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.hr_inversion_opt:
-            if train_opt.hr_inversion_opt.get("loss_weight", 0) > 0:
-                self.cri_hr_inversion = build_loss(train_opt.hr_inversion_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.dinov2_opt:
-            if train_opt.dinov2_opt.get("loss_weight", 0) > 0:
-                self.cri_dinov2 = build_loss(train_opt.dinov2_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.topiq_opt:
-            if train_opt.topiq_opt.get("loss_weight", 0) > 0:
-                self.cri_topiq = build_loss(train_opt.topiq_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.pd_opt:
-            if train_opt.pd_opt.get("loss_weight", 0) > 0:
-                self.cri_pd = build_loss(train_opt.pd_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.fd_opt:
-            if train_opt.fd_opt.get("loss_weight", 0) > 0:
-                self.cri_fd = build_loss(train_opt.fd_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.contextual_opt:
-            if train_opt.contextual_opt.get("loss_weight", 0) > 0:
-                self.cri_contextual = build_loss(train_opt.contextual_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.color_opt:
-            if train_opt.color_opt.get("loss_weight", 0) > 0:
-                self.cri_color = build_loss(train_opt.color_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.luma_opt:
-            if train_opt.luma_opt.get("loss_weight", 0) > 0:
-                self.cri_luma = build_loss(train_opt.luma_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.hsluv_opt:
-            if train_opt.hsluv_opt.get("loss_weight", 0) > 0:
-                self.cri_hsluv = build_loss(train_opt.hsluv_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.avg_opt:
-            if train_opt.avg_opt.get("loss_weight", 0) > 0:
-                self.cri_avg = build_loss(train_opt.avg_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.bicubic_opt:
-            if train_opt.bicubic_opt.get("loss_weight", 0) > 0:
-                self.cri_bicubic = build_loss(train_opt.bicubic_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-
-        if train_opt.gan_opt:
-            if train_opt.gan_opt.get("loss_weight", 0) > 0:
-                self.cri_gan = build_loss(train_opt.gan_opt).to(
-                    self.device,
-                    memory_format=torch.channels_last,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-        else:
-            self.cri_gan = None
+        assert self.losses, "At least one loss must be defined."
 
         if not self.has_gan:
             # warn that discriminator network / optimizer won't be used if enabled
@@ -448,7 +336,6 @@ class SRModel(BaseModel):
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
 
-        # TODO refactor self.accum_iters
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
@@ -456,99 +343,17 @@ class SRModel(BaseModel):
             assert isinstance(self.output, Tensor)
             l_g_total = torch.tensor(0.0, device=self.output.device)
             loss_dict = OrderedDict()
-            # pixel loss
-            if self.cri_pix:
-                l_g_pix = self.cri_pix(self.output, self.gt)
-                l_g_total += l_g_pix / self.accum_iters
-                loss_dict["l_g_pix"] = l_g_pix
-            if self.cri_mssim:
-                l_g_mssim = self.cri_mssim(self.output, self.gt)
-                l_g_total += l_g_mssim / self.accum_iters
-                loss_dict["l_g_mssim"] = l_g_mssim
-            if self.cri_ms_ssim_l1:
-                l_g_ms_ssim_l1 = self.cri_ms_ssim_l1(self.output, self.gt)
-                l_g_total += l_g_ms_ssim_l1 / self.accum_iters
-                loss_dict["l_g_ms_ssim_l1"] = l_g_ms_ssim_l1
-            if self.cri_ldl:
-                assert self.net_g_ema is not None
-                l_g_ldl = self.cri_ldl(self.output, self.gt)
-                l_g_total += l_g_ldl / self.accum_iters
-                loss_dict["l_g_ldl"] = l_g_ldl
-            # perceptual loss
-            if self.cri_perceptual:
-                l_g_percep, l_g_style = self.cri_perceptual(self.output, self.gt)
-                if l_g_percep is not None:
-                    l_g_total += l_g_percep / self.accum_iters
-                    loss_dict["l_g_percep"] = l_g_percep
-                if l_g_style is not None:
-                    l_g_total += l_g_style / self.accum_iters
-                    loss_dict["l_g_style"] = l_g_style
-            # dists loss
-            if self.cri_dists:
-                l_g_dists = self.cri_dists(self.output, self.gt)
-                l_g_total += l_g_dists / self.accum_iters
-                loss_dict["l_g_dists"] = l_g_dists
-            # hr inversion loss
-            if self.cri_hr_inversion:
-                l_g_hr_inversion = self.cri_hr_inversion(self.output, self.gt)
-                l_g_total += l_g_hr_inversion / self.accum_iters
-                loss_dict["l_g_hr_inversion"] = l_g_hr_inversion
-            # dinov2 loss
-            if self.cri_dinov2:
-                l_g_dinov2 = self.cri_dinov2(self.output, self.gt)
-                l_g_total += l_g_dinov2 / self.accum_iters
-                loss_dict["l_g_dinov2"] = l_g_dinov2
-            # topiq loss
-            if self.cri_topiq:
-                l_g_topiq = self.cri_topiq(self.output, self.gt)
-                l_g_total += l_g_topiq / self.accum_iters
-                loss_dict["l_g_topiq"] = l_g_topiq
-            # pd loss
-            if self.cri_pd:
-                l_g_pd = self.cri_pd(self.output, self.gt)
-                l_g_total += l_g_pd / self.accum_iters
-                loss_dict["l_g_pd"] = l_g_pd
-            # fd loss
-            if self.cri_fd:
-                l_g_fd = self.cri_fd(self.output, self.gt)
-                l_g_total += l_g_fd / self.accum_iters
-                loss_dict["l_g_fd"] = l_g_fd
-            # contextual loss
-            if self.cri_contextual:
-                l_g_contextual = self.cri_contextual(self.output, self.gt)
-                l_g_total += l_g_contextual
-                loss_dict["l_g_contextual"] = l_g_contextual / self.accum_iters
-            # color loss
-            if self.cri_color:
-                l_g_color = self.cri_color(self.output, self.gt)
-                l_g_total += l_g_color / self.accum_iters
-                loss_dict["l_g_color"] = l_g_color
-            # luma loss
-            if self.cri_luma:
-                l_g_luma = self.cri_luma(self.output, self.gt)
-                l_g_total += l_g_luma / self.accum_iters
-                loss_dict["l_g_luma"] = l_g_luma
-            # hsluv loss
-            if self.cri_hsluv:
-                l_g_hsluv = self.cri_hsluv(self.output, self.gt)
-                l_g_total += l_g_hsluv / self.accum_iters
-                loss_dict["l_g_hsluv"] = l_g_hsluv
-            # avg loss
-            if self.cri_avg:
-                l_g_avg = self.cri_avg(self.output, self.gt)
-                l_g_total += l_g_avg / self.accum_iters
-                loss_dict["l_g_avg"] = l_g_avg
-            # bicubic loss
-            if self.cri_bicubic:
-                l_g_bicubic = self.cri_bicubic(self.output, self.gt)
-                l_g_total += l_g_bicubic / self.accum_iters
-                loss_dict["l_g_bicubic"] = l_g_bicubic
-            # gan loss
-            if self.cri_gan and self.net_d:
-                fake_g_pred = self.net_d(self.output)
-                l_g_gan = self.cri_gan(fake_g_pred, True, is_disc=False)
-                l_g_total += l_g_gan / self.accum_iters
-                loss_dict["l_g_gan"] = l_g_gan
+
+            for label, loss in self.losses.items():
+                if label == "l_g_gan":
+                    assert self.net_d is not None
+                    fake_g_pred = self.net_d(self.output)
+                    l_g_loss = loss(fake_g_pred, True, is_disc=False)
+                else:
+                    l_g_loss = loss(self.output, self.gt)
+
+                l_g_total += l_g_loss / self.accum_iters
+                loss_dict[label] = l_g_loss
 
             # add total generator loss for tensorboard tracking
             loss_dict["l_g_total"] = l_g_total
@@ -565,9 +370,11 @@ class SRModel(BaseModel):
             self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
             self.optimizer_g.zero_grad()
 
+        cri_gan = self.losses.get("gan_loss")
+
         if (
             self.net_d is not None
-            and self.cri_gan is not None
+            and cri_gan is not None
             and self.optimizer_d is not None
         ):
             # optimize net_d
@@ -581,12 +388,12 @@ class SRModel(BaseModel):
             ):
                 # real
                 real_d_pred = self.net_d(self.gt)
-                l_d_real = self.cri_gan(real_d_pred, True, is_disc=True)
+                l_d_real = cri_gan(real_d_pred, True, is_disc=True)
                 loss_dict["l_d_real"] = l_d_real
                 loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
                 # fake
                 fake_d_pred = self.net_d(self.output.detach())
-                l_d_fake = self.cri_gan(fake_d_pred, False, is_disc=True)
+                l_d_fake = cri_gan(fake_d_pred, False, is_disc=True)
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 

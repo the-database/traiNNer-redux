@@ -134,6 +134,10 @@ class TrainOptions(StrictStruct):
     scheduler: SchedulerOptions | None = None
     optim_d: dict[str, Any] | None = None
 
+    # new losses format
+    losses: list[dict[str, Any]] | None = None
+
+    # old losses format
     pixel_opt: dict[str, Any] | None = None
     mssim_opt: dict[str, Any] | None = None
     ms_ssim_l1_opt: dict[str, Any] | None = None

@@ -2,12 +2,10 @@ import math
 
 import numpy as np
 import torch
-import torchvision.transforms.functional as tf
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torchvision import models
 
-from traiNNer.losses.perceptual_loss import VGG_PATCH_SIZE
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 
@@ -175,18 +173,7 @@ class ADISTSLoss(torch.nn.Module):
         return param
 
     def forward_once(self, x: Tensor) -> list[Tensor]:
-        if self.resize_input:
-            # skip resize if dimensions already match
-            if x.shape[2] != VGG_PATCH_SIZE or x.shape[3] != VGG_PATCH_SIZE:
-                h = tf.resize(
-                    x,
-                    [VGG_PATCH_SIZE],
-                    interpolation=tf.InterpolationMode.BICUBIC,
-                    antialias=True,
-                )
-            h = x
-        else:
-            h = x
+        h = x
 
         h = (h - self.mean) / self.std
         h = self.stage1(h)

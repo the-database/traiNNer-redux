@@ -163,54 +163,32 @@ train:
   warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
-  # MS-SSIM L1 loss
-  ms_ssim_l1_opt:
-    type: MSSSIML1Loss
-    alpha: 0.1
-    loss_weight: 1.0
-  # Perceptual loss
-  perceptual_opt:
-    type: PerceptualLoss
-    layer_weights:
-      # before relu
-      "conv1_2": 0.1
-      "conv2_2": 0.1
-      "conv3_4": 1
-      "conv4_4": 1
-      "conv5_4": 1
-    vgg_type: vgg19
-    style_weight: 0
-    range_norm: false
-    criterion: charbonnier
-    perceptual_weight: 0.01
-  # HSLuv loss (hue, saturation, lightness).
-  hsluv_opt:
-    type: HSLuvLoss
-    criterion: charbonnier
-    loss_weight: 1.0
-  # GAN loss
-  gan_opt:
-    type: GANLoss
-    gan_type: vanilla
-    real_label_val: 1.0
-    fake_label_val: 0.0
-    loss_weight: 0.1
-  # Additional losses - disabled by default.
-  # To enable, change the loss_weight from 0 to the recommended loss_weight which appears as a comment next to the loss weight.
-  # For example to enable DISTS loss, change the loss weight from 0 to 0.25; to enable color loss change loss weight from 0 to 1.
-  # DISTS perceptual loss
-  dists_opt:
-    type: DISTSLoss  # DISTSLoss, ADISTSLoss
-    use_input_norm: true
-    loss_weight: 0  # 0.3
-  # LDL loss
-  ldl_opt:
-    type: LDLLoss
-    loss_weight: 0  # 1.0
-  # PD (Projected Distribution) perceptual loss. Disable PerceptualLoss if you use this.
-  pd_opt:
-    type: PDLoss
-    loss_weight: 0  # 0.01
+  losses:
+    # MS-SSIM L1 loss
+    - type: MSSSIML1Loss
+      alpha: 0.1
+      loss_weight: 1.0
+    # Perceptual loss
+    - type: PerceptualLoss
+      criterion: pd+l1  # pd+l1 (good quality), fd+l1 (slower), pd, fd, charbonnier, l1 (lower quality, legacy)
+      loss_weight: 0.01
+    # HSLuv loss (hue, saturation, lightness)
+    - type: HSLuvLoss
+      criterion: charbonnier
+      loss_weight: 1.0
+    # GAN loss
+    - type: GANLoss
+      gan_type: vanilla
+      loss_weight: 0.1
+    # Additional losses - disabled by default.
+    # To enable, change the loss_weight from 0 to the recommended loss_weight which appears as a comment next to the loss weight.
+    # For example to enable DISTS loss, change the loss weight from 0 to 0.25; to enable color loss change loss weight from 0 to 1.
+    # DISTS perceptual loss
+    - type: DISTSLoss
+      loss_weight: 0  # 0.3
+    # LDL loss
+    - type: LDLLoss
+      loss_weight: 0  # 1.0
 
   # Mix of Augmentations (MoA)
   use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.

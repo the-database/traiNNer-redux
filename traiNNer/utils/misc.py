@@ -1,5 +1,6 @@
 import os
 import random
+import re
 import shutil
 import time
 from collections.abc import Generator
@@ -222,3 +223,33 @@ def sizeof_fmt(size: float, suffix: str = "B") -> str:
 
 def free_space_gb_str() -> str:
     return f"{shutil.disk_usage(__file__).free / (1 << 30):,.2f} GB"
+
+
+# https://github.com/jpvanhal/inflection/blob/88eefaacf7d0caaa701af7c8ab2d0ab3f17086f1/inflection/__init__.py#L400
+def underscore(word: str) -> str:
+    """
+    Make an underscored, lowercase form from the expression in the string.
+
+    Example::
+
+        >>> underscore("DeviceType")
+        'device_type'
+
+    As a rule of thumb you can think of :func:`underscore` as the inverse of
+    :func:`camelize`, though there are cases where that does not hold::
+
+        >>> camelize(underscore("IOError"))
+        'IoError'
+
+    """
+    word = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", word)
+    word = re.sub(r"([a-z\d])([A-Z])", r"\1_\2", word)
+    word = word.replace("-", "_")
+    return word.lower()
+
+
+def loss_type_to_label(loss_type: str) -> str:
+    label = loss_type.replace("HSLuvLoss", "HSLUVLoss")  # hack for HSLuv
+    label = underscore(label)
+    label = label.replace("_loss", "")
+    return f"l_g_{label}"

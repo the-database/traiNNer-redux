@@ -142,11 +142,11 @@ train:
   warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
-  # MS-SSIM L1 loss
-  ms_ssim_l1_opt:
-    type: MSSSIML1Loss
-    alpha: 0.1
-    loss_weight: 0
+  losses:
+    # MS-SSIM L1 loss
+    - type: MSSSIML1Loss
+      alpha: 0.1
+      loss_weight: 1.0
 
 #############
 # Validation
