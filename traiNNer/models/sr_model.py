@@ -370,7 +370,7 @@ class SRModel(BaseModel):
             self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
             self.optimizer_g.zero_grad()
 
-        cri_gan = self.losses.get("gan_loss")
+        cri_gan = self.losses.get("l_g_gan")
 
         if (
             self.net_d is not None
