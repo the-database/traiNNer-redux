@@ -108,11 +108,11 @@ class SRModel(BaseModel):
 
             if not gan_opt:
                 if self.opt.train.losses:
-                    gan_opts = filter(
-                        lambda x: x["type"] == "GANLoss", self.opt.train.losses
+                    gan_opts = list(
+                        filter(lambda x: x["type"] == "GANLoss", self.opt.train.losses)
                     )
                     if gan_opts:
-                        gan_opt = next(gan_opts)
+                        gan_opt = gan_opts[0]
 
             if gan_opt:
                 if gan_opt.get("loss_weight", 0) > 0:
@@ -347,7 +347,6 @@ class SRModel(BaseModel):
             for label, loss in self.losses.items():
                 if label == "l_g_gan":
                     assert self.net_d is not None
-                    fake_g_pred = self.net_d(self.output)
                     l_g_loss = loss(fake_g_pred, True, is_disc=False)
                 else:
                     l_g_loss = loss(self.output, self.gt)
