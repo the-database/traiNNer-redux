@@ -347,6 +347,7 @@ class SRModel(BaseModel):
             for label, loss in self.losses.items():
                 if label == "l_g_gan":
                     assert self.net_d is not None
+                    fake_g_pred = self.net_d(self.output)
                     l_g_loss = loss(fake_g_pred, True, is_disc=False)
                 else:
                     l_g_loss = loss(self.output, self.gt)
