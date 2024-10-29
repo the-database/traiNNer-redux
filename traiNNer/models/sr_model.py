@@ -647,28 +647,20 @@ class SRModel(BaseModel):
                 "net_g_ema",
                 self.opt.path.models,
                 current_iter,
+                "params_ema",
             )
 
             self.save_network(
-                self.net_g,
-                "net_g",
-                self.opt.path.resume_models,
-                current_iter,
+                self.net_g, "net_g", self.opt.path.resume_models, current_iter, "params"
             )
         else:
             self.save_network(
-                self.net_g,
-                "net_g",
-                self.opt.path.models,
-                current_iter,
+                self.net_g, "net_g", self.opt.path.models, current_iter, "params"
             )
 
         if self.net_d is not None:
             self.save_network(
-                self.net_d,
-                "net_d",
-                self.opt.path.resume_models,
-                current_iter,
+                self.net_d, "net_d", self.opt.path.resume_models, current_iter, "params"
             )
 
         self.save_training_state(epoch, current_iter)
