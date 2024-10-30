@@ -100,7 +100,7 @@ class PerceptualLoss(nn.Module):
                 use_relu_layers = True
                 layer_weights |= VGG19_RELU_LAYER_WEIGHTS
 
-        self.vgg = VGG(list(layer_weights.keys()))
+        self.vgg = VGG(list(layer_weights.keys())).to(memory_format=torch.channels_last)  # pyright: ignore[reportCallIssue]
 
         if alpha is None:
             alpha = []
@@ -207,7 +207,7 @@ class PerceptualLoss(nn.Module):
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
         score1 = torch.tensor(0.0, device=x.device)
-        score2 = None  # torch.tensor(0.0, device=x.device)
+        score2 = None
         criterion2_i = 0
         for i, k in enumerate(x_vgg):
             alpha = self.alpha[i]
@@ -250,9 +250,11 @@ class VGG(nn.Module):
     def __init__(self, layer_name_list: list[str]) -> None:
         super().__init__()
 
-        vgg_pretrained_features = torchvision.models.vgg19(
-            weights=VGG19_Weights.DEFAULT
-        ).features
+        model = torchvision.models.vgg19(weights=VGG19_Weights.DEFAULT).to(
+            memory_format=torch.channels_last
+        )  # pyright: ignore[reportCallIssue]
+
+        vgg_pretrained_features = model.features
         assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
 
         self._disable_inplace_relu(vgg_pretrained_features)
