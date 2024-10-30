@@ -53,8 +53,6 @@ class SRVGGNetCompact(nn.Module):
             activation = nn.PReLU(num_parameters=num_feat)
         elif act_type == "leakyrelu":
             activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        elif act_type == "mish":
-            activation = nn.Mish()
         self.body.append(activation)  # type: ignore
 
         # the body structure
@@ -67,8 +65,6 @@ class SRVGGNetCompact(nn.Module):
                 activation = nn.PReLU(num_parameters=num_feat)
             elif act_type == "leakyrelu":
                 activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-            elif act_type == "mish":
-                activation = nn.Mish()
             self.body.append(activation)  # type: ignore
 
         # the last conv
