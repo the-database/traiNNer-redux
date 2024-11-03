@@ -181,6 +181,10 @@ class BaseModel:
             else torch.contiguous_format,
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+
+        if self.opt.use_compile:
+            net = torch.compile(net)
+
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters
             net = DistributedDataParallel(
@@ -281,6 +285,13 @@ class BaseModel:
         """
         if isinstance(net, DataParallel | DistributedDataParallel):
             net = net.module
+        return self.unwrap_compiled_model(net)
+
+    def unwrap_compiled_model(
+        self, net: nn.Module | torch._dynamo.OptimizedModule
+    ) -> nn.Module:
+        if isinstance(net, torch._dynamo.OptimizedModule):  # noqa: SLF001
+            return net._orig_mod  # noqa: SLF001
         return net
 
     @master_only

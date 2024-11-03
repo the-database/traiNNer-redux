@@ -39,6 +39,7 @@ class SRModel(BaseModel):
         # use amp
         self.use_amp = self.opt.use_amp
         self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
+        self.use_compile = self.opt.use_compile
 
         # define network
         self.net_g = build_network({**opt.network_g, "scale": opt.scale})
@@ -561,7 +562,7 @@ class SRModel(BaseModel):
                     save_img_path = osp.join(
                         self.opt.path.visualization,
                         dataset_name,
-                        f"{img_name}_{self.opt.name}.png",
+                        f"{img_name}.png",
                     )
                 imwrite(sr_img, save_img_path)
                 if (
