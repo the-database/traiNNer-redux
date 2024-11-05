@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import torch
 from cv2.typing import MatLike
+from imagecodecs import imread
 from torch import Tensor
 from torchvision.utils import make_grid
 
@@ -183,26 +184,21 @@ def tensor2img_fast(
     return output
 
 
-def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> MatLike:
+def imfrombytes(content: bytes, float32: bool = False) -> MatLike:
     """Read an image from bytes.
 
     Args:
         content (bytes): Image bytes got from files or other streams.
-        flag (str): Flags specifying the color type of a loaded image,
-            candidates are `color`, `grayscale` and `unchanged`.
         float32 (bool): Whether to change to float32., If True, will also norm
             to [0, 1]. Default: False.
 
     Returns:
         ndarray: Loaded image array.
     """
-    img_np = np.frombuffer(content, np.uint8)
-    imread_flags = {
-        "color": cv2.IMREAD_COLOR,
-        "grayscale": cv2.IMREAD_GRAYSCALE,
-        "unchanged": cv2.IMREAD_UNCHANGED,
-    }
-    img = cv2.imdecode(img_np, imread_flags[flag])
+
+    img = imread(content)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
     if float32:
         img = img.astype(np.float32) / 255.0
     return img

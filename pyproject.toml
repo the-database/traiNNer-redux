@@ -3,6 +3,7 @@ name = "traiNNer-redux"
 requires-python = ">=3.11"
 dynamic = ["version"]
 dependencies = [
+"imagecodecs",
 "msgspec",
 "numpy>=2",
 "opencv-python",
