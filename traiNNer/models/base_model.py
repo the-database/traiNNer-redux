@@ -183,7 +183,7 @@ class BaseModel:
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
         if self.opt.use_compile:
-            net = torch.compile(net)
+            net = torch.compile(net)  # pyright: ignore[reportAssignmentType]
 
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters
