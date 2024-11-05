@@ -173,6 +173,15 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
         ):
             has_gan = False
             gan_opt = opt.train.gan_opt
+
+            if not gan_opt:
+                if opt.train.losses:
+                    gan_opts = list(
+                        filter(lambda x: x["type"] == "GANLoss", opt.train.losses)
+                    )
+                    if gan_opts:
+                        gan_opt = gan_opts[0]
+
             if gan_opt:
                 if gan_opt.get("loss_weight", 0) > 0:
                     has_gan = True

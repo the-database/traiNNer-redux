@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from abc import abstractmethod
@@ -180,6 +181,10 @@ class BaseModel:
             else torch.contiguous_format,
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+
+        if self.opt.use_compile:
+            net = torch.compile(net)  # pyright: ignore[reportAssignmentType]
+
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters
             net = DistributedDataParallel(
@@ -280,6 +285,13 @@ class BaseModel:
         """
         if isinstance(net, DataParallel | DistributedDataParallel):
             net = net.module
+        return self.unwrap_compiled_model(net)
+
+    def unwrap_compiled_model(
+        self, net: nn.Module | torch._dynamo.OptimizedModule
+    ) -> nn.Module:
+        if isinstance(net, torch._dynamo.OptimizedModule):  # noqa: SLF001
+            return net._orig_mod  # noqa: SLF001
         return net
 
     @master_only
@@ -345,6 +357,18 @@ class BaseModel:
     def get_current_learning_rate(self) -> list[float]:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
+    def is_json_compatible(self, value: Any) -> bool:
+        if isinstance(value, str | int | float | bool) or value is None:
+            return True
+        elif isinstance(value, Sequence):
+            return all(self.is_json_compatible(item) for item in value)
+        elif isinstance(value, dict):
+            return all(
+                isinstance(k, str) and self.is_json_compatible(v)
+                for k, v in value.items()
+            )
+        return False
+
     @master_only
     def save_network(
         self,
@@ -352,6 +376,7 @@ class BaseModel:
         net_label: str,
         save_dir: str,
         current_iter: int,
+        param_key: str,
     ) -> None:
         """Save networks.
 
@@ -382,15 +407,35 @@ class BaseModel:
                 continue
             new_state_dict[key] = param.to("cpu", memory_format=torch.contiguous_format)
 
+        metadata: dict[str, Any] | None = None
+        if hasattr(net, "hyperparameters"):
+            metadata = {
+                k: v
+                for k, v in net.hyperparameters.items()
+                if self.is_json_compatible(v)
+            }
+
         # avoid occasional writing errors
         retry = 3
         logger = None
         while retry > 0:
             try:
                 if self.opt.logger.save_checkpoint_format == "safetensors":
-                    save_file(new_state_dict, save_path)
-                else:
-                    torch.save(new_state_dict, save_path)
+                    if metadata:
+                        save_file(
+                            new_state_dict,
+                            save_path,
+                            metadata={"metadata": json.dumps(metadata)},
+                        )
+                    else:
+                        save_file(new_state_dict, save_path)
+                else:  # noqa: PLR5501
+                    if metadata:
+                        torch.save(
+                            {"metadata": metadata, param_key: new_state_dict}, save_path
+                        )
+                    else:
+                        torch.save(new_state_dict, save_path)
             except Exception as e:
                 logger = get_root_logger()
                 logger.warning(
