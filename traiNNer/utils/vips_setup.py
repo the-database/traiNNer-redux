@@ -5,7 +5,7 @@ import sys
 import urllib.request
 import zipfile
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 from traiNNer.utils.logger import get_root_logger
 
@@ -53,7 +53,10 @@ def setup_vips() -> None:
 
 def initialize_vips() -> ModuleType:
     setup_vips()
+    try:
+        import pyvips
 
-    import pyvips
-
-    return pyvips
+        return pyvips
+    except ModuleNotFoundError:
+        # hack
+        return SimpleNamespace(Image="")  # type: ignore
