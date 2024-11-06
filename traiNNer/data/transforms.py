@@ -3,6 +3,7 @@ from typing import overload
 
 import cv2
 import numpy as np
+import pyvips
 from torch import Tensor
 
 
@@ -189,6 +190,50 @@ def paired_random_crop_list(
         cropped_lqs.append(cropped_lq)
 
     return cropped_gts, cropped_lqs
+
+
+def paired_random_crop_vips(
+    img_gt: pyvips.Image,
+    img_lq: pyvips.Image,
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    h_lq: int = img_lq.height  # pyright: ignore[reportAssignmentType]
+    w_lq: int = img_lq.width  # pyright: ignore[reportAssignmentType]
+    h_gt, w_gt = img_gt.height, img_gt.width
+    lq_patch_size = gt_patch_size // scale
+    if h_gt != h_lq * scale or w_gt != w_lq * scale:
+        raise ValueError(
+            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
+            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}",
+        )
+    if h_lq < lq_patch_size or w_lq < lq_patch_size:
+        raise ValueError(
+            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
+            f"({lq_patch_size}, {lq_patch_size}). "
+            f"Please remove {gt_path}."
+        )
+
+    # randomly choose top and left coordinates for lq patch
+    x = random.randint(0, w_lq - lq_patch_size)
+    y = random.randint(0, h_lq - lq_patch_size)
+
+    region_lq = pyvips.Region.new(img_lq)
+    data_lq = region_lq.fetch(x, y, lq_patch_size, lq_patch_size)
+    img_lq_np = np.ndarray(
+        buffer=data_lq, dtype=np.uint8, shape=[lq_patch_size, lq_patch_size, 3]
+    )  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall]
+
+    # crop corresponding gt patch
+    x_gt, y_gt = int(x * scale), int(y * scale)
+    region_gt = pyvips.Region.new(img_gt)
+    data_gt = region_gt.fetch(x_gt, y_gt, gt_patch_size, gt_patch_size)
+    img_gt_np = np.ndarray(
+        buffer=data_gt, dtype=np.uint8, shape=[gt_patch_size, gt_patch_size, 3]
+    )  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall]
+
+    return img_gt_np.astype(np.float32) / 255.0, img_lq_np.astype(np.float32) / 255.0
 
 
 def augment(
