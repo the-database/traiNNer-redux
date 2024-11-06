@@ -146,7 +146,7 @@ class RealESRGANDataset(BaseDataset):
         assert self.opt.use_hflip is not None
         assert self.opt.use_rot is not None
 
-        img_gt = imfrombytes(img_bytes, float32=True)
+        img_gt = imfrombytes(img_bytes, float32=True)  # TODO vips
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
         img_gt = augment(img_gt, self.opt.use_hflip, self.opt.use_rot)

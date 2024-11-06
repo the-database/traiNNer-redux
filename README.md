@@ -12,7 +12,7 @@ A modern community fork of [BasicSR](https://github.com/XPixelGroup/BasicSR) and
       git clone https://github.com/the-database/traiNNer-redux.git
       ```
    - To use a GUI for git, follow the instructions for that git client. For [GitHub Desktop](https://desktop.github.com/), for example, click on the green Code button near the top of this page, click Open with GitHub Desktop and follow the instructions.
-3. For Windows users, double click `install.bat`, and for Linux users, from the terminal in the traiNNer-redux folder run `chmod +x install.sh && ./install.sh` to install all Python dependencies to a new virtual environment.
+3. For Windows users, double click `install.bat`, and for Linux users, from the terminal in the traiNNer-redux folder run `chmod +x install.sh && sudo ./install.sh` to install all Python dependencies to a new virtual environment. The `install.sh` script is tested on Ubuntu and may need adjustments to work on other Linux distros.
 
 ### Training a Model
 Refer to the [wiki](https://github.com/the-database/traiNNer-redux/wiki) for a [full training guide](https://github.com/the-database/traiNNer-redux/wiki/%F0%9F%93%88-Training%E2%80%90a%E2%80%90Model%E2%80%90in%E2%80%90traiNNer%E2%80%90redux) and [benchmarks](https://github.com/the-database/traiNNer-redux/wiki/PyTorch-Inference-Benchmarks-by-Architecture).

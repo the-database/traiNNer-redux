@@ -3,8 +3,11 @@ from typing import overload
 
 import cv2
 import numpy as np
-import pyvips
 from torch import Tensor
+
+from traiNNer.utils.vips_setup import initialize_vips
+
+pyvips = initialize_vips()
 
 
 def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
@@ -216,8 +219,8 @@ def paired_random_crop_vips(
         )
 
     # randomly choose top and left coordinates for lq patch
-    x = random.randint(0, w_lq - lq_patch_size)
     y = random.randint(0, h_lq - lq_patch_size)
+    x = random.randint(0, w_lq - lq_patch_size)
 
     region_lq = pyvips.Region.new(img_lq)
     data_lq = region_lq.fetch(x, y, lq_patch_size, lq_patch_size)
