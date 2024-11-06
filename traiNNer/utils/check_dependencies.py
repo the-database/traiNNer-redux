@@ -28,19 +28,24 @@ def get_min_versions_from_pyproject() -> dict[str, str | None]:
 
 def check_dependencies() -> None:
     min_versions = get_min_versions_from_pyproject()
+
+    if sys.platform == "win32":
+        cmd = "./install.bat"
+    else:
+        cmd = "./install.sh"
+
     for package, min_version in min_versions.items():
         try:
             installed_version = importlib.metadata.version(package)
         except importlib.metadata.PackageNotFoundError as err:
-            raise RuntimeError(f"{package} is not installed") from err
+            raise RuntimeError(
+                f"{package} is not installed."
+                f"Please run this command to install: {cmd}"
+            ) from err
 
         if min_version:
             try:
                 if Version(installed_version) < Version(min_version):
-                    if sys.platform == "win32":
-                        cmd = "./install.bat"
-                    else:
-                        cmd = "./install.sh"
                     raise RuntimeError(
                         f"{package} version {installed_version} is lower than the required version {min_version}. Please run this command to update dependencies: {cmd}"
                     )
