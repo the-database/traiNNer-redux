@@ -1,7 +1,5 @@
 import os
 import platform
-import subprocess
-import sys
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -21,17 +19,18 @@ def setup_vips() -> None:
     system = platform.system()
 
     if system == "Linux":
-        try:
-            subprocess.run(["vips", "--version"], check=True, stdout=subprocess.PIPE)
-            print("VIPS is already installed and available in PATH.")
-            return
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            logger.error(
-                "libvips is not installed. Please install libvibs using the following command:"
-                "  sudo apt install libvips-dev --no-install-recommends"
-            )
+        pass
+        # try:
+        #     subprocess.run(["vips", "--version"], check=True, stdout=subprocess.PIPE)
+        #     print("VIPS is already installed and available in PATH.")
+        #     return
+        # except (subprocess.CalledProcessError, FileNotFoundError):
+        #     logger.error(
+        #         "libvips is not installed. Please install libvibs using the following command:"
+        #         "  sudo apt install libvips-dev --no-install-recommends"
+        #     )
 
-            sys.exit(1)
+        #     sys.exit(1)
     elif system == "Windows":
         vips_url = "https://github.com/libvips/build-win64-mxe/releases/download/v8.16.0/vips-dev-w64-all-8.16.0.zip"
         zip_path = cache_dir / "vips.zip"
