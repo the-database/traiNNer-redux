@@ -7,7 +7,7 @@ from traiNNer.data.data_util import (
     paired_paths_from_lmdb,
     paired_paths_from_meta_info_file,
 )
-from traiNNer.data.transforms import augment_vips_list, paired_random_crop_vips
+from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
 from traiNNer.utils import FileClient, imgs2tensors
 from traiNNer.utils.img_util import vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
@@ -112,7 +112,7 @@ class PairedImageDataset(BaseDataset):
             assert self.opt.use_rot is not None
 
             # flip, rotation
-            vips_img_gt, vips_img_lq = augment_vips_list(
+            vips_img_gt, vips_img_lq = augment_vips_pair(
                 [vips_img_gt, vips_img_lq], self.opt.use_hflip, self.opt.use_rot
             )
 
