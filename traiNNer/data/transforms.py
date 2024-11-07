@@ -250,8 +250,6 @@ def augment(
     imgs: np.ndarray | list[np.ndarray],
     hflip: bool = True,
     rotation: bool = True,
-    flows: list[np.ndarray] | None = None,
-    return_status: bool = False,
 ) -> (
     np.ndarray
     | list[np.ndarray]
@@ -293,33 +291,72 @@ def augment(
             img = img.transpose(1, 0, 2)
         return img
 
-    def _augment_flow(flow: np.ndarray) -> np.ndarray:
-        if hflip:  # horizontal
-            cv2.flip(flow, 1, flow)
-            flow[:, :, 0] *= -1
-        if vflip:  # vertical
-            cv2.flip(flow, 0, flow)
-            flow[:, :, 1] *= -1
-        if rot90:
-            flow = flow.transpose(1, 0, 2)
-            flow = flow[:, :, [1, 0]]
-        return flow
-
     if not isinstance(imgs, list):
         imgs = [imgs]
     imgs = [_augment(img) for img in imgs]
     if len(imgs) == 1:
         imgs = imgs[0]
 
-    if flows is not None:
-        flows = [_augment_flow(flow) for flow in flows]
-        if len(flows) == 1:
-            flows = flows[0]  # type: ignore -- wtf is this function even? this needs to be rewritten to be less jank with what its returning
-        return imgs, flows  # type: ignore -- ditto above
-    elif return_status:
-        return imgs, (hflip, vflip, rot90)  # type: ignore -- ditto above
-    else:
-        return imgs
+    return imgs
+
+
+def augment_vips(
+    img: pyvips.Image,
+    hflip: bool = True,
+    rotation: bool = True,
+) -> pyvips.Image:
+    """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
+
+    We use vertical flip and transpose for rotation implementation.
+    All the images in the list use the same augmentation.
+
+    Args:
+        imgs (list[pyvips.Image] | pyvips.Image): Images to be augmented. If the input
+            is a single pyvips.Image, it will be transformed to a list.
+        hflip (bool): Horizontal flip. Default: True.
+        rotation (bool): Rotation. Default: True.
+
+    Returns:
+        list[pyvips.Image] | pyvips.Image: Augmented images. If returned
+            results only have one element, just return pyvips.Image.
+    """
+    hflip = hflip and random.random() < 0.5
+    vflip = rotation and random.random() < 0.5
+    rot90 = rotation and random.random() < 0.5
+
+    def _augment_vips(img: pyvips.Image) -> pyvips.Image:
+        if hflip:  # horizontal flip
+            img = img.fliphor()  # pyright: ignore[reportAssignmentType]
+        if vflip:  # vertical flip
+            img = img.flipver()  # pyright: ignore[reportAssignmentType]
+        if rot90:  # rotate 90 degrees clockwise
+            img = img.rot90()  # pyright: ignore[reportAssignmentType]
+        return img
+
+    return _augment_vips(img)
+
+
+def augment_vips_list(
+    imgs: list[pyvips.Image],
+    hflip: bool = True,
+    rotation: bool = True,
+) -> list[pyvips.Image]:
+    """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
+
+    We use vertical flip and transpose for rotation implementation.
+    All the images in the list use the same augmentation.
+
+    Args:
+        imgs (list[pyvips.Image] | pyvips.Image): Images to be augmented. If the input
+            is a single pyvips.Image, it will be transformed to a list.
+        hflip (bool): Horizontal flip. Default: True.
+        rotation (bool): Rotation. Default: True.
+
+    Returns:
+        list[pyvips.Image] | pyvips.Image: Augmented images. If returned
+            results only have one element, just return pyvips.Image.
+    """
+    return [augment_vips(img, hflip, rotation) for img in imgs]
 
 
 def img_rotate(
