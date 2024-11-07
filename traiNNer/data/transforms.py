@@ -303,7 +303,9 @@ def augment(
 def augment_vips(
     img: pyvips.Image,
     hflip: bool = True,
-    rotation: bool = True,
+    vflip: bool = True,
+    rot90: bool = True,
+    randomize: bool = True,
 ) -> pyvips.Image:
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
@@ -320,9 +322,10 @@ def augment_vips(
         list[pyvips.Image] | pyvips.Image: Augmented images. If returned
             results only have one element, just return pyvips.Image.
     """
-    hflip = hflip and random.random() < 0.5
-    vflip = rotation and random.random() < 0.5
-    rot90 = rotation and random.random() < 0.5
+    if randomize:
+        hflip = hflip and random.random() < 0.5
+        vflip = vflip and random.random() < 0.5
+        rot90 = rot90 and random.random() < 0.5
 
     def _augment_vips(img: pyvips.Image) -> pyvips.Image:
         if hflip:  # horizontal flip
@@ -336,11 +339,12 @@ def augment_vips(
     return _augment_vips(img)
 
 
-def augment_vips_list(
-    imgs: list[pyvips.Image],
+def augment_vips_pair(
+    imgs: tuple[pyvips.Image, pyvips.Image],
     hflip: bool = True,
-    rotation: bool = True,
-) -> list[pyvips.Image]:
+    vflip: bool = True,
+    rot90: bool = True,
+) -> tuple[pyvips.Image, pyvips.Image]:
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
     We use vertical flip and transpose for rotation implementation.
@@ -356,7 +360,14 @@ def augment_vips_list(
         list[pyvips.Image] | pyvips.Image: Augmented images. If returned
             results only have one element, just return pyvips.Image.
     """
-    return [augment_vips(img, hflip, rotation) for img in imgs]
+
+    hflip = hflip and random.random() < 0.5
+    vflip = vflip and random.random() < 0.5
+    rot90 = rot90 and random.random() < 0.5
+
+    return augment_vips(imgs[0], hflip, vflip, rot90, randomize=False), augment_vips(
+        imgs[1], hflip, vflip, rot90, randomize=False
+    )
 
 
 def img_rotate(
