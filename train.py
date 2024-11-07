@@ -1,7 +1,7 @@
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
-from traiNNer.utils.check_dependencies import check_dependencies
+from traiNNer.check.check_dependencies import check_dependencies
 
 if __name__ == "__main__":
     check_dependencies()
