@@ -212,7 +212,7 @@ def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> M
 
 
 def vipsimfrompath(path: str) -> pyvips.Image:
-    img = pyvips.Image.new_from_file(path, access="sequential")
+    img = pyvips.Image.new_from_file(path, access="sequential", fail=True)
     assert isinstance(img, pyvips.Image)
     return img
 
