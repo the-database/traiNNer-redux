@@ -9,7 +9,7 @@ dependencies = [
 "Pillow",
 "pytorch-optimizer",
 "pyvips>=2.2.3",
-"pyvips-binary>=8.16.0",
+"pyvips-binary>=8.16.0; sys_platform == 'win32'",
 "pyyaml",
 "requests",
 "rich",
