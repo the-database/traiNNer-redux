@@ -222,16 +222,20 @@ def paired_random_crop_vips(
     region_lq = pyvips.Region.new(img_lq)
     data_lq = region_lq.fetch(x, y, lq_patch_size, lq_patch_size)
     img_lq_np = np.ndarray(
-        buffer=data_lq, dtype=np.uint8, shape=[lq_patch_size, lq_patch_size, 3]
-    )  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall]
+        buffer=data_lq,
+        dtype=np.uint8,
+        shape=[lq_patch_size, lq_patch_size, img_lq.bands],  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall, reportArgumentType]
+    )
 
     # crop corresponding gt patch
     x_gt, y_gt = int(x * scale), int(y * scale)
     region_gt = pyvips.Region.new(img_gt)
     data_gt = region_gt.fetch(x_gt, y_gt, gt_patch_size, gt_patch_size)
     img_gt_np = np.ndarray(
-        buffer=data_gt, dtype=np.uint8, shape=[gt_patch_size, gt_patch_size, 3]
-    )  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall]
+        buffer=data_gt,
+        dtype=np.uint8,
+        shape=[gt_patch_size, gt_patch_size, img_gt.bands],  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall, reportArgumentType]
+    )
 
     return img_gt_np.astype(np.float32) / 255.0, img_lq_np.astype(np.float32) / 255.0
 
