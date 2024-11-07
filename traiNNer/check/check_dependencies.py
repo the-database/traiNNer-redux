@@ -37,11 +37,11 @@ def check_dependencies() -> None:
     for package, min_version in min_versions.items():
         try:
             installed_version = importlib.metadata.version(package)
-        except Exception as err:
+        except Exception:
             raise RuntimeError(
                 f"{package} is not installed. "
                 f"Please run this command to install: {cmd}"
-            ) from err
+            ) from None
 
         if min_version:
             try:
@@ -49,9 +49,9 @@ def check_dependencies() -> None:
                     raise RuntimeError(
                         f"{package} version {installed_version} is lower than the required version {min_version}. Please run this command to update dependencies: {cmd}"
                     )
-            except InvalidVersion as err:
+            except InvalidVersion:
                 raise RuntimeError(
                     f"Invalid version format for {package}: {installed_version}"
-                ) from err
+                ) from None
 
         # print(f"{package}: {installed_version} (OK)")
