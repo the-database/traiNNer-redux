@@ -99,6 +99,7 @@ def build_dataloader(
             "num_workers": num_workers,
             "sampler": sampler,
             "drop_last": True,
+            "prefetch_factor": dataset_opt.prefetch_factor,
         }
         if sampler is None:
             dataloader_args["shuffle"] = True

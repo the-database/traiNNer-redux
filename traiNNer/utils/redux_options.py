@@ -41,6 +41,7 @@ class DatasetOptions(StrictStruct):
     pin_memory: bool = True
     persistent_workers: bool = True
     num_prefetch_queue: int = 1
+    prefetch_factor: int = 2
 
     clip_size: int | None = None
 
