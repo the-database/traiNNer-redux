@@ -5,14 +5,11 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pyvips
 import torch
 from cv2.typing import MatLike
 from torch import Tensor
 from torchvision.utils import make_grid
-
-from traiNNer.utils.vips_setup import initialize_vips
-
-pyvips = initialize_vips()
 
 
 def img2tensor(
