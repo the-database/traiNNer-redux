@@ -206,9 +206,6 @@ def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> M
 
     img = cv2.imdecode(img_np, imread_flags[flag])
 
-    # img = imread(content)
-    # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
     if float32:
         img = img.astype(np.float32) / 255.0
     return img
