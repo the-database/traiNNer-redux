@@ -290,3 +290,34 @@ def crop_border(
         ]
     else:
         return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]
+
+
+def img2rgb(image: np.ndarray) -> np.ndarray:
+    """
+    Convert a NumPy array image to RGB.
+
+    Parameters:
+        image (np.ndarray): The input image array.
+                            Expected shape: (H, W), (H, W, 1), (H, W, 3), or (H, W, 4+).
+                            The array should have dtype=np.uint8 or similar.
+
+    Returns:
+        np.ndarray: RGB image with shape (H, W, 3).
+    """
+
+    # rgb
+    if image.ndim == 3 and image.shape[2] == 3:
+        return image
+
+    # grayscale
+    elif image.ndim == 2 or (image.ndim == 3 and image.shape[2] == 1):
+        return np.repeat(image[:, :, np.newaxis], 3, axis=2)
+
+    # rgba
+    elif image.ndim == 3 and image.shape[2] > 3:
+        return image[:, :, :3]
+
+    else:
+        raise ValueError(
+            "Unsupported image shape: expected (H, W), (H, W, 1), (H, W, 3), or (H, W, 4+)"
+        )
