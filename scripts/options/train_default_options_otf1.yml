@@ -36,4 +36,4 @@ jpeg_range2: [75, 95]
 resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
 resize_mode_prob3: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
 
-queue_size: 180
+queue_size: 120
