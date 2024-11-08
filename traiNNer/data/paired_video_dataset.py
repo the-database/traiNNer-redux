@@ -1,12 +1,13 @@
 # https://github.com/Demetter/TSCUNet_Trainer/blob/main/Train_TSCUNet.py
 import os
 
+import numpy as np
 import torch
 
 from traiNNer.data.base_dataset import BaseDataset
-from traiNNer.data.transforms import paired_random_crop
+from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
 from traiNNer.utils.file_client import FileClient
-from traiNNer.utils.img_util import imfrombytes, imgs2tensors
+from traiNNer.utils.img_util import imgs2tensors, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -74,18 +75,24 @@ class PairedVideoDataset(BaseDataset):
                 for i in range(self.clip_size):
                     lq_path, gt_path = clips[idx + i]
 
-                    img_gt = imfrombytes(
-                        self.file_client.get(gt_path, "gt"), float32=True
-                    )
-                    img_lq = imfrombytes(
-                        self.file_client.get(lq_path, "lq"), float32=True
-                    )
+                    vips_img_gt = vipsimfrompath(gt_path)
+                    vips_img_lq = vipsimfrompath(lq_path)
 
                     if self.opt.phase == "train":
-                        assert self.gt_size is not None
-                        img_gt, img_lq = paired_random_crop(
-                            img_gt, img_lq, self.gt_size, scale, gt_path
+                        # flip, rotation
+                        vips_img_gt, vips_img_lq = augment_vips_pair(
+                            (vips_img_gt, vips_img_lq),
+                            self.opt.use_hflip,
+                            self.opt.use_rot,
                         )
+
+                        assert self.gt_size is not None
+                        img_gt, img_lq = paired_random_crop_vips(
+                            vips_img_gt, vips_img_lq, self.gt_size, scale, gt_path
+                        )
+                    else:
+                        img_gt = vips_img_gt.numpy().astype(np.float32) / 255.0
+                        img_lq = vips_img_lq.numpy().astype(np.float32) / 255.0
 
                     img_gt, img_lq = imgs2tensors(
                         [img_gt, img_lq], color=True, bgr2rgb=True, float32=True
