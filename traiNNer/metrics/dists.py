@@ -17,8 +17,6 @@ def calculate_dists(
 
     # to tensor
     img_t, img2_t = imgs2tensors([img, img2], color=True, bgr2rgb=True, float32=True)
-    # normalize to [0, 1]
-    img_t, img2_t = img_t / 255, img2_t / 255
     # add dim
     img_t, img2_t = img_t.unsqueeze_(0), img2_t.unsqueeze_(0)
     # to cuda

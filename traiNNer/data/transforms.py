@@ -243,7 +243,7 @@ def paired_random_crop_vips(
         )
     )
 
-    return img_gt_np.astype(np.float32) / 255.0, img_lq_np.astype(np.float32) / 255.0
+    return img_gt_np, img_lq_np
 
 
 def augment(

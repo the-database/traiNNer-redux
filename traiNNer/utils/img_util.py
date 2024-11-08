@@ -47,13 +47,8 @@ def img2tensor(
         out = torch.from_numpy(img[None, ...])
 
     if float32:
-        out = out.float()
+        out = out.float() / 255.0
     return out
-
-    # if isinstance(imgs, list):
-    #     return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
-    # else:
-    #     return _totensor(imgs, color, bgr2rgb, float32)
 
 
 def imgs2tensors(

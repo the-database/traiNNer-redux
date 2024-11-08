@@ -137,7 +137,7 @@ class OldPairedImageDataset(BaseDataset):
             [img_gt, img_lq],
             color=self.color,
             bgr2rgb=True,
-            float32=True,
+            float32=False,
         )
         # normalize
         if self.mean is not None and self.std is not None:

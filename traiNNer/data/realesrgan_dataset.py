@@ -156,8 +156,6 @@ class RealESRGANDataset(BaseDataset):
         else:
             img_gt = vips_img_gt.numpy()
 
-        img_gt = img_gt.astype(np.float32) / 255.0
-
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
         if RNG.get_rng().uniform() < self.opt.sinc_prob:

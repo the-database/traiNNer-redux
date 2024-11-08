@@ -1,7 +1,6 @@
 # https://github.com/Demetter/TSCUNet_Trainer/blob/main/Train_TSCUNet.py
 import os
 
-import numpy as np
 import torch
 
 from traiNNer.data.base_dataset import BaseDataset
@@ -91,8 +90,8 @@ class PairedVideoDataset(BaseDataset):
                             vips_img_gt, vips_img_lq, self.gt_size, scale, gt_path
                         )
                     else:
-                        img_gt = vips_img_gt.numpy().astype(np.float32) / 255.0
-                        img_lq = vips_img_lq.numpy().astype(np.float32) / 255.0
+                        img_gt = vips_img_gt.numpy()
+                        img_lq = vips_img_lq.numpy()
 
                     img_gt, img_lq = imgs2tensors(
                         [img_gt, img_lq], color=True, bgr2rgb=True, float32=True

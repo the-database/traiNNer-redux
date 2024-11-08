@@ -1,6 +1,5 @@
 from os import path as osp
 
-import numpy as np
 from torch import Tensor
 from torchvision.transforms.functional import normalize
 
@@ -71,7 +70,7 @@ class SingleImageDataset(BaseDataset):
 
         # load lq image
         lq_path = self.paths[index]
-        img_lq = vipsimfrompath(lq_path).numpy().astype(np.float32) / 255.0
+        img_lq = vipsimfrompath(lq_path).numpy()
 
         # color space transform
         if self.opt.color == "y":

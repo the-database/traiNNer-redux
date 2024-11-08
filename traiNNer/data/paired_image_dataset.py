@@ -124,8 +124,8 @@ class PairedImageDataset(BaseDataset):
             assert isinstance(img_gt, np.ndarray)
             assert isinstance(img_lq, np.ndarray)
         else:
-            img_gt = vips_img_gt.numpy().astype(np.float32) / 255.0
-            img_lq = vips_img_lq.numpy().astype(np.float32) / 255.0
+            img_gt = vips_img_gt.numpy()
+            img_lq = vips_img_lq.numpy()
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop
