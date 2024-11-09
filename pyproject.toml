@@ -20,7 +20,7 @@ dependencies = [
 "spandrel-extra-arches>=0.2.0",
 "tb-nightly",
 "timm",
-"torch>=2.5.0",
+"torch>=2.5.1",
 "torchvision",
 "tqdm",
 ]
