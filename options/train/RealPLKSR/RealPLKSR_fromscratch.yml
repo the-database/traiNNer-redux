@@ -18,12 +18,12 @@ datasets:
   train:
     name: Train Dataset
     type: PairedImageDataset
-    # Path to the HR (high res) images in your training dataset.
+    # Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.
     dataroot_gt: [
       datasets/train/dataset1/hr,
       datasets/train/dataset1/hr2
     ]
-    # Path to the LR (low res) images in your training dataset.
+    # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
     dataroot_lq: [
       datasets/train/dataset1/lr,
       datasets/train/dataset1/lr2

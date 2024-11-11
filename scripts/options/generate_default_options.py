@@ -1,9 +1,13 @@
 import os
 import re
 from os import path as osp
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
-from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
+from traiNNer.archs.arch_info import (
+    ARCHS_WITHOUT_FP16,
+    OFFICIAL_SETTINGS_FINETUNE,
+    OFFICIAL_SETTINGS_FROMSCRATCH,
+)
 
 
 class ArchInfo(TypedDict):
@@ -22,6 +26,7 @@ ALL_SCALES = [1, 2, 3, 4, 8]
 def final_template(
     template: str,
     arch: ArchInfo,
+    training_settings: dict[str, dict[str, Any]] | None = None,
     template_otf1: str = "",
     template_otf2: str = "",
     name_suffix: str = "",
@@ -54,6 +59,13 @@ def final_template(
 
     if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:
         template = template.replace("amp_bf16: false", "amp_bf16: true")
+
+    arch_key = arch["names"][0].lower()  # TODO
+    if training_settings is not None:
+        settings = training_settings.get(arch_key, training_settings[""])
+        for name, value in settings.items():
+            print("training settings", arch_key, name, value)
+            template = template.replace(f"%{name}%", str(value))
 
     template = template.replace("%archname%", f"{arch['names'][0]}")
     template = template.replace("%scale%", f"{default_scale}x")
@@ -111,7 +123,7 @@ archs: list[ArchInfo] = [
         "scales": ALL_SCALES,
     },
     {"names": ["ATD"], "scales": ALL_SCALES},
-    {"names": ["DAT_2"], "scales": ALL_SCALES},
+    {"names": ["DAT", "DAT_2", "DAT_S", "DAT_light"], "scales": ALL_SCALES},
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": ALL_SCALES},
     {
@@ -199,7 +211,8 @@ archs: list[ArchInfo] = [
             "upsampler": "pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)"
         },
     },
-    {"names": ["HMA"], "scales": ALL_SCALES},
+    # {"names": ["HMA"], "scales": ALL_SCALES},
+    {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:
@@ -282,12 +295,20 @@ for arch in archs:
         with open(
             osp.join(train_folder_path, f"{folder_name}_fromscratch.yml"), mode="w"
         ) as fw:
-            fw.write(final_template(template_paired_fromscratch, arch))
+            fw.write(
+                final_template(
+                    template_paired_fromscratch, arch, OFFICIAL_SETTINGS_FROMSCRATCH
+                )
+            )
 
         with open(
             osp.join(train_folder_path, f"{folder_name}_finetune.yml"), mode="w"
         ) as fw:
-            fw.write(final_template(template_paired_finetune, arch))
+            fw.write(
+                final_template(
+                    template_paired_finetune, arch, OFFICIAL_SETTINGS_FINETUNE
+                )
+            )
 
         with open(
             osp.join(train_folder_path, f"{folder_name}_OTF_fromscratch.yml"), mode="w"
@@ -296,6 +317,7 @@ for arch in archs:
                 final_template(
                     template_paired_fromscratch,
                     arch,
+                    OFFICIAL_SETTINGS_FROMSCRATCH,
                     template_otf1,
                     template_otf2,
                     "OTF_fromscratch",
@@ -309,6 +331,7 @@ for arch in archs:
                 final_template(
                     template_paired_finetune,
                     arch,
+                    OFFICIAL_SETTINGS_FINETUNE,
                     template_otf1,
                     template_otf2,
                     "OTF_finetune",
@@ -326,6 +349,7 @@ for arch in archs:
                 final_template(
                     template_paired_fromscratch,
                     arch,
+                    OFFICIAL_SETTINGS_FROMSCRATCH,
                     template_otfbicubic1,
                     template_otfbicubic2,
                     "OTF_bicubic_ms_ssim_l1",
@@ -337,4 +361,6 @@ for arch in archs:
             fw.write(final_template(template_test_single, arch))
 
         with open(osp.join(onnx_folder_path, f"{folder_name}.yml"), mode="w") as fw:
-            fw.write(final_template(template_onnx, arch, template_otf1, template_otf2))
+            fw.write(
+                final_template(template_onnx, arch, None, template_otf1, template_otf2)
+            )

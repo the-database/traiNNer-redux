@@ -18,12 +18,12 @@ datasets:
   train:
     name: Train Dataset
     type: PairedVideoDataset
-    # Path to the HR (high res) images in your training dataset.
+    # Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.
     dataroot_gt: [
       datasets/train/dataset1/hr,
       datasets/train/dataset1/hr2
     ]
-    # Path to the LR (low res) images in your training dataset.
+    # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
     dataroot_lq: [
       datasets/train/dataset1/lr,
       datasets/train/dataset1/lr2
@@ -34,7 +34,7 @@ datasets:
       type: disk
 
 
-    lq_size: 32  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
+    lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
 
