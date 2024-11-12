@@ -1,9 +1,10 @@
 # TODO refactor
-from typing import Literal
+from typing import Any, Literal
 
 ARCHS_WITHOUT_FP16 = {
     "atd",
     "atd_light",
+    "cfsr",
     "dat",
     "dat_2",
     "dat_s",
@@ -15,13 +16,20 @@ ARCHS_WITHOUT_FP16 = {
     "hat_l",
     "hat_m",
     "hat_s",
+    "hma",
     "rgt",
     "rgt_s",
     "srformer",
     "srformer_light",
+    "swinir",
     "swinir_l",
     "swinir_m",
     "swinir_s",
+    "swin2sr",
+    "swin2sr_l",
+    "swin2sr_m",
+    "swin2sr_s",
+    "swin2mose",
     "hit_srf",
     "hit_sng",
     "hit_sir",
@@ -41,6 +49,11 @@ OFFICIAL_METRICS: dict[
         2: {"psnr": 33.27, "ssim": 0.9375, "dists": 0},
         3: {"psnr": 29.17, "ssim": 0.8709, "dists": 0},
         4: {"psnr": 26.97, "ssim": 0.8107, "dists": 0},
+    },
+    "cfsr": {
+        2: {"psnr": 32.28, "ssim": 0.9300, "dists": 0},
+        3: {"psnr": 28.29, "ssim": 0.8553, "dists": 0},
+        4: {"psnr": 26.21, "ssim": 0.7897, "dists": 0},
     },
     "dat": {
         2: {"psnr": 34.37, "ssim": 0.9458, "dists": 0},
@@ -84,6 +97,8 @@ OFFICIAL_METRICS: dict[
     },
     "esrgan": {
         4: {"psnr": 27.03, "ssim": 0.8153, "dists": 0},
+        # 2 pixel unshuffle: 33.08   0.9387    (batch 32 lqcrop128 1m iter)
+        # 2 not pixel unshuffle: 33.41   0.9407    (batch 16 lqcrop64 1m iter)
     },
     "hat_s": {
         2: {"psnr": 34.31, "ssim": 0.9459, "dists": 0},
@@ -160,6 +175,13 @@ OFFICIAL_METRICS: dict[
         3: {"psnr": 29.75, "ssim": 0.8826, "dists": 0},
         4: {"psnr": 27.45, "ssim": 0.8254, "dists": 0},
     },
+    "swin2sr_m": {
+        2: {"psnr": 33.89, "ssim": 0.9431, "dists": 0},
+        4: {"psnr": 27.51, "ssim": 0.8271, "dists": 0},
+    },
+    "swin2sr_s": {
+        2: {"psnr": 32.85, "ssim": 0.9349, "dists": 0},
+    },
     "hit_srf": {
         2: {"psnr": 33.13, "ssim": 0.9372, "dists": 0},
         3: {"psnr": 28.99, "ssim": 0.8687, "dists": 0},
@@ -191,3 +213,274 @@ OFFICIAL_METRICS: dict[
         4: {"psnr": 26.08, "ssim": 0.7838, "dists": 0},
     },
 }
+
+OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
+    "atd": {
+        "milestones": [250000],
+        "total_iter": 300000,
+        "warmup_iter": 10000,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1  # paper: 8",
+    },
+    "atd_light": {
+        "milestones": [250000, 400000, 450000, 475000, 490000],
+        "total_iter": 500000,
+        "warmup_iter": 20000,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 2",
+    },
+    "dat": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "rgt": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "plksr": {
+        "milestones": [100000, 200000, 300000, 400000, 425000],
+        "total_iter": 450000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 96,
+        "batch_size_per_gpu": "16  # paper: 64",
+        "accum_iter": "1",
+    },
+    "span": {
+        "milestones": [200000, 400000, 600000, 800000],
+        "total_iter": 1000000,
+        "warmup_iter": -1,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "16  # paper: 64",
+        "accum_iter": "1",
+    },
+    "esrgan": {
+        "milestones": [200000, 400000, 600000, 800000],
+        "total_iter": 1000000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": "64  # paper: 32",
+        "batch_size_per_gpu": "8",
+        "accum_iter": "1  # paper: 2",
+    },
+    "omnisr": {
+        "milestones": [200000, 400000, 600000],
+        "total_iter": 800000,
+        "warmup_iter": -1,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "8  # paper: 64",
+        "accum_iter": "1",
+    },
+    "man": {
+        "milestones": [800000, 1200000, 140000, 1500000],
+        "total_iter": 1600000,
+        "warmup_iter": -1,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "drct": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "drct_l": {
+        "milestones": [300000, 500000, 650000, 700000, 750000],
+        "total_iter": 800000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "hit_srf": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1",
+    },
+}
+
+OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
+    "atd": {
+        "milestones": [150000, 200000, 225000, 240000],
+        "total_iter": 250000,
+        "warmup_iter": 10000,
+        "lr": "!!float 2e-4",
+        "lq_size": 96,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1  # paper: 8",
+    },
+    "atd_light": {
+        "milestones": [250000, 400000, 450000, 475000, 490000],
+        "total_iter": 500000,
+        "warmup_iter": 10000,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 2",
+    },
+    "dat": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "rgt": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "plksr": {
+        "milestones": [100000],
+        "total_iter": 50000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 96,
+        "batch_size_per_gpu": "16  # paper: 64",
+        "accum_iter": "1",
+    },
+    "span": {
+        "milestones": [100000, 200000, 300000, 400000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4  # paper: !!float 2.5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "16  # paper: 64",
+        "accum_iter": "1",
+    },
+    "esrgan": {
+        "milestones": [100000, 200000, 300000, 400000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": "64  # paper: 32",
+        "batch_size_per_gpu": "8",
+        "accum_iter": "1  # paper: 2",
+    },
+    "omnisr": {
+        "milestones": [100000, 200000, 300000],
+        "total_iter": 400000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "8  # paper: 64",
+        "accum_iter": "1",
+    },
+    "man": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "drct": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "drct_l": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "hit_srf": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1",
+    },
+}
+
+
+def initialize_official_settings(settings: dict[str, dict[str, Any]]) -> None:
+    settings["dat_2"] = settings["dat"]
+    settings["dat_s"] = settings["dat"]
+    settings["dat_light"] = settings["dat"]
+
+    settings["drct_xl"] = settings["drct_l"]
+
+    settings["esrgan_lite"] = settings["esrgan"]
+
+    settings["hit_sng"] = settings["hit_srf"]
+    settings["hit_sir"] = settings["hit_srf"]
+
+    settings["man_light"] = settings["man"]
+    settings["man_tiny"] = settings["man"]
+
+    settings["plksr_tiny"] = settings["plksr"]
+    settings["realplksr"] = settings["plksr"]
+
+    settings["rgt_s"] = settings["rgt"]
+
+    settings["spanplus"] = settings["span"]
+    settings["spanplus_sts"] = settings["span"]
+    settings["spanplus_st"] = settings["span"]
+    settings["spanplus_s"] = settings["span"]
+
+
+# Call the initialization function only once when the module is imported
+initialize_official_settings(OFFICIAL_SETTINGS_FROMSCRATCH)
+initialize_official_settings(OFFICIAL_SETTINGS_FINETUNE)
