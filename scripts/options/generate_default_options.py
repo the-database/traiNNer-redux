@@ -71,7 +71,7 @@ def final_template(
             # print("training settings", arch_key, name, value)
             template = template.replace(f"%{name}%", str(value))
 
-    template = template.replace("%archname%", f"{arch['names'][0]}")
+    template = template.replace("%archname%", f"{variant}")
     template = template.replace("%scale%", f"{default_scale}x")
 
     if "overrides" in arch:

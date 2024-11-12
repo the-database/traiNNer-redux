@@ -1,7 +1,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_HAT_L
+name: 4x_HAT_M
 scale: 4  # 1, 2, 3, 4, 8
 num_gpu: auto
 
@@ -17,7 +17,7 @@ network_g:
 ############################
 path:
   # Path of the model to convert to ONNX.
-  pretrain_network_g: experiments/4x_HAT_L/models/net_g_ema_1000.safetensors
+  pretrain_network_g: experiments/4x_HAT_M/models/net_g_ema_1000.safetensors
 
 #########################
 # ONNX conversion options
