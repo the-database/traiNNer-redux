@@ -398,7 +398,20 @@ def train_pipeline(root_path: str) -> None:
                 break
             # training
             model.feed_data(train_data)
-            model.optimize_parameters(current_iter, current_accum_iter, apply_gradient)
+            try:
+                model.optimize_parameters(
+                    current_iter, current_accum_iter, apply_gradient
+                )
+            except RuntimeError as e:
+                # Check to see if its actually the CUDA out of memory error
+                if "allocate" in str(e) or "CUDA" in str(e):
+                    # Collect garbage (clear VRAM)
+                    raise RuntimeError(
+                        "Ran out of VRAM during training. Please reduce lq_size or batch_size_per_gpu and try again."
+                    ) from None
+                else:
+                    # Re-raise the exception if not an OOM error
+                    raise
             # update learning rate
             if apply_gradient:
                 model.update_learning_rate(

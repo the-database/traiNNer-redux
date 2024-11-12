@@ -233,6 +233,15 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": 16,
         "accum_iter": "1  # paper: 2",
     },
+    "compact": {
+        "milestones": [100000, 200000, 300000, 400000, 425000],
+        "total_iter": 450000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 96,
+        "batch_size_per_gpu": "16  # recommended: 64",
+        "accum_iter": 1,
+    },
     "dat": {
         "milestones": [250000, 400000, 450000, 475000],
         "total_iter": 500000,
@@ -321,6 +330,69 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "lr": "!!float 5e-4",
         "lq_size": 64,
         "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "hat_l": {
+        "milestones": [300000, 500000, 650000, 700000, 750000],
+        "total_iter": 800000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1  # paper: 8",
+    },
+    "hat_s": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1  # paper: 8",
+    },
+    "srformer": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swinir_m": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swinir_s": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swin2sr_m": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swin2sr_s": {
+        "milestones": [250000, 400000, 450000, 475000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
         "accum_iter": "1  # paper: 4",
     },
     "": {
@@ -443,6 +515,78 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": 8,
         "accum_iter": "1  # paper: 4",
     },
+    "hat_l": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1  # paper: 8",
+    },
+    "hat_s": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1  # paper: 8",
+    },
+    "srformer": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swinir_m": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swinir_s": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swin2sr_m": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": "1  # paper: 4",
+    },
+    "swin2sr_s": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "compact": {
+        "milestones": [50000, 100000, 150000, 200000, 225000],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 96,
+        "batch_size_per_gpu": "8",
+        "accum_iter": 1,
+    },
     "": {
         "milestones": [125000, 200000, 225000, 237500],
         "total_iter": 250000,
@@ -456,6 +600,9 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
 
 
 def initialize_official_settings(settings: dict[str, dict[str, Any]]) -> None:
+    settings["ultracompact"] = settings["compact"]
+    settings["superultracompact"] = settings["compact"]
+
     settings["dat_2"] = settings["dat"]
     settings["dat_s"] = settings["dat"]
     settings["dat_light"] = settings["dat"]
@@ -463,6 +610,8 @@ def initialize_official_settings(settings: dict[str, dict[str, Any]]) -> None:
     settings["drct_xl"] = settings["drct_l"]
 
     settings["esrgan_lite"] = settings["esrgan"]
+
+    settings["hat_m"] = settings["hat_l"]
 
     settings["hit_sng"] = settings["hit_srf"]
     settings["hit_sir"] = settings["hit_srf"]
@@ -480,7 +629,12 @@ def initialize_official_settings(settings: dict[str, dict[str, Any]]) -> None:
     settings["spanplus_st"] = settings["span"]
     settings["spanplus_s"] = settings["span"]
 
+    settings["srformer_light"] = settings["srformer"]
 
-# Call the initialization function only once when the module is imported
+    settings["swin2sr_l"] = settings["swin2sr_m"]
+
+    settings["swinir_l"] = settings["swinir_m"]
+
+
 initialize_official_settings(OFFICIAL_SETTINGS_FROMSCRATCH)
 initialize_official_settings(OFFICIAL_SETTINGS_FINETUNE)

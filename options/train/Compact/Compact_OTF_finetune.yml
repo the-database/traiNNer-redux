@@ -88,7 +88,7 @@ datasets:
     final_sinc_prob: 0.0
     final_kernel_range: [5, 17]  # kernel range inclusive, must be odd numbers
 
-    lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
+    lq_size: 96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
 
@@ -156,7 +156,7 @@ train:
 
   scheduler:
     type: MultiStepLR
-    milestones: [125000, 200000, 225000, 237500]
+    milestones: [50000, 100000, 150000, 200000, 225000]
     gamma: 0.5
 
   total_iter: 250000  # Total number of iterations.
