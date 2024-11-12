@@ -93,7 +93,7 @@ datasets:
     use_rot: true  # Randomly rotate the images.
 
     num_worker_per_gpu: 8
-    batch_size_per_gpu: 8  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
+    batch_size_per_gpu: 16  # paper: 64  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
     accum_iter: 1  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
     dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
     prefetch_mode: ~
@@ -143,10 +143,10 @@ train:
 
   scheduler:
     type: MultiStepLR
-    milestones: [100000, 200000, 300000, 400000]
+    milestones: [100000, 200000, 300000, 400000, 425000]
     gamma: 0.5
 
-  total_iter: 500000  # Total number of iterations.
+  total_iter: 450000  # Total number of iterations.
   warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
