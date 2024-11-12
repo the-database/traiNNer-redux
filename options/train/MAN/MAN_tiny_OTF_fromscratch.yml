@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: MAN  # MAN, MAN_tiny, MAN_light
+  type: MAN_tiny
 
 ############################
 # Pretrain and Resume Paths

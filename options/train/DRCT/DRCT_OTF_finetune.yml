@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: DRCT  # DRCT, DRCT_L, DRCT_XL
+  type: DRCT
 
 # Discriminator model settings
 network_d:

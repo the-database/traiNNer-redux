@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: LMLT_Base  # LMLT_Base, LMLT_Large, LMLT_Tiny
+  type: LMLT_Tiny
 
 ############################
 # Pretrain and Resume Paths

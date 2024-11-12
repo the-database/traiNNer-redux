@@ -63,7 +63,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: FlexNet  # FlexNet, MetaFlexNet
+  type: FlexNet
   upsampler: pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)
 
 ############################

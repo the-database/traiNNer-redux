@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: EIMN_L  # EIMN_L, EIMN_A
+  type: EIMN_A
 
 # Discriminator model settings
 network_d:

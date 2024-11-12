@@ -63,7 +63,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: SwinIR_L  # SwinIR_L, SwinIR_M, SwinIR_S
+  type: SwinIR_L
 
 # Discriminator model settings
 network_d:

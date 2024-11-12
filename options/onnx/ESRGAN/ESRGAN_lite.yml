@@ -10,7 +10,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: ESRGAN  # ESRGAN, ESRGAN_lite
+  type: ESRGAN_lite
 
 ############################
 # Pretrain and Resume Paths

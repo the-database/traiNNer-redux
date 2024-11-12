@@ -28,7 +28,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: PLKSR  # PLKSR, PLKSR_Tiny
+  type: PLKSR_Tiny
 
 ############################
 # Pretrain and Resume Paths

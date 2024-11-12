@@ -63,7 +63,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: RGT  # RGT, RGT_S
+  type: RGT
 
 ############################
 # Pretrain and Resume Paths

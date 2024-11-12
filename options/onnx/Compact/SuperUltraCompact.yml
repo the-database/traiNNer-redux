@@ -10,7 +10,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: Compact  # Compact, UltraCompact, SuperUltraCompact
+  type: SuperUltraCompact
 
 ############################
 # Pretrain and Resume Paths

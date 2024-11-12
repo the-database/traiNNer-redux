@@ -63,7 +63,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: MAN  # MAN, MAN_tiny, MAN_light
+  type: MAN_light
 
 # Discriminator model settings
 network_d:

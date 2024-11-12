@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: HiT_SRF  # HiT_SRF, HiT_SNG, HiT_SIR
+  type: HiT_SNG
 
 # Discriminator model settings
 network_d:

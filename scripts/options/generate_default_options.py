@@ -40,9 +40,9 @@ def final_template(
         f"scale: {default_scale}  # {', '.join([str(x) for x in arch['scales']])}",
     )
 
-    arch_type_str = f"type: {arch['names'][0]}"
-    if len(arch["names"]) > 1:
-        arch_type_str += f"  # {', '.join([str(x) for x in arch['names']])}"
+    arch_type_str = f"type: {variant}"
+    # if len(arch["names"]) > 1:
+    #     arch_type_str += f"  # {', '.join([str(x) for x in arch['names']])}"
 
     if "extras" in arch:
         for k, v in arch["extras"].items():

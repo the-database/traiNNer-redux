@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: ESRGAN  # ESRGAN, ESRGAN_lite
+  type: ESRGAN
 
 # Discriminator model settings
 network_d:

@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: Compact  # Compact, UltraCompact, SuperUltraCompact
+  type: UltraCompact
 
 # Discriminator model settings
 network_d:

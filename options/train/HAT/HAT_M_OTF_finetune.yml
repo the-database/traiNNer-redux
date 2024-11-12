@@ -118,7 +118,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: HAT_L  # HAT_L, HAT_M, HAT_S
+  type: HAT_M
 
 # Discriminator model settings
 network_d:

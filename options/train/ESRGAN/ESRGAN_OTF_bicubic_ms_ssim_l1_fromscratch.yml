@@ -110,7 +110,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: ESRGAN  # ESRGAN, ESRGAN_lite
+  type: ESRGAN
 
 ############################
 # Pretrain and Resume Paths
