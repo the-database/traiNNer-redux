@@ -1,7 +1,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_DAT_2
+name: 4x_DAT
 scale: 4  # 1, 2, 3, 4, 8
 num_gpu: auto
 
@@ -10,14 +10,14 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: DAT_2
+  type: DAT
 
 ############################
 # Pretrain and Resume Paths
 ############################
 path:
   # Path of the model to convert to ONNX.
-  pretrain_network_g: experiments/4x_DAT_2/models/net_g_ema_1000.safetensors
+  pretrain_network_g: experiments/4x_DAT/models/net_g_ema_1000.safetensors
 
 #########################
 # ONNX conversion options

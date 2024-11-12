@@ -1,4 +1,4 @@
-from traiNNer.utils.check_dependencies import check_dependencies
+from traiNNer.check.check_dependencies import check_dependencies
 
 if __name__ == "__main__":
     check_dependencies()

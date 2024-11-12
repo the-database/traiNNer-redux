@@ -5,6 +5,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pyvips
 import torch
 from cv2.typing import MatLike
 from torch import Tensor
@@ -46,13 +47,8 @@ def img2tensor(
         out = torch.from_numpy(img[None, ...])
 
     if float32:
-        out = out.float()
+        out = out.float() / 255.0
     return out
-
-    # if isinstance(imgs, list):
-    #     return [_totensor(img, color, bgr2rgb, float32) for img in imgs]
-    # else:
-    #     return _totensor(imgs, color, bgr2rgb, float32)
 
 
 def imgs2tensors(
@@ -202,9 +198,17 @@ def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> M
         "grayscale": cv2.IMREAD_GRAYSCALE,
         "unchanged": cv2.IMREAD_UNCHANGED,
     }
+
     img = cv2.imdecode(img_np, imread_flags[flag])
+
     if float32:
         img = img.astype(np.float32) / 255.0
+    return img
+
+
+def vipsimfrompath(path: str) -> pyvips.Image:
+    img = pyvips.Image.new_from_file(path, access="sequential", fail=True)
+    assert isinstance(img, pyvips.Image)
     return img
 
 
@@ -281,3 +285,34 @@ def crop_border(
         ]
     else:
         return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]
+
+
+def img2rgb(image: np.ndarray) -> np.ndarray:
+    """
+    Convert a NumPy array image to RGB.
+
+    Parameters:
+        image (np.ndarray): The input image array.
+                            Expected shape: (H, W), (H, W, 1), (H, W, 3), or (H, W, 4+).
+                            The array should have dtype=np.uint8 or similar.
+
+    Returns:
+        np.ndarray: RGB image with shape (H, W, 3).
+    """
+
+    # rgb
+    if image.ndim == 3 and image.shape[2] == 3:
+        return image
+
+    # grayscale
+    elif image.ndim == 2 or (image.ndim == 3 and image.shape[2] == 1):
+        return np.repeat(image[:, :, np.newaxis], 3, axis=2)
+
+    # rgba
+    elif image.ndim == 3 and image.shape[2] > 3:
+        return image[:, :, :3]
+
+    else:
+        raise ValueError(
+            "Unsupported image shape: expected (H, W), (H, W, 1), (H, W, 3), or (H, W, 4+)"
+        )

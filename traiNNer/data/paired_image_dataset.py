@@ -7,8 +7,9 @@ from traiNNer.data.data_util import (
     paired_paths_from_lmdb,
     paired_paths_from_meta_info_file,
 )
-from traiNNer.data.transforms import augment, paired_random_crop
-from traiNNer.utils import FileClient, imfrombytes, imgs2tensors
+from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
+from traiNNer.utils import FileClient, imgs2tensors
+from traiNNer.utils.img_util import vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -91,18 +92,16 @@ class PairedImageDataset(BaseDataset):
         # Load gt and lq images. Dimension order: HWC; channel order: BGR;
         # image range: [0, 1], float32.
         gt_path = self.paths[index]["gt_path"]
-        img_bytes = self.file_client.get(gt_path, "gt")
 
         try:
-            img_gt = imfrombytes(img_bytes, float32=True)
+            vips_img_gt = vipsimfrompath(gt_path)
         except AttributeError as err:
             raise AttributeError(gt_path) from err
 
         lq_path = self.paths[index]["lq_path"]
-        img_bytes = self.file_client.get(lq_path, "lq")
 
         try:
-            img_lq = imfrombytes(img_bytes, float32=True)
+            vips_img_lq = vipsimfrompath(lq_path)
         except AttributeError as err:
             raise AttributeError(lq_path) from err
 
@@ -111,16 +110,22 @@ class PairedImageDataset(BaseDataset):
             assert self.opt.gt_size is not None
             assert self.opt.use_hflip is not None
             assert self.opt.use_rot is not None
-            # random crop
-            img_gt, img_lq = paired_random_crop(
-                img_gt, img_lq, self.opt.gt_size, scale, gt_path
-            )
+
             # flip, rotation
-            img_gt, img_lq = augment(
-                [img_gt, img_lq], self.opt.use_hflip, self.opt.use_rot
+            vips_img_gt, vips_img_lq = augment_vips_pair(
+                (vips_img_gt, vips_img_lq), self.opt.use_hflip, self.opt.use_rot
             )
+
+            # random crop
+            img_gt, img_lq = paired_random_crop_vips(
+                vips_img_gt, vips_img_lq, self.opt.gt_size, scale, gt_path
+            )
+
             assert isinstance(img_gt, np.ndarray)
             assert isinstance(img_lq, np.ndarray)
+        else:
+            img_gt = vips_img_gt.numpy()
+            img_lq = vips_img_lq.numpy()
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop
@@ -131,7 +136,7 @@ class PairedImageDataset(BaseDataset):
         img_gt, img_lq = imgs2tensors(
             [img_gt, img_lq],
             color=self.color,
-            bgr2rgb=True,
+            bgr2rgb=False,
             float32=True,
         )
         # normalize

@@ -1,10 +1,12 @@
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
-from traiNNer.utils.check_dependencies import check_dependencies
+from traiNNer.check.check_dependencies import check_dependencies
 
 if __name__ == "__main__":
     check_dependencies()
+
+
 import argparse
 import datetime
 import logging
@@ -102,7 +104,9 @@ def create_train_val_dataloader(
             train_set = build_dataset(dataset_opt)
             dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
             if dataset_enlarge_ratio == "auto":
-                dataset_enlarge_ratio = max(2000 // len(train_set), 1)
+                dataset_enlarge_ratio = max(
+                    2000 * dataset_opt.batch_size_per_gpu // len(train_set), 1
+                )
             train_sampler = EnlargedSampler(
                 train_set, opt.world_size, opt.rank, dataset_enlarge_ratio
             )
@@ -394,7 +398,20 @@ def train_pipeline(root_path: str) -> None:
                 break
             # training
             model.feed_data(train_data)
-            model.optimize_parameters(current_iter, current_accum_iter, apply_gradient)
+            try:
+                model.optimize_parameters(
+                    current_iter, current_accum_iter, apply_gradient
+                )
+            except RuntimeError as e:
+                # Check to see if its actually the CUDA out of memory error
+                if "allocate" in str(e) or "CUDA" in str(e):
+                    # Collect garbage (clear VRAM)
+                    raise RuntimeError(
+                        "Ran out of VRAM during training. Please reduce lq_size or batch_size_per_gpu and try again."
+                    ) from None
+                else:
+                    # Re-raise the exception if not an OOM error
+                    raise
             # update learning rate
             if apply_gradient:
                 model.update_learning_rate(

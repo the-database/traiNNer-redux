@@ -47,7 +47,7 @@ jpeg_range2: [75, 95]
 resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
 resize_mode_prob3: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
 
-queue_size: 180
+queue_size: 120
 
 #################################
 # Dataset and Dataloader Settings
@@ -57,11 +57,12 @@ datasets:
   train:
     name: Train Dataset
     type: RealESRGANDataset
-    # Path to the HR (high res) images in your training dataset.
+    # Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.
     dataroot_gt: [
       datasets/train/dataset1/hr,
       datasets/train/dataset1/hr2
     ]
+    # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
     # meta_info: data/meta_info/dataset1.txt
     io_backend:
       type: disk
@@ -87,13 +88,13 @@ datasets:
     final_sinc_prob: 0.0
     final_kernel_range: [5, 17]  # kernel range inclusive, must be odd numbers
 
-    lq_size: 32  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
+    lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
 
     num_worker_per_gpu: 8
-    batch_size_per_gpu: 8  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
-    accum_iter: 1  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
+    batch_size_per_gpu: 4  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
+    accum_iter: 1  # paper: 8  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
     dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
     prefetch_mode: ~
   # Settings for your validation dataset (optional). These settings will
@@ -140,11 +141,11 @@ train:
 
   scheduler:
     type: MultiStepLR
-    milestones: [100000, 200000, 300000, 400000]
+    milestones: [250000]
     gamma: 0.5
 
-  total_iter: 500000  # Total number of iterations.
-  warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
+  total_iter: 300000  # Total number of iterations.
+  warmup_iter: 10000  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
   losses:

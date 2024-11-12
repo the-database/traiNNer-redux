@@ -5,7 +5,8 @@ from torchvision.transforms.functional import normalize
 
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_util import paths_from_lmdb
-from traiNNer.utils import FileClient, imfrombytes, img2tensor, rgb2ycbcr, scandir
+from traiNNer.utils import FileClient, img2tensor, rgb2ycbcr, scandir
+from traiNNer.utils.img_util import vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -69,15 +70,14 @@ class SingleImageDataset(BaseDataset):
 
         # load lq image
         lq_path = self.paths[index]
-        img_bytes = self.file_client.get(lq_path, "lq")
-        img_lq = imfrombytes(img_bytes, float32=True)
+        img_lq = vipsimfrompath(lq_path).numpy()
 
         # color space transform
         if self.opt.color == "y":
             img_lq = rgb2ycbcr(img_lq, y_only=True)[..., None]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_lq = img2tensor(img_lq, bgr2rgb=True, float32=True)
+        img_lq = img2tensor(img_lq, bgr2rgb=False, float32=True)
         assert isinstance(img_lq, Tensor)
         # normalize
         if self.mean is not None and self.std is not None:

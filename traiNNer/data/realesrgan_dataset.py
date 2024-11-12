@@ -2,23 +2,21 @@ import math
 import os
 import os.path as osp
 import random
-import time
 
-import cv2
 import numpy as np
+import pyvips
 import torch
 
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.degradations import circular_lowpass_kernel, random_mixed_kernels
-from traiNNer.data.transforms import augment
+from traiNNer.data.transforms import augment_vips
 from traiNNer.utils import (
     RNG,
     FileClient,
-    get_root_logger,
-    imfrombytes,
     img2tensor,
     scandir,
 )
+from traiNNer.utils.img_util import img2rgb, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -123,52 +121,40 @@ class RealESRGANDataset(BaseDataset):
         # -------------------------------- Load gt images -------------------------------- #
         # Shape: (h, w, c); channel order: BGR; image range: [0, 1], float32.
         gt_path = self.paths[index]
-        # avoid errors caused by high latency in reading files
-        retry = 3
-        img_bytes = None
-        while retry > 0:
-            try:
-                img_bytes = self.file_client.get(gt_path, "gt")
-            except OSError as e:
-                logger = get_root_logger()
-                logger.warning(
-                    "File client error: %s, remaining retry times: %d", e, retry - 1
-                )
-                # change another file to read
-                index = random.randint(0, self.__len__())
-                gt_path = self.paths[index]
-                time.sleep(1)  # sleep 1s for occasional server congestion
-            else:
-                break
-            finally:
-                retry -= 1
-        assert img_bytes is not None
+
         assert self.opt.use_hflip is not None
         assert self.opt.use_rot is not None
 
-        img_gt = imfrombytes(img_bytes, float32=True)
+        vips_img_gt = vipsimfrompath(gt_path)
 
         # -------------------- Do augmentation for training: flip, rotation -------------------- #
-        img_gt = augment(img_gt, self.opt.use_hflip, self.opt.use_rot)
-        assert isinstance(img_gt, np.ndarray)
+        vips_img_gt = augment_vips(vips_img_gt, self.opt.use_hflip, self.opt.use_rot)
 
-        h, w = img_gt.shape[0:2]
+        h: int = vips_img_gt.height  # type: ignore
+        w: int = vips_img_gt.width  # type: ignore
         assert self.opt.gt_size is not None
+
         crop_pad_size = self.opt.gt_size + 32
         # pad
         if h < crop_pad_size or w < crop_pad_size:
             pad_h = max(0, crop_pad_size - h)
             pad_w = max(0, crop_pad_size - w)
-            img_gt = cv2.copyMakeBorder(
-                img_gt, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT_101
-            )
+            vips_img_gt: pyvips.Image = vips_img_gt.embed(0, 0, w + pad_w, h + pad_h)  # type: ignore
         # crop
-        if img_gt.shape[0] > crop_pad_size or img_gt.shape[1] > crop_pad_size:
-            h, w = img_gt.shape[0:2]
-            # randomly choose top and left coordinates
-            top = random.randint(0, h - crop_pad_size)
-            left = random.randint(0, w - crop_pad_size)
-            img_gt = img_gt[top : top + crop_pad_size, left : left + crop_pad_size, ...]
+        if w > crop_pad_size or h > crop_pad_size:
+            y = random.randint(0, h - crop_pad_size)
+            x = random.randint(0, w - crop_pad_size)
+            region_gt = pyvips.Region.new(vips_img_gt)
+            data_gt = region_gt.fetch(x, y, crop_pad_size, crop_pad_size)
+            img_gt = img2rgb(
+                np.ndarray(
+                    buffer=data_gt,
+                    dtype=np.uint8,
+                    shape=[crop_pad_size, crop_pad_size, vips_img_gt.bands],  # pyright: ignore
+                )
+            )
+        else:
+            img_gt = vips_img_gt.numpy()
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
@@ -230,7 +216,7 @@ class RealESRGANDataset(BaseDataset):
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt = img2tensor(img_gt, bgr2rgb=True, float32=True)
+        img_gt = img2tensor(img_gt, bgr2rgb=False, float32=True)
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 

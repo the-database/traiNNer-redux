@@ -1,9 +1,13 @@
 import os
 import re
 from os import path as osp
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
-from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
+from traiNNer.archs.arch_info import (
+    ARCHS_WITHOUT_FP16,
+    OFFICIAL_SETTINGS_FINETUNE,
+    OFFICIAL_SETTINGS_FROMSCRATCH,
+)
 
 
 class ArchInfo(TypedDict):
@@ -22,6 +26,8 @@ ALL_SCALES = [1, 2, 3, 4, 8]
 def final_template(
     template: str,
     arch: ArchInfo,
+    variant: str,
+    training_settings: dict[str, dict[str, Any]] | None = None,
     template_otf1: str = "",
     template_otf2: str = "",
     name_suffix: str = "",
@@ -34,9 +40,9 @@ def final_template(
         f"scale: {default_scale}  # {', '.join([str(x) for x in arch['scales']])}",
     )
 
-    arch_type_str = f"type: {arch['names'][0]}"
-    if len(arch["names"]) > 1:
-        arch_type_str += f"  # {', '.join([str(x) for x in arch['names']])}"
+    arch_type_str = f"type: {variant}"
+    # if len(arch["names"]) > 1:
+    #     arch_type_str += f"  # {', '.join([str(x) for x in arch['names']])}"
 
     if "extras" in arch:
         for k, v in arch["extras"].items():
@@ -54,6 +60,16 @@ def final_template(
 
     if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:
         template = template.replace("amp_bf16: false", "amp_bf16: true")
+
+    arch_key = variant.lower()
+
+    if training_settings is not None:
+        settings = training_settings.get(arch_key, training_settings[""])
+        if arch_key not in training_settings:
+            print(arch_key)
+        for name, value in settings.items():
+            # print("training settings", arch_key, name, value)
+            template = template.replace(f"%{name}%", str(value))
 
     template = template.replace("%archname%", f"{arch['names'][0]}")
     template = template.replace("%scale%", f"{default_scale}x")
@@ -111,7 +127,7 @@ archs: list[ArchInfo] = [
         "scales": ALL_SCALES,
     },
     {"names": ["ATD"], "scales": ALL_SCALES},
-    {"names": ["DAT_2"], "scales": ALL_SCALES},
+    {"names": ["DAT", "DAT_2", "DAT_S", "DAT_light"], "scales": ALL_SCALES},
     {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
     {"names": ["OmniSR"], "scales": ALL_SCALES},
     {
@@ -199,142 +215,187 @@ archs: list[ArchInfo] = [
             "upsampler": "pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)"
         },
     },
-    {"names": ["HMA"], "scales": ALL_SCALES},
+    # {"names": ["HMA"], "scales": ALL_SCALES},
+    {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:
-    folder_name = arch["names"][0].split("_")[0]
+    for variant in arch["names"]:
+        folder_name = arch["names"][0].split("_")[0]
 
-    if "folder_name_override" in arch:
-        folder_name = arch["folder_name_override"]
+        if "folder_name_override" in arch:
+            folder_name = arch["folder_name_override"]
 
-    train_folder_path = osp.normpath(
-        osp.join(
-            __file__, osp.pardir, osp.pardir, osp.pardir, "./options/train", folder_name
-        )
-    )
-    test_folder_path = osp.normpath(
-        osp.join(
-            __file__, osp.pardir, osp.pardir, osp.pardir, "./options/test", folder_name
-        )
-    )
-    onnx_folder_path = osp.normpath(
-        osp.join(
-            __file__, osp.pardir, osp.pardir, osp.pardir, "./options/onnx", folder_name
-        )
-    )
-
-    os.makedirs(train_folder_path, exist_ok=True)
-    os.makedirs(test_folder_path, exist_ok=True)
-    os.makedirs(onnx_folder_path, exist_ok=True)
-
-    template_path_paired_fromscratch = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_paired_fromscratch.yml")
-    )
-
-    template_path_paired_finetune = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_paired_finetune.yml")
-    )
-
-    template_path_otf1 = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_otf1.yml")
-    )
-
-    template_path_otf2 = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_otf2.yml")
-    )
-
-    template_path_otfbicubic1 = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic1.yml")
-    )
-
-    template_path_otfbicubic2 = osp.normpath(
-        osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic2.yml")
-    )
-
-    template_path_single = osp.normpath(
-        osp.join(__file__, osp.pardir, "./test_default_options_single.yml")
-    )
-
-    template_path_onnx = osp.normpath(
-        osp.join(__file__, osp.pardir, "./onnx_default_options.yml")
-    )
-
-    with (
-        open(template_path_paired_fromscratch) as fps,
-        open(template_path_paired_finetune) as fpf,
-        open(template_path_otf1) as fo1,
-        open(template_path_otf2) as fo2,
-        open(template_path_otfbicubic1) as fob1,
-        open(template_path_otfbicubic2) as fob2,
-        open(template_path_single) as fts,
-        open(template_path_onnx) as fox,
-    ):
-        template_paired_fromscratch = fps.read()
-        template_paired_finetune = fpf.read()
-        template_otf1 = fo1.read()
-        template_otf2 = fo2.read()
-        template_otfbicubic1 = fob1.read()
-        template_otfbicubic2 = fob2.read()
-        template_test_single = fts.read()
-        template_onnx = fox.read()
-
-        with open(
-            osp.join(train_folder_path, f"{folder_name}_fromscratch.yml"), mode="w"
-        ) as fw:
-            fw.write(final_template(template_paired_fromscratch, arch))
-
-        with open(
-            osp.join(train_folder_path, f"{folder_name}_finetune.yml"), mode="w"
-        ) as fw:
-            fw.write(final_template(template_paired_finetune, arch))
-
-        with open(
-            osp.join(train_folder_path, f"{folder_name}_OTF_fromscratch.yml"), mode="w"
-        ) as fw:
-            fw.write(
-                final_template(
-                    template_paired_fromscratch,
-                    arch,
-                    template_otf1,
-                    template_otf2,
-                    "OTF_fromscratch",
-                )
-            )
-
-        with open(
-            osp.join(train_folder_path, f"{folder_name}_OTF_finetune.yml"), mode="w"
-        ) as fw:
-            fw.write(
-                final_template(
-                    template_paired_finetune,
-                    arch,
-                    template_otf1,
-                    template_otf2,
-                    "OTF_finetune",
-                )
-            )
-
-        with open(
+        train_folder_path = osp.normpath(
             osp.join(
-                train_folder_path,
-                f"{folder_name}_OTF_bicubic_ms_ssim_l1_fromscratch.yml",
-            ),
-            mode="w",
-        ) as fw:
-            fw.write(
-                final_template(
-                    template_paired_fromscratch,
-                    arch,
-                    template_otfbicubic1,
-                    template_otfbicubic2,
-                    "OTF_bicubic_ms_ssim_l1",
-                    True,
-                )
+                __file__,
+                osp.pardir,
+                osp.pardir,
+                osp.pardir,
+                "./options/train",
+                folder_name,
             )
+        )
+        test_folder_path = osp.normpath(
+            osp.join(
+                __file__,
+                osp.pardir,
+                osp.pardir,
+                osp.pardir,
+                "./options/test",
+                folder_name,
+            )
+        )
+        onnx_folder_path = osp.normpath(
+            osp.join(
+                __file__,
+                osp.pardir,
+                osp.pardir,
+                osp.pardir,
+                "./options/onnx",
+                folder_name,
+            )
+        )
 
-        with open(osp.join(test_folder_path, f"{folder_name}.yml"), mode="w") as fw:
-            fw.write(final_template(template_test_single, arch))
+        os.makedirs(train_folder_path, exist_ok=True)
+        os.makedirs(test_folder_path, exist_ok=True)
+        os.makedirs(onnx_folder_path, exist_ok=True)
 
-        with open(osp.join(onnx_folder_path, f"{folder_name}.yml"), mode="w") as fw:
-            fw.write(final_template(template_onnx, arch, template_otf1, template_otf2))
+        template_path_paired_fromscratch = osp.normpath(
+            osp.join(
+                __file__, osp.pardir, "./train_default_options_paired_fromscratch.yml"
+            )
+        )
+
+        template_path_paired_finetune = osp.normpath(
+            osp.join(
+                __file__, osp.pardir, "./train_default_options_paired_finetune.yml"
+            )
+        )
+
+        template_path_otf1 = osp.normpath(
+            osp.join(__file__, osp.pardir, "./train_default_options_otf1.yml")
+        )
+
+        template_path_otf2 = osp.normpath(
+            osp.join(__file__, osp.pardir, "./train_default_options_otf2.yml")
+        )
+
+        template_path_otfbicubic1 = osp.normpath(
+            osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic1.yml")
+        )
+
+        template_path_otfbicubic2 = osp.normpath(
+            osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic2.yml")
+        )
+
+        template_path_single = osp.normpath(
+            osp.join(__file__, osp.pardir, "./test_default_options_single.yml")
+        )
+
+        template_path_onnx = osp.normpath(
+            osp.join(__file__, osp.pardir, "./onnx_default_options.yml")
+        )
+
+        with (
+            open(template_path_paired_fromscratch) as fps,
+            open(template_path_paired_finetune) as fpf,
+            open(template_path_otf1) as fo1,
+            open(template_path_otf2) as fo2,
+            open(template_path_otfbicubic1) as fob1,
+            open(template_path_otfbicubic2) as fob2,
+            open(template_path_single) as fts,
+            open(template_path_onnx) as fox,
+        ):
+            template_paired_fromscratch = fps.read()
+            template_paired_finetune = fpf.read()
+            template_otf1 = fo1.read()
+            template_otf2 = fo2.read()
+            template_otfbicubic1 = fob1.read()
+            template_otfbicubic2 = fob2.read()
+            template_test_single = fts.read()
+            template_onnx = fox.read()
+
+            with open(
+                osp.join(train_folder_path, f"{variant}_fromscratch.yml"), mode="w"
+            ) as fw:
+                fw.write(
+                    final_template(
+                        template_paired_fromscratch,
+                        arch,
+                        variant,
+                        OFFICIAL_SETTINGS_FROMSCRATCH,
+                    )
+                )
+
+            with open(
+                osp.join(train_folder_path, f"{variant}_finetune.yml"), mode="w"
+            ) as fw:
+                fw.write(
+                    final_template(
+                        template_paired_finetune,
+                        arch,
+                        variant,
+                        OFFICIAL_SETTINGS_FINETUNE,
+                    )
+                )
+
+            with open(
+                osp.join(train_folder_path, f"{variant}_OTF_fromscratch.yml"), mode="w"
+            ) as fw:
+                fw.write(
+                    final_template(
+                        template_paired_fromscratch,
+                        arch,
+                        variant,
+                        OFFICIAL_SETTINGS_FROMSCRATCH,
+                        template_otf1,
+                        template_otf2,
+                        "OTF_fromscratch",
+                    )
+                )
+
+            with open(
+                osp.join(train_folder_path, f"{variant}_OTF_finetune.yml"), mode="w"
+            ) as fw:
+                fw.write(
+                    final_template(
+                        template_paired_finetune,
+                        arch,
+                        variant,
+                        OFFICIAL_SETTINGS_FINETUNE,
+                        template_otf1,
+                        template_otf2,
+                        "OTF_finetune",
+                    )
+                )
+
+            with open(
+                osp.join(
+                    train_folder_path,
+                    f"{variant}_OTF_bicubic_ms_ssim_l1_fromscratch.yml",
+                ),
+                mode="w",
+            ) as fw:
+                fw.write(
+                    final_template(
+                        template_paired_fromscratch,
+                        arch,
+                        variant,
+                        OFFICIAL_SETTINGS_FROMSCRATCH,
+                        template_otfbicubic1,
+                        template_otfbicubic2,
+                        "OTF_bicubic_ms_ssim_l1",
+                        True,
+                    )
+                )
+
+            with open(osp.join(test_folder_path, f"{variant}.yml"), mode="w") as fw:
+                fw.write(final_template(template_test_single, arch, variant))
+
+            with open(osp.join(onnx_folder_path, f"{variant}.yml"), mode="w") as fw:
+                fw.write(
+                    final_template(
+                        template_onnx, arch, variant, None, template_otf1, template_otf2
+                    )
+                )

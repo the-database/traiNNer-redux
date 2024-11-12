@@ -27,8 +27,8 @@ class DatasetOptions(StrictStruct):
     batch_size_per_gpu: int | None = None
     accum_iter: int = 1
 
-    use_hflip: bool | None = None
-    use_rot: bool | None = None
+    use_hflip: bool = True
+    use_rot: bool = True
     mean: list[float] | None = None
     std: list[float] | None = None
     gt_size: int | None = None
@@ -41,6 +41,7 @@ class DatasetOptions(StrictStruct):
     pin_memory: bool = True
     persistent_workers: bool = True
     num_prefetch_queue: int = 1
+    prefetch_factor: int = 2
 
     clip_size: int | None = None
 

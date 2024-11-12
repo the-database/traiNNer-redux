@@ -8,6 +8,8 @@ dependencies = [
 "opencv-python",
 "Pillow",
 "pytorch-optimizer",
+"pyvips>=2.2.3",
+"pyvips-binary>=8.16.0",
 "pyyaml",
 "requests",
 "rich",

@@ -3,7 +3,10 @@ from typing import overload
 
 import cv2
 import numpy as np
+import pyvips
 from torch import Tensor
+
+from traiNNer.utils.img_util import img2rgb
 
 
 def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
@@ -191,12 +194,62 @@ def paired_random_crop_list(
     return cropped_gts, cropped_lqs
 
 
+def paired_random_crop_vips(
+    img_gt: pyvips.Image,
+    img_lq: pyvips.Image,
+    gt_patch_size: int,
+    scale: int,
+    gt_path: str | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    h_lq: int = img_lq.height  # pyright: ignore[reportAssignmentType]
+    w_lq: int = img_lq.width  # pyright: ignore[reportAssignmentType]
+    h_gt, w_gt = img_gt.height, img_gt.width
+    lq_patch_size = gt_patch_size // scale
+    if h_gt != h_lq * scale or w_gt != w_lq * scale:
+        raise ValueError(
+            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
+            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}",
+        )
+    if h_lq < lq_patch_size or w_lq < lq_patch_size:
+        raise ValueError(
+            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
+            f"({lq_patch_size}, {lq_patch_size}). "
+            f"Please remove {gt_path}."
+        )
+
+    # randomly choose top and left coordinates for lq patch
+    y = random.randint(0, h_lq - lq_patch_size)
+    x = random.randint(0, w_lq - lq_patch_size)
+
+    region_lq = pyvips.Region.new(img_lq)
+    data_lq = region_lq.fetch(x, y, lq_patch_size, lq_patch_size)
+    img_lq_np = img2rgb(
+        np.ndarray(
+            buffer=data_lq,
+            dtype=np.uint8,
+            shape=[lq_patch_size, lq_patch_size, img_lq.bands],  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall, reportArgumentType]
+        )
+    )
+
+    # crop corresponding gt patch
+    x_gt, y_gt = int(x * scale), int(y * scale)
+    region_gt = pyvips.Region.new(img_gt)
+    data_gt = region_gt.fetch(x_gt, y_gt, gt_patch_size, gt_patch_size)
+    img_gt_np = img2rgb(
+        np.ndarray(
+            buffer=data_gt,
+            dtype=np.uint8,
+            shape=[gt_patch_size, gt_patch_size, img_gt.bands],  # pyright: ignore[reportAssignmentType,reportCallIssue,reportOptionalCall, reportArgumentType]
+        )
+    )
+
+    return img_gt_np, img_lq_np
+
+
 def augment(
     imgs: np.ndarray | list[np.ndarray],
     hflip: bool = True,
     rotation: bool = True,
-    flows: list[np.ndarray] | None = None,
-    return_status: bool = False,
 ) -> (
     np.ndarray
     | list[np.ndarray]
@@ -238,33 +291,83 @@ def augment(
             img = img.transpose(1, 0, 2)
         return img
 
-    def _augment_flow(flow: np.ndarray) -> np.ndarray:
-        if hflip:  # horizontal
-            cv2.flip(flow, 1, flow)
-            flow[:, :, 0] *= -1
-        if vflip:  # vertical
-            cv2.flip(flow, 0, flow)
-            flow[:, :, 1] *= -1
-        if rot90:
-            flow = flow.transpose(1, 0, 2)
-            flow = flow[:, :, [1, 0]]
-        return flow
-
     if not isinstance(imgs, list):
         imgs = [imgs]
     imgs = [_augment(img) for img in imgs]
     if len(imgs) == 1:
         imgs = imgs[0]
 
-    if flows is not None:
-        flows = [_augment_flow(flow) for flow in flows]
-        if len(flows) == 1:
-            flows = flows[0]  # type: ignore -- wtf is this function even? this needs to be rewritten to be less jank with what its returning
-        return imgs, flows  # type: ignore -- ditto above
-    elif return_status:
-        return imgs, (hflip, vflip, rot90)  # type: ignore -- ditto above
-    else:
-        return imgs
+    return imgs
+
+
+def augment_vips(
+    img: pyvips.Image,
+    hflip: bool = True,
+    vflip: bool = True,
+    rot90: bool = True,
+    randomize: bool = True,
+) -> pyvips.Image:
+    """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
+
+    We use vertical flip and transpose for rotation implementation.
+    All the images in the list use the same augmentation.
+
+    Args:
+        imgs (list[pyvips.Image] | pyvips.Image): Images to be augmented. If the input
+            is a single pyvips.Image, it will be transformed to a list.
+        hflip (bool): Horizontal flip. Default: True.
+        rotation (bool): Rotation. Default: True.
+
+    Returns:
+        list[pyvips.Image] | pyvips.Image: Augmented images. If returned
+            results only have one element, just return pyvips.Image.
+    """
+    if randomize:
+        hflip = hflip and random.random() < 0.5
+        vflip = vflip and random.random() < 0.5
+        rot90 = rot90 and random.random() < 0.5
+
+    def _augment_vips(img: pyvips.Image) -> pyvips.Image:
+        if hflip:  # horizontal flip
+            img = img.fliphor()  # pyright: ignore[reportAssignmentType]
+        if vflip:  # vertical flip
+            img = img.flipver()  # pyright: ignore[reportAssignmentType]
+        if rot90:  # rotate 90 degrees clockwise
+            img = img.rot90()  # pyright: ignore[reportAssignmentType]
+        return img
+
+    return _augment_vips(img)
+
+
+def augment_vips_pair(
+    imgs: tuple[pyvips.Image, pyvips.Image],
+    hflip: bool = True,
+    vflip: bool = True,
+    rot90: bool = True,
+) -> tuple[pyvips.Image, pyvips.Image]:
+    """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
+
+    We use vertical flip and transpose for rotation implementation.
+    All the images in the list use the same augmentation.
+
+    Args:
+        imgs (list[pyvips.Image] | pyvips.Image): Images to be augmented. If the input
+            is a single pyvips.Image, it will be transformed to a list.
+        hflip (bool): Horizontal flip. Default: True.
+        rotation (bool): Rotation. Default: True.
+
+    Returns:
+        list[pyvips.Image] | pyvips.Image: Augmented images. If returned
+            results only have one element, just return pyvips.Image.
+    """
+
+    hflip = hflip and random.random() < 0.5
+    vflip = vflip and random.random() < 0.5
+    rot90 = rot90 and random.random() < 0.5
+
+    return augment_vips(imgs[0], hflip, vflip, rot90, randomize=False), augment_vips(
+        imgs[1], hflip, vflip, rot90, randomize=False
+    )
 
 
 def img_rotate(

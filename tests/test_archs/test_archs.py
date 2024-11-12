@@ -17,6 +17,7 @@ EXCLUDE_ARCHS = {
     "eimn",
     "hat",
     "swinir",
+    "swin2sr",
     "lmlt",
     "vggstylediscriminator",
     "unetdiscriminatorsn_traiNNer",
@@ -65,6 +66,11 @@ FILTERED_REGISTRIES_SCALES_PARAMS = [
 # A dict of archs mapped to a list of scale + arch params that arch doesn't support.
 EXCLUDE_ARCH_SCALES = {
     "swinir_l": [{"scale": 3, "extra_arch_params": {}}],
+    "swin2sr_l": [
+        {"scale": 1, "extra_arch_params": {}},
+        {"scale": 2, "extra_arch_params": {}},
+        {"scale": 3, "extra_arch_params": {}},
+    ],
     "realcugan": [{"scale": 1, "extra_arch_params": {}}],
     "tscunet": [{"scale": 3, "extra_arch_params": {}}],
     "scunet_aaf6aa": [{"scale": 3, "extra_arch_params": {}}],
@@ -87,6 +93,9 @@ REQUIRE_64_HW = {
     "metaflexnet",
     "scunet_aaf6aa",
     "tscunet",
+    "swin2sr_l",
+    "swin2sr_m",
+    "swin2sr_s",
 }
 
 
@@ -98,7 +107,7 @@ class TestArchData(TypedDict):
 
 @pytest.fixture
 def data() -> TestArchData:
-    device = "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     input_shape = (1, 3, 16, 16)
     use_fp16 = False
     dtype = torch.float16 if use_fp16 else torch.float32
@@ -244,3 +253,40 @@ class TestArchs:
             assert not torch.isnan(
                 param
             ).any(), f"NaN detected in parameter {param} after optimizer step"
+
+    # @pytest.mark.parametrize(
+    #     "name,arch,scale,extra_arch_params",
+    #     [
+    #         pytest.param(
+    #             name,
+    #             arch,
+    #             scale,
+    #             extra_arch_params,
+    #             id=f"test_{name}_{scale}x_{extra_arch_params}",
+    #         )
+    #         for name, arch, scale, extra_arch_params in FILTERED_REGISTRIES_SCALES_PARAMS
+    #     ],
+    # )
+    # def test_arch_channels_last(
+    #     self,
+    #     data: TestArchData,
+    #     name: str,
+    #     arch: Callable[..., nn.Module],
+    #     scale: int,
+    #     extra_arch_params: dict[str, Any],
+    # ):
+    #     lq = data["lq"].to(device="cuda", memory_format=torch.channels_last)
+    #     dtype = data["dtype"]
+    #     device = data["device"]
+    #     model: nn.Module = (
+    #         arch(scale=scale, **extra_arch_params)
+    #         .eval()
+    #         .to(device=device, dtype=dtype, memory_format=torch.channels_last)
+    #     )  # type: ignore
+
+    #     assert lq.is_contiguous(memory_format=torch.channels_last)
+    #     print(list(model.parameters())[0].stride())
+
+    #     with torch.inference_mode(), torch.autocast(dtype=dtype, device_type=device):
+    #         out = model(lq)
+    #         assert out.is_contiguous(memory_format=torch.channels_last)

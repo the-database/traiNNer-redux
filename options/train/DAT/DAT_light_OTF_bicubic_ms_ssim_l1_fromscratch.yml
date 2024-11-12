@@ -1,0 +1,185 @@
+####################
+# General Settings
+####################
+name: 4x_DAT_OTF_bicubic_ms_ssim_l1
+scale: 4  # 1, 2, 3, 4, 8
+use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
+amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
+fast_matmul: false  # Trade precision for performance.
+num_gpu: auto
+# manual_seed: 1024  # Deterministic mode, slows down training.
+
+high_order_degradation: true  # Enable on-the-fly (OTF) degradations, which generates LR tiles from HRs during training.
+high_order_degradations_debug: false  # Save the LR and HR tiles to debug/otf folder inside the root of the training directory.
+high_order_degradations_debug_limit: 100  # The max number of iterations to save LR and HR tiles for.
+
+# The first degradation process.
+blur_prob: 0.0
+resize_prob: [0, 0, 1]  # up, down, keep
+resize_mode_list: []  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob: []  # Probability each resize mode is selected.
+resize_range: [1, 1]
+gaussian_noise_prob: 0.0
+noise_range: [0, 0]
+poisson_scale_range: [0, 0]
+gray_noise_prob: 0.0
+jpeg_prob: 0.0
+jpeg_range: [75, 95]
+
+# The second degradation process.
+blur_prob2: 0.0
+resize_prob2: [0, 0, 1]  # up, down, keep
+resize_mode_list2: []  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob2: []  # Probability each resize mode is selected.
+resize_range2: [1, 1]
+gaussian_noise_prob2: 0.0
+noise_range2: [0, 0]
+poisson_scale_range2: [0, 0]
+gray_noise_prob2: 0.0
+jpeg_prob2: 0.0
+jpeg_range2: [75, 95]
+
+# The final resize to the target resolution.
+resize_mode_list3: ['bicubic']  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob3: [1]  # Probability each resize mode is selected.
+
+queue_size: 180
+
+#################################
+# Dataset and Dataloader Settings
+#################################
+datasets:
+  # Settings for the training dataset.
+  train:
+    name: Train Dataset
+    type: RealESRGANDataset
+    # Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.
+    dataroot_gt: [
+      datasets/train/dataset1/hr,
+      datasets/train/dataset1/hr2
+    ]
+    # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
+    # meta_info: data/meta_info/dataset1.txt
+    io_backend:
+      type: disk
+
+    blur_kernel_size: 12
+    kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob: 0.0
+    blur_sigma: [0.2, 2]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 12
+    kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    sinc_prob2: 0.0
+    blur_sigma2: [0.2, 1]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0.0
+    lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
+    use_hflip: true  # Randomly flip the images horizontally.
+    use_rot: true  # Randomly rotate the images.
+
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 8  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
+    accum_iter: 1  # paper: 4  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
+    dataset_enlarge_ratio: auto  # Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.
+    prefetch_mode: ~
+  # Settings for your validation dataset (optional). These settings will
+  # be ignored if val_enabled is false in the Validation section below.
+  val:
+    name: Val Dataset
+    type: PairedImageDataset
+    dataroot_gt: [
+      datasets/val/dataset1/hr,
+      datasets/val/dataset1/hr2,
+    ]
+    dataroot_lq: [
+      datasets/val/dataset1/lr,
+      datasets/val/dataset1/lr2
+    ]
+    io_backend:
+      type: disk
+
+#####################
+# Network Settings
+#####################
+# Generator model settings
+network_g:
+  type: DAT_light
+
+############################
+# Pretrain and Resume Paths
+############################
+path:
+  resume_state: ~
+
+#####################
+# Training Settings
+#####################
+train:
+  ema_decay: 0.999
+  grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
+  # Optimizer for generator model
+  optim_g:
+    type: AdamW
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [250000, 400000, 450000, 475000]
+    gamma: 0.5
+
+  total_iter: 500000  # Total number of iterations.
+  warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
+
+  # Losses - for any loss set the loss_weight to 0 to disable it.
+  losses:
+    # MS-SSIM L1 loss
+    - type: MSSSIML1Loss
+      alpha: 0.1
+      loss_weight: 1.0
+
+#############
+# Validation
+#############
+val:
+  val_enabled: false  # Whether to enable validations. If disabled, all validation settings below are ignored.
+  val_freq: 1000  # How often to run validations, in iterations.
+  save_img: true  # Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
+
+  metrics_enabled: true  # Whether to run metrics calculations during validation.
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4  # Whether to crop border during validation.
+      test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
+    dists:
+      type: calculate_dists
+      better: lower
+
+##########
+# Logging
+##########
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  save_checkpoint_format: safetensors
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+dist_params:
+  backend: nccl
+  port: 29500
