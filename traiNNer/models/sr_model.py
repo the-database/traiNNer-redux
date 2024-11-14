@@ -43,8 +43,6 @@ class SRModel(BaseModel):
 
         # define network
         self.net_g = build_network({**opt.network_g, "scale": opt.scale})
-        self.net_g = self.model_to_device(self.net_g)
-        # self.print_network(self.net_g)
 
         # load pretrained models
         if self.opt.path.pretrain_network_g is not None:
@@ -54,6 +52,8 @@ class SRModel(BaseModel):
                 self.opt.path.strict_load_g,
                 self.opt.path.param_key_g,
             )
+
+        self.net_g = self.model_to_device(self.net_g)
 
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
@@ -131,9 +131,6 @@ class SRModel(BaseModel):
                     )
                 else:
                     self.net_d = build_network(self.opt.network_d)
-                    self.net_d = self.model_to_device(self.net_d)
-                    # self.print_network(self.net_d)
-
                     # load pretrained models
                     if self.opt.path.pretrain_network_d is not None:
                         self.load_network(
@@ -142,6 +139,7 @@ class SRModel(BaseModel):
                             self.opt.path.strict_load_d,
                             self.opt.path.param_key_d,
                         )
+                    self.net_d = self.model_to_device(self.net_d)
 
             self.losses = {}
 
@@ -176,13 +174,7 @@ class SRModel(BaseModel):
 
             init_net_g_ema = build_network(
                 {**self.opt.network_g, "scale": self.opt.scale}
-            ).to(
-                self.device,
-                memory_format=torch.channels_last
-                if self.use_amp
-                else torch.contiguous_format,
-                non_blocking=True,
-            )  # pyright: ignore[reportCallIssue]
+            )
 
             # load pretrained model
             if self.opt.path.pretrain_network_g_ema is not None:
@@ -197,9 +189,13 @@ class SRModel(BaseModel):
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
             self.net_g_ema = AveragedModel(
-                init_net_g_ema,
+                init_net_g_ema.to(memory_format=torch.channels_last),  # pyright: ignore[reportCallIssue]
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
                 device=self.device,
+            )
+
+            self.net_g_ema.n_averaged = self.net_g_ema.n_averaged.to(
+                device=torch.device("cpu")
             )
 
         self.grad_clip = train_opt.grad_clip
