@@ -9,6 +9,7 @@ if __name__ == "__main__":
 
 import argparse
 import datetime
+import gc
 import logging
 import math
 import signal
@@ -216,10 +217,9 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
     if resume_state_path is None:
         resume_state: TrainingState | None = None
     else:
-        device_id = torch.cuda.current_device()
         resume_state = torch.load(
             resume_state_path,
-            map_location=lambda storage, _: storage.cuda(device_id),  # pyright: ignore[reportAttributeAccessIssue] (https://github.com/pytorch/pytorch/issues/131765)
+            map_location="cpu",
             weights_only=True,
         )
         assert resume_state is not None
@@ -336,6 +336,10 @@ def train_pipeline(root_path: str) -> None:
         )
         start_epoch = resume_state["epoch"]
         current_iter = resume_state["iter"]
+
+        del resume_state
+        gc.collect()
+        torch.cuda.empty_cache()
     else:
         start_epoch = 0
         current_iter = 0
