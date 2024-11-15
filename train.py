@@ -338,8 +338,6 @@ def train_pipeline(root_path: str) -> None:
         current_iter = resume_state["iter"]
 
         del resume_state
-        gc.collect()
-        torch.cuda.empty_cache()
     else:
         start_epoch = 0
         current_iter = 0
@@ -364,6 +362,9 @@ def train_pipeline(root_path: str) -> None:
         )
 
     # training
+    gc.collect()
+    torch.cuda.empty_cache()
+
     logger.info("Start training from epoch: %d, iter: %d.", start_epoch, current_iter)
     data_timer, iter_timer = AvgTimer(), AvgTimer()
     start_time = time.time()

@@ -578,7 +578,7 @@ class BaseModel:
             elif load_path.endswith(".pth"):
                 load_net = torch.load(
                     load_path,
-                    map_location=lambda storage, loc: storage,
+                    map_location="cpu",
                     weights_only=True,
                 )
             else:
