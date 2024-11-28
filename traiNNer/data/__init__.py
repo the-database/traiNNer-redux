@@ -18,7 +18,7 @@ from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.rng import RNG
 from traiNNer.utils.types import DataLoaderArgs
 
-__all__ = ["build_dataset", "build_dataloader"]
+__all__ = ["build_dataloader", "build_dataset"]
 
 # automatically scan and import dataset modules for registry
 # scan all the files under the data folder with '_dataset' in file names
