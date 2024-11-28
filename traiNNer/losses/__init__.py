@@ -13,7 +13,7 @@ from traiNNer.losses.gan_loss import (
 from traiNNer.utils import get_root_logger, scandir
 from traiNNer.utils.registry import LOSS_REGISTRY
 
-__all__ = ["build_loss", "gradient_penalty_loss", "r1_penalty", "g_path_regularize"]
+__all__ = ["build_loss", "g_path_regularize", "gradient_penalty_loss", "r1_penalty"]
 
 # automatically scan and import loss modules for registry
 # scan all the files under the 'losses' folder and collect files ending with '_loss.py'
