@@ -461,7 +461,7 @@ class DeCompressJpeg(nn.Module):
             Tensor: batch x 3 x height x width
         """
         components = {"y": y, "cb": cb, "cr": cr}
-        for k, _ in components.items():  # ruff: ignore[PLC0206]
+        for k, _ in components.items():
             if k in ("cb", "cr"):
                 comp = self.c_dequantize(components[k], factor=factor)
                 height, width = int(imgh / 2), int(imgw / 2)
