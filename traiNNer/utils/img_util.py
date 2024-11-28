@@ -300,17 +300,21 @@ def img2rgb(image: np.ndarray) -> np.ndarray:
         np.ndarray: RGB image with shape (H, W, 3).
     """
 
+    # preprocessing for grayscale case
+    if image.ndim == 3 and image.shape[2] == 1:
+        image = image.squeeze(-1)
+
     # rgb
     if image.ndim == 3 and image.shape[2] == 3:
         return image
 
-    # grayscale
-    elif image.ndim == 2 or (image.ndim == 3 and image.shape[2] == 1):
-        return np.repeat(image[:, :, np.newaxis], 3, axis=2)
-
     # rgba
     elif image.ndim == 3 and image.shape[2] > 3:
         return image[:, :, :3]
+
+    # grayscale
+    elif image.ndim == 2:
+        return np.stack((image,) * 3, axis=-1)
 
     else:
         raise ValueError(
