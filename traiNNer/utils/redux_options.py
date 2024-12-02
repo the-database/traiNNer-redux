@@ -218,6 +218,8 @@ class ReduxOptions(StrictStruct):
     high_order_degradations_debug: bool = False
     high_order_degradations_debug_limit: int = 100
     dataroot_lq_prob: float = 0
+    force_high_order_degradation_filename_masks: list[str] = []
+    force_dataroot_lq_filename_masks: list[str] = []
 
     lq_usm: bool = False
     lq_usm_radius_range: tuple[int, int] = (1, 25)
