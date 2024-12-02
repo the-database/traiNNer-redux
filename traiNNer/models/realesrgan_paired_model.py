@@ -54,7 +54,6 @@ class RealESRGANPairedModel(RealESRGANModel):
             not force_otf and RNG.get_rng().uniform() < self.dataroot_lq_prob
         ):
             # paired feed data
-            print("paired", gt_path, force_paired)
             new_data = {
                 k.replace("paired_", ""): v
                 for k, v in data.items()
@@ -80,7 +79,6 @@ class RealESRGANPairedModel(RealESRGANModel):
 
         else:
             # OTF feed data
-            print("otf", gt_path, force_otf)
             new_data = {
                 k.replace("otf_", ""): v
                 for k, v in data.items()
