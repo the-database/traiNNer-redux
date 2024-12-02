@@ -36,25 +36,25 @@ class RealESRGANPairedModel(RealESRGANModel):
 
     @torch.no_grad()
     def feed_data(self, data: DataFeed) -> None:
-        assert "gt_path" in data
+        gt_path = data["otf_gt_path"]  # type: ignore
 
         force_otf = False
         force_paired = False
 
         for m in self.force_high_order_degradation_filename_masks:
-            if m in data["gt_path"]:
+            if m in gt_path:
                 force_otf = True
 
         if not force_otf:
             for m in self.force_dataroot_lq_filename_masks:
-                if m in data["gt_path"]:
+                if m in gt_path:
                     force_paired = True
 
         if force_paired or (
             not force_otf and RNG.get_rng().uniform() < self.dataroot_lq_prob
         ):
             # paired feed data
-            print("paired", data["gt_path"], force_paired)
+            print("paired", gt_path, force_paired)
             new_data = {
                 k.replace("paired_", ""): v
                 for k, v in data.items()
@@ -80,7 +80,7 @@ class RealESRGANPairedModel(RealESRGANModel):
 
         else:
             # OTF feed data
-            print("otf", data["gt_path"], force_otf)
+            print("otf", gt_path, force_otf)
             new_data = {
                 k.replace("otf_", ""): v
                 for k, v in data.items()
