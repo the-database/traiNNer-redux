@@ -40,7 +40,6 @@ class RealESRGANPairedModel(RealESRGANModel):
                 for k, v in data.items()
                 if k.startswith("paired_")
             }
-            print(new_data.keys())
 
             assert "lq" in new_data
             self.lq = new_data["lq"].to(
@@ -66,5 +65,4 @@ class RealESRGANPairedModel(RealESRGANModel):
                 for k, v in data.items()
                 if k.startswith("otf_")
             }
-            print(data.keys(), new_data.keys())
             super().feed_data(new_data)  # type: ignore
