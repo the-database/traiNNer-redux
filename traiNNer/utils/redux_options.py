@@ -217,6 +217,7 @@ class ReduxOptions(StrictStruct):
     high_order_degradation: bool = False
     high_order_degradations_debug: bool = False
     high_order_degradations_debug_limit: int = 100
+    dataroot_lq_prob: float = 0
 
     lq_usm: bool = False
     lq_usm_radius_range: tuple[int, int] = (1, 25)
