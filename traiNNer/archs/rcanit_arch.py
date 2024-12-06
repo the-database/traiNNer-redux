@@ -622,7 +622,7 @@ class RCANIT(nn.Module):
         block_type: str = "rcan_block",
         short_skip: bool = True,
         channels: int = 3,
-        rgb_range: float = 1.0,
+        rgb_range: float = 255,  # TODO 1.0
         act_mode: str = "silu",
         stochastic_depth: bool = False,
         prob: list[float] | None = None,
