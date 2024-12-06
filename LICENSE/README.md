@@ -32,6 +32,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[OmniSR](https://github.com/Francis0625/Omni-SR) | [Apache License 2.0](https://github.com/Francis0625/Omni-SR#license)|
 |[projected-distribution-loss](https://github.com/saurabh-kataria/projected-distribution-loss)| [MIT License](https://github.com/saurabh-kataria/projected-distribution-loss/blob/main/LICENSE)|
 |[PLKSR](https://github.com/dslisleedh/PLKSR) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
+|[RCAN-it](https://github.com/zudi-lin/rcan-it)| [MIT License](https://github.com/zudi-lin/rcan-it/blob/main/LICENSE)|
 |[Real-CUGAN](https://github.com/bilibili/ailab) | [MIT License](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)|
 |[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | [BSD 3-Clause "New" or "Revised" License](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)|
 |[RealPLKSR](https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
