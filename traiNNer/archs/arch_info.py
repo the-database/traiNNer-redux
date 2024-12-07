@@ -55,7 +55,7 @@ OFFICIAL_METRICS: dict[
         4: {"df2k_psnr": 26.97, "df2k_ssim": 0.8107},
     },
     "camixersr": {
-        4: {"div2k_psnr": 26.63, "df2k_ssim": 0.8012},
+        4: {"div2k_psnr": 26.63, "div2k_ssim": 0.8012},
     },
     "cfsr": {
         2: {"df2k_psnr": 32.28, "df2k_ssim": 0.9300},
