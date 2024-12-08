@@ -34,7 +34,10 @@ class DySample(nn.Module):
     ) -> None:
         super().__init__()
 
-        if in_channels >= groups or in_channels % groups == 0:
+        try:
+            assert in_channels >= groups
+            assert in_channels % groups == 0
+        except:
             msg = "Incorrect in_channels and groups values."
             raise ValueError(msg)
 
@@ -318,7 +321,7 @@ class Block(nn.Module):
         self.se = SSELayer(dim)
 
     def forward(self, x):
-        x = self.token_mix(x) + x
+        x = self.token_mix(x)
         x = self.gamma * self.ffn(x) + x
         return self.se(x)
 
@@ -372,7 +375,7 @@ class MoESR(nn.Module):
             self.upscale = InterpolateUpsampler(dim, out_ch, scale)
         elif upsampler == "psd":
             self.upscale = nn.Sequential(
-                nn.Conv2d(64, 3 * scale * scale, 3, 1, 1), nn.PixelShuffle(scale)
+                nn.Conv2d(64, 3 * 4 * 4, 3, 1, 1), nn.PixelShuffle(scale)
             )
         elif upsampler == "ps":
             self.upscale = Upsample(dim, upsample_dim, out_ch, scale)
