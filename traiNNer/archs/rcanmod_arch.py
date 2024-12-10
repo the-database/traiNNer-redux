@@ -27,14 +27,14 @@ class Upsampler(nn.Sequential):
                 if bn:
                     m.append(nn.BatchNorm2d(n_feat))
                 if act:
-                    m.append(act())
+                    m.append(act)
         elif scale == 3:
             m.append(conv(n_feat, 9 * n_feat, 3, bias))
             m.append(nn.PixelShuffle(3))
             if bn:
                 m.append(nn.BatchNorm2d(n_feat))
             if act:
-                m.append(act())
+                m.append(act)
         else:
             raise NotImplementedError
         # print("m0", m)
@@ -50,7 +50,7 @@ class CALayer(nn.Module):
         # feature channel downscale and upscale --> channel weight
         self.conv_du = nn.Sequential(
             nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
-            nn.SiLU(inplace=True),
+            nn.Mish(inplace=True),
             nn.Conv2d(channel // reduction, channel, 1, padding=0, bias=True),
             nn.Sigmoid(),
         )
@@ -71,7 +71,7 @@ class RCAB(nn.Module):
         reduction,
         bias=True,
         bn=False,
-        act=nn.SiLU(True),
+        act=nn.Mish(True),
         res_scale=1,
     ) -> None:
         super().__init__()
@@ -139,7 +139,7 @@ class RCANMod(nn.Module):
     ) -> None:
         super().__init__()
 
-        act = nn.SiLU(True)
+        act = nn.Mish(True)
 
         # define head module
         modules_head = [conv(n_colors, n_feats, kernel_size)]
@@ -162,7 +162,7 @@ class RCANMod(nn.Module):
 
         # define tail module
         modules_tail = [
-            Upsampler(conv, scale, n_feats, act=False),
+            Upsampler(conv, scale, n_feats, act=act),
             conv(n_feats, n_colors, kernel_size),
         ]
 
