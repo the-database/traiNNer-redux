@@ -134,7 +134,7 @@ archs: list[ArchInfo] = [
         "names": ["PLKSR", "PLKSR_Tiny"],
         "scales": ALL_SCALES,
         "overrides": {
-            "lq_size": "48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)"
+            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
         },
     },
     {
@@ -145,7 +145,7 @@ archs: list[ArchInfo] = [
             "layer_norm": "true  # better quality, not compatible with older models",
         },
         "overrides": {
-            "lq_size": "48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)"
+            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
         },
     },
     {
@@ -217,6 +217,7 @@ archs: list[ArchInfo] = [
     },
     # {"names": ["HMA"], "scales": ALL_SCALES},
     {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
+    {"names": ["CFSR"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:
