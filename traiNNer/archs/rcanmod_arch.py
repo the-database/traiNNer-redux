@@ -43,117 +43,45 @@ class Upsampler(nn.Sequential):
         super().__init__(*m)
 
 
-class ESA(nn.Module):
+class SpatialSELayer(nn.Module):
     """
-    Modification of Enhanced Spatial Attention (ESA), which is proposed by
-    `Residual Feature Aggregation Network for Image Super-Resolution`
-    Note: `conv_max` and `conv3_` are NOT used here, so the corresponding codes
-    are deleted.
+    Re-implementation of SE block -- squeezing spatially and exciting channel-wise described in:
+        *Roy et al., Concurrent Spatial and Channel Squeeze & Excitation in Fully Convolutional Networks, MICCAI 2018*
     """
 
-    def __init__(self, dim, expansion_esa=0.25):
+    def __init__(self, num_channels):
+        """
+
+        :param num_channels: No of input channels
+        """
         super().__init__()
-        f = int(dim * expansion_esa)
-        self.conv1 = nn.Conv2d(dim, f, kernel_size=1)
-        self.conv_f = nn.Conv2d(f, f, kernel_size=1)
-        self.conv2 = nn.Conv2d(f, f, kernel_size=3, stride=2, padding=0)
-        self.conv3 = nn.Conv2d(f, f, kernel_size=3, padding=1)
-        self.conv4 = nn.Conv2d(f, dim, kernel_size=1)
-        self.sigmoid = nn.Hardsigmoid(True)
-        self.relu = nn.ReLU(inplace=True)
+        self.conv = nn.Conv2d(num_channels, 1, 1)
+        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
-        _B, _C, H, W = x.shape
-        c1_ = self.conv1(x)
-        c1 = self.conv2(c1_)
-        v_max = F.max_pool2d(c1, kernel_size=7, stride=3)
-        c3 = self.conv3(v_max)
-        c3 = F.interpolate(c3, (H, W), mode="bilinear", align_corners=False)
-        cf = self.conv_f(c1_)
-        c4 = self.conv4(c3 + cf)
-        m = self.sigmoid(c4)
-        return x * m
+    def forward(self, input_tensor, weights=None):
+        """
 
+        :param weights: weights for few shot learning
+        :param input_tensor: X, shape = (batch_size, num_channels, H, W)
+        :return: output_tensor
+        """
+        # spatial squeeze
+        batch_size, channel, a, b = input_tensor.size()
 
-class CSELayer(nn.Module):
-    def __init__(self, channel, reduction=4):
-        super().__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(channel, channel // reduction),
-            nn.ReLU(inplace=True),
-            nn.Linear(channel // reduction, channel),
-            nn.Hardsigmoid(True),
-        )
+        if weights is not None:
+            weights = torch.mean(weights, dim=0)
+            weights = weights.view(1, channel, 1, 1)
+            out = F.conv2d(input_tensor, weights)
+        else:
+            out = self.conv(input_tensor)
+        squeeze_tensor = self.sigmoid(out)
 
-    def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y
-
-
-class CBAMBlock(nn.Module):
-    def __init__(self, dim, reduction=16, kernel_size=7):
-        super().__init__()
-        # Channel Attention
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.max_pool = nn.AdaptiveMaxPool2d(1)
-        self.fc1 = nn.Sequential(
-            nn.Conv2d(dim, dim // reduction, 1, bias=False),
-            nn.ReLU(True),
-            nn.Conv2d(dim // reduction, dim, 1, bias=False),
-        )
-        self.fc2 = nn.Sequential(
-            nn.Conv2d(dim, dim // reduction, 1, bias=False),
-            nn.ReLU(True),
-            nn.Conv2d(dim // reduction, dim, 1, bias=False),
-        )
-        self.sigmoid_channel = nn.Hardsigmoid(True)
-
-        # Spatial Attention
-        self.conv_spatial = nn.Conv2d(
-            2, 1, kernel_size, padding=kernel_size // 2, bias=False
-        )
-        self.sigmoid_spatial = nn.Hardsigmoid(True)
-        self.gamma = nn.Parameter(torch.ones([1, dim, 1, 1]), requires_grad=True)
-
-    def forward(self, x):
-        short_cut = x
-        # Channel Attention
-        avg_out = self.fc1(self.avg_pool(x))
-        max_out = self.fc2(self.max_pool(x))
-        channel_attention = self.sigmoid_channel(avg_out + max_out)
-        x = x * channel_attention
-
-        # Spatial Attention
-        max_out, _ = torch.max(x, dim=1, keepdim=True)
-        avg_out = torch.mean(x, dim=1, keepdim=True)
-        spatial_attention = self.sigmoid_spatial(
-            self.conv_spatial(torch.cat([avg_out, max_out], dim=1))
-        )
-        x = x * spatial_attention
-
-        return (x * self.gamma) + short_cut
-
-
-class SSELayer(nn.Module):
-    def __init__(self, dim: int = 48):
-        super().__init__()
-        self.squeezing = nn.Sequential(nn.Conv2d(dim, 1, 1, 1, 0), nn.Hardsigmoid(True))
-
-    def forward(self, x):
-        return x * self.squeezing(x)
-
-
-class CSSELayer(nn.Module):
-    def __init__(self, dim: int = 48):
-        super().__init__()
-        self.sse = SSELayer(dim)
-        self.cse = CSELayer(dim)
-
-    def forward(self, x):
-        return torch.max(self.sse(x), self.cse(x))
+        # spatial excitation
+        # print(input_tensor.size(), squeeze_tensor.size())
+        squeeze_tensor = squeeze_tensor.view(batch_size, 1, a, b)
+        output_tensor = torch.mul(input_tensor, squeeze_tensor)
+        # output_tensor = torch.mul(input_tensor, squeeze_tensor)
+        return output_tensor
 
 
 ## Residual Channel Attention Block (RCAB)
@@ -177,7 +105,7 @@ class RCAB(nn.Module):
                 modules_body.append(nn.BatchNorm2d(n_feat))
             if i == 0:
                 modules_body.append(act)
-        modules_body.append(SSELayer(n_feat))
+        modules_body.append(SpatialSELayer(n_feat))
         self.body = nn.Sequential(*modules_body)
         self.res_scale = res_scale
 
