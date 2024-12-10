@@ -1,7 +1,9 @@
 import math
 from collections.abc import Callable
 
+import torch
 from torch import nn
+from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.utils.registry import ARCH_REGISTRY
 
@@ -41,24 +43,117 @@ class Upsampler(nn.Sequential):
         super().__init__(*m)
 
 
-## Channel Attention (CA) Layer
-class CALayer(nn.Module):
-    def __init__(self, channel, reduction: int = 16) -> None:
+class ESA(nn.Module):
+    """
+    Modification of Enhanced Spatial Attention (ESA), which is proposed by
+    `Residual Feature Aggregation Network for Image Super-Resolution`
+    Note: `conv_max` and `conv3_` are NOT used here, so the corresponding codes
+    are deleted.
+    """
+
+    def __init__(self, dim, expansion_esa=0.25):
         super().__init__()
-        # global average pooling: feature --> point
+        f = int(dim * expansion_esa)
+        self.conv1 = nn.Conv2d(dim, f, kernel_size=1)
+        self.conv_f = nn.Conv2d(f, f, kernel_size=1)
+        self.conv2 = nn.Conv2d(f, f, kernel_size=3, stride=2, padding=0)
+        self.conv3 = nn.Conv2d(f, f, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(f, dim, kernel_size=1)
+        self.sigmoid = nn.Hardsigmoid(True)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        _B, _C, H, W = x.shape
+        c1_ = self.conv1(x)
+        c1 = self.conv2(c1_)
+        v_max = F.max_pool2d(c1, kernel_size=7, stride=3)
+        c3 = self.conv3(v_max)
+        c3 = F.interpolate(c3, (H, W), mode="bilinear", align_corners=False)
+        cf = self.conv_f(c1_)
+        c4 = self.conv4(c3 + cf)
+        m = self.sigmoid(c4)
+        return x * m
+
+
+class CSELayer(nn.Module):
+    def __init__(self, channel, reduction=4):
+        super().__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        # feature channel downscale and upscale --> channel weight
-        self.conv_du = nn.Sequential(
-            nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
-            nn.Mish(inplace=True),
-            nn.Conv2d(channel // reduction, channel, 1, padding=0, bias=True),
-            nn.Sigmoid(),
+        self.fc = nn.Sequential(
+            nn.Linear(channel, channel // reduction),
+            nn.ReLU(inplace=True),
+            nn.Linear(channel // reduction, channel),
+            nn.Hardsigmoid(True),
         )
 
     def forward(self, x):
-        y = self.avg_pool(x)
-        y = self.conv_du(y)
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
         return x * y
+
+
+class CBAMBlock(nn.Module):
+    def __init__(self, dim, reduction=16, kernel_size=7):
+        super().__init__()
+        # Channel Attention
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        self.fc1 = nn.Sequential(
+            nn.Conv2d(dim, dim // reduction, 1, bias=False),
+            nn.ReLU(True),
+            nn.Conv2d(dim // reduction, dim, 1, bias=False),
+        )
+        self.fc2 = nn.Sequential(
+            nn.Conv2d(dim, dim // reduction, 1, bias=False),
+            nn.ReLU(True),
+            nn.Conv2d(dim // reduction, dim, 1, bias=False),
+        )
+        self.sigmoid_channel = nn.Hardsigmoid(True)
+
+        # Spatial Attention
+        self.conv_spatial = nn.Conv2d(
+            2, 1, kernel_size, padding=kernel_size // 2, bias=False
+        )
+        self.sigmoid_spatial = nn.Hardsigmoid(True)
+        self.gamma = nn.Parameter(torch.ones([1, dim, 1, 1]), requires_grad=True)
+
+    def forward(self, x):
+        short_cut = x
+        # Channel Attention
+        avg_out = self.fc1(self.avg_pool(x))
+        max_out = self.fc2(self.max_pool(x))
+        channel_attention = self.sigmoid_channel(avg_out + max_out)
+        x = x * channel_attention
+
+        # Spatial Attention
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        spatial_attention = self.sigmoid_spatial(
+            self.conv_spatial(torch.cat([avg_out, max_out], dim=1))
+        )
+        x = x * spatial_attention
+
+        return (x * self.gamma) + short_cut
+
+
+class SSELayer(nn.Module):
+    def __init__(self, dim: int = 48):
+        super().__init__()
+        self.squeezing = nn.Sequential(nn.Conv2d(dim, 1, 1, 1, 0), nn.Hardsigmoid(True))
+
+    def forward(self, x):
+        return x * self.squeezing(x)
+
+
+class CSSELayer(nn.Module):
+    def __init__(self, dim: int = 48):
+        super().__init__()
+        self.sse = SSELayer(dim)
+        self.cse = CSELayer(dim)
+
+    def forward(self, x):
+        return torch.max(self.sse(x), self.cse(x))
 
 
 ## Residual Channel Attention Block (RCAB)
@@ -71,7 +166,7 @@ class RCAB(nn.Module):
         reduction,
         bias=True,
         bn=False,
-        act=nn.Mish(True),
+        act=nn.ReLU(True),
         res_scale=1,
     ) -> None:
         super().__init__()
@@ -82,7 +177,7 @@ class RCAB(nn.Module):
                 modules_body.append(nn.BatchNorm2d(n_feat))
             if i == 0:
                 modules_body.append(act)
-        modules_body.append(CALayer(n_feat, reduction))
+        modules_body.append(SSELayer(n_feat))
         self.body = nn.Sequential(*modules_body)
         self.res_scale = res_scale
 
@@ -139,7 +234,7 @@ class RCANMod(nn.Module):
     ) -> None:
         super().__init__()
 
-        act = nn.Mish(True)
+        act = nn.ReLU(True)
 
         # define head module
         modules_head = [conv(n_colors, n_feats, kernel_size)]
@@ -162,7 +257,7 @@ class RCANMod(nn.Module):
 
         # define tail module
         modules_tail = [
-            Upsampler(conv, scale, n_feats, act=act),
+            Upsampler(conv, scale, n_feats, act=False),
             conv(n_feats, n_colors, kernel_size),
         ]
 

@@ -600,7 +600,7 @@ class ResidualGroup(nn.Module):
 
     def forward(self, x):
         res = self.body(x)
-        print("rg", res.min(), res.max(), res.mean(), res.shape)
+        # print("rg", res.min(), res.max(), res.mean(), res.shape)
         if self.short_skip:
             res += x
         return res
@@ -662,7 +662,7 @@ class RCANIT(nn.Module):
         # print("x2", x.min(), x.max(), x.mean(), x.shape)
 
         res = self.body(x)
-        print("res0", res.min(), res.max(), res.mean(), res.shape)
+        # print("res0", res.min(), res.max(), res.mean(), res.shape)
         res += x  # long skip-connection
 
         x = self.tail(res)
