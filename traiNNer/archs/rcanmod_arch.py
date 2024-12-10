@@ -50,7 +50,7 @@ class CALayer(nn.Module):
         # feature channel downscale and upscale --> channel weight
         self.conv_du = nn.Sequential(
             nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
-            nn.ReLU(inplace=True),
+            nn.SiLU(inplace=True),
             nn.Conv2d(channel // reduction, channel, 1, padding=0, bias=True),
             nn.Sigmoid(),
         )
@@ -71,7 +71,7 @@ class RCAB(nn.Module):
         reduction,
         bias=True,
         bn=False,
-        act=nn.ReLU(True),
+        act=nn.SiLU(True),
         res_scale=1,
     ) -> None:
         super().__init__()
@@ -139,7 +139,7 @@ class RCANMod(nn.Module):
     ) -> None:
         super().__init__()
 
-        act = nn.ReLU(True)
+        act = nn.SiLU(True)
 
         # define head module
         modules_head = [conv(n_colors, n_feats, kernel_size)]
