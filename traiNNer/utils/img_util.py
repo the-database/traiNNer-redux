@@ -35,6 +35,8 @@ def img2tensor(
         if img.ndim == 2:
             # Gray to RGB and to BGR are the same.
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        elif img.shape[2] == 4:
+            img = img[:, :, :3]  # remove alpha channel
         elif img.shape[2] == 3 and bgr2rgb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         out = torch.from_numpy(img.transpose(2, 0, 1))
