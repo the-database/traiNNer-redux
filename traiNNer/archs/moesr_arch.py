@@ -3,19 +3,10 @@ from typing import Literal
 
 import torch
 from torch import Tensor, nn
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: N812
 from torch.nn.init import trunc_normal_
 
 from traiNNer.utils.registry import ARCH_REGISTRY
-
-
-class SSELayer(nn.Module):
-    def __init__(self, dim: int = 48) -> None:
-        super().__init__()
-        self.squeezing = nn.Sequential(nn.Conv2d(dim, 1, 1, 1, 0), nn.Hardsigmoid(True))
-
-    def forward(self, x):
-        return x * self.squeezing(x)
 
 
 class DySample(nn.Module):
@@ -178,35 +169,6 @@ class InterpolateUpsampler(nn.Sequential):
         super().__init__(*m)
 
 
-class CFFT(nn.Module):
-    def __init__(self, dim: int = 64, expansion_factor: float = 1.5) -> None:
-        super().__init__()
-
-        self.dim = dim
-        self.expansion_factor = expansion_factor
-
-        hidden_features = int(dim * expansion_factor)
-        self.project_in = nn.Conv2d(dim, hidden_features, kernel_size=1, bias=True)
-        self.dwconv = nn.Conv2d(
-            hidden_features,
-            hidden_features,
-            kernel_size=5,
-            stride=1,
-            padding=2,
-            groups=hidden_features,
-            bias=True,
-        )
-        self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=True)
-        self.act = nn.Mish(False)
-
-    def forward(self, x):
-        x = self.project_in(x)
-        x = self.act(x)
-        x = channel_shuffle(x, 2)
-        x = self.dwconv(x) + x
-        return self.project_out(x)
-
-
 class LayerNorm(nn.Module):
     def __init__(self, dim: int = 64, eps: float = 1e-6) -> None:
         super().__init__()
@@ -221,45 +183,40 @@ class LayerNorm(nn.Module):
         return self.weight[:, None, None] * x + self.bias[:, None, None]
 
 
-class ESA(nn.Module):
-    """
-    Modification of Enhanced Spatial Attention (ESA), which is proposed by
-    `Residual Feature Aggregation Network for Image Super-Resolution`
-    Note: `conv_max` and `conv3_` are NOT used here, so the corresponding codes
-    are deleted.
-    """
+class InceptionDWConv2d(nn.Module):
+    """Inception depthweise convolution"""
 
-    def __init__(self, dim, expansion_esa=0.25) -> None:
+    def __init__(
+        self, in_channels, square_kernel_size=3, band_kernel_size=11, branch_ratio=0.125
+    ) -> None:
         super().__init__()
-        f = int(dim * expansion_esa)
-        self.conv1 = nn.Conv2d(dim, f, kernel_size=1)
-        self.conv_f = nn.Conv2d(f, f, kernel_size=1)
-        self.conv2 = nn.Conv2d(f, f, kernel_size=3, stride=2, padding=0)
-        self.conv3 = nn.Conv2d(f, f, kernel_size=3, padding=1)
-        self.conv4 = nn.Conv2d(f, dim, kernel_size=1)
-        self.sigmoid = nn.Hardsigmoid(True)
-        self.relu = nn.ReLU(inplace=True)
+
+        gc = int(in_channels * branch_ratio)  # channel numbers of a convolution branch
+        self.dwconv_hw = nn.Conv2d(
+            gc, gc, square_kernel_size, padding=square_kernel_size // 2, groups=gc
+        )
+        self.dwconv_w = nn.Conv2d(
+            gc,
+            gc,
+            kernel_size=(1, band_kernel_size),
+            padding=(0, band_kernel_size // 2),
+            groups=gc,
+        )
+        self.dwconv_h = nn.Conv2d(
+            gc,
+            gc,
+            kernel_size=(band_kernel_size, 1),
+            padding=(band_kernel_size // 2, 0),
+            groups=gc,
+        )
+        self.split_indexes = (in_channels - 3 * gc, gc, gc, gc)
 
     def forward(self, x):
-        _B, _C, H, W = x.shape
-        c1_ = self.conv1(x)
-        c1 = self.conv2(c1_)
-        v_max = F.max_pool2d(c1, kernel_size=7, stride=3)
-        c3 = self.conv3(v_max)
-        c3 = F.interpolate(c3, (H, W), mode="bilinear", align_corners=False)
-        cf = self.conv_f(c1_)
-        c4 = self.conv4(c3 + cf)
-        m = self.sigmoid(c4)
-        return x * m
-
-
-def channel_shuffle(x, groups: int):
-    batchsize, num_channels, height, width = x.size()
-    channels_per_group = num_channels // groups
-    x = x.view(batchsize, groups, channels_per_group, height, width)
-    x = torch.transpose(x, 1, 2).contiguous()
-    x = x.view(batchsize, num_channels, height, width)
-    return x
+        x_id, x_hw, x_w, x_h = torch.split(x, self.split_indexes, dim=1)
+        return torch.cat(
+            (x_id, self.dwconv_hw(x_hw), self.dwconv_w(x_w), self.dwconv_h(x_h)),
+            dim=1,
+        )
 
 
 class GatedCNNBlock(nn.Module):
@@ -271,7 +228,7 @@ class GatedCNNBlock(nn.Module):
     def __init__(
         self,
         dim: int = 64,
-        expansion_ratio: float = 1.5,
+        expansion_ratio: float = 8 / 3,
         conv_ratio: float = 1.0,
         kernel_size: int = 7,
     ) -> None:
@@ -284,14 +241,7 @@ class GatedCNNBlock(nn.Module):
         conv_channels = int(conv_ratio * dim)
         self.split_indices = [hidden, hidden - conv_channels, conv_channels]
 
-        self.conv = nn.Conv2d(
-            conv_channels,
-            conv_channels,
-            kernel_size,
-            1,
-            kernel_size // 2,
-            groups=conv_channels,
-        )
+        self.conv = InceptionDWConv2d(conv_channels)
         self.fc2 = nn.Conv2d(hidden, dim, 3, 1, 1)
         self.gamma = nn.Parameter(torch.ones([1, dim, 1, 1]), requires_grad=True)
         self.apply(self._init_weights)
@@ -312,18 +262,27 @@ class GatedCNNBlock(nn.Module):
         return (x * self.gamma) + shortcut
 
 
-class Block(nn.Module):
-    def __init__(self, dim: int = 64, expansion_factor: float = 1.5) -> None:
+class MSG(nn.Module):
+    def __init__(self, dim) -> None:
         super().__init__()
-        self.token_mix = GatedCNNBlock(dim, expansion_factor)
-        self.ffn = nn.Sequential(LayerNorm(dim, eps=1e-6), CFFT(dim, expansion_factor))
-        self.gamma = nn.Parameter(torch.ones([1, dim, 1, 1]), requires_grad=True)
-        self.se = SSELayer(dim)
+        self.down = nn.Sequential(
+            nn.Conv2d(dim, dim // 4, 3, 1, 1),
+            nn.PixelUnshuffle(2),
+            nn.LeakyReLU(0.1, True),
+        )
+        self.gated = nn.Sequential(
+            *[GatedCNNBlock(dim, expansion_ratio=1.5) for _ in range(3)]
+        )
+        self.up = nn.Sequential(
+            nn.Conv2d(dim, dim * 4, 3, 1, 1),
+            nn.PixelShuffle(2),
+            nn.LeakyReLU(0.1, True),
+        )
 
     def forward(self, x):
-        x = self.token_mix(x)
-        x = self.gamma * self.ffn(x) + x
-        return self.se(x)
+        out = self.down(x)
+        out = self.gated(out)
+        return self.up(out) + x
 
 
 class Blocks(nn.Module):
@@ -335,18 +294,16 @@ class Blocks(nn.Module):
         expansion_esa: float = 0.25,
     ) -> None:
         super().__init__()
-        self.blocks = nn.Sequential(
-            *[Block(dim, expansion_factor) for _ in range(blocks)]
-            + [ESA(dim, expansion_esa)]
-        )
+        self.blocks = nn.Sequential(*[GatedCNNBlock(dim, 8 / 3) for _ in range(blocks)])
+        self.msg = MSG(dim)
         self.gamma = nn.Parameter(torch.ones(1, dim, 1, 1), requires_grad=True)
 
     def forward(self, x):
-        return self.blocks(x) * self.gamma + x
+        return self.msg(self.blocks(x))
 
 
 @ARCH_REGISTRY.register()
-class MoESR(nn.Module):
+class MoESR2(nn.Module):
     """Mamba out Excitation Super-Resolution"""
 
     def __init__(
@@ -355,27 +312,27 @@ class MoESR(nn.Module):
         out_ch: int = 3,
         scale: int = 4,
         dim: int = 64,
-        n_blocks: int = 6,
-        n_block: int = 6,
+        n_blocks: int = 9,
+        n_block: int = 4,
         expansion_factor: int = 1.5,
         expansion_esa: int = 0.25,
-        upsampler: Literal["n+c", "psd", "ps", "dys", "conv"] = "n+c",
+        upsampler: Literal["n+c", "psd", "ps", "dys", "conv"] = "psd",
         upsample_dim: int = 64,
     ) -> None:
         super().__init__()
-
+        self.scale = scale
         self.in_to_dim = nn.Conv2d(in_ch, dim, 3, 1, 1)
         self.blocks = nn.Sequential(
             *[
                 Blocks(dim, n_block, expansion_factor, expansion_esa)
-                for _ in range(n_blocks)
+                for i in range(n_blocks)
             ]
         )
         if upsampler == "n+c":
             self.upscale = InterpolateUpsampler(dim, out_ch, scale)
         elif upsampler == "psd":
             self.upscale = nn.Sequential(
-                nn.Conv2d(64, 3 * 4 * 4, 3, 1, 1), nn.PixelShuffle(scale)
+                nn.Conv2d(64, 3 * scale * scale, 3, 1, 1), nn.PixelShuffle(scale)
             )
         elif upsampler == "ps":
             self.upscale = Upsample(dim, upsample_dim, out_ch, scale)
@@ -388,7 +345,16 @@ class MoESR(nn.Module):
         )
         self.gamma = nn.Parameter(torch.ones(1, 64, 1, 1), requires_grad=True)
 
+    def check_img_size(self, x, resolution):
+        h, w = resolution
+        scaled_size = 2
+        mod_pad_h = (scaled_size - h % scaled_size) % scaled_size
+        mod_pad_w = (scaled_size - w % scaled_size) % scaled_size
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+
     def forward(self, x):
+        b, c, h, w = x.shape
+        x = self.check_img_size(x, (h, w))
         x = self.in_to_dim(x)
-        x = self.blocks(x) * self.gamma + x
-        return self.upscale(x)
+        x = self.blocks(x) + x
+        return self.upscale(x)[:, :, : h * self.scale, : w * self.scale]
