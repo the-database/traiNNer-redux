@@ -296,7 +296,6 @@ class Blocks(nn.Module):
         super().__init__()
         self.blocks = nn.Sequential(*[GatedCNNBlock(dim, 8 / 3) for _ in range(blocks)])
         self.msg = MSG(dim)
-        self.gamma = nn.Parameter(torch.ones(1, dim, 1, 1), requires_grad=True)
 
     def forward(self, x):
         return self.msg(self.blocks(x))
