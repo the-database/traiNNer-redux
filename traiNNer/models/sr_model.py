@@ -103,6 +103,9 @@ class SRModel(BaseModel):
                 "bf16" if self.amp_dtype == torch.bfloat16 else "fp16",
             )
 
+            if self.use_channels_last:
+                logger.info("Using channels last memory format.")
+
         if self.opt.fast_matmul:
             logger.info(
                 "Fast matrix multiplication and convolution operations (fast_matmul) enabled, trading precision for performance."

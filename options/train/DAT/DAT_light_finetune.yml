@@ -5,7 +5,7 @@ name: 4x_DAT_light
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
-use_channels_last: true  # Enable channels last memory format while using AMP. Speeds up training for most architectures, but some architectures are slower with channels last.
+use_channels_last: true  # Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.
 fast_matmul: false  # Trade precision for performance.
 num_gpu: auto
 # manual_seed: 1024  # Deterministic mode, slows down training.
