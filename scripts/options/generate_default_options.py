@@ -4,6 +4,7 @@ from os import path as osp
 from typing import Any, NotRequired, TypedDict
 
 from traiNNer.archs.arch_info import (
+    ARCHS_WITHOUT_CHANNELS_LAST,
     ARCHS_WITHOUT_FP16,
     OFFICIAL_SETTINGS_FINETUNE,
     OFFICIAL_SETTINGS_FROMSCRATCH,
@@ -60,6 +61,11 @@ def final_template(
 
     if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:
         template = template.replace("amp_bf16: false", "amp_bf16: true")
+
+    if arch["names"][0].lower() in ARCHS_WITHOUT_CHANNELS_LAST:
+        template = template.replace(
+            "use_channels_last: true", "use_channels_last: false"
+        )
 
     arch_key = variant.lower()
 

@@ -37,6 +37,27 @@ ARCHS_WITHOUT_FP16 = {
     "hit_lmlt",
 }
 
+# These archs perform slower when using channels last
+ARCHS_WITHOUT_CHANNELS_LAST = {
+    "camixersr",
+    "cfsr",
+    "eimn_a",
+    "eimn_l",
+    "flexnet",
+    "hit_sir",
+    "hit_sng",
+    "hit_srf",
+    "man",
+    "man_light",
+    "man_tiny",
+    "moesr2",
+    "omnisr",
+    "rgt",
+    "rgt_s",
+    "spanplus",
+    "spanplus_s",
+}
+
 # Urban100
 OFFICIAL_METRICS: dict[
     str,
