@@ -38,6 +38,12 @@ class SRModel(BaseModel):
 
         # use amp
         self.use_amp = self.opt.use_amp
+        self.use_channels_last = self.opt.use_channels_last
+        self.memory_format = (
+            torch.channels_last
+            if self.use_amp and self.use_channels_last
+            else torch.preserve_format
+        )
         self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
         self.use_compile = self.opt.use_compile
 
@@ -189,7 +195,7 @@ class SRModel(BaseModel):
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
             self.net_g_ema = AveragedModel(
-                init_net_g_ema.to(memory_format=torch.channels_last),  # pyright: ignore[reportCallIssue]
+                init_net_g_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
                 device=self.device,
             )
@@ -241,7 +247,7 @@ class SRModel(BaseModel):
                     self.has_gan = True
                 self.losses[label] = build_loss(loss).to(
                     self.device,
-                    memory_format=torch.channels_last,
+                    memory_format=self.memory_format,
                     non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
@@ -300,13 +306,13 @@ class SRModel(BaseModel):
         assert "lq" in data
         self.lq = data["lq"].to(
             self.device,
-            memory_format=torch.channels_last,
+            memory_format=self.memory_format,
             non_blocking=True,
         )
         if "gt" in data:
             self.gt = data["gt"].to(
                 self.device,
-                memory_format=torch.channels_last,
+                memory_format=self.memory_format,
                 non_blocking=True,
             )
 

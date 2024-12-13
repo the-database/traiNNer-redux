@@ -63,13 +63,13 @@ class RealESRGANPairedModel(RealESRGANModel):
             assert "lq" in new_data
             self.lq = new_data["lq"].to(
                 self.device,
-                memory_format=torch.channels_last,
+                memory_format=self.memory_format,
                 non_blocking=True,
             )
             if "gt" in new_data:
                 self.gt = new_data["gt"].to(
                     self.device,
-                    memory_format=torch.channels_last,
+                    memory_format=self.memory_format,
                     non_blocking=True,
                 )
 
