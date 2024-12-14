@@ -50,7 +50,7 @@ class ArtCNN(nn.Module):
         in_ch: int = 3,
         scale: int = 4,
         filters: int = 96,
-        n_block: int = 15,
+        n_block: int = 16,
         kernel_size: int = 3,
         act: type[nn.Module] = nn.ReLU,
     ) -> None:

@@ -121,7 +121,7 @@ datasets:
 network_g:
   type: ArtCNN
   filters: 96
-  n_block: 15
+  n_block: 16
   kernel_size: 3
 
 # Discriminator model settings

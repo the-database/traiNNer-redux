@@ -197,7 +197,7 @@ archs: list[ArchInfo] = [
     {
         "names": ["ArtCNN"],
         "scales": ALL_SCALES,
-        "extras": {"filters": str(96), "n_block": str(15), "kernel_size": str(3)},
+        "extras": {"filters": str(96), "n_block": str(16), "kernel_size": str(3)},
     },
     {
         "names": ["MoSR", "MoSR_T"],
