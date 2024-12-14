@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 import math
 from typing import Literal
 
@@ -7,6 +9,10 @@ from torch.nn import functional as F  # noqa: N812
 from torch.nn.init import trunc_normal_
 
 from traiNNer.utils.registry import ARCH_REGISTRY
+
+SampleMods = Literal[
+    "conv", "pixelshuffledirect", "pixelshuffle", "nearest+conv", "dysample"
+]
 
 
 class DySample(nn.Module):
@@ -25,10 +31,7 @@ class DySample(nn.Module):
     ) -> None:
         super().__init__()
 
-        try:
-            assert in_channels >= groups
-            assert in_channels % groups == 0
-        except:
+        if in_channels >= groups or in_channels % groups == 0:
             msg = "Incorrect in_channels and groups values."
             raise ValueError(msg)
 
@@ -97,76 +100,92 @@ class DySample(nn.Module):
         return output
 
 
-class Upsample(nn.Sequential):
-    """Upsample module.
-
-    Args:
-    ----
-        scale (int): Scale factor. Supported scales: 2^n and 3.
-        num_feat (int): Channel number of intermediate features.
-
-    """
-
+class UniUpsample(nn.Sequential):
     def __init__(
-        self, in_dim: int = 64, num_feat: int = 64, out_dim: int = 3, scale: int = 4
+        self,
+        upsample: SampleMods,
+        scale: int = 2,
+        in_dim: int = 64,
+        out_dim: int = 3,
+        mid_dim: int = 64,  # Only pixelshuffle
+        group: int = 4,  # Only DySample
     ) -> None:
-        m = [nn.Conv2d(in_dim, num_feat, 3, 1, 1), nn.LeakyReLU(inplace=True)]
-        if (scale & (scale - 1)) == 0:  # scale = 2^n
-            for _ in range(int(math.log2(scale))):
-                m.append(nn.Conv2d(num_feat, 4 * num_feat, 3, 1, 1))
-                m.append(nn.PixelShuffle(2))
-        elif scale == 3:
-            m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
-            m.append(nn.PixelShuffle(3))
-        else:
-            raise ValueError(
-                f"scale {scale} is not supported. Supported scales: 2^n and 3."
-            )
-        m.append(nn.Conv2d(num_feat, out_dim, 3, 1, 1))
-        super().__init__(*m)
-
-
-class Interpolate(nn.Module):
-    def __init__(self, scale_factor: int = 4, mode: str = "nearest") -> None:
-        super().__init__()
-        self.scale_factor = scale_factor
-        self.mode = mode
-
-    def forward(self, x):
-        return F.interpolate(x, scale_factor=self.scale_factor, mode=self.mode)
-
-
-class InterpolateUpsampler(nn.Sequential):
-    def __init__(self, dim: int = 64, out_ch: int = 3, scale: int = 4) -> None:
         m = []
-        if (scale & (scale - 1)) == 0:
-            for _ in range(int(math.log2(scale))):
+
+        if scale == 1 or upsample == "conv":
+            m.append(nn.Conv2d(in_dim, out_dim, 3, 1, 1))
+        elif upsample == "pixelshuffledirect":
+            m.extend(
+                [nn.Conv2d(in_dim, out_dim * scale**2, 3, 1, 1), nn.PixelShuffle(scale)]
+            )
+        elif upsample == "pixelshuffle":
+            m.extend([nn.Conv2d(in_dim, mid_dim, 3, 1, 1), nn.LeakyReLU(inplace=True)])
+            if (scale & (scale - 1)) == 0:  # scale = 2^n
+                for _ in range(int(math.log2(scale))):
+                    m.extend(
+                        [nn.Conv2d(mid_dim, 4 * mid_dim, 3, 1, 1), nn.PixelShuffle(2)]
+                    )
+            elif scale == 3:
+                m.extend([nn.Conv2d(mid_dim, 9 * mid_dim, 3, 1, 1), nn.PixelShuffle(3)])
+            else:
+                raise ValueError(
+                    f"scale {scale} is not supported. Supported scales: 2^n and 3."
+                )
+            m.append(nn.Conv2d(mid_dim, out_dim, 3, 1, 1))
+        elif upsample == "nearest+conv":
+            if (scale & (scale - 1)) == 0:
+                for _ in range(int(math.log2(scale))):
+                    m.extend(
+                        (
+                            nn.Conv2d(in_dim, in_dim, 3, 1, 1),
+                            nn.Upsample(scale_factor=2),
+                            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                        )
+                    )
                 m.extend(
                     (
-                        nn.Conv2d(dim, dim, 3, 1, 1),
-                        Interpolate(2),
+                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
                         nn.LeakyReLU(negative_slope=0.2, inplace=True),
                     )
                 )
-            m.extend(
-                (
-                    nn.Conv2d(dim, dim, 3, 1, 1),
-                    nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            elif scale == 3:
+                m.extend(
+                    (
+                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
+                        nn.Upsample(scale_factor=scale),
+                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
+                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                    )
                 )
-            )
-        elif scale == 3:
-            m.extend(
-                (
-                    nn.Conv2d(dim, dim, 3, 1, 1),
-                    Interpolate(scale),
-                    nn.LeakyReLU(negative_slope=0.2, inplace=True),
-                    nn.Conv2d(dim, dim, 3, 1, 1),
-                    nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            else:
+                raise ValueError(
+                    f"scale {scale} is not supported. Supported scales: 2^n and 3."
                 )
+            m.append(nn.Conv2d(in_dim, out_dim, 3, 1, 1))
+        elif upsample == "dysample":
+            m.append(DySample(in_dim, out_dim, scale, group))
+        else:
+            raise ValueError(
+                f"An invalid Upsample was selected. Please choose one of {SampleMods}"
             )
-
-        m.append(nn.Conv2d(dim, out_ch, 3, 1, 1))
         super().__init__(*m)
+
+        self.register_buffer(
+            "MetaUpsample",
+            torch.tensor(
+                [
+                    1,  # Block version, if you change something, please number from the end so that you can distinguish between authorized changes and third parties
+                    list(SampleMods.__args__).index(upsample),  # UpSample method index
+                    scale,
+                    in_dim,
+                    out_dim,
+                    mid_dim,
+                    group,
+                ],
+                dtype=torch.uint8,
+            ),
+        )
 
 
 class LayerNorm(nn.Module):
@@ -230,7 +249,6 @@ class GatedCNNBlock(nn.Module):
         dim: int = 64,
         expansion_ratio: float = 8 / 3,
         conv_ratio: float = 1.0,
-        kernel_size: int = 7,
     ) -> None:
         super().__init__()
         self.norm = LayerNorm(dim)
@@ -263,7 +281,7 @@ class GatedCNNBlock(nn.Module):
 
 
 class MSG(nn.Module):
-    def __init__(self, dim) -> None:
+    def __init__(self, dim, expansion_msg=1.5) -> None:
         super().__init__()
         self.down = nn.Sequential(
             nn.Conv2d(dim, dim // 4, 3, 1, 1),
@@ -271,7 +289,7 @@ class MSG(nn.Module):
             nn.LeakyReLU(0.1, True),
         )
         self.gated = nn.Sequential(
-            *[GatedCNNBlock(dim, expansion_ratio=1.5) for _ in range(3)]
+            *[GatedCNNBlock(dim, expansion_ratio=expansion_msg) for _ in range(3)]
         )
         self.up = nn.Sequential(
             nn.Conv2d(dim, dim * 4, 3, 1, 1),
@@ -291,11 +309,13 @@ class Blocks(nn.Module):
         dim: int = 64,
         blocks: int = 4,
         expansion_factor: float = 1.5,
-        expansion_esa: float = 0.25,
+        expansion_msg: float = 1.5,
     ) -> None:
         super().__init__()
-        self.blocks = nn.Sequential(*[GatedCNNBlock(dim, 8 / 3) for _ in range(blocks)])
-        self.msg = MSG(dim)
+        self.blocks = nn.Sequential(
+            *[GatedCNNBlock(dim, expansion_factor) for _ in range(blocks)]
+        )
+        self.msg = MSG(dim, expansion_msg)
 
     def forward(self, x):
         return self.msg(self.blocks(x))
@@ -313,36 +333,23 @@ class MoESR2(nn.Module):
         dim: int = 64,
         n_blocks: int = 9,
         n_block: int = 4,
-        expansion_factor: int = 1.5,
-        expansion_esa: int = 0.25,
-        upsampler: Literal["n+c", "psd", "ps", "dys", "conv"] = "psd",
+        expansion_factor: int = 8 / 3,
+        expansion_msg: int = 1.5,
+        upsampler: SampleMods = "pixelshuffledirect",
         upsample_dim: int = 64,
     ) -> None:
         super().__init__()
+        if upsampler == "conv":
+            scale = 1
         self.scale = scale
         self.in_to_dim = nn.Conv2d(in_ch, dim, 3, 1, 1)
         self.blocks = nn.Sequential(
             *[
-                Blocks(dim, n_block, expansion_factor, expansion_esa)
-                for i in range(n_blocks)
+                Blocks(dim, n_block, expansion_factor, expansion_msg)
+                for _ in range(n_blocks)
             ]
         )
-        if upsampler == "n+c":
-            self.upscale = InterpolateUpsampler(dim, out_ch, scale)
-        elif upsampler == "psd":
-            self.upscale = nn.Sequential(
-                nn.Conv2d(64, 3 * scale * scale, 3, 1, 1), nn.PixelShuffle(scale)
-            )
-        elif upsampler == "ps":
-            self.upscale = Upsample(dim, upsample_dim, out_ch, scale)
-        elif upsampler == "dys":
-            self.upscale = DySample(dim, out_ch, scale)
-        elif upsampler == "conv":
-            self.upscale = nn.Conv2d(dim, out_ch, 3, 1, 1)
-        self.register_buffer(
-            "metadata", torch.tensor([in_ch, out_ch, scale], dtype=torch.uint8)
-        )
-        self.gamma = nn.Parameter(torch.ones(1, 64, 1, 1), requires_grad=True)
+        self.upscale = UniUpsample(upsampler, scale, dim, out_ch, upsample_dim)
 
     def check_img_size(self, x, resolution):
         h, w = resolution
