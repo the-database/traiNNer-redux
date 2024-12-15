@@ -243,10 +243,19 @@ if __name__ == "__main__":
     print_markdown = True
     n, c, h, w = input_shape
     results_by_scale: dict[
-        int, list[tuple[str, str, float, float, float, int, int, dict[str, Any]]]
+        int,
+        list[
+            tuple[str, str, float, float, float, int, int, dict[str, Any], float, float]
+        ],
     ] = {}
     results_by_arch: dict[
-        str, dict[int, tuple[str, str, float, float, float, int, int, dict[str, Any]]]
+        str,
+        dict[
+            int,
+            tuple[
+                str, str, float, float, float, int, int, dict[str, Any], float, float
+            ],
+        ],
     ] = {}
 
     for use_amp in [True]:
@@ -254,6 +263,7 @@ if __name__ == "__main__":
             results_by_scale[scale] = []
 
             for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
+                assert isinstance(arch, nn.Module)
                 arch_key = f"{name} {format_extra_params(extra_arch_params)}"
                 dtype_str, dtype = get_dtype(name, use_amp)
                 try:
