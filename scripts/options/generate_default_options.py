@@ -224,6 +224,14 @@ archs: list[ArchInfo] = [
     # {"names": ["HMA"], "scales": ALL_SCALES},
     {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
     {"names": ["CFSR"], "scales": ALL_SCALES},
+    {
+        "names": ["MoESR2"],
+        "folder_name_override": "MoESR",
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
+        },
+    },
 ]
 
 for arch in archs:
