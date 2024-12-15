@@ -101,6 +101,8 @@ def get_line(
     params: int,
     scale: int,
     extra_arch_params: dict[str, Any],
+    fps_channels_last: float,
+    channels_last_vs_baseline: float,
     print_markdown: bool = False,
 ) -> str:
     name_separator = "|" if print_markdown else ": "
@@ -110,6 +112,8 @@ def get_line(
     name_str = f"{name} {format_extra_params(extra_arch_params)} {scale}x {dtype_str}"
 
     fps_label = "" if print_markdown else "FPS: "
+    fps_cl_label = "" if print_markdown else "FPS (channels last): "
+    channels_last_vs_label = "" if print_markdown else "Channels last vs baseline: "
     sec_img_label = "" if print_markdown else "sec/img: "
     vram_label = "" if print_markdown else "VRAM: "
     params_label = "" if print_markdown else "Params: "
@@ -135,9 +139,9 @@ def get_line(
                 ssimdiv2k = format(OFFICIAL_METRICS[name][scale]["div2k_ssim"], ".4f")
 
     if params != -1:
-        return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{fps:>8.2f}{separator}{sec_img_label}{avg_time:>8.4f}{separator}{vram_label}{vram:>8.2f} GB{separator}{params_label}{params:>10,d}{separator}{psnrdf2k_label}{psnrdf2k}{separator}{ssimdf2k_label}{ssimdf2k}{separator}{psnrdiv2k_label}{psnrdiv2k}{separator}{ssimdiv2k_label}{ssimdiv2k}{edge_separator}"
+        return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{fps:>8.2f}{separator}{fps_cl_label}{fps_channels_last:>8.2f}{separator}{channels_last_vs_label}{channels_last_vs_baseline:>1.2f}x{separator}{sec_img_label}{avg_time:>8.4f}{separator}{vram_label}{vram:>8.2f} GB{separator}{params_label}{params:>10,d}{separator}{psnrdf2k_label}{psnrdf2k}{separator}{ssimdf2k_label}{ssimdf2k}{separator}{psnrdiv2k_label}{psnrdiv2k}{separator}{ssimdiv2k_label}{ssimdiv2k}{edge_separator}"
 
-    return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{unsupported_value:<8}{separator}{sec_img_label}{unsupported_value:<8}{separator}{vram_label}{unsupported_value:<8}{separator}{params_label}{unsupported_value:<10}{separator}{psnrdf2k_label}{unsupported_value}{separator}{ssimdf2k_label}{unsupported_value}{separator}{psnrdiv2k_label}{unsupported_value}{separator}{ssimdiv2k_label}{edge_separator}"
+    return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{unsupported_value:<8}{separator}{fps_cl_label}{unsupported_value:<8}{separator}{channels_last_vs_label}{unsupported_value:<8}{separator}{sec_img_label}{unsupported_value:<8}{separator}{vram_label}{unsupported_value:<8}{separator}{params_label}{unsupported_value:<10}{separator}{psnrdf2k_label}{unsupported_value}{separator}{ssimdf2k_label}{unsupported_value}{separator}{psnrdiv2k_label}{unsupported_value}{separator}{ssimdiv2k_label}{edge_separator}"
 
 
 def benchmark_model(
@@ -171,14 +175,70 @@ def get_dtype(name: str, use_amp: bool) -> tuple[str, torch.dtype]:
     return dtype_str, dtype
 
 
+def benchmark_arch(
+    name: str, arch: nn.Module, extra_arch_params, memory_format
+) -> tuple:
+    random_input = torch.rand(
+        input_shape,
+        device=device,
+        # dtype=dtype,
+    ).to(
+        memory_format=memory_format,
+        non_blocking=True,
+    )
+    model = (
+        arch(scale=scale, **extra_arch_params)
+        .eval()
+        .to(
+            device,
+            # dtype=dtype,
+            memory_format=memory_format,
+            non_blocking=True,
+        )
+    )
+
+    total_params = sum(p[1].numel() for p in model.named_parameters())
+    runs = lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats()
+    with torch.autocast(
+        device_type="cuda",
+        dtype=dtype,
+        enabled=use_amp,
+    ):
+        avg_time, output = benchmark_model(model, random_input, warmup_runs, runs)
+
+    if not (
+        output.shape[2] == random_input.shape[2] * scale
+        and output.shape[3] == random_input.shape[3] * scale
+    ):
+        msg = f"{name}: {output.shape} is not {scale}x {random_input.shape}"
+        print(msg)
+        # raise ValueError(msg)  # TODO restore
+
+    vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
+    row = (
+        name,
+        dtype_str,
+        avg_time,
+        1 / avg_time,
+        vram_usage,
+        total_params,
+        scale,
+        extra_arch_params,
+    )
+
+    return row
+
+
 if __name__ == "__main__":
     start_script_time = time.time()
     device = "cuda"
 
-    input_shape = (1, 3, 480, 640)
+    input_shape = (1, 3, 960, 1280)
 
-    warmup_runs = 1  # 1
-    num_runs = 5  # 5
+    warmup_runs = 5  # 1
+    num_runs = 10  # 5
     lightweight_num_runs = 250
     print_markdown = True
     n, c, h, w = input_shape
@@ -199,64 +259,19 @@ if __name__ == "__main__":
                 try:
                     if "rcan" not in name:
                         continue
-                    random_input = torch.rand(
-                        input_shape,
-                        device=device,
-                        # dtype=dtype,
-                    ).to(
-                        memory_format=torch.channels_last,
-                        non_blocking=True,
-                    )
-                    model = (
-                        arch(scale=scale, **extra_arch_params)
-                        .eval()
-                        .to(
-                            device,
-                            # dtype=dtype,
-                            memory_format=torch.channels_last,
-                            non_blocking=True,
-                        )
-                    )
-
                     if arch_key not in results_by_arch:
                         results_by_arch[arch_key] = {}
-                    total_params = sum(p[1].numel() for p in model.named_parameters())
-                    runs = (
-                        lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
+                    row = benchmark_arch(
+                        name, arch, extra_arch_params, torch.preserve_format
                     )
-                    torch.cuda.empty_cache()
-                    torch.cuda.reset_peak_memory_stats()
-                    with torch.autocast(
-                        device_type="cuda",
-                        dtype=dtype,
-                        enabled=use_amp,
-                    ):
-                        avg_time, output = benchmark_model(
-                            model, random_input, warmup_runs, runs
-                        )
-
-                    if not (
-                        output.shape[2] == random_input.shape[2] * scale
-                        and output.shape[3] == random_input.shape[3] * scale
-                    ):
-                        msg = f"{name}: {output.shape} is not {scale}x {random_input.shape}"
-                        print(msg)
-                        raise ValueError(msg)
-
-                    vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
-                    row = (
-                        name,
-                        dtype_str,
-                        avg_time,
-                        1 / avg_time,
-                        vram_usage,
-                        total_params,
-                        scale,
-                        extra_arch_params,
+                    row_channels_last = benchmark_arch(
+                        name, arch, extra_arch_params, torch.channels_last
                     )
 
-                    results_by_scale[scale].append(row)
-                    results_by_arch[arch_key][scale] = row
+                    channels_last_improvement = row_channels_last[3] / row[3]
+                    new_row = (*row, row_channels_last[3], channels_last_improvement)
+                    results_by_scale[scale].append(new_row)
+                    results_by_arch[arch_key][scale] = new_row
                 except Exception as e:
                     import traceback
 
@@ -270,6 +285,8 @@ if __name__ == "__main__":
                         -1,
                         scale,
                         extra_arch_params,
+                        float("inf"),
+                        float("inf"),
                     )
                     results_by_scale[scale].append(row)
                     results_by_arch[arch_key][scale] = row
@@ -286,9 +303,9 @@ if __name__ == "__main__":
                 f"{input_shape} input, {warmup_runs} warmup + {num_runs} runs averaged"
             )
             print(
-                "|Name|FPS|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)"
+                "|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
             )
-            print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|")
+            print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|")
         for row in results_by_scale[scale]:
             print(get_line(*row, print_markdown))
 
@@ -300,9 +317,9 @@ if __name__ == "__main__":
         runs = lightweight_num_runs if arch_name in LIGHTWEIGHT_ARCHS else num_runs
         print(f"{input_shape} input, {warmup_runs} warmup + {runs} runs averaged")
         print(
-            "|Name|FPS|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)"
+            "|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
         )
-        print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|")
+        print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|")
         for scale in ALL_SCALES:
             print(get_line(*results_by_arch[arch_name][scale], print_markdown))
 

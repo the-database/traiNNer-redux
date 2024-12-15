@@ -1,8 +1,8 @@
+# ruff: noqa
+# type: ignore
 import math
 
 from torch import nn
-
-from traiNNer.utils.registry import ARCH_REGISTRY
 
 AFFINE_LIST = ["basicblock", "bottleneck", "mbconv", "basicblock_dw"]
 
@@ -358,7 +358,7 @@ class EDSRBlock(ResidualBase):
         prob: float = 1.0,
         multFlag: bool = True,
         **_,
-    ):
+    ) -> None:
         super().__init__(stochastic_depth, prob, multFlag)
         if res_scale_learnable:
             self.res_scale = Parameter(torch.ones(1))
@@ -390,7 +390,7 @@ class RCANBlock(ResidualBase):
         multFlag: bool = True,
         normal_init_std: float | None = None,
         **_,
-    ):
+    ) -> None:
         super().__init__(stochastic_depth, prob, multFlag)
         if res_scale_learnable:
             self.res_scale = Parameter(torch.ones(1))
@@ -429,7 +429,7 @@ class RCANBlockDW(ResidualBase):
         prob: float = 1.0,
         multFlag: bool = True,
         **_,
-    ):
+    ) -> None:
         super().__init__(stochastic_depth, prob, multFlag)
         if res_scale_learnable:
             self.res_scale = Parameter(torch.ones(1))
@@ -466,7 +466,7 @@ class RCANBlockAllDW(ResidualBase):
         prob: float = 1.0,
         multFlag: bool = True,
         **_,
-    ):
+    ) -> None:
         super().__init__(stochastic_depth, prob, multFlag)
         if res_scale_learnable:
             self.res_scale = Parameter(torch.ones(1))
@@ -487,7 +487,7 @@ class RCANBlockAllDW(ResidualBase):
 
 
 class SEBlock(nn.Module):
-    def __init__(self, planes: int, reduction: int = 8, act_mode: str = "relu"):
+    def __init__(self, planes: int, reduction: int = 8, act_mode: str = "relu") -> None:
         super().__init__()
         self.squeeze = nn.AdaptiveAvgPool2d(1)
         self.excitation = nn.Sequential(
@@ -510,8 +510,8 @@ class MeanShift(nn.Conv2d):
         rgb_mean=(0.4488, 0.4371, 0.4040),
         rgb_std=(1.0, 1.0, 1.0),
         sign=-1,
-    ):
-        super(MeanShift, self).__init__(3, 3, kernel_size=1)
+    ) -> None:
+        super().__init__(3, 3, kernel_size=1)
         std = torch.Tensor(rgb_std)
         self.weight.data = torch.eye(3).view(3, 3, 1, 1) / std.view(3, 1, 1, 1)
         self.bias.data = sign * rgb_range * torch.Tensor(rgb_mean) / std
@@ -533,7 +533,7 @@ class Affine2d(nn.Module):
 class Upsampler(nn.Sequential):
     def __init__(
         self, scale: int, planes: int, act_mode: str = "relu", use_affine: bool = True
-    ):
+    ) -> None:
         m = []
         if (scale & (scale - 1)) == 0:  # is power of 2
             if use_affine:
@@ -562,7 +562,7 @@ class Upsampler(nn.Sequential):
         else:
             raise NotImplementedError
 
-        super(Upsampler, self).__init__(*m)
+        super().__init__(*m)
 
 
 BLOCK_DICT = {
@@ -587,7 +587,7 @@ class ResidualGroup(nn.Module):
         out_conv: bool = False,
         df_conv: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
         self.short_skip = short_skip
 
@@ -606,7 +606,7 @@ class ResidualGroup(nn.Module):
         return res
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 class RCANIT(nn.Module):
     def __init__(
         self,
@@ -614,7 +614,7 @@ class RCANIT(nn.Module):
         n_resblocks: int = 20,
         planes: int = 64,
         scale: int = 4,
-        prob: list[float] = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+        prob: list[float] | None = None,
         block_type: str = "rcan_block",
         channels: int = 3,
         rgb_range: int = 255,
@@ -622,7 +622,9 @@ class RCANIT(nn.Module):
         out_conv: bool = True,
         short_skip: bool = True,
         **kwargs,
-    ):
+    ) -> None:
+        if prob is None:
+            prob = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
         super().__init__()
         self.rgb_range = rgb_range
         self.sub_mean = MeanShift(rgb_range)

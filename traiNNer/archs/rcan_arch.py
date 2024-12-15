@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 import math
 from collections.abc import Callable
 
@@ -104,7 +106,6 @@ class Upsampler(nn.Sequential):
                 m.append(act())
         else:
             raise NotImplementedError
-
         super().__init__(*m)
 
 
@@ -245,7 +246,6 @@ class RCAN(nn.Module):
         self.head = nn.Sequential(*modules_head)
         self.body = nn.Sequential(*modules_body)
         self.tail = nn.Sequential(*modules_tail)
-        # print(self)
 
     def forward(self, x):
         x *= self.rgb_range
@@ -257,7 +257,6 @@ class RCAN(nn.Module):
 
         x = self.tail(res)
         x = self.add_mean(x)
-
         return x / self.rgb_range
 
     def load_state_dict(self, state_dict, strict=False) -> None:
@@ -285,3 +284,53 @@ class RCAN(nn.Module):
             missing = set(own_state.keys()) - set(state_dict.keys())
             if len(missing) > 0:
                 raise KeyError(f'missing keys in state_dict: "{missing}"')
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_ng5_nb10(**kwargs):
+#     return RCAN(n_resblocks=10, n_resgroups=5, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_ng9_nb18(**kwargs):
+#     return RCAN(n_resblocks=18, n_resgroups=9, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_ng8_nb16(**kwargs):
+#     return RCAN(n_resblocks=16, n_resgroups=8, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_ng7_nb14(**kwargs):
+#     return RCAN(n_resblocks=14, n_resgroups=7, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_ng6_nb12(**kwargs):
+#     return RCAN(n_resblocks=12, n_resgroups=6, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_ng20_nb40(**kwargs):
+#     return RCAN(n_resblocks=40, n_resgroups=20, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_r8(**kwargs):
+#     return RCAN(reduction=8, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_r4(**kwargs):
+#     return RCAN(reduction=4, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_r2(**kwargs):
+#     return RCAN(reduction=2, **kwargs)
+
+
+# @ARCH_REGISTRY.register()
+# def RCAN_r1(**kwargs):
+#     return RCAN(reduction=1, **kwargs)

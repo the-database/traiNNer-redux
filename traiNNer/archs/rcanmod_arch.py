@@ -1,11 +1,12 @@
+# ruff: noqa
+# type: ignore
 import math
 from collections.abc import Callable
 
 import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
-
-from traiNNer.utils.registry import ARCH_REGISTRY
+from torch.nn.init import trunc_normal_
 
 
 def default_conv(
@@ -49,7 +50,7 @@ class SpatialSELayer(nn.Module):
         *Roy et al., Concurrent Spatial and Channel Squeeze & Excitation in Fully Convolutional Networks, MICCAI 2018*
     """
 
-    def __init__(self, num_channels):
+    def __init__(self, num_channels) -> None:
         """
 
         :param num_channels: No of input channels
@@ -77,11 +78,21 @@ class SpatialSELayer(nn.Module):
         squeeze_tensor = self.sigmoid(out)
 
         # spatial excitation
-        # print(input_tensor.size(), squeeze_tensor.size())
+        # print("before", input_tensor.size(), squeeze_tensor.size())
         squeeze_tensor = squeeze_tensor.view(batch_size, 1, a, b)
+        # print("after", input_tensor.size(), squeeze_tensor.size())
         output_tensor = torch.mul(input_tensor, squeeze_tensor)
         # output_tensor = torch.mul(input_tensor, squeeze_tensor)
         return output_tensor
+
+
+class SSELayer(nn.Module):
+    def __init__(self, dim: int = 48) -> None:
+        super().__init__()
+        self.squeezing = nn.Sequential(nn.Conv2d(dim, 1, 1, 1, 0), nn.Hardsigmoid(True))
+
+    def forward(self, x):
+        return x * self.squeezing(x)
 
 
 ## Residual Channel Attention Block (RCAB)
@@ -105,7 +116,7 @@ class RCAB(nn.Module):
                 modules_body.append(nn.BatchNorm2d(n_feat))
             if i == 0:
                 modules_body.append(act)
-        modules_body.append(SpatialSELayer(n_feat))
+        modules_body.append(MSG(n_feat))
         self.body = nn.Sequential(*modules_body)
         self.res_scale = res_scale
 
@@ -114,6 +125,93 @@ class RCAB(nn.Module):
         # res = self.body(x).mul(self.res_scale)
         res += x
         return res
+
+
+class MSG(nn.Module):
+    def __init__(self, dim) -> None:
+        super().__init__()
+        self.down = nn.Sequential(
+            nn.Conv2d(dim, dim // 4, 3, 1, 1),
+            nn.PixelUnshuffle(2),
+            nn.LeakyReLU(0.1, True),
+        )
+        self.gated = nn.Sequential(
+            *[GatedCNNBlock(dim, expansion_ratio=1.5) for _ in range(3)]
+        )
+        self.up = nn.Sequential(
+            nn.Conv2d(dim, dim * 4, 3, 1, 1),
+            nn.PixelShuffle(2),
+            nn.LeakyReLU(0.1, True),
+        )
+
+    def forward(self, x):
+        out = self.down(x)
+        out = self.gated(out)
+        return self.up(out) + x
+
+
+class GatedCNNBlock(nn.Module):
+    r"""
+    modernized mambaout main unit
+    https://github.com/yuweihao/MambaOut/blob/main/models/mambaout.py#L119
+    """
+
+    def __init__(
+        self,
+        dim: int = 64,
+        expansion_ratio: float = 1.5,
+        conv_ratio: float = 1.0,
+        kernel_size: int = 7,
+    ) -> None:
+        super().__init__()
+        self.norm = LayerNorm(dim)
+        hidden = int(expansion_ratio * dim)
+        self.fc1 = nn.Conv2d(dim, hidden * 2, 3, 1, 1)
+
+        self.act = nn.Mish()
+        conv_channels = int(conv_ratio * dim)
+        self.split_indices = [hidden, hidden - conv_channels, conv_channels]
+
+        self.conv = nn.Conv2d(
+            conv_channels,
+            conv_channels,
+            kernel_size,
+            1,
+            kernel_size // 2,
+            groups=conv_channels,
+        )
+        self.fc2 = nn.Conv2d(hidden, dim, 3, 1, 1)
+        self.gamma = nn.Parameter(torch.ones([1, dim, 1, 1]), requires_grad=True)
+        self.apply(self._init_weights)
+
+    @staticmethod
+    def _init_weights(m) -> None:
+        if isinstance(m, nn.Conv2d | nn.Linear):
+            trunc_normal_(m.weight, std=0.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+
+    def forward(self, x):
+        shortcut = x
+        x = self.norm(x)
+        g, i, c = torch.split(self.fc1(x), self.split_indices, dim=1)
+        c = self.conv(c)
+        x = self.act(self.fc2(self.act(g) * torch.cat((i, c), dim=1)))
+        return (x * self.gamma) + shortcut
+
+
+class LayerNorm(nn.Module):
+    def __init__(self, dim: int = 64, eps: float = 1e-6) -> None:
+        super().__init__()
+        self.weight = nn.Parameter(torch.ones(dim))
+        self.bias = nn.Parameter(torch.zeros(dim))
+        self.eps = eps
+
+    def forward(self, x):
+        u = x.mean(1, keepdim=True)
+        s = (x - u).pow(2).mean(1, keepdim=True)
+        x = (x - u) / torch.sqrt(s + self.eps)
+        return self.weight[:, None, None] * x + self.bias[:, None, None]
 
 
 ## Residual Group (RG)
@@ -145,7 +243,7 @@ class ResidualGroup(nn.Module):
         return res
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 ## Residual Channel Attention Network (RCAN)
 class RCANMod(nn.Module):
     def __init__(
