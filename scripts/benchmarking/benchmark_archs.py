@@ -4,7 +4,7 @@ import time
 from typing import Any
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor, memory_format, nn
 
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), r"..\.."))
@@ -176,7 +176,7 @@ def get_dtype(name: str, use_amp: bool) -> tuple[str, torch.dtype]:
 
 
 def benchmark_arch(
-    name: str, arch: nn.Module, extra_arch_params, memory_format
+    name: str, arch: nn.Module, extra_arch_params: dict, memory_format: memory_format
 ) -> tuple:
     random_input = torch.rand(
         input_shape,
