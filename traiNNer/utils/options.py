@@ -52,7 +52,7 @@ def yaml_load(file_path: str) -> ReduxOptions:
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"Options file does not exist: {file_path}")
 
-    with open(file_path) as f:
+    with open(file_path, encoding="utf-8") as f:
         contents = f.read()
         return msgspec.yaml.decode(contents, type=ReduxOptions, strict=True)
 

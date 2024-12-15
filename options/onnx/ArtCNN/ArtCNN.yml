@@ -12,7 +12,7 @@ num_gpu: auto
 network_g:
   type: ArtCNN
   filters: 96
-  n_block: 15
+  n_block: 16
   kernel_size: 3
 
 ############################

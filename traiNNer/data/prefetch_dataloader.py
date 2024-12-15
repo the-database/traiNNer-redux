@@ -103,6 +103,11 @@ class CUDAPrefetcher:
         self.stream = torch.cuda.Stream()
         self.device = torch.device("cuda" if opt.num_gpu != 0 else "cpu")
         self.batch = None
+        self.memory_format = (
+            torch.channels_last
+            if opt.use_amp and opt.use_channels_last
+            else torch.preserve_format
+        )
         self.preload()
 
     def preload(self) -> None:
@@ -117,7 +122,7 @@ class CUDAPrefetcher:
                 if torch.is_tensor(v):
                     self.batch[k] = self.batch[k].to(
                         device=self.device,
-                        memory_format=torch.channels_last,
+                        memory_format=self.memory_format,
                         non_blocking=True,
                     )
 

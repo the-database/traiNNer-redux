@@ -2,7 +2,7 @@ from typing import Literal
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from timm.layers import DropPath
+from timm.layers.drop import DropPath
 from torch import Tensor, nn
 
 from traiNNer.utils.registry import ARCH_REGISTRY

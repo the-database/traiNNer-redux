@@ -210,6 +210,7 @@ class ReduxOptions(StrictStruct):
 
     use_amp: bool = False
     amp_bf16: bool = False
+    use_channels_last: bool = True
     fast_matmul: bool = False
     use_compile: bool = False
     detect_anomaly: bool = False
@@ -217,6 +218,9 @@ class ReduxOptions(StrictStruct):
     high_order_degradation: bool = False
     high_order_degradations_debug: bool = False
     high_order_degradations_debug_limit: int = 100
+    dataroot_lq_prob: float = 0
+    force_high_order_degradation_filename_masks: list[str] = []
+    force_dataroot_lq_filename_masks: list[str] = []
 
     lq_usm: bool = False
     lq_usm_radius_range: tuple[int, int] = (1, 25)

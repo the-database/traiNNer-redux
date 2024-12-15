@@ -4,6 +4,7 @@ from os import path as osp
 from typing import Any, NotRequired, TypedDict
 
 from traiNNer.archs.arch_info import (
+    ARCHS_WITHOUT_CHANNELS_LAST,
     ARCHS_WITHOUT_FP16,
     OFFICIAL_SETTINGS_FINETUNE,
     OFFICIAL_SETTINGS_FROMSCRATCH,
@@ -60,6 +61,11 @@ def final_template(
 
     if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:
         template = template.replace("amp_bf16: false", "amp_bf16: true")
+
+    if arch["names"][0].lower() in ARCHS_WITHOUT_CHANNELS_LAST:
+        template = template.replace(
+            "use_channels_last: true", "use_channels_last: false"
+        )
 
     arch_key = variant.lower()
 
@@ -134,7 +140,7 @@ archs: list[ArchInfo] = [
         "names": ["PLKSR", "PLKSR_Tiny"],
         "scales": ALL_SCALES,
         "overrides": {
-            "lq_size": "48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)"
+            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
         },
     },
     {
@@ -145,7 +151,7 @@ archs: list[ArchInfo] = [
             "layer_norm": "true  # better quality, not compatible with older models",
         },
         "overrides": {
-            "lq_size": "48  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. (Official default: 96)"
+            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
         },
     },
     {
@@ -191,7 +197,7 @@ archs: list[ArchInfo] = [
     {
         "names": ["ArtCNN"],
         "scales": ALL_SCALES,
-        "extras": {"filters": str(96), "n_block": str(15), "kernel_size": str(3)},
+        "extras": {"filters": str(96), "n_block": str(16), "kernel_size": str(3)},
     },
     {
         "names": ["MoSR", "MoSR_T"],
@@ -217,6 +223,15 @@ archs: list[ArchInfo] = [
     },
     # {"names": ["HMA"], "scales": ALL_SCALES},
     {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
+    {"names": ["CFSR"], "scales": ALL_SCALES},
+    {
+        "names": ["MoESR2"],
+        "folder_name_override": "MoESR",
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
+        },
+    },
 ]
 
 for arch in archs:

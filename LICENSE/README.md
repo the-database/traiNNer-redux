@@ -25,6 +25,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
 |[LMLT](https://github.com/jwgdmkj/LMLT) | [MIT License](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)|
 |[MAN](https://github.com/icandle/MAN)| [Apache License 2.0](https://github.com/icandle/MAN/blob/main/LICENSE)|
+|[MoESR](https://github.com/umzi2/MoESR)| [MIT License](https://github.com/umzi2/MoESR/blob/master/LICENSE)|
 |[MoSR](https://github.com/umzi2/MoSR) | [MIT License](https://github.com/umzi2/MoSR/blob/master/LICENSE)|
 |[mssim.pytorch](https://github.com/lartpang/mssim.pytorch) | [MIT License](https://github.com/lartpang/mssim.pytorch/blob/main/LICENSE)|
 |[Corpsecreate/neosr](https://github.com/Corpsecreate/neosr) | [Apache License 2.0](https://github.com/Corpsecreate/neosr/blob/master/license.txt)|
@@ -32,6 +33,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[OmniSR](https://github.com/Francis0625/Omni-SR) | [Apache License 2.0](https://github.com/Francis0625/Omni-SR#license)|
 |[projected-distribution-loss](https://github.com/saurabh-kataria/projected-distribution-loss)| [MIT License](https://github.com/saurabh-kataria/projected-distribution-loss/blob/main/LICENSE)|
 |[PLKSR](https://github.com/dslisleedh/PLKSR) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
+|[RCAN-it](https://github.com/zudi-lin/rcan-it)| [MIT License](https://github.com/zudi-lin/rcan-it/blob/main/LICENSE)|
 |[Real-CUGAN](https://github.com/bilibili/ailab) | [MIT License](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)|
 |[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | [BSD 3-Clause "New" or "Revised" License](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)|
 |[RealPLKSR](https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
