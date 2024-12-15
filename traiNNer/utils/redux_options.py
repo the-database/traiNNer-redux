@@ -210,7 +210,7 @@ class ReduxOptions(StrictStruct):
 
     use_amp: bool = False
     amp_bf16: bool = False
-    use_channels_last: bool = False
+    use_channels_last: bool = True
     fast_matmul: bool = False
     use_compile: bool = False
     detect_anomaly: bool = False
