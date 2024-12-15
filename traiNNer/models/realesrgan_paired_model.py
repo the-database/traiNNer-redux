@@ -61,13 +61,13 @@ class RealESRGANPairedModel(RealESRGANModel):
             }
 
             assert "lq" in new_data
-            self.lq = new_data["lq"].to(
+            self.lq = new_data["lq"].to(  # pyright: ignore[reportAttributeAccessIssue]
                 self.device,
                 memory_format=self.memory_format,
                 non_blocking=True,
             )
             if "gt" in new_data:
-                self.gt = new_data["gt"].to(
+                self.gt = new_data["gt"].to(  # pyright: ignore[reportAttributeAccessIssue]
                     self.device,
                     memory_format=self.memory_format,
                     non_blocking=True,
@@ -75,7 +75,7 @@ class RealESRGANPairedModel(RealESRGANModel):
 
             # moa
             if self.is_train and self.batch_augment and self.gt is not None:
-                self.gt, self.lq = self.batch_augment(self.gt, self.lq)
+                self.gt, self.lq = self.batch_augment(self.gt, self.lq)  # pyright: ignore[reportArgumentType]
 
         else:
             # OTF feed data
