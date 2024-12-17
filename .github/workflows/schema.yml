@@ -54,4 +54,5 @@ jobs:
           body: "This PR updates the generated JSON schema."
           head: update-json-schema
           base: master
+          committer: 'GitHub Actions <actions@github.com>'
           author: 'GitHub Actions <actions@github.com>'
