@@ -38,12 +38,13 @@ jobs:
           git checkout -b update-json-schema
           python scripts/options/generate_schema.py
           git add schemas/redux-config.schema.json
+          git status
           git commit -m "Update generated JSON schema"
 
       # Push the new branch to GitHub
       - name: Push new branch
         run: |
-          git push
+          git push origin update-json-schema
 
       # Create a pull request targeting master
       - name: Create pull request
