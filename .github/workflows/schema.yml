@@ -34,11 +34,23 @@ jobs:
         run: |
           python scripts/options/generate_schema.py
 
-      # Commit and push the generated schema to the repository
-      - name: Commit and push generated schema
-        uses: EndBug/add-and-commit@v9
+      # Commit changes to a new branch
+      - name: Commit changes to new branch
+        run: |
+          git checkout -b update-json-schema
+          git add schemas/redux-config.schema.json
+          git commit -m "Update generated JSON schema"
+
+      # Push the new branch to GitHub
+      - name: Push new branch
+        run: |
+          git push origin update-json-schema
+
+      # Create a pull request targeting master
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
         with:
-          author_name: 'the-database'
-          author_email: '25811902+the-database@users.noreply.github.com'
-          message: 'Update generated JSON schema'
-          token: ${{ secrets.GH_USER_TOKEN }}  # Use your personal access token
+          title: "Update generated JSON schema"
+          body: "This PR updates the generated JSON schema."
+          head: update-json-schema
+          base: master
