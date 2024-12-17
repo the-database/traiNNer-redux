@@ -1,6 +1,6 @@
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from msgspec import Struct, field
+from msgspec import Meta, Struct, field
 
 
 class StrictStruct(Struct, forbid_unknown_fields=True):
@@ -9,8 +9,18 @@ class StrictStruct(Struct, forbid_unknown_fields=True):
 
 class SchedulerOptions(StrictStruct):
     type: str
-    milestones: list[int]
-    gamma: float
+    milestones: Annotated[
+        list[int],
+        Meta(
+            description="List of milestones, iterations where the learning rate is reduced."
+        ),
+    ]
+    gamma: Annotated[
+        float,
+        Meta(
+            description="At each milestone, the learning rate is multiplied by this number, so a gamma of 0.5 cuts the learning rate in half at each milestone."
+        ),
+    ]
 
 
 class WandbOptions(StrictStruct):
@@ -19,24 +29,56 @@ class WandbOptions(StrictStruct):
 
 
 class DatasetOptions(StrictStruct):
-    name: str
+    name: Annotated[
+        str,
+        Meta(
+            description="Name of the dataset. It should be unique compared to other datasets in this config, but the exact name isn't very important."
+        ),
+    ]
     type: str
     io_backend: dict[str, Any]
 
-    num_worker_per_gpu: int | None = None
-    batch_size_per_gpu: int | None = None
-    accum_iter: int = 1
+    num_worker_per_gpu: Annotated[
+        int | None,
+        Meta(
+            description="Number of subprocesses to use for data loading with PyTorch dataloader."
+        ),
+    ] = None
+    batch_size_per_gpu: Annotated[
+        int | None,
+        Meta(
+            description="Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP. A higher batch size, like 32 or 64 is more important when training from scratch, while smaller batches like 8 can be used when training with a quality pretrain model."
+        ),
+    ] = None
+    accum_iter: Annotated[
+        int,
+        Meta(
+            description="Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow."
+        ),
+    ] = 1
 
-    use_hflip: bool = True
-    use_rot: bool = True
+    use_hflip: Annotated[
+        bool, Meta(description="Randomly flip the images horizontally.")
+    ] = True
+    use_rot: Annotated[bool, Meta(description="Randomly rotate the images.")] = True
     mean: list[float] | None = None
     std: list[float] | None = None
     gt_size: int | None = None
-    lq_size: int | None = None
+    lq_size: Annotated[
+        int | None,
+        Meta(
+            description="During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
+        ),
+    ] = None
     color: Literal["y"] | None = None
     phase: str | None = None
     scale: int | None = None
-    dataset_enlarge_ratio: Literal["auto"] | int = "auto"
+    dataset_enlarge_ratio: Annotated[
+        Literal["auto"] | int,
+        Meta(
+            description="Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only."
+        ),
+    ] = "auto"
     prefetch_mode: str | None = None
     pin_memory: bool = True
     persistent_workers: bool = True
@@ -45,8 +87,18 @@ class DatasetOptions(StrictStruct):
 
     clip_size: int | None = None
 
-    dataroot_gt: str | list[str] | None = None
-    dataroot_lq: str | list[str] | None = None
+    dataroot_gt: Annotated[
+        str | list[str] | None,
+        Meta(
+            description="Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas."
+        ),
+    ] = None
+    dataroot_lq: Annotated[
+        str | list[str] | None,
+        Meta(
+            description="Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas."
+        ),
+    ] = None
     meta_info: str | None = None
     filename_tmpl: str = "{}"
 
@@ -127,16 +179,47 @@ class OnnxOptions(StrictStruct):
 
 
 class TrainOptions(StrictStruct):
-    total_iter: int
-    optim_g: dict[str, Any]
-    ema_decay: float = 0
-    grad_clip: bool = False
-    warmup_iter: int = -1
-    scheduler: SchedulerOptions | None = None
-    optim_d: dict[str, Any] | None = None
+    total_iter: Annotated[
+        int, Meta(description="The total number of iterations to train.")
+    ]
+    optim_g: Annotated[
+        dict[str, Any],
+        Meta(description="The optimizer to use for the generator model."),
+    ]
+    ema_decay: Annotated[
+        float,
+        Meta(
+            description="The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA."
+        ),
+    ] = 0
+    grad_clip: Annotated[
+        bool,
+        Meta(
+            description="Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations."
+        ),
+    ] = False
+    warmup_iter: Annotated[
+        int,
+        Meta(
+            description="Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable."
+        ),
+    ] = -1
+    scheduler: Annotated[
+        SchedulerOptions | None,
+        Meta(
+            description="Options for the optimizer scheduler. If there are multiple optimizers, both will use the same scheduler options."
+        ),
+    ] = None
+    optim_d: Annotated[
+        dict[str, Any] | None,
+        Meta(description="The optimizer to use for the discriminator model."),
+    ] = None
 
     # new losses format
-    losses: list[dict[str, Any]] | None = None
+    losses: Annotated[
+        list[dict[str, Any]] | None,
+        Meta(description="The list of loss functions to optimize."),
+    ] = None
 
     # old losses format
     pixel_opt: dict[str, Any] | None = None
@@ -158,46 +241,120 @@ class TrainOptions(StrictStruct):
     avg_opt: dict[str, Any] | None = None
     bicubic_opt: dict[str, Any] | None = None
 
-    use_moa: bool = False
-    moa_augs: list[str] = field(
-        default_factory=lambda: ["none", "mixup", "cutmix", "resizemix"]
-    )
-    moa_probs: list[float] = field(
-        default_factory=lambda: [0.4, 0.084, 0.084, 0.084, 0.348]
-    )
-    moa_debug: bool = False
-    moa_debug_limit: int = 100
+    use_moa: Annotated[
+        bool,
+        Meta(
+            description="Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize."
+        ),
+    ] = False
+    moa_augs: Annotated[
+        list[str],
+        Meta(
+            description="The list of augmentations to choose from, only one is selected per iteration."
+        ),
+    ] = field(default_factory=lambda: ["none", "mixup", "cutmix", "resizemix"])
+    moa_probs: Annotated[
+        list[float],
+        Meta(
+            description="The probability each augmentation in moa_augs will be applied. Total should add up to 1."
+        ),
+    ] = field(default_factory=lambda: [0.4, 0.084, 0.084, 0.084, 0.348])
+    moa_debug: Annotated[
+        bool,
+        Meta(
+            description="Save images before and after augment to debug/moa folder inside of the root training directory."
+        ),
+    ] = False
+    moa_debug_limit: Annotated[
+        int,
+        Meta(
+            description="The max number of iterations to save augmentation images for."
+        ),
+    ] = 100
 
 
 class ValOptions(StrictStruct):
-    val_enabled: bool
-    save_img: bool
-    val_freq: int | None = None
-    suffix: str | None = None
+    val_enabled: Annotated[
+        bool,
+        Meta(
+            description="Whether to enable validations. If disabled, all validation settings below are ignored."
+        ),
+    ]
+    save_img: Annotated[
+        bool,
+        Meta(
+            description="Whether to save the validation images during validation, in the experiments/<name>/visualization folder."
+        ),
+    ]
+    val_freq: Annotated[
+        int | None, Meta(description="How often to run validations, in iterations.")
+    ] = None
+    suffix: Annotated[
+        str | None, Meta(description="Optional suffix to append to saved filenames.")
+    ] = None
 
-    metrics_enabled: bool = False
+    metrics_enabled: Annotated[
+        bool, Meta(description="Whether to run metrics calculations during validation.")
+    ] = False
     metrics: dict[str, Any] | None = None
     pbar: bool = True
 
 
 class LogOptions(StrictStruct):
-    print_freq: int
-    save_checkpoint_freq: int
-    use_tb_logger: bool
-    save_checkpoint_format: Literal["safetensors", "pth"] = "safetensors"
+    print_freq: Annotated[
+        int, Meta(description="How often to print logs to the console, in iterations.")
+    ]
+    save_checkpoint_freq: Annotated[
+        int,
+        Meta(
+            description="How often to save model checkpoints and training states, in iterations."
+        ),
+    ]
+    use_tb_logger: Annotated[
+        bool, Meta(description="Whether or not to enable TensorBoard logging.")
+    ]
+    save_checkpoint_format: Annotated[
+        Literal["safetensors", "pth"],
+        Meta(description="Format to save model checkpoints."),
+    ] = "safetensors"
     wandb: WandbOptions | None = None
 
 
 class ReduxOptions(StrictStruct):
-    name: str
-    scale: int
-    num_gpu: Literal["auto"] | int
+    name: Annotated[
+        str,
+        Meta(
+            description="Name of the experiment. It should be a unique name. If you enable auto resume, any experiment with this name will be resumed instead of starting a new training run."
+        ),
+    ]
+    scale: Annotated[
+        int,
+        Meta(
+            description="Scale of the model. Most architectures support a scale of 1, 2, 3, 4, or 8. A scale of 1 can be used for restoration models that don't change the resolution of the input image. A scale of 2 means the width and height of the input image are doubled, so a 640x480 input will be upscaled to 1280x960."
+        ),
+    ]
+    num_gpu: Annotated[
+        Literal["auto"] | int,
+        Meta(
+            description="The number of GPUs to use for training, if using multiple GPUs."
+        ),
+    ]
     path: PathOptions
 
-    network_g: dict[str, Any]
-    network_d: dict[str, Any] | None = None
+    network_g: Annotated[
+        dict[str, Any], Meta(description="The options for the generator model.")
+    ]
+    network_d: Annotated[
+        dict[str, Any] | None,
+        Meta(description="The options for the discriminator model."),
+    ] = None
 
-    manual_seed: int | None = None
+    manual_seed: Annotated[
+        int | None,
+        Meta(
+            description="Deterministic mode, slows down training. Only use for reproducible experiments."
+        ),
+    ] = None
     deterministic: bool | None = None
     dist: bool | None = None
     launcher: str | None = None
@@ -208,17 +365,59 @@ class ReduxOptions(StrictStruct):
     is_train: bool | None = None
     root_path: str | None = None
 
-    use_amp: bool = False
-    amp_bf16: bool = False
-    use_channels_last: bool = True
-    fast_matmul: bool = False
-    use_compile: bool = False
-    detect_anomaly: bool = False
+    use_amp: Annotated[
+        bool, Meta(description="Speed up training and reduce VRAM usage. NVIDIA only.")
+    ] = False
+    amp_bf16: Annotated[
+        bool,
+        Meta(
+            description="Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work."
+        ),
+    ] = False
+    use_channels_last: Annotated[
+        bool,
+        Meta(
+            description="Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last."
+        ),
+    ] = True
+    fast_matmul: Annotated[
+        bool, Meta(description="Trade precision for performance.")
+    ] = False
+    use_compile: Annotated[
+        bool,
+        Meta(
+            description="Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled."
+        ),
+    ] = False
+    detect_anomaly: Annotated[
+        bool,
+        Meta(
+            description="Whether or not to enable anomaly detection, which can be useful for debugging NaNs that occur during training. Has a significant performance hit and should be disabled when not debugging."
+        ),
+    ] = False
 
-    high_order_degradation: bool = False
-    high_order_degradations_debug: bool = False
-    high_order_degradations_debug_limit: int = 100
-    dataroot_lq_prob: float = 0
+    high_order_degradation: Annotated[
+        bool,
+        Meta(
+            description="Whether or not to enable OTF (on the fly) degradations, which generates LRs on the fly."
+        ),
+    ] = False
+    high_order_degradations_debug: Annotated[
+        bool,
+        Meta(
+            description="Whether or not to enable debugging for OTF, which saves the OTF generated LR images so they can be inspected to view the effect of different OTF settings."
+        ),
+    ] = False
+    high_order_degradations_debug_limit: Annotated[
+        int,
+        Meta(
+            description="The maximum number of OTF images to save when debugging is enabled."
+        ),
+    ] = 100
+    dataroot_lq_prob: Annotated[
+        float,
+        Meta(description="Probability of using paired LR data instead of OTF LR data."),
+    ] = 0
     force_high_order_degradation_filename_masks: list[str] = []
     force_dataroot_lq_filename_masks: list[str] = []
 
