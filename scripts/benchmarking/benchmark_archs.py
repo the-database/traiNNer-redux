@@ -152,13 +152,13 @@ def benchmark_model(
             model(input_tensor)
 
     output = None
-    # torch.cuda.synchronize()
+    torch.cuda.synchronize()
     start_time = time.time()
 
     for _ in range(num_runs):
         with torch.inference_mode():
             output = model(input_tensor)
-        # torch.cuda.synchronize()
+        torch.cuda.synchronize()
 
     end_time = time.time()
     avg_time = (end_time - start_time) / num_runs
@@ -176,13 +176,8 @@ def get_dtype(name: str, use_amp: bool) -> tuple[str, torch.dtype]:
 
 
 def benchmark_arch(
-    name: str,
-    arch: nn.Module,
-    extra_arch_params: dict,
-    memory_format: memory_format,
-    device: str,
+    name: str, arch: nn.Module, extra_arch_params: dict, memory_format: memory_format
 ) -> tuple:
-    print("device??????????????", device)
     random_input = torch.rand(
         input_shape,
         device=device,
@@ -204,11 +199,10 @@ def benchmark_arch(
 
     total_params = sum(p[1].numel() for p in model.named_parameters())
     runs = lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
-    # torch.cuda.empty_cache()
-    # torch.cuda.reset_peak_memory_stats()
-    print("device type???", device.type)
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats()
     with torch.autocast(
-        device_type=device.type,
+        device_type="cuda",
         dtype=dtype,
         enabled=use_amp,
     ):
@@ -222,8 +216,7 @@ def benchmark_arch(
         print(msg)
         # raise ValueError(msg)  # TODO restore
 
-    # vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
-    vram_usage = 0
+    vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
     row = (
         name,
         dtype_str,
@@ -240,9 +233,7 @@ def benchmark_arch(
 
 if __name__ == "__main__":
     start_script_time = time.time()
-    import torch_directml
-
-    device = torch_directml.device()
+    device = "cuda"
 
     input_shape = (1, 3, 960, 1280)
 
@@ -272,7 +263,7 @@ if __name__ == "__main__":
             results_by_scale[scale] = []
 
             for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
-                # assert isinstance(arch, nn.Module), arch
+                assert isinstance(arch, nn.Module)
                 arch_key = f"{name} {format_extra_params(extra_arch_params)}"
                 dtype_str, dtype = get_dtype(name, use_amp)
                 try:
@@ -281,10 +272,10 @@ if __name__ == "__main__":
                     if arch_key not in results_by_arch:
                         results_by_arch[arch_key] = {}
                     row = benchmark_arch(
-                        name, arch, extra_arch_params, torch.preserve_format, device
+                        name, arch, extra_arch_params, torch.preserve_format
                     )
                     row_channels_last = benchmark_arch(
-                        name, arch, extra_arch_params, torch.channels_last, device
+                        name, arch, extra_arch_params, torch.channels_last
                     )
 
                     channels_last_improvement = row_channels_last[3] / row[3]
