@@ -29,7 +29,7 @@ jobs:
     - name: Generate Markdown
       run: |
         mkdir -p docs
-        jsonschema2md --input schemas/redux-config.schema.json --output docs/schema.md
+        jsonschema2md schemas/redux-config.schema.json docs/schema.md
 
     # Step 4: Clone the GitHub Wiki repository
     - name: Clone Wiki Repository
