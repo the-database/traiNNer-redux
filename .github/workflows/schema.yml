@@ -15,13 +15,14 @@ jobs:
     steps:
       # Checkout the code from the repository
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Set up Python environment
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
 
       # Install dependencies
       - name: Install dependencies
@@ -37,6 +38,8 @@ jobs:
       # Commit changes to a new branch
       - name: Commit changes to new branch
         run: |
+          git config user.name 'GitHub Actions'
+          git config user.email 'actions@github.com'
           git checkout -b update-json-schema
           git add schemas/redux-config.schema.json
           git commit -m "Update generated JSON schema"
