@@ -38,6 +38,8 @@ jobs:
       # Commit changes to a new branch
       - name: Commit changes to new branch
         run: |
+          git config user.name 'GitHub Actions'
+          git config user.email 'actions@github.com'
           git checkout -b update-json-schema
           git add schemas/redux-config.schema.json
           git commit -m "Update generated JSON schema"
