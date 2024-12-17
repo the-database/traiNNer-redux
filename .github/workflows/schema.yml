@@ -47,13 +47,12 @@ jobs:
           git push origin update-json-schema
 
       # Create a pull request targeting master
-      # - name: Create pull request
-      #   uses: peter-evans/create-pull-request@v7
-      #   with:
-      #     title: "Update generated JSON schema"
-      #     body: "This PR updates the generated JSON schema."
-      #     branch: update-json-schema
-      #     base: master
-      #     committer: 'GitHub Actions <actions@github.com>'
-      #     author: 'GitHub Actions <actions@github.com>'
-
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          title: "Update generated JSON schema"
+          body: "This PR updates the generated JSON schema."
+          branch: master
+          base: update-json-schema
+          committer: 'GitHub Actions <actions@github.com>'
+          author: 'GitHub Actions <actions@github.com>'
