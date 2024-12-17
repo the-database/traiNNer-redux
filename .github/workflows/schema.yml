@@ -3,11 +3,11 @@ name: Generate JSON Schema
 on:
   push:
     branches: ['master']
-    # paths:
-    #   - 'traiNNer/utils/redux_options.py'  # Only trigger if this file is changed
+    paths:
+      - 'traiNNer/utils/redux_options.py'  # Only trigger if this file is changed
 
-    # Allows you to run this workflow manually from the Actions tab
-    workflow_dispatch:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   generate_schema:
