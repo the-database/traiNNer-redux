@@ -4,5 +4,5 @@ from traiNNer.utils.redux_options import ReduxOptions
 
 schema = msgspec.json.schema(ReduxOptions)
 
-# Print out that schema as JSON
-print(msgspec.json.encode(schema))
+with open("schemas/redux-config.schema.json", "w") as schema_file:
+    schema_file.write(msgspec.json.encode(schema).decode())
