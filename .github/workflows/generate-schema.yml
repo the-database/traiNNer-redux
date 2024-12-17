@@ -2,7 +2,7 @@ name: Generate JSON Schema
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'traiNNer/utils/redux_options.py'  # Only trigger if this file is changed
 
