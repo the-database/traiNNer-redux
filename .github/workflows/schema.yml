@@ -55,7 +55,7 @@ jobs:
         with:
           title: "Update generated JSON schema"
           body: "This PR updates the generated JSON schema."
-          head: update-json-schema
+          branch: update-json-schema
           base: master
           committer: 'GitHub Actions <actions@github.com>'
           author: 'GitHub Actions <actions@github.com>'
