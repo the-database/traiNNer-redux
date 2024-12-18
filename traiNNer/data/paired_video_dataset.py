@@ -87,7 +87,12 @@ class PairedVideoDataset(BaseDataset):
 
                         assert self.gt_size is not None
                         img_gt, img_lq = paired_random_crop_vips(
-                            vips_img_gt, vips_img_lq, self.gt_size, scale, gt_path
+                            vips_img_gt,
+                            vips_img_lq,
+                            self.gt_size,
+                            scale,
+                            lq_path,
+                            gt_path,
                         )
                     else:
                         img_gt = vips_img_gt.numpy()
