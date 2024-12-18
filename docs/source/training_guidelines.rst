@@ -6,9 +6,6 @@ training, and best practices based on research and community testing.
 Note these guidelines may not be optimal for every single architecture,
 where each may have their own individual quirks.
 
-Guidelines
-----------
-
 Training Schedule
 -----------------
 
@@ -25,7 +22,7 @@ model to handle degradations, a common process is:
       total iterations. The training settings are often available on
       their GitHub repo or described in their paper. For example the
       training settings for DAT_2_X2 are
-      `here `__:
+      `here <https://github.com/zhengchen1999/DAT/blob/main/options/Train/train_DAT_2_x2.yml>`_:
 
       -  This model is trained until validation metrics peak, which is
          often at least 500,000 iterations, depending on the
