@@ -422,7 +422,12 @@ class ReduxOptions(StrictStruct):
     force_dataroot_lq_filename_masks: list[str] = []
 
     lq_usm: bool = False
-    lq_usm_radius_range: tuple[int, int] = (1, 25)
+    lq_usm_radius_range: Annotated[
+        tuple[int, int],
+        Meta(
+            description="For the unsharp mask of the LQ image, use a radius randomly selected from this range."
+        ),
+    ] = (1, 25)
 
     blur_prob: float = 0
     resize_prob: list[float] = field(default_factory=lambda: [0.2, 0.7, 0.1])
