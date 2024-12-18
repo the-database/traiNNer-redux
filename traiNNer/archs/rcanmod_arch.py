@@ -116,7 +116,7 @@ class RCAB(nn.Module):
                 modules_body.append(nn.BatchNorm2d(n_feat))
             if i == 0:
                 modules_body.append(act)
-        modules_body.append(MSG(n_feat))
+        modules_body.append(SpatialSELayer(n_feat))
         self.body = nn.Sequential(*modules_body)
         self.res_scale = res_scale
 
@@ -243,9 +243,9 @@ class ResidualGroup(nn.Module):
         return res
 
 
-# @ARCH_REGISTRY.register()
+@ARCH_REGISTRY.register()
 ## Residual Channel Attention Network (RCAN)
-class RCANMod(nn.Module):
+class RCANSpatialSELayer(nn.Module):
     def __init__(
         self,
         scale: int = 4,
