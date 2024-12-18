@@ -9,7 +9,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### 4x scale
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |superultracompact  4x fp16         |  718.42|  815.69|1.14x|  0.0014|    0.12 GB|    52,968|-    |-     |-    |-     |
 |ultracompact  4x fp16              |  253.38|  363.77|1.44x|  0.0039|    0.19 GB|   325,488|-    |-     |-    |-     |
@@ -77,7 +77,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### 3x scale
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |superultracompact  3x fp16         |  848.11| 1085.14|1.28x|  0.0012|    0.09 GB|    48,411|-    |-     |-    |-     |
 |ultracompact  3x fp16              |  266.26|  401.52|1.51x|  0.0038|    0.18 GB|   313,371|-    |-     |-    |-     |
@@ -145,7 +145,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### 2x scale
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |superultracompact  2x fp16         |  918.98| 1293.90|1.41x|  0.0011|    0.07 GB|    45,156|-    |-     |-    |-     |
 |ultracompact  2x fp16              |  271.81|  427.26|1.57x|  0.0037|    0.17 GB|   304,716|-    |-     |-    |-     |
@@ -213,7 +213,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### 1x scale
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |superultracompact  1x fp16         |  948.23| 1360.99|1.44x|  0.0011|    0.07 GB|    43,203|-    |-     |-    |-     |
 |ultracompact  1x fp16              |  273.98|  436.02|1.59x|  0.0036|    0.16 GB|   299,523|-    |-     |-    |-     |
@@ -283,7 +283,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### artcnn
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |artcnn  4x fp16                    |   21.67|   32.65|1.51x|  0.0462|    0.39 GB| 3,864,048|-    |-     |-    |-     |
 |artcnn  3x fp16                    |   21.69|   32.85|1.51x|  0.0461|    0.38 GB| 3,845,883|-    |-     |-    |-     |
@@ -292,7 +292,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### atd
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |atd  4x bf16                       |    0.36|    0.38|1.06x|  2.8085|    6.42 GB|20,260,929|28.22|0.8414|-    |-     |
 |atd  3x bf16                       |    0.36|    0.38|1.06x|  2.7876|    6.40 GB|20,297,857|30.52|0.8924|-    |-     |
@@ -301,7 +301,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### atd_light
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |atd_light  4x bf16                 |    1.27|    1.30|1.02x|  0.7857|    3.30 GB|   768,792|26.97|0.8107|-    |-     |
 |atd_light  3x bf16                 |    1.29|    1.31|1.02x|  0.7760|    3.28 GB|   759,699|29.17|0.8709|-    |-     |
@@ -310,7 +310,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### camixersr
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |camixersr  4x bf16                 |    4.88|    3.92|0.80x|  0.2050|    1.14 GB|   765,322|-    |-     |26.63|0.8012|
 |camixersr  3x bf16                 |    5.08|    3.95|0.78x|  0.1970|    1.13 GB|   753,961|-    |-     |-    |-     |
@@ -319,7 +319,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### cfsr
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |cfsr  4x bf16                      |   17.18|   14.50|0.84x|  0.0582|    0.48 GB|   306,912|26.21|0.7897|-    |-     |
 |cfsr  3x bf16                      |   17.25|   14.52|0.84x|  0.0580|    0.46 GB|   297,819|28.29|0.8553|-    |-     |
@@ -328,7 +328,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### compact
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |compact  4x fp16                   |  138.18|  209.95|1.52x|  0.0072|    0.19 GB|   621,424|-    |-     |-    |-     |
 |compact  3x fp16                   |  142.77|  222.11|1.56x|  0.0070|    0.18 GB|   609,307|-    |-     |-    |-     |
@@ -337,7 +337,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### dat
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |dat  4x bf16                       |    0.29|    0.29|0.99x|  3.4675|    3.94 GB|14,802,051|27.87|0.8343|-    |-     |
 |dat  3x bf16                       |    0.29|    0.29|1.00x|  3.4337|    3.92 GB|14,838,979|30.18|0.8886|-    |-     |
@@ -346,7 +346,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### dat_2
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |dat_2  4x bf16                     |    0.29|    0.29|1.00x|  3.4695|    3.92 GB|11,212,131|27.86|0.8341|-    |-     |
 |dat_2  3x bf16                     |    0.29|    0.29|1.00x|  3.4270|    3.90 GB|11,249,059|30.13|0.8878|-    |-     |
@@ -355,7 +355,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### dat_light
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |dat_light  4x bf16                 |    0.64|    0.65|1.01x|  1.5522|    2.71 GB|   572,766|26.64|0.8033|-    |-     |
 |dat_light  3x bf16                 |    0.65|    0.65|1.00x|  1.5346|    2.69 GB|   561,405|28.89|0.8666|-    |-     |
@@ -364,7 +364,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### dat_s
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |dat_s  4x bf16                     |    0.58|    0.56|0.98x|  1.7321|    2.85 GB|11,212,131|27.68|0.8300|-    |-     |
 |dat_s  3x bf16                     |    0.58|    0.58|1.00x|  1.7230|    2.82 GB|11,249,059|29.98|0.8846|-    |-     |
@@ -373,7 +373,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### drct
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |drct  4x bf16                      |    0.19|    0.18|0.99x|  5.3531|    6.28 GB|14,139,579|28.06|0.8378|-    |-     |
 |drct  3x bf16                      |    0.19|    0.19|1.00x|  5.2765|    6.25 GB|14,176,507|30.34|0.8910|-    |-     |
@@ -382,7 +382,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### drct_l
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |drct_l  4x bf16                    |    0.09|    0.09|1.00x| 10.6400|    6.42 GB|27,580,719|28.70|0.8508|-    |-     |
 |drct_l  3x bf16                    |    0.10|    0.09|0.99x| 10.4625|    6.39 GB|27,617,647|31.14|0.9004|-    |-     |
@@ -391,7 +391,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### drct_xl
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |drct_xl  4x bf16                   |    0.08|    0.07|0.95x| 13.2828|    6.46 GB|32,061,099|-    |-     |-    |-     |
 |drct_xl  3x bf16                   |    0.08|    0.08|1.00x| 12.3796|    6.44 GB|32,098,027|-    |-     |-    |-     |
@@ -400,7 +400,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### eimn_a
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |eimn_a  4x fp16                    |    8.54|    6.23|0.73x|  0.1171|    0.89 GB|   880,870|26.68|0.8027|-    |-     |
 |eimn_a  3x fp16                    |    8.52|    6.24|0.73x|  0.1174|    0.88 GB|   868,753|28.87|0.8660|-    |-     |
@@ -409,7 +409,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### eimn_l
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |eimn_l  4x fp16                    |    7.47|    5.45|0.73x|  0.1339|    0.89 GB| 1,002,496|26.88|0.8084|-    |-     |
 |eimn_l  3x fp16                    |    7.44|    5.46|0.73x|  0.1343|    0.88 GB|   990,379|29.05|0.8698|-    |-     |
@@ -418,7 +418,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### esrgan use_pixel_unshuffle=False
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |esrgan use_pixel_unshuffle=False 4x fp16|    3.34|    4.66|1.40x|  0.2996|    3.65 GB|16,697,987|27.03|0.8153|26.73|0.8072|
 |esrgan use_pixel_unshuffle=False 3x fp16|    3.52|    4.92|1.40x|  0.2844|    2.10 GB|16,661,059|-    |-     |-    |-     |
@@ -427,7 +427,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### esrgan use_pixel_unshuffle=True
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |esrgan use_pixel_unshuffle=True 4x fp16|    3.34|    4.66|1.40x|  0.2996|    3.65 GB|16,697,987|27.03|0.8153|26.73|0.8072|
 |esrgan use_pixel_unshuffle=True 3x fp16|    3.52|    4.91|1.39x|  0.2839|    2.10 GB|16,661,059|-    |-     |-    |-     |
@@ -436,7 +436,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### esrgan_lite
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |esrgan_lite  4x fp16               |    8.89|   12.32|1.39x|  0.1125|    1.27 GB| 5,021,155|-    |-     |-    |-     |
 |esrgan_lite  3x fp16               |    9.51|   13.17|1.38x|  0.1051|    0.73 GB| 5,011,907|-    |-     |-    |-     |
@@ -445,7 +445,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### flexnet
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |flexnet  4x fp16                   |    3.53|    3.47|0.98x|  0.2834|    1.31 GB| 3,045,136|-    |-     |-    |-     |
 |flexnet  3x fp16                   |    3.53|    3.47|0.98x|  0.2834|    1.29 GB| 3,020,923|-    |-     |-    |-     |
@@ -454,7 +454,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### hat_l
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |hat_l  4x bf16                     |    0.29|    0.31|1.07x|  3.4878|   10.41 GB|40,846,575|28.60|0.8498|-    |-     |
 |hat_l  3x bf16                     |    0.29|    0.32|1.08x|  3.3917|   10.39 GB|40,883,503|30.92|0.8981|-    |-     |
@@ -463,7 +463,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### hat_m
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |hat_m  4x bf16                     |    0.54|    0.59|1.08x|  1.8393|   10.30 GB|20,772,507|27.97|0.8368|-    |-     |
 |hat_m  3x bf16                     |    0.56|    0.60|1.07x|  1.7750|   10.27 GB|20,809,435|30.23|0.8896|-    |-     |
@@ -472,7 +472,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### hat_s
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |hat_s  4x bf16                     |    0.63|    0.66|1.04x|  1.5855|    9.85 GB| 9,621,183|27.87|0.8346|-    |-     |
 |hat_s  3x bf16                     |    0.65|    0.69|1.07x|  1.5465|    9.83 GB| 9,658,111|30.15|0.8879|-    |-     |
@@ -481,7 +481,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### hit_sir
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |hit_sir  4x bf16                   |    5.38|    5.23|0.97x|  0.1858|    1.34 GB|   791,540|-    |-     |26.71|0.8045|
 |hit_sir  3x bf16                   |    5.39|    5.23|0.97x|  0.1854|    1.32 GB|   780,179|-    |-     |28.93|0.8673|
@@ -490,7 +490,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### hit_sng
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |hit_sng  4x bf16                   |    4.18|    4.01|0.96x|  0.2391|    1.34 GB| 1,032,060|-    |-     |26.75|0.8053|
 |hit_sng  3x bf16                   |    4.19|    4.00|0.96x|  0.2387|    1.32 GB| 1,020,699|-    |-     |28.91|0.8671|
@@ -499,7 +499,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### hit_srf
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |hit_srf  4x bf16                   |    4.32|    4.27|0.99x|  0.2316|    1.34 GB|   866,420|-    |-     |26.80|0.8069|
 |hit_srf  3x bf16                   |    4.32|    4.28|0.99x|  0.2316|    1.32 GB|   855,059|-    |-     |28.99|0.8687|
@@ -508,7 +508,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### lmlt_base
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |lmlt_base  4x fp16                 |   15.53|   15.41|0.99x|  0.0644|    0.64 GB|   671,808|26.44|0.7949|-    |-     |
 |lmlt_base  3x fp16                 |   15.53|   15.48|1.00x|  0.0644|    0.62 GB|   660,447|28.48|0.8581|-    |-     |
@@ -517,7 +517,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### lmlt_large
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |lmlt_large  4x fp16                |   10.59|   10.54|1.00x|  0.0944|    0.87 GB| 1,295,328|26.63|0.8001|-    |-     |
 |lmlt_large  3x fp16                |   10.61|   10.55|0.99x|  0.0943|    0.86 GB| 1,279,431|28.72|0.8628|-    |-     |
@@ -526,7 +526,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### lmlt_tiny
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |lmlt_tiny  4x fp16                 |   29.07|   28.89|0.99x|  0.0344|    0.37 GB|   251,040|26.08|0.7838|-    |-     |
 |lmlt_tiny  3x fp16                 |   29.16|   28.99|0.99x|  0.0343|    0.36 GB|   244,215|28.10|0.8503|-    |-     |
@@ -535,7 +535,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### man
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |man  4x fp16                       |    1.29|    0.88|0.68x|  0.7773|    1.53 GB| 8,712,612|27.26|0.8197|-    |-     |
 |man  3x fp16                       |    1.29|    0.88|0.68x|  0.7770|    1.52 GB| 8,678,571|29.52|0.8782|-    |-     |
@@ -544,7 +544,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### man_light
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |man_light  4x fp16                 |    6.13|    4.50|0.73x|  0.1631|    0.53 GB|   842,892|26.70|0.8052|-    |-     |
 |man_light  3x fp16                 |    6.14|    4.49|0.73x|  0.1628|    0.51 GB|   831,531|-    |-     |-    |-     |
@@ -553,7 +553,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### man_tiny
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |man_tiny  4x fp16                  |   35.58|   27.91|0.78x|  0.0281|    0.42 GB|   150,024|25.84|0.7786|-    |-     |
 |man_tiny  3x fp16                  |   35.81|   27.98|0.78x|  0.0279|    0.41 GB|   140,931|-    |-     |-    |-     |
@@ -562,7 +562,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### metaflexnet
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |metaflexnet  4x fp16               |    9.52|    9.86|1.04x|  0.1050|    1.29 GB|38,053,568|-    |-     |-    |-     |
 |metaflexnet  3x fp16               |    9.50|    9.86|1.04x|  0.1052|    1.27 GB|38,035,403|-    |-     |-    |-     |
@@ -571,7 +571,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### moesr2
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |moesr2  4x fp16                    |    4.02|    3.76|0.94x|  0.2488|    0.91 GB|16,547,072|-    |-     |-    |-     |
 |moesr2  3x fp16                    |    4.02|    3.77|0.94x|  0.2488|    0.90 GB|16,534,955|-    |-     |-    |-     |
@@ -580,7 +580,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### mosr
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |mosr  4x fp16                      |    9.45|   11.65|1.23x|  0.1059|    0.50 GB| 4,287,600|-    |-     |-    |-     |
 |mosr  3x fp16                      |    9.45|   11.66|1.23x|  0.1059|    0.49 GB| 4,275,483|-    |-     |-    |-     |
@@ -589,7 +589,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### mosr_t
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |mosr_t  4x fp16                    |   54.87|   65.58|1.20x|  0.0182|    0.37 GB|   609,888|-    |-     |-    |-     |
 |mosr_t  3x fp16                    |   55.03|   66.43|1.21x|  0.0182|    0.36 GB|   600,795|-    |-     |-    |-     |
@@ -598,7 +598,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### omnisr
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |omnisr  4x fp16                    |    7.96|    7.80|0.98x|  0.1256|    1.18 GB|   805,376|26.95|0.8105|26.64|0.8018|
 |omnisr  3x fp16                    |    7.98|    7.84|0.98x|  0.1253|    1.17 GB|   793,259|29.12|0.8712|28.84|0.8656|
@@ -607,7 +607,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### plksr
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |plksr  4x fp16                     |   12.08|   15.85|1.31x|  0.0828|    0.37 GB| 7,386,096|26.85|0.8097|26.69|0.8054|
 |plksr  3x fp16                     |   12.17|   15.95|1.31x|  0.0822|    0.34 GB| 7,373,979|29.10|0.8713|28.86|0.8666|
@@ -616,7 +616,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### plksr_tiny
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |plksr_tiny  4x fp16                |   37.18|   49.48|1.33x|  0.0269|    0.34 GB| 2,370,544|26.34|0.7942|26.12|0.7888|
 |plksr_tiny  3x fp16                |   37.70|   50.62|1.34x|  0.0265|    0.31 GB| 2,358,427|28.51|0.8599|28.35|0.8571|
@@ -625,7 +625,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### rcan
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |rcan  4x fp16                      |    5.43|    7.10|1.31x|  0.1841|    1.67 GB|15,592,379|-    |-     |26.82|0.8087|
 |rcan  3x fp16                      |    5.62|    7.63|1.36x|  0.1778|    0.89 GB|15,629,307|-    |-     |29.09|0.8702|
@@ -634,7 +634,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### realcugan
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |realcugan  4x fp16                 |   44.56|   61.14|1.37x|  0.0224|    1.25 GB| 1,406,812|-    |-     |-    |-     |
 |realcugan  3x fp16                 |   25.66|   34.99|1.36x|  0.0390|    2.37 GB| 1,286,326|-    |-     |-    |-     |
@@ -643,7 +643,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### realplksr dysample layer_norm=False
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |realplksr dysample layer_norm=False 4x fp16|    5.61|    5.81|1.04x|  0.1784|    1.77 GB| 7,402,243|-    |-     |-    |-     |
 |realplksr dysample layer_norm=False 3x fp16|    5.78|    6.05|1.05x|  0.1729|    0.66 GB| 7,380,617|-    |-     |-    |-     |
@@ -652,7 +652,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### realplksr dysample layer_norm=True
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |realplksr dysample layer_norm=True 4x fp16|    8.01|    9.27|1.16x|  0.1249|    1.77 GB| 7,402,243|-    |-     |-    |-     |
 |realplksr dysample layer_norm=True 3x fp16|    8.39|    9.87|1.18x|  0.1192|    0.66 GB| 7,380,617|-    |-     |-    |-     |
@@ -661,7 +661,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### realplksr pixelshuffle layer_norm=False
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |realplksr pixelshuffle layer_norm=False 4x fp16|    5.89|    6.18|1.05x|  0.1699|    0.40 GB| 7,389,680|-    |-     |-    |-     |
 |realplksr pixelshuffle layer_norm=False 3x fp16|    5.90|    6.19|1.05x|  0.1695|    0.38 GB| 7,377,563|-    |-     |-    |-     |
@@ -670,7 +670,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### realplksr pixelshuffle layer_norm=True
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |realplksr pixelshuffle layer_norm=True 4x fp16|    8.58|   10.23|1.19x|  0.1166|    0.44 GB| 7,389,680|-    |-     |-    |-     |
 |realplksr pixelshuffle layer_norm=True 3x fp16|    8.61|   10.27|1.19x|  0.1162|    0.42 GB| 7,377,563|-    |-     |-    |-     |
@@ -679,7 +679,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### rgt
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |rgt  4x bf16                       |-       |-       |-       |-       |-       |-         |-|-|-||
 |rgt  3x bf16                       |-       |-       |-       |-       |-       |-         |-|-|-||
@@ -688,7 +688,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### rgt_s
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |rgt_s  4x bf16                     |-       |-       |-       |-       |-       |-         |-|-|-||
 |rgt_s  3x bf16                     |-       |-       |-       |-       |-       |-         |-|-|-||
@@ -697,7 +697,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### scunet_aaf6aa
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |scunet_aaf6aa  4x fp16             |    8.70|   11.02|1.27x|  0.1150|    4.92 GB|15,207,468|-    |-     |-    |-     |
 |scunet_aaf6aa  3x fp16             |   11.75|   14.39|1.22x|  0.0851|    1.41 GB|15,170,540|-    |-     |-    |-     |
@@ -706,7 +706,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### span
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |span  4x fp16                      |   98.29|  101.76|1.04x|  0.0102|    0.60 GB| 2,236,728|26.18|0.7879|-    |-     |
 |span  3x fp16                      |  101.72|  111.07|1.09x|  0.0098|    0.59 GB| 2,227,635|-    |-     |-    |-     |
@@ -715,7 +715,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### spanplus
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |spanplus  4x fp16                  |   56.23|   53.22|0.95x|  0.0178|    1.71 GB| 2,228,507|-    |-     |-    |-     |
 |spanplus  3x fp16                  |   70.34|   68.55|0.97x|  0.0142|    0.99 GB| 2,223,075|-    |-     |-    |-     |
@@ -724,7 +724,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### spanplus_s
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |spanplus_s  4x fp16                |   69.76|   64.48|0.92x|  0.0143|    1.26 GB|   687,707|-    |-     |-    |-     |
 |spanplus_s  3x fp16                |   93.16|   89.02|0.96x|  0.0107|    0.72 GB|   684,067|-    |-     |-    |-     |
@@ -733,7 +733,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### spanplus_st
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |spanplus_st  4x fp16               |   93.24|  105.48|1.13x|  0.0107|    0.32 GB| 2,236,728|-    |-     |-    |-     |
 |spanplus_st  3x fp16               |   99.92|  110.94|1.11x|  0.0100|    0.31 GB| 2,227,635|-    |-     |-    |-     |
@@ -742,7 +742,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### spanplus_sts
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |spanplus_sts  4x fp16              |  161.12|  170.65|1.06x|  0.0062|    0.23 GB|   693,160|-    |-     |-    |-     |
 |spanplus_sts  3x fp16              |  159.28|  164.55|1.03x|  0.0063|    0.21 GB|   687,091|-    |-     |-    |-     |
@@ -751,7 +751,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### srformer
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |srformer  4x bf16                  |    0.27|    0.26|0.95x|  3.6540|    3.65 GB|10,543,503|27.68|0.8311|-    |-     |
 |srformer  3x bf16                  |    0.29|    0.29|1.01x|  3.4537|    3.62 GB|10,580,431|30.04|0.8865|-    |-     |
@@ -760,7 +760,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### srformer_light
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |srformer_light  4x bf16            |    0.87|    0.91|1.04x|  1.1495|    1.47 GB|   872,748|26.67|0.8032|-    |-     |
 |srformer_light  3x bf16            |    1.07|    1.06|0.99x|  0.9309|    1.45 GB|   861,387|28.81|0.8655|-    |-     |
@@ -769,7 +769,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### superultracompact
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |superultracompact  4x fp16         |  718.42|  815.69|1.14x|  0.0014|    0.12 GB|    52,968|-    |-     |-    |-     |
 |superultracompact  3x fp16         |  848.11| 1085.14|1.28x|  0.0012|    0.09 GB|    48,411|-    |-     |-    |-     |
@@ -778,7 +778,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### swin2sr_l
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |swin2sr_l  4x bf16                 |    0.35|    0.39|1.09x|  2.8199|    3.92 GB|28,785,859|-    |-     |-    |-     |
 |swin2sr_l  3x bf16                 |-       |-       |-       |-       |-       |-         |-|-|-||
@@ -787,7 +787,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### swin2sr_m
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |swin2sr_m  4x bf16                 |    0.61|    0.63|1.03x|  1.6425|    2.51 GB|12,239,283|27.51|0.8271|-    |-     |
 |swin2sr_m  3x bf16                 |    0.63|    0.64|1.01x|  1.5873|    2.49 GB|12,276,211|-    |-     |-    |-     |
@@ -796,7 +796,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### swin2sr_s
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |swin2sr_s  4x bf16                 |    1.04|    1.02|0.98x|  0.9629|    1.45 GB| 1,024,824|-    |-     |-    |-     |
 |swin2sr_s  3x bf16                 |    1.04|    1.04|1.00x|  0.9641|    1.43 GB| 1,013,463|-    |-     |-    |-     |
@@ -805,7 +805,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### swinir_l
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |swinir_l  4x bf16                  |    0.47|    0.48|1.01x|  2.1149|    3.91 GB|28,013,059|-    |-     |-    |-     |
 |swinir_l  3x bf16                  |    0.48|    0.48|1.01x|  2.0971|    3.52 GB|27,976,131|-    |-     |-    |-     |
@@ -814,7 +814,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### swinir_m
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |swinir_m  4x bf16                  |    0.70|    0.71|1.01x|  1.4201|    2.64 GB|11,900,199|27.45|0.8254|-    |-     |
 |swinir_m  3x bf16                  |    0.71|    0.72|1.01x|  1.3992|    2.62 GB|11,937,127|29.75|0.8826|-    |-     |
@@ -823,7 +823,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### swinir_s
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |swinir_s  4x bf16                  |    1.09|    1.09|1.01x|  0.9196|    1.55 GB|   929,628|26.47|0.7980|-    |-     |
 |swinir_s  3x bf16                  |    1.09|    1.08|0.99x|  0.9139|    1.53 GB|   918,267|28.66|0.8624|-    |-     |
@@ -832,7 +832,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### tscunet
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |tscunet  4x fp16                   |-       |-       |-       |-       |-       |-         |-|-|-||
 |tscunet  3x fp16                   |-       |-       |-       |-       |-       |-         |-|-|-||
@@ -841,7 +841,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
 ### ultracompact
 (1, 3, 480, 640) input, 5 warmup + 10 runs averaged
-|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
+|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|
 |:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|
 |ultracompact  4x fp16              |  253.38|  363.77|1.44x|  0.0039|    0.19 GB|   325,488|-    |-     |-    |-     |
 |ultracompact  3x fp16              |  266.26|  401.52|1.51x|  0.0038|    0.18 GB|   313,371|-    |-     |-    |-     |
