@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+from collections.abc import Callable
+from io import TextIOWrapper
 from typing import Any
 
 import torch
@@ -81,6 +83,11 @@ EXCLUDE_ARCH_SCALES = {
 }
 
 
+def printfc(text: str, f: TextIOWrapper) -> None:
+    print(text)
+    f.write(f"{text}\n")
+
+
 def format_extra_params(extra_arch_params: dict[str, Any]) -> str:
     out = ""
 
@@ -140,9 +147,9 @@ def get_line(
                 ssimdiv2k = format(OFFICIAL_METRICS[name][scale]["div2k_ssim"], ".4f")
 
     if params != -1:
-        return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{fps:>8.2f}{separator}{fps_cl_label}{fps_channels_last:>8.2f}{separator}{channels_last_vs_label}{channels_last_vs_baseline:>1.2f}x{separator}{sec_img_label}{avg_time:>8.4f}{separator}{vram_label}{vram:>8.2f} GB{separator}{params_label}{params:>10,d}{separator}{psnrdf2k_label}{psnrdf2k}{separator}{ssimdf2k_label}{ssimdf2k}{separator}{psnrdiv2k_label}{psnrdiv2k}{separator}{ssimdiv2k_label}{ssimdiv2k}{edge_separator}"
+        return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{fps:>8.2f}{separator}{fps_cl_label}{fps_channels_last:>8.2f}{separator}{channels_last_vs_label}{channels_last_vs_baseline:>1.2f}x{separator}{sec_img_label}{avg_time:>8.4f}{separator}{vram_label}{vram:>8.2f} GB{separator}{psnrdf2k_label}{psnrdf2k}{separator}{ssimdf2k_label}{ssimdf2k}{separator}{psnrdiv2k_label}{psnrdiv2k}{separator}{ssimdiv2k_label}{ssimdiv2k}{separator}{params_label}{params:>10,d}{edge_separator}"
 
-    return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{unsupported_value:<8}{separator}{fps_cl_label}{unsupported_value:<8}{separator}{channels_last_vs_label}{unsupported_value:<8}{separator}{sec_img_label}{unsupported_value:<8}{separator}{vram_label}{unsupported_value:<8}{separator}{params_label}{unsupported_value:<10}{separator}{psnrdf2k_label}{unsupported_value}{separator}{ssimdf2k_label}{unsupported_value}{separator}{psnrdiv2k_label}{unsupported_value}{separator}{ssimdiv2k_label}{edge_separator}"
+    return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{unsupported_value:<8}{separator}{fps_cl_label}{unsupported_value:<8}{separator}{channels_last_vs_label}{unsupported_value:<8}{separator}{sec_img_label}{unsupported_value:<8}{separator}{vram_label}{unsupported_value:<8}{separator}{psnrdf2k_label}{unsupported_value}{separator}{ssimdf2k_label}{unsupported_value}{separator}{psnrdiv2k_label}{unsupported_value}{separator}{ssimdiv2k_label}{separator}{params_label}{unsupported_value:<10}{edge_separator}"
 
 
 def benchmark_model(
@@ -177,7 +184,7 @@ def get_dtype(name: str, use_amp: bool) -> tuple[str, torch.dtype]:
 
 
 def benchmark_arch(
-    name: str, arch: nn.Module, extra_arch_params: dict, memory_format: memory_format
+    name: str, arch: Callable, extra_arch_params: dict, memory_format: memory_format
 ) -> tuple:
     random_input = torch.rand(
         input_shape,
@@ -236,10 +243,10 @@ if __name__ == "__main__":
     start_script_time = time.time()
     device = "cuda"
 
-    input_shape = (1, 3, 960, 1280)
+    input_shape = (1, 3, 480, 640)
 
-    warmup_runs = 5  # 1
-    num_runs = 10  # 5
+    warmup_runs = 1  # 1
+    num_runs = 5  # 5
     lightweight_num_runs = 250
     print_markdown = True
     n, c, h, w = input_shape
@@ -259,80 +266,104 @@ if __name__ == "__main__":
         ],
     ] = {}
 
-    for use_amp in [True]:
+    with open("docs/source/benchmarks.md", "w") as f:
+        f.write("""# PyTorch Inference Benchmarks by Architecture (AMP & channels last)
+
+All benchmarks were generated using [benchmark_archs.py](https://github.com/the-database/traiNNer-redux/blob/master/scripts/benchmarking/benchmark_archs.py). The benchmarks were done on a Windows 11 PC with RTX 4090 + i9-13000K.
+
+Note that these benchmarks only measure the raw inference step of these architectures. In practice, several other factors may contribute to results not matching the benchmarks shown here. For example, when comparing two architectures with the same inference speed but one has double the VRAM usage, the one with less VRAM usage will be faster to upscale with for larger images, because the one with higher VRAM usage would require tiling to avoid running out of VRAM in order to upscale a large image while the one with lower VRAM usage could upscale the entire image at once without tiling.
+
+PSNR and SSIM scores are a rough measure of quality, higher is better. These scores should not be taken as an absolute that one architecture is better than another. Metrics are calculated using the officially released models optimized on L1 loss, and are trained on either the DF2K or DIV2K training dataset. When comparing scores between architectures, only compare within the same dataset, so only compare DF2K scores with DF2K scores or DIV2K scores with DIV2K scores. DF2K scores are typically higher than DIV2K scores on the same architecture. PSNR and SSIM are calculated on the Y channel of the Urban100 validation dataset, one of the standard research validation sets.
+""")
+
+        for use_amp in [True]:
+            for scale in ALL_SCALES:
+                results_by_scale[scale] = []
+
+                for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
+                    arch_key = f"{name} {format_extra_params(extra_arch_params)}"
+                    dtype_str, dtype = get_dtype(name, use_amp)
+                    try:
+                        # if "esrgan" not in name:
+                        #     continue
+                        if arch_key not in results_by_arch:
+                            results_by_arch[arch_key] = {}
+                        row = benchmark_arch(
+                            name, arch, extra_arch_params, torch.preserve_format
+                        )
+                        row_channels_last = benchmark_arch(
+                            name, arch, extra_arch_params, torch.channels_last
+                        )
+
+                        channels_last_improvement = row_channels_last[3] / row[3]
+                        new_row = (
+                            row[0],
+                            row[1],
+                            row[2],
+                            row[3],
+                            row_channels_last[4],
+                            row[5],
+                            row[6],
+                            row[7],
+                            row_channels_last[3],
+                            channels_last_improvement,
+                        )
+                        results_by_scale[scale].append(new_row)
+                        results_by_arch[arch_key][scale] = new_row
+                    except Exception as e:
+                        import traceback
+
+                        traceback.print_exception(e)
+                        row = (
+                            name,
+                            dtype_str,
+                            float("inf"),
+                            float("inf"),
+                            float("inf"),
+                            -1,
+                            scale,
+                            extra_arch_params,
+                            float("inf"),
+                            float("inf"),
+                        )
+                        results_by_scale[scale].append(row)
+                        results_by_arch[arch_key][scale] = row
+                    print(get_line(*results_by_scale[scale][-1]))
+
+                results_by_scale[scale].sort(key=lambda x: x[2])
+
+        printfc("## By Scale", f)
+
         for scale in ALL_SCALES:
-            results_by_scale[scale] = []
+            if print_markdown:
+                f.write(f"\n### {scale}x scale\n")
+                f.write(
+                    f"{input_shape} input, {warmup_runs} warmup + {num_runs} runs averaged\n"
+                )
+                f.write(
+                    "|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs base|sec/img|VRAM ({abbr}`CL (channels_last)`)|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|Params|\n"
+                )
+                f.write("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|\n")
+            for row in results_by_scale[scale]:
+                printfc(get_line(*row, print_markdown), f)
 
-            for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
-                assert isinstance(arch, nn.Module)
-                arch_key = f"{name} {format_extra_params(extra_arch_params)}"
-                dtype_str, dtype = get_dtype(name, use_amp)
-                try:
-                    if "rcan" not in name:
-                        continue
-                    if arch_key not in results_by_arch:
-                        results_by_arch[arch_key] = {}
-                    row = benchmark_arch(
-                        name, arch, extra_arch_params, torch.preserve_format
-                    )
-                    row_channels_last = benchmark_arch(
-                        name, arch, extra_arch_params, torch.channels_last
-                    )
-
-                    channels_last_improvement = row_channels_last[3] / row[3]
-                    new_row = (*row, row_channels_last[3], channels_last_improvement)
-                    results_by_scale[scale].append(new_row)
-                    results_by_arch[arch_key][scale] = new_row
-                except Exception as e:
-                    import traceback
-
-                    traceback.print_exception(e)
-                    row = (
-                        name,
-                        dtype_str,
-                        float("inf"),
-                        float("inf"),
-                        float("inf"),
-                        -1,
-                        scale,
-                        extra_arch_params,
-                        float("inf"),
-                        float("inf"),
-                    )
-                    results_by_scale[scale].append(row)
-                    results_by_arch[arch_key][scale] = row
-                print(get_line(*results_by_scale[scale][-1]))
-
-            results_by_scale[scale].sort(key=lambda x: x[2])
-
-    print("## By Scale")
-
-    for scale in ALL_SCALES:
         if print_markdown:
-            print(f"\n### {scale}x scale")
-            print(
-                f"{input_shape} input, {warmup_runs} warmup + {num_runs} runs averaged"
+            f.write("\n## By Architecture\n")
+
+        for arch_name in sorted(results_by_arch.keys()):
+            f.write(f"\n### {arch_name}\n")
+            runs = lightweight_num_runs if arch_name in LIGHTWEIGHT_ARCHS else num_runs
+            f.write(
+                f"{input_shape} input, {warmup_runs} warmup + {runs} runs averaged\n"
             )
-            print(
-                "|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
+            f.write(
+                "|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs base|sec/img|VRAM ({abbr}`CL (channels_last)`)|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|Params|\n"
             )
-            print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|")
-        for row in results_by_scale[scale]:
-            print(get_line(*row, print_markdown))
+            f.write("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|\n")
+            for scale in ALL_SCALES:
+                f.write(
+                    f"{get_line(*results_by_arch[arch_name][scale], print_markdown)}\n"
+                )
 
-    if print_markdown:
-        print("\n## By Architecture")
-
-    for arch_name in sorted(results_by_arch.keys()):
-        print(f"\n### {arch_name}")
-        runs = lightweight_num_runs if arch_name in LIGHTWEIGHT_ARCHS else num_runs
-        print(f"{input_shape} input, {warmup_runs} warmup + {runs} runs averaged")
-        print(
-            "|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
-        )
-        print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|")
-        for scale in ALL_SCALES:
-            print(get_line(*results_by_arch[arch_name][scale], print_markdown))
-
-    end_script_time = time.time()
-    print(f"\nFinished in: {end_script_time - start_script_time:.2f} seconds")
+        end_script_time = time.time()
+        print(f"\nFinished in: {end_script_time - start_script_time:.2f} seconds")
