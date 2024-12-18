@@ -1,5 +1,5 @@
-Introduction
-============
+Training Guidelines
+===================
 
 This page includes a summary of suggested guidelines to follow for
 training, and best practices based on research and community testing.
@@ -7,7 +7,7 @@ Note these guidelines may not be optimal for every single architecture,
 where each may have their own individual quirks.
 
 Guidelines
-==========
+----------
 
 Training Schedule
 -----------------
