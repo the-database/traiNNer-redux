@@ -199,6 +199,7 @@ def paired_random_crop_vips(
     img_lq: pyvips.Image,
     gt_patch_size: int,
     scale: int,
+    lq_path: str | None = None,
     gt_path: str | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     h_lq: int = img_lq.height  # pyright: ignore[reportAssignmentType]
@@ -222,7 +223,10 @@ def paired_random_crop_vips(
     x = random.randint(0, w_lq - lq_patch_size)
 
     region_lq = pyvips.Region.new(img_lq)
-    data_lq = region_lq.fetch(x, y, lq_patch_size, lq_patch_size)
+    try:
+        data_lq = region_lq.fetch(x, y, lq_patch_size, lq_patch_size)
+    except pyvips.error.Error as e:
+        raise RuntimeError(f"Unable to read LQ image {lq_path}") from e
     img_lq_np = img2rgb(
         np.ndarray(
             buffer=data_lq,
@@ -234,7 +238,10 @@ def paired_random_crop_vips(
     # crop corresponding gt patch
     x_gt, y_gt = int(x * scale), int(y * scale)
     region_gt = pyvips.Region.new(img_gt)
-    data_gt = region_gt.fetch(x_gt, y_gt, gt_patch_size, gt_patch_size)
+    try:
+        data_gt = region_gt.fetch(x_gt, y_gt, gt_patch_size, gt_patch_size)
+    except pyvips.error.Error as e:
+        raise RuntimeError(f"Unable to read GT image {gt_path}") from e
     img_gt_np = img2rgb(
         np.ndarray(
             buffer=data_gt,

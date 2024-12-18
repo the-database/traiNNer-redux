@@ -118,7 +118,7 @@ class PairedImageDataset(BaseDataset):
 
             # random crop
             img_gt, img_lq = paired_random_crop_vips(
-                vips_img_gt, vips_img_lq, self.opt.gt_size, scale, gt_path
+                vips_img_gt, vips_img_lq, self.opt.gt_size, scale, lq_path, gt_path
             )
 
             assert isinstance(img_gt, np.ndarray)
