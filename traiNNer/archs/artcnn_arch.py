@@ -66,3 +66,13 @@ class ArtCNN(nn.Module):
         x = self.conv0(x)
         x = self.res_block(x) + x
         return self.depth_to_space(x)
+
+
+@ARCH_REGISTRY.register()
+def artcnn_r16f96(scale: int = 4, **kwargs) -> ArtCNN:
+    return ArtCNN(scale=scale, n_block=16, filters=96, **kwargs)
+
+
+@ARCH_REGISTRY.register()
+def artcnn_r8f64(scale: int = 4, **kwargs) -> ArtCNN:
+    return ArtCNN(scale=scale, n_block=8, filters=64, **kwargs)

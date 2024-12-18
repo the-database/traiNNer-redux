@@ -15,6 +15,7 @@ from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16, OFFICIAL_METRICS
 # ALL_REGISTRIES = list(SPANDREL_REGISTRY) + list(ARCH_REGISTRY)
 ALL_REGISTRIES = list(ARCH_REGISTRY)
 EXCLUDE_BENCHMARK_ARCHS = {
+    "artcnn",
     "dct",
     "dunet",
     "eimn",

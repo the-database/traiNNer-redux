@@ -195,9 +195,8 @@ archs: list[ArchInfo] = [
         "folder_name_override": "SCUNet_aaf6aa",
     },
     {
-        "names": ["ArtCNN"],
+        "names": ["ArtCNN_R16F96", "ArtCNN_R8F64"],
         "scales": ALL_SCALES,
-        "extras": {"filters": str(96), "n_block": str(16), "kernel_size": str(3)},
     },
     {
         "names": ["MoSR", "MoSR_T"],
