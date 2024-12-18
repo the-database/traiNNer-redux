@@ -18,3 +18,4 @@ documentation for details.
    /index
    /training_guidelines
    /config_reference
+   /benchmarks
