@@ -313,7 +313,7 @@ if __name__ == "__main__":
                 f"{input_shape} input, {warmup_runs} warmup + {num_runs} runs averaged"
             )
             print(
-                "|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
+                "|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
             )
             print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|")
         for row in results_by_scale[scale]:
@@ -327,7 +327,7 @@ if __name__ == "__main__":
         runs = lightweight_num_runs if arch_name in LIGHTWEIGHT_ARCHS else num_runs
         print(f"{input_shape} input, {warmup_runs} warmup + {runs} runs averaged")
         print(
-            "|Name|FPS|FPS (channels_last)|channels_last vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
+            "|Name|FPS|FPS ({abbr}`CL (channels_last)`)|{abbr}`CL (channels_last)` vs baseline|sec/img|VRAM|Params|PSNR (DF2K)|SSIM (DF2K)|PSNR (DIV2K)|SSIM (DIV2K)|"
         )
         print("|:-|-:|-:|-:|-:|-:|-:|-:|-:|-:|-:|")
         for scale in ALL_SCALES:
