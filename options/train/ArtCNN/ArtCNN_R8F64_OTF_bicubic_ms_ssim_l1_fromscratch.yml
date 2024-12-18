@@ -2,7 +2,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_ArtCNN_OTF_fromscratch
+name: 4x_ArtCNN_R8F64_OTF_bicubic_ms_ssim_l1
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
@@ -15,41 +15,37 @@ high_order_degradation: true  # Enable on-the-fly (OTF) degradations, which gene
 high_order_degradations_debug: false  # Save the LR and HR tiles to debug/otf folder inside the root of the training directory.
 high_order_degradations_debug_limit: 100  # The max number of iterations to save LR and HR tiles for.
 
-# USM degradation options.
-lq_usm: false  # Apply unsharp mask to LQ image before all other degradations.
-lq_usm_radius_range: [1, 25]  # Range of randomly selected unsharp mask radius to apply.
-
 # The first degradation process.
 blur_prob: 0.0
-resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
-resize_mode_list: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
-resize_mode_prob: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
-resize_range: [0.4, 1.5]
+resize_prob: [0, 0, 1]  # up, down, keep
+resize_mode_list: []  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob: []  # Probability each resize mode is selected.
+resize_range: [1, 1]
 gaussian_noise_prob: 0.0
 noise_range: [0, 0]
 poisson_scale_range: [0, 0]
 gray_noise_prob: 0.0
-jpeg_prob: 1.0
+jpeg_prob: 0.0
 jpeg_range: [75, 95]
 
 # The second degradation process.
 blur_prob2: 0.0
-resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
-resize_mode_list2: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
-resize_mode_prob2: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
-resize_range2: [0.6, 1.2]
-gaussian_noise_prob2: 0
+resize_prob2: [0, 0, 1]  # up, down, keep
+resize_mode_list2: []  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob2: []  # Probability each resize mode is selected.
+resize_range2: [1, 1]
+gaussian_noise_prob2: 0.0
 noise_range2: [0, 0]
 poisson_scale_range2: [0, 0]
 gray_noise_prob2: 0.0
-jpeg_prob2: 1.0
+jpeg_prob2: 0.0
 jpeg_range2: [75, 95]
 
 # The final resize to the target resolution.
-resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
-resize_mode_prob3: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
+resize_mode_list3: ['bicubic']  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob3: [1]  # Probability each resize mode is selected.
 
-queue_size: 120
+queue_size: 180
 
 #################################
 # Dataset and Dataloader Settings
@@ -72,7 +68,6 @@ datasets:
     blur_kernel_size: 12
     kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
     kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-    kernel_range: [5, 17]  # kernel range inclusive, must be odd numbers
     sinc_prob: 0.0
     blur_sigma: [0.2, 2]
     betag_range: [0.5, 4]
@@ -81,15 +76,12 @@ datasets:
     blur_kernel_size2: 12
     kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
     kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-    kernel_range2: [5, 17]  # kernel range inclusive, must be odd numbers
     sinc_prob2: 0.0
     blur_sigma2: [0.2, 1]
     betag_range2: [0.5, 4]
     betap_range2: [1, 2]
 
     final_sinc_prob: 0.0
-    final_kernel_range: [5, 17]  # kernel range inclusive, must be odd numbers
-
     lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
@@ -120,10 +112,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: ArtCNN
-  filters: 96
-  n_block: 16
-  kernel_size: 3
+  type: ArtCNN_R8F64
 
 ############################
 # Pretrain and Resume Paths
