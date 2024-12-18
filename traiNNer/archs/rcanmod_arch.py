@@ -7,6 +7,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
 from torch.nn.init import trunc_normal_
+from traiNNer.utils.registry import ARCH_REGISTRY
 
 
 def default_conv(
