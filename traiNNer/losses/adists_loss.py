@@ -45,9 +45,9 @@ class Downsample(nn.Module):
 class ADISTSLoss(torch.nn.Module):
     def __init__(
         self,
+        loss_weight: float,
         window_size: int = 21,
         resize_input: bool = False,
-        loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
         assert window_size % 3 == 0

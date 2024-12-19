@@ -62,8 +62,8 @@ class DISTSLoss(nn.Module):
 
     def __init__(
         self,
+        loss_weight: float,
         as_loss: bool = True,
-        loss_weight: float = 1.0,
         load_weights: bool = True,
         use_input_norm: bool = True,
         clip_min: int = 0,

@@ -37,7 +37,7 @@ class L1Loss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
+    def __init__(self, loss_weight: float, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -71,7 +71,7 @@ class MSELoss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
+    def __init__(self, loss_weight: float, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -111,7 +111,7 @@ class CharbonnierLoss(nn.Module):
     """
 
     def __init__(
-        self, loss_weight: float = 1.0, reduction: str = "mean", eps: float = 1e-12
+        self, loss_weight: float, reduction: str = "mean", eps: float = 1e-12
     ) -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
@@ -142,7 +142,7 @@ class ColorLoss(nn.Module):
     """Color loss"""
 
     def __init__(
-        self, criterion: str = "l1", loss_weight: float = 1.0, scale: int = 4
+        self, loss_weight: float, criterion: str = "l1", scale: int = 4
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
@@ -163,11 +163,10 @@ class ColorLoss(nn.Module):
         # Get just the UV channels
         input_uv = input_yuv[:, 1:, :, :]
         target_uv = target_yuv[:, 1:, :, :]
-        input_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
-        target_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
-        return (
-            self.criterion(input_uv_downscale, target_uv_downscale) * self.loss_weight
-        )
+        # input_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
+        # target_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
+        print(input_uv.shape, target_uv.shape)
+        return self.criterion(input_uv, target_uv) * self.loss_weight
 
 
 @LOSS_REGISTRY.register()
@@ -175,7 +174,7 @@ class AverageLoss(nn.Module):
     """Averaging Downscale loss"""
 
     def __init__(
-        self, criterion: str = "l1", loss_weight: float = 1.0, scale: int = 4
+        self, loss_weight: float, criterion: str = "l1", scale: int = 4
     ) -> None:
         super().__init__()
         self.ds_f = torch.nn.AvgPool2d(kernel_size=int(scale))
@@ -197,7 +196,7 @@ class BicubicLoss(nn.Module):
     """Bicubic Downscale loss"""
 
     def __init__(
-        self, criterion: str = "l1", loss_weight: float = 1.0, scale: int = 4
+        self, loss_weight: float, criterion: str = "l1", scale: int = 4
     ) -> None:
         super().__init__()
         self.scale = scale
@@ -225,7 +224,7 @@ class BicubicLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class LumaLoss(nn.Module):
-    def __init__(self, criterion: str = "l1", loss_weight: float = 1.0) -> None:
+    def __init__(self, loss_weight: float, criterion: str = "l1") -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion
@@ -248,7 +247,7 @@ class LumaLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class HSLuvLoss(nn.Module):
-    def __init__(self, criterion: str = "l1", loss_weight: float = 1.0) -> None:
+    def __init__(self, loss_weight: float, criterion: str = "l1") -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.criterion_type = criterion

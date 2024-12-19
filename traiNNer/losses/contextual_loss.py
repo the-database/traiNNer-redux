@@ -39,7 +39,7 @@ class ContextualLoss(nn.Module):
 
     def __init__(
         self,
-        loss_weight: float = 1.0,
+        loss_weight: float,
         layer_weights: dict[str, float] | None = None,
         crop_quarter: bool = False,
         max_1d_size: int = 100,

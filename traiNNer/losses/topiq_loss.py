@@ -10,7 +10,7 @@ PATCH_SIZE_KADID = 384
 
 @LOSS_REGISTRY.register()
 class TOPIQLoss(nn.Module):
-    def __init__(self, loss_weight: float = 1.0, resize_input: bool = True) -> None:
+    def __init__(self, loss_weight: float, resize_input: bool = True) -> None:
         super().__init__()
         self.loss_weight = loss_weight
         self.loss = CFANet(

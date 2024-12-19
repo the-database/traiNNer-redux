@@ -25,7 +25,7 @@ class FFLoss(nn.Module):
 
     def __init__(
         self,
-        loss_weight: float = 1.0,
+        loss_weight: float,
         alpha: float = 1.0,
         patch_factor: int = 1,
         ave_spectrum: bool = True,
