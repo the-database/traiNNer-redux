@@ -82,7 +82,7 @@ class MSSIMLoss(nn.Module):
         k1: float = 0.01,
         k2: float = 0.03,
         l: int = 1,
-        padding: int | SymInt | Sequence[int | SymInt] | None = None,
+        padding: int | None = None,
         cosim: bool = True,
         cosim_lambda: int = 5,
         loss_weight: float = 1.0,
