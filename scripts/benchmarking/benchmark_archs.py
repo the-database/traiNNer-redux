@@ -284,7 +284,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                     arch_key = f"{name} {format_extra_params(extra_arch_params)}"
                     dtype_str, dtype = get_dtype(name, use_amp)
                     try:
-                        # if "esrgan" not in name:
+                        # if "rcan" not in name:
                         #     continue
                         if arch_key not in results_by_arch:
                             results_by_arch[arch_key] = {}
@@ -330,7 +330,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                         results_by_arch[arch_key][scale] = row
                     print(get_line(*results_by_scale[scale][-1]))
 
-                results_by_scale[scale].sort(key=lambda x: x[2])
+                results_by_scale[scale].sort(key=lambda x: x[8])
 
         printfc("## By Scale", f)
 

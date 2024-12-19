@@ -36,7 +36,7 @@ class DatasetOptions(StrictStruct):
         ),
     ]
     type: str
-    io_backend: dict[str, Any]
+    io_backend: dict[str, Any] = field(default_factory=lambda: {"type": "disk"})
 
     num_worker_per_gpu: Annotated[
         int | None,

@@ -101,7 +101,7 @@ datasets:
   # be ignored if val_enabled is false in the Validation section below.
   val:
     name: Val Dataset
-    type: PairedImageDataset
+    type: pairedimagedataset
     dataroot_gt: [
       datasets/val/dataset1/hr,
       datasets/val/dataset1/hr2,

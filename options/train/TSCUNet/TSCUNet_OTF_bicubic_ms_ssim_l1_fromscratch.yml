@@ -62,8 +62,6 @@ datasets:
     ]
     # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
     # meta_info: data/meta_info/dataset1.txt
-    io_backend:
-      type: disk
 
     blur_kernel_size: 12
     kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
@@ -93,7 +91,7 @@ datasets:
   # be ignored if val_enabled is false in the Validation section below.
   val:
     name: Val Dataset
-    type: PairedImageDataset
+    type: pairedvideodataset
     dataroot_gt: [
       datasets/val/dataset1/hr,
       datasets/val/dataset1/hr2,
@@ -103,8 +101,6 @@ datasets:
       datasets/val/dataset1/lr2
     ]
     clip_size: 5
-    io_backend:
-      type: disk
 
 #####################
 # Network Settings
