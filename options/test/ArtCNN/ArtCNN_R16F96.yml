@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: ArtCNN_R16F96
+  type: artcnn_r16f96
 
 ############################
 # Pretrain and Resume Paths

@@ -29,8 +29,8 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: MoESR2
-  upsampler: pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)
+  type: moesr2
+  upsampler: pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic onnx)
 
 ############################
 # Pretrain and Resume Paths

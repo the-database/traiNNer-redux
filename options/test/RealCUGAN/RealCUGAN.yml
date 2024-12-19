@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: RealCUGAN
+  type: realcugan
   pro: true
   fast: false
 

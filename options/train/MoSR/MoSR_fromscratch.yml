@@ -65,8 +65,8 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: MoSR
-  upsampler: geoensemblepixelshuffle  # geoensemblepixelshuffle, dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle
+  type: mosr
+  upsampler: geoensemblepixelshuffle  # geoensemblepixelshuffle, dysample (best on even number scales, does not support dynamic onnx), pixelshuffle
   drop_path: 0  # 0.05
 
 ############################
@@ -99,7 +99,7 @@ train:
   # Losses - for any loss set the loss_weight to 0 to disable it.
   losses:
     # MS-SSIM L1 loss
-    - type: MSSSIML1Loss
+    - type: msssiml1loss
       alpha: 0.1
       loss_weight: 1.0
 
@@ -133,10 +133,3 @@ logger:
   save_checkpoint_freq: 1000
   save_checkpoint_format: safetensors
   use_tb_logger: true
-  wandb:
-    project: ~
-    resume_id: ~
-
-dist_params:
-  backend: nccl
-  port: 29500

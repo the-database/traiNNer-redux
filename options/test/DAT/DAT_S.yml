@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: DAT_S
+  type: dat_s
 
 ############################
 # Pretrain and Resume Paths

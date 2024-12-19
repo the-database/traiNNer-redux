@@ -11,7 +11,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: SPANPlus_S
+  type: spanplus_s
 
 ############################
 # Pretrain and Resume Paths

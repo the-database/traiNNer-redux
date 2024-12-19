@@ -11,7 +11,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: DRCT_L
+  type: drct_l
 
 ############################
 # Pretrain and Resume Paths

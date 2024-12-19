@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: SCUNet_aaf6aa
+  type: scunet_aaf6aa
 
 ############################
 # Pretrain and Resume Paths

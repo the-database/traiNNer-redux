@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: SRFormer_light
+  type: srformer_light
 
 ############################
 # Pretrain and Resume Paths

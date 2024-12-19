@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: SPAN
+  type: span
   norm: false  # some pretrains require norm: true
 
 ############################

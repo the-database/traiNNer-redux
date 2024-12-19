@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: SPANPlus_STS
+  type: spanplus_sts
 
 ############################
 # Pretrain and Resume Paths
