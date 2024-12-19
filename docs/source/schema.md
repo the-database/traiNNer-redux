@@ -1,390 +1,754 @@
 # Schema Docs
 
-- [1. Property `ReduxOptions > name`](#name)
-- [2. Property `ReduxOptions > scale`](#scale)
-- [3. Property `ReduxOptions > num_gpu`](#num_gpu)
-  - [3.1. Property `ReduxOptions > num_gpu > anyOf > item 0`](#num_gpu_anyOf_i0)
-  - [3.2. Property `ReduxOptions > num_gpu > anyOf > item 1`](#num_gpu_anyOf_i1)
-- [4. Property `ReduxOptions > path`](#path)
-  - [4.1. Property `ReduxOptions > path > experiments_root`](#path_experiments_root)
-    - [4.1.1. Property `ReduxOptions > path > experiments_root > anyOf > item 0`](#path_experiments_root_anyOf_i0)
-    - [4.1.2. Property `ReduxOptions > path > experiments_root > anyOf > item 1`](#path_experiments_root_anyOf_i1)
-  - [4.2. Property `ReduxOptions > path > models`](#path_models)
-    - [4.2.1. Property `ReduxOptions > path > models > anyOf > item 0`](#path_models_anyOf_i0)
-    - [4.2.2. Property `ReduxOptions > path > models > anyOf > item 1`](#path_models_anyOf_i1)
-  - [4.3. Property `ReduxOptions > path > resume_models`](#path_resume_models)
-    - [4.3.1. Property `ReduxOptions > path > resume_models > anyOf > item 0`](#path_resume_models_anyOf_i0)
-    - [4.3.2. Property `ReduxOptions > path > resume_models > anyOf > item 1`](#path_resume_models_anyOf_i1)
-  - [4.4. Property `ReduxOptions > path > training_states`](#path_training_states)
-    - [4.4.1. Property `ReduxOptions > path > training_states > anyOf > item 0`](#path_training_states_anyOf_i0)
-    - [4.4.2. Property `ReduxOptions > path > training_states > anyOf > item 1`](#path_training_states_anyOf_i1)
-  - [4.5. Property `ReduxOptions > path > log`](#path_log)
-    - [4.5.1. Property `ReduxOptions > path > log > anyOf > item 0`](#path_log_anyOf_i0)
-    - [4.5.2. Property `ReduxOptions > path > log > anyOf > item 1`](#path_log_anyOf_i1)
-  - [4.6. Property `ReduxOptions > path > visualization`](#path_visualization)
-    - [4.6.1. Property `ReduxOptions > path > visualization > anyOf > item 0`](#path_visualization_anyOf_i0)
-    - [4.6.2. Property `ReduxOptions > path > visualization > anyOf > item 1`](#path_visualization_anyOf_i1)
-  - [4.7. Property `ReduxOptions > path > results_root`](#path_results_root)
-    - [4.7.1. Property `ReduxOptions > path > results_root > anyOf > item 0`](#path_results_root_anyOf_i0)
-    - [4.7.2. Property `ReduxOptions > path > results_root > anyOf > item 1`](#path_results_root_anyOf_i1)
-  - [4.8. Property `ReduxOptions > path > pretrain_network_g`](#path_pretrain_network_g)
-    - [4.8.1. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 0`](#path_pretrain_network_g_anyOf_i0)
-    - [4.8.2. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 1`](#path_pretrain_network_g_anyOf_i1)
-  - [4.9. Property `ReduxOptions > path > pretrain_network_g_path`](#path_pretrain_network_g_path)
-    - [4.9.1. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 0`](#path_pretrain_network_g_path_anyOf_i0)
-    - [4.9.2. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 1`](#path_pretrain_network_g_path_anyOf_i1)
-  - [4.10. Property `ReduxOptions > path > param_key_g`](#path_param_key_g)
-    - [4.10.1. Property `ReduxOptions > path > param_key_g > anyOf > item 0`](#path_param_key_g_anyOf_i0)
-    - [4.10.2. Property `ReduxOptions > path > param_key_g > anyOf > item 1`](#path_param_key_g_anyOf_i1)
-  - [4.11. Property `ReduxOptions > path > strict_load_g`](#path_strict_load_g)
-  - [4.12. Property `ReduxOptions > path > resume_state`](#path_resume_state)
-    - [4.12.1. Property `ReduxOptions > path > resume_state > anyOf > item 0`](#path_resume_state_anyOf_i0)
-    - [4.12.2. Property `ReduxOptions > path > resume_state > anyOf > item 1`](#path_resume_state_anyOf_i1)
-  - [4.13. Property `ReduxOptions > path > pretrain_network_g_ema`](#path_pretrain_network_g_ema)
-    - [4.13.1. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 0`](#path_pretrain_network_g_ema_anyOf_i0)
-    - [4.13.2. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 1`](#path_pretrain_network_g_ema_anyOf_i1)
-  - [4.14. Property `ReduxOptions > path > pretrain_network_d`](#path_pretrain_network_d)
-    - [4.14.1. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 0`](#path_pretrain_network_d_anyOf_i0)
-    - [4.14.2. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 1`](#path_pretrain_network_d_anyOf_i1)
-  - [4.15. Property `ReduxOptions > path > param_key_d`](#path_param_key_d)
-    - [4.15.1. Property `ReduxOptions > path > param_key_d > anyOf > item 0`](#path_param_key_d_anyOf_i0)
-    - [4.15.2. Property `ReduxOptions > path > param_key_d > anyOf > item 1`](#path_param_key_d_anyOf_i1)
-  - [4.16. Property `ReduxOptions > path > strict_load_d`](#path_strict_load_d)
-  - [4.17. Property `ReduxOptions > path > ignore_resume_networks`](#path_ignore_resume_networks)
-    - [4.17.1. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 0`](#path_ignore_resume_networks_anyOf_i0)
-      - [4.17.1.1. ReduxOptions > path > ignore_resume_networks > anyOf > item 0 > item 0 items](#path_ignore_resume_networks_anyOf_i0_items)
-    - [4.17.2. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 1`](#path_ignore_resume_networks_anyOf_i1)
-- [5. Property `ReduxOptions > network_g`](#network_g)
-- [6. Property `ReduxOptions > network_d`](#network_d)
-  - [6.1. Property `ReduxOptions > network_d > anyOf > item 0`](#network_d_anyOf_i0)
-  - [6.2. Property `ReduxOptions > network_d > anyOf > item 1`](#network_d_anyOf_i1)
-- [7. Property `ReduxOptions > manual_seed`](#manual_seed)
-  - [7.1. Property `ReduxOptions > manual_seed > anyOf > item 0`](#manual_seed_anyOf_i0)
-  - [7.2. Property `ReduxOptions > manual_seed > anyOf > item 1`](#manual_seed_anyOf_i1)
-- [8. Property `ReduxOptions > deterministic`](#deterministic)
-  - [8.1. Property `ReduxOptions > deterministic > anyOf > item 0`](#deterministic_anyOf_i0)
-  - [8.2. Property `ReduxOptions > deterministic > anyOf > item 1`](#deterministic_anyOf_i1)
-- [9. Property `ReduxOptions > dist`](#dist)
-  - [9.1. Property `ReduxOptions > dist > anyOf > item 0`](#dist_anyOf_i0)
-  - [9.2. Property `ReduxOptions > dist > anyOf > item 1`](#dist_anyOf_i1)
-- [10. Property `ReduxOptions > launcher`](#launcher)
-  - [10.1. Property `ReduxOptions > launcher > anyOf > item 0`](#launcher_anyOf_i0)
-  - [10.2. Property `ReduxOptions > launcher > anyOf > item 1`](#launcher_anyOf_i1)
-- [11. Property `ReduxOptions > rank`](#rank)
-  - [11.1. Property `ReduxOptions > rank > anyOf > item 0`](#rank_anyOf_i0)
-  - [11.2. Property `ReduxOptions > rank > anyOf > item 1`](#rank_anyOf_i1)
-- [12. Property `ReduxOptions > world_size`](#world_size)
-  - [12.1. Property `ReduxOptions > world_size > anyOf > item 0`](#world_size_anyOf_i0)
-  - [12.2. Property `ReduxOptions > world_size > anyOf > item 1`](#world_size_anyOf_i1)
-- [13. Property `ReduxOptions > auto_resume`](#auto_resume)
-  - [13.1. Property `ReduxOptions > auto_resume > anyOf > item 0`](#auto_resume_anyOf_i0)
-  - [13.2. Property `ReduxOptions > auto_resume > anyOf > item 1`](#auto_resume_anyOf_i1)
-- [14. Property `ReduxOptions > resume`](#resume)
-- [15. Property `ReduxOptions > is_train`](#is_train)
-  - [15.1. Property `ReduxOptions > is_train > anyOf > item 0`](#is_train_anyOf_i0)
-  - [15.2. Property `ReduxOptions > is_train > anyOf > item 1`](#is_train_anyOf_i1)
-- [16. Property `ReduxOptions > root_path`](#root_path)
-  - [16.1. Property `ReduxOptions > root_path > anyOf > item 0`](#root_path_anyOf_i0)
-  - [16.2. Property `ReduxOptions > root_path > anyOf > item 1`](#root_path_anyOf_i1)
-- [17. Property `ReduxOptions > use_amp`](#use_amp)
-- [18. Property `ReduxOptions > amp_bf16`](#amp_bf16)
-- [19. Property `ReduxOptions > use_channels_last`](#use_channels_last)
-- [20. Property `ReduxOptions > fast_matmul`](#fast_matmul)
-- [21. Property `ReduxOptions > use_compile`](#use_compile)
-- [22. Property `ReduxOptions > detect_anomaly`](#detect_anomaly)
-- [23. Property `ReduxOptions > high_order_degradation`](#high_order_degradation)
-- [24. Property `ReduxOptions > high_order_degradations_debug`](#high_order_degradations_debug)
-- [25. Property `ReduxOptions > high_order_degradations_debug_limit`](#high_order_degradations_debug_limit)
-- [26. Property `ReduxOptions > dataroot_lq_prob`](#dataroot_lq_prob)
-- [27. Property `ReduxOptions > force_high_order_degradation_filename_masks`](#force_high_order_degradation_filename_masks)
-  - [27.1. ReduxOptions > force_high_order_degradation_filename_masks > force_high_order_degradation_filename_masks items](#force_high_order_degradation_filename_masks_items)
-- [28. Property `ReduxOptions > force_dataroot_lq_filename_masks`](#force_dataroot_lq_filename_masks)
-  - [28.1. ReduxOptions > force_dataroot_lq_filename_masks > force_dataroot_lq_filename_masks items](#force_dataroot_lq_filename_masks_items)
-- [29. Property `ReduxOptions > lq_usm`](#lq_usm)
-- [30. Property `ReduxOptions > lq_usm_radius_range`](#lq_usm_radius_range)
-  - [30.1. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 0](#autogenerated_heading_2)
-  - [30.2. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 1](#autogenerated_heading_3)
-- [31. Property `ReduxOptions > blur_prob`](#blur_prob)
-- [32. Property `ReduxOptions > resize_prob`](#resize_prob)
-  - [32.1. ReduxOptions > resize_prob > resize_prob items](#resize_prob_items)
-- [33. Property `ReduxOptions > resize_mode_list`](#resize_mode_list)
-  - [33.1. ReduxOptions > resize_mode_list > resize_mode_list items](#resize_mode_list_items)
-- [34. Property `ReduxOptions > resize_mode_prob`](#resize_mode_prob)
-  - [34.1. ReduxOptions > resize_mode_prob > resize_mode_prob items](#resize_mode_prob_items)
-- [35. Property `ReduxOptions > resize_range`](#resize_range)
-  - [35.1. ReduxOptions > resize_range > resize_range item 0](#autogenerated_heading_4)
-  - [35.2. ReduxOptions > resize_range > resize_range item 1](#autogenerated_heading_5)
-- [36. Property `ReduxOptions > gaussian_noise_prob`](#gaussian_noise_prob)
-- [37. Property `ReduxOptions > noise_range`](#noise_range)
-  - [37.1. ReduxOptions > noise_range > noise_range item 0](#autogenerated_heading_6)
-  - [37.2. ReduxOptions > noise_range > noise_range item 1](#autogenerated_heading_7)
-- [38. Property `ReduxOptions > poisson_scale_range`](#poisson_scale_range)
-  - [38.1. ReduxOptions > poisson_scale_range > poisson_scale_range item 0](#autogenerated_heading_8)
-  - [38.2. ReduxOptions > poisson_scale_range > poisson_scale_range item 1](#autogenerated_heading_9)
-- [39. Property `ReduxOptions > gray_noise_prob`](#gray_noise_prob)
-- [40. Property `ReduxOptions > jpeg_prob`](#jpeg_prob)
-- [41. Property `ReduxOptions > jpeg_range`](#jpeg_range)
-  - [41.1. ReduxOptions > jpeg_range > jpeg_range item 0](#autogenerated_heading_10)
-  - [41.2. ReduxOptions > jpeg_range > jpeg_range item 1](#autogenerated_heading_11)
-- [42. Property `ReduxOptions > blur_prob2`](#blur_prob2)
-- [43. Property `ReduxOptions > resize_prob2`](#resize_prob2)
-  - [43.1. ReduxOptions > resize_prob2 > resize_prob2 items](#resize_prob2_items)
-- [44. Property `ReduxOptions > resize_mode_list2`](#resize_mode_list2)
-  - [44.1. ReduxOptions > resize_mode_list2 > resize_mode_list2 items](#resize_mode_list2_items)
-- [45. Property `ReduxOptions > resize_mode_prob2`](#resize_mode_prob2)
-  - [45.1. ReduxOptions > resize_mode_prob2 > resize_mode_prob2 items](#resize_mode_prob2_items)
-- [46. Property `ReduxOptions > resize_range2`](#resize_range2)
-  - [46.1. ReduxOptions > resize_range2 > resize_range2 item 0](#autogenerated_heading_12)
-  - [46.2. ReduxOptions > resize_range2 > resize_range2 item 1](#autogenerated_heading_13)
-- [47. Property `ReduxOptions > gaussian_noise_prob2`](#gaussian_noise_prob2)
-- [48. Property `ReduxOptions > noise_range2`](#noise_range2)
-  - [48.1. ReduxOptions > noise_range2 > noise_range2 item 0](#autogenerated_heading_14)
-  - [48.2. ReduxOptions > noise_range2 > noise_range2 item 1](#autogenerated_heading_15)
-- [49. Property `ReduxOptions > poisson_scale_range2`](#poisson_scale_range2)
-  - [49.1. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 0](#autogenerated_heading_16)
-  - [49.2. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 1](#autogenerated_heading_17)
-- [50. Property `ReduxOptions > gray_noise_prob2`](#gray_noise_prob2)
-- [51. Property `ReduxOptions > jpeg_prob2`](#jpeg_prob2)
-- [52. Property `ReduxOptions > jpeg_range2`](#jpeg_range2)
-  - [52.1. ReduxOptions > jpeg_range2 > jpeg_range2 items](#jpeg_range2_items)
-- [53. Property `ReduxOptions > resize_mode_list3`](#resize_mode_list3)
-  - [53.1. ReduxOptions > resize_mode_list3 > resize_mode_list3 items](#resize_mode_list3_items)
-- [54. Property `ReduxOptions > resize_mode_prob3`](#resize_mode_prob3)
-  - [54.1. ReduxOptions > resize_mode_prob3 > resize_mode_prob3 items](#resize_mode_prob3_items)
-- [55. Property `ReduxOptions > queue_size`](#queue_size)
-- [56. Property `ReduxOptions > datasets`](#datasets)
-  - [56.1. Property `ReduxOptions > datasets > DatasetOptions`](#datasets_additionalProperties)
-    - [56.1.1. Property `ReduxOptions > datasets > DatasetOptions > name`](#datasets_additionalProperties_name)
-    - [56.1.2. Property `ReduxOptions > datasets > DatasetOptions > type`](#datasets_additionalProperties_type)
-    - [56.1.3. Property `ReduxOptions > datasets > DatasetOptions > io_backend`](#datasets_additionalProperties_io_backend)
-    - [56.1.4. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu`](#datasets_additionalProperties_num_worker_per_gpu)
-      - [56.1.4.1. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 0`](#datasets_additionalProperties_num_worker_per_gpu_anyOf_i0)
-      - [56.1.4.2. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 1`](#datasets_additionalProperties_num_worker_per_gpu_anyOf_i1)
-    - [56.1.5. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu`](#datasets_additionalProperties_batch_size_per_gpu)
-      - [56.1.5.1. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 0`](#datasets_additionalProperties_batch_size_per_gpu_anyOf_i0)
-      - [56.1.5.2. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 1`](#datasets_additionalProperties_batch_size_per_gpu_anyOf_i1)
-    - [56.1.6. Property `ReduxOptions > datasets > DatasetOptions > accum_iter`](#datasets_additionalProperties_accum_iter)
-    - [56.1.7. Property `ReduxOptions > datasets > DatasetOptions > use_hflip`](#datasets_additionalProperties_use_hflip)
-    - [56.1.8. Property `ReduxOptions > datasets > DatasetOptions > use_rot`](#datasets_additionalProperties_use_rot)
-    - [56.1.9. Property `ReduxOptions > datasets > DatasetOptions > mean`](#datasets_additionalProperties_mean)
-      - [56.1.9.1. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0`](#datasets_additionalProperties_mean_anyOf_i0)
-        - [56.1.9.1.1. ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0 > item 0 items](#datasets_additionalProperties_mean_anyOf_i0_items)
-      - [56.1.9.2. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 1`](#datasets_additionalProperties_mean_anyOf_i1)
-    - [56.1.10. Property `ReduxOptions > datasets > DatasetOptions > std`](#datasets_additionalProperties_std)
-      - [56.1.10.1. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0`](#datasets_additionalProperties_std_anyOf_i0)
-        - [56.1.10.1.1. ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0 > item 0 items](#datasets_additionalProperties_std_anyOf_i0_items)
-      - [56.1.10.2. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 1`](#datasets_additionalProperties_std_anyOf_i1)
-    - [56.1.11. Property `ReduxOptions > datasets > DatasetOptions > gt_size`](#datasets_additionalProperties_gt_size)
-      - [56.1.11.1. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 0`](#datasets_additionalProperties_gt_size_anyOf_i0)
-      - [56.1.11.2. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 1`](#datasets_additionalProperties_gt_size_anyOf_i1)
-    - [56.1.12. Property `ReduxOptions > datasets > DatasetOptions > lq_size`](#datasets_additionalProperties_lq_size)
-      - [56.1.12.1. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 0`](#datasets_additionalProperties_lq_size_anyOf_i0)
-      - [56.1.12.2. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 1`](#datasets_additionalProperties_lq_size_anyOf_i1)
-    - [56.1.13. Property `ReduxOptions > datasets > DatasetOptions > color`](#datasets_additionalProperties_color)
-      - [56.1.13.1. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 0`](#datasets_additionalProperties_color_anyOf_i0)
-      - [56.1.13.2. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 1`](#datasets_additionalProperties_color_anyOf_i1)
-    - [56.1.14. Property `ReduxOptions > datasets > DatasetOptions > phase`](#datasets_additionalProperties_phase)
-      - [56.1.14.1. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 0`](#datasets_additionalProperties_phase_anyOf_i0)
-      - [56.1.14.2. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 1`](#datasets_additionalProperties_phase_anyOf_i1)
-    - [56.1.15. Property `ReduxOptions > datasets > DatasetOptions > scale`](#datasets_additionalProperties_scale)
-      - [56.1.15.1. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 0`](#datasets_additionalProperties_scale_anyOf_i0)
-      - [56.1.15.2. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 1`](#datasets_additionalProperties_scale_anyOf_i1)
-    - [56.1.16. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio`](#datasets_additionalProperties_dataset_enlarge_ratio)
-      - [56.1.16.1. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 0`](#datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i0)
-      - [56.1.16.2. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 1`](#datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i1)
-    - [56.1.17. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode`](#datasets_additionalProperties_prefetch_mode)
-      - [56.1.17.1. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 0`](#datasets_additionalProperties_prefetch_mode_anyOf_i0)
-      - [56.1.17.2. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 1`](#datasets_additionalProperties_prefetch_mode_anyOf_i1)
-    - [56.1.18. Property `ReduxOptions > datasets > DatasetOptions > pin_memory`](#datasets_additionalProperties_pin_memory)
-    - [56.1.19. Property `ReduxOptions > datasets > DatasetOptions > persistent_workers`](#datasets_additionalProperties_persistent_workers)
-    - [56.1.20. Property `ReduxOptions > datasets > DatasetOptions > num_prefetch_queue`](#datasets_additionalProperties_num_prefetch_queue)
-    - [56.1.21. Property `ReduxOptions > datasets > DatasetOptions > prefetch_factor`](#datasets_additionalProperties_prefetch_factor)
-    - [56.1.22. Property `ReduxOptions > datasets > DatasetOptions > clip_size`](#datasets_additionalProperties_clip_size)
-      - [56.1.22.1. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 0`](#datasets_additionalProperties_clip_size_anyOf_i0)
-      - [56.1.22.2. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 1`](#datasets_additionalProperties_clip_size_anyOf_i1)
-    - [56.1.23. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt`](#datasets_additionalProperties_dataroot_gt)
-      - [56.1.23.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 0`](#datasets_additionalProperties_dataroot_gt_anyOf_i0)
-      - [56.1.23.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1`](#datasets_additionalProperties_dataroot_gt_anyOf_i1)
-        - [56.1.23.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1 > item 1 items](#datasets_additionalProperties_dataroot_gt_anyOf_i1_items)
-      - [56.1.23.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 2`](#datasets_additionalProperties_dataroot_gt_anyOf_i2)
-    - [56.1.24. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq`](#datasets_additionalProperties_dataroot_lq)
-      - [56.1.24.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 0`](#datasets_additionalProperties_dataroot_lq_anyOf_i0)
-      - [56.1.24.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1`](#datasets_additionalProperties_dataroot_lq_anyOf_i1)
-        - [56.1.24.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1 > item 1 items](#datasets_additionalProperties_dataroot_lq_anyOf_i1_items)
-      - [56.1.24.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 2`](#datasets_additionalProperties_dataroot_lq_anyOf_i2)
-    - [56.1.25. Property `ReduxOptions > datasets > DatasetOptions > meta_info`](#datasets_additionalProperties_meta_info)
-      - [56.1.25.1. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 0`](#datasets_additionalProperties_meta_info_anyOf_i0)
-      - [56.1.25.2. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 1`](#datasets_additionalProperties_meta_info_anyOf_i1)
-    - [56.1.26. Property `ReduxOptions > datasets > DatasetOptions > filename_tmpl`](#datasets_additionalProperties_filename_tmpl)
-    - [56.1.27. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size`](#datasets_additionalProperties_blur_kernel_size)
-    - [56.1.28. Property `ReduxOptions > datasets > DatasetOptions > kernel_list`](#datasets_additionalProperties_kernel_list)
-      - [56.1.28.1. ReduxOptions > datasets > DatasetOptions > kernel_list > kernel_list items](#datasets_additionalProperties_kernel_list_items)
-    - [56.1.29. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob`](#datasets_additionalProperties_kernel_prob)
-      - [56.1.29.1. ReduxOptions > datasets > DatasetOptions > kernel_prob > kernel_prob items](#datasets_additionalProperties_kernel_prob_items)
-    - [56.1.30. Property `ReduxOptions > datasets > DatasetOptions > kernel_range`](#datasets_additionalProperties_kernel_range)
-      - [56.1.30.1. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 0](#autogenerated_heading_18)
-      - [56.1.30.2. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 1](#autogenerated_heading_19)
-    - [56.1.31. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob`](#datasets_additionalProperties_sinc_prob)
-    - [56.1.32. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma`](#datasets_additionalProperties_blur_sigma)
-      - [56.1.32.1. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 0](#autogenerated_heading_20)
-      - [56.1.32.2. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 1](#autogenerated_heading_21)
-    - [56.1.33. Property `ReduxOptions > datasets > DatasetOptions > betag_range`](#datasets_additionalProperties_betag_range)
-      - [56.1.33.1. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 0](#autogenerated_heading_22)
-      - [56.1.33.2. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 1](#autogenerated_heading_23)
-    - [56.1.34. Property `ReduxOptions > datasets > DatasetOptions > betap_range`](#datasets_additionalProperties_betap_range)
-      - [56.1.34.1. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 0](#autogenerated_heading_24)
-      - [56.1.34.2. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 1](#autogenerated_heading_25)
-    - [56.1.35. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size2`](#datasets_additionalProperties_blur_kernel_size2)
-    - [56.1.36. Property `ReduxOptions > datasets > DatasetOptions > kernel_list2`](#datasets_additionalProperties_kernel_list2)
-      - [56.1.36.1. ReduxOptions > datasets > DatasetOptions > kernel_list2 > kernel_list2 items](#datasets_additionalProperties_kernel_list2_items)
-    - [56.1.37. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob2`](#datasets_additionalProperties_kernel_prob2)
-      - [56.1.37.1. ReduxOptions > datasets > DatasetOptions > kernel_prob2 > kernel_prob2 items](#datasets_additionalProperties_kernel_prob2_items)
-    - [56.1.38. Property `ReduxOptions > datasets > DatasetOptions > kernel_range2`](#datasets_additionalProperties_kernel_range2)
-      - [56.1.38.1. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 0](#autogenerated_heading_26)
-      - [56.1.38.2. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 1](#autogenerated_heading_27)
-    - [56.1.39. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob2`](#datasets_additionalProperties_sinc_prob2)
-    - [56.1.40. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma2`](#datasets_additionalProperties_blur_sigma2)
-      - [56.1.40.1. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 0](#autogenerated_heading_28)
-      - [56.1.40.2. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 1](#autogenerated_heading_29)
-    - [56.1.41. Property `ReduxOptions > datasets > DatasetOptions > betag_range2`](#datasets_additionalProperties_betag_range2)
-      - [56.1.41.1. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 0](#autogenerated_heading_30)
-      - [56.1.41.2. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 1](#autogenerated_heading_31)
-    - [56.1.42. Property `ReduxOptions > datasets > DatasetOptions > betap_range2`](#datasets_additionalProperties_betap_range2)
-      - [56.1.42.1. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 0](#autogenerated_heading_32)
-      - [56.1.42.2. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 1](#autogenerated_heading_33)
-    - [56.1.43. Property `ReduxOptions > datasets > DatasetOptions > final_sinc_prob`](#datasets_additionalProperties_final_sinc_prob)
-    - [56.1.44. Property `ReduxOptions > datasets > DatasetOptions > final_kernel_range`](#datasets_additionalProperties_final_kernel_range)
-      - [56.1.44.1. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 0](#autogenerated_heading_34)
-      - [56.1.44.2. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 1](#autogenerated_heading_35)
-- [57. Property `ReduxOptions > train`](#train)
-  - [57.1. Property `ReduxOptions > train > anyOf > item 0`](#train_anyOf_i0)
-  - [57.2. Property `ReduxOptions > train > anyOf > TrainOptions`](#train_anyOf_i1)
-    - [57.2.1. Property `ReduxOptions > train > anyOf > TrainOptions > total_iter`](#train_anyOf_i1_total_iter)
-    - [57.2.2. Property `ReduxOptions > train > anyOf > TrainOptions > optim_g`](#train_anyOf_i1_optim_g)
-    - [57.2.3. Property `ReduxOptions > train > anyOf > TrainOptions > ema_decay`](#train_anyOf_i1_ema_decay)
-    - [57.2.4. Property `ReduxOptions > train > anyOf > TrainOptions > grad_clip`](#train_anyOf_i1_grad_clip)
-    - [57.2.5. Property `ReduxOptions > train > anyOf > TrainOptions > warmup_iter`](#train_anyOf_i1_warmup_iter)
-    - [57.2.6. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler`](#train_anyOf_i1_scheduler)
-      - [57.2.6.1. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > item 0`](#train_anyOf_i1_scheduler_anyOf_i0)
-      - [57.2.6.2. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions`](#train_anyOf_i1_scheduler_anyOf_i1)
-        - [57.2.6.2.1. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > type`](#train_anyOf_i1_scheduler_anyOf_i1_type)
-        - [57.2.6.2.2. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > milestones`](#train_anyOf_i1_scheduler_anyOf_i1_milestones)
-          - [57.2.6.2.2.1. ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > milestones > milestones items](#train_anyOf_i1_scheduler_anyOf_i1_milestones_items)
-        - [57.2.6.2.3. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > gamma`](#train_anyOf_i1_scheduler_anyOf_i1_gamma)
-    - [57.2.7. Property `ReduxOptions > train > anyOf > TrainOptions > optim_d`](#train_anyOf_i1_optim_d)
-      - [57.2.7.1. Property `ReduxOptions > train > anyOf > TrainOptions > optim_d > anyOf > item 0`](#train_anyOf_i1_optim_d_anyOf_i0)
-      - [57.2.7.2. Property `ReduxOptions > train > anyOf > TrainOptions > optim_d > anyOf > item 1`](#train_anyOf_i1_optim_d_anyOf_i1)
-    - [57.2.8. Property `ReduxOptions > train > anyOf > TrainOptions > losses`](#train_anyOf_i1_losses)
-      - [57.2.8.1. Property `ReduxOptions > train > anyOf > TrainOptions > losses > anyOf > item 0`](#train_anyOf_i1_losses_anyOf_i0)
-        - [57.2.8.1.1. ReduxOptions > train > anyOf > TrainOptions > losses > anyOf > item 0 > item 0 items](#train_anyOf_i1_losses_anyOf_i0_items)
-      - [57.2.8.2. Property `ReduxOptions > train > anyOf > TrainOptions > losses > anyOf > item 1`](#train_anyOf_i1_losses_anyOf_i1)
-    - [57.2.9. Property `ReduxOptions > train > anyOf > TrainOptions > pixel_opt`](#train_anyOf_i1_pixel_opt)
-      - [57.2.9.1. Property `ReduxOptions > train > anyOf > TrainOptions > pixel_opt > anyOf > item 0`](#train_anyOf_i1_pixel_opt_anyOf_i0)
-      - [57.2.9.2. Property `ReduxOptions > train > anyOf > TrainOptions > pixel_opt > anyOf > item 1`](#train_anyOf_i1_pixel_opt_anyOf_i1)
-    - [57.2.10. Property `ReduxOptions > train > anyOf > TrainOptions > mssim_opt`](#train_anyOf_i1_mssim_opt)
-      - [57.2.10.1. Property `ReduxOptions > train > anyOf > TrainOptions > mssim_opt > anyOf > item 0`](#train_anyOf_i1_mssim_opt_anyOf_i0)
-      - [57.2.10.2. Property `ReduxOptions > train > anyOf > TrainOptions > mssim_opt > anyOf > item 1`](#train_anyOf_i1_mssim_opt_anyOf_i1)
-    - [57.2.11. Property `ReduxOptions > train > anyOf > TrainOptions > ms_ssim_l1_opt`](#train_anyOf_i1_ms_ssim_l1_opt)
-      - [57.2.11.1. Property `ReduxOptions > train > anyOf > TrainOptions > ms_ssim_l1_opt > anyOf > item 0`](#train_anyOf_i1_ms_ssim_l1_opt_anyOf_i0)
-      - [57.2.11.2. Property `ReduxOptions > train > anyOf > TrainOptions > ms_ssim_l1_opt > anyOf > item 1`](#train_anyOf_i1_ms_ssim_l1_opt_anyOf_i1)
-    - [57.2.12. Property `ReduxOptions > train > anyOf > TrainOptions > perceptual_opt`](#train_anyOf_i1_perceptual_opt)
-      - [57.2.12.1. Property `ReduxOptions > train > anyOf > TrainOptions > perceptual_opt > anyOf > item 0`](#train_anyOf_i1_perceptual_opt_anyOf_i0)
-      - [57.2.12.2. Property `ReduxOptions > train > anyOf > TrainOptions > perceptual_opt > anyOf > item 1`](#train_anyOf_i1_perceptual_opt_anyOf_i1)
-    - [57.2.13. Property `ReduxOptions > train > anyOf > TrainOptions > contextual_opt`](#train_anyOf_i1_contextual_opt)
-      - [57.2.13.1. Property `ReduxOptions > train > anyOf > TrainOptions > contextual_opt > anyOf > item 0`](#train_anyOf_i1_contextual_opt_anyOf_i0)
-      - [57.2.13.2. Property `ReduxOptions > train > anyOf > TrainOptions > contextual_opt > anyOf > item 1`](#train_anyOf_i1_contextual_opt_anyOf_i1)
-    - [57.2.14. Property `ReduxOptions > train > anyOf > TrainOptions > dists_opt`](#train_anyOf_i1_dists_opt)
-      - [57.2.14.1. Property `ReduxOptions > train > anyOf > TrainOptions > dists_opt > anyOf > item 0`](#train_anyOf_i1_dists_opt_anyOf_i0)
-      - [57.2.14.2. Property `ReduxOptions > train > anyOf > TrainOptions > dists_opt > anyOf > item 1`](#train_anyOf_i1_dists_opt_anyOf_i1)
-    - [57.2.15. Property `ReduxOptions > train > anyOf > TrainOptions > hr_inversion_opt`](#train_anyOf_i1_hr_inversion_opt)
-      - [57.2.15.1. Property `ReduxOptions > train > anyOf > TrainOptions > hr_inversion_opt > anyOf > item 0`](#train_anyOf_i1_hr_inversion_opt_anyOf_i0)
-      - [57.2.15.2. Property `ReduxOptions > train > anyOf > TrainOptions > hr_inversion_opt > anyOf > item 1`](#train_anyOf_i1_hr_inversion_opt_anyOf_i1)
-    - [57.2.16. Property `ReduxOptions > train > anyOf > TrainOptions > dinov2_opt`](#train_anyOf_i1_dinov2_opt)
-      - [57.2.16.1. Property `ReduxOptions > train > anyOf > TrainOptions > dinov2_opt > anyOf > item 0`](#train_anyOf_i1_dinov2_opt_anyOf_i0)
-      - [57.2.16.2. Property `ReduxOptions > train > anyOf > TrainOptions > dinov2_opt > anyOf > item 1`](#train_anyOf_i1_dinov2_opt_anyOf_i1)
-    - [57.2.17. Property `ReduxOptions > train > anyOf > TrainOptions > topiq_opt`](#train_anyOf_i1_topiq_opt)
-      - [57.2.17.1. Property `ReduxOptions > train > anyOf > TrainOptions > topiq_opt > anyOf > item 0`](#train_anyOf_i1_topiq_opt_anyOf_i0)
-      - [57.2.17.2. Property `ReduxOptions > train > anyOf > TrainOptions > topiq_opt > anyOf > item 1`](#train_anyOf_i1_topiq_opt_anyOf_i1)
-    - [57.2.18. Property `ReduxOptions > train > anyOf > TrainOptions > pd_opt`](#train_anyOf_i1_pd_opt)
-      - [57.2.18.1. Property `ReduxOptions > train > anyOf > TrainOptions > pd_opt > anyOf > item 0`](#train_anyOf_i1_pd_opt_anyOf_i0)
-      - [57.2.18.2. Property `ReduxOptions > train > anyOf > TrainOptions > pd_opt > anyOf > item 1`](#train_anyOf_i1_pd_opt_anyOf_i1)
-    - [57.2.19. Property `ReduxOptions > train > anyOf > TrainOptions > fd_opt`](#train_anyOf_i1_fd_opt)
-      - [57.2.19.1. Property `ReduxOptions > train > anyOf > TrainOptions > fd_opt > anyOf > item 0`](#train_anyOf_i1_fd_opt_anyOf_i0)
-      - [57.2.19.2. Property `ReduxOptions > train > anyOf > TrainOptions > fd_opt > anyOf > item 1`](#train_anyOf_i1_fd_opt_anyOf_i1)
-    - [57.2.20. Property `ReduxOptions > train > anyOf > TrainOptions > ldl_opt`](#train_anyOf_i1_ldl_opt)
-      - [57.2.20.1. Property `ReduxOptions > train > anyOf > TrainOptions > ldl_opt > anyOf > item 0`](#train_anyOf_i1_ldl_opt_anyOf_i0)
-      - [57.2.20.2. Property `ReduxOptions > train > anyOf > TrainOptions > ldl_opt > anyOf > item 1`](#train_anyOf_i1_ldl_opt_anyOf_i1)
-    - [57.2.21. Property `ReduxOptions > train > anyOf > TrainOptions > hsluv_opt`](#train_anyOf_i1_hsluv_opt)
-      - [57.2.21.1. Property `ReduxOptions > train > anyOf > TrainOptions > hsluv_opt > anyOf > item 0`](#train_anyOf_i1_hsluv_opt_anyOf_i0)
-      - [57.2.21.2. Property `ReduxOptions > train > anyOf > TrainOptions > hsluv_opt > anyOf > item 1`](#train_anyOf_i1_hsluv_opt_anyOf_i1)
-    - [57.2.22. Property `ReduxOptions > train > anyOf > TrainOptions > gan_opt`](#train_anyOf_i1_gan_opt)
-      - [57.2.22.1. Property `ReduxOptions > train > anyOf > TrainOptions > gan_opt > anyOf > item 0`](#train_anyOf_i1_gan_opt_anyOf_i0)
-      - [57.2.22.2. Property `ReduxOptions > train > anyOf > TrainOptions > gan_opt > anyOf > item 1`](#train_anyOf_i1_gan_opt_anyOf_i1)
-    - [57.2.23. Property `ReduxOptions > train > anyOf > TrainOptions > color_opt`](#train_anyOf_i1_color_opt)
-      - [57.2.23.1. Property `ReduxOptions > train > anyOf > TrainOptions > color_opt > anyOf > item 0`](#train_anyOf_i1_color_opt_anyOf_i0)
-      - [57.2.23.2. Property `ReduxOptions > train > anyOf > TrainOptions > color_opt > anyOf > item 1`](#train_anyOf_i1_color_opt_anyOf_i1)
-    - [57.2.24. Property `ReduxOptions > train > anyOf > TrainOptions > luma_opt`](#train_anyOf_i1_luma_opt)
-      - [57.2.24.1. Property `ReduxOptions > train > anyOf > TrainOptions > luma_opt > anyOf > item 0`](#train_anyOf_i1_luma_opt_anyOf_i0)
-      - [57.2.24.2. Property `ReduxOptions > train > anyOf > TrainOptions > luma_opt > anyOf > item 1`](#train_anyOf_i1_luma_opt_anyOf_i1)
-    - [57.2.25. Property `ReduxOptions > train > anyOf > TrainOptions > avg_opt`](#train_anyOf_i1_avg_opt)
-      - [57.2.25.1. Property `ReduxOptions > train > anyOf > TrainOptions > avg_opt > anyOf > item 0`](#train_anyOf_i1_avg_opt_anyOf_i0)
-      - [57.2.25.2. Property `ReduxOptions > train > anyOf > TrainOptions > avg_opt > anyOf > item 1`](#train_anyOf_i1_avg_opt_anyOf_i1)
-    - [57.2.26. Property `ReduxOptions > train > anyOf > TrainOptions > bicubic_opt`](#train_anyOf_i1_bicubic_opt)
-      - [57.2.26.1. Property `ReduxOptions > train > anyOf > TrainOptions > bicubic_opt > anyOf > item 0`](#train_anyOf_i1_bicubic_opt_anyOf_i0)
-      - [57.2.26.2. Property `ReduxOptions > train > anyOf > TrainOptions > bicubic_opt > anyOf > item 1`](#train_anyOf_i1_bicubic_opt_anyOf_i1)
-    - [57.2.27. Property `ReduxOptions > train > anyOf > TrainOptions > use_moa`](#train_anyOf_i1_use_moa)
-    - [57.2.28. Property `ReduxOptions > train > anyOf > TrainOptions > moa_augs`](#train_anyOf_i1_moa_augs)
-      - [57.2.28.1. ReduxOptions > train > anyOf > TrainOptions > moa_augs > moa_augs items](#train_anyOf_i1_moa_augs_items)
-    - [57.2.29. Property `ReduxOptions > train > anyOf > TrainOptions > moa_probs`](#train_anyOf_i1_moa_probs)
-      - [57.2.29.1. ReduxOptions > train > anyOf > TrainOptions > moa_probs > moa_probs items](#train_anyOf_i1_moa_probs_items)
-    - [57.2.30. Property `ReduxOptions > train > anyOf > TrainOptions > moa_debug`](#train_anyOf_i1_moa_debug)
-    - [57.2.31. Property `ReduxOptions > train > anyOf > TrainOptions > moa_debug_limit`](#train_anyOf_i1_moa_debug_limit)
-- [58. Property `ReduxOptions > val`](#val)
-  - [58.1. Property `ReduxOptions > val > anyOf > item 0`](#val_anyOf_i0)
-  - [58.2. Property `ReduxOptions > val > anyOf > ValOptions`](#val_anyOf_i1)
-    - [58.2.1. Property `ReduxOptions > val > anyOf > ValOptions > val_enabled`](#val_anyOf_i1_val_enabled)
-    - [58.2.2. Property `ReduxOptions > val > anyOf > ValOptions > save_img`](#val_anyOf_i1_save_img)
-    - [58.2.3. Property `ReduxOptions > val > anyOf > ValOptions > val_freq`](#val_anyOf_i1_val_freq)
-      - [58.2.3.1. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 0`](#val_anyOf_i1_val_freq_anyOf_i0)
-      - [58.2.3.2. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 1`](#val_anyOf_i1_val_freq_anyOf_i1)
-    - [58.2.4. Property `ReduxOptions > val > anyOf > ValOptions > suffix`](#val_anyOf_i1_suffix)
-      - [58.2.4.1. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 0`](#val_anyOf_i1_suffix_anyOf_i0)
-      - [58.2.4.2. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 1`](#val_anyOf_i1_suffix_anyOf_i1)
-    - [58.2.5. Property `ReduxOptions > val > anyOf > ValOptions > metrics_enabled`](#val_anyOf_i1_metrics_enabled)
-    - [58.2.6. Property `ReduxOptions > val > anyOf > ValOptions > metrics`](#val_anyOf_i1_metrics)
-      - [58.2.6.1. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 0`](#val_anyOf_i1_metrics_anyOf_i0)
-      - [58.2.6.2. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 1`](#val_anyOf_i1_metrics_anyOf_i1)
-    - [58.2.7. Property `ReduxOptions > val > anyOf > ValOptions > pbar`](#val_anyOf_i1_pbar)
-- [59. Property `ReduxOptions > logger`](#logger)
-  - [59.1. Property `ReduxOptions > logger > anyOf > item 0`](#logger_anyOf_i0)
-  - [59.2. Property `ReduxOptions > logger > anyOf > LogOptions`](#logger_anyOf_i1)
-    - [59.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > print_freq`](#logger_anyOf_i1_print_freq)
-    - [59.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_freq`](#logger_anyOf_i1_save_checkpoint_freq)
-    - [59.2.3. Property `ReduxOptions > logger > anyOf > LogOptions > use_tb_logger`](#logger_anyOf_i1_use_tb_logger)
-    - [59.2.4. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_format`](#logger_anyOf_i1_save_checkpoint_format)
-    - [59.2.5. Property `ReduxOptions > logger > anyOf > LogOptions > wandb`](#logger_anyOf_i1_wandb)
-      - [59.2.5.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > item 0`](#logger_anyOf_i1_wandb_anyOf_i0)
-      - [59.2.5.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions`](#logger_anyOf_i1_wandb_anyOf_i1)
-        - [59.2.5.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id`](#logger_anyOf_i1_wandb_anyOf_i1_resume_id)
-          - [59.2.5.2.1.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 0`](#logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i0)
-          - [59.2.5.2.1.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 1`](#logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i1)
-        - [59.2.5.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project`](#logger_anyOf_i1_wandb_anyOf_i1_project)
-          - [59.2.5.2.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 0`](#logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i0)
-          - [59.2.5.2.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 1`](#logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i1)
-- [60. Property `ReduxOptions > dist_params`](#dist_params)
-  - [60.1. Property `ReduxOptions > dist_params > anyOf > item 0`](#dist_params_anyOf_i0)
-  - [60.2. Property `ReduxOptions > dist_params > anyOf > item 1`](#dist_params_anyOf_i1)
-- [61. Property `ReduxOptions > onnx`](#onnx)
-  - [61.1. Property `ReduxOptions > onnx > anyOf > item 0`](#onnx_anyOf_i0)
-  - [61.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions`](#onnx_anyOf_i1)
-    - [61.2.1. Property `ReduxOptions > onnx > anyOf > OnnxOptions > dynamo`](#onnx_anyOf_i1_dynamo)
-    - [61.2.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions > opset`](#onnx_anyOf_i1_opset)
-    - [61.2.3. Property `ReduxOptions > onnx > anyOf > OnnxOptions > use_static_shapes`](#onnx_anyOf_i1_use_static_shapes)
-    - [61.2.4. Property `ReduxOptions > onnx > anyOf > OnnxOptions > shape`](#onnx_anyOf_i1_shape)
-    - [61.2.5. Property `ReduxOptions > onnx > anyOf > OnnxOptions > verify`](#onnx_anyOf_i1_verify)
-    - [61.2.6. Property `ReduxOptions > onnx > anyOf > OnnxOptions > fp16`](#onnx_anyOf_i1_fp16)
-    - [61.2.7. Property `ReduxOptions > onnx > anyOf > OnnxOptions > optimize`](#onnx_anyOf_i1_optimize)
-- [62. Property `ReduxOptions > find_unused_parameters`](#find_unused_parameters)
+- [1. Property `ReduxOptions > type`](#type)
+- [2. Property `ReduxOptions > name`](#name)
+- [3. Property `ReduxOptions > scale`](#scale)
+- [4. Property `ReduxOptions > num_gpu`](#num_gpu)
+  - [4.1. Property `ReduxOptions > num_gpu > anyOf > item 0`](#num_gpu_anyOf_i0)
+  - [4.2. Property `ReduxOptions > num_gpu > anyOf > item 1`](#num_gpu_anyOf_i1)
+- [5. Property `ReduxOptions > path`](#path)
+  - [5.1. Property `ReduxOptions > path > experiments_root`](#path_experiments_root)
+    - [5.1.1. Property `ReduxOptions > path > experiments_root > anyOf > item 0`](#path_experiments_root_anyOf_i0)
+    - [5.1.2. Property `ReduxOptions > path > experiments_root > anyOf > item 1`](#path_experiments_root_anyOf_i1)
+  - [5.2. Property `ReduxOptions > path > models`](#path_models)
+    - [5.2.1. Property `ReduxOptions > path > models > anyOf > item 0`](#path_models_anyOf_i0)
+    - [5.2.2. Property `ReduxOptions > path > models > anyOf > item 1`](#path_models_anyOf_i1)
+  - [5.3. Property `ReduxOptions > path > resume_models`](#path_resume_models)
+    - [5.3.1. Property `ReduxOptions > path > resume_models > anyOf > item 0`](#path_resume_models_anyOf_i0)
+    - [5.3.2. Property `ReduxOptions > path > resume_models > anyOf > item 1`](#path_resume_models_anyOf_i1)
+  - [5.4. Property `ReduxOptions > path > training_states`](#path_training_states)
+    - [5.4.1. Property `ReduxOptions > path > training_states > anyOf > item 0`](#path_training_states_anyOf_i0)
+    - [5.4.2. Property `ReduxOptions > path > training_states > anyOf > item 1`](#path_training_states_anyOf_i1)
+  - [5.5. Property `ReduxOptions > path > log`](#path_log)
+    - [5.5.1. Property `ReduxOptions > path > log > anyOf > item 0`](#path_log_anyOf_i0)
+    - [5.5.2. Property `ReduxOptions > path > log > anyOf > item 1`](#path_log_anyOf_i1)
+  - [5.6. Property `ReduxOptions > path > visualization`](#path_visualization)
+    - [5.6.1. Property `ReduxOptions > path > visualization > anyOf > item 0`](#path_visualization_anyOf_i0)
+    - [5.6.2. Property `ReduxOptions > path > visualization > anyOf > item 1`](#path_visualization_anyOf_i1)
+  - [5.7. Property `ReduxOptions > path > results_root`](#path_results_root)
+    - [5.7.1. Property `ReduxOptions > path > results_root > anyOf > item 0`](#path_results_root_anyOf_i0)
+    - [5.7.2. Property `ReduxOptions > path > results_root > anyOf > item 1`](#path_results_root_anyOf_i1)
+  - [5.8. Property `ReduxOptions > path > pretrain_network_g`](#path_pretrain_network_g)
+    - [5.8.1. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 0`](#path_pretrain_network_g_anyOf_i0)
+    - [5.8.2. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 1`](#path_pretrain_network_g_anyOf_i1)
+  - [5.9. Property `ReduxOptions > path > pretrain_network_g_path`](#path_pretrain_network_g_path)
+    - [5.9.1. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 0`](#path_pretrain_network_g_path_anyOf_i0)
+    - [5.9.2. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 1`](#path_pretrain_network_g_path_anyOf_i1)
+  - [5.10. Property `ReduxOptions > path > param_key_g`](#path_param_key_g)
+    - [5.10.1. Property `ReduxOptions > path > param_key_g > anyOf > item 0`](#path_param_key_g_anyOf_i0)
+    - [5.10.2. Property `ReduxOptions > path > param_key_g > anyOf > item 1`](#path_param_key_g_anyOf_i1)
+  - [5.11. Property `ReduxOptions > path > strict_load_g`](#path_strict_load_g)
+  - [5.12. Property `ReduxOptions > path > resume_state`](#path_resume_state)
+    - [5.12.1. Property `ReduxOptions > path > resume_state > anyOf > item 0`](#path_resume_state_anyOf_i0)
+    - [5.12.2. Property `ReduxOptions > path > resume_state > anyOf > item 1`](#path_resume_state_anyOf_i1)
+  - [5.13. Property `ReduxOptions > path > pretrain_network_g_ema`](#path_pretrain_network_g_ema)
+    - [5.13.1. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 0`](#path_pretrain_network_g_ema_anyOf_i0)
+    - [5.13.2. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 1`](#path_pretrain_network_g_ema_anyOf_i1)
+  - [5.14. Property `ReduxOptions > path > pretrain_network_d`](#path_pretrain_network_d)
+    - [5.14.1. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 0`](#path_pretrain_network_d_anyOf_i0)
+    - [5.14.2. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 1`](#path_pretrain_network_d_anyOf_i1)
+  - [5.15. Property `ReduxOptions > path > param_key_d`](#path_param_key_d)
+    - [5.15.1. Property `ReduxOptions > path > param_key_d > anyOf > item 0`](#path_param_key_d_anyOf_i0)
+    - [5.15.2. Property `ReduxOptions > path > param_key_d > anyOf > item 1`](#path_param_key_d_anyOf_i1)
+  - [5.16. Property `ReduxOptions > path > strict_load_d`](#path_strict_load_d)
+  - [5.17. Property `ReduxOptions > path > ignore_resume_networks`](#path_ignore_resume_networks)
+    - [5.17.1. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 0`](#path_ignore_resume_networks_anyOf_i0)
+      - [5.17.1.1. ReduxOptions > path > ignore_resume_networks > anyOf > item 0 > item 0 items](#path_ignore_resume_networks_anyOf_i0_items)
+    - [5.17.2. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 1`](#path_ignore_resume_networks_anyOf_i1)
+- [6. Property `ReduxOptions > network_g`](#network_g)
+  - [6.1. Property `ReduxOptions > network_g > anyOf > artcnn`](#network_g_anyOf_i0)
+    - [6.1.1. Property `ReduxOptions > network_g > anyOf > artcnn > kind`](#network_g_anyOf_i0_kind)
+    - [6.1.2. Property `ReduxOptions > network_g > anyOf > artcnn > in_ch`](#network_g_anyOf_i0_in_ch)
+    - [6.1.3. Property `ReduxOptions > network_g > anyOf > artcnn > scale`](#network_g_anyOf_i0_scale)
+    - [6.1.4. Property `ReduxOptions > network_g > anyOf > artcnn > filters`](#network_g_anyOf_i0_filters)
+    - [6.1.5. Property `ReduxOptions > network_g > anyOf > artcnn > n_block`](#network_g_anyOf_i0_n_block)
+    - [6.1.6. Property `ReduxOptions > network_g > anyOf > artcnn > kernel_size`](#network_g_anyOf_i0_kernel_size)
+    - [6.1.7. Property `ReduxOptions > network_g > anyOf > artcnn > type`](#network_g_anyOf_i0_type)
+  - [6.2. Property `ReduxOptions > network_g > anyOf > artcnn_r16f96`](#network_g_anyOf_i1)
+    - [6.2.1. Property `ReduxOptions > network_g > anyOf > artcnn_r16f96 > kind`](#network_g_anyOf_i1_kind)
+    - [6.2.2. Property `ReduxOptions > network_g > anyOf > artcnn_r16f96 > type`](#network_g_anyOf_i1_type)
+  - [6.3. Property `ReduxOptions > network_g > anyOf > artcnn_r8f64`](#network_g_anyOf_i2)
+    - [6.3.1. Property `ReduxOptions > network_g > anyOf > artcnn_r8f64 > kind`](#network_g_anyOf_i2_kind)
+    - [6.3.2. Property `ReduxOptions > network_g > anyOf > artcnn_r8f64 > type`](#network_g_anyOf_i2_type)
+  - [6.4. Property `ReduxOptions > network_g > anyOf > cfsr`](#network_g_anyOf_i3)
+    - [6.4.1. Property `ReduxOptions > network_g > anyOf > cfsr > kind`](#network_g_anyOf_i3_kind)
+    - [6.4.2. Property `ReduxOptions > network_g > anyOf > cfsr > type`](#network_g_anyOf_i3_type)
+  - [6.5. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator`](#network_g_anyOf_i4)
+    - [6.5.1. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > kind`](#network_g_anyOf_i4_kind)
+    - [6.5.2. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > num_in_ch`](#network_g_anyOf_i4_num_in_ch)
+    - [6.5.3. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > num_feat`](#network_g_anyOf_i4_num_feat)
+    - [6.5.4. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > input_size`](#network_g_anyOf_i4_input_size)
+    - [6.5.5. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > type`](#network_g_anyOf_i4_type)
+  - [6.6. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer`](#network_g_anyOf_i5)
+    - [6.6.1. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > kind`](#network_g_anyOf_i5_kind)
+    - [6.6.2. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > num_in_ch`](#network_g_anyOf_i5_num_in_ch)
+    - [6.6.3. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > num_feat`](#network_g_anyOf_i5_num_feat)
+    - [6.6.4. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > skip_connection`](#network_g_anyOf_i5_skip_connection)
+    - [6.6.5. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > type`](#network_g_anyOf_i5_type)
+  - [6.7. Property `ReduxOptions > network_g > anyOf > dunet`](#network_g_anyOf_i6)
+    - [6.7.1. Property `ReduxOptions > network_g > anyOf > dunet > kind`](#network_g_anyOf_i6_kind)
+    - [6.7.2. Property `ReduxOptions > network_g > anyOf > dunet > num_in_ch`](#network_g_anyOf_i6_num_in_ch)
+    - [6.7.3. Property `ReduxOptions > network_g > anyOf > dunet > num_feat`](#network_g_anyOf_i6_num_feat)
+    - [6.7.4. Property `ReduxOptions > network_g > anyOf > dunet > type`](#network_g_anyOf_i6_type)
+  - [6.8. Property `ReduxOptions > network_g > anyOf > eimn`](#network_g_anyOf_i7)
+    - [6.8.1. Property `ReduxOptions > network_g > anyOf > eimn > kind`](#network_g_anyOf_i7_kind)
+    - [6.8.2. Property `ReduxOptions > network_g > anyOf > eimn > embed_dims`](#network_g_anyOf_i7_embed_dims)
+    - [6.8.3. Property `ReduxOptions > network_g > anyOf > eimn > scale`](#network_g_anyOf_i7_scale)
+    - [6.8.4. Property `ReduxOptions > network_g > anyOf > eimn > depths`](#network_g_anyOf_i7_depths)
+    - [6.8.5. Property `ReduxOptions > network_g > anyOf > eimn > mlp_ratios`](#network_g_anyOf_i7_mlp_ratios)
+    - [6.8.6. Property `ReduxOptions > network_g > anyOf > eimn > drop_rate`](#network_g_anyOf_i7_drop_rate)
+    - [6.8.7. Property `ReduxOptions > network_g > anyOf > eimn > drop_path_rate`](#network_g_anyOf_i7_drop_path_rate)
+    - [6.8.8. Property `ReduxOptions > network_g > anyOf > eimn > num_stages`](#network_g_anyOf_i7_num_stages)
+    - [6.8.9. Property `ReduxOptions > network_g > anyOf > eimn > freeze_param`](#network_g_anyOf_i7_freeze_param)
+    - [6.8.10. Property `ReduxOptions > network_g > anyOf > eimn > type`](#network_g_anyOf_i7_type)
+  - [6.9. Property `ReduxOptions > network_g > anyOf > eimn_l`](#network_g_anyOf_i8)
+    - [6.9.1. Property `ReduxOptions > network_g > anyOf > eimn_l > kind`](#network_g_anyOf_i8_kind)
+    - [6.9.2. Property `ReduxOptions > network_g > anyOf > eimn_l > type`](#network_g_anyOf_i8_type)
+  - [6.10. Property `ReduxOptions > network_g > anyOf > eimn_a`](#network_g_anyOf_i9)
+    - [6.10.1. Property `ReduxOptions > network_g > anyOf > eimn_a > kind`](#network_g_anyOf_i9_kind)
+    - [6.10.2. Property `ReduxOptions > network_g > anyOf > eimn_a > type`](#network_g_anyOf_i9_type)
+  - [6.11. Property `ReduxOptions > network_g > anyOf > flexnet`](#network_g_anyOf_i10)
+    - [6.11.1. Property `ReduxOptions > network_g > anyOf > flexnet > kind`](#network_g_anyOf_i10_kind)
+    - [6.11.2. Property `ReduxOptions > network_g > anyOf > flexnet > inp_channels`](#network_g_anyOf_i10_inp_channels)
+    - [6.11.3. Property `ReduxOptions > network_g > anyOf > flexnet > out_channels`](#network_g_anyOf_i10_out_channels)
+    - [6.11.4. Property `ReduxOptions > network_g > anyOf > flexnet > scale`](#network_g_anyOf_i10_scale)
+    - [6.11.5. Property `ReduxOptions > network_g > anyOf > flexnet > dim`](#network_g_anyOf_i10_dim)
+    - [6.11.6. Property `ReduxOptions > network_g > anyOf > flexnet > num_blocks`](#network_g_anyOf_i10_num_blocks)
+      - [6.11.6.1. ReduxOptions > network_g > anyOf > flexnet > num_blocks > num_blocks items](#network_g_anyOf_i10_num_blocks_items)
+    - [6.11.7. Property `ReduxOptions > network_g > anyOf > flexnet > window_size`](#network_g_anyOf_i10_window_size)
+    - [6.11.8. Property `ReduxOptions > network_g > anyOf > flexnet > hidden_rate`](#network_g_anyOf_i10_hidden_rate)
+    - [6.11.9. Property `ReduxOptions > network_g > anyOf > flexnet > channel_norm`](#network_g_anyOf_i10_channel_norm)
+    - [6.11.10. Property `ReduxOptions > network_g > anyOf > flexnet > attn_drop`](#network_g_anyOf_i10_attn_drop)
+    - [6.11.11. Property `ReduxOptions > network_g > anyOf > flexnet > proj_drop`](#network_g_anyOf_i10_proj_drop)
+    - [6.11.12. Property `ReduxOptions > network_g > anyOf > flexnet > pipeline_type`](#network_g_anyOf_i10_pipeline_type)
+    - [6.11.13. Property `ReduxOptions > network_g > anyOf > flexnet > upsampler`](#network_g_anyOf_i10_upsampler)
+    - [6.11.14. Property `ReduxOptions > network_g > anyOf > flexnet > type`](#network_g_anyOf_i10_type)
+  - [6.12. Property `ReduxOptions > network_g > anyOf > metaflexnet`](#network_g_anyOf_i11)
+    - [6.12.1. Property `ReduxOptions > network_g > anyOf > metaflexnet > kind`](#network_g_anyOf_i11_kind)
+    - [6.12.2. Property `ReduxOptions > network_g > anyOf > metaflexnet > type`](#network_g_anyOf_i11_type)
+  - [6.13. Property `ReduxOptions > network_g > anyOf > hit_sir`](#network_g_anyOf_i12)
+    - [6.13.1. Property `ReduxOptions > network_g > anyOf > hit_sir > kind`](#network_g_anyOf_i12_kind)
+    - [6.13.2. Property `ReduxOptions > network_g > anyOf > hit_sir > type`](#network_g_anyOf_i12_type)
+  - [6.14. Property `ReduxOptions > network_g > anyOf > hit_sng`](#network_g_anyOf_i13)
+    - [6.14.1. Property `ReduxOptions > network_g > anyOf > hit_sng > kind`](#network_g_anyOf_i13_kind)
+    - [6.14.2. Property `ReduxOptions > network_g > anyOf > hit_sng > type`](#network_g_anyOf_i13_type)
+  - [6.15. Property `ReduxOptions > network_g > anyOf > hit_srf`](#network_g_anyOf_i14)
+    - [6.15.1. Property `ReduxOptions > network_g > anyOf > hit_srf > kind`](#network_g_anyOf_i14_kind)
+    - [6.15.2. Property `ReduxOptions > network_g > anyOf > hit_srf > type`](#network_g_anyOf_i14_type)
+  - [6.16. Property `ReduxOptions > network_g > anyOf > lmlt`](#network_g_anyOf_i15)
+    - [6.16.1. Property `ReduxOptions > network_g > anyOf > lmlt > kind`](#network_g_anyOf_i15_kind)
+    - [6.16.2. Property `ReduxOptions > network_g > anyOf > lmlt > dim`](#network_g_anyOf_i15_dim)
+    - [6.16.3. Property `ReduxOptions > network_g > anyOf > lmlt > n_blocks`](#network_g_anyOf_i15_n_blocks)
+    - [6.16.4. Property `ReduxOptions > network_g > anyOf > lmlt > ffn_scale`](#network_g_anyOf_i15_ffn_scale)
+    - [6.16.5. Property `ReduxOptions > network_g > anyOf > lmlt > scale`](#network_g_anyOf_i15_scale)
+    - [6.16.6. Property `ReduxOptions > network_g > anyOf > lmlt > drop_rate`](#network_g_anyOf_i15_drop_rate)
+    - [6.16.7. Property `ReduxOptions > network_g > anyOf > lmlt > attn_drop_rate`](#network_g_anyOf_i15_attn_drop_rate)
+    - [6.16.8. Property `ReduxOptions > network_g > anyOf > lmlt > drop_path_rate`](#network_g_anyOf_i15_drop_path_rate)
+    - [6.16.9. Property `ReduxOptions > network_g > anyOf > lmlt > type`](#network_g_anyOf_i15_type)
+  - [6.17. Property `ReduxOptions > network_g > anyOf > lmlt_base`](#network_g_anyOf_i16)
+    - [6.17.1. Property `ReduxOptions > network_g > anyOf > lmlt_base > kind`](#network_g_anyOf_i16_kind)
+    - [6.17.2. Property `ReduxOptions > network_g > anyOf > lmlt_base > type`](#network_g_anyOf_i16_type)
+  - [6.18. Property `ReduxOptions > network_g > anyOf > lmlt_large`](#network_g_anyOf_i17)
+    - [6.18.1. Property `ReduxOptions > network_g > anyOf > lmlt_large > kind`](#network_g_anyOf_i17_kind)
+    - [6.18.2. Property `ReduxOptions > network_g > anyOf > lmlt_large > type`](#network_g_anyOf_i17_type)
+  - [6.19. Property `ReduxOptions > network_g > anyOf > lmlt_tiny`](#network_g_anyOf_i18)
+    - [6.19.1. Property `ReduxOptions > network_g > anyOf > lmlt_tiny > kind`](#network_g_anyOf_i18_kind)
+    - [6.19.2. Property `ReduxOptions > network_g > anyOf > lmlt_tiny > type`](#network_g_anyOf_i18_type)
+  - [6.20. Property `ReduxOptions > network_g > anyOf > man`](#network_g_anyOf_i19)
+    - [6.20.1. Property `ReduxOptions > network_g > anyOf > man > kind`](#network_g_anyOf_i19_kind)
+    - [6.20.2. Property `ReduxOptions > network_g > anyOf > man > n_resblocks`](#network_g_anyOf_i19_n_resblocks)
+    - [6.20.3. Property `ReduxOptions > network_g > anyOf > man > n_resgroups`](#network_g_anyOf_i19_n_resgroups)
+    - [6.20.4. Property `ReduxOptions > network_g > anyOf > man > n_colors`](#network_g_anyOf_i19_n_colors)
+    - [6.20.5. Property `ReduxOptions > network_g > anyOf > man > n_feats`](#network_g_anyOf_i19_n_feats)
+    - [6.20.6. Property `ReduxOptions > network_g > anyOf > man > scale`](#network_g_anyOf_i19_scale)
+    - [6.20.7. Property `ReduxOptions > network_g > anyOf > man > res_scale`](#network_g_anyOf_i19_res_scale)
+    - [6.20.8. Property `ReduxOptions > network_g > anyOf > man > type`](#network_g_anyOf_i19_type)
+  - [6.21. Property `ReduxOptions > network_g > anyOf > man_tiny`](#network_g_anyOf_i20)
+    - [6.21.1. Property `ReduxOptions > network_g > anyOf > man_tiny > kind`](#network_g_anyOf_i20_kind)
+    - [6.21.2. Property `ReduxOptions > network_g > anyOf > man_tiny > type`](#network_g_anyOf_i20_type)
+  - [6.22. Property `ReduxOptions > network_g > anyOf > man_light`](#network_g_anyOf_i21)
+    - [6.22.1. Property `ReduxOptions > network_g > anyOf > man_light > kind`](#network_g_anyOf_i21_kind)
+    - [6.22.2. Property `ReduxOptions > network_g > anyOf > man_light > type`](#network_g_anyOf_i21_type)
+  - [6.23. Property `ReduxOptions > network_g > anyOf > moesr2`](#network_g_anyOf_i22)
+    - [6.23.1. Property `ReduxOptions > network_g > anyOf > moesr2 > kind`](#network_g_anyOf_i22_kind)
+    - [6.23.2. Property `ReduxOptions > network_g > anyOf > moesr2 > in_ch`](#network_g_anyOf_i22_in_ch)
+    - [6.23.3. Property `ReduxOptions > network_g > anyOf > moesr2 > out_ch`](#network_g_anyOf_i22_out_ch)
+    - [6.23.4. Property `ReduxOptions > network_g > anyOf > moesr2 > scale`](#network_g_anyOf_i22_scale)
+    - [6.23.5. Property `ReduxOptions > network_g > anyOf > moesr2 > dim`](#network_g_anyOf_i22_dim)
+    - [6.23.6. Property `ReduxOptions > network_g > anyOf > moesr2 > n_blocks`](#network_g_anyOf_i22_n_blocks)
+    - [6.23.7. Property `ReduxOptions > network_g > anyOf > moesr2 > n_block`](#network_g_anyOf_i22_n_block)
+    - [6.23.8. Property `ReduxOptions > network_g > anyOf > moesr2 > expansion_factor`](#network_g_anyOf_i22_expansion_factor)
+    - [6.23.9. Property `ReduxOptions > network_g > anyOf > moesr2 > expansion_msg`](#network_g_anyOf_i22_expansion_msg)
+    - [6.23.10. Property `ReduxOptions > network_g > anyOf > moesr2 > upsampler`](#network_g_anyOf_i22_upsampler)
+    - [6.23.11. Property `ReduxOptions > network_g > anyOf > moesr2 > upsample_dim`](#network_g_anyOf_i22_upsample_dim)
+    - [6.23.12. Property `ReduxOptions > network_g > anyOf > moesr2 > type`](#network_g_anyOf_i22_type)
+  - [6.24. Property `ReduxOptions > network_g > anyOf > mosr`](#network_g_anyOf_i23)
+    - [6.24.1. Property `ReduxOptions > network_g > anyOf > mosr > kind`](#network_g_anyOf_i23_kind)
+    - [6.24.2. Property `ReduxOptions > network_g > anyOf > mosr > type`](#network_g_anyOf_i23_type)
+  - [6.25. Property `ReduxOptions > network_g > anyOf > mosr_t`](#network_g_anyOf_i24)
+    - [6.25.1. Property `ReduxOptions > network_g > anyOf > mosr_t > kind`](#network_g_anyOf_i24_kind)
+    - [6.25.2. Property `ReduxOptions > network_g > anyOf > mosr_t > type`](#network_g_anyOf_i24_type)
+  - [6.26. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer`](#network_g_anyOf_i25)
+    - [6.26.1. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > kind`](#network_g_anyOf_i25_kind)
+    - [6.26.2. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > scale`](#network_g_anyOf_i25_scale)
+    - [6.26.3. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_resgroups`](#network_g_anyOf_i25_n_resgroups)
+    - [6.26.4. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_resblocks`](#network_g_anyOf_i25_n_resblocks)
+    - [6.26.5. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_feats`](#network_g_anyOf_i25_n_feats)
+    - [6.26.6. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_colors`](#network_g_anyOf_i25_n_colors)
+    - [6.26.7. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > kernel_size`](#network_g_anyOf_i25_kernel_size)
+    - [6.26.8. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > reduction`](#network_g_anyOf_i25_reduction)
+    - [6.26.9. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > res_scale`](#network_g_anyOf_i25_res_scale)
+    - [6.26.10. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > type`](#network_g_anyOf_i25_type)
+  - [6.27. Property `ReduxOptions > network_g > anyOf > rcan`](#network_g_anyOf_i26)
+    - [6.27.1. Property `ReduxOptions > network_g > anyOf > rcan > kind`](#network_g_anyOf_i26_kind)
+    - [6.27.2. Property `ReduxOptions > network_g > anyOf > rcan > scale`](#network_g_anyOf_i26_scale)
+    - [6.27.3. Property `ReduxOptions > network_g > anyOf > rcan > n_resgroups`](#network_g_anyOf_i26_n_resgroups)
+    - [6.27.4. Property `ReduxOptions > network_g > anyOf > rcan > n_resblocks`](#network_g_anyOf_i26_n_resblocks)
+    - [6.27.5. Property `ReduxOptions > network_g > anyOf > rcan > n_feats`](#network_g_anyOf_i26_n_feats)
+    - [6.27.6. Property `ReduxOptions > network_g > anyOf > rcan > n_colors`](#network_g_anyOf_i26_n_colors)
+    - [6.27.7. Property `ReduxOptions > network_g > anyOf > rcan > rgb_range`](#network_g_anyOf_i26_rgb_range)
+    - [6.27.8. Property `ReduxOptions > network_g > anyOf > rcan > kernel_size`](#network_g_anyOf_i26_kernel_size)
+    - [6.27.9. Property `ReduxOptions > network_g > anyOf > rcan > reduction`](#network_g_anyOf_i26_reduction)
+    - [6.27.10. Property `ReduxOptions > network_g > anyOf > rcan > res_scale`](#network_g_anyOf_i26_res_scale)
+    - [6.27.11. Property `ReduxOptions > network_g > anyOf > rcan > type`](#network_g_anyOf_i26_type)
+  - [6.28. Property `ReduxOptions > network_g > anyOf > realplksr`](#network_g_anyOf_i27)
+    - [6.28.1. Property `ReduxOptions > network_g > anyOf > realplksr > kind`](#network_g_anyOf_i27_kind)
+    - [6.28.2. Property `ReduxOptions > network_g > anyOf > realplksr > type`](#network_g_anyOf_i27_type)
+  - [6.29. Property `ReduxOptions > network_g > anyOf > spanplus`](#network_g_anyOf_i28)
+    - [6.29.1. Property `ReduxOptions > network_g > anyOf > spanplus > kind`](#network_g_anyOf_i28_kind)
+    - [6.29.2. Property `ReduxOptions > network_g > anyOf > spanplus > type`](#network_g_anyOf_i28_type)
+  - [6.30. Property `ReduxOptions > network_g > anyOf > spanplus_sts`](#network_g_anyOf_i29)
+    - [6.30.1. Property `ReduxOptions > network_g > anyOf > spanplus_sts > kind`](#network_g_anyOf_i29_kind)
+    - [6.30.2. Property `ReduxOptions > network_g > anyOf > spanplus_sts > type`](#network_g_anyOf_i29_type)
+  - [6.31. Property `ReduxOptions > network_g > anyOf > spanplus_s`](#network_g_anyOf_i30)
+    - [6.31.1. Property `ReduxOptions > network_g > anyOf > spanplus_s > kind`](#network_g_anyOf_i30_kind)
+    - [6.31.2. Property `ReduxOptions > network_g > anyOf > spanplus_s > type`](#network_g_anyOf_i30_type)
+  - [6.32. Property `ReduxOptions > network_g > anyOf > spanplus_st`](#network_g_anyOf_i31)
+    - [6.32.1. Property `ReduxOptions > network_g > anyOf > spanplus_st > kind`](#network_g_anyOf_i31_kind)
+    - [6.32.2. Property `ReduxOptions > network_g > anyOf > spanplus_st > type`](#network_g_anyOf_i31_type)
+  - [6.33. Property `ReduxOptions > network_g > anyOf > compact`](#network_g_anyOf_i32)
+    - [6.33.1. Property `ReduxOptions > network_g > anyOf > compact > kind`](#network_g_anyOf_i32_kind)
+    - [6.33.2. Property `ReduxOptions > network_g > anyOf > compact > type`](#network_g_anyOf_i32_type)
+  - [6.34. Property `ReduxOptions > network_g > anyOf > ultracompact`](#network_g_anyOf_i33)
+    - [6.34.1. Property `ReduxOptions > network_g > anyOf > ultracompact > kind`](#network_g_anyOf_i33_kind)
+    - [6.34.2. Property `ReduxOptions > network_g > anyOf > ultracompact > type`](#network_g_anyOf_i33_type)
+  - [6.35. Property `ReduxOptions > network_g > anyOf > superultracompact`](#network_g_anyOf_i34)
+    - [6.35.1. Property `ReduxOptions > network_g > anyOf > superultracompact > kind`](#network_g_anyOf_i34_kind)
+    - [6.35.2. Property `ReduxOptions > network_g > anyOf > superultracompact > type`](#network_g_anyOf_i34_type)
+- [7. Property `ReduxOptions > network_d`](#network_d)
+  - [7.1. Property `ReduxOptions > network_d > anyOf > item 0`](#network_d_anyOf_i0)
+  - [7.2. Property `ReduxOptions > network_d > anyOf > item 1`](#network_d_anyOf_i1)
+- [8. Property `ReduxOptions > manual_seed`](#manual_seed)
+  - [8.1. Property `ReduxOptions > manual_seed > anyOf > item 0`](#manual_seed_anyOf_i0)
+  - [8.2. Property `ReduxOptions > manual_seed > anyOf > item 1`](#manual_seed_anyOf_i1)
+- [9. Property `ReduxOptions > deterministic`](#deterministic)
+  - [9.1. Property `ReduxOptions > deterministic > anyOf > item 0`](#deterministic_anyOf_i0)
+  - [9.2. Property `ReduxOptions > deterministic > anyOf > item 1`](#deterministic_anyOf_i1)
+- [10. Property `ReduxOptions > dist`](#dist)
+  - [10.1. Property `ReduxOptions > dist > anyOf > item 0`](#dist_anyOf_i0)
+  - [10.2. Property `ReduxOptions > dist > anyOf > item 1`](#dist_anyOf_i1)
+- [11. Property `ReduxOptions > launcher`](#launcher)
+  - [11.1. Property `ReduxOptions > launcher > anyOf > item 0`](#launcher_anyOf_i0)
+  - [11.2. Property `ReduxOptions > launcher > anyOf > item 1`](#launcher_anyOf_i1)
+- [12. Property `ReduxOptions > rank`](#rank)
+  - [12.1. Property `ReduxOptions > rank > anyOf > item 0`](#rank_anyOf_i0)
+  - [12.2. Property `ReduxOptions > rank > anyOf > item 1`](#rank_anyOf_i1)
+- [13. Property `ReduxOptions > world_size`](#world_size)
+  - [13.1. Property `ReduxOptions > world_size > anyOf > item 0`](#world_size_anyOf_i0)
+  - [13.2. Property `ReduxOptions > world_size > anyOf > item 1`](#world_size_anyOf_i1)
+- [14. Property `ReduxOptions > auto_resume`](#auto_resume)
+  - [14.1. Property `ReduxOptions > auto_resume > anyOf > item 0`](#auto_resume_anyOf_i0)
+  - [14.2. Property `ReduxOptions > auto_resume > anyOf > item 1`](#auto_resume_anyOf_i1)
+- [15. Property `ReduxOptions > resume`](#resume)
+- [16. Property `ReduxOptions > is_train`](#is_train)
+  - [16.1. Property `ReduxOptions > is_train > anyOf > item 0`](#is_train_anyOf_i0)
+  - [16.2. Property `ReduxOptions > is_train > anyOf > item 1`](#is_train_anyOf_i1)
+- [17. Property `ReduxOptions > root_path`](#root_path)
+  - [17.1. Property `ReduxOptions > root_path > anyOf > item 0`](#root_path_anyOf_i0)
+  - [17.2. Property `ReduxOptions > root_path > anyOf > item 1`](#root_path_anyOf_i1)
+- [18. Property `ReduxOptions > use_amp`](#use_amp)
+- [19. Property `ReduxOptions > amp_bf16`](#amp_bf16)
+- [20. Property `ReduxOptions > use_channels_last`](#use_channels_last)
+- [21. Property `ReduxOptions > fast_matmul`](#fast_matmul)
+- [22. Property `ReduxOptions > use_compile`](#use_compile)
+- [23. Property `ReduxOptions > detect_anomaly`](#detect_anomaly)
+- [24. Property `ReduxOptions > high_order_degradation`](#high_order_degradation)
+- [25. Property `ReduxOptions > high_order_degradations_debug`](#high_order_degradations_debug)
+- [26. Property `ReduxOptions > high_order_degradations_debug_limit`](#high_order_degradations_debug_limit)
+- [27. Property `ReduxOptions > dataroot_lq_prob`](#dataroot_lq_prob)
+- [28. Property `ReduxOptions > force_high_order_degradation_filename_masks`](#force_high_order_degradation_filename_masks)
+  - [28.1. ReduxOptions > force_high_order_degradation_filename_masks > force_high_order_degradation_filename_masks items](#force_high_order_degradation_filename_masks_items)
+- [29. Property `ReduxOptions > force_dataroot_lq_filename_masks`](#force_dataroot_lq_filename_masks)
+  - [29.1. ReduxOptions > force_dataroot_lq_filename_masks > force_dataroot_lq_filename_masks items](#force_dataroot_lq_filename_masks_items)
+- [30. Property `ReduxOptions > lq_usm`](#lq_usm)
+- [31. Property `ReduxOptions > lq_usm_radius_range`](#lq_usm_radius_range)
+  - [31.1. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 0](#autogenerated_heading_2)
+  - [31.2. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 1](#autogenerated_heading_3)
+- [32. Property `ReduxOptions > blur_prob`](#blur_prob)
+- [33. Property `ReduxOptions > resize_prob`](#resize_prob)
+  - [33.1. ReduxOptions > resize_prob > resize_prob items](#resize_prob_items)
+- [34. Property `ReduxOptions > resize_mode_list`](#resize_mode_list)
+  - [34.1. ReduxOptions > resize_mode_list > resize_mode_list items](#resize_mode_list_items)
+- [35. Property `ReduxOptions > resize_mode_prob`](#resize_mode_prob)
+  - [35.1. ReduxOptions > resize_mode_prob > resize_mode_prob items](#resize_mode_prob_items)
+- [36. Property `ReduxOptions > resize_range`](#resize_range)
+  - [36.1. ReduxOptions > resize_range > resize_range item 0](#autogenerated_heading_4)
+  - [36.2. ReduxOptions > resize_range > resize_range item 1](#autogenerated_heading_5)
+- [37. Property `ReduxOptions > gaussian_noise_prob`](#gaussian_noise_prob)
+- [38. Property `ReduxOptions > noise_range`](#noise_range)
+  - [38.1. ReduxOptions > noise_range > noise_range item 0](#autogenerated_heading_6)
+  - [38.2. ReduxOptions > noise_range > noise_range item 1](#autogenerated_heading_7)
+- [39. Property `ReduxOptions > poisson_scale_range`](#poisson_scale_range)
+  - [39.1. ReduxOptions > poisson_scale_range > poisson_scale_range item 0](#autogenerated_heading_8)
+  - [39.2. ReduxOptions > poisson_scale_range > poisson_scale_range item 1](#autogenerated_heading_9)
+- [40. Property `ReduxOptions > gray_noise_prob`](#gray_noise_prob)
+- [41. Property `ReduxOptions > jpeg_prob`](#jpeg_prob)
+- [42. Property `ReduxOptions > jpeg_range`](#jpeg_range)
+  - [42.1. ReduxOptions > jpeg_range > jpeg_range item 0](#autogenerated_heading_10)
+  - [42.2. ReduxOptions > jpeg_range > jpeg_range item 1](#autogenerated_heading_11)
+- [43. Property `ReduxOptions > blur_prob2`](#blur_prob2)
+- [44. Property `ReduxOptions > resize_prob2`](#resize_prob2)
+  - [44.1. ReduxOptions > resize_prob2 > resize_prob2 items](#resize_prob2_items)
+- [45. Property `ReduxOptions > resize_mode_list2`](#resize_mode_list2)
+  - [45.1. ReduxOptions > resize_mode_list2 > resize_mode_list2 items](#resize_mode_list2_items)
+- [46. Property `ReduxOptions > resize_mode_prob2`](#resize_mode_prob2)
+  - [46.1. ReduxOptions > resize_mode_prob2 > resize_mode_prob2 items](#resize_mode_prob2_items)
+- [47. Property `ReduxOptions > resize_range2`](#resize_range2)
+  - [47.1. ReduxOptions > resize_range2 > resize_range2 item 0](#autogenerated_heading_12)
+  - [47.2. ReduxOptions > resize_range2 > resize_range2 item 1](#autogenerated_heading_13)
+- [48. Property `ReduxOptions > gaussian_noise_prob2`](#gaussian_noise_prob2)
+- [49. Property `ReduxOptions > noise_range2`](#noise_range2)
+  - [49.1. ReduxOptions > noise_range2 > noise_range2 item 0](#autogenerated_heading_14)
+  - [49.2. ReduxOptions > noise_range2 > noise_range2 item 1](#autogenerated_heading_15)
+- [50. Property `ReduxOptions > poisson_scale_range2`](#poisson_scale_range2)
+  - [50.1. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 0](#autogenerated_heading_16)
+  - [50.2. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 1](#autogenerated_heading_17)
+- [51. Property `ReduxOptions > gray_noise_prob2`](#gray_noise_prob2)
+- [52. Property `ReduxOptions > jpeg_prob2`](#jpeg_prob2)
+- [53. Property `ReduxOptions > jpeg_range2`](#jpeg_range2)
+  - [53.1. ReduxOptions > jpeg_range2 > jpeg_range2 items](#jpeg_range2_items)
+- [54. Property `ReduxOptions > resize_mode_list3`](#resize_mode_list3)
+  - [54.1. ReduxOptions > resize_mode_list3 > resize_mode_list3 items](#resize_mode_list3_items)
+- [55. Property `ReduxOptions > resize_mode_prob3`](#resize_mode_prob3)
+  - [55.1. ReduxOptions > resize_mode_prob3 > resize_mode_prob3 items](#resize_mode_prob3_items)
+- [56. Property `ReduxOptions > queue_size`](#queue_size)
+- [57. Property `ReduxOptions > datasets`](#datasets)
+  - [57.1. Property `ReduxOptions > datasets > DatasetOptions`](#datasets_additionalProperties)
+    - [57.1.1. Property `ReduxOptions > datasets > DatasetOptions > name`](#datasets_additionalProperties_name)
+    - [57.1.2. Property `ReduxOptions > datasets > DatasetOptions > type`](#datasets_additionalProperties_type)
+    - [57.1.3. Property `ReduxOptions > datasets > DatasetOptions > io_backend`](#datasets_additionalProperties_io_backend)
+    - [57.1.4. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu`](#datasets_additionalProperties_num_worker_per_gpu)
+      - [57.1.4.1. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 0`](#datasets_additionalProperties_num_worker_per_gpu_anyOf_i0)
+      - [57.1.4.2. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 1`](#datasets_additionalProperties_num_worker_per_gpu_anyOf_i1)
+    - [57.1.5. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu`](#datasets_additionalProperties_batch_size_per_gpu)
+      - [57.1.5.1. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 0`](#datasets_additionalProperties_batch_size_per_gpu_anyOf_i0)
+      - [57.1.5.2. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 1`](#datasets_additionalProperties_batch_size_per_gpu_anyOf_i1)
+    - [57.1.6. Property `ReduxOptions > datasets > DatasetOptions > accum_iter`](#datasets_additionalProperties_accum_iter)
+    - [57.1.7. Property `ReduxOptions > datasets > DatasetOptions > use_hflip`](#datasets_additionalProperties_use_hflip)
+    - [57.1.8. Property `ReduxOptions > datasets > DatasetOptions > use_rot`](#datasets_additionalProperties_use_rot)
+    - [57.1.9. Property `ReduxOptions > datasets > DatasetOptions > mean`](#datasets_additionalProperties_mean)
+      - [57.1.9.1. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0`](#datasets_additionalProperties_mean_anyOf_i0)
+        - [57.1.9.1.1. ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0 > item 0 items](#datasets_additionalProperties_mean_anyOf_i0_items)
+      - [57.1.9.2. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 1`](#datasets_additionalProperties_mean_anyOf_i1)
+    - [57.1.10. Property `ReduxOptions > datasets > DatasetOptions > std`](#datasets_additionalProperties_std)
+      - [57.1.10.1. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0`](#datasets_additionalProperties_std_anyOf_i0)
+        - [57.1.10.1.1. ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0 > item 0 items](#datasets_additionalProperties_std_anyOf_i0_items)
+      - [57.1.10.2. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 1`](#datasets_additionalProperties_std_anyOf_i1)
+    - [57.1.11. Property `ReduxOptions > datasets > DatasetOptions > gt_size`](#datasets_additionalProperties_gt_size)
+      - [57.1.11.1. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 0`](#datasets_additionalProperties_gt_size_anyOf_i0)
+      - [57.1.11.2. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 1`](#datasets_additionalProperties_gt_size_anyOf_i1)
+    - [57.1.12. Property `ReduxOptions > datasets > DatasetOptions > lq_size`](#datasets_additionalProperties_lq_size)
+      - [57.1.12.1. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 0`](#datasets_additionalProperties_lq_size_anyOf_i0)
+      - [57.1.12.2. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 1`](#datasets_additionalProperties_lq_size_anyOf_i1)
+    - [57.1.13. Property `ReduxOptions > datasets > DatasetOptions > color`](#datasets_additionalProperties_color)
+      - [57.1.13.1. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 0`](#datasets_additionalProperties_color_anyOf_i0)
+      - [57.1.13.2. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 1`](#datasets_additionalProperties_color_anyOf_i1)
+    - [57.1.14. Property `ReduxOptions > datasets > DatasetOptions > phase`](#datasets_additionalProperties_phase)
+      - [57.1.14.1. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 0`](#datasets_additionalProperties_phase_anyOf_i0)
+      - [57.1.14.2. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 1`](#datasets_additionalProperties_phase_anyOf_i1)
+    - [57.1.15. Property `ReduxOptions > datasets > DatasetOptions > scale`](#datasets_additionalProperties_scale)
+      - [57.1.15.1. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 0`](#datasets_additionalProperties_scale_anyOf_i0)
+      - [57.1.15.2. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 1`](#datasets_additionalProperties_scale_anyOf_i1)
+    - [57.1.16. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio`](#datasets_additionalProperties_dataset_enlarge_ratio)
+      - [57.1.16.1. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 0`](#datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i0)
+      - [57.1.16.2. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 1`](#datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i1)
+    - [57.1.17. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode`](#datasets_additionalProperties_prefetch_mode)
+      - [57.1.17.1. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 0`](#datasets_additionalProperties_prefetch_mode_anyOf_i0)
+      - [57.1.17.2. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 1`](#datasets_additionalProperties_prefetch_mode_anyOf_i1)
+    - [57.1.18. Property `ReduxOptions > datasets > DatasetOptions > pin_memory`](#datasets_additionalProperties_pin_memory)
+    - [57.1.19. Property `ReduxOptions > datasets > DatasetOptions > persistent_workers`](#datasets_additionalProperties_persistent_workers)
+    - [57.1.20. Property `ReduxOptions > datasets > DatasetOptions > num_prefetch_queue`](#datasets_additionalProperties_num_prefetch_queue)
+    - [57.1.21. Property `ReduxOptions > datasets > DatasetOptions > prefetch_factor`](#datasets_additionalProperties_prefetch_factor)
+    - [57.1.22. Property `ReduxOptions > datasets > DatasetOptions > clip_size`](#datasets_additionalProperties_clip_size)
+      - [57.1.22.1. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 0`](#datasets_additionalProperties_clip_size_anyOf_i0)
+      - [57.1.22.2. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 1`](#datasets_additionalProperties_clip_size_anyOf_i1)
+    - [57.1.23. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt`](#datasets_additionalProperties_dataroot_gt)
+      - [57.1.23.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 0`](#datasets_additionalProperties_dataroot_gt_anyOf_i0)
+      - [57.1.23.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1`](#datasets_additionalProperties_dataroot_gt_anyOf_i1)
+        - [57.1.23.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1 > item 1 items](#datasets_additionalProperties_dataroot_gt_anyOf_i1_items)
+      - [57.1.23.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 2`](#datasets_additionalProperties_dataroot_gt_anyOf_i2)
+    - [57.1.24. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq`](#datasets_additionalProperties_dataroot_lq)
+      - [57.1.24.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 0`](#datasets_additionalProperties_dataroot_lq_anyOf_i0)
+      - [57.1.24.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1`](#datasets_additionalProperties_dataroot_lq_anyOf_i1)
+        - [57.1.24.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1 > item 1 items](#datasets_additionalProperties_dataroot_lq_anyOf_i1_items)
+      - [57.1.24.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 2`](#datasets_additionalProperties_dataroot_lq_anyOf_i2)
+    - [57.1.25. Property `ReduxOptions > datasets > DatasetOptions > meta_info`](#datasets_additionalProperties_meta_info)
+      - [57.1.25.1. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 0`](#datasets_additionalProperties_meta_info_anyOf_i0)
+      - [57.1.25.2. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 1`](#datasets_additionalProperties_meta_info_anyOf_i1)
+    - [57.1.26. Property `ReduxOptions > datasets > DatasetOptions > filename_tmpl`](#datasets_additionalProperties_filename_tmpl)
+    - [57.1.27. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size`](#datasets_additionalProperties_blur_kernel_size)
+    - [57.1.28. Property `ReduxOptions > datasets > DatasetOptions > kernel_list`](#datasets_additionalProperties_kernel_list)
+      - [57.1.28.1. ReduxOptions > datasets > DatasetOptions > kernel_list > kernel_list items](#datasets_additionalProperties_kernel_list_items)
+    - [57.1.29. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob`](#datasets_additionalProperties_kernel_prob)
+      - [57.1.29.1. ReduxOptions > datasets > DatasetOptions > kernel_prob > kernel_prob items](#datasets_additionalProperties_kernel_prob_items)
+    - [57.1.30. Property `ReduxOptions > datasets > DatasetOptions > kernel_range`](#datasets_additionalProperties_kernel_range)
+      - [57.1.30.1. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 0](#autogenerated_heading_18)
+      - [57.1.30.2. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 1](#autogenerated_heading_19)
+    - [57.1.31. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob`](#datasets_additionalProperties_sinc_prob)
+    - [57.1.32. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma`](#datasets_additionalProperties_blur_sigma)
+      - [57.1.32.1. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 0](#autogenerated_heading_20)
+      - [57.1.32.2. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 1](#autogenerated_heading_21)
+    - [57.1.33. Property `ReduxOptions > datasets > DatasetOptions > betag_range`](#datasets_additionalProperties_betag_range)
+      - [57.1.33.1. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 0](#autogenerated_heading_22)
+      - [57.1.33.2. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 1](#autogenerated_heading_23)
+    - [57.1.34. Property `ReduxOptions > datasets > DatasetOptions > betap_range`](#datasets_additionalProperties_betap_range)
+      - [57.1.34.1. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 0](#autogenerated_heading_24)
+      - [57.1.34.2. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 1](#autogenerated_heading_25)
+    - [57.1.35. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size2`](#datasets_additionalProperties_blur_kernel_size2)
+    - [57.1.36. Property `ReduxOptions > datasets > DatasetOptions > kernel_list2`](#datasets_additionalProperties_kernel_list2)
+      - [57.1.36.1. ReduxOptions > datasets > DatasetOptions > kernel_list2 > kernel_list2 items](#datasets_additionalProperties_kernel_list2_items)
+    - [57.1.37. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob2`](#datasets_additionalProperties_kernel_prob2)
+      - [57.1.37.1. ReduxOptions > datasets > DatasetOptions > kernel_prob2 > kernel_prob2 items](#datasets_additionalProperties_kernel_prob2_items)
+    - [57.1.38. Property `ReduxOptions > datasets > DatasetOptions > kernel_range2`](#datasets_additionalProperties_kernel_range2)
+      - [57.1.38.1. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 0](#autogenerated_heading_26)
+      - [57.1.38.2. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 1](#autogenerated_heading_27)
+    - [57.1.39. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob2`](#datasets_additionalProperties_sinc_prob2)
+    - [57.1.40. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma2`](#datasets_additionalProperties_blur_sigma2)
+      - [57.1.40.1. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 0](#autogenerated_heading_28)
+      - [57.1.40.2. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 1](#autogenerated_heading_29)
+    - [57.1.41. Property `ReduxOptions > datasets > DatasetOptions > betag_range2`](#datasets_additionalProperties_betag_range2)
+      - [57.1.41.1. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 0](#autogenerated_heading_30)
+      - [57.1.41.2. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 1](#autogenerated_heading_31)
+    - [57.1.42. Property `ReduxOptions > datasets > DatasetOptions > betap_range2`](#datasets_additionalProperties_betap_range2)
+      - [57.1.42.1. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 0](#autogenerated_heading_32)
+      - [57.1.42.2. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 1](#autogenerated_heading_33)
+    - [57.1.43. Property `ReduxOptions > datasets > DatasetOptions > final_sinc_prob`](#datasets_additionalProperties_final_sinc_prob)
+    - [57.1.44. Property `ReduxOptions > datasets > DatasetOptions > final_kernel_range`](#datasets_additionalProperties_final_kernel_range)
+      - [57.1.44.1. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 0](#autogenerated_heading_34)
+      - [57.1.44.2. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 1](#autogenerated_heading_35)
+- [58. Property `ReduxOptions > train`](#train)
+  - [58.1. Property `ReduxOptions > train > type`](#train_type)
+  - [58.2. Property `ReduxOptions > train > total_iter`](#train_total_iter)
+  - [58.3. Property `ReduxOptions > train > optim_g`](#train_optim_g)
+  - [58.4. Property `ReduxOptions > train > ema_decay`](#train_ema_decay)
+  - [58.5. Property `ReduxOptions > train > grad_clip`](#train_grad_clip)
+  - [58.6. Property `ReduxOptions > train > warmup_iter`](#train_warmup_iter)
+  - [58.7. Property `ReduxOptions > train > scheduler`](#train_scheduler)
+    - [58.7.1. Property `ReduxOptions > train > scheduler > anyOf > item 0`](#train_scheduler_anyOf_i0)
+    - [58.7.2. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions`](#train_scheduler_anyOf_i1)
+      - [58.7.2.1. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions > type`](#train_scheduler_anyOf_i1_type)
+      - [58.7.2.2. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions > milestones`](#train_scheduler_anyOf_i1_milestones)
+        - [58.7.2.2.1. ReduxOptions > train > scheduler > anyOf > SchedulerOptions > milestones > milestones items](#train_scheduler_anyOf_i1_milestones_items)
+      - [58.7.2.3. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions > gamma`](#train_scheduler_anyOf_i1_gamma)
+  - [58.8. Property `ReduxOptions > train > optim_d`](#train_optim_d)
+    - [58.8.1. Property `ReduxOptions > train > optim_d > anyOf > item 0`](#train_optim_d_anyOf_i0)
+    - [58.8.2. Property `ReduxOptions > train > optim_d > anyOf > item 1`](#train_optim_d_anyOf_i1)
+  - [58.9. Property `ReduxOptions > train > losses`](#train_losses)
+    - [58.9.1. ReduxOptions > train > losses > losses items](#train_losses_items)
+      - [58.9.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss`](#train_losses_items_anyOf_i0)
+        - [58.9.1.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > kind`](#train_losses_items_anyOf_i0_kind)
+        - [58.9.1.1.2. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > gan_type`](#train_losses_items_anyOf_i0_gan_type)
+        - [58.9.1.1.3. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > real_label_val`](#train_losses_items_anyOf_i0_real_label_val)
+        - [58.9.1.1.4. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > fake_label_val`](#train_losses_items_anyOf_i0_fake_label_val)
+        - [58.9.1.1.5. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > loss_weight`](#train_losses_items_anyOf_i0_loss_weight)
+        - [58.9.1.1.6. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > type`](#train_losses_items_anyOf_i0_type)
+      - [58.9.1.2. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss`](#train_losses_items_anyOf_i1)
+        - [58.9.1.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > kind`](#train_losses_items_anyOf_i1_kind)
+        - [58.9.1.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > gan_type`](#train_losses_items_anyOf_i1_gan_type)
+        - [58.9.1.2.3. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > real_label_val`](#train_losses_items_anyOf_i1_real_label_val)
+        - [58.9.1.2.4. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > fake_label_val`](#train_losses_items_anyOf_i1_fake_label_val)
+        - [58.9.1.2.5. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > loss_weight`](#train_losses_items_anyOf_i1_loss_weight)
+        - [58.9.1.2.6. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > type`](#train_losses_items_anyOf_i1_type)
+      - [58.9.1.3. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss`](#train_losses_items_anyOf_i2)
+        - [58.9.1.3.1. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > kind`](#train_losses_items_anyOf_i2_kind)
+        - [58.9.1.3.2. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > window_size`](#train_losses_items_anyOf_i2_window_size)
+        - [58.9.1.3.3. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > resize_input`](#train_losses_items_anyOf_i2_resize_input)
+        - [58.9.1.3.4. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > loss_weight`](#train_losses_items_anyOf_i2_loss_weight)
+        - [58.9.1.3.5. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > type`](#train_losses_items_anyOf_i2_type)
+      - [58.9.1.4. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss`](#train_losses_items_anyOf_i3)
+        - [58.9.1.4.1. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > kind`](#train_losses_items_anyOf_i3_kind)
+        - [58.9.1.4.2. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > loss_weight`](#train_losses_items_anyOf_i3_loss_weight)
+        - [58.9.1.4.3. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > reduction`](#train_losses_items_anyOf_i3_reduction)
+        - [58.9.1.4.4. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > type`](#train_losses_items_anyOf_i3_type)
+      - [58.9.1.5. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss`](#train_losses_items_anyOf_i4)
+        - [58.9.1.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > kind`](#train_losses_items_anyOf_i4_kind)
+        - [58.9.1.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > loss_weight`](#train_losses_items_anyOf_i4_loss_weight)
+        - [58.9.1.5.3. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > reduction`](#train_losses_items_anyOf_i4_reduction)
+        - [58.9.1.5.4. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > type`](#train_losses_items_anyOf_i4_type)
+      - [58.9.1.6. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss`](#train_losses_items_anyOf_i5)
+        - [58.9.1.6.1. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > kind`](#train_losses_items_anyOf_i5_kind)
+        - [58.9.1.6.2. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > loss_weight`](#train_losses_items_anyOf_i5_loss_weight)
+        - [58.9.1.6.3. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > reduction`](#train_losses_items_anyOf_i5_reduction)
+        - [58.9.1.6.4. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > eps`](#train_losses_items_anyOf_i5_eps)
+        - [58.9.1.6.5. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > type`](#train_losses_items_anyOf_i5_type)
+      - [58.9.1.7. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss`](#train_losses_items_anyOf_i6)
+        - [58.9.1.7.1. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > kind`](#train_losses_items_anyOf_i6_kind)
+        - [58.9.1.7.2. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > criterion`](#train_losses_items_anyOf_i6_criterion)
+        - [58.9.1.7.3. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > loss_weight`](#train_losses_items_anyOf_i6_loss_weight)
+        - [58.9.1.7.4. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > scale`](#train_losses_items_anyOf_i6_scale)
+        - [58.9.1.7.5. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > type`](#train_losses_items_anyOf_i6_type)
+      - [58.9.1.8. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss`](#train_losses_items_anyOf_i7)
+        - [58.9.1.8.1. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > kind`](#train_losses_items_anyOf_i7_kind)
+        - [58.9.1.8.2. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > criterion`](#train_losses_items_anyOf_i7_criterion)
+        - [58.9.1.8.3. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > loss_weight`](#train_losses_items_anyOf_i7_loss_weight)
+        - [58.9.1.8.4. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > scale`](#train_losses_items_anyOf_i7_scale)
+        - [58.9.1.8.5. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > type`](#train_losses_items_anyOf_i7_type)
+      - [58.9.1.9. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss`](#train_losses_items_anyOf_i8)
+        - [58.9.1.9.1. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > kind`](#train_losses_items_anyOf_i8_kind)
+        - [58.9.1.9.2. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > criterion`](#train_losses_items_anyOf_i8_criterion)
+        - [58.9.1.9.3. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > loss_weight`](#train_losses_items_anyOf_i8_loss_weight)
+        - [58.9.1.9.4. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > scale`](#train_losses_items_anyOf_i8_scale)
+        - [58.9.1.9.5. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > type`](#train_losses_items_anyOf_i8_type)
+      - [58.9.1.10. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss`](#train_losses_items_anyOf_i9)
+        - [58.9.1.10.1. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > kind`](#train_losses_items_anyOf_i9_kind)
+        - [58.9.1.10.2. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > criterion`](#train_losses_items_anyOf_i9_criterion)
+        - [58.9.1.10.3. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > loss_weight`](#train_losses_items_anyOf_i9_loss_weight)
+        - [58.9.1.10.4. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > type`](#train_losses_items_anyOf_i9_type)
+      - [58.9.1.11. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss`](#train_losses_items_anyOf_i10)
+        - [58.9.1.11.1. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > kind`](#train_losses_items_anyOf_i10_kind)
+        - [58.9.1.11.2. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > criterion`](#train_losses_items_anyOf_i10_criterion)
+        - [58.9.1.11.3. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > loss_weight`](#train_losses_items_anyOf_i10_loss_weight)
+        - [58.9.1.11.4. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > type`](#train_losses_items_anyOf_i10_type)
+      - [58.9.1.12. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss`](#train_losses_items_anyOf_i11)
+        - [58.9.1.12.1. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > kind`](#train_losses_items_anyOf_i11_kind)
+        - [58.9.1.12.2. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > loss_weight`](#train_losses_items_anyOf_i11_loss_weight)
+        - [58.9.1.12.3. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights`](#train_losses_items_anyOf_i11_layer_weights)
+          - [58.9.1.12.3.1. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights > anyOf > item 0`](#train_losses_items_anyOf_i11_layer_weights_anyOf_i0)
+            - [58.9.1.12.3.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights > anyOf > item 0 > additionalProperties`](#train_losses_items_anyOf_i11_layer_weights_anyOf_i0_additionalProperties)
+          - [58.9.1.12.3.2. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights > anyOf > item 1`](#train_losses_items_anyOf_i11_layer_weights_anyOf_i1)
+        - [58.9.1.12.4. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > crop_quarter`](#train_losses_items_anyOf_i11_crop_quarter)
+        - [58.9.1.12.5. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > max_1d_size`](#train_losses_items_anyOf_i11_max_1d_size)
+        - [58.9.1.12.6. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > distance_type`](#train_losses_items_anyOf_i11_distance_type)
+        - [58.9.1.12.7. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > b`](#train_losses_items_anyOf_i11_b)
+        - [58.9.1.12.8. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > band_width`](#train_losses_items_anyOf_i11_band_width)
+        - [58.9.1.12.9. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > use_vgg`](#train_losses_items_anyOf_i11_use_vgg)
+        - [58.9.1.12.10. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > net`](#train_losses_items_anyOf_i11_net)
+        - [58.9.1.12.11. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > calc_type`](#train_losses_items_anyOf_i11_calc_type)
+        - [58.9.1.12.12. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > z_norm`](#train_losses_items_anyOf_i11_z_norm)
+        - [58.9.1.12.13. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > type`](#train_losses_items_anyOf_i11_type)
+      - [58.9.1.13. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss`](#train_losses_items_anyOf_i12)
+        - [58.9.1.13.1. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > kind`](#train_losses_items_anyOf_i12_kind)
+        - [58.9.1.13.2. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > as_loss`](#train_losses_items_anyOf_i12_as_loss)
+        - [58.9.1.13.3. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > loss_weight`](#train_losses_items_anyOf_i12_loss_weight)
+        - [58.9.1.13.4. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > load_weights`](#train_losses_items_anyOf_i12_load_weights)
+        - [58.9.1.13.5. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > use_input_norm`](#train_losses_items_anyOf_i12_use_input_norm)
+        - [58.9.1.13.6. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > clip_min`](#train_losses_items_anyOf_i12_clip_min)
+        - [58.9.1.13.7. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > type`](#train_losses_items_anyOf_i12_type)
+      - [58.9.1.14. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss`](#train_losses_items_anyOf_i13)
+        - [58.9.1.14.1. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > kind`](#train_losses_items_anyOf_i13_kind)
+        - [58.9.1.14.2. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > features_to_compute`](#train_losses_items_anyOf_i13_features_to_compute)
+          - [58.9.1.14.2.1. ReduxOptions > train > losses > losses items > anyOf > dsdloss > features_to_compute > features_to_compute items](#train_losses_items_anyOf_i13_features_to_compute_items)
+        - [58.9.1.14.3. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > scales`](#train_losses_items_anyOf_i13_scales)
+          - [58.9.1.14.3.1. ReduxOptions > train > losses > losses items > anyOf > dsdloss > scales > scales items](#train_losses_items_anyOf_i13_scales_items)
+        - [58.9.1.14.4. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > criterion`](#train_losses_items_anyOf_i13_criterion)
+        - [58.9.1.14.5. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > shave_edge`](#train_losses_items_anyOf_i13_shave_edge)
+          - [58.9.1.14.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > shave_edge > anyOf > item 0`](#train_losses_items_anyOf_i13_shave_edge_anyOf_i0)
+          - [58.9.1.14.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > shave_edge > anyOf > item 1`](#train_losses_items_anyOf_i13_shave_edge_anyOf_i1)
+        - [58.9.1.14.6. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > loss_weight`](#train_losses_items_anyOf_i13_loss_weight)
+        - [58.9.1.14.7. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > type`](#train_losses_items_anyOf_i13_type)
+      - [58.9.1.15. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss`](#train_losses_items_anyOf_i14)
+        - [58.9.1.15.1. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > kind`](#train_losses_items_anyOf_i14_kind)
+        - [58.9.1.15.2. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > loss_weight`](#train_losses_items_anyOf_i14_loss_weight)
+        - [58.9.1.15.3. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > alpha`](#train_losses_items_anyOf_i14_alpha)
+        - [58.9.1.15.4. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > patch_factor`](#train_losses_items_anyOf_i14_patch_factor)
+        - [58.9.1.15.5. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > ave_spectrum`](#train_losses_items_anyOf_i14_ave_spectrum)
+        - [58.9.1.15.6. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > log_matrix`](#train_losses_items_anyOf_i14_log_matrix)
+        - [58.9.1.15.7. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > batch_matrix`](#train_losses_items_anyOf_i14_batch_matrix)
+        - [58.9.1.15.8. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > type`](#train_losses_items_anyOf_i14_type)
+      - [58.9.1.16. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss`](#train_losses_items_anyOf_i15)
+        - [58.9.1.16.1. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > kind`](#train_losses_items_anyOf_i15_kind)
+        - [58.9.1.16.2. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > criterion`](#train_losses_items_anyOf_i15_criterion)
+        - [58.9.1.16.3. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > loss_weight`](#train_losses_items_anyOf_i15_loss_weight)
+        - [58.9.1.16.4. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > type`](#train_losses_items_anyOf_i15_type)
+      - [58.9.1.17. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss`](#train_losses_items_anyOf_i16)
+        - [58.9.1.17.1. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > kind`](#train_losses_items_anyOf_i16_kind)
+        - [58.9.1.17.2. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > window_size`](#train_losses_items_anyOf_i16_window_size)
+        - [58.9.1.17.3. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > in_channels`](#train_losses_items_anyOf_i16_in_channels)
+        - [58.9.1.17.4. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > sigma`](#train_losses_items_anyOf_i16_sigma)
+        - [58.9.1.17.5. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > k1`](#train_losses_items_anyOf_i16_k1)
+        - [58.9.1.17.6. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > k2`](#train_losses_items_anyOf_i16_k2)
+        - [58.9.1.17.7. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > l`](#train_losses_items_anyOf_i16_l)
+        - [58.9.1.17.8. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > padding`](#train_losses_items_anyOf_i16_padding)
+          - [58.9.1.17.8.1. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > padding > anyOf > item 0`](#train_losses_items_anyOf_i16_padding_anyOf_i0)
+          - [58.9.1.17.8.2. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > padding > anyOf > item 1`](#train_losses_items_anyOf_i16_padding_anyOf_i1)
+        - [58.9.1.17.9. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > cosim`](#train_losses_items_anyOf_i16_cosim)
+        - [58.9.1.17.10. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > cosim_lambda`](#train_losses_items_anyOf_i16_cosim_lambda)
+        - [58.9.1.17.11. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > loss_weight`](#train_losses_items_anyOf_i16_loss_weight)
+        - [58.9.1.17.12. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > type`](#train_losses_items_anyOf_i16_type)
+      - [58.9.1.18. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss`](#train_losses_items_anyOf_i17)
+        - [58.9.1.18.1. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > kind`](#train_losses_items_anyOf_i17_kind)
+        - [58.9.1.18.2. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas`](#train_losses_items_anyOf_i17_gaussian_sigmas)
+          - [58.9.1.18.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas > anyOf > item 0`](#train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i0)
+            - [58.9.1.18.2.1.1. ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas > anyOf > item 0 > item 0 items](#train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i0_items)
+          - [58.9.1.18.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas > anyOf > item 1`](#train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i1)
+        - [58.9.1.18.3. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > data_range`](#train_losses_items_anyOf_i17_data_range)
+        - [58.9.1.18.4. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > k`](#train_losses_items_anyOf_i17_k)
+          - [58.9.1.18.4.1. ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > k > k item 0](#autogenerated_heading_36)
+          - [58.9.1.18.4.2. ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > k > k item 1](#autogenerated_heading_37)
+        - [58.9.1.18.5. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > alpha`](#train_losses_items_anyOf_i17_alpha)
+        - [58.9.1.18.6. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > cuda_dev`](#train_losses_items_anyOf_i17_cuda_dev)
+        - [58.9.1.18.7. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > loss_weight`](#train_losses_items_anyOf_i17_loss_weight)
+        - [58.9.1.18.8. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > type`](#train_losses_items_anyOf_i17_type)
+      - [58.9.1.19. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss`](#train_losses_items_anyOf_i18)
+        - [58.9.1.19.1. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss > kind`](#train_losses_items_anyOf_i18_kind)
+        - [58.9.1.19.2. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss > loss_weight`](#train_losses_items_anyOf_i18_loss_weight)
+        - [58.9.1.19.3. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss > type`](#train_losses_items_anyOf_i18_type)
+      - [58.9.1.20. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss`](#train_losses_items_anyOf_i19)
+        - [58.9.1.20.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > kind`](#train_losses_items_anyOf_i19_kind)
+        - [58.9.1.20.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights`](#train_losses_items_anyOf_i19_layer_weights)
+          - [58.9.1.20.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights > anyOf > item 0`](#train_losses_items_anyOf_i19_layer_weights_anyOf_i0)
+            - [58.9.1.20.2.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights > anyOf > item 0 > additionalProperties`](#train_losses_items_anyOf_i19_layer_weights_anyOf_i0_additionalProperties)
+          - [58.9.1.20.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights > anyOf > item 1`](#train_losses_items_anyOf_i19_layer_weights_anyOf_i1)
+        - [58.9.1.20.3. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > w_lambda`](#train_losses_items_anyOf_i19_w_lambda)
+        - [58.9.1.20.4. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > loss_weight`](#train_losses_items_anyOf_i19_loss_weight)
+        - [58.9.1.20.5. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha`](#train_losses_items_anyOf_i19_alpha)
+          - [58.9.1.20.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha > anyOf > item 0`](#train_losses_items_anyOf_i19_alpha_anyOf_i0)
+            - [58.9.1.20.5.1.1. ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha > anyOf > item 0 > item 0 items](#train_losses_items_anyOf_i19_alpha_anyOf_i0_items)
+          - [58.9.1.20.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha > anyOf > item 1`](#train_losses_items_anyOf_i19_alpha_anyOf_i1)
+        - [58.9.1.20.6. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > criterion`](#train_losses_items_anyOf_i19_criterion)
+        - [58.9.1.20.7. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > num_proj_fd`](#train_losses_items_anyOf_i19_num_proj_fd)
+        - [58.9.1.20.8. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > phase_weight_fd`](#train_losses_items_anyOf_i19_phase_weight_fd)
+        - [58.9.1.20.9. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > stride_fd`](#train_losses_items_anyOf_i19_stride_fd)
+        - [58.9.1.20.10. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > type`](#train_losses_items_anyOf_i19_type)
+      - [58.9.1.21. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss`](#train_losses_items_anyOf_i20)
+        - [58.9.1.21.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > kind`](#train_losses_items_anyOf_i20_kind)
+        - [58.9.1.21.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights`](#train_losses_items_anyOf_i20_layer_weights)
+          - [58.9.1.21.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights > anyOf > item 0`](#train_losses_items_anyOf_i20_layer_weights_anyOf_i0)
+            - [58.9.1.21.2.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights > anyOf > item 0 > additionalProperties`](#train_losses_items_anyOf_i20_layer_weights_anyOf_i0_additionalProperties)
+          - [58.9.1.21.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights > anyOf > item 1`](#train_losses_items_anyOf_i20_layer_weights_anyOf_i1)
+        - [58.9.1.21.3. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > w_lambda`](#train_losses_items_anyOf_i20_w_lambda)
+        - [58.9.1.21.4. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > loss_weight`](#train_losses_items_anyOf_i20_loss_weight)
+        - [58.9.1.21.5. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha`](#train_losses_items_anyOf_i20_alpha)
+          - [58.9.1.21.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha > anyOf > item 0`](#train_losses_items_anyOf_i20_alpha_anyOf_i0)
+            - [58.9.1.21.5.1.1. ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha > anyOf > item 0 > item 0 items](#train_losses_items_anyOf_i20_alpha_anyOf_i0_items)
+          - [58.9.1.21.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha > anyOf > item 1`](#train_losses_items_anyOf_i20_alpha_anyOf_i1)
+        - [58.9.1.21.6. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > criterion`](#train_losses_items_anyOf_i20_criterion)
+        - [58.9.1.21.7. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > num_proj_fd`](#train_losses_items_anyOf_i20_num_proj_fd)
+        - [58.9.1.21.8. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > phase_weight_fd`](#train_losses_items_anyOf_i20_phase_weight_fd)
+        - [58.9.1.21.9. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > stride_fd`](#train_losses_items_anyOf_i20_stride_fd)
+        - [58.9.1.21.10. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > type`](#train_losses_items_anyOf_i20_type)
+      - [58.9.1.22. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss`](#train_losses_items_anyOf_i21)
+        - [58.9.1.22.1. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > kind`](#train_losses_items_anyOf_i21_kind)
+        - [58.9.1.22.2. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > loss_weight`](#train_losses_items_anyOf_i21_loss_weight)
+        - [58.9.1.22.3. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > resize_input`](#train_losses_items_anyOf_i21_resize_input)
+        - [58.9.1.22.4. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > type`](#train_losses_items_anyOf_i21_type)
+  - [58.10. Property `ReduxOptions > train > pixel_opt`](#train_pixel_opt)
+    - [58.10.1. Property `ReduxOptions > train > pixel_opt > anyOf > item 0`](#train_pixel_opt_anyOf_i0)
+    - [58.10.2. Property `ReduxOptions > train > pixel_opt > anyOf > item 1`](#train_pixel_opt_anyOf_i1)
+  - [58.11. Property `ReduxOptions > train > mssim_opt`](#train_mssim_opt)
+    - [58.11.1. Property `ReduxOptions > train > mssim_opt > anyOf > item 0`](#train_mssim_opt_anyOf_i0)
+    - [58.11.2. Property `ReduxOptions > train > mssim_opt > anyOf > item 1`](#train_mssim_opt_anyOf_i1)
+  - [58.12. Property `ReduxOptions > train > ms_ssim_l1_opt`](#train_ms_ssim_l1_opt)
+    - [58.12.1. Property `ReduxOptions > train > ms_ssim_l1_opt > anyOf > item 0`](#train_ms_ssim_l1_opt_anyOf_i0)
+    - [58.12.2. Property `ReduxOptions > train > ms_ssim_l1_opt > anyOf > item 1`](#train_ms_ssim_l1_opt_anyOf_i1)
+  - [58.13. Property `ReduxOptions > train > perceptual_opt`](#train_perceptual_opt)
+    - [58.13.1. Property `ReduxOptions > train > perceptual_opt > anyOf > item 0`](#train_perceptual_opt_anyOf_i0)
+    - [58.13.2. Property `ReduxOptions > train > perceptual_opt > anyOf > item 1`](#train_perceptual_opt_anyOf_i1)
+  - [58.14. Property `ReduxOptions > train > contextual_opt`](#train_contextual_opt)
+    - [58.14.1. Property `ReduxOptions > train > contextual_opt > anyOf > item 0`](#train_contextual_opt_anyOf_i0)
+    - [58.14.2. Property `ReduxOptions > train > contextual_opt > anyOf > item 1`](#train_contextual_opt_anyOf_i1)
+  - [58.15. Property `ReduxOptions > train > dists_opt`](#train_dists_opt)
+    - [58.15.1. Property `ReduxOptions > train > dists_opt > anyOf > item 0`](#train_dists_opt_anyOf_i0)
+    - [58.15.2. Property `ReduxOptions > train > dists_opt > anyOf > item 1`](#train_dists_opt_anyOf_i1)
+  - [58.16. Property `ReduxOptions > train > hr_inversion_opt`](#train_hr_inversion_opt)
+    - [58.16.1. Property `ReduxOptions > train > hr_inversion_opt > anyOf > item 0`](#train_hr_inversion_opt_anyOf_i0)
+    - [58.16.2. Property `ReduxOptions > train > hr_inversion_opt > anyOf > item 1`](#train_hr_inversion_opt_anyOf_i1)
+  - [58.17. Property `ReduxOptions > train > dinov2_opt`](#train_dinov2_opt)
+    - [58.17.1. Property `ReduxOptions > train > dinov2_opt > anyOf > item 0`](#train_dinov2_opt_anyOf_i0)
+    - [58.17.2. Property `ReduxOptions > train > dinov2_opt > anyOf > item 1`](#train_dinov2_opt_anyOf_i1)
+  - [58.18. Property `ReduxOptions > train > topiq_opt`](#train_topiq_opt)
+    - [58.18.1. Property `ReduxOptions > train > topiq_opt > anyOf > item 0`](#train_topiq_opt_anyOf_i0)
+    - [58.18.2. Property `ReduxOptions > train > topiq_opt > anyOf > item 1`](#train_topiq_opt_anyOf_i1)
+  - [58.19. Property `ReduxOptions > train > pd_opt`](#train_pd_opt)
+    - [58.19.1. Property `ReduxOptions > train > pd_opt > anyOf > item 0`](#train_pd_opt_anyOf_i0)
+    - [58.19.2. Property `ReduxOptions > train > pd_opt > anyOf > item 1`](#train_pd_opt_anyOf_i1)
+  - [58.20. Property `ReduxOptions > train > fd_opt`](#train_fd_opt)
+    - [58.20.1. Property `ReduxOptions > train > fd_opt > anyOf > item 0`](#train_fd_opt_anyOf_i0)
+    - [58.20.2. Property `ReduxOptions > train > fd_opt > anyOf > item 1`](#train_fd_opt_anyOf_i1)
+  - [58.21. Property `ReduxOptions > train > ldl_opt`](#train_ldl_opt)
+    - [58.21.1. Property `ReduxOptions > train > ldl_opt > anyOf > item 0`](#train_ldl_opt_anyOf_i0)
+    - [58.21.2. Property `ReduxOptions > train > ldl_opt > anyOf > item 1`](#train_ldl_opt_anyOf_i1)
+  - [58.22. Property `ReduxOptions > train > hsluv_opt`](#train_hsluv_opt)
+    - [58.22.1. Property `ReduxOptions > train > hsluv_opt > anyOf > item 0`](#train_hsluv_opt_anyOf_i0)
+    - [58.22.2. Property `ReduxOptions > train > hsluv_opt > anyOf > item 1`](#train_hsluv_opt_anyOf_i1)
+  - [58.23. Property `ReduxOptions > train > gan_opt`](#train_gan_opt)
+    - [58.23.1. Property `ReduxOptions > train > gan_opt > anyOf > item 0`](#train_gan_opt_anyOf_i0)
+    - [58.23.2. Property `ReduxOptions > train > gan_opt > anyOf > item 1`](#train_gan_opt_anyOf_i1)
+  - [58.24. Property `ReduxOptions > train > color_opt`](#train_color_opt)
+    - [58.24.1. Property `ReduxOptions > train > color_opt > anyOf > item 0`](#train_color_opt_anyOf_i0)
+    - [58.24.2. Property `ReduxOptions > train > color_opt > anyOf > item 1`](#train_color_opt_anyOf_i1)
+  - [58.25. Property `ReduxOptions > train > luma_opt`](#train_luma_opt)
+    - [58.25.1. Property `ReduxOptions > train > luma_opt > anyOf > item 0`](#train_luma_opt_anyOf_i0)
+    - [58.25.2. Property `ReduxOptions > train > luma_opt > anyOf > item 1`](#train_luma_opt_anyOf_i1)
+  - [58.26. Property `ReduxOptions > train > avg_opt`](#train_avg_opt)
+    - [58.26.1. Property `ReduxOptions > train > avg_opt > anyOf > item 0`](#train_avg_opt_anyOf_i0)
+    - [58.26.2. Property `ReduxOptions > train > avg_opt > anyOf > item 1`](#train_avg_opt_anyOf_i1)
+  - [58.27. Property `ReduxOptions > train > bicubic_opt`](#train_bicubic_opt)
+    - [58.27.1. Property `ReduxOptions > train > bicubic_opt > anyOf > item 0`](#train_bicubic_opt_anyOf_i0)
+    - [58.27.2. Property `ReduxOptions > train > bicubic_opt > anyOf > item 1`](#train_bicubic_opt_anyOf_i1)
+  - [58.28. Property `ReduxOptions > train > use_moa`](#train_use_moa)
+  - [58.29. Property `ReduxOptions > train > moa_augs`](#train_moa_augs)
+    - [58.29.1. ReduxOptions > train > moa_augs > moa_augs items](#train_moa_augs_items)
+  - [58.30. Property `ReduxOptions > train > moa_probs`](#train_moa_probs)
+    - [58.30.1. ReduxOptions > train > moa_probs > moa_probs items](#train_moa_probs_items)
+  - [58.31. Property `ReduxOptions > train > moa_debug`](#train_moa_debug)
+  - [58.32. Property `ReduxOptions > train > moa_debug_limit`](#train_moa_debug_limit)
+- [59. Property `ReduxOptions > val`](#val)
+  - [59.1. Property `ReduxOptions > val > anyOf > item 0`](#val_anyOf_i0)
+  - [59.2. Property `ReduxOptions > val > anyOf > ValOptions`](#val_anyOf_i1)
+    - [59.2.1. Property `ReduxOptions > val > anyOf > ValOptions > val_enabled`](#val_anyOf_i1_val_enabled)
+    - [59.2.2. Property `ReduxOptions > val > anyOf > ValOptions > save_img`](#val_anyOf_i1_save_img)
+    - [59.2.3. Property `ReduxOptions > val > anyOf > ValOptions > val_freq`](#val_anyOf_i1_val_freq)
+      - [59.2.3.1. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 0`](#val_anyOf_i1_val_freq_anyOf_i0)
+      - [59.2.3.2. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 1`](#val_anyOf_i1_val_freq_anyOf_i1)
+    - [59.2.4. Property `ReduxOptions > val > anyOf > ValOptions > suffix`](#val_anyOf_i1_suffix)
+      - [59.2.4.1. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 0`](#val_anyOf_i1_suffix_anyOf_i0)
+      - [59.2.4.2. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 1`](#val_anyOf_i1_suffix_anyOf_i1)
+    - [59.2.5. Property `ReduxOptions > val > anyOf > ValOptions > metrics_enabled`](#val_anyOf_i1_metrics_enabled)
+    - [59.2.6. Property `ReduxOptions > val > anyOf > ValOptions > metrics`](#val_anyOf_i1_metrics)
+      - [59.2.6.1. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 0`](#val_anyOf_i1_metrics_anyOf_i0)
+      - [59.2.6.2. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 1`](#val_anyOf_i1_metrics_anyOf_i1)
+    - [59.2.7. Property `ReduxOptions > val > anyOf > ValOptions > pbar`](#val_anyOf_i1_pbar)
+- [60. Property `ReduxOptions > logger`](#logger)
+  - [60.1. Property `ReduxOptions > logger > anyOf > item 0`](#logger_anyOf_i0)
+  - [60.2. Property `ReduxOptions > logger > anyOf > LogOptions`](#logger_anyOf_i1)
+    - [60.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > print_freq`](#logger_anyOf_i1_print_freq)
+    - [60.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_freq`](#logger_anyOf_i1_save_checkpoint_freq)
+    - [60.2.3. Property `ReduxOptions > logger > anyOf > LogOptions > use_tb_logger`](#logger_anyOf_i1_use_tb_logger)
+    - [60.2.4. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_format`](#logger_anyOf_i1_save_checkpoint_format)
+    - [60.2.5. Property `ReduxOptions > logger > anyOf > LogOptions > wandb`](#logger_anyOf_i1_wandb)
+      - [60.2.5.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > item 0`](#logger_anyOf_i1_wandb_anyOf_i0)
+      - [60.2.5.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions`](#logger_anyOf_i1_wandb_anyOf_i1)
+        - [60.2.5.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id`](#logger_anyOf_i1_wandb_anyOf_i1_resume_id)
+          - [60.2.5.2.1.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 0`](#logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i0)
+          - [60.2.5.2.1.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 1`](#logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i1)
+        - [60.2.5.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project`](#logger_anyOf_i1_wandb_anyOf_i1_project)
+          - [60.2.5.2.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 0`](#logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i0)
+          - [60.2.5.2.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 1`](#logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i1)
+- [61. Property `ReduxOptions > dist_params`](#dist_params)
+  - [61.1. Property `ReduxOptions > dist_params > anyOf > item 0`](#dist_params_anyOf_i0)
+  - [61.2. Property `ReduxOptions > dist_params > anyOf > item 1`](#dist_params_anyOf_i1)
+- [62. Property `ReduxOptions > onnx`](#onnx)
+  - [62.1. Property `ReduxOptions > onnx > anyOf > item 0`](#onnx_anyOf_i0)
+  - [62.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions`](#onnx_anyOf_i1)
+    - [62.2.1. Property `ReduxOptions > onnx > anyOf > OnnxOptions > dynamo`](#onnx_anyOf_i1_dynamo)
+    - [62.2.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions > opset`](#onnx_anyOf_i1_opset)
+    - [62.2.3. Property `ReduxOptions > onnx > anyOf > OnnxOptions > use_static_shapes`](#onnx_anyOf_i1_use_static_shapes)
+    - [62.2.4. Property `ReduxOptions > onnx > anyOf > OnnxOptions > shape`](#onnx_anyOf_i1_shape)
+    - [62.2.5. Property `ReduxOptions > onnx > anyOf > OnnxOptions > verify`](#onnx_anyOf_i1_verify)
+    - [62.2.6. Property `ReduxOptions > onnx > anyOf > OnnxOptions > fp16`](#onnx_anyOf_i1_fp16)
+    - [62.2.7. Property `ReduxOptions > onnx > anyOf > OnnxOptions > optimize`](#onnx_anyOf_i1_optimize)
+- [63. Property `ReduxOptions > find_unused_parameters`](#find_unused_parameters)
 
 **Title:** ReduxOptions
 
@@ -392,75 +756,86 @@
 | ------------------------- | -------------------- |
 | **Type**                  | `object`             |
 | **Required**              | No                   |
-| **Additional properties** | Not allowed          |
+| **Additional properties** | Any type allowed     |
 | **Defined in**            | #/$defs/ReduxOptions |
 
-| Property                                                                                       | Pattern | Type            | Deprecated | Definition             | Title/Description                                                                                                                                                                                                                                                                                         |
-| ---------------------------------------------------------------------------------------------- | ------- | --------------- | ---------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| + [name](#name )                                                                               | No      | string          | No         | -                      | Name of the experiment. It should be a unique name. If you enable auto resume, any experiment with this name will be resumed instead of starting a new training run.                                                                                                                                      |
-| + [scale](#scale )                                                                             | No      | integer         | No         | -                      | Scale of the model. Most architectures support a scale of 1, 2, 3, 4, or 8. A scale of 1 can be used for restoration models that don't change the resolution of the input image. A scale of 2 means the width and height of the input image are doubled, so a 640x480 input will be upscaled to 1280x960. |
-| + [num_gpu](#num_gpu )                                                                         | No      | Combination     | No         | -                      | The number of GPUs to use for training, if using multiple GPUs.                                                                                                                                                                                                                                           |
-| + [path](#path )                                                                               | No      | object          | No         | In #/$defs/PathOptions | PathOptions                                                                                                                                                                                                                                                                                               |
-| + [network_g](#network_g )                                                                     | No      | object          | No         | -                      | The options for the generator model.                                                                                                                                                                                                                                                                      |
-| - [network_d](#network_d )                                                                     | No      | Combination     | No         | -                      | The options for the discriminator model.                                                                                                                                                                                                                                                                  |
-| - [manual_seed](#manual_seed )                                                                 | No      | Combination     | No         | -                      | Deterministic mode, slows down training. Only use for reproducible experiments.                                                                                                                                                                                                                           |
-| - [deterministic](#deterministic )                                                             | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [dist](#dist )                                                                               | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [launcher](#launcher )                                                                       | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [rank](#rank )                                                                               | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [world_size](#world_size )                                                                   | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [auto_resume](#auto_resume )                                                                 | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resume](#resume )                                                                           | No      | integer         | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [is_train](#is_train )                                                                       | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [root_path](#root_path )                                                                     | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [use_amp](#use_amp )                                                                         | No      | boolean         | No         | -                      | Speed up training and reduce VRAM usage. NVIDIA only.                                                                                                                                                                                                                                                     |
-| - [amp_bf16](#amp_bf16 )                                                                       | No      | boolean         | No         | -                      | Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.                                                                                                                                                                                                   |
-| - [use_channels_last](#use_channels_last )                                                     | No      | boolean         | No         | -                      | Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.                                                                                                                                     |
-| - [fast_matmul](#fast_matmul )                                                                 | No      | boolean         | No         | -                      | Trade precision for performance.                                                                                                                                                                                                                                                                          |
-| - [use_compile](#use_compile )                                                                 | No      | boolean         | No         | -                      | Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled.                                                                                                                                                    |
-| - [detect_anomaly](#detect_anomaly )                                                           | No      | boolean         | No         | -                      | Whether or not to enable anomaly detection, which can be useful for debugging NaNs that occur during training. Has a significant performance hit and should be disabled when not debugging.                                                                                                               |
-| - [high_order_degradation](#high_order_degradation )                                           | No      | boolean         | No         | -                      | Whether or not to enable OTF (on the fly) degradations, which generates LRs on the fly.                                                                                                                                                                                                                   |
-| - [high_order_degradations_debug](#high_order_degradations_debug )                             | No      | boolean         | No         | -                      | Whether or not to enable debugging for OTF, which saves the OTF generated LR images so they can be inspected to view the effect of different OTF settings.                                                                                                                                                |
-| - [high_order_degradations_debug_limit](#high_order_degradations_debug_limit )                 | No      | integer         | No         | -                      | The maximum number of OTF images to save when debugging is enabled.                                                                                                                                                                                                                                       |
-| - [dataroot_lq_prob](#dataroot_lq_prob )                                                       | No      | number          | No         | -                      | Probability of using paired LR data instead of OTF LR data.                                                                                                                                                                                                                                               |
-| - [force_high_order_degradation_filename_masks](#force_high_order_degradation_filename_masks ) | No      | array of string | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [force_dataroot_lq_filename_masks](#force_dataroot_lq_filename_masks )                       | No      | array of string | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [lq_usm](#lq_usm )                                                                           | No      | boolean         | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [lq_usm_radius_range](#lq_usm_radius_range )                                                 | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [blur_prob](#blur_prob )                                                                     | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_prob](#resize_prob )                                                                 | No      | array of number | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_mode_list](#resize_mode_list )                                                       | No      | array of string | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_mode_prob](#resize_mode_prob )                                                       | No      | array of number | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_range](#resize_range )                                                               | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [gaussian_noise_prob](#gaussian_noise_prob )                                                 | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [noise_range](#noise_range )                                                                 | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [poisson_scale_range](#poisson_scale_range )                                                 | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [gray_noise_prob](#gray_noise_prob )                                                         | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [jpeg_prob](#jpeg_prob )                                                                     | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [jpeg_range](#jpeg_range )                                                                   | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [blur_prob2](#blur_prob2 )                                                                   | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_prob2](#resize_prob2 )                                                               | No      | array of number | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_mode_list2](#resize_mode_list2 )                                                     | No      | array of string | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_mode_prob2](#resize_mode_prob2 )                                                     | No      | array of number | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_range2](#resize_range2 )                                                             | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [gaussian_noise_prob2](#gaussian_noise_prob2 )                                               | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [noise_range2](#noise_range2 )                                                               | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [poisson_scale_range2](#poisson_scale_range2 )                                               | No      | array           | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [gray_noise_prob2](#gray_noise_prob2 )                                                       | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [jpeg_prob2](#jpeg_prob2 )                                                                   | No      | number          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [jpeg_range2](#jpeg_range2 )                                                                 | No      | array of number | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_mode_list3](#resize_mode_list3 )                                                     | No      | array of string | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [resize_mode_prob3](#resize_mode_prob3 )                                                     | No      | array of number | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [queue_size](#queue_size )                                                                   | No      | integer         | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [datasets](#datasets )                                                                       | No      | object          | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [train](#train )                                                                             | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [val](#val )                                                                                 | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [logger](#logger )                                                                           | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [dist_params](#dist_params )                                                                 | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [onnx](#onnx )                                                                               | No      | Combination     | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
-| - [find_unused_parameters](#find_unused_parameters )                                           | No      | boolean         | No         | -                      | -                                                                                                                                                                                                                                                                                                         |
+| Property                                                                                       | Pattern | Type             | Deprecated | Definition              | Title/Description                                                                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------- | ------- | ---------------- | ---------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| + [type](#type )                                                                               | No      | enum (of string) | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [name](#name )                                                                               | No      | string           | No         | -                       | Name of the experiment. It should be a unique name. If you enable auto resume, any experiment with this name will be resumed instead of starting a new training run.                                                                                                                                      |
+| + [scale](#scale )                                                                             | No      | integer          | No         | -                       | Scale of the model. Most architectures support a scale of 1, 2, 3, 4, or 8. A scale of 1 can be used for restoration models that don't change the resolution of the input image. A scale of 2 means the width and height of the input image are doubled, so a 640x480 input will be upscaled to 1280x960. |
+| + [num_gpu](#num_gpu )                                                                         | No      | Combination      | No         | -                       | The number of GPUs to use for training, if using multiple GPUs.                                                                                                                                                                                                                                           |
+| + [path](#path )                                                                               | No      | object           | No         | In #/$defs/PathOptions  | PathOptions                                                                                                                                                                                                                                                                                               |
+| + [network_g](#network_g )                                                                     | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [network_d](#network_d )                                                                     | No      | Combination      | No         | -                       | The options for the discriminator model.                                                                                                                                                                                                                                                                  |
+| + [manual_seed](#manual_seed )                                                                 | No      | Combination      | No         | -                       | Deterministic mode, slows down training. Only use for reproducible experiments.                                                                                                                                                                                                                           |
+| + [deterministic](#deterministic )                                                             | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [dist](#dist )                                                                               | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [launcher](#launcher )                                                                       | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [rank](#rank )                                                                               | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [world_size](#world_size )                                                                   | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [auto_resume](#auto_resume )                                                                 | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resume](#resume )                                                                           | No      | integer          | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [is_train](#is_train )                                                                       | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [root_path](#root_path )                                                                     | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [use_amp](#use_amp )                                                                         | No      | boolean          | No         | -                       | Speed up training and reduce VRAM usage. NVIDIA only.                                                                                                                                                                                                                                                     |
+| + [amp_bf16](#amp_bf16 )                                                                       | No      | boolean          | No         | -                       | Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.                                                                                                                                                                                                   |
+| + [use_channels_last](#use_channels_last )                                                     | No      | boolean          | No         | -                       | Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.                                                                                                                                     |
+| + [fast_matmul](#fast_matmul )                                                                 | No      | boolean          | No         | -                       | Trade precision for performance.                                                                                                                                                                                                                                                                          |
+| + [use_compile](#use_compile )                                                                 | No      | boolean          | No         | -                       | Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled.                                                                                                                                                    |
+| + [detect_anomaly](#detect_anomaly )                                                           | No      | boolean          | No         | -                       | Whether or not to enable anomaly detection, which can be useful for debugging NaNs that occur during training. Has a significant performance hit and should be disabled when not debugging.                                                                                                               |
+| + [high_order_degradation](#high_order_degradation )                                           | No      | boolean          | No         | -                       | Whether or not to enable OTF (on the fly) degradations, which generates LRs on the fly.                                                                                                                                                                                                                   |
+| + [high_order_degradations_debug](#high_order_degradations_debug )                             | No      | boolean          | No         | -                       | Whether or not to enable debugging for OTF, which saves the OTF generated LR images so they can be inspected to view the effect of different OTF settings.                                                                                                                                                |
+| + [high_order_degradations_debug_limit](#high_order_degradations_debug_limit )                 | No      | integer          | No         | -                       | The maximum number of OTF images to save when debugging is enabled.                                                                                                                                                                                                                                       |
+| + [dataroot_lq_prob](#dataroot_lq_prob )                                                       | No      | number           | No         | -                       | Probability of using paired LR data instead of OTF LR data.                                                                                                                                                                                                                                               |
+| + [force_high_order_degradation_filename_masks](#force_high_order_degradation_filename_masks ) | No      | array of string  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [force_dataroot_lq_filename_masks](#force_dataroot_lq_filename_masks )                       | No      | array of string  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [lq_usm](#lq_usm )                                                                           | No      | boolean          | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [lq_usm_radius_range](#lq_usm_radius_range )                                                 | No      | array            | No         | -                       | For the unsharp mask of the LQ image, use a radius randomly selected from this range.                                                                                                                                                                                                                     |
+| + [blur_prob](#blur_prob )                                                                     | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_prob](#resize_prob )                                                                 | No      | array of number  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_mode_list](#resize_mode_list )                                                       | No      | array of string  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_mode_prob](#resize_mode_prob )                                                       | No      | array of number  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_range](#resize_range )                                                               | No      | array            | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [gaussian_noise_prob](#gaussian_noise_prob )                                                 | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [noise_range](#noise_range )                                                                 | No      | array            | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [poisson_scale_range](#poisson_scale_range )                                                 | No      | array            | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [gray_noise_prob](#gray_noise_prob )                                                         | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [jpeg_prob](#jpeg_prob )                                                                     | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [jpeg_range](#jpeg_range )                                                                   | No      | array            | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [blur_prob2](#blur_prob2 )                                                                   | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_prob2](#resize_prob2 )                                                               | No      | array of number  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_mode_list2](#resize_mode_list2 )                                                     | No      | array of string  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_mode_prob2](#resize_mode_prob2 )                                                     | No      | array of number  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_range2](#resize_range2 )                                                             | No      | array            | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [gaussian_noise_prob2](#gaussian_noise_prob2 )                                               | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [noise_range2](#noise_range2 )                                                               | No      | array            | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [poisson_scale_range2](#poisson_scale_range2 )                                               | No      | array            | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [gray_noise_prob2](#gray_noise_prob2 )                                                       | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [jpeg_prob2](#jpeg_prob2 )                                                                   | No      | number           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [jpeg_range2](#jpeg_range2 )                                                                 | No      | array of number  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_mode_list3](#resize_mode_list3 )                                                     | No      | array of string  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [resize_mode_prob3](#resize_mode_prob3 )                                                     | No      | array of number  | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [queue_size](#queue_size )                                                                   | No      | integer          | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [datasets](#datasets )                                                                       | No      | object           | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [train](#train )                                                                             | No      | object           | No         | In #/$defs/TrainOptions | TrainOptions                                                                                                                                                                                                                                                                                              |
+| + [val](#val )                                                                                 | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [logger](#logger )                                                                           | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [dist_params](#dist_params )                                                                 | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [onnx](#onnx )                                                                               | No      | Combination      | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
+| + [find_unused_parameters](#find_unused_parameters )                                           | No      | boolean          | No         | -                       | -                                                                                                                                                                                                                                                                                                         |
 
-## <a name="name"></a>1. Property `ReduxOptions > name`
+## <a name="type"></a>1. Property `ReduxOptions > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ReduxOptions"
+
+## <a name="name"></a>2. Property `ReduxOptions > name`
 
 |              |          |
 | ------------ | -------- |
@@ -469,7 +844,7 @@
 
 **Description:** Name of the experiment. It should be a unique name. If you enable auto resume, any experiment with this name will be resumed instead of starting a new training run.
 
-## <a name="scale"></a>2. Property `ReduxOptions > scale`
+## <a name="scale"></a>3. Property `ReduxOptions > scale`
 
 |              |           |
 | ------------ | --------- |
@@ -478,7 +853,7 @@
 
 **Description:** Scale of the model. Most architectures support a scale of 1, 2, 3, 4, or 8. A scale of 1 can be used for restoration models that don't change the resolution of the input image. A scale of 2 means the width and height of the input image are doubled, so a 640x480 input will be upscaled to 1280x960.
 
-## <a name="num_gpu"></a>3. Property `ReduxOptions > num_gpu`
+## <a name="num_gpu"></a>4. Property `ReduxOptions > num_gpu`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -493,7 +868,7 @@
 | [item 0](#num_gpu_anyOf_i0) |
 | [item 1](#num_gpu_anyOf_i1) |
 
-### <a name="num_gpu_anyOf_i0"></a>3.1. Property `ReduxOptions > num_gpu > anyOf > item 0`
+### <a name="num_gpu_anyOf_i0"></a>4.1. Property `ReduxOptions > num_gpu > anyOf > item 0`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -503,14 +878,14 @@
 Must be one of:
 * "auto"
 
-### <a name="num_gpu_anyOf_i1"></a>3.2. Property `ReduxOptions > num_gpu > anyOf > item 1`
+### <a name="num_gpu_anyOf_i1"></a>4.2. Property `ReduxOptions > num_gpu > anyOf > item 1`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-## <a name="path"></a>4. Property `ReduxOptions > path`
+## <a name="path"></a>5. Property `ReduxOptions > path`
 
 **Title:** PathOptions
 
@@ -541,7 +916,7 @@ Must be one of:
 | - [strict_load_d](#path_strict_load_d )                     | No      | boolean     | No         | -          | -                 |
 | - [ignore_resume_networks](#path_ignore_resume_networks )   | No      | Combination | No         | -          | -                 |
 
-### <a name="path_experiments_root"></a>4.1. Property `ReduxOptions > path > experiments_root`
+### <a name="path_experiments_root"></a>5.1. Property `ReduxOptions > path > experiments_root`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -555,21 +930,21 @@ Must be one of:
 | [item 0](#path_experiments_root_anyOf_i0) |
 | [item 1](#path_experiments_root_anyOf_i1) |
 
-#### <a name="path_experiments_root_anyOf_i0"></a>4.1.1. Property `ReduxOptions > path > experiments_root > anyOf > item 0`
+#### <a name="path_experiments_root_anyOf_i0"></a>5.1.1. Property `ReduxOptions > path > experiments_root > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_experiments_root_anyOf_i1"></a>4.1.2. Property `ReduxOptions > path > experiments_root > anyOf > item 1`
+#### <a name="path_experiments_root_anyOf_i1"></a>5.1.2. Property `ReduxOptions > path > experiments_root > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_models"></a>4.2. Property `ReduxOptions > path > models`
+### <a name="path_models"></a>5.2. Property `ReduxOptions > path > models`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -583,21 +958,21 @@ Must be one of:
 | [item 0](#path_models_anyOf_i0) |
 | [item 1](#path_models_anyOf_i1) |
 
-#### <a name="path_models_anyOf_i0"></a>4.2.1. Property `ReduxOptions > path > models > anyOf > item 0`
+#### <a name="path_models_anyOf_i0"></a>5.2.1. Property `ReduxOptions > path > models > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_models_anyOf_i1"></a>4.2.2. Property `ReduxOptions > path > models > anyOf > item 1`
+#### <a name="path_models_anyOf_i1"></a>5.2.2. Property `ReduxOptions > path > models > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_resume_models"></a>4.3. Property `ReduxOptions > path > resume_models`
+### <a name="path_resume_models"></a>5.3. Property `ReduxOptions > path > resume_models`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -611,21 +986,21 @@ Must be one of:
 | [item 0](#path_resume_models_anyOf_i0) |
 | [item 1](#path_resume_models_anyOf_i1) |
 
-#### <a name="path_resume_models_anyOf_i0"></a>4.3.1. Property `ReduxOptions > path > resume_models > anyOf > item 0`
+#### <a name="path_resume_models_anyOf_i0"></a>5.3.1. Property `ReduxOptions > path > resume_models > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_resume_models_anyOf_i1"></a>4.3.2. Property `ReduxOptions > path > resume_models > anyOf > item 1`
+#### <a name="path_resume_models_anyOf_i1"></a>5.3.2. Property `ReduxOptions > path > resume_models > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_training_states"></a>4.4. Property `ReduxOptions > path > training_states`
+### <a name="path_training_states"></a>5.4. Property `ReduxOptions > path > training_states`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -639,21 +1014,21 @@ Must be one of:
 | [item 0](#path_training_states_anyOf_i0) |
 | [item 1](#path_training_states_anyOf_i1) |
 
-#### <a name="path_training_states_anyOf_i0"></a>4.4.1. Property `ReduxOptions > path > training_states > anyOf > item 0`
+#### <a name="path_training_states_anyOf_i0"></a>5.4.1. Property `ReduxOptions > path > training_states > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_training_states_anyOf_i1"></a>4.4.2. Property `ReduxOptions > path > training_states > anyOf > item 1`
+#### <a name="path_training_states_anyOf_i1"></a>5.4.2. Property `ReduxOptions > path > training_states > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_log"></a>4.5. Property `ReduxOptions > path > log`
+### <a name="path_log"></a>5.5. Property `ReduxOptions > path > log`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -667,21 +1042,21 @@ Must be one of:
 | [item 0](#path_log_anyOf_i0) |
 | [item 1](#path_log_anyOf_i1) |
 
-#### <a name="path_log_anyOf_i0"></a>4.5.1. Property `ReduxOptions > path > log > anyOf > item 0`
+#### <a name="path_log_anyOf_i0"></a>5.5.1. Property `ReduxOptions > path > log > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_log_anyOf_i1"></a>4.5.2. Property `ReduxOptions > path > log > anyOf > item 1`
+#### <a name="path_log_anyOf_i1"></a>5.5.2. Property `ReduxOptions > path > log > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_visualization"></a>4.6. Property `ReduxOptions > path > visualization`
+### <a name="path_visualization"></a>5.6. Property `ReduxOptions > path > visualization`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -695,21 +1070,21 @@ Must be one of:
 | [item 0](#path_visualization_anyOf_i0) |
 | [item 1](#path_visualization_anyOf_i1) |
 
-#### <a name="path_visualization_anyOf_i0"></a>4.6.1. Property `ReduxOptions > path > visualization > anyOf > item 0`
+#### <a name="path_visualization_anyOf_i0"></a>5.6.1. Property `ReduxOptions > path > visualization > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_visualization_anyOf_i1"></a>4.6.2. Property `ReduxOptions > path > visualization > anyOf > item 1`
+#### <a name="path_visualization_anyOf_i1"></a>5.6.2. Property `ReduxOptions > path > visualization > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_results_root"></a>4.7. Property `ReduxOptions > path > results_root`
+### <a name="path_results_root"></a>5.7. Property `ReduxOptions > path > results_root`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -723,21 +1098,21 @@ Must be one of:
 | [item 0](#path_results_root_anyOf_i0) |
 | [item 1](#path_results_root_anyOf_i1) |
 
-#### <a name="path_results_root_anyOf_i0"></a>4.7.1. Property `ReduxOptions > path > results_root > anyOf > item 0`
+#### <a name="path_results_root_anyOf_i0"></a>5.7.1. Property `ReduxOptions > path > results_root > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_results_root_anyOf_i1"></a>4.7.2. Property `ReduxOptions > path > results_root > anyOf > item 1`
+#### <a name="path_results_root_anyOf_i1"></a>5.7.2. Property `ReduxOptions > path > results_root > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_pretrain_network_g"></a>4.8. Property `ReduxOptions > path > pretrain_network_g`
+### <a name="path_pretrain_network_g"></a>5.8. Property `ReduxOptions > path > pretrain_network_g`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -751,21 +1126,21 @@ Must be one of:
 | [item 0](#path_pretrain_network_g_anyOf_i0) |
 | [item 1](#path_pretrain_network_g_anyOf_i1) |
 
-#### <a name="path_pretrain_network_g_anyOf_i0"></a>4.8.1. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 0`
+#### <a name="path_pretrain_network_g_anyOf_i0"></a>5.8.1. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_pretrain_network_g_anyOf_i1"></a>4.8.2. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 1`
+#### <a name="path_pretrain_network_g_anyOf_i1"></a>5.8.2. Property `ReduxOptions > path > pretrain_network_g > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_pretrain_network_g_path"></a>4.9. Property `ReduxOptions > path > pretrain_network_g_path`
+### <a name="path_pretrain_network_g_path"></a>5.9. Property `ReduxOptions > path > pretrain_network_g_path`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -779,21 +1154,21 @@ Must be one of:
 | [item 0](#path_pretrain_network_g_path_anyOf_i0) |
 | [item 1](#path_pretrain_network_g_path_anyOf_i1) |
 
-#### <a name="path_pretrain_network_g_path_anyOf_i0"></a>4.9.1. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 0`
+#### <a name="path_pretrain_network_g_path_anyOf_i0"></a>5.9.1. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_pretrain_network_g_path_anyOf_i1"></a>4.9.2. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 1`
+#### <a name="path_pretrain_network_g_path_anyOf_i1"></a>5.9.2. Property `ReduxOptions > path > pretrain_network_g_path > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_param_key_g"></a>4.10. Property `ReduxOptions > path > param_key_g`
+### <a name="path_param_key_g"></a>5.10. Property `ReduxOptions > path > param_key_g`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -807,21 +1182,21 @@ Must be one of:
 | [item 0](#path_param_key_g_anyOf_i0) |
 | [item 1](#path_param_key_g_anyOf_i1) |
 
-#### <a name="path_param_key_g_anyOf_i0"></a>4.10.1. Property `ReduxOptions > path > param_key_g > anyOf > item 0`
+#### <a name="path_param_key_g_anyOf_i0"></a>5.10.1. Property `ReduxOptions > path > param_key_g > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_param_key_g_anyOf_i1"></a>4.10.2. Property `ReduxOptions > path > param_key_g > anyOf > item 1`
+#### <a name="path_param_key_g_anyOf_i1"></a>5.10.2. Property `ReduxOptions > path > param_key_g > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_strict_load_g"></a>4.11. Property `ReduxOptions > path > strict_load_g`
+### <a name="path_strict_load_g"></a>5.11. Property `ReduxOptions > path > strict_load_g`
 
 |              |           |
 | ------------ | --------- |
@@ -829,7 +1204,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `true`    |
 
-### <a name="path_resume_state"></a>4.12. Property `ReduxOptions > path > resume_state`
+### <a name="path_resume_state"></a>5.12. Property `ReduxOptions > path > resume_state`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -843,21 +1218,21 @@ Must be one of:
 | [item 0](#path_resume_state_anyOf_i0) |
 | [item 1](#path_resume_state_anyOf_i1) |
 
-#### <a name="path_resume_state_anyOf_i0"></a>4.12.1. Property `ReduxOptions > path > resume_state > anyOf > item 0`
+#### <a name="path_resume_state_anyOf_i0"></a>5.12.1. Property `ReduxOptions > path > resume_state > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_resume_state_anyOf_i1"></a>4.12.2. Property `ReduxOptions > path > resume_state > anyOf > item 1`
+#### <a name="path_resume_state_anyOf_i1"></a>5.12.2. Property `ReduxOptions > path > resume_state > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_pretrain_network_g_ema"></a>4.13. Property `ReduxOptions > path > pretrain_network_g_ema`
+### <a name="path_pretrain_network_g_ema"></a>5.13. Property `ReduxOptions > path > pretrain_network_g_ema`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -871,21 +1246,21 @@ Must be one of:
 | [item 0](#path_pretrain_network_g_ema_anyOf_i0) |
 | [item 1](#path_pretrain_network_g_ema_anyOf_i1) |
 
-#### <a name="path_pretrain_network_g_ema_anyOf_i0"></a>4.13.1. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 0`
+#### <a name="path_pretrain_network_g_ema_anyOf_i0"></a>5.13.1. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_pretrain_network_g_ema_anyOf_i1"></a>4.13.2. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 1`
+#### <a name="path_pretrain_network_g_ema_anyOf_i1"></a>5.13.2. Property `ReduxOptions > path > pretrain_network_g_ema > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_pretrain_network_d"></a>4.14. Property `ReduxOptions > path > pretrain_network_d`
+### <a name="path_pretrain_network_d"></a>5.14. Property `ReduxOptions > path > pretrain_network_d`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -899,21 +1274,21 @@ Must be one of:
 | [item 0](#path_pretrain_network_d_anyOf_i0) |
 | [item 1](#path_pretrain_network_d_anyOf_i1) |
 
-#### <a name="path_pretrain_network_d_anyOf_i0"></a>4.14.1. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 0`
+#### <a name="path_pretrain_network_d_anyOf_i0"></a>5.14.1. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_pretrain_network_d_anyOf_i1"></a>4.14.2. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 1`
+#### <a name="path_pretrain_network_d_anyOf_i1"></a>5.14.2. Property `ReduxOptions > path > pretrain_network_d > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_param_key_d"></a>4.15. Property `ReduxOptions > path > param_key_d`
+### <a name="path_param_key_d"></a>5.15. Property `ReduxOptions > path > param_key_d`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -927,21 +1302,21 @@ Must be one of:
 | [item 0](#path_param_key_d_anyOf_i0) |
 | [item 1](#path_param_key_d_anyOf_i1) |
 
-#### <a name="path_param_key_d_anyOf_i0"></a>4.15.1. Property `ReduxOptions > path > param_key_d > anyOf > item 0`
+#### <a name="path_param_key_d_anyOf_i0"></a>5.15.1. Property `ReduxOptions > path > param_key_d > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_param_key_d_anyOf_i1"></a>4.15.2. Property `ReduxOptions > path > param_key_d > anyOf > item 1`
+#### <a name="path_param_key_d_anyOf_i1"></a>5.15.2. Property `ReduxOptions > path > param_key_d > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="path_strict_load_d"></a>4.16. Property `ReduxOptions > path > strict_load_d`
+### <a name="path_strict_load_d"></a>5.16. Property `ReduxOptions > path > strict_load_d`
 
 |              |           |
 | ------------ | --------- |
@@ -949,7 +1324,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `true`    |
 
-### <a name="path_ignore_resume_networks"></a>4.17. Property `ReduxOptions > path > ignore_resume_networks`
+### <a name="path_ignore_resume_networks"></a>5.17. Property `ReduxOptions > path > ignore_resume_networks`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -963,7 +1338,7 @@ Must be one of:
 | [item 0](#path_ignore_resume_networks_anyOf_i0) |
 | [item 1](#path_ignore_resume_networks_anyOf_i1) |
 
-#### <a name="path_ignore_resume_networks_anyOf_i0"></a>4.17.1. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 0`
+#### <a name="path_ignore_resume_networks_anyOf_i0"></a>5.17.1. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 0`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -982,38 +1357,1952 @@ Must be one of:
 | ----------------------------------------------------------- | ----------- |
 | [item 0 items](#path_ignore_resume_networks_anyOf_i0_items) | -           |
 
-##### <a name="path_ignore_resume_networks_anyOf_i0_items"></a>4.17.1.1. ReduxOptions > path > ignore_resume_networks > anyOf > item 0 > item 0 items
+##### <a name="path_ignore_resume_networks_anyOf_i0_items"></a>5.17.1.1. ReduxOptions > path > ignore_resume_networks > anyOf > item 0 > item 0 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="path_ignore_resume_networks_anyOf_i1"></a>4.17.2. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 1`
+#### <a name="path_ignore_resume_networks_anyOf_i1"></a>5.17.2. Property `ReduxOptions > path > ignore_resume_networks > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="network_g"></a>5. Property `ReduxOptions > network_g`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | Yes              |
-| **Additional properties** | Any type allowed |
-
-**Description:** The options for the generator model.
-
-## <a name="network_d"></a>6. Property `ReduxOptions > network_d`
+## <a name="network_g"></a>6. Property `ReduxOptions > network_g`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                                      |
+| --------------------------------------------------- |
+| [artcnn](#network_g_anyOf_i0)                       |
+| [artcnn_r16f96](#network_g_anyOf_i1)                |
+| [artcnn_r8f64](#network_g_anyOf_i2)                 |
+| [cfsr](#network_g_anyOf_i3)                         |
+| [vggstylediscriminator](#network_g_anyOf_i4)        |
+| [unetdiscriminatorsn_traiNNer](#network_g_anyOf_i5) |
+| [dunet](#network_g_anyOf_i6)                        |
+| [eimn](#network_g_anyOf_i7)                         |
+| [eimn_l](#network_g_anyOf_i8)                       |
+| [eimn_a](#network_g_anyOf_i9)                       |
+| [flexnet](#network_g_anyOf_i10)                     |
+| [metaflexnet](#network_g_anyOf_i11)                 |
+| [hit_sir](#network_g_anyOf_i12)                     |
+| [hit_sng](#network_g_anyOf_i13)                     |
+| [hit_srf](#network_g_anyOf_i14)                     |
+| [lmlt](#network_g_anyOf_i15)                        |
+| [lmlt_base](#network_g_anyOf_i16)                   |
+| [lmlt_large](#network_g_anyOf_i17)                  |
+| [lmlt_tiny](#network_g_anyOf_i18)                   |
+| [man](#network_g_anyOf_i19)                         |
+| [man_tiny](#network_g_anyOf_i20)                    |
+| [man_light](#network_g_anyOf_i21)                   |
+| [moesr2](#network_g_anyOf_i22)                      |
+| [mosr](#network_g_anyOf_i23)                        |
+| [mosr_t](#network_g_anyOf_i24)                      |
+| [rcanspatialselayer](#network_g_anyOf_i25)          |
+| [rcan](#network_g_anyOf_i26)                        |
+| [realplksr](#network_g_anyOf_i27)                   |
+| [spanplus](#network_g_anyOf_i28)                    |
+| [spanplus_sts](#network_g_anyOf_i29)                |
+| [spanplus_s](#network_g_anyOf_i30)                  |
+| [spanplus_st](#network_g_anyOf_i31)                 |
+| [compact](#network_g_anyOf_i32)                     |
+| [ultracompact](#network_g_anyOf_i33)                |
+| [superultracompact](#network_g_anyOf_i34)           |
+
+### <a name="network_g_anyOf_i0"></a>6.1. Property `ReduxOptions > network_g > anyOf > artcnn`
+
+**Title:** artcnn
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
 | **Required**              | No               |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
+| **Defined in**            | #/$defs/artcnn   |
+
+| Property                                          | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i0_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [in_ch](#network_g_anyOf_i0_in_ch )             | No      | integer          | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i0_scale )             | No      | integer          | No         | -          | -                 |
+| + [filters](#network_g_anyOf_i0_filters )         | No      | integer          | No         | -          | -                 |
+| + [n_block](#network_g_anyOf_i0_n_block )         | No      | integer          | No         | -          | -                 |
+| + [kernel_size](#network_g_anyOf_i0_kernel_size ) | No      | integer          | No         | -          | -                 |
+| + [type](#network_g_anyOf_i0_type )               | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i0_kind"></a>6.1.1. Property `ReduxOptions > network_g > anyOf > artcnn > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "artcnn"
+
+#### <a name="network_g_anyOf_i0_in_ch"></a>6.1.2. Property `ReduxOptions > network_g > anyOf > artcnn > in_ch`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i0_scale"></a>6.1.3. Property `ReduxOptions > network_g > anyOf > artcnn > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i0_filters"></a>6.1.4. Property `ReduxOptions > network_g > anyOf > artcnn > filters`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i0_n_block"></a>6.1.5. Property `ReduxOptions > network_g > anyOf > artcnn > n_block`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i0_kernel_size"></a>6.1.6. Property `ReduxOptions > network_g > anyOf > artcnn > kernel_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i0_type"></a>6.1.7. Property `ReduxOptions > network_g > anyOf > artcnn > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "artcnn"
+
+### <a name="network_g_anyOf_i1"></a>6.2. Property `ReduxOptions > network_g > anyOf > artcnn_r16f96`
+
+**Title:** artcnn_r16f96
+
+|                           |                       |
+| ------------------------- | --------------------- |
+| **Type**                  | `object`              |
+| **Required**              | No                    |
+| **Additional properties** | Any type allowed      |
+| **Defined in**            | #/$defs/artcnn_r16f96 |
+
+| Property                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i1_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i1_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i1_kind"></a>6.2.1. Property `ReduxOptions > network_g > anyOf > artcnn_r16f96 > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "artcnn_r16f96"
+
+#### <a name="network_g_anyOf_i1_type"></a>6.2.2. Property `ReduxOptions > network_g > anyOf > artcnn_r16f96 > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "artcnn_r16f96"
+
+### <a name="network_g_anyOf_i2"></a>6.3. Property `ReduxOptions > network_g > anyOf > artcnn_r8f64`
+
+**Title:** artcnn_r8f64
+
+|                           |                      |
+| ------------------------- | -------------------- |
+| **Type**                  | `object`             |
+| **Required**              | No                   |
+| **Additional properties** | Any type allowed     |
+| **Defined in**            | #/$defs/artcnn_r8f64 |
+
+| Property                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i2_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i2_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i2_kind"></a>6.3.1. Property `ReduxOptions > network_g > anyOf > artcnn_r8f64 > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "artcnn_r8f64"
+
+#### <a name="network_g_anyOf_i2_type"></a>6.3.2. Property `ReduxOptions > network_g > anyOf > artcnn_r8f64 > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "artcnn_r8f64"
+
+### <a name="network_g_anyOf_i3"></a>6.4. Property `ReduxOptions > network_g > anyOf > cfsr`
+
+**Title:** cfsr
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/cfsr     |
+
+| Property                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i3_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i3_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i3_kind"></a>6.4.1. Property `ReduxOptions > network_g > anyOf > cfsr > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "cfsr"
+
+#### <a name="network_g_anyOf_i3_type"></a>6.4.2. Property `ReduxOptions > network_g > anyOf > cfsr > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "cfsr"
+
+### <a name="network_g_anyOf_i4"></a>6.5. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator`
+
+**Title:** vggstylediscriminator
+
+|                           |                               |
+| ------------------------- | ----------------------------- |
+| **Type**                  | `object`                      |
+| **Required**              | No                            |
+| **Additional properties** | Any type allowed              |
+| **Defined in**            | #/$defs/vggstylediscriminator |
+
+| Property                                        | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i4_kind )             | No      | enum (of string) | No         | -          | -                 |
+| + [num_in_ch](#network_g_anyOf_i4_num_in_ch )   | No      | integer          | No         | -          | -                 |
+| + [num_feat](#network_g_anyOf_i4_num_feat )     | No      | integer          | No         | -          | -                 |
+| + [input_size](#network_g_anyOf_i4_input_size ) | No      | integer          | No         | -          | -                 |
+| + [type](#network_g_anyOf_i4_type )             | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i4_kind"></a>6.5.1. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "vggstylediscriminator"
+
+#### <a name="network_g_anyOf_i4_num_in_ch"></a>6.5.2. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > num_in_ch`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i4_num_feat"></a>6.5.3. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > num_feat`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i4_input_size"></a>6.5.4. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > input_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i4_type"></a>6.5.5. Property `ReduxOptions > network_g > anyOf > vggstylediscriminator > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "vggstylediscriminator"
+
+### <a name="network_g_anyOf_i5"></a>6.6. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer`
+
+**Title:** unetdiscriminatorsn_traiNNer
+
+|                           |                                      |
+| ------------------------- | ------------------------------------ |
+| **Type**                  | `object`                             |
+| **Required**              | No                                   |
+| **Additional properties** | Any type allowed                     |
+| **Defined in**            | #/$defs/unetdiscriminatorsn_traiNNer |
+
+| Property                                                  | Pattern | Type             | Deprecated | Definition | Title/Description |
+| --------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i5_kind )                       | No      | enum (of string) | No         | -          | -                 |
+| + [num_in_ch](#network_g_anyOf_i5_num_in_ch )             | No      | integer          | No         | -          | -                 |
+| + [num_feat](#network_g_anyOf_i5_num_feat )               | No      | integer          | No         | -          | -                 |
+| + [skip_connection](#network_g_anyOf_i5_skip_connection ) | No      | boolean          | No         | -          | -                 |
+| + [type](#network_g_anyOf_i5_type )                       | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i5_kind"></a>6.6.1. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "unetdiscriminatorsn_traiNNer"
+
+#### <a name="network_g_anyOf_i5_num_in_ch"></a>6.6.2. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > num_in_ch`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i5_num_feat"></a>6.6.3. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > num_feat`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i5_skip_connection"></a>6.6.4. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > skip_connection`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i5_type"></a>6.6.5. Property `ReduxOptions > network_g > anyOf > unetdiscriminatorsn_traiNNer > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "unetdiscriminatorsn_traiNNer"
+
+### <a name="network_g_anyOf_i6"></a>6.7. Property `ReduxOptions > network_g > anyOf > dunet`
+
+**Title:** dunet
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/dunet    |
+
+| Property                                      | Pattern | Type             | Deprecated | Definition | Title/Description |
+| --------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i6_kind )           | No      | enum (of string) | No         | -          | -                 |
+| + [num_in_ch](#network_g_anyOf_i6_num_in_ch ) | No      | integer          | No         | -          | -                 |
+| + [num_feat](#network_g_anyOf_i6_num_feat )   | No      | integer          | No         | -          | -                 |
+| + [type](#network_g_anyOf_i6_type )           | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i6_kind"></a>6.7.1. Property `ReduxOptions > network_g > anyOf > dunet > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "dunet"
+
+#### <a name="network_g_anyOf_i6_num_in_ch"></a>6.7.2. Property `ReduxOptions > network_g > anyOf > dunet > num_in_ch`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i6_num_feat"></a>6.7.3. Property `ReduxOptions > network_g > anyOf > dunet > num_feat`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i6_type"></a>6.7.4. Property `ReduxOptions > network_g > anyOf > dunet > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "dunet"
+
+### <a name="network_g_anyOf_i7"></a>6.8. Property `ReduxOptions > network_g > anyOf > eimn`
+
+**Title:** eimn
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/eimn     |
+
+| Property                                                | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i7_kind )                     | No      | enum (of string) | No         | -          | -                 |
+| + [embed_dims](#network_g_anyOf_i7_embed_dims )         | No      | integer          | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i7_scale )                   | No      | integer          | No         | -          | -                 |
+| + [depths](#network_g_anyOf_i7_depths )                 | No      | integer          | No         | -          | -                 |
+| + [mlp_ratios](#network_g_anyOf_i7_mlp_ratios )         | No      | number           | No         | -          | -                 |
+| + [drop_rate](#network_g_anyOf_i7_drop_rate )           | No      | number           | No         | -          | -                 |
+| + [drop_path_rate](#network_g_anyOf_i7_drop_path_rate ) | No      | number           | No         | -          | -                 |
+| + [num_stages](#network_g_anyOf_i7_num_stages )         | No      | integer          | No         | -          | -                 |
+| + [freeze_param](#network_g_anyOf_i7_freeze_param )     | No      | boolean          | No         | -          | -                 |
+| + [type](#network_g_anyOf_i7_type )                     | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i7_kind"></a>6.8.1. Property `ReduxOptions > network_g > anyOf > eimn > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "eimn"
+
+#### <a name="network_g_anyOf_i7_embed_dims"></a>6.8.2. Property `ReduxOptions > network_g > anyOf > eimn > embed_dims`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i7_scale"></a>6.8.3. Property `ReduxOptions > network_g > anyOf > eimn > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i7_depths"></a>6.8.4. Property `ReduxOptions > network_g > anyOf > eimn > depths`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i7_mlp_ratios"></a>6.8.5. Property `ReduxOptions > network_g > anyOf > eimn > mlp_ratios`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i7_drop_rate"></a>6.8.6. Property `ReduxOptions > network_g > anyOf > eimn > drop_rate`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i7_drop_path_rate"></a>6.8.7. Property `ReduxOptions > network_g > anyOf > eimn > drop_path_rate`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i7_num_stages"></a>6.8.8. Property `ReduxOptions > network_g > anyOf > eimn > num_stages`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i7_freeze_param"></a>6.8.9. Property `ReduxOptions > network_g > anyOf > eimn > freeze_param`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i7_type"></a>6.8.10. Property `ReduxOptions > network_g > anyOf > eimn > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "eimn"
+
+### <a name="network_g_anyOf_i8"></a>6.9. Property `ReduxOptions > network_g > anyOf > eimn_l`
+
+**Title:** eimn_l
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/eimn_l   |
+
+| Property                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i8_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i8_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i8_kind"></a>6.9.1. Property `ReduxOptions > network_g > anyOf > eimn_l > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "eimn_l"
+
+#### <a name="network_g_anyOf_i8_type"></a>6.9.2. Property `ReduxOptions > network_g > anyOf > eimn_l > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "eimn_l"
+
+### <a name="network_g_anyOf_i9"></a>6.10. Property `ReduxOptions > network_g > anyOf > eimn_a`
+
+**Title:** eimn_a
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/eimn_a   |
+
+| Property                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i9_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i9_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i9_kind"></a>6.10.1. Property `ReduxOptions > network_g > anyOf > eimn_a > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "eimn_a"
+
+#### <a name="network_g_anyOf_i9_type"></a>6.10.2. Property `ReduxOptions > network_g > anyOf > eimn_a > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "eimn_a"
+
+### <a name="network_g_anyOf_i10"></a>6.11. Property `ReduxOptions > network_g > anyOf > flexnet`
+
+**Title:** flexnet
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/flexnet  |
+
+| Property                                               | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i10_kind )                   | No      | enum (of string) | No         | -          | -                 |
+| + [inp_channels](#network_g_anyOf_i10_inp_channels )   | No      | integer          | No         | -          | -                 |
+| + [out_channels](#network_g_anyOf_i10_out_channels )   | No      | integer          | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i10_scale )                 | No      | integer          | No         | -          | -                 |
+| + [dim](#network_g_anyOf_i10_dim )                     | No      | integer          | No         | -          | -                 |
+| + [num_blocks](#network_g_anyOf_i10_num_blocks )       | No      | array of integer | No         | -          | -                 |
+| + [window_size](#network_g_anyOf_i10_window_size )     | No      | integer          | No         | -          | -                 |
+| + [hidden_rate](#network_g_anyOf_i10_hidden_rate )     | No      | integer          | No         | -          | -                 |
+| + [channel_norm](#network_g_anyOf_i10_channel_norm )   | No      | boolean          | No         | -          | -                 |
+| + [attn_drop](#network_g_anyOf_i10_attn_drop )         | No      | number           | No         | -          | -                 |
+| + [proj_drop](#network_g_anyOf_i10_proj_drop )         | No      | number           | No         | -          | -                 |
+| + [pipeline_type](#network_g_anyOf_i10_pipeline_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [upsampler](#network_g_anyOf_i10_upsampler )         | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i10_type )                   | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i10_kind"></a>6.11.1. Property `ReduxOptions > network_g > anyOf > flexnet > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "flexnet"
+
+#### <a name="network_g_anyOf_i10_inp_channels"></a>6.11.2. Property `ReduxOptions > network_g > anyOf > flexnet > inp_channels`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i10_out_channels"></a>6.11.3. Property `ReduxOptions > network_g > anyOf > flexnet > out_channels`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i10_scale"></a>6.11.4. Property `ReduxOptions > network_g > anyOf > flexnet > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i10_dim"></a>6.11.5. Property `ReduxOptions > network_g > anyOf > flexnet > dim`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i10_num_blocks"></a>6.11.6. Property `ReduxOptions > network_g > anyOf > flexnet > num_blocks`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `array of integer` |
+| **Required** | Yes                |
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | N/A                |
+| **Max items**        | N/A                |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                           | Description |
+| --------------------------------------------------------- | ----------- |
+| [num_blocks items](#network_g_anyOf_i10_num_blocks_items) | -           |
+
+##### <a name="network_g_anyOf_i10_num_blocks_items"></a>6.11.6.1. ReduxOptions > network_g > anyOf > flexnet > num_blocks > num_blocks items
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | No        |
+
+#### <a name="network_g_anyOf_i10_window_size"></a>6.11.7. Property `ReduxOptions > network_g > anyOf > flexnet > window_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i10_hidden_rate"></a>6.11.8. Property `ReduxOptions > network_g > anyOf > flexnet > hidden_rate`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i10_channel_norm"></a>6.11.9. Property `ReduxOptions > network_g > anyOf > flexnet > channel_norm`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i10_attn_drop"></a>6.11.10. Property `ReduxOptions > network_g > anyOf > flexnet > attn_drop`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i10_proj_drop"></a>6.11.11. Property `ReduxOptions > network_g > anyOf > flexnet > proj_drop`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i10_pipeline_type"></a>6.11.12. Property `ReduxOptions > network_g > anyOf > flexnet > pipeline_type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "linear"
+* "meta"
+
+#### <a name="network_g_anyOf_i10_upsampler"></a>6.11.13. Property `ReduxOptions > network_g > anyOf > flexnet > upsampler`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "dysample"
+* "nearest+conv"
+* "pixelshuffle"
+
+#### <a name="network_g_anyOf_i10_type"></a>6.11.14. Property `ReduxOptions > network_g > anyOf > flexnet > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "flexnet"
+
+### <a name="network_g_anyOf_i11"></a>6.12. Property `ReduxOptions > network_g > anyOf > metaflexnet`
+
+**Title:** metaflexnet
+
+|                           |                     |
+| ------------------------- | ------------------- |
+| **Type**                  | `object`            |
+| **Required**              | No                  |
+| **Additional properties** | Any type allowed    |
+| **Defined in**            | #/$defs/metaflexnet |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i11_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i11_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i11_kind"></a>6.12.1. Property `ReduxOptions > network_g > anyOf > metaflexnet > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "metaflexnet"
+
+#### <a name="network_g_anyOf_i11_type"></a>6.12.2. Property `ReduxOptions > network_g > anyOf > metaflexnet > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "metaflexnet"
+
+### <a name="network_g_anyOf_i12"></a>6.13. Property `ReduxOptions > network_g > anyOf > hit_sir`
+
+**Title:** hit_sir
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/hit_sir  |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i12_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i12_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i12_kind"></a>6.13.1. Property `ReduxOptions > network_g > anyOf > hit_sir > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hit_sir"
+
+#### <a name="network_g_anyOf_i12_type"></a>6.13.2. Property `ReduxOptions > network_g > anyOf > hit_sir > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hit_sir"
+
+### <a name="network_g_anyOf_i13"></a>6.14. Property `ReduxOptions > network_g > anyOf > hit_sng`
+
+**Title:** hit_sng
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/hit_sng  |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i13_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i13_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i13_kind"></a>6.14.1. Property `ReduxOptions > network_g > anyOf > hit_sng > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hit_sng"
+
+#### <a name="network_g_anyOf_i13_type"></a>6.14.2. Property `ReduxOptions > network_g > anyOf > hit_sng > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hit_sng"
+
+### <a name="network_g_anyOf_i14"></a>6.15. Property `ReduxOptions > network_g > anyOf > hit_srf`
+
+**Title:** hit_srf
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/hit_srf  |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i14_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i14_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i14_kind"></a>6.15.1. Property `ReduxOptions > network_g > anyOf > hit_srf > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hit_srf"
+
+#### <a name="network_g_anyOf_i14_type"></a>6.15.2. Property `ReduxOptions > network_g > anyOf > hit_srf > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hit_srf"
+
+### <a name="network_g_anyOf_i15"></a>6.16. Property `ReduxOptions > network_g > anyOf > lmlt`
+
+**Title:** lmlt
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/lmlt     |
+
+| Property                                                 | Pattern | Type             | Deprecated | Definition | Title/Description |
+| -------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i15_kind )                     | No      | enum (of string) | No         | -          | -                 |
+| + [dim](#network_g_anyOf_i15_dim )                       | No      | integer          | No         | -          | -                 |
+| + [n_blocks](#network_g_anyOf_i15_n_blocks )             | No      | integer          | No         | -          | -                 |
+| + [ffn_scale](#network_g_anyOf_i15_ffn_scale )           | No      | number           | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i15_scale )                   | No      | integer          | No         | -          | -                 |
+| + [drop_rate](#network_g_anyOf_i15_drop_rate )           | No      | number           | No         | -          | -                 |
+| + [attn_drop_rate](#network_g_anyOf_i15_attn_drop_rate ) | No      | number           | No         | -          | -                 |
+| + [drop_path_rate](#network_g_anyOf_i15_drop_path_rate ) | No      | number           | No         | -          | -                 |
+| + [type](#network_g_anyOf_i15_type )                     | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i15_kind"></a>6.16.1. Property `ReduxOptions > network_g > anyOf > lmlt > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt"
+
+#### <a name="network_g_anyOf_i15_dim"></a>6.16.2. Property `ReduxOptions > network_g > anyOf > lmlt > dim`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i15_n_blocks"></a>6.16.3. Property `ReduxOptions > network_g > anyOf > lmlt > n_blocks`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i15_ffn_scale"></a>6.16.4. Property `ReduxOptions > network_g > anyOf > lmlt > ffn_scale`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i15_scale"></a>6.16.5. Property `ReduxOptions > network_g > anyOf > lmlt > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i15_drop_rate"></a>6.16.6. Property `ReduxOptions > network_g > anyOf > lmlt > drop_rate`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i15_attn_drop_rate"></a>6.16.7. Property `ReduxOptions > network_g > anyOf > lmlt > attn_drop_rate`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i15_drop_path_rate"></a>6.16.8. Property `ReduxOptions > network_g > anyOf > lmlt > drop_path_rate`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i15_type"></a>6.16.9. Property `ReduxOptions > network_g > anyOf > lmlt > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt"
+
+### <a name="network_g_anyOf_i16"></a>6.17. Property `ReduxOptions > network_g > anyOf > lmlt_base`
+
+**Title:** lmlt_base
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/lmlt_base |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i16_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i16_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i16_kind"></a>6.17.1. Property `ReduxOptions > network_g > anyOf > lmlt_base > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt_base"
+
+#### <a name="network_g_anyOf_i16_type"></a>6.17.2. Property `ReduxOptions > network_g > anyOf > lmlt_base > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt_base"
+
+### <a name="network_g_anyOf_i17"></a>6.18. Property `ReduxOptions > network_g > anyOf > lmlt_large`
+
+**Title:** lmlt_large
+
+|                           |                    |
+| ------------------------- | ------------------ |
+| **Type**                  | `object`           |
+| **Required**              | No                 |
+| **Additional properties** | Any type allowed   |
+| **Defined in**            | #/$defs/lmlt_large |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i17_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i17_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i17_kind"></a>6.18.1. Property `ReduxOptions > network_g > anyOf > lmlt_large > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt_large"
+
+#### <a name="network_g_anyOf_i17_type"></a>6.18.2. Property `ReduxOptions > network_g > anyOf > lmlt_large > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt_large"
+
+### <a name="network_g_anyOf_i18"></a>6.19. Property `ReduxOptions > network_g > anyOf > lmlt_tiny`
+
+**Title:** lmlt_tiny
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/lmlt_tiny |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i18_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i18_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i18_kind"></a>6.19.1. Property `ReduxOptions > network_g > anyOf > lmlt_tiny > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt_tiny"
+
+#### <a name="network_g_anyOf_i18_type"></a>6.19.2. Property `ReduxOptions > network_g > anyOf > lmlt_tiny > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lmlt_tiny"
+
+### <a name="network_g_anyOf_i19"></a>6.20. Property `ReduxOptions > network_g > anyOf > man`
+
+**Title:** man
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/man      |
+
+| Property                                           | Pattern | Type             | Deprecated | Definition | Title/Description |
+| -------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i19_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [n_resblocks](#network_g_anyOf_i19_n_resblocks ) | No      | integer          | No         | -          | -                 |
+| + [n_resgroups](#network_g_anyOf_i19_n_resgroups ) | No      | integer          | No         | -          | -                 |
+| + [n_colors](#network_g_anyOf_i19_n_colors )       | No      | integer          | No         | -          | -                 |
+| + [n_feats](#network_g_anyOf_i19_n_feats )         | No      | integer          | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i19_scale )             | No      | integer          | No         | -          | -                 |
+| + [res_scale](#network_g_anyOf_i19_res_scale )     | No      | number           | No         | -          | -                 |
+| + [type](#network_g_anyOf_i19_type )               | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i19_kind"></a>6.20.1. Property `ReduxOptions > network_g > anyOf > man > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "man"
+
+#### <a name="network_g_anyOf_i19_n_resblocks"></a>6.20.2. Property `ReduxOptions > network_g > anyOf > man > n_resblocks`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i19_n_resgroups"></a>6.20.3. Property `ReduxOptions > network_g > anyOf > man > n_resgroups`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i19_n_colors"></a>6.20.4. Property `ReduxOptions > network_g > anyOf > man > n_colors`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i19_n_feats"></a>6.20.5. Property `ReduxOptions > network_g > anyOf > man > n_feats`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i19_scale"></a>6.20.6. Property `ReduxOptions > network_g > anyOf > man > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i19_res_scale"></a>6.20.7. Property `ReduxOptions > network_g > anyOf > man > res_scale`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i19_type"></a>6.20.8. Property `ReduxOptions > network_g > anyOf > man > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "man"
+
+### <a name="network_g_anyOf_i20"></a>6.21. Property `ReduxOptions > network_g > anyOf > man_tiny`
+
+**Title:** man_tiny
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/man_tiny |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i20_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i20_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i20_kind"></a>6.21.1. Property `ReduxOptions > network_g > anyOf > man_tiny > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "man_tiny"
+
+#### <a name="network_g_anyOf_i20_type"></a>6.21.2. Property `ReduxOptions > network_g > anyOf > man_tiny > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "man_tiny"
+
+### <a name="network_g_anyOf_i21"></a>6.22. Property `ReduxOptions > network_g > anyOf > man_light`
+
+**Title:** man_light
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/man_light |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i21_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i21_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i21_kind"></a>6.22.1. Property `ReduxOptions > network_g > anyOf > man_light > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "man_light"
+
+#### <a name="network_g_anyOf_i21_type"></a>6.22.2. Property `ReduxOptions > network_g > anyOf > man_light > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "man_light"
+
+### <a name="network_g_anyOf_i22"></a>6.23. Property `ReduxOptions > network_g > anyOf > moesr2`
+
+**Title:** moesr2
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/moesr2   |
+
+| Property                                                     | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i22_kind )                         | No      | enum (of string) | No         | -          | -                 |
+| + [in_ch](#network_g_anyOf_i22_in_ch )                       | No      | integer          | No         | -          | -                 |
+| + [out_ch](#network_g_anyOf_i22_out_ch )                     | No      | integer          | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i22_scale )                       | No      | integer          | No         | -          | -                 |
+| + [dim](#network_g_anyOf_i22_dim )                           | No      | integer          | No         | -          | -                 |
+| + [n_blocks](#network_g_anyOf_i22_n_blocks )                 | No      | integer          | No         | -          | -                 |
+| + [n_block](#network_g_anyOf_i22_n_block )                   | No      | integer          | No         | -          | -                 |
+| + [expansion_factor](#network_g_anyOf_i22_expansion_factor ) | No      | integer          | No         | -          | -                 |
+| + [expansion_msg](#network_g_anyOf_i22_expansion_msg )       | No      | integer          | No         | -          | -                 |
+| + [upsampler](#network_g_anyOf_i22_upsampler )               | No      | enum (of string) | No         | -          | -                 |
+| + [upsample_dim](#network_g_anyOf_i22_upsample_dim )         | No      | integer          | No         | -          | -                 |
+| + [type](#network_g_anyOf_i22_type )                         | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i22_kind"></a>6.23.1. Property `ReduxOptions > network_g > anyOf > moesr2 > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "moesr2"
+
+#### <a name="network_g_anyOf_i22_in_ch"></a>6.23.2. Property `ReduxOptions > network_g > anyOf > moesr2 > in_ch`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_out_ch"></a>6.23.3. Property `ReduxOptions > network_g > anyOf > moesr2 > out_ch`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_scale"></a>6.23.4. Property `ReduxOptions > network_g > anyOf > moesr2 > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_dim"></a>6.23.5. Property `ReduxOptions > network_g > anyOf > moesr2 > dim`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_n_blocks"></a>6.23.6. Property `ReduxOptions > network_g > anyOf > moesr2 > n_blocks`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_n_block"></a>6.23.7. Property `ReduxOptions > network_g > anyOf > moesr2 > n_block`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_expansion_factor"></a>6.23.8. Property `ReduxOptions > network_g > anyOf > moesr2 > expansion_factor`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_expansion_msg"></a>6.23.9. Property `ReduxOptions > network_g > anyOf > moesr2 > expansion_msg`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_upsampler"></a>6.23.10. Property `ReduxOptions > network_g > anyOf > moesr2 > upsampler`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "conv"
+* "dysample"
+* "nearest+conv"
+* "pixelshuffle"
+* "pixelshuffledirect"
+
+#### <a name="network_g_anyOf_i22_upsample_dim"></a>6.23.11. Property `ReduxOptions > network_g > anyOf > moesr2 > upsample_dim`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i22_type"></a>6.23.12. Property `ReduxOptions > network_g > anyOf > moesr2 > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "moesr2"
+
+### <a name="network_g_anyOf_i23"></a>6.24. Property `ReduxOptions > network_g > anyOf > mosr`
+
+**Title:** mosr
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/mosr     |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i23_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i23_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i23_kind"></a>6.24.1. Property `ReduxOptions > network_g > anyOf > mosr > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mosr"
+
+#### <a name="network_g_anyOf_i23_type"></a>6.24.2. Property `ReduxOptions > network_g > anyOf > mosr > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mosr"
+
+### <a name="network_g_anyOf_i24"></a>6.25. Property `ReduxOptions > network_g > anyOf > mosr_t`
+
+**Title:** mosr_t
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/mosr_t   |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i24_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i24_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i24_kind"></a>6.25.1. Property `ReduxOptions > network_g > anyOf > mosr_t > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mosr_t"
+
+#### <a name="network_g_anyOf_i24_type"></a>6.25.2. Property `ReduxOptions > network_g > anyOf > mosr_t > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mosr_t"
+
+### <a name="network_g_anyOf_i25"></a>6.26. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer`
+
+**Title:** rcanspatialselayer
+
+|                           |                            |
+| ------------------------- | -------------------------- |
+| **Type**                  | `object`                   |
+| **Required**              | No                         |
+| **Additional properties** | Any type allowed           |
+| **Defined in**            | #/$defs/rcanspatialselayer |
+
+| Property                                           | Pattern | Type             | Deprecated | Definition | Title/Description |
+| -------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i25_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i25_scale )             | No      | integer          | No         | -          | -                 |
+| + [n_resgroups](#network_g_anyOf_i25_n_resgroups ) | No      | integer          | No         | -          | -                 |
+| + [n_resblocks](#network_g_anyOf_i25_n_resblocks ) | No      | integer          | No         | -          | -                 |
+| + [n_feats](#network_g_anyOf_i25_n_feats )         | No      | integer          | No         | -          | -                 |
+| + [n_colors](#network_g_anyOf_i25_n_colors )       | No      | integer          | No         | -          | -                 |
+| + [kernel_size](#network_g_anyOf_i25_kernel_size ) | No      | integer          | No         | -          | -                 |
+| + [reduction](#network_g_anyOf_i25_reduction )     | No      | integer          | No         | -          | -                 |
+| + [res_scale](#network_g_anyOf_i25_res_scale )     | No      | number           | No         | -          | -                 |
+| + [type](#network_g_anyOf_i25_type )               | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i25_kind"></a>6.26.1. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "rcanspatialselayer"
+
+#### <a name="network_g_anyOf_i25_scale"></a>6.26.2. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i25_n_resgroups"></a>6.26.3. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_resgroups`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i25_n_resblocks"></a>6.26.4. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_resblocks`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i25_n_feats"></a>6.26.5. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_feats`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i25_n_colors"></a>6.26.6. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > n_colors`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i25_kernel_size"></a>6.26.7. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > kernel_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i25_reduction"></a>6.26.8. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > reduction`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i25_res_scale"></a>6.26.9. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > res_scale`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i25_type"></a>6.26.10. Property `ReduxOptions > network_g > anyOf > rcanspatialselayer > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "rcanspatialselayer"
+
+### <a name="network_g_anyOf_i26"></a>6.27. Property `ReduxOptions > network_g > anyOf > rcan`
+
+**Title:** rcan
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/rcan     |
+
+| Property                                           | Pattern | Type             | Deprecated | Definition | Title/Description |
+| -------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i26_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [scale](#network_g_anyOf_i26_scale )             | No      | integer          | No         | -          | -                 |
+| + [n_resgroups](#network_g_anyOf_i26_n_resgroups ) | No      | integer          | No         | -          | -                 |
+| + [n_resblocks](#network_g_anyOf_i26_n_resblocks ) | No      | integer          | No         | -          | -                 |
+| + [n_feats](#network_g_anyOf_i26_n_feats )         | No      | integer          | No         | -          | -                 |
+| + [n_colors](#network_g_anyOf_i26_n_colors )       | No      | integer          | No         | -          | -                 |
+| + [rgb_range](#network_g_anyOf_i26_rgb_range )     | No      | integer          | No         | -          | -                 |
+| + [kernel_size](#network_g_anyOf_i26_kernel_size ) | No      | integer          | No         | -          | -                 |
+| + [reduction](#network_g_anyOf_i26_reduction )     | No      | integer          | No         | -          | -                 |
+| + [res_scale](#network_g_anyOf_i26_res_scale )     | No      | number           | No         | -          | -                 |
+| + [type](#network_g_anyOf_i26_type )               | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i26_kind"></a>6.27.1. Property `ReduxOptions > network_g > anyOf > rcan > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "rcan"
+
+#### <a name="network_g_anyOf_i26_scale"></a>6.27.2. Property `ReduxOptions > network_g > anyOf > rcan > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_n_resgroups"></a>6.27.3. Property `ReduxOptions > network_g > anyOf > rcan > n_resgroups`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_n_resblocks"></a>6.27.4. Property `ReduxOptions > network_g > anyOf > rcan > n_resblocks`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_n_feats"></a>6.27.5. Property `ReduxOptions > network_g > anyOf > rcan > n_feats`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_n_colors"></a>6.27.6. Property `ReduxOptions > network_g > anyOf > rcan > n_colors`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_rgb_range"></a>6.27.7. Property `ReduxOptions > network_g > anyOf > rcan > rgb_range`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_kernel_size"></a>6.27.8. Property `ReduxOptions > network_g > anyOf > rcan > kernel_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_reduction"></a>6.27.9. Property `ReduxOptions > network_g > anyOf > rcan > reduction`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+#### <a name="network_g_anyOf_i26_res_scale"></a>6.27.10. Property `ReduxOptions > network_g > anyOf > rcan > res_scale`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+#### <a name="network_g_anyOf_i26_type"></a>6.27.11. Property `ReduxOptions > network_g > anyOf > rcan > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "rcan"
+
+### <a name="network_g_anyOf_i27"></a>6.28. Property `ReduxOptions > network_g > anyOf > realplksr`
+
+**Title:** realplksr
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/realplksr |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i27_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i27_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i27_kind"></a>6.28.1. Property `ReduxOptions > network_g > anyOf > realplksr > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "realplksr"
+
+#### <a name="network_g_anyOf_i27_type"></a>6.28.2. Property `ReduxOptions > network_g > anyOf > realplksr > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "realplksr"
+
+### <a name="network_g_anyOf_i28"></a>6.29. Property `ReduxOptions > network_g > anyOf > spanplus`
+
+**Title:** spanplus
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/spanplus |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i28_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i28_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i28_kind"></a>6.29.1. Property `ReduxOptions > network_g > anyOf > spanplus > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus"
+
+#### <a name="network_g_anyOf_i28_type"></a>6.29.2. Property `ReduxOptions > network_g > anyOf > spanplus > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus"
+
+### <a name="network_g_anyOf_i29"></a>6.30. Property `ReduxOptions > network_g > anyOf > spanplus_sts`
+
+**Title:** spanplus_sts
+
+|                           |                      |
+| ------------------------- | -------------------- |
+| **Type**                  | `object`             |
+| **Required**              | No                   |
+| **Additional properties** | Any type allowed     |
+| **Defined in**            | #/$defs/spanplus_sts |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i29_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i29_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i29_kind"></a>6.30.1. Property `ReduxOptions > network_g > anyOf > spanplus_sts > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus_sts"
+
+#### <a name="network_g_anyOf_i29_type"></a>6.30.2. Property `ReduxOptions > network_g > anyOf > spanplus_sts > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus_sts"
+
+### <a name="network_g_anyOf_i30"></a>6.31. Property `ReduxOptions > network_g > anyOf > spanplus_s`
+
+**Title:** spanplus_s
+
+|                           |                    |
+| ------------------------- | ------------------ |
+| **Type**                  | `object`           |
+| **Required**              | No                 |
+| **Additional properties** | Any type allowed   |
+| **Defined in**            | #/$defs/spanplus_s |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i30_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i30_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i30_kind"></a>6.31.1. Property `ReduxOptions > network_g > anyOf > spanplus_s > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus_s"
+
+#### <a name="network_g_anyOf_i30_type"></a>6.31.2. Property `ReduxOptions > network_g > anyOf > spanplus_s > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus_s"
+
+### <a name="network_g_anyOf_i31"></a>6.32. Property `ReduxOptions > network_g > anyOf > spanplus_st`
+
+**Title:** spanplus_st
+
+|                           |                     |
+| ------------------------- | ------------------- |
+| **Type**                  | `object`            |
+| **Required**              | No                  |
+| **Additional properties** | Any type allowed    |
+| **Defined in**            | #/$defs/spanplus_st |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i31_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i31_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i31_kind"></a>6.32.1. Property `ReduxOptions > network_g > anyOf > spanplus_st > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus_st"
+
+#### <a name="network_g_anyOf_i31_type"></a>6.32.2. Property `ReduxOptions > network_g > anyOf > spanplus_st > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "spanplus_st"
+
+### <a name="network_g_anyOf_i32"></a>6.33. Property `ReduxOptions > network_g > anyOf > compact`
+
+**Title:** compact
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/compact  |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i32_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i32_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i32_kind"></a>6.33.1. Property `ReduxOptions > network_g > anyOf > compact > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "compact"
+
+#### <a name="network_g_anyOf_i32_type"></a>6.33.2. Property `ReduxOptions > network_g > anyOf > compact > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "compact"
+
+### <a name="network_g_anyOf_i33"></a>6.34. Property `ReduxOptions > network_g > anyOf > ultracompact`
+
+**Title:** ultracompact
+
+|                           |                      |
+| ------------------------- | -------------------- |
+| **Type**                  | `object`             |
+| **Required**              | No                   |
+| **Additional properties** | Any type allowed     |
+| **Defined in**            | #/$defs/ultracompact |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i33_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i33_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i33_kind"></a>6.34.1. Property `ReduxOptions > network_g > anyOf > ultracompact > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ultracompact"
+
+#### <a name="network_g_anyOf_i33_type"></a>6.34.2. Property `ReduxOptions > network_g > anyOf > ultracompact > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ultracompact"
+
+### <a name="network_g_anyOf_i34"></a>6.35. Property `ReduxOptions > network_g > anyOf > superultracompact`
+
+**Title:** superultracompact
+
+|                           |                           |
+| ------------------------- | ------------------------- |
+| **Type**                  | `object`                  |
+| **Required**              | No                        |
+| **Additional properties** | Any type allowed          |
+| **Defined in**            | #/$defs/superultracompact |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#network_g_anyOf_i34_kind ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i34_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i34_kind"></a>6.35.1. Property `ReduxOptions > network_g > anyOf > superultracompact > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "superultracompact"
+
+#### <a name="network_g_anyOf_i34_type"></a>6.35.2. Property `ReduxOptions > network_g > anyOf > superultracompact > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "superultracompact"
+
+## <a name="network_d"></a>7. Property `ReduxOptions > network_d`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
 
 **Description:** The options for the discriminator model.
 
@@ -1022,7 +3311,7 @@ Must be one of:
 | [item 0](#network_d_anyOf_i0) |
 | [item 1](#network_d_anyOf_i1) |
 
-### <a name="network_d_anyOf_i0"></a>6.1. Property `ReduxOptions > network_d > anyOf > item 0`
+### <a name="network_d_anyOf_i0"></a>7.1. Property `ReduxOptions > network_d > anyOf > item 0`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -1030,21 +3319,20 @@ Must be one of:
 | **Required**              | No               |
 | **Additional properties** | Any type allowed |
 
-### <a name="network_d_anyOf_i1"></a>6.2. Property `ReduxOptions > network_d > anyOf > item 1`
+### <a name="network_d_anyOf_i1"></a>7.2. Property `ReduxOptions > network_d > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="manual_seed"></a>7. Property `ReduxOptions > manual_seed`
+## <a name="manual_seed"></a>8. Property `ReduxOptions > manual_seed`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 **Description:** Deterministic mode, slows down training. Only use for reproducible experiments.
 
@@ -1053,359 +3341,339 @@ Must be one of:
 | [item 0](#manual_seed_anyOf_i0) |
 | [item 1](#manual_seed_anyOf_i1) |
 
-### <a name="manual_seed_anyOf_i0"></a>7.1. Property `ReduxOptions > manual_seed > anyOf > item 0`
+### <a name="manual_seed_anyOf_i0"></a>8.1. Property `ReduxOptions > manual_seed > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-### <a name="manual_seed_anyOf_i1"></a>7.2. Property `ReduxOptions > manual_seed > anyOf > item 1`
+### <a name="manual_seed_anyOf_i1"></a>8.2. Property `ReduxOptions > manual_seed > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="deterministic"></a>8. Property `ReduxOptions > deterministic`
+## <a name="deterministic"></a>9. Property `ReduxOptions > deterministic`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)                    |
 | --------------------------------- |
 | [item 0](#deterministic_anyOf_i0) |
 | [item 1](#deterministic_anyOf_i1) |
 
-### <a name="deterministic_anyOf_i0"></a>8.1. Property `ReduxOptions > deterministic > anyOf > item 0`
+### <a name="deterministic_anyOf_i0"></a>9.1. Property `ReduxOptions > deterministic > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
 | **Required** | No        |
 
-### <a name="deterministic_anyOf_i1"></a>8.2. Property `ReduxOptions > deterministic > anyOf > item 1`
+### <a name="deterministic_anyOf_i1"></a>9.2. Property `ReduxOptions > deterministic > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="dist"></a>9. Property `ReduxOptions > dist`
+## <a name="dist"></a>10. Property `ReduxOptions > dist`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)           |
 | ------------------------ |
 | [item 0](#dist_anyOf_i0) |
 | [item 1](#dist_anyOf_i1) |
 
-### <a name="dist_anyOf_i0"></a>9.1. Property `ReduxOptions > dist > anyOf > item 0`
+### <a name="dist_anyOf_i0"></a>10.1. Property `ReduxOptions > dist > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
 | **Required** | No        |
 
-### <a name="dist_anyOf_i1"></a>9.2. Property `ReduxOptions > dist > anyOf > item 1`
+### <a name="dist_anyOf_i1"></a>10.2. Property `ReduxOptions > dist > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="launcher"></a>10. Property `ReduxOptions > launcher`
+## <a name="launcher"></a>11. Property `ReduxOptions > launcher`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)               |
 | ---------------------------- |
 | [item 0](#launcher_anyOf_i0) |
 | [item 1](#launcher_anyOf_i1) |
 
-### <a name="launcher_anyOf_i0"></a>10.1. Property `ReduxOptions > launcher > anyOf > item 0`
+### <a name="launcher_anyOf_i0"></a>11.1. Property `ReduxOptions > launcher > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-### <a name="launcher_anyOf_i1"></a>10.2. Property `ReduxOptions > launcher > anyOf > item 1`
+### <a name="launcher_anyOf_i1"></a>11.2. Property `ReduxOptions > launcher > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="rank"></a>11. Property `ReduxOptions > rank`
+## <a name="rank"></a>12. Property `ReduxOptions > rank`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)           |
 | ------------------------ |
 | [item 0](#rank_anyOf_i0) |
 | [item 1](#rank_anyOf_i1) |
 
-### <a name="rank_anyOf_i0"></a>11.1. Property `ReduxOptions > rank > anyOf > item 0`
+### <a name="rank_anyOf_i0"></a>12.1. Property `ReduxOptions > rank > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-### <a name="rank_anyOf_i1"></a>11.2. Property `ReduxOptions > rank > anyOf > item 1`
+### <a name="rank_anyOf_i1"></a>12.2. Property `ReduxOptions > rank > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="world_size"></a>12. Property `ReduxOptions > world_size`
+## <a name="world_size"></a>13. Property `ReduxOptions > world_size`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)                 |
 | ------------------------------ |
 | [item 0](#world_size_anyOf_i0) |
 | [item 1](#world_size_anyOf_i1) |
 
-### <a name="world_size_anyOf_i0"></a>12.1. Property `ReduxOptions > world_size > anyOf > item 0`
+### <a name="world_size_anyOf_i0"></a>13.1. Property `ReduxOptions > world_size > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-### <a name="world_size_anyOf_i1"></a>12.2. Property `ReduxOptions > world_size > anyOf > item 1`
+### <a name="world_size_anyOf_i1"></a>13.2. Property `ReduxOptions > world_size > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="auto_resume"></a>13. Property `ReduxOptions > auto_resume`
+## <a name="auto_resume"></a>14. Property `ReduxOptions > auto_resume`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)                  |
 | ------------------------------- |
 | [item 0](#auto_resume_anyOf_i0) |
 | [item 1](#auto_resume_anyOf_i1) |
 
-### <a name="auto_resume_anyOf_i0"></a>13.1. Property `ReduxOptions > auto_resume > anyOf > item 0`
+### <a name="auto_resume_anyOf_i0"></a>14.1. Property `ReduxOptions > auto_resume > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
 | **Required** | No        |
 
-### <a name="auto_resume_anyOf_i1"></a>13.2. Property `ReduxOptions > auto_resume > anyOf > item 1`
+### <a name="auto_resume_anyOf_i1"></a>14.2. Property `ReduxOptions > auto_resume > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="resume"></a>14. Property `ReduxOptions > resume`
+## <a name="resume"></a>15. Property `ReduxOptions > resume`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
-| **Required** | No        |
-| **Default**  | `0`       |
+| **Required** | Yes       |
 
-## <a name="is_train"></a>15. Property `ReduxOptions > is_train`
+## <a name="is_train"></a>16. Property `ReduxOptions > is_train`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)               |
 | ---------------------------- |
 | [item 0](#is_train_anyOf_i0) |
 | [item 1](#is_train_anyOf_i1) |
 
-### <a name="is_train_anyOf_i0"></a>15.1. Property `ReduxOptions > is_train > anyOf > item 0`
+### <a name="is_train_anyOf_i0"></a>16.1. Property `ReduxOptions > is_train > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
 | **Required** | No        |
 
-### <a name="is_train_anyOf_i1"></a>15.2. Property `ReduxOptions > is_train > anyOf > item 1`
+### <a name="is_train_anyOf_i1"></a>16.2. Property `ReduxOptions > is_train > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="root_path"></a>16. Property `ReduxOptions > root_path`
+## <a name="root_path"></a>17. Property `ReduxOptions > root_path`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)                |
 | ----------------------------- |
 | [item 0](#root_path_anyOf_i0) |
 | [item 1](#root_path_anyOf_i1) |
 
-### <a name="root_path_anyOf_i0"></a>16.1. Property `ReduxOptions > root_path > anyOf > item 0`
+### <a name="root_path_anyOf_i0"></a>17.1. Property `ReduxOptions > root_path > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-### <a name="root_path_anyOf_i1"></a>16.2. Property `ReduxOptions > root_path > anyOf > item 1`
+### <a name="root_path_anyOf_i1"></a>17.2. Property `ReduxOptions > root_path > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="use_amp"></a>17. Property `ReduxOptions > use_amp`
+## <a name="use_amp"></a>18. Property `ReduxOptions > use_amp`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Speed up training and reduce VRAM usage. NVIDIA only.
 
-## <a name="amp_bf16"></a>18. Property `ReduxOptions > amp_bf16`
+## <a name="amp_bf16"></a>19. Property `ReduxOptions > amp_bf16`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
 
-## <a name="use_channels_last"></a>19. Property `ReduxOptions > use_channels_last`
+## <a name="use_channels_last"></a>20. Property `ReduxOptions > use_channels_last`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `true`    |
+| **Required** | Yes       |
 
 **Description:** Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.
 
-## <a name="fast_matmul"></a>20. Property `ReduxOptions > fast_matmul`
+## <a name="fast_matmul"></a>21. Property `ReduxOptions > fast_matmul`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Trade precision for performance.
 
-## <a name="use_compile"></a>21. Property `ReduxOptions > use_compile`
+## <a name="use_compile"></a>22. Property `ReduxOptions > use_compile`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled.
 
-## <a name="detect_anomaly"></a>22. Property `ReduxOptions > detect_anomaly`
+## <a name="detect_anomaly"></a>23. Property `ReduxOptions > detect_anomaly`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Whether or not to enable anomaly detection, which can be useful for debugging NaNs that occur during training. Has a significant performance hit and should be disabled when not debugging.
 
-## <a name="high_order_degradation"></a>23. Property `ReduxOptions > high_order_degradation`
+## <a name="high_order_degradation"></a>24. Property `ReduxOptions > high_order_degradation`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Whether or not to enable OTF (on the fly) degradations, which generates LRs on the fly.
 
-## <a name="high_order_degradations_debug"></a>24. Property `ReduxOptions > high_order_degradations_debug`
+## <a name="high_order_degradations_debug"></a>25. Property `ReduxOptions > high_order_degradations_debug`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Whether or not to enable debugging for OTF, which saves the OTF generated LR images so they can be inspected to view the effect of different OTF settings.
 
-## <a name="high_order_degradations_debug_limit"></a>25. Property `ReduxOptions > high_order_degradations_debug_limit`
+## <a name="high_order_degradations_debug_limit"></a>26. Property `ReduxOptions > high_order_degradations_debug_limit`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
-| **Required** | No        |
-| **Default**  | `100`     |
+| **Required** | Yes       |
 
 **Description:** The maximum number of OTF images to save when debugging is enabled.
 
-## <a name="dataroot_lq_prob"></a>26. Property `ReduxOptions > dataroot_lq_prob`
+## <a name="dataroot_lq_prob"></a>27. Property `ReduxOptions > dataroot_lq_prob`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
 **Description:** Probability of using paired LR data instead of OTF LR data.
 
-## <a name="force_high_order_degradation_filename_masks"></a>27. Property `ReduxOptions > force_high_order_degradation_filename_masks`
+## <a name="force_high_order_degradation_filename_masks"></a>28. Property `ReduxOptions > force_high_order_degradation_filename_masks`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of string` |
-| **Required** | No                |
-| **Default**  | `[]`              |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1419,20 +3687,19 @@ Must be one of:
 | ------------------------------------------------------------------------------------------------------- | ----------- |
 | [force_high_order_degradation_filename_masks items](#force_high_order_degradation_filename_masks_items) | -           |
 
-### <a name="force_high_order_degradation_filename_masks_items"></a>27.1. ReduxOptions > force_high_order_degradation_filename_masks > force_high_order_degradation_filename_masks items
+### <a name="force_high_order_degradation_filename_masks_items"></a>28.1. ReduxOptions > force_high_order_degradation_filename_masks > force_high_order_degradation_filename_masks items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-## <a name="force_dataroot_lq_filename_masks"></a>28. Property `ReduxOptions > force_dataroot_lq_filename_masks`
+## <a name="force_dataroot_lq_filename_masks"></a>29. Property `ReduxOptions > force_dataroot_lq_filename_masks`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of string` |
-| **Required** | No                |
-| **Default**  | `[]`              |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1446,28 +3713,28 @@ Must be one of:
 | --------------------------------------------------------------------------------- | ----------- |
 | [force_dataroot_lq_filename_masks items](#force_dataroot_lq_filename_masks_items) | -           |
 
-### <a name="force_dataroot_lq_filename_masks_items"></a>28.1. ReduxOptions > force_dataroot_lq_filename_masks > force_dataroot_lq_filename_masks items
+### <a name="force_dataroot_lq_filename_masks_items"></a>29.1. ReduxOptions > force_dataroot_lq_filename_masks > force_dataroot_lq_filename_masks items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-## <a name="lq_usm"></a>29. Property `ReduxOptions > lq_usm`
+## <a name="lq_usm"></a>30. Property `ReduxOptions > lq_usm`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
-## <a name="lq_usm_radius_range"></a>30. Property `ReduxOptions > lq_usm_radius_range`
+## <a name="lq_usm_radius_range"></a>31. Property `ReduxOptions > lq_usm_radius_range`
 
-|              |           |
-| ------------ | --------- |
-| **Type**     | `array`   |
-| **Required** | No        |
-| **Default**  | `[1, 25]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
+
+**Description:** For the unsharp mask of the LQ image, use a radius randomly selected from this range.
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1482,34 +3749,33 @@ Must be one of:
 | [lq_usm_radius_range item 0](#lq_usm_radius_range_items_i0) | -           |
 | [lq_usm_radius_range item 1](#lq_usm_radius_range_items_i1) | -           |
 
-### <a name="autogenerated_heading_2"></a>30.1. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 0
+### <a name="autogenerated_heading_2"></a>31.1. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 0
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-### <a name="autogenerated_heading_3"></a>30.2. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 1
+### <a name="autogenerated_heading_3"></a>31.2. ReduxOptions > lq_usm_radius_range > lq_usm_radius_range item 1
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-## <a name="blur_prob"></a>31. Property `ReduxOptions > blur_prob`
+## <a name="blur_prob"></a>32. Property `ReduxOptions > blur_prob`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
-## <a name="resize_prob"></a>32. Property `ReduxOptions > resize_prob`
+## <a name="resize_prob"></a>33. Property `ReduxOptions > resize_prob`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1523,19 +3789,19 @@ Must be one of:
 | --------------------------------------- | ----------- |
 | [resize_prob items](#resize_prob_items) | -           |
 
-### <a name="resize_prob_items"></a>32.1. ReduxOptions > resize_prob > resize_prob items
+### <a name="resize_prob_items"></a>33.1. ReduxOptions > resize_prob > resize_prob items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="resize_mode_list"></a>33. Property `ReduxOptions > resize_mode_list`
+## <a name="resize_mode_list"></a>34. Property `ReduxOptions > resize_mode_list`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of string` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1549,19 +3815,19 @@ Must be one of:
 | ------------------------------------------------- | ----------- |
 | [resize_mode_list items](#resize_mode_list_items) | -           |
 
-### <a name="resize_mode_list_items"></a>33.1. ReduxOptions > resize_mode_list > resize_mode_list items
+### <a name="resize_mode_list_items"></a>34.1. ReduxOptions > resize_mode_list > resize_mode_list items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-## <a name="resize_mode_prob"></a>34. Property `ReduxOptions > resize_mode_prob`
+## <a name="resize_mode_prob"></a>35. Property `ReduxOptions > resize_mode_prob`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1575,20 +3841,19 @@ Must be one of:
 | ------------------------------------------------- | ----------- |
 | [resize_mode_prob items](#resize_mode_prob_items) | -           |
 
-### <a name="resize_mode_prob_items"></a>34.1. ReduxOptions > resize_mode_prob > resize_mode_prob items
+### <a name="resize_mode_prob_items"></a>35.1. ReduxOptions > resize_mode_prob > resize_mode_prob items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="resize_range"></a>35. Property `ReduxOptions > resize_range`
+## <a name="resize_range"></a>36. Property `ReduxOptions > resize_range`
 
-|              |              |
-| ------------ | ------------ |
-| **Type**     | `array`      |
-| **Required** | No           |
-| **Default**  | `[0.4, 1.5]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1603,35 +3868,33 @@ Must be one of:
 | [resize_range item 0](#resize_range_items_i0) | -           |
 | [resize_range item 1](#resize_range_items_i1) | -           |
 
-### <a name="autogenerated_heading_4"></a>35.1. ReduxOptions > resize_range > resize_range item 0
+### <a name="autogenerated_heading_4"></a>36.1. ReduxOptions > resize_range > resize_range item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-### <a name="autogenerated_heading_5"></a>35.2. ReduxOptions > resize_range > resize_range item 1
+### <a name="autogenerated_heading_5"></a>36.2. ReduxOptions > resize_range > resize_range item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="gaussian_noise_prob"></a>36. Property `ReduxOptions > gaussian_noise_prob`
+## <a name="gaussian_noise_prob"></a>37. Property `ReduxOptions > gaussian_noise_prob`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
-## <a name="noise_range"></a>37. Property `ReduxOptions > noise_range`
+## <a name="noise_range"></a>38. Property `ReduxOptions > noise_range`
 
-|              |          |
-| ------------ | -------- |
-| **Type**     | `array`  |
-| **Required** | No       |
-| **Default**  | `[0, 0]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1646,27 +3909,26 @@ Must be one of:
 | [noise_range item 0](#noise_range_items_i0) | -           |
 | [noise_range item 1](#noise_range_items_i1) | -           |
 
-### <a name="autogenerated_heading_6"></a>37.1. ReduxOptions > noise_range > noise_range item 0
+### <a name="autogenerated_heading_6"></a>38.1. ReduxOptions > noise_range > noise_range item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-### <a name="autogenerated_heading_7"></a>37.2. ReduxOptions > noise_range > noise_range item 1
+### <a name="autogenerated_heading_7"></a>38.2. ReduxOptions > noise_range > noise_range item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="poisson_scale_range"></a>38. Property `ReduxOptions > poisson_scale_range`
+## <a name="poisson_scale_range"></a>39. Property `ReduxOptions > poisson_scale_range`
 
-|              |          |
-| ------------ | -------- |
-| **Type**     | `array`  |
-| **Required** | No       |
-| **Default**  | `[0, 0]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1681,43 +3943,40 @@ Must be one of:
 | [poisson_scale_range item 0](#poisson_scale_range_items_i0) | -           |
 | [poisson_scale_range item 1](#poisson_scale_range_items_i1) | -           |
 
-### <a name="autogenerated_heading_8"></a>38.1. ReduxOptions > poisson_scale_range > poisson_scale_range item 0
+### <a name="autogenerated_heading_8"></a>39.1. ReduxOptions > poisson_scale_range > poisson_scale_range item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-### <a name="autogenerated_heading_9"></a>38.2. ReduxOptions > poisson_scale_range > poisson_scale_range item 1
+### <a name="autogenerated_heading_9"></a>39.2. ReduxOptions > poisson_scale_range > poisson_scale_range item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="gray_noise_prob"></a>39. Property `ReduxOptions > gray_noise_prob`
+## <a name="gray_noise_prob"></a>40. Property `ReduxOptions > gray_noise_prob`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
-## <a name="jpeg_prob"></a>40. Property `ReduxOptions > jpeg_prob`
+## <a name="jpeg_prob"></a>41. Property `ReduxOptions > jpeg_prob`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `1`      |
+| **Required** | Yes      |
 
-## <a name="jpeg_range"></a>41. Property `ReduxOptions > jpeg_range`
+## <a name="jpeg_range"></a>42. Property `ReduxOptions > jpeg_range`
 
-|              |            |
-| ------------ | ---------- |
-| **Type**     | `array`    |
-| **Required** | No         |
-| **Default**  | `[75, 95]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1732,34 +3991,33 @@ Must be one of:
 | [jpeg_range item 0](#jpeg_range_items_i0) | -           |
 | [jpeg_range item 1](#jpeg_range_items_i1) | -           |
 
-### <a name="autogenerated_heading_10"></a>41.1. ReduxOptions > jpeg_range > jpeg_range item 0
+### <a name="autogenerated_heading_10"></a>42.1. ReduxOptions > jpeg_range > jpeg_range item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-### <a name="autogenerated_heading_11"></a>41.2. ReduxOptions > jpeg_range > jpeg_range item 1
+### <a name="autogenerated_heading_11"></a>42.2. ReduxOptions > jpeg_range > jpeg_range item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="blur_prob2"></a>42. Property `ReduxOptions > blur_prob2`
+## <a name="blur_prob2"></a>43. Property `ReduxOptions > blur_prob2`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
-## <a name="resize_prob2"></a>43. Property `ReduxOptions > resize_prob2`
+## <a name="resize_prob2"></a>44. Property `ReduxOptions > resize_prob2`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1773,19 +4031,19 @@ Must be one of:
 | ----------------------------------------- | ----------- |
 | [resize_prob2 items](#resize_prob2_items) | -           |
 
-### <a name="resize_prob2_items"></a>43.1. ReduxOptions > resize_prob2 > resize_prob2 items
+### <a name="resize_prob2_items"></a>44.1. ReduxOptions > resize_prob2 > resize_prob2 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="resize_mode_list2"></a>44. Property `ReduxOptions > resize_mode_list2`
+## <a name="resize_mode_list2"></a>45. Property `ReduxOptions > resize_mode_list2`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of string` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1799,19 +4057,19 @@ Must be one of:
 | --------------------------------------------------- | ----------- |
 | [resize_mode_list2 items](#resize_mode_list2_items) | -           |
 
-### <a name="resize_mode_list2_items"></a>44.1. ReduxOptions > resize_mode_list2 > resize_mode_list2 items
+### <a name="resize_mode_list2_items"></a>45.1. ReduxOptions > resize_mode_list2 > resize_mode_list2 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-## <a name="resize_mode_prob2"></a>45. Property `ReduxOptions > resize_mode_prob2`
+## <a name="resize_mode_prob2"></a>46. Property `ReduxOptions > resize_mode_prob2`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1825,20 +4083,19 @@ Must be one of:
 | --------------------------------------------------- | ----------- |
 | [resize_mode_prob2 items](#resize_mode_prob2_items) | -           |
 
-### <a name="resize_mode_prob2_items"></a>45.1. ReduxOptions > resize_mode_prob2 > resize_mode_prob2 items
+### <a name="resize_mode_prob2_items"></a>46.1. ReduxOptions > resize_mode_prob2 > resize_mode_prob2 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="resize_range2"></a>46. Property `ReduxOptions > resize_range2`
+## <a name="resize_range2"></a>47. Property `ReduxOptions > resize_range2`
 
-|              |              |
-| ------------ | ------------ |
-| **Type**     | `array`      |
-| **Required** | No           |
-| **Default**  | `[0.6, 1.2]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1853,35 +4110,33 @@ Must be one of:
 | [resize_range2 item 0](#resize_range2_items_i0) | -           |
 | [resize_range2 item 1](#resize_range2_items_i1) | -           |
 
-### <a name="autogenerated_heading_12"></a>46.1. ReduxOptions > resize_range2 > resize_range2 item 0
+### <a name="autogenerated_heading_12"></a>47.1. ReduxOptions > resize_range2 > resize_range2 item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-### <a name="autogenerated_heading_13"></a>46.2. ReduxOptions > resize_range2 > resize_range2 item 1
+### <a name="autogenerated_heading_13"></a>47.2. ReduxOptions > resize_range2 > resize_range2 item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="gaussian_noise_prob2"></a>47. Property `ReduxOptions > gaussian_noise_prob2`
+## <a name="gaussian_noise_prob2"></a>48. Property `ReduxOptions > gaussian_noise_prob2`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
-## <a name="noise_range2"></a>48. Property `ReduxOptions > noise_range2`
+## <a name="noise_range2"></a>49. Property `ReduxOptions > noise_range2`
 
-|              |          |
-| ------------ | -------- |
-| **Type**     | `array`  |
-| **Required** | No       |
-| **Default**  | `[0, 0]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1896,27 +4151,26 @@ Must be one of:
 | [noise_range2 item 0](#noise_range2_items_i0) | -           |
 | [noise_range2 item 1](#noise_range2_items_i1) | -           |
 
-### <a name="autogenerated_heading_14"></a>48.1. ReduxOptions > noise_range2 > noise_range2 item 0
+### <a name="autogenerated_heading_14"></a>49.1. ReduxOptions > noise_range2 > noise_range2 item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-### <a name="autogenerated_heading_15"></a>48.2. ReduxOptions > noise_range2 > noise_range2 item 1
+### <a name="autogenerated_heading_15"></a>49.2. ReduxOptions > noise_range2 > noise_range2 item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="poisson_scale_range2"></a>49. Property `ReduxOptions > poisson_scale_range2`
+## <a name="poisson_scale_range2"></a>50. Property `ReduxOptions > poisson_scale_range2`
 
-|              |          |
-| ------------ | -------- |
-| **Type**     | `array`  |
-| **Required** | No       |
-| **Default**  | `[0, 0]` |
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1931,42 +4185,40 @@ Must be one of:
 | [poisson_scale_range2 item 0](#poisson_scale_range2_items_i0) | -           |
 | [poisson_scale_range2 item 1](#poisson_scale_range2_items_i1) | -           |
 
-### <a name="autogenerated_heading_16"></a>49.1. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 0
+### <a name="autogenerated_heading_16"></a>50.1. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-### <a name="autogenerated_heading_17"></a>49.2. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 1
+### <a name="autogenerated_heading_17"></a>50.2. ReduxOptions > poisson_scale_range2 > poisson_scale_range2 item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="gray_noise_prob2"></a>50. Property `ReduxOptions > gray_noise_prob2`
+## <a name="gray_noise_prob2"></a>51. Property `ReduxOptions > gray_noise_prob2`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
-## <a name="jpeg_prob2"></a>51. Property `ReduxOptions > jpeg_prob2`
+## <a name="jpeg_prob2"></a>52. Property `ReduxOptions > jpeg_prob2`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `1`      |
+| **Required** | Yes      |
 
-## <a name="jpeg_range2"></a>52. Property `ReduxOptions > jpeg_range2`
+## <a name="jpeg_range2"></a>53. Property `ReduxOptions > jpeg_range2`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1980,19 +4232,19 @@ Must be one of:
 | --------------------------------------- | ----------- |
 | [jpeg_range2 items](#jpeg_range2_items) | -           |
 
-### <a name="jpeg_range2_items"></a>52.1. ReduxOptions > jpeg_range2 > jpeg_range2 items
+### <a name="jpeg_range2_items"></a>53.1. ReduxOptions > jpeg_range2 > jpeg_range2 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="resize_mode_list3"></a>53. Property `ReduxOptions > resize_mode_list3`
+## <a name="resize_mode_list3"></a>54. Property `ReduxOptions > resize_mode_list3`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of string` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -2006,19 +4258,19 @@ Must be one of:
 | --------------------------------------------------- | ----------- |
 | [resize_mode_list3 items](#resize_mode_list3_items) | -           |
 
-### <a name="resize_mode_list3_items"></a>53.1. ReduxOptions > resize_mode_list3 > resize_mode_list3 items
+### <a name="resize_mode_list3_items"></a>54.1. ReduxOptions > resize_mode_list3 > resize_mode_list3 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-## <a name="resize_mode_prob3"></a>54. Property `ReduxOptions > resize_mode_prob3`
+## <a name="resize_mode_prob3"></a>55. Property `ReduxOptions > resize_mode_prob3`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -2032,35 +4284,33 @@ Must be one of:
 | --------------------------------------------------- | ----------- |
 | [resize_mode_prob3 items](#resize_mode_prob3_items) | -           |
 
-### <a name="resize_mode_prob3_items"></a>54.1. ReduxOptions > resize_mode_prob3 > resize_mode_prob3 items
+### <a name="resize_mode_prob3_items"></a>55.1. ReduxOptions > resize_mode_prob3 > resize_mode_prob3 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-## <a name="queue_size"></a>55. Property `ReduxOptions > queue_size`
+## <a name="queue_size"></a>56. Property `ReduxOptions > queue_size`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
-| **Required** | No        |
-| **Default**  | `180`     |
+| **Required** | Yes       |
 
-## <a name="datasets"></a>56. Property `ReduxOptions > datasets`
+## <a name="datasets"></a>57. Property `ReduxOptions > datasets`
 
 |                           |                                                                                       |
 | ------------------------- | ------------------------------------------------------------------------------------- |
 | **Type**                  | `object`                                                                              |
-| **Required**              | No                                                                                    |
+| **Required**              | Yes                                                                                   |
 | **Additional properties** | [Each additional property must conform to the schema](#datasets_additionalProperties) |
-| **Default**               | `{}`                                                                                  |
 
 | Property                              | Pattern | Type   | Deprecated | Definition                | Title/Description |
 | ------------------------------------- | ------- | ------ | ---------- | ------------------------- | ----------------- |
 | - [](#datasets_additionalProperties ) | No      | object | No         | In #/$defs/DatasetOptions | DatasetOptions    |
 
-### <a name="datasets_additionalProperties"></a>56.1. Property `ReduxOptions > datasets > DatasetOptions`
+### <a name="datasets_additionalProperties"></a>57.1. Property `ReduxOptions > datasets > DatasetOptions`
 
 **Title:** DatasetOptions
 
@@ -2118,7 +4368,7 @@ Must be one of:
 | - [final_sinc_prob](#datasets_additionalProperties_final_sinc_prob )             | No      | number          | No         | -          | -                                                                                                                                                                                                                                                                                           |
 | - [final_kernel_range](#datasets_additionalProperties_final_kernel_range )       | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
 
-#### <a name="datasets_additionalProperties_name"></a>56.1.1. Property `ReduxOptions > datasets > DatasetOptions > name`
+#### <a name="datasets_additionalProperties_name"></a>57.1.1. Property `ReduxOptions > datasets > DatasetOptions > name`
 
 |              |          |
 | ------------ | -------- |
@@ -2127,14 +4377,14 @@ Must be one of:
 
 **Description:** Name of the dataset. It should be unique compared to other datasets in this config, but the exact name isn't very important.
 
-#### <a name="datasets_additionalProperties_type"></a>56.1.2. Property `ReduxOptions > datasets > DatasetOptions > type`
+#### <a name="datasets_additionalProperties_type"></a>57.1.2. Property `ReduxOptions > datasets > DatasetOptions > type`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | Yes      |
 
-#### <a name="datasets_additionalProperties_io_backend"></a>56.1.3. Property `ReduxOptions > datasets > DatasetOptions > io_backend`
+#### <a name="datasets_additionalProperties_io_backend"></a>57.1.3. Property `ReduxOptions > datasets > DatasetOptions > io_backend`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2142,7 +4392,7 @@ Must be one of:
 | **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
 
-#### <a name="datasets_additionalProperties_num_worker_per_gpu"></a>56.1.4. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu`
+#### <a name="datasets_additionalProperties_num_worker_per_gpu"></a>57.1.4. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2158,21 +4408,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_num_worker_per_gpu_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_num_worker_per_gpu_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_num_worker_per_gpu_anyOf_i0"></a>56.1.4.1. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 0`
+##### <a name="datasets_additionalProperties_num_worker_per_gpu_anyOf_i0"></a>57.1.4.1. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="datasets_additionalProperties_num_worker_per_gpu_anyOf_i1"></a>56.1.4.2. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 1`
+##### <a name="datasets_additionalProperties_num_worker_per_gpu_anyOf_i1"></a>57.1.4.2. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_batch_size_per_gpu"></a>56.1.5. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu`
+#### <a name="datasets_additionalProperties_batch_size_per_gpu"></a>57.1.5. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2188,21 +4438,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_batch_size_per_gpu_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_batch_size_per_gpu_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_batch_size_per_gpu_anyOf_i0"></a>56.1.5.1. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 0`
+##### <a name="datasets_additionalProperties_batch_size_per_gpu_anyOf_i0"></a>57.1.5.1. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="datasets_additionalProperties_batch_size_per_gpu_anyOf_i1"></a>56.1.5.2. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 1`
+##### <a name="datasets_additionalProperties_batch_size_per_gpu_anyOf_i1"></a>57.1.5.2. Property `ReduxOptions > datasets > DatasetOptions > batch_size_per_gpu > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_accum_iter"></a>56.1.6. Property `ReduxOptions > datasets > DatasetOptions > accum_iter`
+#### <a name="datasets_additionalProperties_accum_iter"></a>57.1.6. Property `ReduxOptions > datasets > DatasetOptions > accum_iter`
 
 |              |           |
 | ------------ | --------- |
@@ -2212,7 +4462,7 @@ Must be one of:
 
 **Description:** Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
 
-#### <a name="datasets_additionalProperties_use_hflip"></a>56.1.7. Property `ReduxOptions > datasets > DatasetOptions > use_hflip`
+#### <a name="datasets_additionalProperties_use_hflip"></a>57.1.7. Property `ReduxOptions > datasets > DatasetOptions > use_hflip`
 
 |              |           |
 | ------------ | --------- |
@@ -2222,7 +4472,7 @@ Must be one of:
 
 **Description:** Randomly flip the images horizontally.
 
-#### <a name="datasets_additionalProperties_use_rot"></a>56.1.8. Property `ReduxOptions > datasets > DatasetOptions > use_rot`
+#### <a name="datasets_additionalProperties_use_rot"></a>57.1.8. Property `ReduxOptions > datasets > DatasetOptions > use_rot`
 
 |              |           |
 | ------------ | --------- |
@@ -2232,7 +4482,7 @@ Must be one of:
 
 **Description:** Randomly rotate the images.
 
-#### <a name="datasets_additionalProperties_mean"></a>56.1.9. Property `ReduxOptions > datasets > DatasetOptions > mean`
+#### <a name="datasets_additionalProperties_mean"></a>57.1.9. Property `ReduxOptions > datasets > DatasetOptions > mean`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2246,7 +4496,7 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_mean_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_mean_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_mean_anyOf_i0"></a>56.1.9.1. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0`
+##### <a name="datasets_additionalProperties_mean_anyOf_i0"></a>57.1.9.1. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -2265,21 +4515,21 @@ Must be one of:
 | ------------------------------------------------------------------ | ----------- |
 | [item 0 items](#datasets_additionalProperties_mean_anyOf_i0_items) | -           |
 
-###### <a name="datasets_additionalProperties_mean_anyOf_i0_items"></a>56.1.9.1.1. ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0 > item 0 items
+###### <a name="datasets_additionalProperties_mean_anyOf_i0_items"></a>57.1.9.1.1. ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 0 > item 0 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_mean_anyOf_i1"></a>56.1.9.2. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 1`
+##### <a name="datasets_additionalProperties_mean_anyOf_i1"></a>57.1.9.2. Property `ReduxOptions > datasets > DatasetOptions > mean > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_std"></a>56.1.10. Property `ReduxOptions > datasets > DatasetOptions > std`
+#### <a name="datasets_additionalProperties_std"></a>57.1.10. Property `ReduxOptions > datasets > DatasetOptions > std`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2293,7 +4543,7 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_std_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_std_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_std_anyOf_i0"></a>56.1.10.1. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0`
+##### <a name="datasets_additionalProperties_std_anyOf_i0"></a>57.1.10.1. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -2312,21 +4562,21 @@ Must be one of:
 | ----------------------------------------------------------------- | ----------- |
 | [item 0 items](#datasets_additionalProperties_std_anyOf_i0_items) | -           |
 
-###### <a name="datasets_additionalProperties_std_anyOf_i0_items"></a>56.1.10.1.1. ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0 > item 0 items
+###### <a name="datasets_additionalProperties_std_anyOf_i0_items"></a>57.1.10.1.1. ReduxOptions > datasets > DatasetOptions > std > anyOf > item 0 > item 0 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_std_anyOf_i1"></a>56.1.10.2. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 1`
+##### <a name="datasets_additionalProperties_std_anyOf_i1"></a>57.1.10.2. Property `ReduxOptions > datasets > DatasetOptions > std > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_gt_size"></a>56.1.11. Property `ReduxOptions > datasets > DatasetOptions > gt_size`
+#### <a name="datasets_additionalProperties_gt_size"></a>57.1.11. Property `ReduxOptions > datasets > DatasetOptions > gt_size`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2340,21 +4590,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_gt_size_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_gt_size_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_gt_size_anyOf_i0"></a>56.1.11.1. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 0`
+##### <a name="datasets_additionalProperties_gt_size_anyOf_i0"></a>57.1.11.1. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="datasets_additionalProperties_gt_size_anyOf_i1"></a>56.1.11.2. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 1`
+##### <a name="datasets_additionalProperties_gt_size_anyOf_i1"></a>57.1.11.2. Property `ReduxOptions > datasets > DatasetOptions > gt_size > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_lq_size"></a>56.1.12. Property `ReduxOptions > datasets > DatasetOptions > lq_size`
+#### <a name="datasets_additionalProperties_lq_size"></a>57.1.12. Property `ReduxOptions > datasets > DatasetOptions > lq_size`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2370,21 +4620,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_lq_size_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_lq_size_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_lq_size_anyOf_i0"></a>56.1.12.1. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 0`
+##### <a name="datasets_additionalProperties_lq_size_anyOf_i0"></a>57.1.12.1. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="datasets_additionalProperties_lq_size_anyOf_i1"></a>56.1.12.2. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 1`
+##### <a name="datasets_additionalProperties_lq_size_anyOf_i1"></a>57.1.12.2. Property `ReduxOptions > datasets > DatasetOptions > lq_size > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_color"></a>56.1.13. Property `ReduxOptions > datasets > DatasetOptions > color`
+#### <a name="datasets_additionalProperties_color"></a>57.1.13. Property `ReduxOptions > datasets > DatasetOptions > color`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2398,7 +4648,7 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_color_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_color_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_color_anyOf_i0"></a>56.1.13.1. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 0`
+##### <a name="datasets_additionalProperties_color_anyOf_i0"></a>57.1.13.1. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 0`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2408,14 +4658,14 @@ Must be one of:
 Must be one of:
 * "y"
 
-##### <a name="datasets_additionalProperties_color_anyOf_i1"></a>56.1.13.2. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 1`
+##### <a name="datasets_additionalProperties_color_anyOf_i1"></a>57.1.13.2. Property `ReduxOptions > datasets > DatasetOptions > color > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_phase"></a>56.1.14. Property `ReduxOptions > datasets > DatasetOptions > phase`
+#### <a name="datasets_additionalProperties_phase"></a>57.1.14. Property `ReduxOptions > datasets > DatasetOptions > phase`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2429,21 +4679,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_phase_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_phase_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_phase_anyOf_i0"></a>56.1.14.1. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 0`
+##### <a name="datasets_additionalProperties_phase_anyOf_i0"></a>57.1.14.1. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_phase_anyOf_i1"></a>56.1.14.2. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 1`
+##### <a name="datasets_additionalProperties_phase_anyOf_i1"></a>57.1.14.2. Property `ReduxOptions > datasets > DatasetOptions > phase > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_scale"></a>56.1.15. Property `ReduxOptions > datasets > DatasetOptions > scale`
+#### <a name="datasets_additionalProperties_scale"></a>57.1.15. Property `ReduxOptions > datasets > DatasetOptions > scale`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2457,21 +4707,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_scale_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_scale_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_scale_anyOf_i0"></a>56.1.15.1. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 0`
+##### <a name="datasets_additionalProperties_scale_anyOf_i0"></a>57.1.15.1. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="datasets_additionalProperties_scale_anyOf_i1"></a>56.1.15.2. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 1`
+##### <a name="datasets_additionalProperties_scale_anyOf_i1"></a>57.1.15.2. Property `ReduxOptions > datasets > DatasetOptions > scale > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_dataset_enlarge_ratio"></a>56.1.16. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio`
+#### <a name="datasets_additionalProperties_dataset_enlarge_ratio"></a>57.1.16. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2487,7 +4737,7 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i0"></a>56.1.16.1. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 0`
+##### <a name="datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i0"></a>57.1.16.1. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 0`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2497,14 +4747,14 @@ Must be one of:
 Must be one of:
 * "auto"
 
-##### <a name="datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i1"></a>56.1.16.2. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 1`
+##### <a name="datasets_additionalProperties_dataset_enlarge_ratio_anyOf_i1"></a>57.1.16.2. Property `ReduxOptions > datasets > DatasetOptions > dataset_enlarge_ratio > anyOf > item 1`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-#### <a name="datasets_additionalProperties_prefetch_mode"></a>56.1.17. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode`
+#### <a name="datasets_additionalProperties_prefetch_mode"></a>57.1.17. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2518,21 +4768,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_prefetch_mode_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_prefetch_mode_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_prefetch_mode_anyOf_i0"></a>56.1.17.1. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 0`
+##### <a name="datasets_additionalProperties_prefetch_mode_anyOf_i0"></a>57.1.17.1. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_prefetch_mode_anyOf_i1"></a>56.1.17.2. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 1`
+##### <a name="datasets_additionalProperties_prefetch_mode_anyOf_i1"></a>57.1.17.2. Property `ReduxOptions > datasets > DatasetOptions > prefetch_mode > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_pin_memory"></a>56.1.18. Property `ReduxOptions > datasets > DatasetOptions > pin_memory`
+#### <a name="datasets_additionalProperties_pin_memory"></a>57.1.18. Property `ReduxOptions > datasets > DatasetOptions > pin_memory`
 
 |              |           |
 | ------------ | --------- |
@@ -2540,7 +4790,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `true`    |
 
-#### <a name="datasets_additionalProperties_persistent_workers"></a>56.1.19. Property `ReduxOptions > datasets > DatasetOptions > persistent_workers`
+#### <a name="datasets_additionalProperties_persistent_workers"></a>57.1.19. Property `ReduxOptions > datasets > DatasetOptions > persistent_workers`
 
 |              |           |
 | ------------ | --------- |
@@ -2548,7 +4798,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `true`    |
 
-#### <a name="datasets_additionalProperties_num_prefetch_queue"></a>56.1.20. Property `ReduxOptions > datasets > DatasetOptions > num_prefetch_queue`
+#### <a name="datasets_additionalProperties_num_prefetch_queue"></a>57.1.20. Property `ReduxOptions > datasets > DatasetOptions > num_prefetch_queue`
 
 |              |           |
 | ------------ | --------- |
@@ -2556,7 +4806,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `1`       |
 
-#### <a name="datasets_additionalProperties_prefetch_factor"></a>56.1.21. Property `ReduxOptions > datasets > DatasetOptions > prefetch_factor`
+#### <a name="datasets_additionalProperties_prefetch_factor"></a>57.1.21. Property `ReduxOptions > datasets > DatasetOptions > prefetch_factor`
 
 |              |           |
 | ------------ | --------- |
@@ -2564,7 +4814,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `2`       |
 
-#### <a name="datasets_additionalProperties_clip_size"></a>56.1.22. Property `ReduxOptions > datasets > DatasetOptions > clip_size`
+#### <a name="datasets_additionalProperties_clip_size"></a>57.1.22. Property `ReduxOptions > datasets > DatasetOptions > clip_size`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2578,21 +4828,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_clip_size_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_clip_size_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_clip_size_anyOf_i0"></a>56.1.22.1. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 0`
+##### <a name="datasets_additionalProperties_clip_size_anyOf_i0"></a>57.1.22.1. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="datasets_additionalProperties_clip_size_anyOf_i1"></a>56.1.22.2. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 1`
+##### <a name="datasets_additionalProperties_clip_size_anyOf_i1"></a>57.1.22.2. Property `ReduxOptions > datasets > DatasetOptions > clip_size > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_dataroot_gt"></a>56.1.23. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt`
+#### <a name="datasets_additionalProperties_dataroot_gt"></a>57.1.23. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2609,14 +4859,14 @@ Must be one of:
 | [item 1](#datasets_additionalProperties_dataroot_gt_anyOf_i1) |
 | [item 2](#datasets_additionalProperties_dataroot_gt_anyOf_i2) |
 
-##### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i0"></a>56.1.23.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 0`
+##### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i0"></a>57.1.23.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i1"></a>56.1.23.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1`
+##### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i1"></a>57.1.23.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -2635,21 +4885,21 @@ Must be one of:
 | ------------------------------------------------------------------------- | ----------- |
 | [item 1 items](#datasets_additionalProperties_dataroot_gt_anyOf_i1_items) | -           |
 
-###### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i1_items"></a>56.1.23.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1 > item 1 items
+###### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i1_items"></a>57.1.23.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 1 > item 1 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i2"></a>56.1.23.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 2`
+##### <a name="datasets_additionalProperties_dataroot_gt_anyOf_i2"></a>57.1.23.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_gt > anyOf > item 2`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_dataroot_lq"></a>56.1.24. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq`
+#### <a name="datasets_additionalProperties_dataroot_lq"></a>57.1.24. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2666,14 +4916,14 @@ Must be one of:
 | [item 1](#datasets_additionalProperties_dataroot_lq_anyOf_i1) |
 | [item 2](#datasets_additionalProperties_dataroot_lq_anyOf_i2) |
 
-##### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i0"></a>56.1.24.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 0`
+##### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i0"></a>57.1.24.1. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i1"></a>56.1.24.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1`
+##### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i1"></a>57.1.24.2. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -2692,21 +4942,21 @@ Must be one of:
 | ------------------------------------------------------------------------- | ----------- |
 | [item 1 items](#datasets_additionalProperties_dataroot_lq_anyOf_i1_items) | -           |
 
-###### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i1_items"></a>56.1.24.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1 > item 1 items
+###### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i1_items"></a>57.1.24.2.1. ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 1 > item 1 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i2"></a>56.1.24.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 2`
+##### <a name="datasets_additionalProperties_dataroot_lq_anyOf_i2"></a>57.1.24.3. Property `ReduxOptions > datasets > DatasetOptions > dataroot_lq > anyOf > item 2`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_meta_info"></a>56.1.25. Property `ReduxOptions > datasets > DatasetOptions > meta_info`
+#### <a name="datasets_additionalProperties_meta_info"></a>57.1.25. Property `ReduxOptions > datasets > DatasetOptions > meta_info`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -2720,21 +4970,21 @@ Must be one of:
 | [item 0](#datasets_additionalProperties_meta_info_anyOf_i0) |
 | [item 1](#datasets_additionalProperties_meta_info_anyOf_i1) |
 
-##### <a name="datasets_additionalProperties_meta_info_anyOf_i0"></a>56.1.25.1. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 0`
+##### <a name="datasets_additionalProperties_meta_info_anyOf_i0"></a>57.1.25.1. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="datasets_additionalProperties_meta_info_anyOf_i1"></a>56.1.25.2. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 1`
+##### <a name="datasets_additionalProperties_meta_info_anyOf_i1"></a>57.1.25.2. Property `ReduxOptions > datasets > DatasetOptions > meta_info > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="datasets_additionalProperties_filename_tmpl"></a>56.1.26. Property `ReduxOptions > datasets > DatasetOptions > filename_tmpl`
+#### <a name="datasets_additionalProperties_filename_tmpl"></a>57.1.26. Property `ReduxOptions > datasets > DatasetOptions > filename_tmpl`
 
 |              |          |
 | ------------ | -------- |
@@ -2742,7 +4992,7 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `"{}"`   |
 
-#### <a name="datasets_additionalProperties_blur_kernel_size"></a>56.1.27. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size`
+#### <a name="datasets_additionalProperties_blur_kernel_size"></a>57.1.27. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size`
 
 |              |           |
 | ------------ | --------- |
@@ -2750,7 +5000,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `12`      |
 
-#### <a name="datasets_additionalProperties_kernel_list"></a>56.1.28. Property `ReduxOptions > datasets > DatasetOptions > kernel_list`
+#### <a name="datasets_additionalProperties_kernel_list"></a>57.1.28. Property `ReduxOptions > datasets > DatasetOptions > kernel_list`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -2769,14 +5019,14 @@ Must be one of:
 | --------------------------------------------------------------------- | ----------- |
 | [kernel_list items](#datasets_additionalProperties_kernel_list_items) | -           |
 
-##### <a name="datasets_additionalProperties_kernel_list_items"></a>56.1.28.1. ReduxOptions > datasets > DatasetOptions > kernel_list > kernel_list items
+##### <a name="datasets_additionalProperties_kernel_list_items"></a>57.1.28.1. ReduxOptions > datasets > DatasetOptions > kernel_list > kernel_list items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_kernel_prob"></a>56.1.29. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob`
+#### <a name="datasets_additionalProperties_kernel_prob"></a>57.1.29. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -2795,14 +5045,14 @@ Must be one of:
 | --------------------------------------------------------------------- | ----------- |
 | [kernel_prob items](#datasets_additionalProperties_kernel_prob_items) | -           |
 
-##### <a name="datasets_additionalProperties_kernel_prob_items"></a>56.1.29.1. ReduxOptions > datasets > DatasetOptions > kernel_prob > kernel_prob items
+##### <a name="datasets_additionalProperties_kernel_prob_items"></a>57.1.29.1. ReduxOptions > datasets > DatasetOptions > kernel_prob > kernel_prob items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_kernel_range"></a>56.1.30. Property `ReduxOptions > datasets > DatasetOptions > kernel_range`
+#### <a name="datasets_additionalProperties_kernel_range"></a>57.1.30. Property `ReduxOptions > datasets > DatasetOptions > kernel_range`
 
 |              |           |
 | ------------ | --------- |
@@ -2823,21 +5073,21 @@ Must be one of:
 | [kernel_range item 0](#datasets_additionalProperties_kernel_range_items_i0) | -           |
 | [kernel_range item 1](#datasets_additionalProperties_kernel_range_items_i1) | -           |
 
-##### <a name="autogenerated_heading_18"></a>56.1.30.1. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 0
+##### <a name="autogenerated_heading_18"></a>57.1.30.1. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 0
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="autogenerated_heading_19"></a>56.1.30.2. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 1
+##### <a name="autogenerated_heading_19"></a>57.1.30.2. ReduxOptions > datasets > DatasetOptions > kernel_range > kernel_range item 1
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-#### <a name="datasets_additionalProperties_sinc_prob"></a>56.1.31. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob`
+#### <a name="datasets_additionalProperties_sinc_prob"></a>57.1.31. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob`
 
 |              |          |
 | ------------ | -------- |
@@ -2845,7 +5095,7 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `0`      |
 
-#### <a name="datasets_additionalProperties_blur_sigma"></a>56.1.32. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma`
+#### <a name="datasets_additionalProperties_blur_sigma"></a>57.1.32. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma`
 
 |              |            |
 | ------------ | ---------- |
@@ -2866,21 +5116,21 @@ Must be one of:
 | [blur_sigma item 0](#datasets_additionalProperties_blur_sigma_items_i0) | -           |
 | [blur_sigma item 1](#datasets_additionalProperties_blur_sigma_items_i1) | -           |
 
-##### <a name="autogenerated_heading_20"></a>56.1.32.1. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 0
+##### <a name="autogenerated_heading_20"></a>57.1.32.1. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="autogenerated_heading_21"></a>56.1.32.2. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 1
+##### <a name="autogenerated_heading_21"></a>57.1.32.2. ReduxOptions > datasets > DatasetOptions > blur_sigma > blur_sigma item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_betag_range"></a>56.1.33. Property `ReduxOptions > datasets > DatasetOptions > betag_range`
+#### <a name="datasets_additionalProperties_betag_range"></a>57.1.33. Property `ReduxOptions > datasets > DatasetOptions > betag_range`
 
 |              |            |
 | ------------ | ---------- |
@@ -2901,21 +5151,21 @@ Must be one of:
 | [betag_range item 0](#datasets_additionalProperties_betag_range_items_i0) | -           |
 | [betag_range item 1](#datasets_additionalProperties_betag_range_items_i1) | -           |
 
-##### <a name="autogenerated_heading_22"></a>56.1.33.1. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 0
+##### <a name="autogenerated_heading_22"></a>57.1.33.1. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="autogenerated_heading_23"></a>56.1.33.2. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 1
+##### <a name="autogenerated_heading_23"></a>57.1.33.2. ReduxOptions > datasets > DatasetOptions > betag_range > betag_range item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_betap_range"></a>56.1.34. Property `ReduxOptions > datasets > DatasetOptions > betap_range`
+#### <a name="datasets_additionalProperties_betap_range"></a>57.1.34. Property `ReduxOptions > datasets > DatasetOptions > betap_range`
 
 |              |          |
 | ------------ | -------- |
@@ -2936,21 +5186,21 @@ Must be one of:
 | [betap_range item 0](#datasets_additionalProperties_betap_range_items_i0) | -           |
 | [betap_range item 1](#datasets_additionalProperties_betap_range_items_i1) | -           |
 
-##### <a name="autogenerated_heading_24"></a>56.1.34.1. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 0
+##### <a name="autogenerated_heading_24"></a>57.1.34.1. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="autogenerated_heading_25"></a>56.1.34.2. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 1
+##### <a name="autogenerated_heading_25"></a>57.1.34.2. ReduxOptions > datasets > DatasetOptions > betap_range > betap_range item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_blur_kernel_size2"></a>56.1.35. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size2`
+#### <a name="datasets_additionalProperties_blur_kernel_size2"></a>57.1.35. Property `ReduxOptions > datasets > DatasetOptions > blur_kernel_size2`
 
 |              |           |
 | ------------ | --------- |
@@ -2958,7 +5208,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `12`      |
 
-#### <a name="datasets_additionalProperties_kernel_list2"></a>56.1.36. Property `ReduxOptions > datasets > DatasetOptions > kernel_list2`
+#### <a name="datasets_additionalProperties_kernel_list2"></a>57.1.36. Property `ReduxOptions > datasets > DatasetOptions > kernel_list2`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -2977,14 +5227,14 @@ Must be one of:
 | ----------------------------------------------------------------------- | ----------- |
 | [kernel_list2 items](#datasets_additionalProperties_kernel_list2_items) | -           |
 
-##### <a name="datasets_additionalProperties_kernel_list2_items"></a>56.1.36.1. ReduxOptions > datasets > DatasetOptions > kernel_list2 > kernel_list2 items
+##### <a name="datasets_additionalProperties_kernel_list2_items"></a>57.1.36.1. ReduxOptions > datasets > DatasetOptions > kernel_list2 > kernel_list2 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_kernel_prob2"></a>56.1.37. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob2`
+#### <a name="datasets_additionalProperties_kernel_prob2"></a>57.1.37. Property `ReduxOptions > datasets > DatasetOptions > kernel_prob2`
 
 |              |                   |
 | ------------ | ----------------- |
@@ -3003,14 +5253,14 @@ Must be one of:
 | ----------------------------------------------------------------------- | ----------- |
 | [kernel_prob2 items](#datasets_additionalProperties_kernel_prob2_items) | -           |
 
-##### <a name="datasets_additionalProperties_kernel_prob2_items"></a>56.1.37.1. ReduxOptions > datasets > DatasetOptions > kernel_prob2 > kernel_prob2 items
+##### <a name="datasets_additionalProperties_kernel_prob2_items"></a>57.1.37.1. ReduxOptions > datasets > DatasetOptions > kernel_prob2 > kernel_prob2 items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_kernel_range2"></a>56.1.38. Property `ReduxOptions > datasets > DatasetOptions > kernel_range2`
+#### <a name="datasets_additionalProperties_kernel_range2"></a>57.1.38. Property `ReduxOptions > datasets > DatasetOptions > kernel_range2`
 
 |              |           |
 | ------------ | --------- |
@@ -3031,21 +5281,21 @@ Must be one of:
 | [kernel_range2 item 0](#datasets_additionalProperties_kernel_range2_items_i0) | -           |
 | [kernel_range2 item 1](#datasets_additionalProperties_kernel_range2_items_i1) | -           |
 
-##### <a name="autogenerated_heading_26"></a>56.1.38.1. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 0
+##### <a name="autogenerated_heading_26"></a>57.1.38.1. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 0
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="autogenerated_heading_27"></a>56.1.38.2. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 1
+##### <a name="autogenerated_heading_27"></a>57.1.38.2. ReduxOptions > datasets > DatasetOptions > kernel_range2 > kernel_range2 item 1
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-#### <a name="datasets_additionalProperties_sinc_prob2"></a>56.1.39. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob2`
+#### <a name="datasets_additionalProperties_sinc_prob2"></a>57.1.39. Property `ReduxOptions > datasets > DatasetOptions > sinc_prob2`
 
 |              |          |
 | ------------ | -------- |
@@ -3053,7 +5303,7 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `0`      |
 
-#### <a name="datasets_additionalProperties_blur_sigma2"></a>56.1.40. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma2`
+#### <a name="datasets_additionalProperties_blur_sigma2"></a>57.1.40. Property `ReduxOptions > datasets > DatasetOptions > blur_sigma2`
 
 |              |            |
 | ------------ | ---------- |
@@ -3074,21 +5324,21 @@ Must be one of:
 | [blur_sigma2 item 0](#datasets_additionalProperties_blur_sigma2_items_i0) | -           |
 | [blur_sigma2 item 1](#datasets_additionalProperties_blur_sigma2_items_i1) | -           |
 
-##### <a name="autogenerated_heading_28"></a>56.1.40.1. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 0
+##### <a name="autogenerated_heading_28"></a>57.1.40.1. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="autogenerated_heading_29"></a>56.1.40.2. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 1
+##### <a name="autogenerated_heading_29"></a>57.1.40.2. ReduxOptions > datasets > DatasetOptions > blur_sigma2 > blur_sigma2 item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_betag_range2"></a>56.1.41. Property `ReduxOptions > datasets > DatasetOptions > betag_range2`
+#### <a name="datasets_additionalProperties_betag_range2"></a>57.1.41. Property `ReduxOptions > datasets > DatasetOptions > betag_range2`
 
 |              |            |
 | ------------ | ---------- |
@@ -3109,21 +5359,21 @@ Must be one of:
 | [betag_range2 item 0](#datasets_additionalProperties_betag_range2_items_i0) | -           |
 | [betag_range2 item 1](#datasets_additionalProperties_betag_range2_items_i1) | -           |
 
-##### <a name="autogenerated_heading_30"></a>56.1.41.1. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 0
+##### <a name="autogenerated_heading_30"></a>57.1.41.1. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="autogenerated_heading_31"></a>56.1.41.2. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 1
+##### <a name="autogenerated_heading_31"></a>57.1.41.2. ReduxOptions > datasets > DatasetOptions > betag_range2 > betag_range2 item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_betap_range2"></a>56.1.42. Property `ReduxOptions > datasets > DatasetOptions > betap_range2`
+#### <a name="datasets_additionalProperties_betap_range2"></a>57.1.42. Property `ReduxOptions > datasets > DatasetOptions > betap_range2`
 
 |              |          |
 | ------------ | -------- |
@@ -3144,21 +5394,21 @@ Must be one of:
 | [betap_range2 item 0](#datasets_additionalProperties_betap_range2_items_i0) | -           |
 | [betap_range2 item 1](#datasets_additionalProperties_betap_range2_items_i1) | -           |
 
-##### <a name="autogenerated_heading_32"></a>56.1.42.1. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 0
+##### <a name="autogenerated_heading_32"></a>57.1.42.1. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 0
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="autogenerated_heading_33"></a>56.1.42.2. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 1
+##### <a name="autogenerated_heading_33"></a>57.1.42.2. ReduxOptions > datasets > DatasetOptions > betap_range2 > betap_range2 item 1
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="datasets_additionalProperties_final_sinc_prob"></a>56.1.43. Property `ReduxOptions > datasets > DatasetOptions > final_sinc_prob`
+#### <a name="datasets_additionalProperties_final_sinc_prob"></a>57.1.43. Property `ReduxOptions > datasets > DatasetOptions > final_sinc_prob`
 
 |              |          |
 | ------------ | -------- |
@@ -3166,7 +5416,7 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `0`      |
 
-#### <a name="datasets_additionalProperties_final_kernel_range"></a>56.1.44. Property `ReduxOptions > datasets > DatasetOptions > final_kernel_range`
+#### <a name="datasets_additionalProperties_final_kernel_range"></a>57.1.44. Property `ReduxOptions > datasets > DatasetOptions > final_kernel_range`
 
 |              |           |
 | ------------ | --------- |
@@ -3187,87 +5437,77 @@ Must be one of:
 | [final_kernel_range item 0](#datasets_additionalProperties_final_kernel_range_items_i0) | -           |
 | [final_kernel_range item 1](#datasets_additionalProperties_final_kernel_range_items_i1) | -           |
 
-##### <a name="autogenerated_heading_34"></a>56.1.44.1. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 0
+##### <a name="autogenerated_heading_34"></a>57.1.44.1. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 0
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="autogenerated_heading_35"></a>56.1.44.2. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 1
+##### <a name="autogenerated_heading_35"></a>57.1.44.2. ReduxOptions > datasets > DatasetOptions > final_kernel_range > final_kernel_range item 1
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-## <a name="train"></a>57. Property `ReduxOptions > train`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                  |
-| ------------------------------- |
-| [item 0](#train_anyOf_i0)       |
-| [TrainOptions](#train_anyOf_i1) |
-
-### <a name="train_anyOf_i0"></a>57.1. Property `ReduxOptions > train > anyOf > item 0`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-### <a name="train_anyOf_i1"></a>57.2. Property `ReduxOptions > train > anyOf > TrainOptions`
+## <a name="train"></a>58. Property `ReduxOptions > train`
 
 **Title:** TrainOptions
 
 |                           |                      |
 | ------------------------- | -------------------- |
 | **Type**                  | `object`             |
-| **Required**              | No                   |
-| **Additional properties** | Not allowed          |
+| **Required**              | Yes                  |
+| **Additional properties** | Any type allowed     |
 | **Defined in**            | #/$defs/TrainOptions |
 
-| Property                                                | Pattern | Type            | Deprecated | Definition | Title/Description                                                                                                                                       |
-| ------------------------------------------------------- | ------- | --------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| + [total_iter](#train_anyOf_i1_total_iter )             | No      | integer         | No         | -          | The total number of iterations to train.                                                                                                                |
-| + [optim_g](#train_anyOf_i1_optim_g )                   | No      | object          | No         | -          | The optimizer to use for the generator model.                                                                                                           |
-| - [ema_decay](#train_anyOf_i1_ema_decay )               | No      | number          | No         | -          | The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA.                                                                  |
-| - [grad_clip](#train_anyOf_i1_grad_clip )               | No      | boolean         | No         | -          | Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations. |
-| - [warmup_iter](#train_anyOf_i1_warmup_iter )           | No      | integer         | No         | -          | Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.                                                  |
-| - [scheduler](#train_anyOf_i1_scheduler )               | No      | Combination     | No         | -          | Options for the optimizer scheduler. If there are multiple optimizers, both will use the same scheduler options.                                        |
-| - [optim_d](#train_anyOf_i1_optim_d )                   | No      | Combination     | No         | -          | The optimizer to use for the discriminator model.                                                                                                       |
-| - [losses](#train_anyOf_i1_losses )                     | No      | Combination     | No         | -          | The list of loss functions to optimize.                                                                                                                 |
-| - [pixel_opt](#train_anyOf_i1_pixel_opt )               | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [mssim_opt](#train_anyOf_i1_mssim_opt )               | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [ms_ssim_l1_opt](#train_anyOf_i1_ms_ssim_l1_opt )     | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [perceptual_opt](#train_anyOf_i1_perceptual_opt )     | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [contextual_opt](#train_anyOf_i1_contextual_opt )     | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [dists_opt](#train_anyOf_i1_dists_opt )               | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [hr_inversion_opt](#train_anyOf_i1_hr_inversion_opt ) | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [dinov2_opt](#train_anyOf_i1_dinov2_opt )             | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [topiq_opt](#train_anyOf_i1_topiq_opt )               | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [pd_opt](#train_anyOf_i1_pd_opt )                     | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [fd_opt](#train_anyOf_i1_fd_opt )                     | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [ldl_opt](#train_anyOf_i1_ldl_opt )                   | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [hsluv_opt](#train_anyOf_i1_hsluv_opt )               | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [gan_opt](#train_anyOf_i1_gan_opt )                   | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [color_opt](#train_anyOf_i1_color_opt )               | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [luma_opt](#train_anyOf_i1_luma_opt )                 | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [avg_opt](#train_anyOf_i1_avg_opt )                   | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [bicubic_opt](#train_anyOf_i1_bicubic_opt )           | No      | Combination     | No         | -          | -                                                                                                                                                       |
-| - [use_moa](#train_anyOf_i1_use_moa )                   | No      | boolean         | No         | -          | Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.                 |
-| - [moa_augs](#train_anyOf_i1_moa_augs )                 | No      | array of string | No         | -          | The list of augmentations to choose from, only one is selected per iteration.                                                                           |
-| - [moa_probs](#train_anyOf_i1_moa_probs )               | No      | array of number | No         | -          | The probability each augmentation in moa_augs will be applied. Total should add up to 1.                                                                |
-| - [moa_debug](#train_anyOf_i1_moa_debug )               | No      | boolean         | No         | -          | Save images before and after augment to debug/moa folder inside of the root training directory.                                                         |
-| - [moa_debug_limit](#train_anyOf_i1_moa_debug_limit )   | No      | integer         | No         | -          | The max number of iterations to save augmentation images for.                                                                                           |
+| Property                                       | Pattern | Type             | Deprecated | Definition | Title/Description                                                                                                                                       |
+| ---------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| + [type](#train_type )                         | No      | enum (of string) | No         | -          | -                                                                                                                                                       |
+| + [total_iter](#train_total_iter )             | No      | integer          | No         | -          | The total number of iterations to train.                                                                                                                |
+| + [optim_g](#train_optim_g )                   | No      | object           | No         | -          | The optimizer to use for the generator model.                                                                                                           |
+| + [ema_decay](#train_ema_decay )               | No      | number           | No         | -          | The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA.                                                                  |
+| + [grad_clip](#train_grad_clip )               | No      | boolean          | No         | -          | Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations. |
+| + [warmup_iter](#train_warmup_iter )           | No      | integer          | No         | -          | Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.                                                  |
+| + [scheduler](#train_scheduler )               | No      | Combination      | No         | -          | Options for the optimizer scheduler. If there are multiple optimizers, both will use the same scheduler options.                                        |
+| + [optim_d](#train_optim_d )                   | No      | Combination      | No         | -          | The optimizer to use for the discriminator model.                                                                                                       |
+| + [losses](#train_losses )                     | No      | array            | No         | -          | The list of loss functions to optimize.                                                                                                                 |
+| + [pixel_opt](#train_pixel_opt )               | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [mssim_opt](#train_mssim_opt )               | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [ms_ssim_l1_opt](#train_ms_ssim_l1_opt )     | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [perceptual_opt](#train_perceptual_opt )     | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [contextual_opt](#train_contextual_opt )     | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [dists_opt](#train_dists_opt )               | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [hr_inversion_opt](#train_hr_inversion_opt ) | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [dinov2_opt](#train_dinov2_opt )             | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [topiq_opt](#train_topiq_opt )               | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [pd_opt](#train_pd_opt )                     | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [fd_opt](#train_fd_opt )                     | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [ldl_opt](#train_ldl_opt )                   | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [hsluv_opt](#train_hsluv_opt )               | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [gan_opt](#train_gan_opt )                   | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [color_opt](#train_color_opt )               | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [luma_opt](#train_luma_opt )                 | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [avg_opt](#train_avg_opt )                   | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [bicubic_opt](#train_bicubic_opt )           | No      | Combination      | No         | -          | -                                                                                                                                                       |
+| + [use_moa](#train_use_moa )                   | No      | boolean          | No         | -          | Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.                 |
+| + [moa_augs](#train_moa_augs )                 | No      | array of string  | No         | -          | The list of augmentations to choose from, only one is selected per iteration.                                                                           |
+| + [moa_probs](#train_moa_probs )               | No      | array of number  | No         | -          | The probability each augmentation in moa_augs will be applied. Total should add up to 1.                                                                |
+| + [moa_debug](#train_moa_debug )               | No      | boolean          | No         | -          | Save images before and after augment to debug/moa folder inside of the root training directory.                                                         |
+| + [moa_debug_limit](#train_moa_debug_limit )   | No      | integer          | No         | -          | The max number of iterations to save augmentation images for.                                                                                           |
 
-#### <a name="train_anyOf_i1_total_iter"></a>57.2.1. Property `ReduxOptions > train > anyOf > TrainOptions > total_iter`
+### <a name="train_type"></a>58.1. Property `ReduxOptions > train > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "TrainOptions"
+
+### <a name="train_total_iter"></a>58.2. Property `ReduxOptions > train > total_iter`
 
 |              |           |
 | ------------ | --------- |
@@ -3276,7 +5516,7 @@ Must be one of:
 
 **Description:** The total number of iterations to train.
 
-#### <a name="train_anyOf_i1_optim_g"></a>57.2.2. Property `ReduxOptions > train > anyOf > TrainOptions > optim_g`
+### <a name="train_optim_g"></a>58.3. Property `ReduxOptions > train > optim_g`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -3286,60 +5526,56 @@ Must be one of:
 
 **Description:** The optimizer to use for the generator model.
 
-#### <a name="train_anyOf_i1_ema_decay"></a>57.2.3. Property `ReduxOptions > train > anyOf > TrainOptions > ema_decay`
+### <a name="train_ema_decay"></a>58.4. Property `ReduxOptions > train > ema_decay`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
-| **Required** | No       |
-| **Default**  | `0`      |
+| **Required** | Yes      |
 
 **Description:** The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA.
 
-#### <a name="train_anyOf_i1_grad_clip"></a>57.2.4. Property `ReduxOptions > train > anyOf > TrainOptions > grad_clip`
+### <a name="train_grad_clip"></a>58.5. Property `ReduxOptions > train > grad_clip`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations.
 
-#### <a name="train_anyOf_i1_warmup_iter"></a>57.2.5. Property `ReduxOptions > train > anyOf > TrainOptions > warmup_iter`
+### <a name="train_warmup_iter"></a>58.6. Property `ReduxOptions > train > warmup_iter`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
-| **Required** | No        |
-| **Default**  | `-1`      |
+| **Required** | Yes       |
 
 **Description:** Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
-#### <a name="train_anyOf_i1_scheduler"></a>57.2.6. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler`
+### <a name="train_scheduler"></a>58.7. Property `ReduxOptions > train > scheduler`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 **Description:** Options for the optimizer scheduler. If there are multiple optimizers, both will use the same scheduler options.
 
-| Any of(Option)                                         |
-| ------------------------------------------------------ |
-| [item 0](#train_anyOf_i1_scheduler_anyOf_i0)           |
-| [SchedulerOptions](#train_anyOf_i1_scheduler_anyOf_i1) |
+| Any of(Option)                                |
+| --------------------------------------------- |
+| [item 0](#train_scheduler_anyOf_i0)           |
+| [SchedulerOptions](#train_scheduler_anyOf_i1) |
 
-##### <a name="train_anyOf_i1_scheduler_anyOf_i0"></a>57.2.6.1. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > item 0`
+#### <a name="train_scheduler_anyOf_i0"></a>58.7.1. Property `ReduxOptions > train > scheduler > anyOf > item 0`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-##### <a name="train_anyOf_i1_scheduler_anyOf_i1"></a>57.2.6.2. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions`
+#### <a name="train_scheduler_anyOf_i1"></a>58.7.2. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions`
 
 **Title:** SchedulerOptions
 
@@ -3350,20 +5586,20 @@ Must be one of:
 | **Additional properties** | Not allowed              |
 | **Defined in**            | #/$defs/SchedulerOptions |
 
-| Property                                                       | Pattern | Type             | Deprecated | Definition | Title/Description                                                                                                                      |
-| -------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| + [type](#train_anyOf_i1_scheduler_anyOf_i1_type )             | No      | string           | No         | -          | -                                                                                                                                      |
-| + [milestones](#train_anyOf_i1_scheduler_anyOf_i1_milestones ) | No      | array of integer | No         | -          | List of milestones, iterations where the learning rate is reduced.                                                                     |
-| + [gamma](#train_anyOf_i1_scheduler_anyOf_i1_gamma )           | No      | number           | No         | -          | At each milestone, the learning rate is multiplied by this number, so a gamma of 0.5 cuts the learning rate in half at each milestone. |
+| Property                                              | Pattern | Type             | Deprecated | Definition | Title/Description                                                                                                                      |
+| ----------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| + [type](#train_scheduler_anyOf_i1_type )             | No      | string           | No         | -          | -                                                                                                                                      |
+| + [milestones](#train_scheduler_anyOf_i1_milestones ) | No      | array of integer | No         | -          | List of milestones, iterations where the learning rate is reduced.                                                                     |
+| + [gamma](#train_scheduler_anyOf_i1_gamma )           | No      | number           | No         | -          | At each milestone, the learning rate is multiplied by this number, so a gamma of 0.5 cuts the learning rate in half at each milestone. |
 
-###### <a name="train_anyOf_i1_scheduler_anyOf_i1_type"></a>57.2.6.2.1. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > type`
+##### <a name="train_scheduler_anyOf_i1_type"></a>58.7.2.1. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions > type`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | Yes      |
 
-###### <a name="train_anyOf_i1_scheduler_anyOf_i1_milestones"></a>57.2.6.2.2. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > milestones`
+##### <a name="train_scheduler_anyOf_i1_milestones"></a>58.7.2.2. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions > milestones`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3380,18 +5616,18 @@ Must be one of:
 | **Additional items** | False              |
 | **Tuple validation** | See below          |
 
-| Each item of this array must be                                         | Description |
-| ----------------------------------------------------------------------- | ----------- |
-| [milestones items](#train_anyOf_i1_scheduler_anyOf_i1_milestones_items) | -           |
+| Each item of this array must be                                | Description |
+| -------------------------------------------------------------- | ----------- |
+| [milestones items](#train_scheduler_anyOf_i1_milestones_items) | -           |
 
-###### <a name="train_anyOf_i1_scheduler_anyOf_i1_milestones_items"></a>57.2.6.2.2.1. ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > milestones > milestones items
+###### <a name="train_scheduler_anyOf_i1_milestones_items"></a>58.7.2.2.1. ReduxOptions > train > scheduler > anyOf > SchedulerOptions > milestones > milestones items
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-###### <a name="train_anyOf_i1_scheduler_anyOf_i1_gamma"></a>57.2.6.2.3. Property `ReduxOptions > train > anyOf > TrainOptions > scheduler > anyOf > SchedulerOptions > gamma`
+##### <a name="train_scheduler_anyOf_i1_gamma"></a>58.7.2.3. Property `ReduxOptions > train > scheduler > anyOf > SchedulerOptions > gamma`
 
 |              |          |
 | ------------ | -------- |
@@ -3400,23 +5636,22 @@ Must be one of:
 
 **Description:** At each milestone, the learning rate is multiplied by this number, so a gamma of 0.5 cuts the learning rate in half at each milestone.
 
-#### <a name="train_anyOf_i1_optim_d"></a>57.2.7. Property `ReduxOptions > train > anyOf > TrainOptions > optim_d`
+### <a name="train_optim_d"></a>58.8. Property `ReduxOptions > train > optim_d`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 **Description:** The optimizer to use for the discriminator model.
 
-| Any of(Option)                             |
-| ------------------------------------------ |
-| [item 0](#train_anyOf_i1_optim_d_anyOf_i0) |
-| [item 1](#train_anyOf_i1_optim_d_anyOf_i1) |
+| Any of(Option)                    |
+| --------------------------------- |
+| [item 0](#train_optim_d_anyOf_i0) |
+| [item 1](#train_optim_d_anyOf_i1) |
 
-##### <a name="train_anyOf_i1_optim_d_anyOf_i0"></a>57.2.7.1. Property `ReduxOptions > train > anyOf > TrainOptions > optim_d > anyOf > item 0`
+#### <a name="train_optim_d_anyOf_i0"></a>58.8.1. Property `ReduxOptions > train > optim_d > anyOf > item 0`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -3424,34 +5659,1399 @@ Must be one of:
 | **Required**              | No               |
 | **Additional properties** | Any type allowed |
 
-##### <a name="train_anyOf_i1_optim_d_anyOf_i1"></a>57.2.7.2. Property `ReduxOptions > train > anyOf > TrainOptions > optim_d > anyOf > item 1`
+#### <a name="train_optim_d_anyOf_i1"></a>58.8.2. Property `ReduxOptions > train > optim_d > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="train_anyOf_i1_losses"></a>57.2.8. Property `ReduxOptions > train > anyOf > TrainOptions > losses`
+### <a name="train_losses"></a>58.9. Property `ReduxOptions > train > losses`
+
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
+
+**Description:** The list of loss functions to optimize.
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | N/A                |
+| **Max items**        | N/A                |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be     | Description |
+| ----------------------------------- | ----------- |
+| [losses items](#train_losses_items) | -           |
+
+#### <a name="train_losses_items"></a>58.9.1. ReduxOptions > train > losses > losses items
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
 | **Required**              | No               |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
-**Description:** The list of loss functions to optimize.
+| Any of(Option)                                      |
+| --------------------------------------------------- |
+| [ganloss](#train_losses_items_anyOf_i0)             |
+| [multiscaleganloss](#train_losses_items_anyOf_i1)   |
+| [adistsloss](#train_losses_items_anyOf_i2)          |
+| [l1loss](#train_losses_items_anyOf_i3)              |
+| [mseloss](#train_losses_items_anyOf_i4)             |
+| [charbonnierloss](#train_losses_items_anyOf_i5)     |
+| [colorloss](#train_losses_items_anyOf_i6)           |
+| [averageloss](#train_losses_items_anyOf_i7)         |
+| [bicubicloss](#train_losses_items_anyOf_i8)         |
+| [lumaloss](#train_losses_items_anyOf_i9)            |
+| [hsluvloss](#train_losses_items_anyOf_i10)          |
+| [contextualloss](#train_losses_items_anyOf_i11)     |
+| [distsloss](#train_losses_items_anyOf_i12)          |
+| [dsdloss](#train_losses_items_anyOf_i13)            |
+| [ffloss](#train_losses_items_anyOf_i14)             |
+| [ldlloss](#train_losses_items_anyOf_i15)            |
+| [mssimloss](#train_losses_items_anyOf_i16)          |
+| [msssiml1loss](#train_losses_items_anyOf_i17)       |
+| [nccloss](#train_losses_items_anyOf_i18)            |
+| [perceptualfp16loss](#train_losses_items_anyOf_i19) |
+| [perceptualloss](#train_losses_items_anyOf_i20)     |
+| [topiqloss](#train_losses_items_anyOf_i21)          |
 
-| Any of(Option)                            |
-| ----------------------------------------- |
-| [item 0](#train_anyOf_i1_losses_anyOf_i0) |
-| [item 1](#train_anyOf_i1_losses_anyOf_i1) |
+##### <a name="train_losses_items_anyOf_i0"></a>58.9.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss`
 
-##### <a name="train_anyOf_i1_losses_anyOf_i0"></a>57.2.8.1. Property `ReduxOptions > train > anyOf > TrainOptions > losses > anyOf > item 0`
+**Title:** ganloss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/ganloss  |
+
+| Property                                                         | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i0_kind )                     | No      | enum (of string) | No         | -          | -                 |
+| + [gan_type](#train_losses_items_anyOf_i0_gan_type )             | No      | string           | No         | -          | -                 |
+| + [real_label_val](#train_losses_items_anyOf_i0_real_label_val ) | No      | number           | No         | -          | -                 |
+| + [fake_label_val](#train_losses_items_anyOf_i0_fake_label_val ) | No      | number           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i0_loss_weight )       | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i0_type )                     | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i0_kind"></a>58.9.1.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ganloss"
+
+###### <a name="train_losses_items_anyOf_i0_gan_type"></a>58.9.1.1.2. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > gan_type`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i0_real_label_val"></a>58.9.1.1.3. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > real_label_val`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i0_fake_label_val"></a>58.9.1.1.4. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > fake_label_val`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i0_loss_weight"></a>58.9.1.1.5. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i0_type"></a>58.9.1.1.6. Property `ReduxOptions > train > losses > losses items > anyOf > ganloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ganloss"
+
+##### <a name="train_losses_items_anyOf_i1"></a>58.9.1.2. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss`
+
+**Title:** multiscaleganloss
+
+|                           |                           |
+| ------------------------- | ------------------------- |
+| **Type**                  | `object`                  |
+| **Required**              | No                        |
+| **Additional properties** | Any type allowed          |
+| **Defined in**            | #/$defs/multiscaleganloss |
+
+| Property                                                         | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i1_kind )                     | No      | enum (of string) | No         | -          | -                 |
+| + [gan_type](#train_losses_items_anyOf_i1_gan_type )             | No      | string           | No         | -          | -                 |
+| + [real_label_val](#train_losses_items_anyOf_i1_real_label_val ) | No      | number           | No         | -          | -                 |
+| + [fake_label_val](#train_losses_items_anyOf_i1_fake_label_val ) | No      | number           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i1_loss_weight )       | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i1_type )                     | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i1_kind"></a>58.9.1.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "multiscaleganloss"
+
+###### <a name="train_losses_items_anyOf_i1_gan_type"></a>58.9.1.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > gan_type`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i1_real_label_val"></a>58.9.1.2.3. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > real_label_val`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i1_fake_label_val"></a>58.9.1.2.4. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > fake_label_val`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i1_loss_weight"></a>58.9.1.2.5. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i1_type"></a>58.9.1.2.6. Property `ReduxOptions > train > losses > losses items > anyOf > multiscaleganloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "multiscaleganloss"
+
+##### <a name="train_losses_items_anyOf_i2"></a>58.9.1.3. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss`
+
+**Title:** adistsloss
+
+|                           |                    |
+| ------------------------- | ------------------ |
+| **Type**                  | `object`           |
+| **Required**              | No                 |
+| **Additional properties** | Any type allowed   |
+| **Defined in**            | #/$defs/adistsloss |
+
+| Property                                                     | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i2_kind )                 | No      | enum (of string) | No         | -          | -                 |
+| + [window_size](#train_losses_items_anyOf_i2_window_size )   | No      | integer          | No         | -          | -                 |
+| + [resize_input](#train_losses_items_anyOf_i2_resize_input ) | No      | boolean          | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i2_loss_weight )   | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i2_type )                 | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i2_kind"></a>58.9.1.3.1. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "adistsloss"
+
+###### <a name="train_losses_items_anyOf_i2_window_size"></a>58.9.1.3.2. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > window_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i2_resize_input"></a>58.9.1.3.3. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > resize_input`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i2_loss_weight"></a>58.9.1.3.4. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i2_type"></a>58.9.1.3.5. Property `ReduxOptions > train > losses > losses items > anyOf > adistsloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "adistsloss"
+
+##### <a name="train_losses_items_anyOf_i3"></a>58.9.1.4. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss`
+
+**Title:** l1loss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/l1loss   |
+
+| Property                                                   | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i3_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i3_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [reduction](#train_losses_items_anyOf_i3_reduction )     | No      | string           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i3_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i3_kind"></a>58.9.1.4.1. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "l1loss"
+
+###### <a name="train_losses_items_anyOf_i3_loss_weight"></a>58.9.1.4.2. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i3_reduction"></a>58.9.1.4.3. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > reduction`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i3_type"></a>58.9.1.4.4. Property `ReduxOptions > train > losses > losses items > anyOf > l1loss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "l1loss"
+
+##### <a name="train_losses_items_anyOf_i4"></a>58.9.1.5. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss`
+
+**Title:** mseloss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/mseloss  |
+
+| Property                                                   | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i4_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i4_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [reduction](#train_losses_items_anyOf_i4_reduction )     | No      | string           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i4_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i4_kind"></a>58.9.1.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mseloss"
+
+###### <a name="train_losses_items_anyOf_i4_loss_weight"></a>58.9.1.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i4_reduction"></a>58.9.1.5.3. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > reduction`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i4_type"></a>58.9.1.5.4. Property `ReduxOptions > train > losses > losses items > anyOf > mseloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mseloss"
+
+##### <a name="train_losses_items_anyOf_i5"></a>58.9.1.6. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss`
+
+**Title:** charbonnierloss
+
+|                           |                         |
+| ------------------------- | ----------------------- |
+| **Type**                  | `object`                |
+| **Required**              | No                      |
+| **Additional properties** | Any type allowed        |
+| **Defined in**            | #/$defs/charbonnierloss |
+
+| Property                                                   | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i5_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i5_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [reduction](#train_losses_items_anyOf_i5_reduction )     | No      | string           | No         | -          | -                 |
+| + [eps](#train_losses_items_anyOf_i5_eps )                 | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i5_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i5_kind"></a>58.9.1.6.1. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "charbonnierloss"
+
+###### <a name="train_losses_items_anyOf_i5_loss_weight"></a>58.9.1.6.2. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i5_reduction"></a>58.9.1.6.3. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > reduction`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i5_eps"></a>58.9.1.6.4. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > eps`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i5_type"></a>58.9.1.6.5. Property `ReduxOptions > train > losses > losses items > anyOf > charbonnierloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "charbonnierloss"
+
+##### <a name="train_losses_items_anyOf_i6"></a>58.9.1.7. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss`
+
+**Title:** colorloss
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/colorloss |
+
+| Property                                                   | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i6_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i6_criterion )     | No      | string           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i6_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [scale](#train_losses_items_anyOf_i6_scale )             | No      | integer          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i6_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i6_kind"></a>58.9.1.7.1. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "colorloss"
+
+###### <a name="train_losses_items_anyOf_i6_criterion"></a>58.9.1.7.2. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > criterion`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i6_loss_weight"></a>58.9.1.7.3. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i6_scale"></a>58.9.1.7.4. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i6_type"></a>58.9.1.7.5. Property `ReduxOptions > train > losses > losses items > anyOf > colorloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "colorloss"
+
+##### <a name="train_losses_items_anyOf_i7"></a>58.9.1.8. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss`
+
+**Title:** averageloss
+
+|                           |                     |
+| ------------------------- | ------------------- |
+| **Type**                  | `object`            |
+| **Required**              | No                  |
+| **Additional properties** | Any type allowed    |
+| **Defined in**            | #/$defs/averageloss |
+
+| Property                                                   | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i7_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i7_criterion )     | No      | string           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i7_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [scale](#train_losses_items_anyOf_i7_scale )             | No      | integer          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i7_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i7_kind"></a>58.9.1.8.1. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "averageloss"
+
+###### <a name="train_losses_items_anyOf_i7_criterion"></a>58.9.1.8.2. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > criterion`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i7_loss_weight"></a>58.9.1.8.3. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i7_scale"></a>58.9.1.8.4. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i7_type"></a>58.9.1.8.5. Property `ReduxOptions > train > losses > losses items > anyOf > averageloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "averageloss"
+
+##### <a name="train_losses_items_anyOf_i8"></a>58.9.1.9. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss`
+
+**Title:** bicubicloss
+
+|                           |                     |
+| ------------------------- | ------------------- |
+| **Type**                  | `object`            |
+| **Required**              | No                  |
+| **Additional properties** | Any type allowed    |
+| **Defined in**            | #/$defs/bicubicloss |
+
+| Property                                                   | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i8_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i8_criterion )     | No      | string           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i8_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [scale](#train_losses_items_anyOf_i8_scale )             | No      | integer          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i8_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i8_kind"></a>58.9.1.9.1. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "bicubicloss"
+
+###### <a name="train_losses_items_anyOf_i8_criterion"></a>58.9.1.9.2. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > criterion`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i8_loss_weight"></a>58.9.1.9.3. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i8_scale"></a>58.9.1.9.4. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > scale`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i8_type"></a>58.9.1.9.5. Property `ReduxOptions > train > losses > losses items > anyOf > bicubicloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "bicubicloss"
+
+##### <a name="train_losses_items_anyOf_i9"></a>58.9.1.10. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss`
+
+**Title:** lumaloss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/lumaloss |
+
+| Property                                                   | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i9_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i9_criterion )     | No      | string           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i9_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i9_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i9_kind"></a>58.9.1.10.1. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lumaloss"
+
+###### <a name="train_losses_items_anyOf_i9_criterion"></a>58.9.1.10.2. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > criterion`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i9_loss_weight"></a>58.9.1.10.3. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i9_type"></a>58.9.1.10.4. Property `ReduxOptions > train > losses > losses items > anyOf > lumaloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "lumaloss"
+
+##### <a name="train_losses_items_anyOf_i10"></a>58.9.1.11. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss`
+
+**Title:** hsluvloss
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/hsluvloss |
+
+| Property                                                    | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i10_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i10_criterion )     | No      | string           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i10_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i10_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i10_kind"></a>58.9.1.11.1. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hsluvloss"
+
+###### <a name="train_losses_items_anyOf_i10_criterion"></a>58.9.1.11.2. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > criterion`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i10_loss_weight"></a>58.9.1.11.3. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i10_type"></a>58.9.1.11.4. Property `ReduxOptions > train > losses > losses items > anyOf > hsluvloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "hsluvloss"
+
+##### <a name="train_losses_items_anyOf_i11"></a>58.9.1.12. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss`
+
+**Title:** contextualloss
+
+|                           |                        |
+| ------------------------- | ---------------------- |
+| **Type**                  | `object`               |
+| **Required**              | No                     |
+| **Additional properties** | Any type allowed       |
+| **Defined in**            | #/$defs/contextualloss |
+
+| Property                                                        | Pattern | Type             | Deprecated | Definition | Title/Description |
+| --------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i11_kind )                   | No      | enum (of string) | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i11_loss_weight )     | No      | number           | No         | -          | -                 |
+| + [layer_weights](#train_losses_items_anyOf_i11_layer_weights ) | No      | Combination      | No         | -          | -                 |
+| + [crop_quarter](#train_losses_items_anyOf_i11_crop_quarter )   | No      | boolean          | No         | -          | -                 |
+| + [max_1d_size](#train_losses_items_anyOf_i11_max_1d_size )     | No      | integer          | No         | -          | -                 |
+| + [distance_type](#train_losses_items_anyOf_i11_distance_type ) | No      | string           | No         | -          | -                 |
+| + [b](#train_losses_items_anyOf_i11_b )                         | No      | number           | No         | -          | -                 |
+| + [band_width](#train_losses_items_anyOf_i11_band_width )       | No      | number           | No         | -          | -                 |
+| + [use_vgg](#train_losses_items_anyOf_i11_use_vgg )             | No      | boolean          | No         | -          | -                 |
+| + [net](#train_losses_items_anyOf_i11_net )                     | No      | string           | No         | -          | -                 |
+| + [calc_type](#train_losses_items_anyOf_i11_calc_type )         | No      | string           | No         | -          | -                 |
+| + [z_norm](#train_losses_items_anyOf_i11_z_norm )               | No      | boolean          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i11_type )                   | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i11_kind"></a>58.9.1.12.1. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "contextualloss"
+
+###### <a name="train_losses_items_anyOf_i11_loss_weight"></a>58.9.1.12.2. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i11_layer_weights"></a>58.9.1.12.3. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                                                 |
+| -------------------------------------------------------------- |
+| [item 0](#train_losses_items_anyOf_i11_layer_weights_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i11_layer_weights_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i11_layer_weights_anyOf_i0"></a>58.9.1.12.3.1. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights > anyOf > item 0`
+
+|                           |                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Type**                  | `object`                                                                                                                         |
+| **Required**              | No                                                                                                                               |
+| **Additional properties** | [Each additional property must conform to the schema](#train_losses_items_anyOf_i11_layer_weights_anyOf_i0_additionalProperties) |
+
+| Property                                                                         | Pattern | Type   | Deprecated | Definition | Title/Description |
+| -------------------------------------------------------------------------------- | ------- | ------ | ---------- | ---------- | ----------------- |
+| - [](#train_losses_items_anyOf_i11_layer_weights_anyOf_i0_additionalProperties ) | No      | number | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i11_layer_weights_anyOf_i0_additionalProperties"></a>58.9.1.12.3.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights > anyOf > item 0 > additionalProperties`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i11_layer_weights_anyOf_i1"></a>58.9.1.12.3.2. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > layer_weights > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+###### <a name="train_losses_items_anyOf_i11_crop_quarter"></a>58.9.1.12.4. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > crop_quarter`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i11_max_1d_size"></a>58.9.1.12.5. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > max_1d_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i11_distance_type"></a>58.9.1.12.6. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > distance_type`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i11_b"></a>58.9.1.12.7. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > b`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i11_band_width"></a>58.9.1.12.8. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > band_width`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i11_use_vgg"></a>58.9.1.12.9. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > use_vgg`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i11_net"></a>58.9.1.12.10. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > net`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i11_calc_type"></a>58.9.1.12.11. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > calc_type`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i11_z_norm"></a>58.9.1.12.12. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > z_norm`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i11_type"></a>58.9.1.12.13. Property `ReduxOptions > train > losses > losses items > anyOf > contextualloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "contextualloss"
+
+##### <a name="train_losses_items_anyOf_i12"></a>58.9.1.13. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss`
+
+**Title:** distsloss
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/distsloss |
+
+| Property                                                          | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i12_kind )                     | No      | enum (of string) | No         | -          | -                 |
+| + [as_loss](#train_losses_items_anyOf_i12_as_loss )               | No      | boolean          | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i12_loss_weight )       | No      | number           | No         | -          | -                 |
+| + [load_weights](#train_losses_items_anyOf_i12_load_weights )     | No      | boolean          | No         | -          | -                 |
+| + [use_input_norm](#train_losses_items_anyOf_i12_use_input_norm ) | No      | boolean          | No         | -          | -                 |
+| + [clip_min](#train_losses_items_anyOf_i12_clip_min )             | No      | integer          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i12_type )                     | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i12_kind"></a>58.9.1.13.1. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "distsloss"
+
+###### <a name="train_losses_items_anyOf_i12_as_loss"></a>58.9.1.13.2. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > as_loss`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i12_loss_weight"></a>58.9.1.13.3. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i12_load_weights"></a>58.9.1.13.4. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > load_weights`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i12_use_input_norm"></a>58.9.1.13.5. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > use_input_norm`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i12_clip_min"></a>58.9.1.13.6. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > clip_min`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i12_type"></a>58.9.1.13.7. Property `ReduxOptions > train > losses > losses items > anyOf > distsloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "distsloss"
+
+##### <a name="train_losses_items_anyOf_i13"></a>58.9.1.14. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss`
+
+**Title:** dsdloss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/dsdloss  |
+
+| Property                                                                    | Pattern | Type             | Deprecated | Definition | Title/Description |
+| --------------------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i13_kind )                               | No      | enum (of string) | No         | -          | -                 |
+| + [features_to_compute](#train_losses_items_anyOf_i13_features_to_compute ) | No      | array of string  | No         | -          | -                 |
+| + [scales](#train_losses_items_anyOf_i13_scales )                           | No      | array of number  | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i13_criterion )                     | No      | string           | No         | -          | -                 |
+| + [shave_edge](#train_losses_items_anyOf_i13_shave_edge )                   | No      | Combination      | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i13_loss_weight )                 | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i13_type )                               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i13_kind"></a>58.9.1.14.1. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "dsdloss"
+
+###### <a name="train_losses_items_anyOf_i13_features_to_compute"></a>58.9.1.14.2. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > features_to_compute`
 
 |              |                   |
 | ------------ | ----------------- |
-| **Type**     | `array of object` |
+| **Type**     | `array of string` |
+| **Required** | Yes               |
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | N/A                |
+| **Max items**        | N/A                |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                                                      | Description |
+| ------------------------------------------------------------------------------------ | ----------- |
+| [features_to_compute items](#train_losses_items_anyOf_i13_features_to_compute_items) | -           |
+
+###### <a name="train_losses_items_anyOf_i13_features_to_compute_items"></a>58.9.1.14.2.1. ReduxOptions > train > losses > losses items > anyOf > dsdloss > features_to_compute > features_to_compute items
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i13_scales"></a>58.9.1.14.3. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > scales`
+
+|              |                   |
+| ------------ | ----------------- |
+| **Type**     | `array of number` |
+| **Required** | Yes               |
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | N/A                |
+| **Max items**        | N/A                |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                            | Description |
+| ---------------------------------------------------------- | ----------- |
+| [scales items](#train_losses_items_anyOf_i13_scales_items) | -           |
+
+###### <a name="train_losses_items_anyOf_i13_scales_items"></a>58.9.1.14.3.1. ReduxOptions > train > losses > losses items > anyOf > dsdloss > scales > scales items
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i13_criterion"></a>58.9.1.14.4. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > criterion`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i13_shave_edge"></a>58.9.1.14.5. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > shave_edge`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                                              |
+| ----------------------------------------------------------- |
+| [item 0](#train_losses_items_anyOf_i13_shave_edge_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i13_shave_edge_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i13_shave_edge_anyOf_i0"></a>58.9.1.14.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > shave_edge > anyOf > item 0`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | No        |
+
+###### <a name="train_losses_items_anyOf_i13_shave_edge_anyOf_i1"></a>58.9.1.14.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > shave_edge > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+###### <a name="train_losses_items_anyOf_i13_loss_weight"></a>58.9.1.14.6. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i13_type"></a>58.9.1.14.7. Property `ReduxOptions > train > losses > losses items > anyOf > dsdloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "dsdloss"
+
+##### <a name="train_losses_items_anyOf_i14"></a>58.9.1.15. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss`
+
+**Title:** ffloss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/ffloss   |
+
+| Property                                                      | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i14_kind )                 | No      | enum (of string) | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i14_loss_weight )   | No      | number           | No         | -          | -                 |
+| + [alpha](#train_losses_items_anyOf_i14_alpha )               | No      | number           | No         | -          | -                 |
+| + [patch_factor](#train_losses_items_anyOf_i14_patch_factor ) | No      | integer          | No         | -          | -                 |
+| + [ave_spectrum](#train_losses_items_anyOf_i14_ave_spectrum ) | No      | boolean          | No         | -          | -                 |
+| + [log_matrix](#train_losses_items_anyOf_i14_log_matrix )     | No      | boolean          | No         | -          | -                 |
+| + [batch_matrix](#train_losses_items_anyOf_i14_batch_matrix ) | No      | boolean          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i14_type )                 | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i14_kind"></a>58.9.1.15.1. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ffloss"
+
+###### <a name="train_losses_items_anyOf_i14_loss_weight"></a>58.9.1.15.2. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i14_alpha"></a>58.9.1.15.3. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > alpha`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i14_patch_factor"></a>58.9.1.15.4. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > patch_factor`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i14_ave_spectrum"></a>58.9.1.15.5. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > ave_spectrum`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i14_log_matrix"></a>58.9.1.15.6. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > log_matrix`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i14_batch_matrix"></a>58.9.1.15.7. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > batch_matrix`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i14_type"></a>58.9.1.15.8. Property `ReduxOptions > train > losses > losses items > anyOf > ffloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ffloss"
+
+##### <a name="train_losses_items_anyOf_i15"></a>58.9.1.16. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss`
+
+**Title:** ldlloss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/ldlloss  |
+
+| Property                                                    | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i15_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i15_criterion )     | No      | string           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i15_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i15_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i15_kind"></a>58.9.1.16.1. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ldlloss"
+
+###### <a name="train_losses_items_anyOf_i15_criterion"></a>58.9.1.16.2. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > criterion`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i15_loss_weight"></a>58.9.1.16.3. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i15_type"></a>58.9.1.16.4. Property `ReduxOptions > train > losses > losses items > anyOf > ldlloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "ldlloss"
+
+##### <a name="train_losses_items_anyOf_i16"></a>58.9.1.17. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss`
+
+**Title:** mssimloss
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/mssimloss |
+
+| Property                                                      | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i16_kind )                 | No      | enum (of string) | No         | -          | -                 |
+| + [window_size](#train_losses_items_anyOf_i16_window_size )   | No      | integer          | No         | -          | -                 |
+| + [in_channels](#train_losses_items_anyOf_i16_in_channels )   | No      | integer          | No         | -          | -                 |
+| + [sigma](#train_losses_items_anyOf_i16_sigma )               | No      | number           | No         | -          | -                 |
+| + [k1](#train_losses_items_anyOf_i16_k1 )                     | No      | number           | No         | -          | -                 |
+| + [k2](#train_losses_items_anyOf_i16_k2 )                     | No      | number           | No         | -          | -                 |
+| + [l](#train_losses_items_anyOf_i16_l )                       | No      | integer          | No         | -          | -                 |
+| + [padding](#train_losses_items_anyOf_i16_padding )           | No      | Combination      | No         | -          | -                 |
+| + [cosim](#train_losses_items_anyOf_i16_cosim )               | No      | boolean          | No         | -          | -                 |
+| + [cosim_lambda](#train_losses_items_anyOf_i16_cosim_lambda ) | No      | integer          | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i16_loss_weight )   | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i16_type )                 | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i16_kind"></a>58.9.1.17.1. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mssimloss"
+
+###### <a name="train_losses_items_anyOf_i16_window_size"></a>58.9.1.17.2. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > window_size`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i16_in_channels"></a>58.9.1.17.3. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > in_channels`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i16_sigma"></a>58.9.1.17.4. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > sigma`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i16_k1"></a>58.9.1.17.5. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > k1`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i16_k2"></a>58.9.1.17.6. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > k2`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i16_l"></a>58.9.1.17.7. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > l`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i16_padding"></a>58.9.1.17.8. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > padding`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                                           |
+| -------------------------------------------------------- |
+| [item 0](#train_losses_items_anyOf_i16_padding_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i16_padding_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i16_padding_anyOf_i0"></a>58.9.1.17.8.1. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > padding > anyOf > item 0`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | No        |
+
+###### <a name="train_losses_items_anyOf_i16_padding_anyOf_i1"></a>58.9.1.17.8.2. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > padding > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+###### <a name="train_losses_items_anyOf_i16_cosim"></a>58.9.1.17.9. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > cosim`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i16_cosim_lambda"></a>58.9.1.17.10. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > cosim_lambda`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i16_loss_weight"></a>58.9.1.17.11. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i16_type"></a>58.9.1.17.12. Property `ReduxOptions > train > losses > losses items > anyOf > mssimloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "mssimloss"
+
+##### <a name="train_losses_items_anyOf_i17"></a>58.9.1.18. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss`
+
+**Title:** msssiml1loss
+
+|                           |                      |
+| ------------------------- | -------------------- |
+| **Type**                  | `object`             |
+| **Required**              | No                   |
+| **Additional properties** | Any type allowed     |
+| **Defined in**            | #/$defs/msssiml1loss |
+
+| Property                                                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i17_kind )                       | No      | enum (of string) | No         | -          | -                 |
+| + [gaussian_sigmas](#train_losses_items_anyOf_i17_gaussian_sigmas ) | No      | Combination      | No         | -          | -                 |
+| + [data_range](#train_losses_items_anyOf_i17_data_range )           | No      | number           | No         | -          | -                 |
+| + [k](#train_losses_items_anyOf_i17_k )                             | No      | array            | No         | -          | -                 |
+| + [alpha](#train_losses_items_anyOf_i17_alpha )                     | No      | number           | No         | -          | -                 |
+| + [cuda_dev](#train_losses_items_anyOf_i17_cuda_dev )               | No      | integer          | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i17_loss_weight )         | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i17_type )                       | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i17_kind"></a>58.9.1.18.1. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "msssiml1loss"
+
+###### <a name="train_losses_items_anyOf_i17_gaussian_sigmas"></a>58.9.1.18.2. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                                                   |
+| ---------------------------------------------------------------- |
+| [item 0](#train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i0"></a>58.9.1.18.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas > anyOf > item 0`
+
+|              |                   |
+| ------------ | ----------------- |
+| **Type**     | `array of number` |
 | **Required** | No                |
 
 |                      | Array restrictions |
@@ -3462,563 +7062,1067 @@ Must be one of:
 | **Additional items** | False              |
 | **Tuple validation** | See below          |
 
-| Each item of this array must be                       | Description |
-| ----------------------------------------------------- | ----------- |
-| [item 0 items](#train_anyOf_i1_losses_anyOf_i0_items) | -           |
+| Each item of this array must be                                              | Description |
+| ---------------------------------------------------------------------------- | ----------- |
+| [item 0 items](#train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i0_items) | -           |
 
-###### <a name="train_anyOf_i1_losses_anyOf_i0_items"></a>57.2.8.1.1. ReduxOptions > train > anyOf > TrainOptions > losses > anyOf > item 0 > item 0 items
+###### <a name="train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i0_items"></a>58.9.1.18.2.1.1. ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas > anyOf > item 0 > item 0 items
 
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
 
-##### <a name="train_anyOf_i1_losses_anyOf_i1"></a>57.2.8.2. Property `ReduxOptions > train > anyOf > TrainOptions > losses > anyOf > item 1`
+###### <a name="train_losses_items_anyOf_i17_gaussian_sigmas_anyOf_i1"></a>58.9.1.18.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > gaussian_sigmas > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="train_anyOf_i1_pixel_opt"></a>57.2.9. Property `ReduxOptions > train > anyOf > TrainOptions > pixel_opt`
+###### <a name="train_losses_items_anyOf_i17_data_range"></a>58.9.1.18.3. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > data_range`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i17_k"></a>58.9.1.18.4. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > k`
+
+|              |         |
+| ------------ | ------- |
+| **Type**     | `array` |
+| **Required** | Yes     |
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | 2                  |
+| **Max items**        | 2                  |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                      | Description |
+| ---------------------------------------------------- | ----------- |
+| [k item 0](#train_losses_items_anyOf_i17_k_items_i0) | -           |
+| [k item 1](#train_losses_items_anyOf_i17_k_items_i1) | -           |
+
+###### <a name="autogenerated_heading_36"></a>58.9.1.18.4.1. ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > k > k item 0
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="autogenerated_heading_37"></a>58.9.1.18.4.2. ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > k > k item 1
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i17_alpha"></a>58.9.1.18.5. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > alpha`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i17_cuda_dev"></a>58.9.1.18.6. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > cuda_dev`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i17_loss_weight"></a>58.9.1.18.7. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i17_type"></a>58.9.1.18.8. Property `ReduxOptions > train > losses > losses items > anyOf > msssiml1loss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "msssiml1loss"
+
+##### <a name="train_losses_items_anyOf_i18"></a>58.9.1.19. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss`
+
+**Title:** nccloss
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+| **Defined in**            | #/$defs/nccloss  |
+
+| Property                                                    | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ----------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i18_kind )               | No      | enum (of string) | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i18_loss_weight ) | No      | number           | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i18_type )               | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i18_kind"></a>58.9.1.19.1. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "nccloss"
+
+###### <a name="train_losses_items_anyOf_i18_loss_weight"></a>58.9.1.19.2. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i18_type"></a>58.9.1.19.3. Property `ReduxOptions > train > losses > losses items > anyOf > nccloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "nccloss"
+
+##### <a name="train_losses_items_anyOf_i19"></a>58.9.1.20. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss`
+
+**Title:** perceptualfp16loss
+
+|                           |                            |
+| ------------------------- | -------------------------- |
+| **Type**                  | `object`                   |
+| **Required**              | No                         |
+| **Additional properties** | Any type allowed           |
+| **Defined in**            | #/$defs/perceptualfp16loss |
+
+| Property                                                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i19_kind )                       | No      | enum (of string) | No         | -          | -                 |
+| + [layer_weights](#train_losses_items_anyOf_i19_layer_weights )     | No      | Combination      | No         | -          | -                 |
+| + [w_lambda](#train_losses_items_anyOf_i19_w_lambda )               | No      | number           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i19_loss_weight )         | No      | number           | No         | -          | -                 |
+| + [alpha](#train_losses_items_anyOf_i19_alpha )                     | No      | Combination      | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i19_criterion )             | No      | enum (of string) | No         | -          | -                 |
+| + [num_proj_fd](#train_losses_items_anyOf_i19_num_proj_fd )         | No      | integer          | No         | -          | -                 |
+| + [phase_weight_fd](#train_losses_items_anyOf_i19_phase_weight_fd ) | No      | number           | No         | -          | -                 |
+| + [stride_fd](#train_losses_items_anyOf_i19_stride_fd )             | No      | integer          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i19_type )                       | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i19_kind"></a>58.9.1.20.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "perceptualfp16loss"
+
+###### <a name="train_losses_items_anyOf_i19_layer_weights"></a>58.9.1.20.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                               |
-| -------------------------------------------- |
-| [item 0](#train_anyOf_i1_pixel_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_pixel_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_pixel_opt_anyOf_i0"></a>57.2.9.1. Property `ReduxOptions > train > anyOf > TrainOptions > pixel_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
 
-##### <a name="train_anyOf_i1_pixel_opt_anyOf_i1"></a>57.2.9.2. Property `ReduxOptions > train > anyOf > TrainOptions > pixel_opt > anyOf > item 1`
+| Any of(Option)                                                 |
+| -------------------------------------------------------------- |
+| [item 0](#train_losses_items_anyOf_i19_layer_weights_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i19_layer_weights_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i19_layer_weights_anyOf_i0"></a>58.9.1.20.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights > anyOf > item 0`
+
+|                           |                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Type**                  | `object`                                                                                                                         |
+| **Required**              | No                                                                                                                               |
+| **Additional properties** | [Each additional property must conform to the schema](#train_losses_items_anyOf_i19_layer_weights_anyOf_i0_additionalProperties) |
+
+| Property                                                                         | Pattern | Type   | Deprecated | Definition | Title/Description |
+| -------------------------------------------------------------------------------- | ------- | ------ | ---------- | ---------- | ----------------- |
+| - [](#train_losses_items_anyOf_i19_layer_weights_anyOf_i0_additionalProperties ) | No      | number | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i19_layer_weights_anyOf_i0_additionalProperties"></a>58.9.1.20.2.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights > anyOf > item 0 > additionalProperties`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i19_layer_weights_anyOf_i1"></a>58.9.1.20.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > layer_weights > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="train_anyOf_i1_mssim_opt"></a>57.2.10. Property `ReduxOptions > train > anyOf > TrainOptions > mssim_opt`
+###### <a name="train_losses_items_anyOf_i19_w_lambda"></a>58.9.1.20.3. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > w_lambda`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i19_loss_weight"></a>58.9.1.20.4. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i19_alpha"></a>58.9.1.20.5. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                               |
-| -------------------------------------------- |
-| [item 0](#train_anyOf_i1_mssim_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_mssim_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_mssim_opt_anyOf_i0"></a>57.2.10.1. Property `ReduxOptions > train > anyOf > TrainOptions > mssim_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
 
-##### <a name="train_anyOf_i1_mssim_opt_anyOf_i1"></a>57.2.10.2. Property `ReduxOptions > train > anyOf > TrainOptions > mssim_opt > anyOf > item 1`
+| Any of(Option)                                         |
+| ------------------------------------------------------ |
+| [item 0](#train_losses_items_anyOf_i19_alpha_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i19_alpha_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i19_alpha_anyOf_i0"></a>58.9.1.20.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha > anyOf > item 0`
+
+|              |                   |
+| ------------ | ----------------- |
+| **Type**     | `array of number` |
+| **Required** | No                |
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | N/A                |
+| **Max items**        | N/A                |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                                    | Description |
+| ------------------------------------------------------------------ | ----------- |
+| [item 0 items](#train_losses_items_anyOf_i19_alpha_anyOf_i0_items) | -           |
+
+###### <a name="train_losses_items_anyOf_i19_alpha_anyOf_i0_items"></a>58.9.1.20.5.1.1. ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha > anyOf > item 0 > item 0 items
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i19_alpha_anyOf_i1"></a>58.9.1.20.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > alpha > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="train_anyOf_i1_ms_ssim_l1_opt"></a>57.2.11. Property `ReduxOptions > train > anyOf > TrainOptions > ms_ssim_l1_opt`
+###### <a name="train_losses_items_anyOf_i19_criterion"></a>58.9.1.20.6. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > criterion`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "charbonnier"
+* "fd"
+* "fd+l1pd"
+* "l1"
+* "pd+l1"
+
+###### <a name="train_losses_items_anyOf_i19_num_proj_fd"></a>58.9.1.20.7. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > num_proj_fd`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i19_phase_weight_fd"></a>58.9.1.20.8. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > phase_weight_fd`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i19_stride_fd"></a>58.9.1.20.9. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > stride_fd`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i19_type"></a>58.9.1.20.10. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualfp16loss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "perceptualfp16loss"
+
+##### <a name="train_losses_items_anyOf_i20"></a>58.9.1.21. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss`
+
+**Title:** perceptualloss
+
+|                           |                        |
+| ------------------------- | ---------------------- |
+| **Type**                  | `object`               |
+| **Required**              | No                     |
+| **Additional properties** | Any type allowed       |
+| **Defined in**            | #/$defs/perceptualloss |
+
+| Property                                                            | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i20_kind )                       | No      | enum (of string) | No         | -          | -                 |
+| + [layer_weights](#train_losses_items_anyOf_i20_layer_weights )     | No      | Combination      | No         | -          | -                 |
+| + [w_lambda](#train_losses_items_anyOf_i20_w_lambda )               | No      | number           | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i20_loss_weight )         | No      | number           | No         | -          | -                 |
+| + [alpha](#train_losses_items_anyOf_i20_alpha )                     | No      | Combination      | No         | -          | -                 |
+| + [criterion](#train_losses_items_anyOf_i20_criterion )             | No      | enum (of string) | No         | -          | -                 |
+| + [num_proj_fd](#train_losses_items_anyOf_i20_num_proj_fd )         | No      | integer          | No         | -          | -                 |
+| + [phase_weight_fd](#train_losses_items_anyOf_i20_phase_weight_fd ) | No      | number           | No         | -          | -                 |
+| + [stride_fd](#train_losses_items_anyOf_i20_stride_fd )             | No      | integer          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i20_type )                       | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i20_kind"></a>58.9.1.21.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "perceptualloss"
+
+###### <a name="train_losses_items_anyOf_i20_layer_weights"></a>58.9.1.21.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                                    |
-| ------------------------------------------------- |
-| [item 0](#train_anyOf_i1_ms_ssim_l1_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_ms_ssim_l1_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_ms_ssim_l1_opt_anyOf_i0"></a>57.2.11.1. Property `ReduxOptions > train > anyOf > TrainOptions > ms_ssim_l1_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
 
-##### <a name="train_anyOf_i1_ms_ssim_l1_opt_anyOf_i1"></a>57.2.11.2. Property `ReduxOptions > train > anyOf > TrainOptions > ms_ssim_l1_opt > anyOf > item 1`
+| Any of(Option)                                                 |
+| -------------------------------------------------------------- |
+| [item 0](#train_losses_items_anyOf_i20_layer_weights_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i20_layer_weights_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i20_layer_weights_anyOf_i0"></a>58.9.1.21.2.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights > anyOf > item 0`
+
+|                           |                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Type**                  | `object`                                                                                                                         |
+| **Required**              | No                                                                                                                               |
+| **Additional properties** | [Each additional property must conform to the schema](#train_losses_items_anyOf_i20_layer_weights_anyOf_i0_additionalProperties) |
+
+| Property                                                                         | Pattern | Type   | Deprecated | Definition | Title/Description |
+| -------------------------------------------------------------------------------- | ------- | ------ | ---------- | ---------- | ----------------- |
+| - [](#train_losses_items_anyOf_i20_layer_weights_anyOf_i0_additionalProperties ) | No      | number | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i20_layer_weights_anyOf_i0_additionalProperties"></a>58.9.1.21.2.1.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights > anyOf > item 0 > additionalProperties`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i20_layer_weights_anyOf_i1"></a>58.9.1.21.2.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > layer_weights > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="train_anyOf_i1_perceptual_opt"></a>57.2.12. Property `ReduxOptions > train > anyOf > TrainOptions > perceptual_opt`
+###### <a name="train_losses_items_anyOf_i20_w_lambda"></a>58.9.1.21.3. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > w_lambda`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i20_loss_weight"></a>58.9.1.21.4. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i20_alpha"></a>58.9.1.21.5. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                                    |
-| ------------------------------------------------- |
-| [item 0](#train_anyOf_i1_perceptual_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_perceptual_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_perceptual_opt_anyOf_i0"></a>57.2.12.1. Property `ReduxOptions > train > anyOf > TrainOptions > perceptual_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
 
-##### <a name="train_anyOf_i1_perceptual_opt_anyOf_i1"></a>57.2.12.2. Property `ReduxOptions > train > anyOf > TrainOptions > perceptual_opt > anyOf > item 1`
+| Any of(Option)                                         |
+| ------------------------------------------------------ |
+| [item 0](#train_losses_items_anyOf_i20_alpha_anyOf_i0) |
+| [item 1](#train_losses_items_anyOf_i20_alpha_anyOf_i1) |
+
+###### <a name="train_losses_items_anyOf_i20_alpha_anyOf_i0"></a>58.9.1.21.5.1. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha > anyOf > item 0`
+
+|              |                   |
+| ------------ | ----------------- |
+| **Type**     | `array of number` |
+| **Required** | No                |
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | N/A                |
+| **Max items**        | N/A                |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                                    | Description |
+| ------------------------------------------------------------------ | ----------- |
+| [item 0 items](#train_losses_items_anyOf_i20_alpha_anyOf_i0_items) | -           |
+
+###### <a name="train_losses_items_anyOf_i20_alpha_anyOf_i0_items"></a>58.9.1.21.5.1.1. ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha > anyOf > item 0 > item 0 items
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+###### <a name="train_losses_items_anyOf_i20_alpha_anyOf_i1"></a>58.9.1.21.5.2. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > alpha > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="train_anyOf_i1_contextual_opt"></a>57.2.13. Property `ReduxOptions > train > anyOf > TrainOptions > contextual_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                                    |
-| ------------------------------------------------- |
-| [item 0](#train_anyOf_i1_contextual_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_contextual_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_contextual_opt_anyOf_i0"></a>57.2.13.1. Property `ReduxOptions > train > anyOf > TrainOptions > contextual_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_contextual_opt_anyOf_i1"></a>57.2.13.2. Property `ReduxOptions > train > anyOf > TrainOptions > contextual_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_dists_opt"></a>57.2.14. Property `ReduxOptions > train > anyOf > TrainOptions > dists_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                               |
-| -------------------------------------------- |
-| [item 0](#train_anyOf_i1_dists_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_dists_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_dists_opt_anyOf_i0"></a>57.2.14.1. Property `ReduxOptions > train > anyOf > TrainOptions > dists_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_dists_opt_anyOf_i1"></a>57.2.14.2. Property `ReduxOptions > train > anyOf > TrainOptions > dists_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_hr_inversion_opt"></a>57.2.15. Property `ReduxOptions > train > anyOf > TrainOptions > hr_inversion_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                                      |
-| --------------------------------------------------- |
-| [item 0](#train_anyOf_i1_hr_inversion_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_hr_inversion_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_hr_inversion_opt_anyOf_i0"></a>57.2.15.1. Property `ReduxOptions > train > anyOf > TrainOptions > hr_inversion_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_hr_inversion_opt_anyOf_i1"></a>57.2.15.2. Property `ReduxOptions > train > anyOf > TrainOptions > hr_inversion_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_dinov2_opt"></a>57.2.16. Property `ReduxOptions > train > anyOf > TrainOptions > dinov2_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                                |
-| --------------------------------------------- |
-| [item 0](#train_anyOf_i1_dinov2_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_dinov2_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_dinov2_opt_anyOf_i0"></a>57.2.16.1. Property `ReduxOptions > train > anyOf > TrainOptions > dinov2_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
+###### <a name="train_losses_items_anyOf_i20_criterion"></a>58.9.1.21.6. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > criterion`
 
-##### <a name="train_anyOf_i1_dinov2_opt_anyOf_i1"></a>57.2.16.2. Property `ReduxOptions > train > anyOf > TrainOptions > dinov2_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_topiq_opt"></a>57.2.17. Property `ReduxOptions > train > anyOf > TrainOptions > topiq_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                               |
-| -------------------------------------------- |
-| [item 0](#train_anyOf_i1_topiq_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_topiq_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_topiq_opt_anyOf_i0"></a>57.2.17.1. Property `ReduxOptions > train > anyOf > TrainOptions > topiq_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_topiq_opt_anyOf_i1"></a>57.2.17.2. Property `ReduxOptions > train > anyOf > TrainOptions > topiq_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_pd_opt"></a>57.2.18. Property `ReduxOptions > train > anyOf > TrainOptions > pd_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                            |
-| ----------------------------------------- |
-| [item 0](#train_anyOf_i1_pd_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_pd_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_pd_opt_anyOf_i0"></a>57.2.18.1. Property `ReduxOptions > train > anyOf > TrainOptions > pd_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_pd_opt_anyOf_i1"></a>57.2.18.2. Property `ReduxOptions > train > anyOf > TrainOptions > pd_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_fd_opt"></a>57.2.19. Property `ReduxOptions > train > anyOf > TrainOptions > fd_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                            |
-| ----------------------------------------- |
-| [item 0](#train_anyOf_i1_fd_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_fd_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_fd_opt_anyOf_i0"></a>57.2.19.1. Property `ReduxOptions > train > anyOf > TrainOptions > fd_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_fd_opt_anyOf_i1"></a>57.2.19.2. Property `ReduxOptions > train > anyOf > TrainOptions > fd_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_ldl_opt"></a>57.2.20. Property `ReduxOptions > train > anyOf > TrainOptions > ldl_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                             |
-| ------------------------------------------ |
-| [item 0](#train_anyOf_i1_ldl_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_ldl_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_ldl_opt_anyOf_i0"></a>57.2.20.1. Property `ReduxOptions > train > anyOf > TrainOptions > ldl_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_ldl_opt_anyOf_i1"></a>57.2.20.2. Property `ReduxOptions > train > anyOf > TrainOptions > ldl_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_hsluv_opt"></a>57.2.21. Property `ReduxOptions > train > anyOf > TrainOptions > hsluv_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                               |
-| -------------------------------------------- |
-| [item 0](#train_anyOf_i1_hsluv_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_hsluv_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_hsluv_opt_anyOf_i0"></a>57.2.21.1. Property `ReduxOptions > train > anyOf > TrainOptions > hsluv_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_hsluv_opt_anyOf_i1"></a>57.2.21.2. Property `ReduxOptions > train > anyOf > TrainOptions > hsluv_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_gan_opt"></a>57.2.22. Property `ReduxOptions > train > anyOf > TrainOptions > gan_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                             |
-| ------------------------------------------ |
-| [item 0](#train_anyOf_i1_gan_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_gan_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_gan_opt_anyOf_i0"></a>57.2.22.1. Property `ReduxOptions > train > anyOf > TrainOptions > gan_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_gan_opt_anyOf_i1"></a>57.2.22.2. Property `ReduxOptions > train > anyOf > TrainOptions > gan_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_color_opt"></a>57.2.23. Property `ReduxOptions > train > anyOf > TrainOptions > color_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                               |
-| -------------------------------------------- |
-| [item 0](#train_anyOf_i1_color_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_color_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_color_opt_anyOf_i0"></a>57.2.23.1. Property `ReduxOptions > train > anyOf > TrainOptions > color_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_color_opt_anyOf_i1"></a>57.2.23.2. Property `ReduxOptions > train > anyOf > TrainOptions > color_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_luma_opt"></a>57.2.24. Property `ReduxOptions > train > anyOf > TrainOptions > luma_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                              |
-| ------------------------------------------- |
-| [item 0](#train_anyOf_i1_luma_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_luma_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_luma_opt_anyOf_i0"></a>57.2.24.1. Property `ReduxOptions > train > anyOf > TrainOptions > luma_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_luma_opt_anyOf_i1"></a>57.2.24.2. Property `ReduxOptions > train > anyOf > TrainOptions > luma_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_avg_opt"></a>57.2.25. Property `ReduxOptions > train > anyOf > TrainOptions > avg_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                             |
-| ------------------------------------------ |
-| [item 0](#train_anyOf_i1_avg_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_avg_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_avg_opt_anyOf_i0"></a>57.2.25.1. Property `ReduxOptions > train > anyOf > TrainOptions > avg_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_avg_opt_anyOf_i1"></a>57.2.25.2. Property `ReduxOptions > train > anyOf > TrainOptions > avg_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_bicubic_opt"></a>57.2.26. Property `ReduxOptions > train > anyOf > TrainOptions > bicubic_opt`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `combining`      |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
-
-| Any of(Option)                                 |
-| ---------------------------------------------- |
-| [item 0](#train_anyOf_i1_bicubic_opt_anyOf_i0) |
-| [item 1](#train_anyOf_i1_bicubic_opt_anyOf_i1) |
-
-##### <a name="train_anyOf_i1_bicubic_opt_anyOf_i0"></a>57.2.26.1. Property `ReduxOptions > train > anyOf > TrainOptions > bicubic_opt > anyOf > item 0`
-
-|                           |                  |
-| ------------------------- | ---------------- |
-| **Type**                  | `object`         |
-| **Required**              | No               |
-| **Additional properties** | Any type allowed |
-
-##### <a name="train_anyOf_i1_bicubic_opt_anyOf_i1"></a>57.2.26.2. Property `ReduxOptions > train > anyOf > TrainOptions > bicubic_opt > anyOf > item 1`
-
-|              |        |
-| ------------ | ------ |
-| **Type**     | `null` |
-| **Required** | No     |
-
-#### <a name="train_anyOf_i1_use_moa"></a>57.2.27. Property `ReduxOptions > train > anyOf > TrainOptions > use_moa`
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "charbonnier"
+* "fd"
+* "fd+l1pd"
+* "l1"
+* "pd+l1"
+
+###### <a name="train_losses_items_anyOf_i20_num_proj_fd"></a>58.9.1.21.7. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > num_proj_fd`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i20_phase_weight_fd"></a>58.9.1.21.8. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > phase_weight_fd`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i20_stride_fd"></a>58.9.1.21.9. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > stride_fd`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i20_type"></a>58.9.1.21.10. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "perceptualloss"
+
+##### <a name="train_losses_items_anyOf_i21"></a>58.9.1.22. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss`
+
+**Title:** topiqloss
+
+|                           |                   |
+| ------------------------- | ----------------- |
+| **Type**                  | `object`          |
+| **Required**              | No                |
+| **Additional properties** | Any type allowed  |
+| **Defined in**            | #/$defs/topiqloss |
+
+| Property                                                      | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [kind](#train_losses_items_anyOf_i21_kind )                 | No      | enum (of string) | No         | -          | -                 |
+| + [loss_weight](#train_losses_items_anyOf_i21_loss_weight )   | No      | number           | No         | -          | -                 |
+| + [resize_input](#train_losses_items_anyOf_i21_resize_input ) | No      | boolean          | No         | -          | -                 |
+| + [type](#train_losses_items_anyOf_i21_type )                 | No      | enum (of string) | No         | -          | -                 |
+
+###### <a name="train_losses_items_anyOf_i21_kind"></a>58.9.1.22.1. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > kind`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "topiqloss"
+
+###### <a name="train_losses_items_anyOf_i21_loss_weight"></a>58.9.1.22.2. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > loss_weight`
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | Yes      |
+
+###### <a name="train_losses_items_anyOf_i21_resize_input"></a>58.9.1.22.3. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > resize_input`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
+
+###### <a name="train_losses_items_anyOf_i21_type"></a>58.9.1.22.4. Property `ReduxOptions > train > losses > losses items > anyOf > topiqloss > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "topiqloss"
+
+### <a name="train_pixel_opt"></a>58.10. Property `ReduxOptions > train > pixel_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                      |
+| ----------------------------------- |
+| [item 0](#train_pixel_opt_anyOf_i0) |
+| [item 1](#train_pixel_opt_anyOf_i1) |
+
+#### <a name="train_pixel_opt_anyOf_i0"></a>58.10.1. Property `ReduxOptions > train > pixel_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_pixel_opt_anyOf_i1"></a>58.10.2. Property `ReduxOptions > train > pixel_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_mssim_opt"></a>58.11. Property `ReduxOptions > train > mssim_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                      |
+| ----------------------------------- |
+| [item 0](#train_mssim_opt_anyOf_i0) |
+| [item 1](#train_mssim_opt_anyOf_i1) |
+
+#### <a name="train_mssim_opt_anyOf_i0"></a>58.11.1. Property `ReduxOptions > train > mssim_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_mssim_opt_anyOf_i1"></a>58.11.2. Property `ReduxOptions > train > mssim_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_ms_ssim_l1_opt"></a>58.12. Property `ReduxOptions > train > ms_ssim_l1_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                           |
+| ---------------------------------------- |
+| [item 0](#train_ms_ssim_l1_opt_anyOf_i0) |
+| [item 1](#train_ms_ssim_l1_opt_anyOf_i1) |
+
+#### <a name="train_ms_ssim_l1_opt_anyOf_i0"></a>58.12.1. Property `ReduxOptions > train > ms_ssim_l1_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_ms_ssim_l1_opt_anyOf_i1"></a>58.12.2. Property `ReduxOptions > train > ms_ssim_l1_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_perceptual_opt"></a>58.13. Property `ReduxOptions > train > perceptual_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                           |
+| ---------------------------------------- |
+| [item 0](#train_perceptual_opt_anyOf_i0) |
+| [item 1](#train_perceptual_opt_anyOf_i1) |
+
+#### <a name="train_perceptual_opt_anyOf_i0"></a>58.13.1. Property `ReduxOptions > train > perceptual_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_perceptual_opt_anyOf_i1"></a>58.13.2. Property `ReduxOptions > train > perceptual_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_contextual_opt"></a>58.14. Property `ReduxOptions > train > contextual_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                           |
+| ---------------------------------------- |
+| [item 0](#train_contextual_opt_anyOf_i0) |
+| [item 1](#train_contextual_opt_anyOf_i1) |
+
+#### <a name="train_contextual_opt_anyOf_i0"></a>58.14.1. Property `ReduxOptions > train > contextual_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_contextual_opt_anyOf_i1"></a>58.14.2. Property `ReduxOptions > train > contextual_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_dists_opt"></a>58.15. Property `ReduxOptions > train > dists_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                      |
+| ----------------------------------- |
+| [item 0](#train_dists_opt_anyOf_i0) |
+| [item 1](#train_dists_opt_anyOf_i1) |
+
+#### <a name="train_dists_opt_anyOf_i0"></a>58.15.1. Property `ReduxOptions > train > dists_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_dists_opt_anyOf_i1"></a>58.15.2. Property `ReduxOptions > train > dists_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_hr_inversion_opt"></a>58.16. Property `ReduxOptions > train > hr_inversion_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                             |
+| ------------------------------------------ |
+| [item 0](#train_hr_inversion_opt_anyOf_i0) |
+| [item 1](#train_hr_inversion_opt_anyOf_i1) |
+
+#### <a name="train_hr_inversion_opt_anyOf_i0"></a>58.16.1. Property `ReduxOptions > train > hr_inversion_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_hr_inversion_opt_anyOf_i1"></a>58.16.2. Property `ReduxOptions > train > hr_inversion_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_dinov2_opt"></a>58.17. Property `ReduxOptions > train > dinov2_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                       |
+| ------------------------------------ |
+| [item 0](#train_dinov2_opt_anyOf_i0) |
+| [item 1](#train_dinov2_opt_anyOf_i1) |
+
+#### <a name="train_dinov2_opt_anyOf_i0"></a>58.17.1. Property `ReduxOptions > train > dinov2_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_dinov2_opt_anyOf_i1"></a>58.17.2. Property `ReduxOptions > train > dinov2_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_topiq_opt"></a>58.18. Property `ReduxOptions > train > topiq_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                      |
+| ----------------------------------- |
+| [item 0](#train_topiq_opt_anyOf_i0) |
+| [item 1](#train_topiq_opt_anyOf_i1) |
+
+#### <a name="train_topiq_opt_anyOf_i0"></a>58.18.1. Property `ReduxOptions > train > topiq_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_topiq_opt_anyOf_i1"></a>58.18.2. Property `ReduxOptions > train > topiq_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_pd_opt"></a>58.19. Property `ReduxOptions > train > pd_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                   |
+| -------------------------------- |
+| [item 0](#train_pd_opt_anyOf_i0) |
+| [item 1](#train_pd_opt_anyOf_i1) |
+
+#### <a name="train_pd_opt_anyOf_i0"></a>58.19.1. Property `ReduxOptions > train > pd_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_pd_opt_anyOf_i1"></a>58.19.2. Property `ReduxOptions > train > pd_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_fd_opt"></a>58.20. Property `ReduxOptions > train > fd_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                   |
+| -------------------------------- |
+| [item 0](#train_fd_opt_anyOf_i0) |
+| [item 1](#train_fd_opt_anyOf_i1) |
+
+#### <a name="train_fd_opt_anyOf_i0"></a>58.20.1. Property `ReduxOptions > train > fd_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_fd_opt_anyOf_i1"></a>58.20.2. Property `ReduxOptions > train > fd_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_ldl_opt"></a>58.21. Property `ReduxOptions > train > ldl_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                    |
+| --------------------------------- |
+| [item 0](#train_ldl_opt_anyOf_i0) |
+| [item 1](#train_ldl_opt_anyOf_i1) |
+
+#### <a name="train_ldl_opt_anyOf_i0"></a>58.21.1. Property `ReduxOptions > train > ldl_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_ldl_opt_anyOf_i1"></a>58.21.2. Property `ReduxOptions > train > ldl_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_hsluv_opt"></a>58.22. Property `ReduxOptions > train > hsluv_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                      |
+| ----------------------------------- |
+| [item 0](#train_hsluv_opt_anyOf_i0) |
+| [item 1](#train_hsluv_opt_anyOf_i1) |
+
+#### <a name="train_hsluv_opt_anyOf_i0"></a>58.22.1. Property `ReduxOptions > train > hsluv_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_hsluv_opt_anyOf_i1"></a>58.22.2. Property `ReduxOptions > train > hsluv_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_gan_opt"></a>58.23. Property `ReduxOptions > train > gan_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                    |
+| --------------------------------- |
+| [item 0](#train_gan_opt_anyOf_i0) |
+| [item 1](#train_gan_opt_anyOf_i1) |
+
+#### <a name="train_gan_opt_anyOf_i0"></a>58.23.1. Property `ReduxOptions > train > gan_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_gan_opt_anyOf_i1"></a>58.23.2. Property `ReduxOptions > train > gan_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_color_opt"></a>58.24. Property `ReduxOptions > train > color_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                      |
+| ----------------------------------- |
+| [item 0](#train_color_opt_anyOf_i0) |
+| [item 1](#train_color_opt_anyOf_i1) |
+
+#### <a name="train_color_opt_anyOf_i0"></a>58.24.1. Property `ReduxOptions > train > color_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_color_opt_anyOf_i1"></a>58.24.2. Property `ReduxOptions > train > color_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_luma_opt"></a>58.25. Property `ReduxOptions > train > luma_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                     |
+| ---------------------------------- |
+| [item 0](#train_luma_opt_anyOf_i0) |
+| [item 1](#train_luma_opt_anyOf_i1) |
+
+#### <a name="train_luma_opt_anyOf_i0"></a>58.25.1. Property `ReduxOptions > train > luma_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_luma_opt_anyOf_i1"></a>58.25.2. Property `ReduxOptions > train > luma_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_avg_opt"></a>58.26. Property `ReduxOptions > train > avg_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                    |
+| --------------------------------- |
+| [item 0](#train_avg_opt_anyOf_i0) |
+| [item 1](#train_avg_opt_anyOf_i1) |
+
+#### <a name="train_avg_opt_anyOf_i0"></a>58.26.1. Property `ReduxOptions > train > avg_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_avg_opt_anyOf_i1"></a>58.26.2. Property `ReduxOptions > train > avg_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_bicubic_opt"></a>58.27. Property `ReduxOptions > train > bicubic_opt`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `combining`      |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
+
+| Any of(Option)                        |
+| ------------------------------------- |
+| [item 0](#train_bicubic_opt_anyOf_i0) |
+| [item 1](#train_bicubic_opt_anyOf_i1) |
+
+#### <a name="train_bicubic_opt_anyOf_i0"></a>58.27.1. Property `ReduxOptions > train > bicubic_opt > anyOf > item 0`
+
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | No               |
+| **Additional properties** | Any type allowed |
+
+#### <a name="train_bicubic_opt_anyOf_i1"></a>58.27.2. Property `ReduxOptions > train > bicubic_opt > anyOf > item 1`
+
+|              |        |
+| ------------ | ------ |
+| **Type**     | `null` |
+| **Required** | No     |
+
+### <a name="train_use_moa"></a>58.28. Property `ReduxOptions > train > use_moa`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
 
 **Description:** Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
 
-#### <a name="train_anyOf_i1_moa_augs"></a>57.2.28. Property `ReduxOptions > train > anyOf > TrainOptions > moa_augs`
+### <a name="train_moa_augs"></a>58.29. Property `ReduxOptions > train > moa_augs`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of string` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 **Description:** The list of augmentations to choose from, only one is selected per iteration.
 
@@ -4030,23 +8134,23 @@ Must be one of:
 | **Additional items** | False              |
 | **Tuple validation** | See below          |
 
-| Each item of this array must be                  | Description |
-| ------------------------------------------------ | ----------- |
-| [moa_augs items](#train_anyOf_i1_moa_augs_items) | -           |
+| Each item of this array must be         | Description |
+| --------------------------------------- | ----------- |
+| [moa_augs items](#train_moa_augs_items) | -           |
 
-##### <a name="train_anyOf_i1_moa_augs_items"></a>57.2.28.1. ReduxOptions > train > anyOf > TrainOptions > moa_augs > moa_augs items
+#### <a name="train_moa_augs_items"></a>58.29.1. ReduxOptions > train > moa_augs > moa_augs items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-#### <a name="train_anyOf_i1_moa_probs"></a>57.2.29. Property `ReduxOptions > train > anyOf > TrainOptions > moa_probs`
+### <a name="train_moa_probs"></a>58.30. Property `ReduxOptions > train > moa_probs`
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
-| **Required** | No                |
+| **Required** | Yes               |
 
 **Description:** The probability each augmentation in moa_augs will be applied. Total should add up to 1.
 
@@ -4058,59 +8162,56 @@ Must be one of:
 | **Additional items** | False              |
 | **Tuple validation** | See below          |
 
-| Each item of this array must be                    | Description |
-| -------------------------------------------------- | ----------- |
-| [moa_probs items](#train_anyOf_i1_moa_probs_items) | -           |
+| Each item of this array must be           | Description |
+| ----------------------------------------- | ----------- |
+| [moa_probs items](#train_moa_probs_items) | -           |
 
-##### <a name="train_anyOf_i1_moa_probs_items"></a>57.2.29.1. ReduxOptions > train > anyOf > TrainOptions > moa_probs > moa_probs items
+#### <a name="train_moa_probs_items"></a>58.30.1. ReduxOptions > train > moa_probs > moa_probs items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-#### <a name="train_anyOf_i1_moa_debug"></a>57.2.30. Property `ReduxOptions > train > anyOf > TrainOptions > moa_debug`
+### <a name="train_moa_debug"></a>58.31. Property `ReduxOptions > train > moa_debug`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 **Description:** Save images before and after augment to debug/moa folder inside of the root training directory.
 
-#### <a name="train_anyOf_i1_moa_debug_limit"></a>57.2.31. Property `ReduxOptions > train > anyOf > TrainOptions > moa_debug_limit`
+### <a name="train_moa_debug_limit"></a>58.32. Property `ReduxOptions > train > moa_debug_limit`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
-| **Required** | No        |
-| **Default**  | `100`     |
+| **Required** | Yes       |
 
 **Description:** The max number of iterations to save augmentation images for.
 
-## <a name="val"></a>58. Property `ReduxOptions > val`
+## <a name="val"></a>59. Property `ReduxOptions > val`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)              |
 | --------------------------- |
 | [item 0](#val_anyOf_i0)     |
 | [ValOptions](#val_anyOf_i1) |
 
-### <a name="val_anyOf_i0"></a>58.1. Property `ReduxOptions > val > anyOf > item 0`
+### <a name="val_anyOf_i0"></a>59.1. Property `ReduxOptions > val > anyOf > item 0`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="val_anyOf_i1"></a>58.2. Property `ReduxOptions > val > anyOf > ValOptions`
+### <a name="val_anyOf_i1"></a>59.2. Property `ReduxOptions > val > anyOf > ValOptions`
 
 **Title:** ValOptions
 
@@ -4131,7 +8232,7 @@ Must be one of:
 | - [metrics](#val_anyOf_i1_metrics )                 | No      | Combination | No         | -          | -                                                                                                        |
 | - [pbar](#val_anyOf_i1_pbar )                       | No      | boolean     | No         | -          | -                                                                                                        |
 
-#### <a name="val_anyOf_i1_val_enabled"></a>58.2.1. Property `ReduxOptions > val > anyOf > ValOptions > val_enabled`
+#### <a name="val_anyOf_i1_val_enabled"></a>59.2.1. Property `ReduxOptions > val > anyOf > ValOptions > val_enabled`
 
 |              |           |
 | ------------ | --------- |
@@ -4140,7 +8241,7 @@ Must be one of:
 
 **Description:** Whether to enable validations. If disabled, all validation settings below are ignored.
 
-#### <a name="val_anyOf_i1_save_img"></a>58.2.2. Property `ReduxOptions > val > anyOf > ValOptions > save_img`
+#### <a name="val_anyOf_i1_save_img"></a>59.2.2. Property `ReduxOptions > val > anyOf > ValOptions > save_img`
 
 |              |           |
 | ------------ | --------- |
@@ -4149,7 +8250,7 @@ Must be one of:
 
 **Description:** Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
 
-#### <a name="val_anyOf_i1_val_freq"></a>58.2.3. Property `ReduxOptions > val > anyOf > ValOptions > val_freq`
+#### <a name="val_anyOf_i1_val_freq"></a>59.2.3. Property `ReduxOptions > val > anyOf > ValOptions > val_freq`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4165,21 +8266,21 @@ Must be one of:
 | [item 0](#val_anyOf_i1_val_freq_anyOf_i0) |
 | [item 1](#val_anyOf_i1_val_freq_anyOf_i1) |
 
-##### <a name="val_anyOf_i1_val_freq_anyOf_i0"></a>58.2.3.1. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 0`
+##### <a name="val_anyOf_i1_val_freq_anyOf_i0"></a>59.2.3.1. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `integer` |
 | **Required** | No        |
 
-##### <a name="val_anyOf_i1_val_freq_anyOf_i1"></a>58.2.3.2. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 1`
+##### <a name="val_anyOf_i1_val_freq_anyOf_i1"></a>59.2.3.2. Property `ReduxOptions > val > anyOf > ValOptions > val_freq > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="val_anyOf_i1_suffix"></a>58.2.4. Property `ReduxOptions > val > anyOf > ValOptions > suffix`
+#### <a name="val_anyOf_i1_suffix"></a>59.2.4. Property `ReduxOptions > val > anyOf > ValOptions > suffix`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4195,21 +8296,21 @@ Must be one of:
 | [item 0](#val_anyOf_i1_suffix_anyOf_i0) |
 | [item 1](#val_anyOf_i1_suffix_anyOf_i1) |
 
-##### <a name="val_anyOf_i1_suffix_anyOf_i0"></a>58.2.4.1. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 0`
+##### <a name="val_anyOf_i1_suffix_anyOf_i0"></a>59.2.4.1. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="val_anyOf_i1_suffix_anyOf_i1"></a>58.2.4.2. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 1`
+##### <a name="val_anyOf_i1_suffix_anyOf_i1"></a>59.2.4.2. Property `ReduxOptions > val > anyOf > ValOptions > suffix > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="val_anyOf_i1_metrics_enabled"></a>58.2.5. Property `ReduxOptions > val > anyOf > ValOptions > metrics_enabled`
+#### <a name="val_anyOf_i1_metrics_enabled"></a>59.2.5. Property `ReduxOptions > val > anyOf > ValOptions > metrics_enabled`
 
 |              |           |
 | ------------ | --------- |
@@ -4219,7 +8320,7 @@ Must be one of:
 
 **Description:** Whether to run metrics calculations during validation.
 
-#### <a name="val_anyOf_i1_metrics"></a>58.2.6. Property `ReduxOptions > val > anyOf > ValOptions > metrics`
+#### <a name="val_anyOf_i1_metrics"></a>59.2.6. Property `ReduxOptions > val > anyOf > ValOptions > metrics`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4233,7 +8334,7 @@ Must be one of:
 | [item 0](#val_anyOf_i1_metrics_anyOf_i0) |
 | [item 1](#val_anyOf_i1_metrics_anyOf_i1) |
 
-##### <a name="val_anyOf_i1_metrics_anyOf_i0"></a>58.2.6.1. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 0`
+##### <a name="val_anyOf_i1_metrics_anyOf_i0"></a>59.2.6.1. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 0`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4241,14 +8342,14 @@ Must be one of:
 | **Required**              | No               |
 | **Additional properties** | Any type allowed |
 
-##### <a name="val_anyOf_i1_metrics_anyOf_i1"></a>58.2.6.2. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 1`
+##### <a name="val_anyOf_i1_metrics_anyOf_i1"></a>59.2.6.2. Property `ReduxOptions > val > anyOf > ValOptions > metrics > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-#### <a name="val_anyOf_i1_pbar"></a>58.2.7. Property `ReduxOptions > val > anyOf > ValOptions > pbar`
+#### <a name="val_anyOf_i1_pbar"></a>59.2.7. Property `ReduxOptions > val > anyOf > ValOptions > pbar`
 
 |              |           |
 | ------------ | --------- |
@@ -4256,28 +8357,27 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `true`    |
 
-## <a name="logger"></a>59. Property `ReduxOptions > logger`
+## <a name="logger"></a>60. Property `ReduxOptions > logger`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)                 |
 | ------------------------------ |
 | [item 0](#logger_anyOf_i0)     |
 | [LogOptions](#logger_anyOf_i1) |
 
-### <a name="logger_anyOf_i0"></a>59.1. Property `ReduxOptions > logger > anyOf > item 0`
+### <a name="logger_anyOf_i0"></a>60.1. Property `ReduxOptions > logger > anyOf > item 0`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="logger_anyOf_i1"></a>59.2. Property `ReduxOptions > logger > anyOf > LogOptions`
+### <a name="logger_anyOf_i1"></a>60.2. Property `ReduxOptions > logger > anyOf > LogOptions`
 
 **Title:** LogOptions
 
@@ -4296,7 +8396,7 @@ Must be one of:
 | - [save_checkpoint_format](#logger_anyOf_i1_save_checkpoint_format ) | No      | enum (of string) | No         | -          | Format to save model checkpoints.                                       |
 | - [wandb](#logger_anyOf_i1_wandb )                                   | No      | Combination      | No         | -          | -                                                                       |
 
-#### <a name="logger_anyOf_i1_print_freq"></a>59.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > print_freq`
+#### <a name="logger_anyOf_i1_print_freq"></a>60.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > print_freq`
 
 |              |           |
 | ------------ | --------- |
@@ -4305,7 +8405,7 @@ Must be one of:
 
 **Description:** How often to print logs to the console, in iterations.
 
-#### <a name="logger_anyOf_i1_save_checkpoint_freq"></a>59.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_freq`
+#### <a name="logger_anyOf_i1_save_checkpoint_freq"></a>60.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_freq`
 
 |              |           |
 | ------------ | --------- |
@@ -4314,7 +8414,7 @@ Must be one of:
 
 **Description:** How often to save model checkpoints and training states, in iterations.
 
-#### <a name="logger_anyOf_i1_use_tb_logger"></a>59.2.3. Property `ReduxOptions > logger > anyOf > LogOptions > use_tb_logger`
+#### <a name="logger_anyOf_i1_use_tb_logger"></a>60.2.3. Property `ReduxOptions > logger > anyOf > LogOptions > use_tb_logger`
 
 |              |           |
 | ------------ | --------- |
@@ -4323,7 +8423,7 @@ Must be one of:
 
 **Description:** Whether or not to enable TensorBoard logging.
 
-#### <a name="logger_anyOf_i1_save_checkpoint_format"></a>59.2.4. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_format`
+#### <a name="logger_anyOf_i1_save_checkpoint_format"></a>60.2.4. Property `ReduxOptions > logger > anyOf > LogOptions > save_checkpoint_format`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -4337,7 +8437,7 @@ Must be one of:
 * "pth"
 * "safetensors"
 
-#### <a name="logger_anyOf_i1_wandb"></a>59.2.5. Property `ReduxOptions > logger > anyOf > LogOptions > wandb`
+#### <a name="logger_anyOf_i1_wandb"></a>60.2.5. Property `ReduxOptions > logger > anyOf > LogOptions > wandb`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4351,14 +8451,14 @@ Must be one of:
 | [item 0](#logger_anyOf_i1_wandb_anyOf_i0)       |
 | [WandbOptions](#logger_anyOf_i1_wandb_anyOf_i1) |
 
-##### <a name="logger_anyOf_i1_wandb_anyOf_i0"></a>59.2.5.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > item 0`
+##### <a name="logger_anyOf_i1_wandb_anyOf_i0"></a>60.2.5.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > item 0`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-##### <a name="logger_anyOf_i1_wandb_anyOf_i1"></a>59.2.5.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions`
+##### <a name="logger_anyOf_i1_wandb_anyOf_i1"></a>60.2.5.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions`
 
 **Title:** WandbOptions
 
@@ -4374,7 +8474,7 @@ Must be one of:
 | - [resume_id](#logger_anyOf_i1_wandb_anyOf_i1_resume_id ) | No      | Combination | No         | -          | -                 |
 | - [project](#logger_anyOf_i1_wandb_anyOf_i1_project )     | No      | Combination | No         | -          | -                 |
 
-###### <a name="logger_anyOf_i1_wandb_anyOf_i1_resume_id"></a>59.2.5.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id`
+###### <a name="logger_anyOf_i1_wandb_anyOf_i1_resume_id"></a>60.2.5.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4388,21 +8488,21 @@ Must be one of:
 | [item 0](#logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i0) |
 | [item 1](#logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i1) |
 
-###### <a name="logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i0"></a>59.2.5.2.1.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 0`
+###### <a name="logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i0"></a>60.2.5.2.1.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-###### <a name="logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i1"></a>59.2.5.2.1.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 1`
+###### <a name="logger_anyOf_i1_wandb_anyOf_i1_resume_id_anyOf_i1"></a>60.2.5.2.1.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > resume_id > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-###### <a name="logger_anyOf_i1_wandb_anyOf_i1_project"></a>59.2.5.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project`
+###### <a name="logger_anyOf_i1_wandb_anyOf_i1_project"></a>60.2.5.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4416,35 +8516,34 @@ Must be one of:
 | [item 0](#logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i0) |
 | [item 1](#logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i1) |
 
-###### <a name="logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i0"></a>59.2.5.2.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 0`
+###### <a name="logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i0"></a>60.2.5.2.2.1. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 0`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-###### <a name="logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i1"></a>59.2.5.2.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 1`
+###### <a name="logger_anyOf_i1_wandb_anyOf_i1_project_anyOf_i1"></a>60.2.5.2.2.2. Property `ReduxOptions > logger > anyOf > LogOptions > wandb > anyOf > WandbOptions > project > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="dist_params"></a>60. Property `ReduxOptions > dist_params`
+## <a name="dist_params"></a>61. Property `ReduxOptions > dist_params`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)                  |
 | ------------------------------- |
 | [item 0](#dist_params_anyOf_i0) |
 | [item 1](#dist_params_anyOf_i1) |
 
-### <a name="dist_params_anyOf_i0"></a>60.1. Property `ReduxOptions > dist_params > anyOf > item 0`
+### <a name="dist_params_anyOf_i0"></a>61.1. Property `ReduxOptions > dist_params > anyOf > item 0`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -4452,35 +8551,34 @@ Must be one of:
 | **Required**              | No               |
 | **Additional properties** | Any type allowed |
 
-### <a name="dist_params_anyOf_i1"></a>60.2. Property `ReduxOptions > dist_params > anyOf > item 1`
+### <a name="dist_params_anyOf_i1"></a>61.2. Property `ReduxOptions > dist_params > anyOf > item 1`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-## <a name="onnx"></a>61. Property `ReduxOptions > onnx`
+## <a name="onnx"></a>62. Property `ReduxOptions > onnx`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `combining`      |
-| **Required**              | No               |
+| **Required**              | Yes              |
 | **Additional properties** | Any type allowed |
-| **Default**               | `null`           |
 
 | Any of(Option)                |
 | ----------------------------- |
 | [item 0](#onnx_anyOf_i0)      |
 | [OnnxOptions](#onnx_anyOf_i1) |
 
-### <a name="onnx_anyOf_i0"></a>61.1. Property `ReduxOptions > onnx > anyOf > item 0`
+### <a name="onnx_anyOf_i0"></a>62.1. Property `ReduxOptions > onnx > anyOf > item 0`
 
 |              |        |
 | ------------ | ------ |
 | **Type**     | `null` |
 | **Required** | No     |
 
-### <a name="onnx_anyOf_i1"></a>61.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions`
+### <a name="onnx_anyOf_i1"></a>62.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions`
 
 **Title:** OnnxOptions
 
@@ -4501,7 +8599,7 @@ Must be one of:
 | - [fp16](#onnx_anyOf_i1_fp16 )                           | No      | boolean | No         | -          | -                 |
 | - [optimize](#onnx_anyOf_i1_optimize )                   | No      | boolean | No         | -          | -                 |
 
-#### <a name="onnx_anyOf_i1_dynamo"></a>61.2.1. Property `ReduxOptions > onnx > anyOf > OnnxOptions > dynamo`
+#### <a name="onnx_anyOf_i1_dynamo"></a>62.2.1. Property `ReduxOptions > onnx > anyOf > OnnxOptions > dynamo`
 
 |              |           |
 | ------------ | --------- |
@@ -4509,7 +8607,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `false`   |
 
-#### <a name="onnx_anyOf_i1_opset"></a>61.2.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions > opset`
+#### <a name="onnx_anyOf_i1_opset"></a>62.2.2. Property `ReduxOptions > onnx > anyOf > OnnxOptions > opset`
 
 |              |           |
 | ------------ | --------- |
@@ -4517,7 +8615,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `20`      |
 
-#### <a name="onnx_anyOf_i1_use_static_shapes"></a>61.2.3. Property `ReduxOptions > onnx > anyOf > OnnxOptions > use_static_shapes`
+#### <a name="onnx_anyOf_i1_use_static_shapes"></a>62.2.3. Property `ReduxOptions > onnx > anyOf > OnnxOptions > use_static_shapes`
 
 |              |           |
 | ------------ | --------- |
@@ -4525,7 +8623,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `false`   |
 
-#### <a name="onnx_anyOf_i1_shape"></a>61.2.4. Property `ReduxOptions > onnx > anyOf > OnnxOptions > shape`
+#### <a name="onnx_anyOf_i1_shape"></a>62.2.4. Property `ReduxOptions > onnx > anyOf > OnnxOptions > shape`
 
 |              |               |
 | ------------ | ------------- |
@@ -4533,7 +8631,7 @@ Must be one of:
 | **Required** | No            |
 | **Default**  | `"3x256x256"` |
 
-#### <a name="onnx_anyOf_i1_verify"></a>61.2.5. Property `ReduxOptions > onnx > anyOf > OnnxOptions > verify`
+#### <a name="onnx_anyOf_i1_verify"></a>62.2.5. Property `ReduxOptions > onnx > anyOf > OnnxOptions > verify`
 
 |              |           |
 | ------------ | --------- |
@@ -4541,7 +8639,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `true`    |
 
-#### <a name="onnx_anyOf_i1_fp16"></a>61.2.6. Property `ReduxOptions > onnx > anyOf > OnnxOptions > fp16`
+#### <a name="onnx_anyOf_i1_fp16"></a>62.2.6. Property `ReduxOptions > onnx > anyOf > OnnxOptions > fp16`
 
 |              |           |
 | ------------ | --------- |
@@ -4549,7 +8647,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `false`   |
 
-#### <a name="onnx_anyOf_i1_optimize"></a>61.2.7. Property `ReduxOptions > onnx > anyOf > OnnxOptions > optimize`
+#### <a name="onnx_anyOf_i1_optimize"></a>62.2.7. Property `ReduxOptions > onnx > anyOf > OnnxOptions > optimize`
 
 |              |           |
 | ------------ | --------- |
@@ -4557,13 +8655,12 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `true`    |
 
-## <a name="find_unused_parameters"></a>62. Property `ReduxOptions > find_unused_parameters`
+## <a name="find_unused_parameters"></a>63. Property `ReduxOptions > find_unused_parameters`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+| **Required** | Yes       |
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2024-12-18 at 19:17:14 -0500
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2024-12-19 at 01:49:18 -0500

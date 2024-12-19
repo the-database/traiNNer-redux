@@ -8,7 +8,6 @@ from torch.nn import functional as F  # noqa: N812
 from torchvision.models import VGG19_Weights, vgg
 
 # from traiNNer.losses.dists_loss import L2pooling
-from traiNNer.utils.registry import ARCH_REGISTRY
 
 VGG19_PATCH_SIZE = 256
 VGG19_CROP_SIZE = 224
@@ -189,7 +188,7 @@ class L2pooling(nn.Module):
         return (out + 1e-12).sqrt()
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 class VGGFeatureExtractor(nn.Module):
     """VGG network for feature extraction.
 
