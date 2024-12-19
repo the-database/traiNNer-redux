@@ -67,7 +67,6 @@ class DISTSLoss(nn.Module):
         load_weights: bool = True,
         use_input_norm: bool = True,
         clip_min: int = 0,
-        **kwargs,
     ) -> None:
         super().__init__()
         self.as_loss = as_loss
