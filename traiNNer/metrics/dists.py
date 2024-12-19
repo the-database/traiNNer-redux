@@ -22,6 +22,6 @@ def calculate_dists(
     # to cuda
     img_t, img2_t = img_t.to(device), img2_t.to(device)
 
-    loss = DISTSLoss(as_loss=False).to(device)
+    loss = DISTSLoss(loss_weight=1.0, as_loss=False).to(device)
     with torch.no_grad():
         return loss.forward(img_t, img2_t)
