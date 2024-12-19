@@ -76,6 +76,7 @@ class GaussianFilter2D(nn.Module):
 class MSSIMLoss(nn.Module):
     def __init__(
         self,
+        loss_weight: float,
         window_size: int = 11,
         in_channels: int = 3,
         sigma: float = 1.5,
@@ -85,7 +86,6 @@ class MSSIMLoss(nn.Module):
         padding: int | None = None,
         cosim: bool = True,
         cosim_lambda: int = 5,
-        loss_weight: float = 1.0,
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':

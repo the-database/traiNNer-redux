@@ -11,7 +11,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: DAT_light
+  type: dat_light
 
 ############################
 # Pretrain and Resume Paths

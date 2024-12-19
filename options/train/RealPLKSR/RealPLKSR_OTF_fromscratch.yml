@@ -120,8 +120,8 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: RealPLKSR
-  upsampler: pixelshuffle  # pixelshuffle, dysample (better quality on even number scales, but does not support dynamic ONNX)
+  type: realplksr
+  upsampler: pixelshuffle  # pixelshuffle, dysample (better quality on even number scales, but does not support dynamic onnx)
   layer_norm: true  # better quality, not compatible with older models
 
 ############################
@@ -154,7 +154,7 @@ train:
   # Losses - for any loss set the loss_weight to 0 to disable it.
   losses:
     # MS-SSIM L1 loss
-    - type: MSSSIML1Loss
+    - type: msssiml1loss
       alpha: 0.1
       loss_weight: 1.0
 
@@ -188,10 +188,3 @@ logger:
   save_checkpoint_freq: 1000
   save_checkpoint_format: safetensors
   use_tb_logger: true
-  wandb:
-    project: ~
-    resume_id: ~
-
-dist_params:
-  backend: nccl
-  port: 29500

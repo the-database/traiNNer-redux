@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: SwinIR_S
+  type: swinir_s
 
 ############################
 # Pretrain and Resume Paths

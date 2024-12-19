@@ -62,8 +62,8 @@ def get_refined_artifact_map(
 class LDLLoss(nn.Module):
     def __init__(
         self,
+        loss_weight: float,
         criterion: str = "l1",
-        loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight

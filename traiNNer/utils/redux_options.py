@@ -418,8 +418,6 @@ class ReduxOptions(StrictStruct):
         float,
         Meta(description="Probability of using paired LR data instead of OTF LR data."),
     ] = 0
-    force_high_order_degradation_filename_masks: list[str] = []
-    force_dataroot_lq_filename_masks: list[str] = []
 
     lq_usm: bool = False
     lq_usm_radius_range: Annotated[

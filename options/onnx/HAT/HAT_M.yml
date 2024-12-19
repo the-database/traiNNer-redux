@@ -11,7 +11,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: HAT_M
+  type: hat_m
 
 ############################
 # Pretrain and Resume Paths

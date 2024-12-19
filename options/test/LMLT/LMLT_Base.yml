@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: LMLT_Base
+  type: lmlt_base
 
 ############################
 # Pretrain and Resume Paths

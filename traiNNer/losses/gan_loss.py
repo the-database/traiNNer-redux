@@ -22,10 +22,10 @@ class GANLoss(nn.Module):
 
     def __init__(
         self,
+        loss_weight: float,
         gan_type: str = "vanilla",
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
-        loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
         self.gan_type = gan_type
@@ -131,10 +131,10 @@ class MultiScaleGANLoss(GANLoss):
 
     def __init__(
         self,
+        loss_weight: float,
         gan_type: str,
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
-        loss_weight: float = 1.0,
     ) -> None:
         super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
 

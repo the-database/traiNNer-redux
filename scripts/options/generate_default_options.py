@@ -56,7 +56,7 @@ def final_template(
 
     template = template.replace(
         "type: %archname%",
-        arch_type_str,
+        arch_type_str.lower(),
     )
 
     if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:

@@ -72,8 +72,6 @@ network_g:
 # Discriminator model settings
 network_d:
   type: DUnet  # DUnet, UNetDiscriminatorSN
-  num_in_ch: 3
-  num_feat: 64
 
 ############################
 # Pretrain and Resume Paths
@@ -114,32 +112,32 @@ train:
   # Losses - for any loss set the loss_weight to 0 to disable it.
   losses:
     # MS-SSIM L1 loss
-    - type: MSSSIML1Loss
+    - type: msssiml1loss
       alpha: 0.1
       loss_weight: 1.0
     # Perceptual loss
-    - type: PerceptualLoss
+    - type: perceptualloss
       criterion: pd+l1  # pd+l1 (good quality), fd+l1 (slower), pd, fd, charbonnier, l1 (lower quality, legacy)
       loss_weight: 0.01
     # HSLuv loss (hue, saturation, lightness)
-    - type: HSLuvLoss
+    - type: hsluvloss
       criterion: charbonnier
       loss_weight: 1.0
     # GAN loss
-    - type: GANLoss
+    - type: ganloss
       gan_type: vanilla
       loss_weight: 0.1
     # Additional losses - disabled by default.
     # To enable, change the loss_weight from 0 to the recommended loss_weight which appears as a comment next to the loss weight.
     # For example to enable DISTS loss, change the loss weight from 0 to 0.25; to enable color loss change loss weight from 0 to 1.
     # DISTS perceptual loss
-    - type: DISTSLoss
+    - type: distsloss
       loss_weight: 0  # 0.3
     # LDL loss
-    - type: LDLLoss
+    - type: ldlloss
       loss_weight: 0  # 1.0
     # FF loss
-    - type: FFLoss
+    - type: ffloss
       loss_weight: 0  # 0.2
 
   # Mix of Augmentations (MoA)
@@ -179,10 +177,3 @@ logger:
   save_checkpoint_freq: 1000
   save_checkpoint_format: safetensors
   use_tb_logger: true
-  wandb:
-    project: ~
-    resume_id: ~
-
-dist_params:
-  backend: nccl
-  port: 29500

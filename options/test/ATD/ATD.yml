@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: ATD
+  type: atd
 
 ############################
 # Pretrain and Resume Paths

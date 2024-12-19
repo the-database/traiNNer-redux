@@ -11,7 +11,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: TSCUNet
+  type: tscunet
 
 ############################
 # Pretrain and Resume Paths

@@ -29,7 +29,7 @@ datasets:
 #####################
 # Generator model settings
 network_g:
-  type: EIMN_L
+  type: eimn_l
 
 ############################
 # Pretrain and Resume Paths

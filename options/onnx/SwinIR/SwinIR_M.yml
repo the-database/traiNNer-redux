@@ -11,7 +11,7 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: SwinIR_M
+  type: swinir_m
 
 ############################
 # Pretrain and Resume Paths
