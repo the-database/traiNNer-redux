@@ -32,8 +32,6 @@ datasets:
     ]
     clip_size: 5
     # meta_info: data/meta_info/dataset1.txt
-    io_backend:
-      type: disk
 
 
     lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
@@ -47,7 +45,7 @@ datasets:
   # be ignored if val_enabled is false in the Validation section below.
   val:
     name: Val Dataset
-    type: PairedImageDataset
+    type: pairedvideodataset
     dataroot_gt: [
       datasets/val/dataset1/hr,
       datasets/val/dataset1/hr2,
@@ -57,8 +55,6 @@ datasets:
       datasets/val/dataset1/lr2
     ]
     clip_size: 5
-    io_backend:
-      type: disk
 
 #####################
 # Network Settings
