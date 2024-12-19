@@ -71,7 +71,7 @@ network_g:
 
 # Discriminator model settings
 network_d:
-  type: DUnet  # DUnet, UNetDiscriminatorSN
+  type: dunet  # dunet, unetdiscriminatorsn
 
 ############################
 # Pretrain and Resume Paths
