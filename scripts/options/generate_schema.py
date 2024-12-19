@@ -1,13 +1,14 @@
 import inspect
 import os
 from collections.abc import Callable
-from typing import Annotated, Union, get_type_hints
+from typing import Annotated, Literal, Union, get_type_hints
 
 from msgspec import NODEFAULT, Meta, Struct, defstruct, field, json
 from msgspec.structs import fields
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
+from traiNNer.data import DATASET_REGISTRY
 from traiNNer.losses import LOSS_REGISTRY
-from traiNNer.utils.redux_options import ReduxOptions, TrainOptions
+from traiNNer.utils.redux_options import DatasetOptions, ReduxOptions, TrainOptions
 from traiNNer.utils.registry import Registry
 
 
@@ -70,8 +71,10 @@ def create_dynamic_train_options(
 
 LOSS_STRUCTS = generate_registry_structs(LOSS_REGISTRY)
 ARCH_STRUCTS = generate_registry_structs(list(ARCH_REGISTRY) + list(SPANDREL_REGISTRY))
+DATASET_STRUCTS = generate_registry_structs(DATASET_REGISTRY)
 LossType = Union[tuple(LOSS_STRUCTS.values())]  # noqa: UP007
 ArchType = Union[tuple(ARCH_STRUCTS.values())]  # noqa: UP007
+DatasetType = Union[tuple(DATASET_STRUCTS.values())]  # noqa: UP007
 
 new_train_opts = create_dynamic_train_options(
     TrainOptions,
@@ -84,13 +87,29 @@ new_train_opts = create_dynamic_train_options(
         ],
     ),
 )
+print(DATASET_STRUCTS)
+new_dataset_opts = create_dynamic_train_options(
+    DatasetOptions,
+    "DatasetOptions",
+    (
+        "type",
+        Annotated[
+            Literal[tuple([k for k, _ in DATASET_REGISTRY])],
+            Meta(description="The type of dataset to use."),
+        ],
+    ),
+)
+
 new_redux_opts = create_dynamic_train_options(
     ReduxOptions, "ReduxOptions", ("train", new_train_opts)
 )
 
-
 new_redux_opts = create_dynamic_train_options(
     new_redux_opts, "ReduxOptions", ("network_g", ArchType)
+)
+
+new_redux_opts = create_dynamic_train_options(
+    new_redux_opts, "ReduxOptions", ("datasets", dict[str, new_dataset_opts])
 )
 
 schema = json.schema(new_redux_opts)

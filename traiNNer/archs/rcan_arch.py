@@ -306,9 +306,9 @@ class RCAN(nn.Module):
 #     return RCAN(n_resblocks=14, n_resgroups=7, **kwargs)
 
 
-# @ARCH_REGISTRY.register()
-# def RCAN_ng6_nb12(**kwargs):
-#     return RCAN(n_resblocks=12, n_resgroups=6, **kwargs)
+@ARCH_REGISTRY.register()
+def RCAN_ng6_nb12(**kwargs):
+    return RCAN(n_resblocks=12, n_resgroups=6, **kwargs)
 
 
 # @ARCH_REGISTRY.register()

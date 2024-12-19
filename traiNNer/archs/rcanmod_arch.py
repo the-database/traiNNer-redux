@@ -2,23 +2,32 @@
 # type: ignore
 import math
 from collections.abc import Callable
+from typing import Sequence
 
 import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
-from torch.nn.init import trunc_normal_
+
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
 def default_conv(
     in_channels: int, out_channels: int, kernel_size: int, bias: bool = True
 ) -> nn.Conv2d:
-    # print(
-    #     "default_conv", in_channels, out_channels, kernel_size, kernel_size // 2, bias
-    # )
     return nn.Conv2d(
         in_channels, out_channels, kernel_size, padding=(kernel_size // 2), bias=bias
     )
+
+
+class MeanShift(nn.Conv2d):
+    def __init__(self, rgb_range, rgb_mean, rgb_std, sign=-1) -> None:
+        super().__init__(3, 3, kernel_size=1)
+        std = torch.Tensor(rgb_std)
+        self.weight.data = torch.eye(3).view(3, 3, 1, 1)
+        self.weight.data.div_(std.view(3, 1, 1, 1))
+        self.bias.data = sign * rgb_range * torch.Tensor(rgb_mean)
+        self.bias.data.div_(std)
+        self.requires_grad = False
 
 
 class Upsampler(nn.Sequential):
@@ -31,76 +40,37 @@ class Upsampler(nn.Sequential):
                 if bn:
                     m.append(nn.BatchNorm2d(n_feat))
                 if act:
-                    m.append(act)
+                    m.append(act())
         elif scale == 3:
             m.append(conv(n_feat, 9 * n_feat, 3, bias))
             m.append(nn.PixelShuffle(3))
             if bn:
                 m.append(nn.BatchNorm2d(n_feat))
             if act:
-                m.append(act)
+                m.append(act())
         else:
             raise NotImplementedError
-        # print("m0", m)
         super().__init__(*m)
 
 
-class ChannelAttention(nn.Module):
-    """Channel attention used in RCAN.
-    Args:
-        num_feat (int): Channel number of intermediate features.
-        squeeze_factor (int): Channel squeeze factor. Default: 16.
-    """
-
-    def __init__(self, num_feat, squeeze_factor=16):
-        super(ChannelAttention, self).__init__()
-        self.attention = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(num_feat, num_feat // squeeze_factor, 1, padding=0),
+## Channel Attention (CA) Layer
+class CALayer(nn.Module):
+    def __init__(self, channel, reduction: int = 16) -> None:
+        super().__init__()
+        # global average pooling: feature --> point
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        # feature channel downscale and upscale --> channel weight
+        self.conv_du = nn.Sequential(
+            nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
             nn.ReLU(inplace=True),
-            nn.Conv2d(num_feat // squeeze_factor, num_feat, 1, padding=0),
+            nn.Conv2d(channel // reduction, channel, 1, padding=0, bias=True),
             nn.Sigmoid(),
         )
 
     def forward(self, x):
-        y = self.attention(x)
+        y = self.avg_pool(x)
+        y = self.conv_du(y)
         return x * y
-
-
-class CAB(nn.Module):
-    def __init__(
-        self, num_feat, is_light_sr=False, compress_ratio=3, squeeze_factor=30
-    ):
-        super(CAB, self).__init__()
-        if is_light_sr:  # we use dilated-conv & DWConv for lightSR for a large ERF
-            compress_ratio = 2
-            self.cab = nn.Sequential(
-                nn.Conv2d(num_feat, num_feat // compress_ratio, 1, 1, 0),
-                nn.Conv2d(
-                    num_feat // compress_ratio,
-                    num_feat // compress_ratio,
-                    3,
-                    1,
-                    1,
-                    groups=num_feat // compress_ratio,
-                ),
-                nn.GELU(),
-                nn.Conv2d(num_feat // compress_ratio, num_feat, 1, 1, 0),
-                nn.Conv2d(
-                    num_feat, num_feat, 3, 1, padding=2, groups=num_feat, dilation=2
-                ),
-                ChannelAttention(num_feat, squeeze_factor),
-            )
-        else:
-            self.cab = nn.Sequential(
-                nn.Conv2d(num_feat, num_feat // compress_ratio, 3, 1, 1),
-                nn.GELU(),
-                nn.Conv2d(num_feat // compress_ratio, num_feat, 3, 1, 1),
-                ChannelAttention(num_feat, squeeze_factor),
-            )
-
-    def forward(self, x):
-        return self.cab(x)
 
 
 ## Residual Channel Attention Block (RCAB)
@@ -124,7 +94,7 @@ class RCAB(nn.Module):
                 modules_body.append(nn.BatchNorm2d(n_feat))
             if i == 0:
                 modules_body.append(act)
-        modules_body.append(CAB(n_feat))
+        modules_body.append(CALayer(n_feat, reduction))
         self.body = nn.Sequential(*modules_body)
         self.res_scale = res_scale
 
@@ -135,100 +105,12 @@ class RCAB(nn.Module):
         return res
 
 
-class MSG(nn.Module):
-    def __init__(self, dim) -> None:
-        super().__init__()
-        self.down = nn.Sequential(
-            nn.Conv2d(dim, dim // 4, 3, 1, 1),
-            nn.PixelUnshuffle(2),
-            nn.LeakyReLU(0.1, True),
-        )
-        self.gated = nn.Sequential(
-            *[GatedCNNBlock(dim, expansion_ratio=1.5) for _ in range(3)]
-        )
-        self.up = nn.Sequential(
-            nn.Conv2d(dim, dim * 4, 3, 1, 1),
-            nn.PixelShuffle(2),
-            nn.LeakyReLU(0.1, True),
-        )
-
-    def forward(self, x):
-        out = self.down(x)
-        out = self.gated(out)
-        return self.up(out) + x
-
-
-class GatedCNNBlock(nn.Module):
-    r"""
-    modernized mambaout main unit
-    https://github.com/yuweihao/MambaOut/blob/main/models/mambaout.py#L119
-    """
-
-    def __init__(
-        self,
-        dim: int = 64,
-        expansion_ratio: float = 1.5,
-        conv_ratio: float = 1.0,
-        kernel_size: int = 7,
-    ) -> None:
-        super().__init__()
-        self.norm = LayerNorm(dim)
-        hidden = int(expansion_ratio * dim)
-        self.fc1 = nn.Conv2d(dim, hidden * 2, 3, 1, 1)
-
-        self.act = nn.Mish()
-        conv_channels = int(conv_ratio * dim)
-        self.split_indices = [hidden, hidden - conv_channels, conv_channels]
-
-        self.conv = nn.Conv2d(
-            conv_channels,
-            conv_channels,
-            kernel_size,
-            1,
-            kernel_size // 2,
-            groups=conv_channels,
-        )
-        self.fc2 = nn.Conv2d(hidden, dim, 3, 1, 1)
-        self.gamma = nn.Parameter(torch.ones([1, dim, 1, 1]), requires_grad=True)
-        self.apply(self._init_weights)
-
-    @staticmethod
-    def _init_weights(m) -> None:
-        if isinstance(m, nn.Conv2d | nn.Linear):
-            trunc_normal_(m.weight, std=0.02)
-            if m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-
-    def forward(self, x):
-        shortcut = x
-        x = self.norm(x)
-        g, i, c = torch.split(self.fc1(x), self.split_indices, dim=1)
-        c = self.conv(c)
-        x = self.act(self.fc2(self.act(g) * torch.cat((i, c), dim=1)))
-        return (x * self.gamma) + shortcut
-
-
-class LayerNorm(nn.Module):
-    def __init__(self, dim: int = 64, eps: float = 1e-6) -> None:
-        super().__init__()
-        self.weight = nn.Parameter(torch.ones(dim))
-        self.bias = nn.Parameter(torch.zeros(dim))
-        self.eps = eps
-
-    def forward(self, x):
-        u = x.mean(1, keepdim=True)
-        s = (x - u).pow(2).mean(1, keepdim=True)
-        x = (x - u) / torch.sqrt(s + self.eps)
-        return self.weight[:, None, None] * x + self.bias[:, None, None]
-
-
 ## Residual Group (RG)
 class ResidualGroup(nn.Module):
     def __init__(
         self, conv, n_feat, kernel_size, reduction, act, res_scale, n_resblocks
     ) -> None:
         super().__init__()
-        modules_body = []
         modules_body = [
             RCAB(
                 conv,
@@ -238,7 +120,7 @@ class ResidualGroup(nn.Module):
                 bias=True,
                 bn=False,
                 act=act,
-                res_scale=1,
+                res_scale=res_scale,
             )
             for _ in range(n_resblocks)
         ]
@@ -251,9 +133,57 @@ class ResidualGroup(nn.Module):
         return res
 
 
+class MultyScaleResidualGroup(nn.Module):
+    def __init__(
+        self,
+        conv,
+        n_feat,
+        kernel_size,
+        reduction,
+        act,
+        res_scale,
+        n_resblocks,
+        pixel_shuffle: bool = False,
+    ):
+        super().__init__()
+        self.down = (
+            nn.Sequential(nn.Conv2d(n_feat, n_feat // 4, 3, 1, 1), nn.PixelUnshuffle(2))
+            if pixel_shuffle
+            else nn.Conv2d(n_feat, n_feat, 3, 2, 1)
+        )
+        self.body = nn.Sequential(
+            *[
+                RCAB(
+                    conv,
+                    n_feat,
+                    kernel_size,
+                    reduction,
+                    bias=True,
+                    bn=False,
+                    act=act,
+                    res_scale=res_scale,
+                )
+                for _ in range(n_resblocks)
+            ]
+            + [conv(n_feat, n_feat, kernel_size)]
+        )
+        self.act = nn.LeakyReLU(0.1, True)
+        self.up = (
+            nn.Sequential(nn.Conv2d(n_feat, n_feat * 4, 3, 1, 1), nn.PixelShuffle(2))
+            if pixel_shuffle
+            else nn.ConvTranspose2d(n_feat, n_feat, 4, 2, 1)
+        )
+
+    def forward(self, x):
+        out = self.act(self.down(x))
+        out = self.body(out)
+        out = self.act(self.up(out))
+        return out + x
+
+
 @ARCH_REGISTRY.register()
 ## Residual Channel Attention Network (RCAN)
-class RCANCAB(nn.Module):
+class RCANMSRB(nn.Module):
     def __init__(
         self,
         scale: int = 4,
@@ -261,14 +191,37 @@ class RCANCAB(nn.Module):
         n_resblocks: int = 20,
         n_feats: int = 64,
         n_colors: int = 3,
+        rgb_range: int = 255,  # TODO
         kernel_size: int = 3,
         reduction: int = 16,
-        res_scale: float = 1,
+        res_scale: float = 8,
+        mean_shift: Sequence[float] = (
+            0.4488,
+            0.4371,
+            0.4040,
+        ),  # div2k: (0.4488, 0.4371, 0.4040) df2k: (0.4690, 0.4490, 0.4036) normal_dataset: (0, 0, 0)
+        pixel_shuffle_msrb: bool = True,
         conv: Callable[..., nn.Conv2d] = default_conv,
     ) -> None:
         super().__init__()
 
         act = nn.ReLU(True)
+
+        # RGB mean for DIV2K
+        self.rgb_range = rgb_range  # meh
+        self.register_buffer(
+            "rgb_mean",
+            torch.tensor(
+                mean_shift,
+                dtype=torch.float32,
+            ),
+        )
+        rgb_std = (1.0, 1.0, 1.0)
+        self.sub_mean = (
+            MeanShift(rgb_range, mean_shift, rgb_std)
+            if mean_shift != (0, 0, 0)
+            else nn.Identity()
+        )
 
         # define head module
         modules_head = [conv(n_colors, n_feats, kernel_size)]
@@ -284,7 +237,18 @@ class RCANCAB(nn.Module):
                 res_scale=res_scale,
                 n_resblocks=n_resblocks,
             )
-            for _ in range(n_resgroups)
+            if index % 2 == 1
+            else MultyScaleResidualGroup(
+                conv,
+                n_feats,
+                kernel_size,
+                reduction,
+                act=act,
+                res_scale=res_scale,
+                n_resblocks=n_resblocks,
+                pixel_shuffle=pixel_shuffle_msrb,
+            )
+            for index in range(n_resgroups)
         ]
 
         modules_body.append(conv(n_feats, n_feats, kernel_size))
@@ -295,13 +259,59 @@ class RCANCAB(nn.Module):
             conv(n_feats, n_colors, kernel_size),
         ]
 
+        self.add_mean = (
+            MeanShift(rgb_range, mean_shift, rgb_std, 1)
+            if mean_shift != (0, 0, 0)
+            else nn.Identity()
+        )
+        self.scale = scale
         self.head = nn.Sequential(*modules_head)
         self.body = nn.Sequential(*modules_body)
         self.tail = nn.Sequential(*modules_tail)
 
+    def check_img_size(self, x, resolution):
+        h, w = resolution
+        scaled_size = 2
+        mod_pad_h = (scaled_size - h % scaled_size) % scaled_size
+        mod_pad_w = (scaled_size - w % scaled_size) % scaled_size
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+
     def forward(self, x):
+        b, c, h, w = x.shape
+        x = self.check_img_size(x, (h, w))
+        x *= self.rgb_range
+        x = self.sub_mean(x)
         x = self.head(x)
+
         res = self.body(x)
         res += x
+
         x = self.tail(res)
-        return x
+        x = self.add_mean(x)
+        return (x / self.rgb_range)[:, :, : h * self.scale, : w * self.scale]
+
+    def load_state_dict(self, state_dict, strict=False) -> None:
+        own_state = self.state_dict()
+        for name, param in state_dict.items():
+            if name in own_state:
+                if isinstance(param, nn.Parameter):
+                    param = param.data
+                try:
+                    own_state[name].copy_(param)
+                except Exception:
+                    if name.find("tail") >= 0:
+                        print("Replace pre-trained upsampler to new one...")
+                    else:
+                        raise RuntimeError(
+                            f"While copying the parameter named {name}, "
+                            f"whose dimensions in the model are {own_state[name].size()} and "
+                            f"whose dimensions in the checkpoint are {param.size()}."
+                        )
+            elif strict:
+                if name.find("tail") == -1:
+                    raise KeyError(f'unexpected key "{name}" in state_dict')
+
+        if strict:
+            missing = set(own_state.keys()) - set(state_dict.keys())
+            if len(missing) > 0:
+                raise KeyError(f'missing keys in state_dict: "{missing}"')

@@ -93,7 +93,7 @@ def final_template(
     template = template.replace("    %otf2%\n", template_otf2)
 
     if template_otf1 and template_otf2:
-        template = template.replace("%traindatasettype%", "RealESRGANDataset")
+        template = template.replace("%traindatasettype%", "realesrgandataset")
         template = template.replace(
             "    # Path to the LR (low res) images in your training dataset.\n", ""
         )
@@ -102,15 +102,15 @@ def final_template(
             "",
         )
     else:
-        template = template.replace("%traindatasettype%", "PairedImageDataset")
+        template = template.replace("%traindatasettype%", "pairedimagedataset")
 
     if "video_override" in arch:
         template = template.replace(
-            "type: PairedImageDataset", "type: PairedVideoDataset"
+            "type: pairedimagedataset", "type: pairedvideodataset"
         )
 
         template = template.replace(
-            "type: SingleImageDataset", "type: SingleVideoDataset"
+            "type: singleimagedataset", "type: singlevideodataset"
         )
 
         template = re.sub(
@@ -120,8 +120,8 @@ def final_template(
     if mssim_only:
         template = re.sub("loss_weight: [0-9.]+", "loss_weight: 0", template)
         template = template.replace(
-            "type: MSSSIML1Loss\n      alpha: 0.1\n      loss_weight: 0",
-            "type: MSSSIML1Loss\n      alpha: 0.1\n      loss_weight: 1.0",
+            "type: msssiml1loss\n      alpha: 0.1\n      loss_weight: 0",
+            "type: msssiml1loss\n      alpha: 0.1\n      loss_weight: 1.0",
         )
 
     return template
