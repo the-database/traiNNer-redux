@@ -15,7 +15,7 @@ num_gpu: auto
 datasets:
   val:
     name: Val Dataset
-    type: SingleVideoDataset
+    type: singlevideodataset
     # Path of the LR (low res) images to run the model on.
     dataroot_lq: [
       datasets/val/dataset1/lr,
