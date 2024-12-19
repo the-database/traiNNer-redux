@@ -166,16 +166,20 @@
     - [5.26.1. Property `ReduxOptions > network_g > anyOf > mosr > type`](#network_g_anyOf_i25_type)
   - [5.27. Property `ReduxOptions > network_g > anyOf > mosr_t`](#network_g_anyOf_i26)
     - [5.27.1. Property `ReduxOptions > network_g > anyOf > mosr_t > type`](#network_g_anyOf_i26_type)
-  - [5.28. Property `ReduxOptions > network_g > anyOf > rcancab`](#network_g_anyOf_i27)
-    - [5.28.1. Property `ReduxOptions > network_g > anyOf > rcancab > type`](#network_g_anyOf_i27_type)
-    - [5.28.2. Property `ReduxOptions > network_g > anyOf > rcancab > scale`](#network_g_anyOf_i27_scale)
-    - [5.28.3. Property `ReduxOptions > network_g > anyOf > rcancab > n_resgroups`](#network_g_anyOf_i27_n_resgroups)
-    - [5.28.4. Property `ReduxOptions > network_g > anyOf > rcancab > n_resblocks`](#network_g_anyOf_i27_n_resblocks)
-    - [5.28.5. Property `ReduxOptions > network_g > anyOf > rcancab > n_feats`](#network_g_anyOf_i27_n_feats)
-    - [5.28.6. Property `ReduxOptions > network_g > anyOf > rcancab > n_colors`](#network_g_anyOf_i27_n_colors)
-    - [5.28.7. Property `ReduxOptions > network_g > anyOf > rcancab > kernel_size`](#network_g_anyOf_i27_kernel_size)
-    - [5.28.8. Property `ReduxOptions > network_g > anyOf > rcancab > reduction`](#network_g_anyOf_i27_reduction)
-    - [5.28.9. Property `ReduxOptions > network_g > anyOf > rcancab > res_scale`](#network_g_anyOf_i27_res_scale)
+  - [5.28. Property `ReduxOptions > network_g > anyOf > rcanmsrb`](#network_g_anyOf_i27)
+    - [5.28.1. Property `ReduxOptions > network_g > anyOf > rcanmsrb > type`](#network_g_anyOf_i27_type)
+    - [5.28.2. Property `ReduxOptions > network_g > anyOf > rcanmsrb > scale`](#network_g_anyOf_i27_scale)
+    - [5.28.3. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_resgroups`](#network_g_anyOf_i27_n_resgroups)
+    - [5.28.4. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_resblocks`](#network_g_anyOf_i27_n_resblocks)
+    - [5.28.5. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_feats`](#network_g_anyOf_i27_n_feats)
+    - [5.28.6. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_colors`](#network_g_anyOf_i27_n_colors)
+    - [5.28.7. Property `ReduxOptions > network_g > anyOf > rcanmsrb > rgb_range`](#network_g_anyOf_i27_rgb_range)
+    - [5.28.8. Property `ReduxOptions > network_g > anyOf > rcanmsrb > kernel_size`](#network_g_anyOf_i27_kernel_size)
+    - [5.28.9. Property `ReduxOptions > network_g > anyOf > rcanmsrb > reduction`](#network_g_anyOf_i27_reduction)
+    - [5.28.10. Property `ReduxOptions > network_g > anyOf > rcanmsrb > res_scale`](#network_g_anyOf_i27_res_scale)
+    - [5.28.11. Property `ReduxOptions > network_g > anyOf > rcanmsrb > mean_shift`](#network_g_anyOf_i27_mean_shift)
+      - [5.28.11.1. ReduxOptions > network_g > anyOf > rcanmsrb > mean_shift > mean_shift items](#network_g_anyOf_i27_mean_shift_items)
+    - [5.28.12. Property `ReduxOptions > network_g > anyOf > rcanmsrb > pixel_shuffle_msrb`](#network_g_anyOf_i27_pixel_shuffle_msrb)
   - [5.29. Property `ReduxOptions > network_g > anyOf > rcan`](#network_g_anyOf_i28)
     - [5.29.1. Property `ReduxOptions > network_g > anyOf > rcan > type`](#network_g_anyOf_i28_type)
     - [5.29.2. Property `ReduxOptions > network_g > anyOf > rcan > scale`](#network_g_anyOf_i28_scale)
@@ -187,90 +191,92 @@
     - [5.29.8. Property `ReduxOptions > network_g > anyOf > rcan > kernel_size`](#network_g_anyOf_i28_kernel_size)
     - [5.29.9. Property `ReduxOptions > network_g > anyOf > rcan > reduction`](#network_g_anyOf_i28_reduction)
     - [5.29.10. Property `ReduxOptions > network_g > anyOf > rcan > res_scale`](#network_g_anyOf_i28_res_scale)
-  - [5.30. Property `ReduxOptions > network_g > anyOf > realplksr`](#network_g_anyOf_i29)
-    - [5.30.1. Property `ReduxOptions > network_g > anyOf > realplksr > type`](#network_g_anyOf_i29_type)
-  - [5.31. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa`](#network_g_anyOf_i30)
-    - [5.31.1. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa > type`](#network_g_anyOf_i30_type)
-  - [5.32. Property `ReduxOptions > network_g > anyOf > spanplus`](#network_g_anyOf_i31)
-    - [5.32.1. Property `ReduxOptions > network_g > anyOf > spanplus > type`](#network_g_anyOf_i31_type)
-  - [5.33. Property `ReduxOptions > network_g > anyOf > spanplus_sts`](#network_g_anyOf_i32)
-    - [5.33.1. Property `ReduxOptions > network_g > anyOf > spanplus_sts > type`](#network_g_anyOf_i32_type)
-  - [5.34. Property `ReduxOptions > network_g > anyOf > spanplus_s`](#network_g_anyOf_i33)
-    - [5.34.1. Property `ReduxOptions > network_g > anyOf > spanplus_s > type`](#network_g_anyOf_i33_type)
-  - [5.35. Property `ReduxOptions > network_g > anyOf > spanplus_st`](#network_g_anyOf_i34)
-    - [5.35.1. Property `ReduxOptions > network_g > anyOf > spanplus_st > type`](#network_g_anyOf_i34_type)
-  - [5.36. Property `ReduxOptions > network_g > anyOf > compact`](#network_g_anyOf_i35)
-    - [5.36.1. Property `ReduxOptions > network_g > anyOf > compact > type`](#network_g_anyOf_i35_type)
-  - [5.37. Property `ReduxOptions > network_g > anyOf > ultracompact`](#network_g_anyOf_i36)
-    - [5.37.1. Property `ReduxOptions > network_g > anyOf > ultracompact > type`](#network_g_anyOf_i36_type)
-  - [5.38. Property `ReduxOptions > network_g > anyOf > superultracompact`](#network_g_anyOf_i37)
-    - [5.38.1. Property `ReduxOptions > network_g > anyOf > superultracompact > type`](#network_g_anyOf_i37_type)
-  - [5.39. Property `ReduxOptions > network_g > anyOf > tscunet`](#network_g_anyOf_i38)
-    - [5.39.1. Property `ReduxOptions > network_g > anyOf > tscunet > type`](#network_g_anyOf_i38_type)
-  - [5.40. Property `ReduxOptions > network_g > anyOf > atd`](#network_g_anyOf_i39)
-    - [5.40.1. Property `ReduxOptions > network_g > anyOf > atd > type`](#network_g_anyOf_i39_type)
-  - [5.41. Property `ReduxOptions > network_g > anyOf > atd_light`](#network_g_anyOf_i40)
-    - [5.41.1. Property `ReduxOptions > network_g > anyOf > atd_light > type`](#network_g_anyOf_i40_type)
-  - [5.42. Property `ReduxOptions > network_g > anyOf > dat`](#network_g_anyOf_i41)
-    - [5.42.1. Property `ReduxOptions > network_g > anyOf > dat > type`](#network_g_anyOf_i41_type)
-  - [5.43. Property `ReduxOptions > network_g > anyOf > dat_s`](#network_g_anyOf_i42)
-    - [5.43.1. Property `ReduxOptions > network_g > anyOf > dat_s > type`](#network_g_anyOf_i42_type)
-  - [5.44. Property `ReduxOptions > network_g > anyOf > dat_2`](#network_g_anyOf_i43)
-    - [5.44.1. Property `ReduxOptions > network_g > anyOf > dat_2 > type`](#network_g_anyOf_i43_type)
-  - [5.45. Property `ReduxOptions > network_g > anyOf > dat_light`](#network_g_anyOf_i44)
-    - [5.45.1. Property `ReduxOptions > network_g > anyOf > dat_light > type`](#network_g_anyOf_i44_type)
-  - [5.46. Property `ReduxOptions > network_g > anyOf > drct`](#network_g_anyOf_i45)
-    - [5.46.1. Property `ReduxOptions > network_g > anyOf > drct > type`](#network_g_anyOf_i45_type)
-  - [5.47. Property `ReduxOptions > network_g > anyOf > drct_l`](#network_g_anyOf_i46)
-    - [5.47.1. Property `ReduxOptions > network_g > anyOf > drct_l > type`](#network_g_anyOf_i46_type)
-  - [5.48. Property `ReduxOptions > network_g > anyOf > drct_xl`](#network_g_anyOf_i47)
-    - [5.48.1. Property `ReduxOptions > network_g > anyOf > drct_xl > type`](#network_g_anyOf_i47_type)
-  - [5.49. Property `ReduxOptions > network_g > anyOf > hat`](#network_g_anyOf_i48)
-    - [5.49.1. Property `ReduxOptions > network_g > anyOf > hat > type`](#network_g_anyOf_i48_type)
-  - [5.50. Property `ReduxOptions > network_g > anyOf > hat_l`](#network_g_anyOf_i49)
-    - [5.50.1. Property `ReduxOptions > network_g > anyOf > hat_l > type`](#network_g_anyOf_i49_type)
-  - [5.51. Property `ReduxOptions > network_g > anyOf > hat_m`](#network_g_anyOf_i50)
-    - [5.51.1. Property `ReduxOptions > network_g > anyOf > hat_m > type`](#network_g_anyOf_i50_type)
-  - [5.52. Property `ReduxOptions > network_g > anyOf > hat_s`](#network_g_anyOf_i51)
-    - [5.52.1. Property `ReduxOptions > network_g > anyOf > hat_s > type`](#network_g_anyOf_i51_type)
-  - [5.53. Property `ReduxOptions > network_g > anyOf > omnisr`](#network_g_anyOf_i52)
-    - [5.53.1. Property `ReduxOptions > network_g > anyOf > omnisr > type`](#network_g_anyOf_i52_type)
-  - [5.54. Property `ReduxOptions > network_g > anyOf > plksr`](#network_g_anyOf_i53)
-    - [5.54.1. Property `ReduxOptions > network_g > anyOf > plksr > type`](#network_g_anyOf_i53_type)
-  - [5.55. Property `ReduxOptions > network_g > anyOf > plksr_tiny`](#network_g_anyOf_i54)
-    - [5.55.1. Property `ReduxOptions > network_g > anyOf > plksr_tiny > type`](#network_g_anyOf_i54_type)
-  - [5.56. Property `ReduxOptions > network_g > anyOf > realcugan`](#network_g_anyOf_i55)
-    - [5.56.1. Property `ReduxOptions > network_g > anyOf > realcugan > type`](#network_g_anyOf_i55_type)
-  - [5.57. Property `ReduxOptions > network_g > anyOf > rgt`](#network_g_anyOf_i56)
-    - [5.57.1. Property `ReduxOptions > network_g > anyOf > rgt > type`](#network_g_anyOf_i56_type)
-  - [5.58. Property `ReduxOptions > network_g > anyOf > rgt_s`](#network_g_anyOf_i57)
-    - [5.58.1. Property `ReduxOptions > network_g > anyOf > rgt_s > type`](#network_g_anyOf_i57_type)
-  - [5.59. Property `ReduxOptions > network_g > anyOf > esrgan`](#network_g_anyOf_i58)
-    - [5.59.1. Property `ReduxOptions > network_g > anyOf > esrgan > type`](#network_g_anyOf_i58_type)
-  - [5.60. Property `ReduxOptions > network_g > anyOf > esrgan_lite`](#network_g_anyOf_i59)
-    - [5.60.1. Property `ReduxOptions > network_g > anyOf > esrgan_lite > type`](#network_g_anyOf_i59_type)
-  - [5.61. Property `ReduxOptions > network_g > anyOf > span`](#network_g_anyOf_i60)
-    - [5.61.1. Property `ReduxOptions > network_g > anyOf > span > type`](#network_g_anyOf_i60_type)
-  - [5.62. Property `ReduxOptions > network_g > anyOf > srformer`](#network_g_anyOf_i61)
-    - [5.62.1. Property `ReduxOptions > network_g > anyOf > srformer > type`](#network_g_anyOf_i61_type)
-  - [5.63. Property `ReduxOptions > network_g > anyOf > srformer_light`](#network_g_anyOf_i62)
-    - [5.63.1. Property `ReduxOptions > network_g > anyOf > srformer_light > type`](#network_g_anyOf_i62_type)
-  - [5.64. Property `ReduxOptions > network_g > anyOf > swin2sr`](#network_g_anyOf_i63)
-    - [5.64.1. Property `ReduxOptions > network_g > anyOf > swin2sr > type`](#network_g_anyOf_i63_type)
-  - [5.65. Property `ReduxOptions > network_g > anyOf > swin2sr_l`](#network_g_anyOf_i64)
-    - [5.65.1. Property `ReduxOptions > network_g > anyOf > swin2sr_l > type`](#network_g_anyOf_i64_type)
-  - [5.66. Property `ReduxOptions > network_g > anyOf > swin2sr_m`](#network_g_anyOf_i65)
-    - [5.66.1. Property `ReduxOptions > network_g > anyOf > swin2sr_m > type`](#network_g_anyOf_i65_type)
-  - [5.67. Property `ReduxOptions > network_g > anyOf > swin2sr_s`](#network_g_anyOf_i66)
-    - [5.67.1. Property `ReduxOptions > network_g > anyOf > swin2sr_s > type`](#network_g_anyOf_i66_type)
-  - [5.68. Property `ReduxOptions > network_g > anyOf > swinir`](#network_g_anyOf_i67)
-    - [5.68.1. Property `ReduxOptions > network_g > anyOf > swinir > type`](#network_g_anyOf_i67_type)
-  - [5.69. Property `ReduxOptions > network_g > anyOf > swinir_l`](#network_g_anyOf_i68)
-    - [5.69.1. Property `ReduxOptions > network_g > anyOf > swinir_l > type`](#network_g_anyOf_i68_type)
-  - [5.70. Property `ReduxOptions > network_g > anyOf > swinir_m`](#network_g_anyOf_i69)
-    - [5.70.1. Property `ReduxOptions > network_g > anyOf > swinir_m > type`](#network_g_anyOf_i69_type)
-  - [5.71. Property `ReduxOptions > network_g > anyOf > swinir_s`](#network_g_anyOf_i70)
-    - [5.71.1. Property `ReduxOptions > network_g > anyOf > swinir_s > type`](#network_g_anyOf_i70_type)
+  - [5.30. Property `ReduxOptions > network_g > anyOf > rcan_ng6_nb12`](#network_g_anyOf_i29)
+    - [5.30.1. Property `ReduxOptions > network_g > anyOf > rcan_ng6_nb12 > type`](#network_g_anyOf_i29_type)
+  - [5.31. Property `ReduxOptions > network_g > anyOf > realplksr`](#network_g_anyOf_i30)
+    - [5.31.1. Property `ReduxOptions > network_g > anyOf > realplksr > type`](#network_g_anyOf_i30_type)
+  - [5.32. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa`](#network_g_anyOf_i31)
+    - [5.32.1. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa > type`](#network_g_anyOf_i31_type)
+  - [5.33. Property `ReduxOptions > network_g > anyOf > spanplus`](#network_g_anyOf_i32)
+    - [5.33.1. Property `ReduxOptions > network_g > anyOf > spanplus > type`](#network_g_anyOf_i32_type)
+  - [5.34. Property `ReduxOptions > network_g > anyOf > spanplus_sts`](#network_g_anyOf_i33)
+    - [5.34.1. Property `ReduxOptions > network_g > anyOf > spanplus_sts > type`](#network_g_anyOf_i33_type)
+  - [5.35. Property `ReduxOptions > network_g > anyOf > spanplus_s`](#network_g_anyOf_i34)
+    - [5.35.1. Property `ReduxOptions > network_g > anyOf > spanplus_s > type`](#network_g_anyOf_i34_type)
+  - [5.36. Property `ReduxOptions > network_g > anyOf > spanplus_st`](#network_g_anyOf_i35)
+    - [5.36.1. Property `ReduxOptions > network_g > anyOf > spanplus_st > type`](#network_g_anyOf_i35_type)
+  - [5.37. Property `ReduxOptions > network_g > anyOf > compact`](#network_g_anyOf_i36)
+    - [5.37.1. Property `ReduxOptions > network_g > anyOf > compact > type`](#network_g_anyOf_i36_type)
+  - [5.38. Property `ReduxOptions > network_g > anyOf > ultracompact`](#network_g_anyOf_i37)
+    - [5.38.1. Property `ReduxOptions > network_g > anyOf > ultracompact > type`](#network_g_anyOf_i37_type)
+  - [5.39. Property `ReduxOptions > network_g > anyOf > superultracompact`](#network_g_anyOf_i38)
+    - [5.39.1. Property `ReduxOptions > network_g > anyOf > superultracompact > type`](#network_g_anyOf_i38_type)
+  - [5.40. Property `ReduxOptions > network_g > anyOf > tscunet`](#network_g_anyOf_i39)
+    - [5.40.1. Property `ReduxOptions > network_g > anyOf > tscunet > type`](#network_g_anyOf_i39_type)
+  - [5.41. Property `ReduxOptions > network_g > anyOf > atd`](#network_g_anyOf_i40)
+    - [5.41.1. Property `ReduxOptions > network_g > anyOf > atd > type`](#network_g_anyOf_i40_type)
+  - [5.42. Property `ReduxOptions > network_g > anyOf > atd_light`](#network_g_anyOf_i41)
+    - [5.42.1. Property `ReduxOptions > network_g > anyOf > atd_light > type`](#network_g_anyOf_i41_type)
+  - [5.43. Property `ReduxOptions > network_g > anyOf > dat`](#network_g_anyOf_i42)
+    - [5.43.1. Property `ReduxOptions > network_g > anyOf > dat > type`](#network_g_anyOf_i42_type)
+  - [5.44. Property `ReduxOptions > network_g > anyOf > dat_s`](#network_g_anyOf_i43)
+    - [5.44.1. Property `ReduxOptions > network_g > anyOf > dat_s > type`](#network_g_anyOf_i43_type)
+  - [5.45. Property `ReduxOptions > network_g > anyOf > dat_2`](#network_g_anyOf_i44)
+    - [5.45.1. Property `ReduxOptions > network_g > anyOf > dat_2 > type`](#network_g_anyOf_i44_type)
+  - [5.46. Property `ReduxOptions > network_g > anyOf > dat_light`](#network_g_anyOf_i45)
+    - [5.46.1. Property `ReduxOptions > network_g > anyOf > dat_light > type`](#network_g_anyOf_i45_type)
+  - [5.47. Property `ReduxOptions > network_g > anyOf > drct`](#network_g_anyOf_i46)
+    - [5.47.1. Property `ReduxOptions > network_g > anyOf > drct > type`](#network_g_anyOf_i46_type)
+  - [5.48. Property `ReduxOptions > network_g > anyOf > drct_l`](#network_g_anyOf_i47)
+    - [5.48.1. Property `ReduxOptions > network_g > anyOf > drct_l > type`](#network_g_anyOf_i47_type)
+  - [5.49. Property `ReduxOptions > network_g > anyOf > drct_xl`](#network_g_anyOf_i48)
+    - [5.49.1. Property `ReduxOptions > network_g > anyOf > drct_xl > type`](#network_g_anyOf_i48_type)
+  - [5.50. Property `ReduxOptions > network_g > anyOf > hat`](#network_g_anyOf_i49)
+    - [5.50.1. Property `ReduxOptions > network_g > anyOf > hat > type`](#network_g_anyOf_i49_type)
+  - [5.51. Property `ReduxOptions > network_g > anyOf > hat_l`](#network_g_anyOf_i50)
+    - [5.51.1. Property `ReduxOptions > network_g > anyOf > hat_l > type`](#network_g_anyOf_i50_type)
+  - [5.52. Property `ReduxOptions > network_g > anyOf > hat_m`](#network_g_anyOf_i51)
+    - [5.52.1. Property `ReduxOptions > network_g > anyOf > hat_m > type`](#network_g_anyOf_i51_type)
+  - [5.53. Property `ReduxOptions > network_g > anyOf > hat_s`](#network_g_anyOf_i52)
+    - [5.53.1. Property `ReduxOptions > network_g > anyOf > hat_s > type`](#network_g_anyOf_i52_type)
+  - [5.54. Property `ReduxOptions > network_g > anyOf > omnisr`](#network_g_anyOf_i53)
+    - [5.54.1. Property `ReduxOptions > network_g > anyOf > omnisr > type`](#network_g_anyOf_i53_type)
+  - [5.55. Property `ReduxOptions > network_g > anyOf > plksr`](#network_g_anyOf_i54)
+    - [5.55.1. Property `ReduxOptions > network_g > anyOf > plksr > type`](#network_g_anyOf_i54_type)
+  - [5.56. Property `ReduxOptions > network_g > anyOf > plksr_tiny`](#network_g_anyOf_i55)
+    - [5.56.1. Property `ReduxOptions > network_g > anyOf > plksr_tiny > type`](#network_g_anyOf_i55_type)
+  - [5.57. Property `ReduxOptions > network_g > anyOf > realcugan`](#network_g_anyOf_i56)
+    - [5.57.1. Property `ReduxOptions > network_g > anyOf > realcugan > type`](#network_g_anyOf_i56_type)
+  - [5.58. Property `ReduxOptions > network_g > anyOf > rgt`](#network_g_anyOf_i57)
+    - [5.58.1. Property `ReduxOptions > network_g > anyOf > rgt > type`](#network_g_anyOf_i57_type)
+  - [5.59. Property `ReduxOptions > network_g > anyOf > rgt_s`](#network_g_anyOf_i58)
+    - [5.59.1. Property `ReduxOptions > network_g > anyOf > rgt_s > type`](#network_g_anyOf_i58_type)
+  - [5.60. Property `ReduxOptions > network_g > anyOf > esrgan`](#network_g_anyOf_i59)
+    - [5.60.1. Property `ReduxOptions > network_g > anyOf > esrgan > type`](#network_g_anyOf_i59_type)
+  - [5.61. Property `ReduxOptions > network_g > anyOf > esrgan_lite`](#network_g_anyOf_i60)
+    - [5.61.1. Property `ReduxOptions > network_g > anyOf > esrgan_lite > type`](#network_g_anyOf_i60_type)
+  - [5.62. Property `ReduxOptions > network_g > anyOf > span`](#network_g_anyOf_i61)
+    - [5.62.1. Property `ReduxOptions > network_g > anyOf > span > type`](#network_g_anyOf_i61_type)
+  - [5.63. Property `ReduxOptions > network_g > anyOf > srformer`](#network_g_anyOf_i62)
+    - [5.63.1. Property `ReduxOptions > network_g > anyOf > srformer > type`](#network_g_anyOf_i62_type)
+  - [5.64. Property `ReduxOptions > network_g > anyOf > srformer_light`](#network_g_anyOf_i63)
+    - [5.64.1. Property `ReduxOptions > network_g > anyOf > srformer_light > type`](#network_g_anyOf_i63_type)
+  - [5.65. Property `ReduxOptions > network_g > anyOf > swin2sr`](#network_g_anyOf_i64)
+    - [5.65.1. Property `ReduxOptions > network_g > anyOf > swin2sr > type`](#network_g_anyOf_i64_type)
+  - [5.66. Property `ReduxOptions > network_g > anyOf > swin2sr_l`](#network_g_anyOf_i65)
+    - [5.66.1. Property `ReduxOptions > network_g > anyOf > swin2sr_l > type`](#network_g_anyOf_i65_type)
+  - [5.67. Property `ReduxOptions > network_g > anyOf > swin2sr_m`](#network_g_anyOf_i66)
+    - [5.67.1. Property `ReduxOptions > network_g > anyOf > swin2sr_m > type`](#network_g_anyOf_i66_type)
+  - [5.68. Property `ReduxOptions > network_g > anyOf > swin2sr_s`](#network_g_anyOf_i67)
+    - [5.68.1. Property `ReduxOptions > network_g > anyOf > swin2sr_s > type`](#network_g_anyOf_i67_type)
+  - [5.69. Property `ReduxOptions > network_g > anyOf > swinir`](#network_g_anyOf_i68)
+    - [5.69.1. Property `ReduxOptions > network_g > anyOf > swinir > type`](#network_g_anyOf_i68_type)
+  - [5.70. Property `ReduxOptions > network_g > anyOf > swinir_l`](#network_g_anyOf_i69)
+    - [5.70.1. Property `ReduxOptions > network_g > anyOf > swinir_l > type`](#network_g_anyOf_i69_type)
+  - [5.71. Property `ReduxOptions > network_g > anyOf > swinir_m`](#network_g_anyOf_i70)
+    - [5.71.1. Property `ReduxOptions > network_g > anyOf > swinir_m > type`](#network_g_anyOf_i70_type)
+  - [5.72. Property `ReduxOptions > network_g > anyOf > swinir_s`](#network_g_anyOf_i71)
+    - [5.72.1. Property `ReduxOptions > network_g > anyOf > swinir_s > type`](#network_g_anyOf_i71_type)
 - [6. Property `ReduxOptions > network_d`](#network_d)
   - [6.1. Property `ReduxOptions > network_d > anyOf > item 0`](#network_d_anyOf_i0)
   - [6.2. Property `ReduxOptions > network_d > anyOf > item 1`](#network_d_anyOf_i1)
@@ -1393,50 +1399,51 @@ Must be one of:
 | [moesr2](#network_g_anyOf_i24)                      |
 | [mosr](#network_g_anyOf_i25)                        |
 | [mosr_t](#network_g_anyOf_i26)                      |
-| [rcancab](#network_g_anyOf_i27)                     |
+| [rcanmsrb](#network_g_anyOf_i27)                    |
 | [rcan](#network_g_anyOf_i28)                        |
-| [realplksr](#network_g_anyOf_i29)                   |
-| [scunet_aaf6aa](#network_g_anyOf_i30)               |
-| [spanplus](#network_g_anyOf_i31)                    |
-| [spanplus_sts](#network_g_anyOf_i32)                |
-| [spanplus_s](#network_g_anyOf_i33)                  |
-| [spanplus_st](#network_g_anyOf_i34)                 |
-| [compact](#network_g_anyOf_i35)                     |
-| [ultracompact](#network_g_anyOf_i36)                |
-| [superultracompact](#network_g_anyOf_i37)           |
-| [tscunet](#network_g_anyOf_i38)                     |
-| [atd](#network_g_anyOf_i39)                         |
-| [atd_light](#network_g_anyOf_i40)                   |
-| [dat](#network_g_anyOf_i41)                         |
-| [dat_s](#network_g_anyOf_i42)                       |
-| [dat_2](#network_g_anyOf_i43)                       |
-| [dat_light](#network_g_anyOf_i44)                   |
-| [drct](#network_g_anyOf_i45)                        |
-| [drct_l](#network_g_anyOf_i46)                      |
-| [drct_xl](#network_g_anyOf_i47)                     |
-| [hat](#network_g_anyOf_i48)                         |
-| [hat_l](#network_g_anyOf_i49)                       |
-| [hat_m](#network_g_anyOf_i50)                       |
-| [hat_s](#network_g_anyOf_i51)                       |
-| [omnisr](#network_g_anyOf_i52)                      |
-| [plksr](#network_g_anyOf_i53)                       |
-| [plksr_tiny](#network_g_anyOf_i54)                  |
-| [realcugan](#network_g_anyOf_i55)                   |
-| [rgt](#network_g_anyOf_i56)                         |
-| [rgt_s](#network_g_anyOf_i57)                       |
-| [esrgan](#network_g_anyOf_i58)                      |
-| [esrgan_lite](#network_g_anyOf_i59)                 |
-| [span](#network_g_anyOf_i60)                        |
-| [srformer](#network_g_anyOf_i61)                    |
-| [srformer_light](#network_g_anyOf_i62)              |
-| [swin2sr](#network_g_anyOf_i63)                     |
-| [swin2sr_l](#network_g_anyOf_i64)                   |
-| [swin2sr_m](#network_g_anyOf_i65)                   |
-| [swin2sr_s](#network_g_anyOf_i66)                   |
-| [swinir](#network_g_anyOf_i67)                      |
-| [swinir_l](#network_g_anyOf_i68)                    |
-| [swinir_m](#network_g_anyOf_i69)                    |
-| [swinir_s](#network_g_anyOf_i70)                    |
+| [rcan_ng6_nb12](#network_g_anyOf_i29)               |
+| [realplksr](#network_g_anyOf_i30)                   |
+| [scunet_aaf6aa](#network_g_anyOf_i31)               |
+| [spanplus](#network_g_anyOf_i32)                    |
+| [spanplus_sts](#network_g_anyOf_i33)                |
+| [spanplus_s](#network_g_anyOf_i34)                  |
+| [spanplus_st](#network_g_anyOf_i35)                 |
+| [compact](#network_g_anyOf_i36)                     |
+| [ultracompact](#network_g_anyOf_i37)                |
+| [superultracompact](#network_g_anyOf_i38)           |
+| [tscunet](#network_g_anyOf_i39)                     |
+| [atd](#network_g_anyOf_i40)                         |
+| [atd_light](#network_g_anyOf_i41)                   |
+| [dat](#network_g_anyOf_i42)                         |
+| [dat_s](#network_g_anyOf_i43)                       |
+| [dat_2](#network_g_anyOf_i44)                       |
+| [dat_light](#network_g_anyOf_i45)                   |
+| [drct](#network_g_anyOf_i46)                        |
+| [drct_l](#network_g_anyOf_i47)                      |
+| [drct_xl](#network_g_anyOf_i48)                     |
+| [hat](#network_g_anyOf_i49)                         |
+| [hat_l](#network_g_anyOf_i50)                       |
+| [hat_m](#network_g_anyOf_i51)                       |
+| [hat_s](#network_g_anyOf_i52)                       |
+| [omnisr](#network_g_anyOf_i53)                      |
+| [plksr](#network_g_anyOf_i54)                       |
+| [plksr_tiny](#network_g_anyOf_i55)                  |
+| [realcugan](#network_g_anyOf_i56)                   |
+| [rgt](#network_g_anyOf_i57)                         |
+| [rgt_s](#network_g_anyOf_i58)                       |
+| [esrgan](#network_g_anyOf_i59)                      |
+| [esrgan_lite](#network_g_anyOf_i60)                 |
+| [span](#network_g_anyOf_i61)                        |
+| [srformer](#network_g_anyOf_i62)                    |
+| [srformer_light](#network_g_anyOf_i63)              |
+| [swin2sr](#network_g_anyOf_i64)                     |
+| [swin2sr_l](#network_g_anyOf_i65)                   |
+| [swin2sr_m](#network_g_anyOf_i66)                   |
+| [swin2sr_s](#network_g_anyOf_i67)                   |
+| [swinir](#network_g_anyOf_i68)                      |
+| [swinir_l](#network_g_anyOf_i69)                    |
+| [swinir_m](#network_g_anyOf_i70)                    |
+| [swinir_s](#network_g_anyOf_i71)                    |
 
 ### <a name="network_g_anyOf_i0"></a>5.1. Property `ReduxOptions > network_g > anyOf > artcnn`
 
@@ -2648,30 +2655,33 @@ Must be one of:
 Must be one of:
 * "mosr_t"
 
-### <a name="network_g_anyOf_i27"></a>5.28. Property `ReduxOptions > network_g > anyOf > rcancab`
+### <a name="network_g_anyOf_i27"></a>5.28. Property `ReduxOptions > network_g > anyOf > rcanmsrb`
 
-**Title:** rcancab
+**Title:** rcanmsrb
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `object`         |
 | **Required**              | No               |
 | **Additional properties** | Any type allowed |
-| **Defined in**            | #/$defs/rcancab  |
+| **Defined in**            | #/$defs/rcanmsrb |
 
-| Property                                           | Pattern | Type             | Deprecated | Definition | Title/Description |
-| -------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i27_type )               | No      | enum (of string) | No         | -          | -                 |
-| - [scale](#network_g_anyOf_i27_scale )             | No      | integer          | No         | -          | -                 |
-| - [n_resgroups](#network_g_anyOf_i27_n_resgroups ) | No      | integer          | No         | -          | -                 |
-| - [n_resblocks](#network_g_anyOf_i27_n_resblocks ) | No      | integer          | No         | -          | -                 |
-| - [n_feats](#network_g_anyOf_i27_n_feats )         | No      | integer          | No         | -          | -                 |
-| - [n_colors](#network_g_anyOf_i27_n_colors )       | No      | integer          | No         | -          | -                 |
-| - [kernel_size](#network_g_anyOf_i27_kernel_size ) | No      | integer          | No         | -          | -                 |
-| - [reduction](#network_g_anyOf_i27_reduction )     | No      | integer          | No         | -          | -                 |
-| - [res_scale](#network_g_anyOf_i27_res_scale )     | No      | number           | No         | -          | -                 |
+| Property                                                         | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ---------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [type](#network_g_anyOf_i27_type )                             | No      | enum (of string) | No         | -          | -                 |
+| - [scale](#network_g_anyOf_i27_scale )                           | No      | integer          | No         | -          | -                 |
+| - [n_resgroups](#network_g_anyOf_i27_n_resgroups )               | No      | integer          | No         | -          | -                 |
+| - [n_resblocks](#network_g_anyOf_i27_n_resblocks )               | No      | integer          | No         | -          | -                 |
+| - [n_feats](#network_g_anyOf_i27_n_feats )                       | No      | integer          | No         | -          | -                 |
+| - [n_colors](#network_g_anyOf_i27_n_colors )                     | No      | integer          | No         | -          | -                 |
+| - [rgb_range](#network_g_anyOf_i27_rgb_range )                   | No      | integer          | No         | -          | -                 |
+| - [kernel_size](#network_g_anyOf_i27_kernel_size )               | No      | integer          | No         | -          | -                 |
+| - [reduction](#network_g_anyOf_i27_reduction )                   | No      | integer          | No         | -          | -                 |
+| - [res_scale](#network_g_anyOf_i27_res_scale )                   | No      | number           | No         | -          | -                 |
+| - [mean_shift](#network_g_anyOf_i27_mean_shift )                 | No      | array of number  | No         | -          | -                 |
+| - [pixel_shuffle_msrb](#network_g_anyOf_i27_pixel_shuffle_msrb ) | No      | boolean          | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i27_type"></a>5.28.1. Property `ReduxOptions > network_g > anyOf > rcancab > type`
+#### <a name="network_g_anyOf_i27_type"></a>5.28.1. Property `ReduxOptions > network_g > anyOf > rcanmsrb > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2679,9 +2689,9 @@ Must be one of:
 | **Required** | Yes                |
 
 Must be one of:
-* "rcancab"
+* "rcanmsrb"
 
-#### <a name="network_g_anyOf_i27_scale"></a>5.28.2. Property `ReduxOptions > network_g > anyOf > rcancab > scale`
+#### <a name="network_g_anyOf_i27_scale"></a>5.28.2. Property `ReduxOptions > network_g > anyOf > rcanmsrb > scale`
 
 |              |           |
 | ------------ | --------- |
@@ -2689,7 +2699,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `4`       |
 
-#### <a name="network_g_anyOf_i27_n_resgroups"></a>5.28.3. Property `ReduxOptions > network_g > anyOf > rcancab > n_resgroups`
+#### <a name="network_g_anyOf_i27_n_resgroups"></a>5.28.3. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_resgroups`
 
 |              |           |
 | ------------ | --------- |
@@ -2697,7 +2707,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `10`      |
 
-#### <a name="network_g_anyOf_i27_n_resblocks"></a>5.28.4. Property `ReduxOptions > network_g > anyOf > rcancab > n_resblocks`
+#### <a name="network_g_anyOf_i27_n_resblocks"></a>5.28.4. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_resblocks`
 
 |              |           |
 | ------------ | --------- |
@@ -2705,7 +2715,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `20`      |
 
-#### <a name="network_g_anyOf_i27_n_feats"></a>5.28.5. Property `ReduxOptions > network_g > anyOf > rcancab > n_feats`
+#### <a name="network_g_anyOf_i27_n_feats"></a>5.28.5. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_feats`
 
 |              |           |
 | ------------ | --------- |
@@ -2713,7 +2723,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `64`      |
 
-#### <a name="network_g_anyOf_i27_n_colors"></a>5.28.6. Property `ReduxOptions > network_g > anyOf > rcancab > n_colors`
+#### <a name="network_g_anyOf_i27_n_colors"></a>5.28.6. Property `ReduxOptions > network_g > anyOf > rcanmsrb > n_colors`
 
 |              |           |
 | ------------ | --------- |
@@ -2721,7 +2731,15 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `3`       |
 
-#### <a name="network_g_anyOf_i27_kernel_size"></a>5.28.7. Property `ReduxOptions > network_g > anyOf > rcancab > kernel_size`
+#### <a name="network_g_anyOf_i27_rgb_range"></a>5.28.7. Property `ReduxOptions > network_g > anyOf > rcanmsrb > rgb_range`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `integer` |
+| **Required** | No        |
+| **Default**  | `255`     |
+
+#### <a name="network_g_anyOf_i27_kernel_size"></a>5.28.8. Property `ReduxOptions > network_g > anyOf > rcanmsrb > kernel_size`
 
 |              |           |
 | ------------ | --------- |
@@ -2729,7 +2747,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `3`       |
 
-#### <a name="network_g_anyOf_i27_reduction"></a>5.28.8. Property `ReduxOptions > network_g > anyOf > rcancab > reduction`
+#### <a name="network_g_anyOf_i27_reduction"></a>5.28.9. Property `ReduxOptions > network_g > anyOf > rcanmsrb > reduction`
 
 |              |           |
 | ------------ | --------- |
@@ -2737,13 +2755,48 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `16`      |
 
-#### <a name="network_g_anyOf_i27_res_scale"></a>5.28.9. Property `ReduxOptions > network_g > anyOf > rcancab > res_scale`
+#### <a name="network_g_anyOf_i27_res_scale"></a>5.28.10. Property `ReduxOptions > network_g > anyOf > rcanmsrb > res_scale`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
-| **Default**  | `1`      |
+| **Default**  | `8`      |
+
+#### <a name="network_g_anyOf_i27_mean_shift"></a>5.28.11. Property `ReduxOptions > network_g > anyOf > rcanmsrb > mean_shift`
+
+|              |                           |
+| ------------ | ------------------------- |
+| **Type**     | `array of number`         |
+| **Required** | No                        |
+| **Default**  | `[0.4488, 0.4371, 0.404]` |
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | N/A                |
+| **Max items**        | N/A                |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                           | Description |
+| --------------------------------------------------------- | ----------- |
+| [mean_shift items](#network_g_anyOf_i27_mean_shift_items) | -           |
+
+##### <a name="network_g_anyOf_i27_mean_shift_items"></a>5.28.11.1. ReduxOptions > network_g > anyOf > rcanmsrb > mean_shift > mean_shift items
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
+
+#### <a name="network_g_anyOf_i27_pixel_shuffle_msrb"></a>5.28.12. Property `ReduxOptions > network_g > anyOf > rcanmsrb > pixel_shuffle_msrb`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | No        |
+| **Default**  | `true`    |
 
 ### <a name="network_g_anyOf_i28"></a>5.29. Property `ReduxOptions > network_g > anyOf > rcan`
 
@@ -2851,7 +2904,32 @@ Must be one of:
 | **Required** | No       |
 | **Default**  | `1`      |
 
-### <a name="network_g_anyOf_i29"></a>5.30. Property `ReduxOptions > network_g > anyOf > realplksr`
+### <a name="network_g_anyOf_i29"></a>5.30. Property `ReduxOptions > network_g > anyOf > rcan_ng6_nb12`
+
+**Title:** rcan_ng6_nb12
+
+|                           |                       |
+| ------------------------- | --------------------- |
+| **Type**                  | `object`              |
+| **Required**              | No                    |
+| **Additional properties** | Any type allowed      |
+| **Defined in**            | #/$defs/rcan_ng6_nb12 |
+
+| Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
+| ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
+| + [type](#network_g_anyOf_i29_type ) | No      | enum (of string) | No         | -          | -                 |
+
+#### <a name="network_g_anyOf_i29_type"></a>5.30.1. Property `ReduxOptions > network_g > anyOf > rcan_ng6_nb12 > type`
+
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+Must be one of:
+* "rcan_ng6_nb12"
+
+### <a name="network_g_anyOf_i30"></a>5.31. Property `ReduxOptions > network_g > anyOf > realplksr`
 
 **Title:** realplksr
 
@@ -2864,9 +2942,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i29_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i30_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i29_type"></a>5.30.1. Property `ReduxOptions > network_g > anyOf > realplksr > type`
+#### <a name="network_g_anyOf_i30_type"></a>5.31.1. Property `ReduxOptions > network_g > anyOf > realplksr > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2876,7 +2954,7 @@ Must be one of:
 Must be one of:
 * "realplksr"
 
-### <a name="network_g_anyOf_i30"></a>5.31. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa`
+### <a name="network_g_anyOf_i31"></a>5.32. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa`
 
 **Title:** scunet_aaf6aa
 
@@ -2889,9 +2967,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i30_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i31_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i30_type"></a>5.31.1. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa > type`
+#### <a name="network_g_anyOf_i31_type"></a>5.32.1. Property `ReduxOptions > network_g > anyOf > scunet_aaf6aa > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2901,7 +2979,7 @@ Must be one of:
 Must be one of:
 * "scunet_aaf6aa"
 
-### <a name="network_g_anyOf_i31"></a>5.32. Property `ReduxOptions > network_g > anyOf > spanplus`
+### <a name="network_g_anyOf_i32"></a>5.33. Property `ReduxOptions > network_g > anyOf > spanplus`
 
 **Title:** spanplus
 
@@ -2914,9 +2992,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i31_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i32_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i31_type"></a>5.32.1. Property `ReduxOptions > network_g > anyOf > spanplus > type`
+#### <a name="network_g_anyOf_i32_type"></a>5.33.1. Property `ReduxOptions > network_g > anyOf > spanplus > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2926,7 +3004,7 @@ Must be one of:
 Must be one of:
 * "spanplus"
 
-### <a name="network_g_anyOf_i32"></a>5.33. Property `ReduxOptions > network_g > anyOf > spanplus_sts`
+### <a name="network_g_anyOf_i33"></a>5.34. Property `ReduxOptions > network_g > anyOf > spanplus_sts`
 
 **Title:** spanplus_sts
 
@@ -2939,9 +3017,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i32_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i33_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i32_type"></a>5.33.1. Property `ReduxOptions > network_g > anyOf > spanplus_sts > type`
+#### <a name="network_g_anyOf_i33_type"></a>5.34.1. Property `ReduxOptions > network_g > anyOf > spanplus_sts > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2951,7 +3029,7 @@ Must be one of:
 Must be one of:
 * "spanplus_sts"
 
-### <a name="network_g_anyOf_i33"></a>5.34. Property `ReduxOptions > network_g > anyOf > spanplus_s`
+### <a name="network_g_anyOf_i34"></a>5.35. Property `ReduxOptions > network_g > anyOf > spanplus_s`
 
 **Title:** spanplus_s
 
@@ -2964,9 +3042,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i33_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i34_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i33_type"></a>5.34.1. Property `ReduxOptions > network_g > anyOf > spanplus_s > type`
+#### <a name="network_g_anyOf_i34_type"></a>5.35.1. Property `ReduxOptions > network_g > anyOf > spanplus_s > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -2976,7 +3054,7 @@ Must be one of:
 Must be one of:
 * "spanplus_s"
 
-### <a name="network_g_anyOf_i34"></a>5.35. Property `ReduxOptions > network_g > anyOf > spanplus_st`
+### <a name="network_g_anyOf_i35"></a>5.36. Property `ReduxOptions > network_g > anyOf > spanplus_st`
 
 **Title:** spanplus_st
 
@@ -2989,9 +3067,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i34_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i35_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i34_type"></a>5.35.1. Property `ReduxOptions > network_g > anyOf > spanplus_st > type`
+#### <a name="network_g_anyOf_i35_type"></a>5.36.1. Property `ReduxOptions > network_g > anyOf > spanplus_st > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3001,7 +3079,7 @@ Must be one of:
 Must be one of:
 * "spanplus_st"
 
-### <a name="network_g_anyOf_i35"></a>5.36. Property `ReduxOptions > network_g > anyOf > compact`
+### <a name="network_g_anyOf_i36"></a>5.37. Property `ReduxOptions > network_g > anyOf > compact`
 
 **Title:** compact
 
@@ -3014,9 +3092,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i35_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i36_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i35_type"></a>5.36.1. Property `ReduxOptions > network_g > anyOf > compact > type`
+#### <a name="network_g_anyOf_i36_type"></a>5.37.1. Property `ReduxOptions > network_g > anyOf > compact > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3026,7 +3104,7 @@ Must be one of:
 Must be one of:
 * "compact"
 
-### <a name="network_g_anyOf_i36"></a>5.37. Property `ReduxOptions > network_g > anyOf > ultracompact`
+### <a name="network_g_anyOf_i37"></a>5.38. Property `ReduxOptions > network_g > anyOf > ultracompact`
 
 **Title:** ultracompact
 
@@ -3039,9 +3117,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i36_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i37_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i36_type"></a>5.37.1. Property `ReduxOptions > network_g > anyOf > ultracompact > type`
+#### <a name="network_g_anyOf_i37_type"></a>5.38.1. Property `ReduxOptions > network_g > anyOf > ultracompact > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3051,7 +3129,7 @@ Must be one of:
 Must be one of:
 * "ultracompact"
 
-### <a name="network_g_anyOf_i37"></a>5.38. Property `ReduxOptions > network_g > anyOf > superultracompact`
+### <a name="network_g_anyOf_i38"></a>5.39. Property `ReduxOptions > network_g > anyOf > superultracompact`
 
 **Title:** superultracompact
 
@@ -3064,9 +3142,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i37_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i38_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i37_type"></a>5.38.1. Property `ReduxOptions > network_g > anyOf > superultracompact > type`
+#### <a name="network_g_anyOf_i38_type"></a>5.39.1. Property `ReduxOptions > network_g > anyOf > superultracompact > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3076,7 +3154,7 @@ Must be one of:
 Must be one of:
 * "superultracompact"
 
-### <a name="network_g_anyOf_i38"></a>5.39. Property `ReduxOptions > network_g > anyOf > tscunet`
+### <a name="network_g_anyOf_i39"></a>5.40. Property `ReduxOptions > network_g > anyOf > tscunet`
 
 **Title:** tscunet
 
@@ -3089,9 +3167,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i38_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i39_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i38_type"></a>5.39.1. Property `ReduxOptions > network_g > anyOf > tscunet > type`
+#### <a name="network_g_anyOf_i39_type"></a>5.40.1. Property `ReduxOptions > network_g > anyOf > tscunet > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3101,7 +3179,7 @@ Must be one of:
 Must be one of:
 * "tscunet"
 
-### <a name="network_g_anyOf_i39"></a>5.40. Property `ReduxOptions > network_g > anyOf > atd`
+### <a name="network_g_anyOf_i40"></a>5.41. Property `ReduxOptions > network_g > anyOf > atd`
 
 **Title:** atd
 
@@ -3114,9 +3192,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i39_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i40_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i39_type"></a>5.40.1. Property `ReduxOptions > network_g > anyOf > atd > type`
+#### <a name="network_g_anyOf_i40_type"></a>5.41.1. Property `ReduxOptions > network_g > anyOf > atd > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3126,7 +3204,7 @@ Must be one of:
 Must be one of:
 * "atd"
 
-### <a name="network_g_anyOf_i40"></a>5.41. Property `ReduxOptions > network_g > anyOf > atd_light`
+### <a name="network_g_anyOf_i41"></a>5.42. Property `ReduxOptions > network_g > anyOf > atd_light`
 
 **Title:** atd_light
 
@@ -3139,9 +3217,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i40_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i41_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i40_type"></a>5.41.1. Property `ReduxOptions > network_g > anyOf > atd_light > type`
+#### <a name="network_g_anyOf_i41_type"></a>5.42.1. Property `ReduxOptions > network_g > anyOf > atd_light > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3151,7 +3229,7 @@ Must be one of:
 Must be one of:
 * "atd_light"
 
-### <a name="network_g_anyOf_i41"></a>5.42. Property `ReduxOptions > network_g > anyOf > dat`
+### <a name="network_g_anyOf_i42"></a>5.43. Property `ReduxOptions > network_g > anyOf > dat`
 
 **Title:** dat
 
@@ -3164,9 +3242,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i41_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i42_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i41_type"></a>5.42.1. Property `ReduxOptions > network_g > anyOf > dat > type`
+#### <a name="network_g_anyOf_i42_type"></a>5.43.1. Property `ReduxOptions > network_g > anyOf > dat > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3176,7 +3254,7 @@ Must be one of:
 Must be one of:
 * "dat"
 
-### <a name="network_g_anyOf_i42"></a>5.43. Property `ReduxOptions > network_g > anyOf > dat_s`
+### <a name="network_g_anyOf_i43"></a>5.44. Property `ReduxOptions > network_g > anyOf > dat_s`
 
 **Title:** dat_s
 
@@ -3189,9 +3267,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i42_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i43_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i42_type"></a>5.43.1. Property `ReduxOptions > network_g > anyOf > dat_s > type`
+#### <a name="network_g_anyOf_i43_type"></a>5.44.1. Property `ReduxOptions > network_g > anyOf > dat_s > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3201,7 +3279,7 @@ Must be one of:
 Must be one of:
 * "dat_s"
 
-### <a name="network_g_anyOf_i43"></a>5.44. Property `ReduxOptions > network_g > anyOf > dat_2`
+### <a name="network_g_anyOf_i44"></a>5.45. Property `ReduxOptions > network_g > anyOf > dat_2`
 
 **Title:** dat_2
 
@@ -3214,9 +3292,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i43_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i44_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i43_type"></a>5.44.1. Property `ReduxOptions > network_g > anyOf > dat_2 > type`
+#### <a name="network_g_anyOf_i44_type"></a>5.45.1. Property `ReduxOptions > network_g > anyOf > dat_2 > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3226,7 +3304,7 @@ Must be one of:
 Must be one of:
 * "dat_2"
 
-### <a name="network_g_anyOf_i44"></a>5.45. Property `ReduxOptions > network_g > anyOf > dat_light`
+### <a name="network_g_anyOf_i45"></a>5.46. Property `ReduxOptions > network_g > anyOf > dat_light`
 
 **Title:** dat_light
 
@@ -3239,9 +3317,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i44_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i45_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i44_type"></a>5.45.1. Property `ReduxOptions > network_g > anyOf > dat_light > type`
+#### <a name="network_g_anyOf_i45_type"></a>5.46.1. Property `ReduxOptions > network_g > anyOf > dat_light > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3251,7 +3329,7 @@ Must be one of:
 Must be one of:
 * "dat_light"
 
-### <a name="network_g_anyOf_i45"></a>5.46. Property `ReduxOptions > network_g > anyOf > drct`
+### <a name="network_g_anyOf_i46"></a>5.47. Property `ReduxOptions > network_g > anyOf > drct`
 
 **Title:** drct
 
@@ -3264,9 +3342,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i45_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i46_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i45_type"></a>5.46.1. Property `ReduxOptions > network_g > anyOf > drct > type`
+#### <a name="network_g_anyOf_i46_type"></a>5.47.1. Property `ReduxOptions > network_g > anyOf > drct > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3276,7 +3354,7 @@ Must be one of:
 Must be one of:
 * "drct"
 
-### <a name="network_g_anyOf_i46"></a>5.47. Property `ReduxOptions > network_g > anyOf > drct_l`
+### <a name="network_g_anyOf_i47"></a>5.48. Property `ReduxOptions > network_g > anyOf > drct_l`
 
 **Title:** drct_l
 
@@ -3289,9 +3367,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i46_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i47_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i46_type"></a>5.47.1. Property `ReduxOptions > network_g > anyOf > drct_l > type`
+#### <a name="network_g_anyOf_i47_type"></a>5.48.1. Property `ReduxOptions > network_g > anyOf > drct_l > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3301,7 +3379,7 @@ Must be one of:
 Must be one of:
 * "drct_l"
 
-### <a name="network_g_anyOf_i47"></a>5.48. Property `ReduxOptions > network_g > anyOf > drct_xl`
+### <a name="network_g_anyOf_i48"></a>5.49. Property `ReduxOptions > network_g > anyOf > drct_xl`
 
 **Title:** drct_xl
 
@@ -3314,9 +3392,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i47_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i48_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i47_type"></a>5.48.1. Property `ReduxOptions > network_g > anyOf > drct_xl > type`
+#### <a name="network_g_anyOf_i48_type"></a>5.49.1. Property `ReduxOptions > network_g > anyOf > drct_xl > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3326,7 +3404,7 @@ Must be one of:
 Must be one of:
 * "drct_xl"
 
-### <a name="network_g_anyOf_i48"></a>5.49. Property `ReduxOptions > network_g > anyOf > hat`
+### <a name="network_g_anyOf_i49"></a>5.50. Property `ReduxOptions > network_g > anyOf > hat`
 
 **Title:** hat
 
@@ -3339,9 +3417,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i48_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i49_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i48_type"></a>5.49.1. Property `ReduxOptions > network_g > anyOf > hat > type`
+#### <a name="network_g_anyOf_i49_type"></a>5.50.1. Property `ReduxOptions > network_g > anyOf > hat > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3351,7 +3429,7 @@ Must be one of:
 Must be one of:
 * "hat"
 
-### <a name="network_g_anyOf_i49"></a>5.50. Property `ReduxOptions > network_g > anyOf > hat_l`
+### <a name="network_g_anyOf_i50"></a>5.51. Property `ReduxOptions > network_g > anyOf > hat_l`
 
 **Title:** hat_l
 
@@ -3364,9 +3442,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i49_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i50_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i49_type"></a>5.50.1. Property `ReduxOptions > network_g > anyOf > hat_l > type`
+#### <a name="network_g_anyOf_i50_type"></a>5.51.1. Property `ReduxOptions > network_g > anyOf > hat_l > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3376,7 +3454,7 @@ Must be one of:
 Must be one of:
 * "hat_l"
 
-### <a name="network_g_anyOf_i50"></a>5.51. Property `ReduxOptions > network_g > anyOf > hat_m`
+### <a name="network_g_anyOf_i51"></a>5.52. Property `ReduxOptions > network_g > anyOf > hat_m`
 
 **Title:** hat_m
 
@@ -3389,9 +3467,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i50_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i51_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i50_type"></a>5.51.1. Property `ReduxOptions > network_g > anyOf > hat_m > type`
+#### <a name="network_g_anyOf_i51_type"></a>5.52.1. Property `ReduxOptions > network_g > anyOf > hat_m > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3401,7 +3479,7 @@ Must be one of:
 Must be one of:
 * "hat_m"
 
-### <a name="network_g_anyOf_i51"></a>5.52. Property `ReduxOptions > network_g > anyOf > hat_s`
+### <a name="network_g_anyOf_i52"></a>5.53. Property `ReduxOptions > network_g > anyOf > hat_s`
 
 **Title:** hat_s
 
@@ -3414,9 +3492,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i51_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i52_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i51_type"></a>5.52.1. Property `ReduxOptions > network_g > anyOf > hat_s > type`
+#### <a name="network_g_anyOf_i52_type"></a>5.53.1. Property `ReduxOptions > network_g > anyOf > hat_s > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3426,7 +3504,7 @@ Must be one of:
 Must be one of:
 * "hat_s"
 
-### <a name="network_g_anyOf_i52"></a>5.53. Property `ReduxOptions > network_g > anyOf > omnisr`
+### <a name="network_g_anyOf_i53"></a>5.54. Property `ReduxOptions > network_g > anyOf > omnisr`
 
 **Title:** omnisr
 
@@ -3439,9 +3517,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i52_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i53_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i52_type"></a>5.53.1. Property `ReduxOptions > network_g > anyOf > omnisr > type`
+#### <a name="network_g_anyOf_i53_type"></a>5.54.1. Property `ReduxOptions > network_g > anyOf > omnisr > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3451,7 +3529,7 @@ Must be one of:
 Must be one of:
 * "omnisr"
 
-### <a name="network_g_anyOf_i53"></a>5.54. Property `ReduxOptions > network_g > anyOf > plksr`
+### <a name="network_g_anyOf_i54"></a>5.55. Property `ReduxOptions > network_g > anyOf > plksr`
 
 **Title:** plksr
 
@@ -3464,9 +3542,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i53_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i54_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i53_type"></a>5.54.1. Property `ReduxOptions > network_g > anyOf > plksr > type`
+#### <a name="network_g_anyOf_i54_type"></a>5.55.1. Property `ReduxOptions > network_g > anyOf > plksr > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3476,7 +3554,7 @@ Must be one of:
 Must be one of:
 * "plksr"
 
-### <a name="network_g_anyOf_i54"></a>5.55. Property `ReduxOptions > network_g > anyOf > plksr_tiny`
+### <a name="network_g_anyOf_i55"></a>5.56. Property `ReduxOptions > network_g > anyOf > plksr_tiny`
 
 **Title:** plksr_tiny
 
@@ -3489,9 +3567,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i54_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i55_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i54_type"></a>5.55.1. Property `ReduxOptions > network_g > anyOf > plksr_tiny > type`
+#### <a name="network_g_anyOf_i55_type"></a>5.56.1. Property `ReduxOptions > network_g > anyOf > plksr_tiny > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3501,7 +3579,7 @@ Must be one of:
 Must be one of:
 * "plksr_tiny"
 
-### <a name="network_g_anyOf_i55"></a>5.56. Property `ReduxOptions > network_g > anyOf > realcugan`
+### <a name="network_g_anyOf_i56"></a>5.57. Property `ReduxOptions > network_g > anyOf > realcugan`
 
 **Title:** realcugan
 
@@ -3514,9 +3592,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i55_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i56_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i55_type"></a>5.56.1. Property `ReduxOptions > network_g > anyOf > realcugan > type`
+#### <a name="network_g_anyOf_i56_type"></a>5.57.1. Property `ReduxOptions > network_g > anyOf > realcugan > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3526,7 +3604,7 @@ Must be one of:
 Must be one of:
 * "realcugan"
 
-### <a name="network_g_anyOf_i56"></a>5.57. Property `ReduxOptions > network_g > anyOf > rgt`
+### <a name="network_g_anyOf_i57"></a>5.58. Property `ReduxOptions > network_g > anyOf > rgt`
 
 **Title:** rgt
 
@@ -3539,9 +3617,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i56_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i57_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i56_type"></a>5.57.1. Property `ReduxOptions > network_g > anyOf > rgt > type`
+#### <a name="network_g_anyOf_i57_type"></a>5.58.1. Property `ReduxOptions > network_g > anyOf > rgt > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3551,7 +3629,7 @@ Must be one of:
 Must be one of:
 * "rgt"
 
-### <a name="network_g_anyOf_i57"></a>5.58. Property `ReduxOptions > network_g > anyOf > rgt_s`
+### <a name="network_g_anyOf_i58"></a>5.59. Property `ReduxOptions > network_g > anyOf > rgt_s`
 
 **Title:** rgt_s
 
@@ -3564,9 +3642,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i57_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i58_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i57_type"></a>5.58.1. Property `ReduxOptions > network_g > anyOf > rgt_s > type`
+#### <a name="network_g_anyOf_i58_type"></a>5.59.1. Property `ReduxOptions > network_g > anyOf > rgt_s > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3576,7 +3654,7 @@ Must be one of:
 Must be one of:
 * "rgt_s"
 
-### <a name="network_g_anyOf_i58"></a>5.59. Property `ReduxOptions > network_g > anyOf > esrgan`
+### <a name="network_g_anyOf_i59"></a>5.60. Property `ReduxOptions > network_g > anyOf > esrgan`
 
 **Title:** esrgan
 
@@ -3589,9 +3667,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i58_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i59_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i58_type"></a>5.59.1. Property `ReduxOptions > network_g > anyOf > esrgan > type`
+#### <a name="network_g_anyOf_i59_type"></a>5.60.1. Property `ReduxOptions > network_g > anyOf > esrgan > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3601,7 +3679,7 @@ Must be one of:
 Must be one of:
 * "esrgan"
 
-### <a name="network_g_anyOf_i59"></a>5.60. Property `ReduxOptions > network_g > anyOf > esrgan_lite`
+### <a name="network_g_anyOf_i60"></a>5.61. Property `ReduxOptions > network_g > anyOf > esrgan_lite`
 
 **Title:** esrgan_lite
 
@@ -3614,9 +3692,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i59_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i60_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i59_type"></a>5.60.1. Property `ReduxOptions > network_g > anyOf > esrgan_lite > type`
+#### <a name="network_g_anyOf_i60_type"></a>5.61.1. Property `ReduxOptions > network_g > anyOf > esrgan_lite > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3626,7 +3704,7 @@ Must be one of:
 Must be one of:
 * "esrgan_lite"
 
-### <a name="network_g_anyOf_i60"></a>5.61. Property `ReduxOptions > network_g > anyOf > span`
+### <a name="network_g_anyOf_i61"></a>5.62. Property `ReduxOptions > network_g > anyOf > span`
 
 **Title:** span
 
@@ -3639,9 +3717,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i60_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i61_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i60_type"></a>5.61.1. Property `ReduxOptions > network_g > anyOf > span > type`
+#### <a name="network_g_anyOf_i61_type"></a>5.62.1. Property `ReduxOptions > network_g > anyOf > span > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3651,7 +3729,7 @@ Must be one of:
 Must be one of:
 * "span"
 
-### <a name="network_g_anyOf_i61"></a>5.62. Property `ReduxOptions > network_g > anyOf > srformer`
+### <a name="network_g_anyOf_i62"></a>5.63. Property `ReduxOptions > network_g > anyOf > srformer`
 
 **Title:** srformer
 
@@ -3664,9 +3742,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i61_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i62_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i61_type"></a>5.62.1. Property `ReduxOptions > network_g > anyOf > srformer > type`
+#### <a name="network_g_anyOf_i62_type"></a>5.63.1. Property `ReduxOptions > network_g > anyOf > srformer > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3676,7 +3754,7 @@ Must be one of:
 Must be one of:
 * "srformer"
 
-### <a name="network_g_anyOf_i62"></a>5.63. Property `ReduxOptions > network_g > anyOf > srformer_light`
+### <a name="network_g_anyOf_i63"></a>5.64. Property `ReduxOptions > network_g > anyOf > srformer_light`
 
 **Title:** srformer_light
 
@@ -3689,9 +3767,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i62_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i63_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i62_type"></a>5.63.1. Property `ReduxOptions > network_g > anyOf > srformer_light > type`
+#### <a name="network_g_anyOf_i63_type"></a>5.64.1. Property `ReduxOptions > network_g > anyOf > srformer_light > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3701,7 +3779,7 @@ Must be one of:
 Must be one of:
 * "srformer_light"
 
-### <a name="network_g_anyOf_i63"></a>5.64. Property `ReduxOptions > network_g > anyOf > swin2sr`
+### <a name="network_g_anyOf_i64"></a>5.65. Property `ReduxOptions > network_g > anyOf > swin2sr`
 
 **Title:** swin2sr
 
@@ -3714,9 +3792,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i63_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i64_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i63_type"></a>5.64.1. Property `ReduxOptions > network_g > anyOf > swin2sr > type`
+#### <a name="network_g_anyOf_i64_type"></a>5.65.1. Property `ReduxOptions > network_g > anyOf > swin2sr > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3726,7 +3804,7 @@ Must be one of:
 Must be one of:
 * "swin2sr"
 
-### <a name="network_g_anyOf_i64"></a>5.65. Property `ReduxOptions > network_g > anyOf > swin2sr_l`
+### <a name="network_g_anyOf_i65"></a>5.66. Property `ReduxOptions > network_g > anyOf > swin2sr_l`
 
 **Title:** swin2sr_l
 
@@ -3739,9 +3817,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i64_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i65_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i64_type"></a>5.65.1. Property `ReduxOptions > network_g > anyOf > swin2sr_l > type`
+#### <a name="network_g_anyOf_i65_type"></a>5.66.1. Property `ReduxOptions > network_g > anyOf > swin2sr_l > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3751,7 +3829,7 @@ Must be one of:
 Must be one of:
 * "swin2sr_l"
 
-### <a name="network_g_anyOf_i65"></a>5.66. Property `ReduxOptions > network_g > anyOf > swin2sr_m`
+### <a name="network_g_anyOf_i66"></a>5.67. Property `ReduxOptions > network_g > anyOf > swin2sr_m`
 
 **Title:** swin2sr_m
 
@@ -3764,9 +3842,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i65_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i66_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i65_type"></a>5.66.1. Property `ReduxOptions > network_g > anyOf > swin2sr_m > type`
+#### <a name="network_g_anyOf_i66_type"></a>5.67.1. Property `ReduxOptions > network_g > anyOf > swin2sr_m > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3776,7 +3854,7 @@ Must be one of:
 Must be one of:
 * "swin2sr_m"
 
-### <a name="network_g_anyOf_i66"></a>5.67. Property `ReduxOptions > network_g > anyOf > swin2sr_s`
+### <a name="network_g_anyOf_i67"></a>5.68. Property `ReduxOptions > network_g > anyOf > swin2sr_s`
 
 **Title:** swin2sr_s
 
@@ -3789,9 +3867,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i66_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i67_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i66_type"></a>5.67.1. Property `ReduxOptions > network_g > anyOf > swin2sr_s > type`
+#### <a name="network_g_anyOf_i67_type"></a>5.68.1. Property `ReduxOptions > network_g > anyOf > swin2sr_s > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3801,7 +3879,7 @@ Must be one of:
 Must be one of:
 * "swin2sr_s"
 
-### <a name="network_g_anyOf_i67"></a>5.68. Property `ReduxOptions > network_g > anyOf > swinir`
+### <a name="network_g_anyOf_i68"></a>5.69. Property `ReduxOptions > network_g > anyOf > swinir`
 
 **Title:** swinir
 
@@ -3814,9 +3892,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i67_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i68_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i67_type"></a>5.68.1. Property `ReduxOptions > network_g > anyOf > swinir > type`
+#### <a name="network_g_anyOf_i68_type"></a>5.69.1. Property `ReduxOptions > network_g > anyOf > swinir > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3826,7 +3904,7 @@ Must be one of:
 Must be one of:
 * "swinir"
 
-### <a name="network_g_anyOf_i68"></a>5.69. Property `ReduxOptions > network_g > anyOf > swinir_l`
+### <a name="network_g_anyOf_i69"></a>5.70. Property `ReduxOptions > network_g > anyOf > swinir_l`
 
 **Title:** swinir_l
 
@@ -3839,9 +3917,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i68_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i69_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i68_type"></a>5.69.1. Property `ReduxOptions > network_g > anyOf > swinir_l > type`
+#### <a name="network_g_anyOf_i69_type"></a>5.70.1. Property `ReduxOptions > network_g > anyOf > swinir_l > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3851,7 +3929,7 @@ Must be one of:
 Must be one of:
 * "swinir_l"
 
-### <a name="network_g_anyOf_i69"></a>5.70. Property `ReduxOptions > network_g > anyOf > swinir_m`
+### <a name="network_g_anyOf_i70"></a>5.71. Property `ReduxOptions > network_g > anyOf > swinir_m`
 
 **Title:** swinir_m
 
@@ -3864,9 +3942,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i69_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i70_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i69_type"></a>5.70.1. Property `ReduxOptions > network_g > anyOf > swinir_m > type`
+#### <a name="network_g_anyOf_i70_type"></a>5.71.1. Property `ReduxOptions > network_g > anyOf > swinir_m > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -3876,7 +3954,7 @@ Must be one of:
 Must be one of:
 * "swinir_m"
 
-### <a name="network_g_anyOf_i70"></a>5.71. Property `ReduxOptions > network_g > anyOf > swinir_s`
+### <a name="network_g_anyOf_i71"></a>5.72. Property `ReduxOptions > network_g > anyOf > swinir_s`
 
 **Title:** swinir_s
 
@@ -3889,9 +3967,9 @@ Must be one of:
 
 | Property                             | Pattern | Type             | Deprecated | Definition | Title/Description |
 | ------------------------------------ | ------- | ---------------- | ---------- | ---------- | ----------------- |
-| + [type](#network_g_anyOf_i70_type ) | No      | enum (of string) | No         | -          | -                 |
+| + [type](#network_g_anyOf_i71_type ) | No      | enum (of string) | No         | -          | -                 |
 
-#### <a name="network_g_anyOf_i70_type"></a>5.71.1. Property `ReduxOptions > network_g > anyOf > swinir_s > type`
+#### <a name="network_g_anyOf_i71_type"></a>5.72.1. Property `ReduxOptions > network_g > anyOf > swinir_s > type`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -4911,55 +4989,55 @@ Must be one of:
 | ------------------------- | ---------------------- |
 | **Type**                  | `object`               |
 | **Required**              | No                     |
-| **Additional properties** | Not allowed            |
+| **Additional properties** | Any type allowed       |
 | **Defined in**            | #/$defs/DatasetOptions |
 
-| Property                                                                         | Pattern | Type            | Deprecated | Definition | Title/Description                                                                                                                                                                                                                                                                           |
-| -------------------------------------------------------------------------------- | ------- | --------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| + [name](#datasets_additionalProperties_name )                                   | No      | string          | No         | -          | Name of the dataset. It should be unique compared to other datasets in this config, but the exact name isn't very important.                                                                                                                                                                |
-| + [type](#datasets_additionalProperties_type )                                   | No      | string          | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| + [io_backend](#datasets_additionalProperties_io_backend )                       | No      | object          | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [num_worker_per_gpu](#datasets_additionalProperties_num_worker_per_gpu )       | No      | Combination     | No         | -          | Number of subprocesses to use for data loading with PyTorch dataloader.                                                                                                                                                                                                                     |
-| - [batch_size_per_gpu](#datasets_additionalProperties_batch_size_per_gpu )       | No      | Combination     | No         | -          | Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP. A higher batch size, like 32 or 64 is more important when training from scratch, while smaller batches like 8 can be used when training with a quality pretrain model. |
-| - [accum_iter](#datasets_additionalProperties_accum_iter )                       | No      | integer         | No         | -          | Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.                                                |
-| - [use_hflip](#datasets_additionalProperties_use_hflip )                         | No      | boolean         | No         | -          | Randomly flip the images horizontally.                                                                                                                                                                                                                                                      |
-| - [use_rot](#datasets_additionalProperties_use_rot )                             | No      | boolean         | No         | -          | Randomly rotate the images.                                                                                                                                                                                                                                                                 |
-| - [mean](#datasets_additionalProperties_mean )                                   | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [std](#datasets_additionalProperties_std )                                     | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [gt_size](#datasets_additionalProperties_gt_size )                             | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [lq_size](#datasets_additionalProperties_lq_size )                             | No      | Combination     | No         | -          | During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.                                                               |
-| - [color](#datasets_additionalProperties_color )                                 | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [phase](#datasets_additionalProperties_phase )                                 | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [scale](#datasets_additionalProperties_scale )                                 | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [dataset_enlarge_ratio](#datasets_additionalProperties_dataset_enlarge_ratio ) | No      | Combination     | No         | -          | Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.                                                                                                                                                                   |
-| - [prefetch_mode](#datasets_additionalProperties_prefetch_mode )                 | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [pin_memory](#datasets_additionalProperties_pin_memory )                       | No      | boolean         | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [persistent_workers](#datasets_additionalProperties_persistent_workers )       | No      | boolean         | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [num_prefetch_queue](#datasets_additionalProperties_num_prefetch_queue )       | No      | integer         | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [prefetch_factor](#datasets_additionalProperties_prefetch_factor )             | No      | integer         | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [clip_size](#datasets_additionalProperties_clip_size )                         | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [dataroot_gt](#datasets_additionalProperties_dataroot_gt )                     | No      | Combination     | No         | -          | Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.                                                                                                                                                                            |
-| - [dataroot_lq](#datasets_additionalProperties_dataroot_lq )                     | No      | Combination     | No         | -          | Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.                                                                                                                                                                             |
-| - [meta_info](#datasets_additionalProperties_meta_info )                         | No      | Combination     | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [filename_tmpl](#datasets_additionalProperties_filename_tmpl )                 | No      | string          | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [blur_kernel_size](#datasets_additionalProperties_blur_kernel_size )           | No      | integer         | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [kernel_list](#datasets_additionalProperties_kernel_list )                     | No      | array of string | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [kernel_prob](#datasets_additionalProperties_kernel_prob )                     | No      | array of number | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [kernel_range](#datasets_additionalProperties_kernel_range )                   | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [sinc_prob](#datasets_additionalProperties_sinc_prob )                         | No      | number          | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [blur_sigma](#datasets_additionalProperties_blur_sigma )                       | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [betag_range](#datasets_additionalProperties_betag_range )                     | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [betap_range](#datasets_additionalProperties_betap_range )                     | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [blur_kernel_size2](#datasets_additionalProperties_blur_kernel_size2 )         | No      | integer         | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [kernel_list2](#datasets_additionalProperties_kernel_list2 )                   | No      | array of string | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [kernel_prob2](#datasets_additionalProperties_kernel_prob2 )                   | No      | array of number | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [kernel_range2](#datasets_additionalProperties_kernel_range2 )                 | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [sinc_prob2](#datasets_additionalProperties_sinc_prob2 )                       | No      | number          | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [blur_sigma2](#datasets_additionalProperties_blur_sigma2 )                     | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [betag_range2](#datasets_additionalProperties_betag_range2 )                   | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [betap_range2](#datasets_additionalProperties_betap_range2 )                   | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [final_sinc_prob](#datasets_additionalProperties_final_sinc_prob )             | No      | number          | No         | -          | -                                                                                                                                                                                                                                                                                           |
-| - [final_kernel_range](#datasets_additionalProperties_final_kernel_range )       | No      | array           | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| Property                                                                         | Pattern | Type             | Deprecated | Definition | Title/Description                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| + [name](#datasets_additionalProperties_name )                                   | No      | string           | No         | -          | Name of the dataset. It should be unique compared to other datasets in this config, but the exact name isn't very important.                                                                                                                                                                |
+| + [type](#datasets_additionalProperties_type )                                   | No      | enum (of string) | No         | -          | The type of dataset to use.                                                                                                                                                                                                                                                                 |
+| - [io_backend](#datasets_additionalProperties_io_backend )                       | No      | object           | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [num_worker_per_gpu](#datasets_additionalProperties_num_worker_per_gpu )       | No      | Combination      | No         | -          | Number of subprocesses to use for data loading with PyTorch dataloader.                                                                                                                                                                                                                     |
+| - [batch_size_per_gpu](#datasets_additionalProperties_batch_size_per_gpu )       | No      | Combination      | No         | -          | Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP. A higher batch size, like 32 or 64 is more important when training from scratch, while smaller batches like 8 can be used when training with a quality pretrain model. |
+| - [accum_iter](#datasets_additionalProperties_accum_iter )                       | No      | integer          | No         | -          | Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.                                                |
+| - [use_hflip](#datasets_additionalProperties_use_hflip )                         | No      | boolean          | No         | -          | Randomly flip the images horizontally.                                                                                                                                                                                                                                                      |
+| - [use_rot](#datasets_additionalProperties_use_rot )                             | No      | boolean          | No         | -          | Randomly rotate the images.                                                                                                                                                                                                                                                                 |
+| - [mean](#datasets_additionalProperties_mean )                                   | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [std](#datasets_additionalProperties_std )                                     | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [gt_size](#datasets_additionalProperties_gt_size )                             | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [lq_size](#datasets_additionalProperties_lq_size )                             | No      | Combination      | No         | -          | During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.                                                               |
+| - [color](#datasets_additionalProperties_color )                                 | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [phase](#datasets_additionalProperties_phase )                                 | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [scale](#datasets_additionalProperties_scale )                                 | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [dataset_enlarge_ratio](#datasets_additionalProperties_dataset_enlarge_ratio ) | No      | Combination      | No         | -          | Increase if the dataset is less than 1000 images to avoid slowdowns. Auto will automatically enlarge small datasets only.                                                                                                                                                                   |
+| - [prefetch_mode](#datasets_additionalProperties_prefetch_mode )                 | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [pin_memory](#datasets_additionalProperties_pin_memory )                       | No      | boolean          | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [persistent_workers](#datasets_additionalProperties_persistent_workers )       | No      | boolean          | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [num_prefetch_queue](#datasets_additionalProperties_num_prefetch_queue )       | No      | integer          | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [prefetch_factor](#datasets_additionalProperties_prefetch_factor )             | No      | integer          | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [clip_size](#datasets_additionalProperties_clip_size )                         | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [dataroot_gt](#datasets_additionalProperties_dataroot_gt )                     | No      | Combination      | No         | -          | Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.                                                                                                                                                                            |
+| - [dataroot_lq](#datasets_additionalProperties_dataroot_lq )                     | No      | Combination      | No         | -          | Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.                                                                                                                                                                             |
+| - [meta_info](#datasets_additionalProperties_meta_info )                         | No      | Combination      | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [filename_tmpl](#datasets_additionalProperties_filename_tmpl )                 | No      | string           | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [blur_kernel_size](#datasets_additionalProperties_blur_kernel_size )           | No      | integer          | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [kernel_list](#datasets_additionalProperties_kernel_list )                     | No      | array of string  | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [kernel_prob](#datasets_additionalProperties_kernel_prob )                     | No      | array of number  | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [kernel_range](#datasets_additionalProperties_kernel_range )                   | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [sinc_prob](#datasets_additionalProperties_sinc_prob )                         | No      | number           | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [blur_sigma](#datasets_additionalProperties_blur_sigma )                       | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [betag_range](#datasets_additionalProperties_betag_range )                     | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [betap_range](#datasets_additionalProperties_betap_range )                     | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [blur_kernel_size2](#datasets_additionalProperties_blur_kernel_size2 )         | No      | integer          | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [kernel_list2](#datasets_additionalProperties_kernel_list2 )                   | No      | array of string  | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [kernel_prob2](#datasets_additionalProperties_kernel_prob2 )                   | No      | array of number  | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [kernel_range2](#datasets_additionalProperties_kernel_range2 )                 | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [sinc_prob2](#datasets_additionalProperties_sinc_prob2 )                       | No      | number           | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [blur_sigma2](#datasets_additionalProperties_blur_sigma2 )                     | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [betag_range2](#datasets_additionalProperties_betag_range2 )                   | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [betap_range2](#datasets_additionalProperties_betap_range2 )                   | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [final_sinc_prob](#datasets_additionalProperties_final_sinc_prob )             | No      | number           | No         | -          | -                                                                                                                                                                                                                                                                                           |
+| - [final_kernel_range](#datasets_additionalProperties_final_kernel_range )       | No      | array            | No         | -          | -                                                                                                                                                                                                                                                                                           |
 
 #### <a name="datasets_additionalProperties_name"></a>54.1.1. Property `ReduxOptions > datasets > DatasetOptions > name`
 
@@ -4972,17 +5050,29 @@ Must be one of:
 
 #### <a name="datasets_additionalProperties_type"></a>54.1.2. Property `ReduxOptions > datasets > DatasetOptions > type`
 
-|              |          |
-| ------------ | -------- |
-| **Type**     | `string` |
-| **Required** | Yes      |
+|              |                    |
+| ------------ | ------------------ |
+| **Type**     | `enum (of string)` |
+| **Required** | Yes                |
+
+**Description:** The type of dataset to use.
+
+Must be one of:
+* "basedataset"
+* "oldpairedimagedataset"
+* "oldrealesrgandataset_traiNNer"
+* "pairedimagedataset"
+* "pairedvideodataset"
+* "realesrgandataset_traiNNer"
+* "realesrganpaireddataset_traiNNer"
+* "singleimagedataset"
 
 #### <a name="datasets_additionalProperties_io_backend"></a>54.1.3. Property `ReduxOptions > datasets > DatasetOptions > io_backend`
 
 |                           |                  |
 | ------------------------- | ---------------- |
 | **Type**                  | `object`         |
-| **Required**              | Yes              |
+| **Required**              | No               |
 | **Additional properties** | Any type allowed |
 
 #### <a name="datasets_additionalProperties_num_worker_per_gpu"></a>54.1.4. Property `ReduxOptions > datasets > DatasetOptions > num_worker_per_gpu`
@@ -7825,8 +7915,9 @@ Must be one of:
 Must be one of:
 * "charbonnier"
 * "fd"
-* "fd+l1pd"
+* "fd+l1"
 * "l1"
+* "pd"
 * "pd+l1"
 
 ###### <a name="train_losses_items_anyOf_i19_num_proj_fd"></a>55.8.1.20.7. Property `ReduxOptions > train > losses > losses items > anyOf > perceptualloss > num_proj_fd`
@@ -8980,4 +9071,4 @@ Must be one of:
 | **Default**  | `false`   |
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2024-12-19 at 08:05:25 -0500
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2024-12-19 at 13:24:40 -0500
