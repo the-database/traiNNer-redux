@@ -1,7 +1,7 @@
 import inspect
 import os
 from collections.abc import Callable
-from typing import Annotated, Literal, Union, get_type_hints
+from typing import Annotated, Union, get_type_hints
 
 from msgspec import Meta, Struct, defstruct, json
 from traiNNer.archs import ARCH_REGISTRY
@@ -34,11 +34,11 @@ def generate_registry_structs(registry: Registry) -> dict[str, type[Struct]]:
                     or hints[k] in exclude_types
                 )
             ]
-            fields.append(("type", Literal[name]))
+            # fields.append(("type", Literal[name]))
 
             # Dynamically create a Struct subclass
             print(name, fields)
-            struct = defstruct(name=name, fields=fields, tag=True, tag_field="kind")
+            struct = defstruct(name=name, fields=fields, tag=True)
             loss_structs[name] = struct
             # break  # TODO remove
         except Exception as e:

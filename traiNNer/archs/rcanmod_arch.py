@@ -45,55 +45,62 @@ class Upsampler(nn.Sequential):
         super().__init__(*m)
 
 
-class SpatialSELayer(nn.Module):
+class ChannelAttention(nn.Module):
+    """Channel attention used in RCAN.
+    Args:
+        num_feat (int): Channel number of intermediate features.
+        squeeze_factor (int): Channel squeeze factor. Default: 16.
     """
-    Re-implementation of SE block -- squeezing spatially and exciting channel-wise described in:
-        *Roy et al., Concurrent Spatial and Channel Squeeze & Excitation in Fully Convolutional Networks, MICCAI 2018*
-    """
 
-    def __init__(self, num_channels) -> None:
-        """
-
-        :param num_channels: No of input channels
-        """
-        super().__init__()
-        self.conv = nn.Conv2d(num_channels, 1, 1)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, input_tensor, weights=None):
-        """
-
-        :param weights: weights for few shot learning
-        :param input_tensor: X, shape = (batch_size, num_channels, H, W)
-        :return: output_tensor
-        """
-        # spatial squeeze
-        batch_size, channel, a, b = input_tensor.size()
-
-        if weights is not None:
-            weights = torch.mean(weights, dim=0)
-            weights = weights.view(1, channel, 1, 1)
-            out = F.conv2d(input_tensor, weights)
-        else:
-            out = self.conv(input_tensor)
-        squeeze_tensor = self.sigmoid(out)
-
-        # spatial excitation
-        # print("before", input_tensor.size(), squeeze_tensor.size())
-        squeeze_tensor = squeeze_tensor.view(batch_size, 1, a, b)
-        # print("after", input_tensor.size(), squeeze_tensor.size())
-        output_tensor = torch.mul(input_tensor, squeeze_tensor)
-        # output_tensor = torch.mul(input_tensor, squeeze_tensor)
-        return output_tensor
-
-
-class SSELayer(nn.Module):
-    def __init__(self, dim: int = 48) -> None:
-        super().__init__()
-        self.squeezing = nn.Sequential(nn.Conv2d(dim, 1, 1, 1, 0), nn.Hardsigmoid(True))
+    def __init__(self, num_feat, squeeze_factor=16):
+        super(ChannelAttention, self).__init__()
+        self.attention = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(num_feat, num_feat // squeeze_factor, 1, padding=0),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(num_feat // squeeze_factor, num_feat, 1, padding=0),
+            nn.Sigmoid(),
+        )
 
     def forward(self, x):
-        return x * self.squeezing(x)
+        y = self.attention(x)
+        return x * y
+
+
+class CAB(nn.Module):
+    def __init__(
+        self, num_feat, is_light_sr=False, compress_ratio=3, squeeze_factor=30
+    ):
+        super(CAB, self).__init__()
+        if is_light_sr:  # we use dilated-conv & DWConv for lightSR for a large ERF
+            compress_ratio = 2
+            self.cab = nn.Sequential(
+                nn.Conv2d(num_feat, num_feat // compress_ratio, 1, 1, 0),
+                nn.Conv2d(
+                    num_feat // compress_ratio,
+                    num_feat // compress_ratio,
+                    3,
+                    1,
+                    1,
+                    groups=num_feat // compress_ratio,
+                ),
+                nn.GELU(),
+                nn.Conv2d(num_feat // compress_ratio, num_feat, 1, 1, 0),
+                nn.Conv2d(
+                    num_feat, num_feat, 3, 1, padding=2, groups=num_feat, dilation=2
+                ),
+                ChannelAttention(num_feat, squeeze_factor),
+            )
+        else:
+            self.cab = nn.Sequential(
+                nn.Conv2d(num_feat, num_feat // compress_ratio, 3, 1, 1),
+                nn.GELU(),
+                nn.Conv2d(num_feat // compress_ratio, num_feat, 3, 1, 1),
+                ChannelAttention(num_feat, squeeze_factor),
+            )
+
+    def forward(self, x):
+        return self.cab(x)
 
 
 ## Residual Channel Attention Block (RCAB)
@@ -117,7 +124,7 @@ class RCAB(nn.Module):
                 modules_body.append(nn.BatchNorm2d(n_feat))
             if i == 0:
                 modules_body.append(act)
-        modules_body.append(SpatialSELayer(n_feat))
+        modules_body.append(CAB(n_feat))
         self.body = nn.Sequential(*modules_body)
         self.res_scale = res_scale
 
@@ -246,7 +253,7 @@ class ResidualGroup(nn.Module):
 
 @ARCH_REGISTRY.register()
 ## Residual Channel Attention Network (RCAN)
-class RCANSpatialSELayer(nn.Module):
+class RCANCAB(nn.Module):
     def __init__(
         self,
         scale: int = 4,
