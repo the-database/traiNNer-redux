@@ -75,11 +75,11 @@ VGG19_CHANNELS = [64, 128, 256, 512, 512]
 class PerceptualLoss(nn.Module):
     def __init__(
         self,
+        loss_weight: float,
         layer_weights: dict[str, float] | None = None,
         w_lambda: float = 0.01,
-        loss_weight: float = 1,
         alpha: list[float] | None = None,
-        criterion: Literal["pd+l1", "fd+l1" "pd", "fd", "charbonnier", "l1"] = "pd+l1",
+        criterion: Literal["pd+l1", "fd+l1", "pd", "fd", "charbonnier", "l1"] = "pd+l1",
         num_proj_fd: int = 256,
         phase_weight_fd: float = 1.0,
         stride_fd: int = 1,

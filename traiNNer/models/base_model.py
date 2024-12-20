@@ -57,6 +57,8 @@ class BaseModel:
         self.net_g_ema: AveragedModel | None = None
         self.net_d = None
         self.use_amp = False
+        self.use_channels_last = False
+        self.memory_format = torch.preserve_format
         self.amp_dtype = torch.float16
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
@@ -176,9 +178,7 @@ class BaseModel:
         assert isinstance(self.opt.num_gpu, int)
         net = net.to(
             self.device,
-            memory_format=torch.channels_last
-            if self.use_amp
-            else torch.contiguous_format,
+            memory_format=self.memory_format,
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
