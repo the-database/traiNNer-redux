@@ -119,7 +119,7 @@ class SRModel(BaseModel):
             if not gan_opt:
                 if self.opt.train.losses:
                     gan_opts = list(
-                        filter(lambda x: x["type"] == "GANLoss", self.opt.train.losses)
+                        filter(lambda x: x["type"] == "ganloss", self.opt.train.losses)
                     )
                     if gan_opts:
                         gan_opt = gan_opts[0]

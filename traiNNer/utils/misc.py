@@ -177,7 +177,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             if not gan_opt:
                 if opt.train.losses:
                     gan_opts = list(
-                        filter(lambda x: x["type"] == "GANLoss", opt.train.losses)
+                        filter(lambda x: x["type"] == "ganloss", opt.train.losses)
                     )
                     if gan_opts:
                         gan_opt = gan_opts[0]
