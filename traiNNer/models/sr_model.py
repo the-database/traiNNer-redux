@@ -119,7 +119,10 @@ class SRModel(BaseModel):
             if not gan_opt:
                 if self.opt.train.losses:
                     gan_opts = list(
-                        filter(lambda x: x["type"] == "ganloss", self.opt.train.losses)
+                        filter(
+                            lambda x: x["type"].lower() == "ganloss",
+                            self.opt.train.losses,
+                        )
                     )
                     if gan_opts:
                         gan_opt = gan_opts[0]
@@ -351,6 +354,7 @@ class SRModel(BaseModel):
             loss_dict = OrderedDict()
 
             for label, loss in self.losses.items():
+                print(label)
                 if label == "l_g_gan":
                     assert self.net_d is not None
                     fake_g_pred = self.net_d(self.output)
