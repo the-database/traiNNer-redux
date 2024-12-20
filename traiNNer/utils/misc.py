@@ -177,7 +177,10 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             if not gan_opt:
                 if opt.train.losses:
                     gan_opts = list(
-                        filter(lambda x: x["type"] == "ganloss", opt.train.losses)
+                        filter(
+                            lambda x: x["type"].lower() == "ganloss",
+                            opt.train.losses,
+                        )
                     )
                     if gan_opts:
                         gan_opt = gan_opts[0]
@@ -258,7 +261,7 @@ def underscore(word: str) -> str:
 
 
 def loss_type_to_label(loss_type: str) -> str:
-    label = loss_type.replace("HSLuvLoss", "HSLUVLoss")  # hack for HSLuv
-    label = underscore(label)
-    label = label.replace("_loss", "")
+    # label = loss_type.replace("HSLuvLoss", "HSLUVLoss")  # hack for HSLuv
+    # label = underscore(label)
+    label = loss_type.lower().replace("loss", "")
     return f"l_g_{label}"
