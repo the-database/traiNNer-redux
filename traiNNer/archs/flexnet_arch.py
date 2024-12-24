@@ -1,6 +1,6 @@
 import math
 from collections.abc import Callable, Sequence
-from typing import Literal, get_args
+from typing import Literal, Self, get_args
 
 import torch
 import torch.nn.functional as F  # noqa: N812
@@ -106,7 +106,6 @@ class OmniShift(nn.Module):
             groups=dim,
             bias=False,
         )
-        self.repram_flag = True
 
     def forward_train(self, x: Tensor) -> Tensor:
         out1x1 = self.conv1x1(x)
@@ -142,17 +141,17 @@ class OmniShift(nn.Module):
 
         self.conv5x5_reparam.weight = nn.Parameter(combined_weight)
 
+    def train(self, mode: bool = True) -> Self:
+        super().train(mode)
+        if not mode:
+            self.reparam_5x5()
+        return self
+
     def forward(self, x: Tensor) -> Tensor:
         if self.training:
-            self.repram_flag = True
             out = self.forward_train(x)
-        elif self.repram_flag:
-            self.reparam_5x5()
-            self.repram_flag = False
-            out = self.conv5x5_reparam(x)
         else:
             out = self.conv5x5_reparam(x)
-
         return out
 
 
