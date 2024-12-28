@@ -57,7 +57,7 @@ def parse_field(field_name: str, field_type: type, field_default: Any) -> str:
     if not type_name:
         return ""
 
-    default_value = field_default if field_default != msgspec.UNSET else "None"
+    # default_value = field_default if field_default != msgspec.UNSET else "None"
     parts = [f"- **{field_name}**"]
     desc = get_desc(field_type)
     if desc:
