@@ -16,6 +16,7 @@ documentation for details.
    :caption: Contents
 
    /index
+   /getting_started
    /training_guidelines
    /benchmarks
 
