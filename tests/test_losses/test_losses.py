@@ -139,7 +139,7 @@ class TestLosses:
         y = torch.randn((batch_size, num_channels, height, width), device=device)
 
         # Initialize both versions of the loss
-        perceptual_loss_fn = PerceptualLoss(criterion=criterion).to(device=device)  # type: ignore
+        perceptual_loss_fn = PerceptualLoss(1.0, criterion=criterion).to(device=device)  # type: ignore
 
         if "pd" in criterion or "fd" in criterion:
             # relu layer weights

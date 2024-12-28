@@ -16,12 +16,13 @@ EXCLUDE_ARCHS = {
     "dunet",
     "eimn",
     "hat",
-    "swinir",
-    "swin2sr",
     "lmlt",
-    "vggstylediscriminator",
+    "metagan2",
+    "swin2sr",
+    "swinir",
     "unetdiscriminatorsn_traiNNer",
     "vggfeatureextractor",
+    "vggstylediscriminator",
 }
 FILTERED_REGISTRY = [
     (name, arch)
