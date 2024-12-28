@@ -23,18 +23,32 @@ from traiNNer.losses.perceptual_loss import (
 )
 
 LOSS_FUNCTIONS = [
-    L1Loss(),
-    CharbonnierLoss(),
-    MSELoss(),
-    MSSIMLoss(cosim=False),
-    MSSIMLoss(cosim=True),
-    HSLuvLoss(criterion="charbonnier"),
-    ColorLoss(criterion="charbonnier"),
-    LumaLoss(criterion="charbonnier"),
-    PerceptualLoss(),
-    ADISTSLoss(),
-    DISTSLoss(),
-    LDLLoss(),
+    L1Loss(
+        1.0,
+    ),
+    CharbonnierLoss(
+        1.0,
+    ),
+    MSELoss(
+        1.0,
+    ),
+    MSSIMLoss(1.0, cosim=False),
+    MSSIMLoss(1.0, cosim=True),
+    HSLuvLoss(1.0, criterion="charbonnier"),
+    ColorLoss(1.0, criterion="charbonnier"),
+    LumaLoss(1.0, criterion="charbonnier"),
+    PerceptualLoss(
+        1.0,
+    ),
+    ADISTSLoss(
+        1.0,
+    ),
+    DISTSLoss(
+        1.0,
+    ),
+    LDLLoss(
+        1.0,
+    ),
 ]
 
 EPSILON = 1e-5  # torch.finfo(torch.float32).eps
@@ -125,7 +139,7 @@ class TestLosses:
         y = torch.randn((batch_size, num_channels, height, width), device=device)
 
         # Initialize both versions of the loss
-        perceptual_loss_fn = PerceptualLoss(criterion=criterion).to(device=device)  # type: ignore
+        perceptual_loss_fn = PerceptualLoss(1.0, criterion=criterion).to(device=device)  # type: ignore
 
         if "pd" in criterion or "fd" in criterion:
             # relu layer weights

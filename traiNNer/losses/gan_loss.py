@@ -136,7 +136,7 @@ class MultiScaleGANLoss(GANLoss):
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
     ) -> None:
-        super().__init__(gan_type, real_label_val, fake_label_val, loss_weight)
+        super().__init__(loss_weight, gan_type, real_label_val, fake_label_val)
 
     def forward(
         self, input: Tensor | list[Tensor], target_is_real: bool, is_disc: bool = False

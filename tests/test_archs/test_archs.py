@@ -16,12 +16,13 @@ EXCLUDE_ARCHS = {
     "dunet",
     "eimn",
     "hat",
-    "swinir",
-    "swin2sr",
     "lmlt",
-    "vggstylediscriminator",
+    "metagan2",
+    "swin2sr",
+    "swinir",
     "unetdiscriminatorsn_traiNNer",
     "vggfeatureextractor",
+    "vggstylediscriminator",
 }
 FILTERED_REGISTRY = [
     (name, arch)
@@ -230,7 +231,7 @@ class TestArchs:
         model = arch(scale=scale, **extra_arch_params).train().to(device, dtype=dtype)
 
         optimizer = torch.optim.AdamW(model.parameters())
-        loss_fn = L1Loss()
+        loss_fn = L1Loss(1.0)
 
         output = model(lq)
         assert output.shape == gt.shape

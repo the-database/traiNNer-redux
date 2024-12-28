@@ -25,6 +25,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
 |[LMLT](https://github.com/jwgdmkj/LMLT) | [MIT License](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)|
 |[MAN](https://github.com/icandle/MAN)| [Apache License 2.0](https://github.com/icandle/MAN/blob/main/LICENSE)|
+|[MetaGan](https://github.com/umzi2/MetaGan)| [MIT License](https://github.com/umzi2/MetaGan/blob/master/LICENSE)|
 |[MoESR](https://github.com/umzi2/MoESR)| [MIT License](https://github.com/umzi2/MoESR/blob/master/LICENSE)|
 |[MoSR](https://github.com/umzi2/MoSR) | [MIT License](https://github.com/umzi2/MoSR/blob/master/LICENSE)|
 |[mssim.pytorch](https://github.com/lartpang/mssim.pytorch) | [MIT License](https://github.com/lartpang/mssim.pytorch/blob/main/LICENSE)|

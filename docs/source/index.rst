@@ -13,9 +13,14 @@ documentation for details.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    /index
    /training_guidelines
-   /config_reference
    /benchmarks
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents
+
+   /config_reference

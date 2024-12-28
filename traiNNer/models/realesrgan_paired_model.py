@@ -32,8 +32,6 @@ class RealESRGANPairedModel(RealESRGANModel):
 
     @torch.no_grad()
     def feed_data(self, data: DataFeed) -> None:
-        gt_path = data["otf_gt_path"]  # type: ignore
-
         if RNG.get_rng().uniform() < self.dataroot_lq_prob:
             # paired feed data
             new_data = {
