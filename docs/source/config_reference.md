@@ -220,7 +220,11 @@
 
 
 
+### **clip_size**
 
+  Number of frames per clip in `PairedVideoDataset`. Must match the `clip_size` option for video generator networks such as `tscunet`.
+
+  Type: int
 ### **dataroot_gt**
 
   Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.
@@ -367,6 +371,23 @@
   The max number of iterations to save augmentation images for.
 
   Type: int
+## Scheduler options (`train.scheduler`)
+
+### **type**
+
+  Name of the optimizer scheduler to use for all optimizers. For a list of scheduler names, see the [PyTorch documentation](https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate).
+
+  Type: str
+### **milestones**
+
+  List of milestones, iterations where the learning rate is reduced.
+
+  Type: list
+### **gamma**
+
+  At each milestone, the learning rate is multiplied by this number, so a gamma of 0.5 cuts the learning rate in half at each milestone.
+
+  Type: float
 ## Validation options (`val`)
 
 ### **val_enabled**

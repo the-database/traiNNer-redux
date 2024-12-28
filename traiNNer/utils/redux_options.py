@@ -8,7 +8,12 @@ class StrictStruct(Struct, forbid_unknown_fields=True):
 
 
 class SchedulerOptions(StrictStruct):
-    type: str
+    type: Annotated[
+        str,
+        Meta(
+            description="Name of the optimizer scheduler to use for all optimizers. For a list of scheduler names, see the [PyTorch documentation](https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)."
+        ),
+    ]
     milestones: Annotated[
         list[int],
         Meta(
@@ -85,7 +90,12 @@ class DatasetOptions(StrictStruct):
     num_prefetch_queue: int = 1
     prefetch_factor: int = 2
 
-    clip_size: int | None = None
+    clip_size: Annotated[
+        int | None,
+        Meta(
+            description="Number of frames per clip in `PairedVideoDataset`. Must match the `clip_size` option for video generator networks such as `tscunet`."
+        ),
+    ] = None
 
     dataroot_gt: Annotated[
         str | list[str] | None,
