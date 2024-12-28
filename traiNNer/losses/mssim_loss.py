@@ -115,7 +115,7 @@ class MSSIMLoss(nn.Module):
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-        self.charbonnier = CharbonnierLoss()
+        self.charbonnier = CharbonnierLoss(1)
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
