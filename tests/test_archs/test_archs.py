@@ -230,7 +230,7 @@ class TestArchs:
         model = arch(scale=scale, **extra_arch_params).train().to(device, dtype=dtype)
 
         optimizer = torch.optim.AdamW(model.parameters())
-        loss_fn = L1Loss()
+        loss_fn = L1Loss(1.0)
 
         output = model(lq)
         assert output.shape == gt.shape

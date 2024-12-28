@@ -82,7 +82,7 @@ if __name__ == "__main__":
         label = f"{name} {format_extra_params(extra_arch_params)} {scale}x"
 
         try:
-            if "plksr" not in name:
+            if "realplksr" not in name:
                 continue
 
             net: nn.Module = arch(scale=scale, **extra_arch_params).eval().to("cuda")
@@ -93,8 +93,8 @@ if __name__ == "__main__":
             #     )["params"]
             # )
 
-            input_tensor = torch.randn((1, 3, 192, 192), device="cuda")
-            criterion = L1Loss()
+            input_tensor = torch.randn((2, 3, 192, 192), device="cuda")
+            criterion = L1Loss(1.0)
 
             fp16_loss, bf16_loss = compare_precision(net, input_tensor, criterion)
             diff = abs(fp16_loss - bf16_loss)
