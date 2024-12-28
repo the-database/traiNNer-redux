@@ -12,7 +12,7 @@ documentation for details.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents
 
    /index
@@ -20,7 +20,7 @@ documentation for details.
    /benchmarks
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Reference
 
    /config_reference
