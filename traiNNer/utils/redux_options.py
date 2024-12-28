@@ -100,7 +100,12 @@ class DatasetOptions(StrictStruct):
         ),
     ] = None
     meta_info: str | None = None
-    filename_tmpl: str = "{}"
+    filename_tmpl: Annotated[
+        str,
+        Meta(
+            description="Filename template to use for LR images. Commonly used values might be `{}x2` or `{}x4`, which should be used if the LR dataset filename is in the format filename.png while the LR dataset filename is in the format `filename_x2.png` or `filename_x4.png`. This is common on some research datasets such as DIV2K or DF2K."
+        ),
+    ] = "{}"
 
     blur_kernel_size: int = 12
     kernel_list: list[str] = field(
@@ -155,16 +160,42 @@ class PathOptions(StrictStruct):
     visualization: str | None = None
     results_root: str | None = None
 
-    pretrain_network_g: str | None = None
+    pretrain_network_g: (
+        Annotated[
+            str,
+            Meta(
+                description="Path to the pretrain model for the generator. `pth` and `safetensors` formats are supported."
+            ),
+        ]
+        | None
+    ) = None
     pretrain_network_g_path: str | None = None
     param_key_g: str | None = None
-    strict_load_g: bool = True
+    strict_load_g: Annotated[
+        bool,
+        Meta(
+            description="Whether to load the pretrain model for the generator in strict mode. It should be enabled in most cases, unless you want to partially load a pretrain of a different scale or with slightly different hyperparameters."
+        ),
+    ] = True
     resume_state: str | None = None
     pretrain_network_g_ema: str | None = None
 
-    pretrain_network_d: str | None = None
+    pretrain_network_d: (
+        Annotated[
+            str,
+            Meta(
+                description="Path to the pretrain model for the discriminator. `pth` and `safetensors` formats are supported."
+            ),
+        ]
+        | None
+    ) = None
     param_key_d: str | None = None
-    strict_load_d: bool = True
+    strict_load_d: Annotated[
+        bool,
+        Meta(
+            description="Whether to load the pretrain model for the discriminator in strict mode. It should be enabled in most cases."
+        ),
+    ] = True
     ignore_resume_networks: list[str] | None = None
 
 
@@ -324,7 +355,7 @@ class ReduxOptions(StrictStruct):
     name: Annotated[
         str,
         Meta(
-            description="Name of the experiment. It should be a unique name. If you enable auto resume, any experiment with this name will be resumed instead of starting a new training run."
+            description="Name of the experiment. It should be a unique name if you want to run a new experiment. If you enable auto resume, the experiment with this name will be resumed instead of starting a new training run."
         ),
     ]
     scale: Annotated[
@@ -386,7 +417,7 @@ class ReduxOptions(StrictStruct):
     use_compile: Annotated[
         bool,
         Meta(
-            description="Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled."
+            description="Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it."
         ),
     ] = False
     detect_anomaly: Annotated[
@@ -419,7 +450,9 @@ class ReduxOptions(StrictStruct):
         Meta(description="Probability of using paired LR data instead of OTF LR data."),
     ] = 0
 
-    lq_usm: bool = False
+    lq_usm: Annotated[
+        bool, Meta(description="Whether to enable unsharp mask on the LQ image.")
+    ] = False
     lq_usm_radius_range: Annotated[
         tuple[int, int],
         Meta(
@@ -427,29 +460,67 @@ class ReduxOptions(StrictStruct):
         ),
     ] = (1, 25)
 
-    blur_prob: float = 0
-    resize_prob: list[float] = field(default_factory=lambda: [0.2, 0.7, 0.1])
-    resize_mode_list: list[str] = field(
-        default_factory=lambda: ["bilinear", "bicubic", "nearest-exact"]
+    blur_prob: Annotated[
+        float,
+        Meta(
+            description="Probability of applying the first blur to the LQ, between 0 and 1."
+        ),
+    ] = 0
+    resize_prob: Annotated[
+        list[float],
+        Meta(
+            description="List of 3 probabilities for the first resize which should add up to 1: the probability of upscaling, the probability of downscaling, and the probability of no resize."
+        ),
+    ] = field(default_factory=lambda: [0.2, 0.7, 0.1])
+    resize_mode_list: Annotated[
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        Meta(description="List of possible resize modes to use for the first resize."),
+    ] = field(
+        default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
     )
-    resize_mode_prob: list[float] = field(
-        default_factory=lambda: [0.3333, 0.3333, 0.3333]
-    )
-    resize_range: tuple[float, float] = (0.4, 1.5)
-    gaussian_noise_prob: float = 0
+    resize_mode_prob: Annotated[
+        list[float],
+        Meta(
+            description="List of probabilities for the first resize of selecting the corresponding resize mode in `resize_mode_list`."
+        ),
+    ] = field(default_factory=lambda: [0.25, 0.25, 0.25, 0.25])
+    resize_range: Annotated[
+        tuple[float, float],
+        Meta(
+            description="The resize range for the first resize, in the format `[min_resize, max_resize]`."
+        ),
+    ] = (0.4, 1.5)
+    gaussian_noise_prob: Annotated[
+        float,
+        Meta(
+            description="The probability of applying the first gaussian noise to the LQ, between 0 and 1."
+        ),
+    ] = 0
     noise_range: tuple[float, float] = (0, 0)
     poisson_scale_range: tuple[float, float] = (0, 0)
     gray_noise_prob: float = 0
-    jpeg_prob: float = 1
-    jpeg_range: tuple[float, float] = (75, 95)
+    jpeg_prob: Annotated[
+        float,
+        Meta(
+            description="The probability of applying the first JPEG degradation to the LQ, between 0 and 1."
+        ),
+    ] = 1
+    jpeg_range: Annotated[
+        tuple[float, float],
+        Meta(
+            description="The range of JPEG quality to apply for the first JPEG degradation, in the format `[min_quality, max_quality]`."
+        ),
+    ] = (75, 95)
 
     blur_prob2: float = 0
     resize_prob2: list[float] = field(default_factory=lambda: [0.3, 0.4, 0.3])
-    resize_mode_list2: list[str] = field(
-        default_factory=lambda: ["bilinear", "bicubic", "nearest-exact"]
+    resize_mode_list2: list[
+        Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]
+    ] = field(
+        default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
     )
     resize_mode_prob2: list[float] = field(
-        default_factory=lambda: [0.3333, 0.3333, 0.3333]
+        default_factory=lambda: [0.25, 0.25, 0.25, 0.25]
     )
     resize_range2: tuple[float, float] = (0.6, 1.2)
     gaussian_noise_prob2: float = 0
@@ -459,9 +530,9 @@ class ReduxOptions(StrictStruct):
     jpeg_prob2: float = 1
     jpeg_range2: list[float] = field(default_factory=lambda: [75, 95])
 
-    resize_mode_list3: list[str] = field(
-        default_factory=lambda: ["bilinear", "bicubic", "nearest-exact"]
-    )
+    resize_mode_list3: list[
+        Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]
+    ] = field(default_factory=lambda: ["bilinear", "bicubic", "nearest-exact"])
     resize_mode_prob3: list[float] = field(
         default_factory=lambda: [0.3333, 0.3333, 0.3333]
     )

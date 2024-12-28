@@ -5,16 +5,15 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
 project = "traiNNer-redux"
-copyright = "2024, the-database"
+copyright = "the-database"
 author = "the-database"
 release = "1.0.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx-jsonschema", "myst_parser"]
+extensions = ["myst_parser"]
 
 templates_path = ["_templates"]
 exclude_patterns = []
