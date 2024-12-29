@@ -1,3 +1,259 @@
+
+ /* Default (light) theme colors */
+ :root {
+  color-scheme: light dark;
+  --body-color: #404040;
+  --content-wrap-background-color: #efefef;
+  --content-background-color: #fcfcfc;
+  --logo-opacity: 1.0;
+
+  --navbar-background-color: #333f67;
+  --navbar-background-color-hover: #29355c;
+  --navbar-background-color-active: #212d51;
+  --navbar-current-background-color: #212d51;
+  --navbar-current-background-color-hover: #182343;
+  --navbar-current-background-color-active: #131e3b;
+  --navbar-category-active-color: rgba(255 115 129 / 10%);
+  --navbar-current-color: #f1f9ff;
+  --navbar-level-1-color: #c3e3ff;
+  --navbar-level-2-color: #b8d6f0;
+  --navbar-level-3-color: #a3c4e1;
+  --navbar-expand-base-color: #81a3c2;
+  --navbar-expand-hover-color: #c3e3ff;
+  --navbar-expand-active-color: #f1f9ff;
+  --navbar-dimmed-color: #a3c4e1;
+  --navbar-heading-color: #ff7381;
+  --navbar-scrollbar-color: #d45a66;
+  --navbar-scrollbar-hover-color: #b14550;
+  --navbar-scrollbar-active-color: #72383e;
+  --navbar-scrollbar-background: #131e2b;
+
+  --link-color: #2980b9;
+  --link-color-hover: #3091d1;
+  --link-color-active: #105078;
+  --link-color-visited: #9b59b6;
+  --class-reference-icon: url("data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtNS4wMjkgMWMtLjk5OS0uMDExLTIuMDA5LjMxMi0zLjAyOSAxdjdjMi4wMTctMS4zNTMgNC4wMTctMS4zMTQgNiAwIDEuOTgzLTEuMzE0IDMuOTgzLTEuMzUzIDYgMHYtN2MtMS4wMi0uNjg4LTIuMDMtMS4wMTEtMy4wMjktMS0uNjYyLjAwNy0xLjMxOC4xNzMtMS45NzEuNDYzdjQuNTM3aC0xdi00Yy0uOTgyLS42NDUtMS45NzEtLjk4OS0yLjk3MS0xem0tNS4wMjkgOXY2aDJjMS42NDYgMCAzLTEuMzU0IDMtM3MtMS4zNTQtMy0zLTN6bTUgM2MwIDEuNjQ2IDEuMzU0IDMgMyAzczMtMS4zNTQgMy0zLTEuMzU0LTMtMy0zLTMgMS4zNTQtMyAzem02IDBjMCAxLjY0NiAxLjM1NCAzIDMgM2gxdi0yaC0xYy0uNTQ5IDAtMS0uNDUxLTEtMXMuNDUxLTEgMS0xaDF2LTJoLTFjLTEuNjQ2IDAtMyAxLjM1NC0zIDN6bS05LTFjLjU0OSAwIDEgLjQ1MSAxIDFzLS40NTEgMS0xIDF6bTYgMGMuNTQ5IDAgMSAuNDUxIDEgMXMtLjQ1MSAxLTEgMS0xLS40NTEtMS0xIC40NTEtMSAxLTF6IiBmaWxsPSIjNDE0MTQxIiBmaWxsLW9wYWNpdHk9Ii41OSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PC9zdmc+Cg==");
+  --external-reference-icon: url("data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEyIiB3aWR0aD0iMTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjk4MGI5Ij48cGF0aCBkPSJtNy41IDcuMXYzLjRoLTZ2LTZoMy40Ii8+PHBhdGggZD0ibTUuNzY1IDFoNS4yMzV2NS4zOWwtMS41NzMgMS41NDctMS4zMS0xLjMxLTIuNzI0IDIuNzIzLTIuNjktMi42ODggMi44MS0yLjgwOC0xLjMxMy0xLjMxeiIvPjwvZz48L3N2Zz4K");
+
+  --hr-color: #e1e4e5;
+  --table-row-odd-background-color: #f3f6f6;
+  --code-background-color: #e9eae5;
+  --code-border-color: #e1e4e5;
+  --code-literal-color: #c03e41;
+  --input-background-color: #fcfcfc;
+  --input-focus-border-color: #5f8cff;
+
+  --tabs-background-color: #e1e4e5;
+  --tabs-selected-color: #a2a9ae;
+  --code-tabs-background-color: #e3ecd1;
+  --code-tabs-selected-color: #8a9378;
+
+  --classref-primary-color: #252525;
+  --classref-secondary-color: #616770;
+  --classref-setget-color: #56585b;
+
+  --search-input-background-color: #e6eef3; /* derived from --input-background-color */
+  --search-match-color: #2c6b96; /* derived from --link-color */
+  --search-match-background-color: #e3f2fd; /* derived from --link-color */
+  --search-active-color: #efefef;
+  --search-credits-background-color: #333f67; /* derived from --navbar-background-color */
+  --search-credits-color: #b3b3b3; /* derived from --footer-color */
+  --search-credits-link-color: #4392c5; /* derived from --link-color */
+
+  --search-odd-color: rgb(133 160 253 / 24%);
+  --search-even-color: rgb(202 209 239 / 30%);
+  --search-highlighted-color: rgb(255 205 0 / 25%);
+  --search-context-color: #6c6e72;
+
+  --highlight-background-color: #f5ffe1;
+  --highlight-background-emph-color: #dbe6c3;
+  --highlight-default-color: #404040;
+  --highlight-comment-color: #408090;
+  --highlight-keyword-color: #007020;
+  --highlight-keyword2-color: #902000;
+  --highlight-control-flow-keyword-color: #902060;
+  --highlight-number-color: #208050;
+  --highlight-decorator-color: #4070a0;
+  --highlight-type-color: #007020;
+  --highlight-type2-color: #0e84b5;
+  --highlight-function-color: #06287e;
+  --highlight-operator-color: #666666;
+  --highlight-string-color: #4070a0;
+
+  --copybtn-background-color: #f6f8fa;
+  --copybtn-background-color-hover: #f3f4f6;
+  --copybtn-border-color: #d5d8da;
+  --copybtn-border-color-hover: #d5d8da;
+  --copybtn-icon-color: #57606a;
+  --copybtn-icon-color-success: #1a7f37;
+  --copybtn-tooltip-background-color: #24292f;
+  --copybtn-box-shadow: 0 1px 0 rgba(27,31,36,0.04), inset 0 1px 0 rgba(255,255,255,0.25);
+  --copybtn-border-color-success: #2da44e;
+
+  --contribute-background-color: #d7dee8;
+  --contribute-text-color: #646e72;
+
+  --admonition-note-background-color: #e7f2fa;
+  --admonition-note-color: #404040;
+  --admonition-note-title-background-color: #6ab0de;
+  --admonition-note-title-color: #fff;
+  --admonition-attention-background-color: #ffedcc;
+  --admonition-attention-color: #404040;
+  --admonition-attention-title-background-color: #f0b37e;
+  --admonition-attention-title-color: #fff;
+  --admonition-danger-background-color: #fcf3f2;
+  --admonition-danger-color: #404040;
+  --admonition-danger-title-background-color: #e9a499;
+  --admonition-danger-title-color: #fff;
+  --admonition-tip-background-color: #dbfaf4;
+  --admonition-tip-color: #404040;
+  --admonition-tip-title-background-color: #1abc9c;
+  --admonition-tip-title-color: #fff;
+
+  --kbd-background-color: #fafbfc;
+  --kbd-outline-color: #d1d5da;
+  --kbd-shadow-color: #b0b7bf;
+  --kbd-text-color: #444d56;
+
+  --code-example-good-color: #3fb950;
+  --code-example-bad-color: #f85149;
+
+  --btn-neutral-background-color: #f3f6f6;
+  --btn-neutral-hover-background-color: #e5ebeb;
+  --footer-color: #808080;
+
+  --system-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --header-font-family: "Montserrat", var(--system-font-family);
+  --monospace-font-family: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, Courier, monospace;
+}
+
+/* Dark theme colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+      --body-color: rgba(255, 255, 255, 0.85);
+      --content-wrap-background-color: #202326;
+      --content-background-color: #2e3236;
+      /* Decrease the logo opacity when using the dark theme to be less distracting */
+      --logo-opacity: 0.85;
+
+      --navbar-background-color: #25282b;
+      --navbar-background-color-hover: #333639;
+      --navbar-background-color-active: #111417;
+      --navbar-current-background-color: #333639;
+      --navbar-current-background-color-hover: #44474a;
+      --navbar-current-background-color-active: #222528;
+      --navbar-category-active-color: rgba(238 115 129 / 10%);
+      --navbar-current-color: #fefefe;
+      --navbar-level-1-color: #ddd;
+      --navbar-level-2-color: #ccc;
+      --navbar-level-3-color: #bbb;
+      --navbar-expand-base-color: #80848e;
+      --navbar-expand-hover-color: #ccc;
+      --navbar-expand-active-color: #ddd;
+      --navbar-dimmed-color: #bbb;
+      --navbar-heading-color: #ee7381;
+      --navbar-scrollbar-color: #be5460;
+      --navbar-scrollbar-hover-color: #963e48;
+      --navbar-scrollbar-active-color: #5f3034;
+      --navbar-scrollbar-background: #1c1e21;
+
+      --link-color: #8cf;
+      --link-color-hover: #9df;
+      --link-color-active: #6ad;
+      --link-color-visited: #cb99f6;
+      --class-reference-icon: url("data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtNS4wMjkgMWMtLjk5OS0uMDExLTIuMDA5LjMxMi0zLjAyOSAxdjdjMi4wMTctMS4zNTMgNC4wMTctMS4zMTQgNiAwIDEuOTgzLTEuMzE0IDMuOTgzLTEuMzUzIDYgMHYtN2MtMS4wMi0uNjg4LTIuMDMtMS4wMTEtMy4wMjktMS0uNjYyLjAwNy0xLjMxOC4xNzMtMS45NzEuNDYzdjQuNTM3aC0xdi00Yy0uOTgyLS42NDUtMS45NzEtLjk4OS0yLjk3MS0xem0tNS4wMjkgOXY2aDJjMS42NDYgMCAzLTEuMzU0IDMtM3MtMS4zNTQtMy0zLTN6bTUgM2MwIDEuNjQ2IDEuMzU0IDMgMyAzczMtMS4zNTQgMy0zLTEuMzU0LTMtMy0zLTMgMS4zNTQtMyAzem02IDBjMCAxLjY0NiAxLjM1NCAzIDMgM2gxdi0yaC0xYy0uNTQ5IDAtMS0uNDUxLTEtMXMuNDUxLTEgMS0xaDF2LTJoLTFjLTEuNjQ2IDAtMyAxLjM1NC0zIDN6bS05LTFjLjU0OSAwIDEgLjQ1MSAxIDFzLS40NTEgMS0xIDF6bTYgMGMuNTQ5IDAgMSAuNDUxIDEgMXMtLjQ1MSAxLTEgMS0xLS40NTEtMS0xIC40NTEtMSAxLTF6IiBmaWxsPSIjYmZiZmJmIiBmaWxsLW9wYWNpdHk9Ii41OSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PC9zdmc+Cg==");
+      --external-reference-icon: url("data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEyIiB3aWR0aD0iMTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGNmIj48cGF0aCBkPSJtNy41IDcuMXYzLjRoLTZ2LTZoMy40Ii8+PHBhdGggZD0ibTUuNzY1IDFoNS4yMzV2NS4zOWwtMS41NzMgMS41NDctMS4zMS0xLjMxLTIuNzI0IDIuNzIzLTIuNjktMi42ODggMi44MS0yLjgwOC0xLjMxMy0xLjMxeiIvPjwvZz48L3N2Zz4K");
+
+      --hr-color: #555;
+      --table-row-odd-background-color: #3b3e41;
+      --code-background-color: #22252d;
+      --code-border-color: #505356;
+      --code-literal-color: #d68f8f;
+      --input-background-color: #333537;
+      --input-focus-border-color: #5f8cff;
+
+      --tabs-background-color: #434649;
+      --tabs-selected-color: #a2a9ae;
+      --code-tabs-background-color: #353c4c;
+      --code-tabs-selected-color: #5a657e;
+
+      --classref-primary-color: #e8e8e8;
+      --classref-secondary-color: #929598;
+      --classref-setget-color: #9e9fa0;
+
+      --search-input-background-color: #43464a; /* derived from --input-background-color */
+      --search-match-color: #52b4ff; /* derived from --link-color */
+      --search-match-background-color: #414c56; /* derived from --link-color */
+      --search-active-color: #202326;
+      --search-credits-background-color: #202123; /* derived from --navbar-background-color */
+      --search-credits-color: #6b6b6b; /* derived from --footer-color */
+      --search-credits-link-color: #628fb1; /* derived from --link-color */
+
+      --search-odd-color: #202326;
+      --search-even-color: #25282b;
+      --search-highlighted-color: rgb(255 205 0 / 16%);
+      --search-context-color: #aaa;
+
+      /* Colors taken from the Godot script editor with the Adaptive theme */
+      --highlight-background-color: #202531;
+      --highlight-background-emph-color: #2d3444;
+      --highlight-default-color: rgba(255, 255, 255, 0.85);
+      --highlight-comment-color: rgba(204, 206, 211, 0.5);
+      --highlight-keyword-color: #ff7085;
+      --highlight-keyword2-color: #42ffc2;
+      --highlight-control-flow-keyword-color: #ff8ccc;
+      --highlight-number-color: #a1ffe0;
+      --highlight-decorator-color: #ffb373;
+      --highlight-type-color: #8effda;
+      --highlight-type2-color: #c6ffed;
+      --highlight-function-color: #57b3ff;
+      --highlight-operator-color: #abc8ff;
+      --highlight-string-color: #ffeca1;
+
+      --copybtn-background-color: #2a303c;
+      --copybtn-background-color-hover: #3e4450;
+      --copybtn-border-color: #3e4450;
+      --copybtn-border-color-hover: #8b949e;
+      --copybtn-icon-color: #8b949e;
+      --copybtn-icon-color-success: #3fb950;
+      --copybtn-tooltip-background-color: #6e7681;
+      --copybtn-box-shadow: 0 0 transparent, 0 0 transparent;
+      --copybtn-border-color-success: #238636;
+
+      --contribute-background-color: #25282d;
+      --contribute-text-color: #7f939b;
+
+      --admonition-note-background-color: #303d4f;
+      --admonition-note-color: #bfeeff;
+      --admonition-note-title-background-color: #305070;
+      --admonition-note-title-color: #bfefff;
+      --admonition-attention-background-color: #444033;
+      --admonition-attention-color: #ffeeaf;
+      --admonition-attention-title-background-color: #665022;
+      --admonition-attention-title-color: #ffeeaf;
+      --admonition-danger-background-color: #433;
+      --admonition-danger-color: #fcc;
+      --admonition-danger-title-background-color: #633;
+      --admonition-danger-title-color: #fcc;
+      --admonition-tip-background-color: #28382d;
+      --admonition-tip-color: #dfd;
+      --admonition-tip-title-background-color: #336648;
+      --admonition-tip-title-color: #dfd;
+
+      --kbd-background-color: #595b5d;
+      --kbd-outline-color: #3d4144;
+      --kbd-shadow-color: #1e2023;
+      --kbd-text-color: #e2f2ff;
+
+      --code-example-good-color: #3fb950;
+      --code-example-bad-color: #f85149;
+
+      --btn-neutral-background-color: #404040;
+      --btn-neutral-hover-background-color: #505050;
+      --footer-color: #aaa;
+  }
+}
+
 div.wy-nav-content {
   max-width: 1200px;
 }
