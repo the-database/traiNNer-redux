@@ -154,7 +154,7 @@ class RealESRGANDataset(BaseDataset):
                 )
             )
         else:
-            img_gt = vips_img_gt.numpy()
+            img_gt = img2rgb(vips_img_gt.numpy())
 
         # ------------------------ Generate kernels (used in the first degradation) ------------------------ #
         kernel_size = random.choice(self.kernel_range)
