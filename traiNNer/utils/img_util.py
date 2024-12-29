@@ -49,8 +49,55 @@ def img2tensor(
         out = torch.from_numpy(img[None, ...])
 
     if float32:
-        out = out.float() / 255.0
+        out = tensor2float32(out)
     return out
+
+
+def tensor2float32(tensor: Tensor) -> Tensor:
+    """
+    Convert a PyTorch tensor to float32 and adjust the range correctly.
+
+    Args:
+        tensor (torch.Tensor): Input tensor.
+
+    Returns:
+        torch.Tensor: Tensor converted to float32.
+    """
+
+    if torch.is_floating_point(tensor):
+        tensor = tensor.clamp(0.0, 1.0)
+    elif torch.is_complex(tensor):
+        raise ValueError("Unsupported tensor dtype.", tensor.dtype)
+    else:
+        max_val = torch.iinfo(tensor.dtype).max
+        tensor = tensor.to(dtype=torch.float32)
+        tensor = tensor / max_val
+
+    return tensor
+
+
+def img2float32(image: np.ndarray) -> np.ndarray:
+    """
+    Convert a NumPy image to float32 and adjust the range correctly.
+
+    Args:
+        image (np.ndarray): Input image as a NumPy array.
+
+    Returns:
+        np.ndarray: Image converted to float32.
+    """
+
+    image = image.astype(np.float32)
+
+    if np.issubdtype(image.dtype, np.integer):
+        max_val = np.iinfo(image.dtype).max
+        image /= max_val
+    elif np.issubdtype(image.dtype, np.floating):
+        image = np.clip(image, 0.0, 1.0)
+    else:
+        raise ValueError("Unsupported image dtype.", image.dtype)
+
+    return image
 
 
 def imgs2tensors(

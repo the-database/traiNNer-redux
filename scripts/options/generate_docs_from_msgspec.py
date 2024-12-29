@@ -7,6 +7,7 @@ from traiNNer.utils.redux_options import (
     LogOptions,
     PathOptions,
     ReduxOptions,
+    SchedulerOptions,
     TrainOptions,
     ValOptions,
 )
@@ -20,7 +21,7 @@ def get_desc(field_type: type) -> str:
     return ""
 
 
-def type_to_str(field_type: type) -> str:
+def type_to_str(field_name: str, field_type: type) -> str:
     origin_type = get_origin(field_type)
     if origin_type is Annotated:
         args = get_args(field_type)
@@ -35,6 +36,7 @@ def type_to_str(field_type: type) -> str:
             return "Literal"
         else:
             return args[0].__name__
+    print("skip", field_name)
     # return field_type.__name__ if hasattr(field_type, "__name__") else str(field_type)
     return ""
 
@@ -52,8 +54,9 @@ def get_literal_options(field_type: type) -> str:
 
 def parse_field(field_name: str, field_type: type, field_default: Any) -> str:
     """Parses a single field and returns its markdown documentation."""
-    type_name = type_to_str(field_type)
-
+    if field_name == "clip_size":
+        print("no")
+    type_name = type_to_str(field_name, field_type)
     if not type_name:
         return ""
 
@@ -110,6 +113,9 @@ if __name__ == "__main__":
         fout.write(f"{generate_markdown_doc(PathOptions, "Path options (`path`)")}\n")
         fout.write(
             f"{generate_markdown_doc(TrainOptions, "Train options (`train`)")}\n"
+        )
+        fout.write(
+            f"{generate_markdown_doc(SchedulerOptions, "Scheduler options (`train.scheduler`)")}\n"
         )
         fout.write(
             f"{generate_markdown_doc(ValOptions, "Validation options (`val`)")}\n"

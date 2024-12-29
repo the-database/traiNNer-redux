@@ -9,7 +9,7 @@ from traiNNer.data.data_util import (
 )
 from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
 from traiNNer.utils import FileClient, imgs2tensors
-from traiNNer.utils.img_util import vipsimfrompath
+from traiNNer.utils.img_util import img2rgb, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -124,8 +124,8 @@ class PairedImageDataset(BaseDataset):
             assert isinstance(img_gt, np.ndarray)
             assert isinstance(img_lq, np.ndarray)
         else:
-            img_gt = vips_img_gt.numpy()
-            img_lq = vips_img_lq.numpy()
+            img_gt = img2rgb(vips_img_gt.numpy())
+            img_lq = img2rgb(vips_img_lq.numpy())
 
         # crop the unmatched GT images during validation or testing, especially for SR benchmark datasets
         # TODO: It is better to update the datasets, rather than force to crop

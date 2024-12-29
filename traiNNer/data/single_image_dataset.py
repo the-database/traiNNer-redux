@@ -6,7 +6,7 @@ from torchvision.transforms.functional import normalize
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_util import paths_from_lmdb
 from traiNNer.utils import FileClient, img2tensor, rgb2ycbcr, scandir
-from traiNNer.utils.img_util import vipsimfrompath
+from traiNNer.utils.img_util import img2rgb, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -70,7 +70,7 @@ class SingleImageDataset(BaseDataset):
 
         # load lq image
         lq_path = self.paths[index]
-        img_lq = vipsimfrompath(lq_path).numpy()
+        img_lq = img2rgb(vipsimfrompath(lq_path).numpy())
 
         # color space transform
         if self.opt.color == "y":
