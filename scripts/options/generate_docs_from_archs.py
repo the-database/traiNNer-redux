@@ -26,19 +26,24 @@ FILTERED_REGISTRY = [
 
 def function_to_markdown(func, header):
     # Start building the Markdown output
-    md = [f"## {header}", ""]
+    md = [f"### {header}", ""]
 
     try:
         sig = signature(func)
         md.append("")
         md.append("```")
+        md.append(f"type: {header}")
         for param_name, param in sig.parameters.items():
             pd = param.default
             print(header, param_name, pd)
+            if param_name == "scale":
+                continue
             if isinstance(pd, tuple):
                 pd = list(pd)
             elif isinstance(pd, bool):
                 pd = str(pd).lower()
+            elif pd is None:
+                pd = "~"
             if param_name == "self" or not is_json_compatible(pd):
                 continue
             param_doc = (
@@ -97,6 +102,7 @@ if __name__ == "__main__":
     output_path = "docs/source/arch_reference.md"
 
     with open(output_path, "w") as fout:
+        fout.write("# Architecture reference\n")
         for _, arch in FILTERED_REGISTRY:
             if inspect.isfunction(arch):
                 net = arch(scale=4)
@@ -104,7 +110,7 @@ if __name__ == "__main__":
             else:
                 cls = arch  # type: ignore
             if cls not in documented_archs:
-                fout.write(f"# {cls.__name__}\n")
+                fout.write(f"## {cls.__name__}\n")
             markdown = callable_to_markdown(arch, arch.__name__)
             fout.write(f"{markdown}\n")
             documented_archs.add(cls)

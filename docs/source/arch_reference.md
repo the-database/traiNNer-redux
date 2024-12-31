@@ -1,9 +1,10 @@
-# ATD
-## atd
+# Architecture reference
+## ATD
+### atd
 
 
 ```
-scale: 4
+type: atd
 in_chans: 3
 img_size: 96
 embed_dim: 210
@@ -19,11 +20,11 @@ mlp_ratio: 2
 upsampler: pixelshuffle
 resi_connection: 1conv
 ```
-## atd_light
+### atd_light
 
 
 ```
-scale: 4
+type: atd_light
 in_chans: 3
 img_size: 64
 embed_dim: 48
@@ -39,12 +40,12 @@ mlp_ratio: 1
 upsampler: pixelshuffledirect
 resi_connection: 1conv
 ```
-# DAT
-## dat
+## DAT
+### dat
 
 
 ```
-scale: 4
+type: dat
 in_chans: 3
 img_size: 64
 img_range: 1.0
@@ -55,18 +56,18 @@ num_heads: [6, 6, 6, 6, 6, 6]
 expansion_factor: 4
 resi_connection: 1conv
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 ```
-## dat_s
+### dat_s
 
 
 ```
-scale: 4
+type: dat_s
 in_chans: 3
 img_size: 64
 img_range: 1.0
@@ -77,18 +78,18 @@ num_heads: [6, 6, 6, 6, 6, 6]
 expansion_factor: 2
 resi_connection: 1conv
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 ```
-## dat_2
+### dat_2
 
 
 ```
-scale: 4
+type: dat_2
 in_chans: 3
 img_size: 64
 img_range: 1.0
@@ -99,18 +100,18 @@ num_heads: [6, 6, 6, 6, 6, 6]
 expansion_factor: 2
 resi_connection: 1conv
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 ```
-## dat_light
+### dat_light
 
 
 ```
-scale: 4
+type: dat_light
 in_chans: 3
 img_size: 64
 img_range: 1.0
@@ -121,19 +122,19 @@ num_heads: [6]
 expansion_factor: 2
 resi_connection: 3conv
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 ```
-# DRCT
-## drct
+## DRCT
+### drct
 
 
 ```
-scale: 4
+type: drct
 in_chans: 3
 img_size: 64
 window_size: 16
@@ -145,11 +146,11 @@ mlp_ratio: 2.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 ```
-## drct_l
+### drct_l
 
 
 ```
-scale: 4
+type: drct_l
 in_chans: 3
 img_size: 64
 window_size: 16
@@ -161,11 +162,11 @@ mlp_ratio: 2.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 ```
-## drct_xl
+### drct_xl
 
 
 ```
-scale: 4
+type: drct_xl
 in_chans: 3
 img_size: 64
 window_size: 16
@@ -177,12 +178,12 @@ mlp_ratio: 2.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 ```
-# HAT
-## hat_l
+## HAT
+### hat_l
 
 
 ```
-scale: 4
+type: hat_l
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -196,7 +197,7 @@ conv_scale: 0.01
 overlap_ratio: 0.5
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -208,11 +209,11 @@ upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
 ```
-## hat_m
+### hat_m
 
 
 ```
-scale: 4
+type: hat_m
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -226,7 +227,7 @@ conv_scale: 0.01
 overlap_ratio: 0.5
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -238,11 +239,11 @@ upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
 ```
-## hat_s
+### hat_s
 
 
 ```
-scale: 4
+type: hat_s
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -256,7 +257,7 @@ conv_scale: 0.01
 overlap_ratio: 0.5
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -268,12 +269,12 @@ upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
 ```
-# OmniSR
-## omnisr
+## OmniSR
+### omnisr
 
 
 ```
-scale: 4
+type: omnisr
 num_in_ch: 3
 num_out_ch: 3
 num_feat: 64
@@ -283,12 +284,12 @@ window_size: 8
 res_num: 1
 bias: true
 ```
-# PLKSR
-## plksr
+## PLKSR
+### plksr
 
 
 ```
-scale: 4
+type: plksr
 dim: 64
 n_blocks: 28
 ccm_type: DCCM
@@ -301,11 +302,11 @@ sparse_dilations: [1, 2, 3, 4]
 with_idt: false
 use_ea: true
 ```
-## plksr_tiny
+### plksr_tiny
 
 
 ```
-scale: 4
+type: plksr_tiny
 dim: 64
 n_blocks: 12
 ccm_type: DCCM
@@ -318,23 +319,23 @@ sparse_dilations: [1, 2, 3, 4]
 with_idt: false
 use_ea: false
 ```
-# UpCunet4x
-## realcugan
+## UpCunet4x
+### realcugan
 
 
 ```
-scale: 4
+type: realcugan
 pro: false
 fast: false
 in_channels: 3
 out_channels: 3
 ```
-# RGT
-## rgt
+## RGT
+### rgt
 
 
 ```
-scale: 4
+type: rgt
 img_size: 64
 in_chans: 3
 embed_dim: 180
@@ -342,7 +343,7 @@ depth: [6, 6, 6, 6, 6, 6, 6, 6]
 num_heads: [6, 6, 6, 6, 6, 6, 6, 6]
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -352,11 +353,11 @@ resi_connection: 1conv
 split_size: [8, 32]
 c_ratio: 0.5
 ```
-## rgt_s
+### rgt_s
 
 
 ```
-scale: 4
+type: rgt_s
 img_size: 64
 in_chans: 3
 embed_dim: 180
@@ -364,7 +365,7 @@ depth: [6, 6, 6, 6, 6, 6]
 num_heads: [6, 6, 6, 6, 6, 6]
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -374,45 +375,45 @@ resi_connection: 1conv
 split_size: [8, 32]
 c_ratio: 0.5
 ```
-# RRDBNet
-## esrgan
+## RRDBNet
+### esrgan
 
 
 ```
-scale: 4
+type: esrgan
 use_pixel_unshuffle: true
 in_nc: 3
 out_nc: 3
 num_filters: 64
 num_blocks: 23
 ```
-## esrgan_lite
+### esrgan_lite
 
 
 ```
-scale: 4
+type: esrgan_lite
 use_pixel_unshuffle: true
 ```
-# SPAN
-## span
+## SPAN
+### span
 
 
 ```
+type: span
 num_in_ch: 3
 num_out_ch: 3
 feature_channels: 48
-scale: 4
 bias: true
 norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
 ```
-# SRFormer
-## srformer
+## SRFormer
+### srformer
 
 
 ```
-scale: 4
+type: srformer
 img_size: 48
 patch_size: 1
 in_chans: 3
@@ -422,7 +423,7 @@ num_heads: [6, 6, 6, 6, 6, 6]
 window_size: 24
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -433,11 +434,11 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 ```
-## srformer_light
+### srformer_light
 
 
 ```
-scale: 4
+type: srformer_light
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -447,7 +448,7 @@ num_heads: [6, 6, 6, 6]
 window_size: 16
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -458,12 +459,12 @@ img_range: 1.0
 upsampler: pixelshuffledirect
 resi_connection: 1conv
 ```
-# Swin2SR
-## swin2sr_l
+## Swin2SR
+### swin2sr_l
 
 
 ```
-scale: 4
+type: swin2sr_l
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -483,11 +484,11 @@ img_range: 1.0
 upsampler: nearest+conv
 resi_connection: 3conv
 ```
-## swin2sr_m
+### swin2sr_m
 
 
 ```
-scale: 4
+type: swin2sr_m
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -507,11 +508,11 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 ```
-## swin2sr_s
+### swin2sr_s
 
 
 ```
-scale: 4
+type: swin2sr_s
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -531,12 +532,12 @@ img_range: 1.0
 upsampler: pixelshuffledirect
 resi_connection: 1conv
 ```
-# SwinIR
-## swinir_l
+## SwinIR
+### swinir_l
 
 
 ```
-scale: 4
+type: swinir_l
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -546,7 +547,7 @@ num_heads: [8, 8, 8, 8, 8, 8, 8, 8, 8]
 window_size: 8
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -558,11 +559,11 @@ upsampler: nearest+conv
 resi_connection: 3conv
 start_unshuffle: 1
 ```
-## swinir_m
+### swinir_m
 
 
 ```
-scale: 4
+type: swinir_m
 img_size: 48
 patch_size: 1
 in_chans: 3
@@ -572,7 +573,7 @@ num_heads: [6, 6, 6, 6, 6, 6]
 window_size: 8
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -584,11 +585,11 @@ upsampler: pixelshuffle
 resi_connection: 1conv
 start_unshuffle: 1
 ```
-## swinir_s
+### swinir_s
 
 
 ```
-scale: 4
+type: swinir_s
 img_size: 64
 patch_size: 1
 in_chans: 3
@@ -598,7 +599,7 @@ num_heads: [6, 6, 6, 6]
 window_size: 8
 mlp_ratio: 2.0
 qkv_bias: true
-qk_scale: None
+qk_scale: ~
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
@@ -610,34 +611,34 @@ upsampler: pixelshuffledirect
 resi_connection: 1conv
 start_unshuffle: 1
 ```
-# ArtCNN
-## artcnn_r16f96
+## ArtCNN
+### artcnn_r16f96
 
 
 ```
+type: artcnn_r16f96
 in_ch: 3
-scale: 4
 filters: 96
 n_block: 16
 kernel_size: 3
 ```
-## artcnn_r8f64
+### artcnn_r8f64
 
 
 ```
+type: artcnn_r8f64
 in_ch: 3
-scale: 4
 filters: 64
 n_block: 8
 kernel_size: 3
 ```
-# EIMN
-## eimn_l
+## EIMN
+### eimn_l
 
 
 ```
+type: eimn_l
 embed_dims: 64
-scale: 2
 depths: 1
 mlp_ratios: 2.66
 drop_rate: 0.0
@@ -645,12 +646,12 @@ drop_path_rate: 0.0
 num_stages: 16
 freeze_param: false
 ```
-## eimn_a
+### eimn_a
 
 
 ```
+type: eimn_a
 embed_dims: 64
-scale: 2
 depths: 1
 mlp_ratios: 2.66
 drop_rate: 0.0
@@ -658,14 +659,14 @@ drop_path_rate: 0.0
 num_stages: 14
 freeze_param: false
 ```
-# FlexNet
 ## FlexNet
+### FlexNet
 
 
 ```
+type: FlexNet
 inp_channels: 3
 out_channels: 3
-scale: 4
 dim: 64
 num_blocks: [6, 6, 6, 6, 6, 6]
 window_size: 8
@@ -676,13 +677,13 @@ proj_drop: 0.0
 pipeline_type: linear
 upsampler: pixelshuffle
 ```
-## metaflexnet
+### metaflexnet
 
 
 ```
+type: metaflexnet
 inp_channels: 3
 out_channels: 3
-scale: 4
 dim: 64
 num_blocks: [4, 6, 6, 8]
 window_size: 8
@@ -693,12 +694,12 @@ proj_drop: 0.0
 pipeline_type: meta
 upsampler: pixelshuffle
 ```
-# HiT_SIR
-## hit_sir
+## HiT_SIR
+### hit_sir
 
 
 ```
-scale: 4
+type: hit_sir
 in_chans: 3
 img_size: 64
 base_win_size: [8, 8]
@@ -711,12 +712,12 @@ resi_connection: 1conv
 hier_win_ratios: [0.5, 1, 2, 4, 6, 8]
 upsampler: pixelshuffledirect
 ```
-# HiT_SNG
-## hit_sng
+## HiT_SNG
+### hit_sng
 
 
 ```
-scale: 4
+type: hit_sng
 in_chans: 3
 img_size: 64
 base_win_size: [8, 8]
@@ -729,12 +730,12 @@ resi_connection: 1conv
 hier_win_ratios: [0.5, 1, 2, 4, 6, 8]
 upsampler: pixelshuffledirect
 ```
-# HiT_SRF
-## hit_srf
+## HiT_SRF
+### hit_srf
 
 
 ```
-scale: 4
+type: hit_srf
 in_chans: 3
 img_size: 64
 base_win_size: [8, 8]
@@ -747,79 +748,80 @@ resi_connection: 1conv
 hier_win_ratios: [0.5, 1, 2, 4, 6, 8]
 upsampler: pixelshuffledirect
 ```
-# LMLT
-## lmlt_base
+## LMLT
+### lmlt_base
 
 
 ```
+type: lmlt_base
 dim: 60
 n_blocks: 8
 ffn_scale: 2.0
-scale: 4
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.0
 ```
-## lmlt_large
+### lmlt_large
 
 
 ```
+type: lmlt_large
 dim: 84
 n_blocks: 8
 ffn_scale: 2.0
-scale: 4
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.0
 ```
-## lmlt_tiny
+### lmlt_tiny
 
 
 ```
+type: lmlt_tiny
 dim: 36
 n_blocks: 8
 ffn_scale: 2.0
-scale: 4
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.0
 ```
-# MAN
 ## MAN
+### MAN
 
 
 ```
+type: MAN
 n_resblocks: 36
 n_resgroups: 1
 n_colors: 3
 n_feats: 180
-scale: 2
 ```
-## man_tiny
+### man_tiny
 
 
 ```
+type: man_tiny
 n_resblocks: 5
 n_resgroups: 1
 n_colors: 3
 n_feats: 48
-scale: 2
 ```
-## man_light
+### man_light
 
 
 ```
+type: man_light
 n_resblocks: 24
 n_resgroups: 1
 n_colors: 3
 n_feats: 60
-scale: 2
 ```
-# MetaGan2
 ## MetaGan2
+### MetaGan2
 
 
 ```
+type: MetaGan2
 in_ch: 3
 n_class: 1
 dims: [48, 96, 192, 288]
@@ -828,14 +830,14 @@ downs: [4, 4, 2, 2]
 drop_path: 0.2
 end_drop: 0.4
 ```
-# MoESR2
 ## MoESR2
+### MoESR2
 
 
 ```
+type: MoESR2
 in_ch: 3
 out_ch: 3
-scale: 4
 dim: 64
 n_blocks: 9
 n_block: 4
@@ -844,12 +846,12 @@ expansion_msg: 1.5
 upsampler: pixelshuffledirect
 upsample_dim: 64
 ```
-# MoSR
-## mosr
+## MoSR
+### mosr
 
 
 ```
-scale: 4
+type: mosr
 in_ch: 3
 out_ch: 3
 n_block: 24
@@ -860,11 +862,11 @@ kernel_size: 7
 expansion_ratio: 1.5
 conv_ratio: 1.0
 ```
-## mosr_t
+### mosr_t
 
 
 ```
-scale: 4
+type: mosr_t
 in_ch: 3
 out_ch: 3
 n_block: 5
@@ -875,12 +877,12 @@ kernel_size: 7
 expansion_ratio: 1.5
 conv_ratio: 1.0
 ```
-# RCAN
 ## RCAN
+### RCAN
 
 
 ```
-scale: 4
+type: RCAN
 n_resgroups: 10
 n_resblocks: 20
 n_feats: 64
@@ -892,11 +894,11 @@ reduction: 16
 res_scale: 1
 act_mode: relu
 ```
-## rcan_b
+### rcan_b
 
 
 ```
-scale: 4
+type: rcan_b
 n_resgroups: 10
 n_resblocks: 20
 n_feats: 64
@@ -908,11 +910,11 @@ reduction: 1
 res_scale: 1
 act_mode: relu
 ```
-## rcan_b2
+### rcan_b2
 
 
 ```
-scale: 4
+type: rcan_b2
 n_resgroups: 6
 n_resblocks: 12
 n_feats: 64
@@ -924,16 +926,16 @@ reduction: 1
 res_scale: 1
 act_mode: relu
 ```
-# RealPLKSR
-## realplksr
+## RealPLKSR
+### realplksr
 
 
 ```
+type: realplksr
 in_ch: 3
 out_ch: 3
 dim: 64
 n_blocks: 28
-scale: 4
 kernel_size: 17
 split_ratio: 0.25
 use_ea: true
@@ -942,39 +944,39 @@ dropout: 0
 upsampler: pixelshuffle
 layer_norm: true
 ```
-# SCUNet_aaf6aa
 ## SCUNet_aaf6aa
+### SCUNet_aaf6aa
 
 
 ```
+type: SCUNet_aaf6aa
 in_nc: 3
 out_nc: 3
-config: None
+config: ~
 dim: 64
 drop_path_rate: 0.0
 input_resolution: 256
-scale: 1
 residual: true
-state: None
+state: ~
 ```
-# SpanPlus
-## spanplus
+## SpanPlus
+### spanplus
 
 
 ```
-scale: 4
+type: spanplus
 num_in_ch: 3
 num_out_ch: 3
-blocks: None
+blocks: ~
 feature_channels: 48
 drop_rate: 0.0
 upsampler: dys
 ```
-## spanplus_sts
+### spanplus_sts
 
 
 ```
-scale: 4
+type: spanplus_sts
 num_in_ch: 3
 num_out_ch: 3
 blocks: [2]
@@ -982,11 +984,11 @@ feature_channels: 32
 drop_rate: 0.0
 upsampler: ps
 ```
-## spanplus_s
+### spanplus_s
 
 
 ```
-scale: 4
+type: spanplus_s
 num_in_ch: 3
 num_out_ch: 3
 blocks: [2]
@@ -994,60 +996,61 @@ feature_channels: 32
 drop_rate: 0.0
 upsampler: dys
 ```
-## spanplus_st
+### spanplus_st
 
 
 ```
-scale: 4
+type: spanplus_st
 num_in_ch: 3
 num_out_ch: 3
-blocks: None
+blocks: ~
 feature_channels: 48
 drop_rate: 0.0
 upsampler: ps
 ```
-# SRVGGNetCompact
-## compact
+## SRVGGNetCompact
+### compact
 
 
 ```
+type: compact
 num_in_ch: 3
 num_out_ch: 3
 num_feat: 64
 num_conv: 16
-scale: 4
 act_type: prelu
 learn_residual: true
 ```
-## ultracompact
+### ultracompact
 
 
 ```
+type: ultracompact
 num_in_ch: 3
 num_out_ch: 3
 num_feat: 64
 num_conv: 8
-scale: 4
 act_type: prelu
 learn_residual: true
 ```
-## superultracompact
+### superultracompact
 
 
 ```
+type: superultracompact
 num_in_ch: 3
 num_out_ch: 3
 num_feat: 24
 num_conv: 8
-scale: 4
 act_type: prelu
 learn_residual: true
 ```
-# TSCUNet
 ## TSCUNet
+### TSCUNet
 
 
 ```
+type: TSCUNet
 in_nc: 3
 out_nc: 3
 clip_size: 5
@@ -1055,8 +1058,7 @@ nb: 2
 dim: 64
 drop_path_rate: 0.0
 input_resolution: 256
-scale: 2
 residual: true
 sigma: false
-state: None
+state: ~
 ```
