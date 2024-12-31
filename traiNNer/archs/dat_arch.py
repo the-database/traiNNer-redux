@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 from spandrel.architectures.DAT import DAT
+from torch import nn
 
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
@@ -17,7 +18,15 @@ def dat(
     num_heads: Sequence[int] = (6, 6, 6, 6, 6, 6),
     expansion_factor: int = 4,
     resi_connection: str = "1conv",
-    **kwargs,
+    qkv_bias: bool = True,
+    qk_scale: float | None = None,
+    drop_rate: float = 0.0,
+    attn_drop_rate: float = 0.0,
+    drop_path_rate: float = 0.1,
+    act_layer: type[nn.Module] = nn.GELU,
+    norm_layer: type[nn.Module] = nn.LayerNorm,
+    use_chk: bool = False,
+    upsampler: str = "pixelshuffle",
 ) -> DAT:
     return DAT(
         upscale=scale,
@@ -30,7 +39,15 @@ def dat(
         num_heads=num_heads,
         expansion_factor=expansion_factor,
         resi_connection=resi_connection,
-        **kwargs,
+        qkv_bias=qkv_bias,
+        qk_scale=qk_scale,
+        drop_rate=drop_rate,
+        attn_drop_rate=attn_drop_rate,
+        drop_path_rate=drop_path_rate,
+        act_layer=act_layer,
+        norm_layer=norm_layer,
+        use_chk=use_chk,
+        upsampler=upsampler,
     )
 
 
