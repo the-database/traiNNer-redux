@@ -6,23 +6,22 @@ img_size: 64
 patch_size: 1
 in_chans: 3
 embed_dim: 90
-depths: (6, 6, 6, 6)
-num_heads: (6, 6, 6, 6)
+depths: [6, 6, 6, 6]
+num_heads: [6, 6, 6, 6]
 window_size: 8
 category_size: 256
 num_tokens: 64
 reducted_dim: 4
 convffn_kernel_size: 5
 mlp_ratio: 2.0
-qkv_bias: True
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
+qkv_bias: true
+ape: false
+patch_norm: true
 upscale: 1
 img_range: 1.0
 upsampler: 
 resi_connection: 1conv
-norm: True
+norm: true
 ```
 # dat, dat_s, dat_2, dat_light
 
@@ -35,14 +34,12 @@ split_size: [2, 4]
 depth: [2, 2, 2, 2]
 num_heads: [2, 2, 2, 2]
 expansion_factor: 4.0
-qkv_bias: True
+qkv_bias: true
 qk_scale: None
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
-act_layer: <class 'torch.nn.modules.activation.GELU'>
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-use_chk: False
+use_chk: false
 upscale: 2
 img_range: 1.0
 resi_connection: 1conv
@@ -56,18 +53,17 @@ img_size: 64
 patch_size: 1
 in_chans: 3
 embed_dim: 180
-depths: (6, 6, 6, 6, 6, 6)
-num_heads: (6, 6, 6, 6, 6, 6)
+depths: [6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6]
 window_size: 16
 mlp_ratio: 2.0
-qkv_bias: True
+qkv_bias: true
 qk_scale: None
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
+ape: false
+patch_norm: true
 upscale: 1
 img_range: 1.0
 upsampler: 
@@ -82,23 +78,22 @@ img_size: 64
 patch_size: 1
 in_chans: 3
 embed_dim: 96
-depths: (6, 6, 6, 6)
-num_heads: (6, 6, 6, 6)
+depths: [6, 6, 6, 6]
+num_heads: [6, 6, 6, 6]
 window_size: 7
 compress_ratio: 3
 squeeze_factor: 30
 conv_scale: 0.01
 overlap_ratio: 0.5
 mlp_ratio: 4.0
-qkv_bias: True
+qkv_bias: true
 qk_scale: None
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
-use_checkpoint: False
+ape: false
+patch_norm: true
+use_checkpoint: false
 upscale: 1
 img_range: 1.0
 upsampler: pixelshuffle
@@ -113,11 +108,11 @@ num_in_ch: 3
 num_out_ch: 3
 num_feat: 64
 block_num: 1
-pe: True
+pe: true
 window_size: 8
 res_num: 1
 up_scale: 4
-bias: True
+bias: true
 ```
 # plksr, plksr_tiny
 
@@ -130,11 +125,11 @@ ccm_type: CCM
 kernel_size: 17
 split_ratio: 0.25
 lk_type: PLK
-use_max_kernel: False
+use_max_kernel: false
 sparse_kernels: [5, 5, 5, 5]
 sparse_dilations: [1, 2, 3, 4]
-with_idt: False
-use_ea: True
+with_idt: false
+use_ea: true
 ```
 # realcugan
 
@@ -142,7 +137,7 @@ use_ea: True
 ```
 in_channels: 3
 out_channels: 3
-pro: False
+pro: false
 ```
 # rgt, rgt_s
 
@@ -154,14 +149,12 @@ embed_dim: 180
 depth: [2, 2, 2, 2]
 num_heads: [2, 2, 2, 2]
 mlp_ratio: 4.0
-qkv_bias: True
+qkv_bias: true
 qk_scale: None
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
-act_layer: <class 'torch.nn.modules.activation.GELU'>
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-use_chk: False
+use_chk: false
 upscale: 2
 img_range: 1.0
 resi_connection: 1conv
@@ -177,7 +170,7 @@ out_nc: 3
 num_filters: 64
 num_blocks: 23
 scale: 4
-plus: False
+plus: false
 shuffle_factor: None
 norm: None
 act: leakyrelu
@@ -188,14 +181,12 @@ mode: CNA
 
 
 ```
-num_in_ch: int
-num_out_ch: int
 feature_channels: 48
 upscale: 4
-bias: True
-norm: True
+bias: true
+norm: true
 img_range: 255.0
-rgb_mean: (0.4488, 0.4371, 0.404)
+rgb_mean: [0.4488, 0.4371, 0.404]
 ```
 # srformer, srformer_light
 
@@ -205,19 +196,18 @@ img_size: 64
 patch_size: 1
 in_chans: 3
 embed_dim: 96
-depths: (6, 6, 6, 6)
-num_heads: (6, 6, 6, 6)
+depths: [6, 6, 6, 6]
+num_heads: [6, 6, 6, 6]
 window_size: 7
 mlp_ratio: 4.0
-qkv_bias: True
+qkv_bias: true
 qk_scale: None
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
-use_checkpoint: False
+ape: false
+patch_norm: true
+use_checkpoint: false
 upscale: 1
 img_range: 1.0
 upsampler: 
@@ -235,14 +225,13 @@ depths: [6, 6, 6, 6]
 num_heads: [6, 6, 6, 6]
 window_size: 7
 mlp_ratio: 4.0
-qkv_bias: True
+qkv_bias: true
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
-use_checkpoint: False
+ape: false
+patch_norm: true
+use_checkpoint: false
 upscale: 2
 img_range: 1.0
 upsampler: 
@@ -260,15 +249,14 @@ depths: [6, 6, 6, 6]
 num_heads: [6, 6, 6, 6]
 window_size: 7
 mlp_ratio: 4.0
-qkv_bias: True
+qkv_bias: true
 qk_scale: None
 drop_rate: 0.0
 attn_drop_rate: 0.0
 drop_path_rate: 0.1
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
-use_checkpoint: False
+ape: false
+patch_norm: true
+use_checkpoint: false
 upscale: 1
 img_range: 1.0
 upsampler: 
@@ -284,7 +272,6 @@ scale: 4
 filters: 96
 n_block: 16
 kernel_size: 3
-act: <class 'torch.nn.modules.activation.ReLU'>
 ```
 # eimn_l, eimn_a
 
@@ -297,7 +284,7 @@ mlp_ratios: 2.66
 drop_rate: 0.0
 drop_path_rate: 0.0
 num_stages: 16
-freeze_param: False
+freeze_param: false
 ```
 # flexnet, metaflexnet
 
@@ -307,10 +294,10 @@ inp_channels: 3
 out_channels: 3
 scale: 4
 dim: 64
-num_blocks: (6, 6, 6, 6, 6, 6)
+num_blocks: [6, 6, 6, 6, 6, 6]
 window_size: 8
 hidden_rate: 4
-channel_norm: False
+channel_norm: false
 attn_drop: 0.0
 proj_drop: 0.0
 pipeline_type: linear
@@ -326,12 +313,11 @@ n_resblocks: 20
 n_feats: 64
 n_colors: 3
 rgb_range: 255
-norm: True
+norm: true
 kernel_size: 3
 reduction: 16
 res_scale: 1
 act_mode: relu
-conv: <function default_conv at 0x000002B8BBCAEFC0>
 ```
 # hit_sir
 
@@ -348,16 +334,14 @@ mlp_ratio: 2.0
 drop_rate: 0.0
 value_drop_rate: 0.0
 drop_path_rate: 0.0
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
-use_checkpoint: False
+ape: false
+patch_norm: true
+use_checkpoint: false
 upscale: 4
 img_range: 1.0
 upsampler: pixelshuffledirect
 resi_connection: 1conv
 hier_win_ratios: None
-kwargs: <class 'inspect._empty'>
 ```
 # hit_sng
 
@@ -374,16 +358,14 @@ mlp_ratio: 2.0
 drop_rate: 0.0
 value_drop_rate: 0.0
 drop_path_rate: 0.0
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
-use_checkpoint: False
+ape: false
+patch_norm: true
+use_checkpoint: false
 upscale: 4
 img_range: 1.0
 upsampler: pixelshuffledirect
 resi_connection: 1conv
 hier_win_ratios: None
-kwargs: <class 'inspect._empty'>
 ```
 # hit_srf
 
@@ -400,22 +382,19 @@ mlp_ratio: 2.0
 drop_rate: 0.0
 value_drop_rate: 0.0
 drop_path_rate: 0.0
-norm_layer: <class 'torch.nn.modules.normalization.LayerNorm'>
-ape: False
-patch_norm: True
-use_checkpoint: False
+ape: false
+patch_norm: true
+use_checkpoint: false
 upscale: 4
 img_range: 1.0
 upsampler: pixelshuffledirect
 resi_connection: 1conv
 hier_win_ratios: None
-kwargs: <class 'inspect._empty'>
 ```
 # lmlt_base, lmlt_large, lmlt_tiny
 
 
 ```
-dim: <class 'int'>
 n_blocks: 8
 ffn_scale: 2.0
 scale: 4
@@ -440,9 +419,9 @@ res_scale: 1.0
 ```
 in_ch: 3
 n_class: 1
-dims: (48, 96, 192, 288)
-blocks: (3, 3, 9, 3)
-downs: (4, 4, 2, 2)
+dims: [48, 96, 192, 288]
+blocks: [3, 3, 9, 3]
+downs: [4, 4, 2, 2]
 drop_path: 0.2
 end_drop: 0.4
 ```
@@ -486,12 +465,11 @@ n_resblocks: 20
 n_feats: 64
 n_colors: 3
 rgb_range: 255
-norm: True
+norm: true
 kernel_size: 3
 reduction: 16
 res_scale: 1
 act_mode: relu
-conv: <function default_conv at 0x000002B8BBD0F2E0>
 ```
 # realplksr
 
@@ -504,11 +482,11 @@ n_blocks: 28
 upscaling_factor: 4
 kernel_size: 17
 split_ratio: 0.25
-use_ea: True
+use_ea: true
 norm_groups: 4
 dropout: 0
 upsampler: pixelshuffle
-layer_norm: True
+layer_norm: true
 ```
 # scunet_aaf6aa
 
@@ -521,7 +499,7 @@ dim: 64
 drop_path_rate: 0.0
 input_resolution: 256
 scale: 1
-residual: True
+residual: true
 state: None
 ```
 # spanplus, spanplus_sts, spanplus_s, spanplus_st
@@ -546,7 +524,7 @@ num_feat: 64
 num_conv: 16
 upscale: 4
 act_type: prelu
-learn_residual: True
+learn_residual: true
 ```
 # tscunet
 
@@ -560,7 +538,7 @@ dim: 64
 drop_path_rate: 0.0
 input_resolution: 256
 scale: 2
-residual: True
-sigma: False
+residual: true
+sigma: false
 state: None
 ```

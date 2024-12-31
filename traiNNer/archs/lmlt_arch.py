@@ -427,15 +427,63 @@ class LMLT(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def lmlt_base(scale: int = 4, **kwargs) -> LMLT:
-    return LMLT(60, 8, 2.0, scale, **kwargs)
+def lmlt_base(
+    dim: int = 60,
+    n_blocks: int = 8,
+    ffn_scale: float = 2.0,
+    scale: int = 4,
+    drop_rate: float = 0.0,
+    attn_drop_rate: float = 0.0,
+    drop_path_rate: float = 0.0,
+) -> LMLT:
+    return LMLT(
+        dim=dim,
+        n_blocks=n_blocks,
+        ffn_scale=ffn_scale,
+        scale=scale,
+        drop_rate=drop_rate,
+        drop_path_rate=drop_path_rate,
+        attn_drop_rate=attn_drop_rate,
+    )
 
 
 @ARCH_REGISTRY.register()
-def lmlt_large(scale: int = 4, **kwargs) -> LMLT:
-    return LMLT(84, 8, 2.0, scale, **kwargs)
+def lmlt_large(
+    dim: int = 84,
+    n_blocks: int = 8,
+    ffn_scale: float = 2.0,
+    scale: int = 4,
+    drop_rate: float = 0.0,
+    attn_drop_rate: float = 0.0,
+    drop_path_rate: float = 0.0,
+) -> LMLT:
+    return LMLT(
+        dim=dim,
+        n_blocks=n_blocks,
+        ffn_scale=ffn_scale,
+        scale=scale,
+        drop_rate=drop_rate,
+        drop_path_rate=drop_path_rate,
+        attn_drop_rate=attn_drop_rate,
+    )
 
 
 @ARCH_REGISTRY.register()
-def lmlt_tiny(scale: int = 4, **kwargs) -> LMLT:
-    return LMLT(36, 8, 2.0, scale, **kwargs)
+def lmlt_tiny(
+    dim: int = 36,
+    n_blocks: int = 8,
+    ffn_scale: float = 2.0,
+    scale: int = 4,
+    drop_rate: float = 0.0,
+    attn_drop_rate: float = 0.0,
+    drop_path_rate: float = 0.0,
+) -> LMLT:
+    return LMLT(
+        dim=dim,
+        n_blocks=n_blocks,
+        ffn_scale=ffn_scale,
+        scale=scale,
+        drop_rate=drop_rate,
+        drop_path_rate=drop_path_rate,
+        attn_drop_rate=attn_drop_rate,
+    )

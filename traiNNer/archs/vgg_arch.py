@@ -188,7 +188,6 @@ class L2pooling(nn.Module):
         return (out + 1e-12).sqrt()
 
 
-# @ARCH_REGISTRY.register()
 class VGGFeatureExtractor(nn.Module):
     """VGG network for feature extraction.
 

@@ -3,8 +3,9 @@ import random
 import re
 import shutil
 import time
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from os import path as osp
+from typing import Any
 
 import torch
 from rich import print
@@ -265,3 +266,15 @@ def loss_type_to_label(loss_type: str) -> str:
     # label = underscore(label)
     label = loss_type.lower().replace("loss", "")
     return f"l_g_{label}"
+
+
+def is_json_compatible(value: Any) -> bool:
+    if isinstance(value, str | int | float | bool) or value is None:
+        return True
+    elif isinstance(value, Sequence):
+        return all(is_json_compatible(item) for item in value)
+    elif isinstance(value, dict):
+        return all(
+            isinstance(k, str) and is_json_compatible(v) for k, v in value.items()
+        )
+    return False

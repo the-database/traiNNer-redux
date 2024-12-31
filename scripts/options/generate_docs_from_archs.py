@@ -1,6 +1,7 @@
 import inspect
 
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
+from traiNNer.utils.misc import is_json_compatible
 
 EXCLUDE_BENCHMARK_ARCHS = {
     "artcnn",
@@ -49,11 +50,16 @@ def class_to_markdown(cls, header):
         md.append("")
         md.append("```")
         for param_name, param in sig.parameters.items():
-            if param_name == "self":
+            pd = param.default
+            if isinstance(pd, tuple):
+                pd = list(pd)
+            elif isinstance(pd, bool):
+                pd = str(pd).lower()
+            if param_name == "self" or not is_json_compatible(pd):
                 continue
             param_doc = (
-                f"{param_name}: {param.default}"
-                if param.default is not param.empty
+                f"{param_name}: {pd}"
+                if pd is not param.empty
                 else f"{param_name}: {param.annotation}"
             )
 

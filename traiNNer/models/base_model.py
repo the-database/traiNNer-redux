@@ -23,6 +23,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
+from traiNNer.utils.misc import is_json_compatible
 from traiNNer.utils.options import struct2dict
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
@@ -357,18 +358,6 @@ class BaseModel:
     def get_current_learning_rate(self) -> list[float]:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
-    def is_json_compatible(self, value: Any) -> bool:
-        if isinstance(value, str | int | float | bool) or value is None:
-            return True
-        elif isinstance(value, Sequence):
-            return all(self.is_json_compatible(item) for item in value)
-        elif isinstance(value, dict):
-            return all(
-                isinstance(k, str) and self.is_json_compatible(v)
-                for k, v in value.items()
-            )
-        return False
-
     @master_only
     def save_network(
         self,
@@ -410,9 +399,7 @@ class BaseModel:
         metadata: dict[str, Any] | None = None
         if hasattr(net, "hyperparameters"):
             metadata = {
-                k: v
-                for k, v in net.hyperparameters.items()
-                if self.is_json_compatible(v)
+                k: v for k, v in net.hyperparameters.items() if is_json_compatible(v)
             }
 
         # avoid occasional writing errors
