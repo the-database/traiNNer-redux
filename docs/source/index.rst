@@ -25,3 +25,4 @@ documentation for details.
    :caption: Reference
 
    /config_reference
+   /arch_reference
