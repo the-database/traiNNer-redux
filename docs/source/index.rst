@@ -22,3 +22,9 @@ traiNNer-redux documentation
    /config_reference
    /arch_reference
    /loss_reference
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developers
+
+   /contributing

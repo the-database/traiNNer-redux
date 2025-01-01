@@ -1,6 +1,6 @@
 # Contributing
 ## Prerequisites
-This project targets [Python 3.11](https://www.python.org/). [Visual Studio Code](https://code.visualstudio.com/) is the recommended IDE, with the [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance) and [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) extensions.
+This project targets [Python 3.12](https://www.python.org/). [Visual Studio Code](https://code.visualstudio.com/) is the recommended IDE, with the [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance), [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff), and [YAML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) extensions.
 
 This repo includes a tiny test dataset so it's ready to run the training pipeline out of the box, with no need to prepare your own dataset.
 
