@@ -12,7 +12,7 @@ EXCLUDE_BENCHMARK_ARCHS = {
     "swinir",
     "lmlt",
     "vggstylediscriminator",
-    "unetdiscriminatorsn_traiNNer",
+    "unetdiscriminatorsn",
     "vggfeatureextractor",
 }
 

@@ -20,7 +20,7 @@ EXCLUDE_ARCHS = {
     "metagan2",
     "swin2sr",
     "swinir",
-    "unetdiscriminatorsn_traiNNer",
+    "unetdiscriminatorsn",
     "vggfeatureextractor",
     "vggstylediscriminator",
 }
