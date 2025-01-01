@@ -128,7 +128,9 @@ if __name__ == "__main__":
 
     with open(output_path, "w") as fout:
         fout.write("# Architecture reference\n")
-
+        fout.write(
+            "This page lists all available parameters for each architecture in traiNNer-redux. While the default configs use the official defaults and shouldn't need to be modified by most users, advanced users may wish to inspect or modify architectures to train to their liking. Please keep in mind that changing parameters for generator architectures can affect compatibility with using pretrain models.\n"
+        )
         fout.write("## Generator architectures (`network_g`)\n")
         for arch_group, doc_dict in sorted(g_docs.items()):
             fout.write(f"### {arch_group}\n")

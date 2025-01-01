@@ -1,4 +1,5 @@
 # Architecture reference
+This page lists all available parameters for each architecture in traiNNer-redux. While the default configs use the official defaults and shouldn't need to be modified by most users, advanced users may wish to inspect or modify architectures to train to their liking. Please keep in mind that changing parameters for generator architectures can affect compatibility with using pretrain models.
 ## Generator architectures (`network_g`)
 ### ATD
 #### atd
