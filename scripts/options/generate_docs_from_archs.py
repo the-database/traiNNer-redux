@@ -7,14 +7,12 @@ from traiNNer.utils.misc import is_json_compatible
 EXCLUDE_BENCHMARK_ARCHS = {
     "artcnn",
     "dct",
-    "dunet",
     "eimn",
     "hat",
     "swinir",
     "swin2sr",
     "lmlt",
     "vggstylediscriminator",
-    "unetdiscriminatorsn_traiNNer",
     "vggfeatureextractor",
 }
 FILTERED_REGISTRY = [
@@ -31,7 +29,7 @@ def function_to_markdown(func, header):
     try:
         sig = signature(func)
         md.append("")
-        md.append("```")
+        md.append("```yaml")
         md.append(f"type: {header}")
         for param_name, param in sig.parameters.items():
             pd = param.default
@@ -104,6 +102,7 @@ if __name__ == "__main__":
     with open(output_path, "w") as fout:
         fout.write("# Architecture reference\n")
         for _, arch in FILTERED_REGISTRY:
+            print("arch", arch)
             if inspect.isfunction(arch):
                 net = arch(scale=4)
                 cls: type = net.__class__

@@ -93,7 +93,7 @@ class VGGStyleDiscriminator(nn.Module):
         return out
 
 
-@ARCH_REGISTRY.register(suffix="traiNNer")
+@ARCH_REGISTRY.register()
 class UNetDiscriminatorSN(nn.Module):
     """Defines a U-Net discriminator with spectral normalization (SN)
 

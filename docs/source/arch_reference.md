@@ -3,7 +3,7 @@
 ### atd
 
 
-```
+```yaml
 type: atd
 in_chans: 3
 img_size: 96
@@ -23,7 +23,7 @@ resi_connection: 1conv
 ### atd_light
 
 
-```
+```yaml
 type: atd_light
 in_chans: 3
 img_size: 64
@@ -44,7 +44,7 @@ resi_connection: 1conv
 ### dat
 
 
-```
+```yaml
 type: dat
 in_chans: 3
 img_size: 64
@@ -66,7 +66,7 @@ upsampler: pixelshuffle
 ### dat_s
 
 
-```
+```yaml
 type: dat_s
 in_chans: 3
 img_size: 64
@@ -88,7 +88,7 @@ upsampler: pixelshuffle
 ### dat_2
 
 
-```
+```yaml
 type: dat_2
 in_chans: 3
 img_size: 64
@@ -110,7 +110,7 @@ upsampler: pixelshuffle
 ### dat_light
 
 
-```
+```yaml
 type: dat_light
 in_chans: 3
 img_size: 64
@@ -133,7 +133,7 @@ upsampler: pixelshuffle
 ### drct
 
 
-```
+```yaml
 type: drct
 in_chans: 3
 img_size: 64
@@ -149,7 +149,7 @@ resi_connection: 1conv
 ### drct_l
 
 
-```
+```yaml
 type: drct_l
 in_chans: 3
 img_size: 64
@@ -165,7 +165,7 @@ resi_connection: 1conv
 ### drct_xl
 
 
-```
+```yaml
 type: drct_xl
 in_chans: 3
 img_size: 64
@@ -182,7 +182,7 @@ resi_connection: 1conv
 ### hat_l
 
 
-```
+```yaml
 type: hat_l
 img_size: 64
 patch_size: 1
@@ -212,7 +212,7 @@ num_feat: 64
 ### hat_m
 
 
-```
+```yaml
 type: hat_m
 img_size: 64
 patch_size: 1
@@ -242,7 +242,7 @@ num_feat: 64
 ### hat_s
 
 
-```
+```yaml
 type: hat_s
 img_size: 64
 patch_size: 1
@@ -273,7 +273,7 @@ num_feat: 64
 ### omnisr
 
 
-```
+```yaml
 type: omnisr
 num_in_ch: 3
 num_out_ch: 3
@@ -288,7 +288,7 @@ bias: true
 ### plksr
 
 
-```
+```yaml
 type: plksr
 dim: 64
 n_blocks: 28
@@ -305,7 +305,7 @@ use_ea: true
 ### plksr_tiny
 
 
-```
+```yaml
 type: plksr_tiny
 dim: 64
 n_blocks: 12
@@ -323,7 +323,7 @@ use_ea: false
 ### realcugan
 
 
-```
+```yaml
 type: realcugan
 pro: false
 fast: false
@@ -334,7 +334,7 @@ out_channels: 3
 ### rgt
 
 
-```
+```yaml
 type: rgt
 img_size: 64
 in_chans: 3
@@ -356,7 +356,7 @@ c_ratio: 0.5
 ### rgt_s
 
 
-```
+```yaml
 type: rgt_s
 img_size: 64
 in_chans: 3
@@ -379,7 +379,7 @@ c_ratio: 0.5
 ### esrgan
 
 
-```
+```yaml
 type: esrgan
 use_pixel_unshuffle: true
 in_nc: 3
@@ -390,7 +390,7 @@ num_blocks: 23
 ### esrgan_lite
 
 
-```
+```yaml
 type: esrgan_lite
 use_pixel_unshuffle: true
 ```
@@ -398,7 +398,7 @@ use_pixel_unshuffle: true
 ### span
 
 
-```
+```yaml
 type: span
 num_in_ch: 3
 num_out_ch: 3
@@ -412,7 +412,7 @@ rgb_mean: [0.4488, 0.4371, 0.404]
 ### srformer
 
 
-```
+```yaml
 type: srformer
 img_size: 48
 patch_size: 1
@@ -437,7 +437,7 @@ resi_connection: 1conv
 ### srformer_light
 
 
-```
+```yaml
 type: srformer_light
 img_size: 64
 patch_size: 1
@@ -463,7 +463,7 @@ resi_connection: 1conv
 ### swin2sr_l
 
 
-```
+```yaml
 type: swin2sr_l
 img_size: 64
 patch_size: 1
@@ -487,7 +487,7 @@ resi_connection: 3conv
 ### swin2sr_m
 
 
-```
+```yaml
 type: swin2sr_m
 img_size: 64
 patch_size: 1
@@ -511,7 +511,7 @@ resi_connection: 1conv
 ### swin2sr_s
 
 
-```
+```yaml
 type: swin2sr_s
 img_size: 64
 patch_size: 1
@@ -536,7 +536,7 @@ resi_connection: 1conv
 ### swinir_l
 
 
-```
+```yaml
 type: swinir_l
 img_size: 64
 patch_size: 1
@@ -562,7 +562,7 @@ start_unshuffle: 1
 ### swinir_m
 
 
-```
+```yaml
 type: swinir_m
 img_size: 48
 patch_size: 1
@@ -588,7 +588,7 @@ start_unshuffle: 1
 ### swinir_s
 
 
-```
+```yaml
 type: swinir_s
 img_size: 64
 patch_size: 1
@@ -615,7 +615,7 @@ start_unshuffle: 1
 ### artcnn_r16f96
 
 
-```
+```yaml
 type: artcnn_r16f96
 in_ch: 3
 filters: 96
@@ -625,18 +625,36 @@ kernel_size: 3
 ### artcnn_r8f64
 
 
-```
+```yaml
 type: artcnn_r8f64
 in_ch: 3
 filters: 64
 n_block: 8
 kernel_size: 3
 ```
+## UNetDiscriminatorSN
+### UNetDiscriminatorSN
+
+
+```yaml
+type: UNetDiscriminatorSN
+num_feat: 64
+skip_connection: true
+```
+## DUnet
+### DUnet
+
+
+```yaml
+type: DUnet
+num_in_ch: 3
+num_feat: 64
+```
 ## EIMN
 ### eimn_l
 
 
-```
+```yaml
 type: eimn_l
 embed_dims: 64
 depths: 1
@@ -649,7 +667,7 @@ freeze_param: false
 ### eimn_a
 
 
-```
+```yaml
 type: eimn_a
 embed_dims: 64
 depths: 1
@@ -663,7 +681,7 @@ freeze_param: false
 ### FlexNet
 
 
-```
+```yaml
 type: FlexNet
 inp_channels: 3
 out_channels: 3
@@ -680,7 +698,7 @@ upsampler: pixelshuffle
 ### metaflexnet
 
 
-```
+```yaml
 type: metaflexnet
 inp_channels: 3
 out_channels: 3
@@ -698,7 +716,7 @@ upsampler: pixelshuffle
 ### hit_sir
 
 
-```
+```yaml
 type: hit_sir
 in_chans: 3
 img_size: 64
@@ -716,7 +734,7 @@ upsampler: pixelshuffledirect
 ### hit_sng
 
 
-```
+```yaml
 type: hit_sng
 in_chans: 3
 img_size: 64
@@ -734,7 +752,7 @@ upsampler: pixelshuffledirect
 ### hit_srf
 
 
-```
+```yaml
 type: hit_srf
 in_chans: 3
 img_size: 64
@@ -752,7 +770,7 @@ upsampler: pixelshuffledirect
 ### lmlt_base
 
 
-```
+```yaml
 type: lmlt_base
 dim: 60
 n_blocks: 8
@@ -764,7 +782,7 @@ drop_path_rate: 0.0
 ### lmlt_large
 
 
-```
+```yaml
 type: lmlt_large
 dim: 84
 n_blocks: 8
@@ -776,7 +794,7 @@ drop_path_rate: 0.0
 ### lmlt_tiny
 
 
-```
+```yaml
 type: lmlt_tiny
 dim: 36
 n_blocks: 8
@@ -789,7 +807,7 @@ drop_path_rate: 0.0
 ### MAN
 
 
-```
+```yaml
 type: MAN
 n_resblocks: 36
 n_resgroups: 1
@@ -799,7 +817,7 @@ n_feats: 180
 ### man_tiny
 
 
-```
+```yaml
 type: man_tiny
 n_resblocks: 5
 n_resgroups: 1
@@ -809,7 +827,7 @@ n_feats: 48
 ### man_light
 
 
-```
+```yaml
 type: man_light
 n_resblocks: 24
 n_resgroups: 1
@@ -820,7 +838,7 @@ n_feats: 60
 ### MetaGan2
 
 
-```
+```yaml
 type: MetaGan2
 in_ch: 3
 n_class: 1
@@ -834,7 +852,7 @@ end_drop: 0.4
 ### MoESR2
 
 
-```
+```yaml
 type: MoESR2
 in_ch: 3
 out_ch: 3
@@ -850,7 +868,7 @@ upsample_dim: 64
 ### mosr
 
 
-```
+```yaml
 type: mosr
 in_ch: 3
 out_ch: 3
@@ -865,7 +883,7 @@ conv_ratio: 1.0
 ### mosr_t
 
 
-```
+```yaml
 type: mosr_t
 in_ch: 3
 out_ch: 3
@@ -881,7 +899,7 @@ conv_ratio: 1.0
 ### RCAN
 
 
-```
+```yaml
 type: RCAN
 n_resgroups: 10
 n_resblocks: 20
@@ -897,7 +915,7 @@ act_mode: relu
 ### rcan_b
 
 
-```
+```yaml
 type: rcan_b
 n_resgroups: 10
 n_resblocks: 20
@@ -913,7 +931,7 @@ act_mode: relu
 ### rcan_b2
 
 
-```
+```yaml
 type: rcan_b2
 n_resgroups: 6
 n_resblocks: 12
@@ -930,7 +948,7 @@ act_mode: relu
 ### realplksr
 
 
-```
+```yaml
 type: realplksr
 in_ch: 3
 out_ch: 3
@@ -948,7 +966,7 @@ layer_norm: true
 ### SCUNet_aaf6aa
 
 
-```
+```yaml
 type: SCUNet_aaf6aa
 in_nc: 3
 out_nc: 3
@@ -963,7 +981,7 @@ state: ~
 ### spanplus
 
 
-```
+```yaml
 type: spanplus
 num_in_ch: 3
 num_out_ch: 3
@@ -975,7 +993,7 @@ upsampler: dys
 ### spanplus_sts
 
 
-```
+```yaml
 type: spanplus_sts
 num_in_ch: 3
 num_out_ch: 3
@@ -987,7 +1005,7 @@ upsampler: ps
 ### spanplus_s
 
 
-```
+```yaml
 type: spanplus_s
 num_in_ch: 3
 num_out_ch: 3
@@ -999,7 +1017,7 @@ upsampler: dys
 ### spanplus_st
 
 
-```
+```yaml
 type: spanplus_st
 num_in_ch: 3
 num_out_ch: 3
@@ -1012,7 +1030,7 @@ upsampler: ps
 ### compact
 
 
-```
+```yaml
 type: compact
 num_in_ch: 3
 num_out_ch: 3
@@ -1024,7 +1042,7 @@ learn_residual: true
 ### ultracompact
 
 
-```
+```yaml
 type: ultracompact
 num_in_ch: 3
 num_out_ch: 3
@@ -1036,7 +1054,7 @@ learn_residual: true
 ### superultracompact
 
 
-```
+```yaml
 type: superultracompact
 num_in_ch: 3
 num_out_ch: 3
@@ -1049,7 +1067,7 @@ learn_residual: true
 ### TSCUNet
 
 
-```
+```yaml
 type: TSCUNet
 in_nc: 3
 out_nc: 3
