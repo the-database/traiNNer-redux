@@ -16,7 +16,9 @@ class VGGStyleDiscriminator(nn.Module):
         num_feat (int): Channel number of base intermediate features.Default: 64.
     """
 
-    def __init__(self, num_in_ch: int, num_feat: int, input_size: int = 128) -> None:
+    def __init__(
+        self, num_in_ch: int = 3, num_feat: int = 64, input_size: int = 128
+    ) -> None:
         super().__init__()
         self.input_size = input_size
         assert self.input_size in (
@@ -106,7 +108,7 @@ class UNetDiscriminatorSN(nn.Module):
     """
 
     def __init__(
-        self, num_in_ch: int, num_feat: int = 64, skip_connection: bool = True
+        self, num_in_ch: int = 3, num_feat: int = 64, skip_connection: bool = True
     ) -> None:
         super().__init__()
         self.skip_connection = skip_connection

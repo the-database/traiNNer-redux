@@ -27,6 +27,7 @@ def function_to_markdown(func: Callable, header: str) -> str:
             elif pd is None:
                 pd = "~"
             if param_name == "self" or not is_json_compatible(pd):
+                print("skip", param_name, pd)
                 continue
             param_doc = (
                 f"{param_name}: {pd}"
@@ -35,6 +36,7 @@ def function_to_markdown(func: Callable, header: str) -> str:
             )
 
             md.append(f"{param_doc}")
+        md.append("loss_weight: 1.0")
         md.append("```")
     except Exception as e:
         print(e)

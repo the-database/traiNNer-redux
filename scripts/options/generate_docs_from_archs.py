@@ -43,6 +43,7 @@ def function_to_markdown(func: Callable, header: str) -> str:
             elif pd is None:
                 pd = "~"
             if param_name == "self" or not is_json_compatible(pd):
+                print("skip", param_name, pd)
                 continue
             param_doc = (
                 f"{param_name}: {pd}"

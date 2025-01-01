@@ -1080,6 +1080,7 @@ end_drop: 0.4
 
 ```yaml
 type: unetdiscriminatorsn
+num_in_ch: 3
 num_feat: 64
 skip_connection: true
 ```
@@ -1089,5 +1090,7 @@ skip_connection: true
 
 ```yaml
 type: vggstylediscriminator
+num_in_ch: 3
+num_feat: 64
 input_size: 128
 ```

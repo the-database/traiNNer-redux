@@ -7,6 +7,7 @@ This page lists all available parameters for each loss function in traiNNer-redu
 type: adistsloss
 window_size: 21
 resize_input: false
+loss_weight: 1.0
 ```
 ## averageloss
 
@@ -14,6 +15,7 @@ resize_input: false
 ```yaml
 type: averageloss
 criterion: l1
+loss_weight: 1.0
 ```
 ## bicubicloss
 
@@ -21,6 +23,7 @@ criterion: l1
 ```yaml
 type: bicubicloss
 criterion: l1
+loss_weight: 1.0
 ```
 ## charbonnierloss
 
@@ -29,6 +32,7 @@ criterion: l1
 type: charbonnierloss
 reduction: mean
 eps: 1e-12
+loss_weight: 1.0
 ```
 ## colorloss
 
@@ -36,6 +40,7 @@ eps: 1e-12
 ```yaml
 type: colorloss
 criterion: l1
+loss_weight: 1.0
 ```
 ## contextualloss
 
@@ -52,6 +57,7 @@ use_vgg: true
 net: vgg19
 calc_type: regular
 z_norm: false
+loss_weight: 1.0
 ```
 ## distsloss
 
@@ -62,6 +68,7 @@ as_loss: true
 load_weights: true
 use_input_norm: true
 clip_min: 0
+loss_weight: 1.0
 ```
 ## ffloss
 
@@ -73,6 +80,7 @@ patch_factor: 1
 ave_spectrum: true
 log_matrix: false
 batch_matrix: false
+loss_weight: 1.0
 ```
 ## ganloss
 
@@ -82,6 +90,7 @@ type: ganloss
 gan_type: vanilla
 real_label_val: 1.0
 fake_label_val: 0.0
+loss_weight: 1.0
 ```
 ## hsluvloss
 
@@ -89,6 +98,7 @@ fake_label_val: 0.0
 ```yaml
 type: hsluvloss
 criterion: l1
+loss_weight: 1.0
 ```
 ## l1loss
 
@@ -96,6 +106,7 @@ criterion: l1
 ```yaml
 type: l1loss
 reduction: mean
+loss_weight: 1.0
 ```
 ## ldlloss
 
@@ -103,6 +114,7 @@ reduction: mean
 ```yaml
 type: ldlloss
 criterion: l1
+loss_weight: 1.0
 ```
 ## lumaloss
 
@@ -110,6 +122,7 @@ criterion: l1
 ```yaml
 type: lumaloss
 criterion: l1
+loss_weight: 1.0
 ```
 ## mseloss
 
@@ -117,6 +130,7 @@ criterion: l1
 ```yaml
 type: mseloss
 reduction: mean
+loss_weight: 1.0
 ```
 ## mssimloss
 
@@ -132,6 +146,7 @@ l: 1
 padding: ~
 cosim: true
 cosim_lambda: 5
+loss_weight: 1.0
 ```
 ## msssiml1loss
 
@@ -143,6 +158,7 @@ data_range: 1.0
 k: [0.01, 0.03]
 alpha: 0.1
 cuda_dev: 0
+loss_weight: 1.0
 ```
 ## multiscaleganloss
 
@@ -151,12 +167,14 @@ cuda_dev: 0
 type: multiscaleganloss
 real_label_val: 1.0
 fake_label_val: 0.0
+loss_weight: 1.0
 ```
 ## nccloss
 
 
 ```yaml
 type: nccloss
+loss_weight: 1.0
 ```
 ## perceptualfp16loss
 
@@ -170,6 +188,7 @@ criterion: pd+l1
 num_proj_fd: 256
 phase_weight_fd: 1.0
 stride_fd: 1
+loss_weight: 1.0
 ```
 ## perceptualloss
 
@@ -183,4 +202,5 @@ criterion: pd+l1
 num_proj_fd: 256
 phase_weight_fd: 1.0
 stride_fd: 1
+loss_weight: 1.0
 ```
