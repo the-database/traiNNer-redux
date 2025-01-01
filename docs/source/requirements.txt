@@ -1,4 +1,4 @@
 sphinx
 sphinx-rtd-theme
-sphinx-jsonschema
+sphinx-toolbox
 myst-parser

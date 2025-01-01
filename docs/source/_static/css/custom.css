@@ -5,3 +5,16 @@ div.wy-nav-content {
 .text-right {
   text-align: right;
 }
+
+/* The following icon based on furo
+
+https://github.com/pradyunsg/furo
+Copyright (c) 2020 Pradyun Gedam <mail@pradyunsg.me>
+MIT Licensed
+*/
+
+.wy-nav-side .wy-menu .reference.external::after {
+	content: url('data:image/svg+xml,<svg width="12" height="12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" stroke="%23607D8B" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11 7h-5a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-5" stroke="white"/><line x1="10" y1="14" x2="20" y2="4" stroke="white"/><polyline points="15 4 20 4 20 9" stroke="white"/></svg>');
+	margin: 0 0.25rem;
+	vertical-align: middle;
+}
