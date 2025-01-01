@@ -12,7 +12,6 @@ EXCLUDE_BENCHMARK_ARCHS = {
     "swinir",
     "swin2sr",
     "lmlt",
-    "vggstylediscriminator",
     "vggfeatureextractor",
 }
 FILTERED_REGISTRY = [
@@ -24,7 +23,7 @@ FILTERED_REGISTRY = [
 
 def function_to_markdown(func, header):
     # Start building the Markdown output
-    md = [f"### {header}", ""]
+    md = [f"#### {header}", ""]
 
     try:
         sig = signature(func)
@@ -33,7 +32,7 @@ def function_to_markdown(func, header):
         md.append(f"type: {header}")
         for param_name, param in sig.parameters.items():
             pd = param.default
-            print(header, param_name, pd)
+            # print(header, param_name, pd)
             if param_name == "scale":
                 continue
             if isinstance(pd, tuple):
@@ -95,21 +94,49 @@ documented_archs = set()
 #         cls_to_names[cls] = []
 #     cls_to_names[cls].append(arch.__name__.lower())
 
+discriminators = {"vggstylediscriminator", "unetdiscriminatorsn", "dunet", "metagan2"}
+
+g_docs = {}
+d_docs = {}
 
 if __name__ == "__main__":
     output_path = "docs/source/arch_reference.md"
 
+    for _, arch in FILTERED_REGISTRY:
+        # print("arch", arch)
+        if inspect.isfunction(arch):
+            net = arch(scale=4)
+            cls: type = net.__class__
+        else:
+            cls = arch  # type: ignore
+        if cls.__name__.lower() not in discriminators:
+            doc = g_docs
+        else:
+            doc = d_docs
+
+        cls_key = cls.__name__
+
+        if cls_key not in doc:
+            doc[cls_key] = {}
+
+        # if cls not in documented_archs:
+        #     fout.write(f"## {cls_key}\n")
+        markdown = callable_to_markdown(arch, arch.__name__)
+        doc[cls_key][arch.__name__.lower()] = markdown
+        # fout.write(f"{markdown}\n")
+        # documented_archs.add(cls)
+
     with open(output_path, "w") as fout:
         fout.write("# Architecture reference\n")
-        for _, arch in FILTERED_REGISTRY:
-            print("arch", arch)
-            if inspect.isfunction(arch):
-                net = arch(scale=4)
-                cls: type = net.__class__
-            else:
-                cls = arch  # type: ignore
-            if cls not in documented_archs:
-                fout.write(f"## {cls.__name__}\n")
-            markdown = callable_to_markdown(arch, arch.__name__)
-            fout.write(f"{markdown}\n")
-            documented_archs.add(cls)
+
+        fout.write("## Generator architectures (`network_g`)\n")
+        for arch_group, doc_dict in sorted(g_docs.items()):
+            fout.write(f"### {arch_group}\n")
+            for _, arch_md in sorted(doc_dict.items()):
+                fout.write(f"{arch_md}\n")
+
+        fout.write("## Discriminator architectures (`network_d`)\n")
+        for arch_group, doc_dict in sorted(d_docs.items()):
+            fout.write(f"### {arch_group}\n")
+            for _, arch_md in sorted(doc_dict.items()):
+                fout.write(f"{arch_md}\n")
