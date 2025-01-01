@@ -50,6 +50,8 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "man",
     "man_light",
     "man_tiny",
+    "rtmosr",
+    "rtmosr_s",
     "moesr2",
     "omnisr",
     "rgt",
