@@ -144,20 +144,64 @@
   The range of JPEG quality to apply for the first JPEG degradation, in the format `[min_quality, max_quality]`.
 
   Type: tuple
+### blur_prob2
+
+  Probability of applying the second blur to the LQ, between 0 and 1.
+
+  Type: float
+### resize_prob2
+
+  List of 3 probabilities for the second resize which should add up to 1: the probability of upscaling, the probability of downscaling, and the probability of no resize.
+
+  Type: list
+### resize_mode_list2
+
+  List of possible resize modes to use for the second resize.
+
+  Type: list
+### resize_mode_prob2
+
+  List of probabilities for the second resize of selecting the corresponding resize mode in `resize_mode_list2`.
+
+  Type: list
+### resize_range2
+
+  The resize range for the second resize, in the format `[min_resize, max_resize]`.
+
+  Type: tuple
+### gaussian_noise_prob2
+
+  The probability of applying the second gaussian noise to the LQ, between 0 and 1.
+
+  Type: float
 
 
 
+### jpeg_prob2
 
+  The probability of applying the second JPEG degradation to the LQ, between 0 and 1.
 
+  Type: float
+### jpeg_range2
 
+  The range of JPEG quality to apply for the second JPEG degradation, in the format `[min_quality, max_quality]`.
 
+  Type: list
+### resize_mode_list3
 
+  List of possible resize modes to use for the final resize.
 
+  Type: list
+### resize_mode_prob3
 
+  List of probabilities for the final resize of selecting the corresponding resize mode in `resize_mode_list3`.
 
+  Type: list
+### queue_size
 
+  Queue size for OTF processing, must be a multiple of `batch_size_per_gpu`.
 
-
+  Type: int
 
 
 
@@ -268,7 +312,11 @@
 
 
 
+### pretrain_network_g
 
+  Path to the pretrain model for the generator. `pth` and `safetensors` formats are supported.
+
+  Type: str
 
 
 ### strict_load_g
@@ -278,7 +326,11 @@
   Type: bool
 
 
+### pretrain_network_d
 
+  Path to the pretrain model for the discriminator. `pth` and `safetensors` formats are supported.
+
+  Type: str
 
 ### strict_load_d
 

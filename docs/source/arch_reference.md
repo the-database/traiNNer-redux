@@ -686,6 +686,27 @@ num_blocks: 23
 type: esrgan_lite
 use_pixel_unshuffle: true
 ```
+### RTMoSR
+#### rtmosr
+
+
+```yaml
+type: rtmosr
+dim: 32
+ffn_expansion: 1.5
+n_blocks: 2
+unshuffle_mod: false
+```
+#### rtmosr_s
+
+
+```yaml
+type: rtmosr_s
+dim: 32
+ffn_expansion: 1.5
+n_blocks: 2
+unshuffle_mod: true
+```
 ### RealPLKSR
 #### realplksr
 
@@ -1080,6 +1101,7 @@ end_drop: 0.4
 
 ```yaml
 type: unetdiscriminatorsn
+num_in_ch: 3
 num_feat: 64
 skip_connection: true
 ```
@@ -1089,5 +1111,7 @@ skip_connection: true
 
 ```yaml
 type: vggstylediscriminator
+num_in_ch: 3
+num_feat: 64
 input_size: 128
 ```

@@ -231,6 +231,7 @@ archs: list[ArchInfo] = [
         },
     },
     {"names": ["RCAN"], "scales": ALL_SCALES},
+    {"names": ["RTMoSR", "RTMoSR_S"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:
