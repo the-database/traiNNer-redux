@@ -170,15 +170,12 @@ class PathOptions(StrictStruct):
     visualization: str | None = None
     results_root: str | None = None
 
-    pretrain_network_g: (
-        Annotated[
-            str,
-            Meta(
-                description="Path to the pretrain model for the generator. `pth` and `safetensors` formats are supported."
-            ),
-        ]
-        | None
-    ) = None
+    pretrain_network_g: Annotated[
+        str | None,
+        Meta(
+            description="Path to the pretrain model for the generator. `pth` and `safetensors` formats are supported."
+        ),
+    ] = None
     pretrain_network_g_path: str | None = None
     param_key_g: str | None = None
     strict_load_g: Annotated[
@@ -190,15 +187,12 @@ class PathOptions(StrictStruct):
     resume_state: str | None = None
     pretrain_network_g_ema: str | None = None
 
-    pretrain_network_d: (
-        Annotated[
-            str,
-            Meta(
-                description="Path to the pretrain model for the discriminator. `pth` and `safetensors` formats are supported."
-            ),
-        ]
-        | None
-    ) = None
+    pretrain_network_d: Annotated[
+        str | None,
+        Meta(
+            description="Path to the pretrain model for the discriminator. `pth` and `safetensors` formats are supported."
+        ),
+    ] = None
     param_key_d: str | None = None
     strict_load_d: Annotated[
         bool,
@@ -522,32 +516,77 @@ class ReduxOptions(StrictStruct):
         ),
     ] = (75, 95)
 
-    blur_prob2: float = 0
-    resize_prob2: list[float] = field(default_factory=lambda: [0.3, 0.4, 0.3])
-    resize_mode_list2: list[
-        Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]
+    blur_prob2: Annotated[
+        float,
+        Meta(
+            description="Probability of applying the second blur to the LQ, between 0 and 1."
+        ),
+    ] = 0
+    resize_prob2: Annotated[
+        list[float],
+        Meta(
+            description="List of 3 probabilities for the second resize which should add up to 1: the probability of upscaling, the probability of downscaling, and the probability of no resize."
+        ),
+    ] = field(default_factory=lambda: [0.3, 0.4, 0.3])
+    resize_mode_list2: Annotated[
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        Meta(description="List of possible resize modes to use for the second resize."),
     ] = field(
         default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
     )
-    resize_mode_prob2: list[float] = field(
-        default_factory=lambda: [0.25, 0.25, 0.25, 0.25]
-    )
-    resize_range2: tuple[float, float] = (0.6, 1.2)
-    gaussian_noise_prob2: float = 0
+    resize_mode_prob2: Annotated[
+        list[float],
+        Meta(
+            description="List of probabilities for the second resize of selecting the corresponding resize mode in `resize_mode_list2`."
+        ),
+    ] = field(default_factory=lambda: [0.25, 0.25, 0.25, 0.25])
+    resize_range2: Annotated[
+        tuple[float, float],
+        Meta(
+            description="The resize range for the second resize, in the format `[min_resize, max_resize]`."
+        ),
+    ] = (0.6, 1.2)
+    gaussian_noise_prob2: Annotated[
+        float,
+        Meta(
+            description="The probability of applying the second gaussian noise to the LQ, between 0 and 1."
+        ),
+    ] = 0
     noise_range2: tuple[float, float] = (0, 0)
     poisson_scale_range2: tuple[float, float] = (0, 0)
     gray_noise_prob2: float = 0
-    jpeg_prob2: float = 1
-    jpeg_range2: list[float] = field(default_factory=lambda: [75, 95])
+    jpeg_prob2: Annotated[
+        float,
+        Meta(
+            description="The probability of applying the second JPEG degradation to the LQ, between 0 and 1."
+        ),
+    ] = 1
+    jpeg_range2: Annotated[
+        list[float],
+        Meta(
+            description="The range of JPEG quality to apply for the second JPEG degradation, in the format `[min_quality, max_quality]`."
+        ),
+    ] = field(default_factory=lambda: [75, 95])
 
-    resize_mode_list3: list[
-        Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]
-    ] = field(default_factory=lambda: ["bilinear", "bicubic", "nearest-exact"])
-    resize_mode_prob3: list[float] = field(
-        default_factory=lambda: [0.3333, 0.3333, 0.3333]
+    resize_mode_list3: Annotated[
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        Meta(description="List of possible resize modes to use for the final resize."),
+    ] = field(
+        default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
     )
+    resize_mode_prob3: Annotated[
+        list[float],
+        Meta(
+            description="List of probabilities for the final resize of selecting the corresponding resize mode in `resize_mode_list3`."
+        ),
+    ] = field(default_factory=lambda: [0.25, 0.25, 0.25, 0.25])
 
-    queue_size: int = 180
+    queue_size: Annotated[
+        int,
+        Meta(
+            description="Queue size for OTF processing, must be a multiple of `batch_size_per_gpu`."
+        ),
+    ] = 120
     datasets: dict[str, DatasetOptions] = {}
     train: TrainOptions | None = None
     val: ValOptions | None = None
