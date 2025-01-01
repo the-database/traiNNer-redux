@@ -88,15 +88,63 @@ class SRVGGNetCompact(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def compact(scale: int = 4, **kwargs) -> SRVGGNetCompact:
-    return SRVGGNetCompact(upscale=scale, **kwargs)
+def compact(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    num_feat: int = 64,
+    num_conv: int = 16,
+    scale: int = 4,
+    act_type: str = "prelu",
+    learn_residual: bool = True,
+) -> SRVGGNetCompact:
+    return SRVGGNetCompact(
+        upscale=scale,
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        num_feat=num_feat,
+        num_conv=num_conv,
+        act_type=act_type,
+        learn_residual=learn_residual,
+    )
 
 
 @ARCH_REGISTRY.register()
-def ultracompact(scale: int = 4, **kwargs) -> SRVGGNetCompact:
-    return SRVGGNetCompact(upscale=scale, num_feat=64, num_conv=8, **kwargs)
+def ultracompact(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    num_feat: int = 64,
+    num_conv: int = 8,
+    scale: int = 4,
+    act_type: str = "prelu",
+    learn_residual: bool = True,
+) -> SRVGGNetCompact:
+    return SRVGGNetCompact(
+        upscale=scale,
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        num_feat=num_feat,
+        num_conv=num_conv,
+        act_type=act_type,
+        learn_residual=learn_residual,
+    )
 
 
 @ARCH_REGISTRY.register()
-def superultracompact(scale: int = 4, **kwargs) -> SRVGGNetCompact:
-    return SRVGGNetCompact(upscale=scale, num_feat=24, num_conv=8, **kwargs)
+def superultracompact(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    num_feat: int = 24,
+    num_conv: int = 8,
+    scale: int = 4,
+    act_type: str = "prelu",
+    learn_residual: bool = True,
+) -> SRVGGNetCompact:
+    return SRVGGNetCompact(
+        upscale=scale,
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        num_feat=num_feat,
+        num_conv=num_conv,
+        act_type=act_type,
+        learn_residual=learn_residual,
+    )

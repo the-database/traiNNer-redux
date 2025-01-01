@@ -405,7 +405,6 @@ class MAN(nn.Module):
         n_colors: int = 3,
         n_feats: int = 180,
         scale: int = 2,
-        res_scale: float = 1.0,
     ) -> None:
         super().__init__()
 
@@ -457,10 +456,34 @@ class MAN(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def man_tiny(scale: int, **kwargs) -> MAN:
-    return MAN(scale=scale, n_resblocks=5, n_feats=48, **kwargs)
+def man_tiny(
+    n_resblocks: int = 5,
+    n_resgroups: int = 1,
+    n_colors: int = 3,
+    n_feats: int = 48,
+    scale: int = 2,
+) -> MAN:
+    return MAN(
+        scale=scale,
+        n_resblocks=n_resblocks,
+        n_resgroups=n_resgroups,
+        n_colors=n_colors,
+        n_feats=n_feats,
+    )
 
 
 @ARCH_REGISTRY.register()
-def man_light(scale: int, **kwargs) -> MAN:
-    return MAN(scale=scale, n_resblocks=24, n_feats=60)
+def man_light(
+    n_resblocks: int = 24,
+    n_resgroups: int = 1,
+    n_colors: int = 3,
+    n_feats: int = 60,
+    scale: int = 2,
+) -> MAN:
+    return MAN(
+        scale=scale,
+        n_resblocks=n_resblocks,
+        n_resgroups=n_resgroups,
+        n_colors=n_colors,
+        n_feats=n_feats,
+    )

@@ -706,5 +706,36 @@ class FlexNet(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def metaflexnet(**kwargs) -> FlexNet:
-    return FlexNet(dim=48, num_blocks=(4, 6, 6, 8), pipeline_type="meta", **kwargs)
+def metaflexnet(
+    inp_channels: int = 3,
+    out_channels: int = 3,
+    scale: int = 4,
+    dim: int = 64,
+    num_blocks: Sequence[int] = (
+        4,
+        6,
+        6,
+        8,
+    ),  # meta = (8,8,8,8), # linear = (6, 6, 6, 6, 6, 6),
+    window_size: int = 8,
+    hidden_rate: int = 4,
+    channel_norm: bool = False,
+    attn_drop: float = 0.0,
+    proj_drop: float = 0.0,
+    pipeline_type: Literal["meta", "linear"] = "meta",
+    upsampler: T_upsampler = "pixelshuffle",
+) -> FlexNet:
+    return FlexNet(
+        scale=scale,
+        inp_channels=inp_channels,
+        out_channels=out_channels,
+        dim=dim,
+        num_blocks=num_blocks,
+        window_size=window_size,
+        hidden_rate=hidden_rate,
+        channel_norm=channel_norm,
+        attn_drop=attn_drop,
+        proj_drop=proj_drop,
+        pipeline_type=pipeline_type,
+        upsampler=upsampler,
+    )

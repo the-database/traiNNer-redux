@@ -1,5 +1,8 @@
 # https://github.com/umzi2/SPANPlus/blob/master/neosr/archs/spanplus_arch.py
 
+from collections.abc import Sequence
+from typing import Literal
+
 import torch
 import torch.nn.functional as F  # noqa: N812
 from spandrel.architectures.__arch_helpers.dysample import DySample
@@ -7,6 +10,8 @@ from torch import nn
 from torch.nn.init import trunc_normal_
 
 from traiNNer.utils.registry import ARCH_REGISTRY
+
+upsampler_type = Literal["dys", "lp", "ps", "conv"]
 
 
 class Conv3XC(nn.Module):
@@ -179,7 +184,7 @@ class SpanPlus(nn.Module):
         self,
         num_in_ch: int = 3,
         num_out_ch: int = 3,
-        blocks: list | None = None,
+        blocks: Sequence[int] | None = None,
         feature_channels: int = 48,
         upscale: int = 4,
         drop_rate: float = 0.0,
@@ -227,11 +232,10 @@ def spanplus(
     scale: int = 4,
     num_in_ch: int = 3,
     num_out_ch: int = 3,
-    blocks: list | None = None,
+    blocks: Sequence[int] | None = None,
     feature_channels: int = 48,
     drop_rate: float = 0.0,
-    upsampler: str = "dys",  # "lp", "ps", "conv"- only 1x
-    **kwargs,
+    upsampler: upsampler_type = "dys",  # "lp", "ps", "conv"- only 1x
 ) -> SpanPlus:
     return SpanPlus(
         num_in_ch=num_in_ch,
@@ -241,22 +245,67 @@ def spanplus(
         upscale=scale,
         drop_rate=drop_rate,
         upsampler=upsampler,
-        **kwargs,
     )
 
 
 @ARCH_REGISTRY.register()
-def spanplus_sts(scale: int = 4, **kwargs) -> SpanPlus:
+def spanplus_sts(
+    scale: int = 4,
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    blocks: Sequence[int] | None = (2,),
+    feature_channels: int = 32,
+    drop_rate: float = 0.0,
+    upsampler: upsampler_type = "ps",  # "lp", "ps", "conv"- only 1x
+) -> SpanPlus:
     return SpanPlus(
-        upscale=scale, blocks=[2], feature_channels=32, upsampler="ps", **kwargs
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        blocks=blocks,
+        feature_channels=feature_channels,
+        upscale=scale,
+        drop_rate=drop_rate,
+        upsampler=upsampler,
     )
 
 
 @ARCH_REGISTRY.register()
-def spanplus_s(scale: int = 4, **kwargs) -> SpanPlus:
-    return SpanPlus(upscale=scale, blocks=[2], feature_channels=32, **kwargs)
+def spanplus_s(
+    scale: int = 4,
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    blocks: Sequence[int] | None = (2,),
+    feature_channels: int = 32,
+    drop_rate: float = 0.0,
+    upsampler: upsampler_type = "dys",  # "lp", "ps", "conv"- only 1x
+) -> SpanPlus:
+    return SpanPlus(
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        blocks=blocks,
+        feature_channels=feature_channels,
+        upscale=scale,
+        drop_rate=drop_rate,
+        upsampler=upsampler,
+    )
 
 
 @ARCH_REGISTRY.register()
-def spanplus_st(scale: int = 4, **kwargs) -> SpanPlus:
-    return SpanPlus(upscale=scale, upsampler="ps", **kwargs)
+def spanplus_st(
+    scale: int = 4,
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    blocks: Sequence[int] | None = None,
+    feature_channels: int = 48,
+    drop_rate: float = 0.0,
+    upsampler: upsampler_type = "ps",  # "lp", "ps", "conv"- only 1x
+) -> SpanPlus:
+    return SpanPlus(
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        blocks=blocks,
+        feature_channels=feature_channels,
+        upscale=scale,
+        drop_rate=drop_rate,
+        upsampler=upsampler,
+    )

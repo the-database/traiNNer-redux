@@ -274,10 +274,46 @@ class EIMN(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def eimn_l(scale: int = 2) -> EIMN:
-    return EIMN(embed_dims=64, scale=scale, num_stages=16)
+def eimn_l(
+    embed_dims: int = 64,
+    scale: int = 2,
+    depths: int = 1,
+    mlp_ratios: float = 2.66,
+    drop_rate: float = 0.0,
+    drop_path_rate: float = 0.0,
+    num_stages: int = 16,
+    freeze_param: bool = False,
+) -> EIMN:
+    return EIMN(
+        scale=scale,
+        embed_dims=embed_dims,
+        depths=depths,
+        mlp_ratios=mlp_ratios,
+        drop_rate=drop_rate,
+        drop_path_rate=drop_path_rate,
+        num_stages=num_stages,
+        freeze_param=freeze_param,
+    )
 
 
 @ARCH_REGISTRY.register()
-def eimn_a(scale: int = 2) -> EIMN:
-    return EIMN(embed_dims=64, scale=scale, num_stages=14)
+def eimn_a(
+    embed_dims: int = 64,
+    scale: int = 2,
+    depths: int = 1,
+    mlp_ratios: float = 2.66,
+    drop_rate: float = 0.0,
+    drop_path_rate: float = 0.0,
+    num_stages: int = 14,
+    freeze_param: bool = False,
+) -> EIMN:
+    return EIMN(
+        scale=scale,
+        embed_dims=embed_dims,
+        depths=depths,
+        mlp_ratios=mlp_ratios,
+        drop_rate=drop_rate,
+        drop_path_rate=drop_path_rate,
+        num_stages=num_stages,
+        freeze_param=freeze_param,
+    )

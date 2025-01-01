@@ -315,12 +315,62 @@ class RCAN(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def rcan_b(scale: int = 4, **kwargs) -> RCAN:
-    return RCAN(scale=scale, norm=False, reduction=1, **kwargs)
+def rcan_b(
+    scale: int = 4,
+    n_resgroups: int = 10,
+    n_resblocks: int = 20,
+    n_feats: int = 64,
+    n_colors: int = 3,
+    rgb_range: int = 255,
+    norm: bool = False,
+    kernel_size: int = 3,
+    reduction: int = 1,
+    res_scale: float = 1,
+    act_mode: str = "relu",
+    conv: Callable[..., nn.Conv2d] = default_conv,
+) -> RCAN:
+    return RCAN(
+        scale=scale,
+        n_resgroups=n_resgroups,
+        n_resblocks=n_resblocks,
+        n_feats=n_feats,
+        n_colors=n_colors,
+        rgb_range=rgb_range,
+        kernel_size=kernel_size,
+        res_scale=res_scale,
+        norm=norm,
+        reduction=reduction,
+        act_mode=act_mode,
+        conv=conv,
+    )
 
 
 @ARCH_REGISTRY.register()
-def rcan_b2(scale: int = 4, **kwargs) -> RCAN:
+def rcan_b2(
+    scale: int = 4,
+    n_resgroups: int = 6,
+    n_resblocks: int = 12,
+    n_feats: int = 64,
+    n_colors: int = 3,
+    rgb_range: int = 255,
+    norm: bool = False,
+    kernel_size: int = 3,
+    reduction: int = 1,
+    res_scale: float = 1,
+    act_mode: str = "relu",
+    conv: Callable[..., nn.Conv2d] = default_conv,
+) -> RCAN:
     return RCAN(
-        scale=scale, n_resgroups=6, n_resblocks=12, norm=False, reduction=1, **kwargs
+        scale=scale,
+        n_resgroups=n_resgroups,
+        n_resblocks=n_resblocks,
+        n_feats=n_feats,
+        n_colors=n_colors,
+        rgb_range=rgb_range,
+        kernel_size=kernel_size,
+        res_scale=res_scale,
+        norm=norm,
+        reduction=reduction,
+        act_mode=act_mode,
+        conv=conv,
     )

@@ -2,6 +2,7 @@
 # With modifications by umzi2 to support dysample and layer norm
 # from spandrel.architectures.PLKSR import PLKSR, RealPLKSR
 from functools import partial
+from typing import Literal
 
 import torch
 from spandrel.architectures.__arch_helpers.dysample import DySample
@@ -180,5 +181,33 @@ class RealPLKSR(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def realplksr(scale: int = 4, **kwargs) -> RealPLKSR:
-    return RealPLKSR(upscaling_factor=scale, **kwargs)
+def realplksr(
+    in_ch: int = 3,
+    out_ch: int = 3,
+    dim: int = 64,
+    n_blocks: int = 28,
+    scale: int = 4,
+    kernel_size: int = 17,
+    split_ratio: float = 0.25,
+    use_ea: bool = True,
+    norm_groups: int = 4,
+    dropout: float = 0,
+    upsampler: Literal[
+        "dysample", "pixelshuffle"
+    ] = "pixelshuffle",  # dysample, pixelshuffle
+    layer_norm: bool = True,
+) -> RealPLKSR:
+    return RealPLKSR(
+        upscaling_factor=scale,
+        in_ch=in_ch,
+        out_ch=out_ch,
+        dim=dim,
+        n_blocks=n_blocks,
+        kernel_size=kernel_size,
+        split_ratio=split_ratio,
+        use_ea=use_ea,
+        norm_groups=norm_groups,
+        dropout=dropout,
+        upsampler=upsampler,
+        layer_norm=layer_norm,
+    )

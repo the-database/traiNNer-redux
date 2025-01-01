@@ -26,7 +26,7 @@ EXCLUDE_BENCHMARK_ARCHS = {
     "swin2sr",
     "lmlt",
     "vggstylediscriminator",
-    "unetdiscriminatorsn_traiNNer",
+    "unetdiscriminatorsn",
     "vggfeatureextractor",
 }
 FILTERED_REGISTRY = [
