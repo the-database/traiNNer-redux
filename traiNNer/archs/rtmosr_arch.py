@@ -264,7 +264,7 @@ class RTMoSR(nn.Module):
                 raise ValueError("Unshuffle_mod does not support 3x")
             unshuffle = 4 // scale
             scale = 4
-
+        self.unshuffle = unshuffle
         self.to_feat = (
             nn.Conv2d(3, dim, 3, 1, 1)
             if not unshuffle
@@ -280,11 +280,22 @@ class RTMoSR(nn.Module):
             nn.PixelShuffle(scale),
         )
 
+    def check_img_size(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
+        scaled_size = self.unshuffle
+        mod_pad_h = (scaled_size - resolution[0] % scaled_size) % scaled_size
+        mod_pad_w = (scaled_size - resolution[1] % scaled_size) % scaled_size
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+
     def forward(self, x: Tensor) -> Tensor:
         short = x
+        _, _, h, w = x.shape
+        if self.unshuffle:
+            x = self.check_img_size(x, (h, w))
         x = self.to_feat(x)
         x = self.body(x) + x
-        return self.to_img(x) + F.interpolate(short, scale_factor=self.scale)
+        return self.to_img(x)[:, :, : h * self.scale, : w * self.scale] + F.interpolate(
+            short, scale_factor=self.scale
+        )
 
 
 @ARCH_REGISTRY.register()
