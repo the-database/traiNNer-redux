@@ -1,11 +1,12 @@
 import inspect
+from collections.abc import Callable
 from inspect import signature
 
 from traiNNer.losses import LOSS_REGISTRY
 from traiNNer.utils.misc import is_json_compatible
 
 
-def function_to_markdown(func, header):
+def function_to_markdown(func: Callable, header: str) -> str:
     # Start building the Markdown output
     md = [f"## {header}", ""]
 
@@ -43,7 +44,7 @@ def function_to_markdown(func, header):
     return "\n".join(md)
 
 
-def class_to_markdown(cls, header):
+def class_to_markdown(cls: type, header: str) -> str:
     """
     Converts a Python class's docstring and its parameters' docstrings into Markdown format.
 
@@ -56,13 +57,14 @@ def class_to_markdown(cls, header):
 
     # Document the `__init__` method if available
     init_method = getattr(cls, "__init__", None)
-
+    assert init_method is not None
     return function_to_markdown(init_method, header)
 
 
-def callable_to_markdown(callable, header) -> str:
+def callable_to_markdown(callable: Callable | type, header: str) -> str:
     if inspect.isfunction(callable):
         return function_to_markdown(callable, header)
+    assert isinstance(callable, type)
     return class_to_markdown(callable, header)
 
 
@@ -96,21 +98,16 @@ if __name__ == "__main__":
         if cls_key not in docs:
             docs[cls_key] = {}
 
-        # if cls not in documented_archs:
-        #     fout.write(f"## {cls_key}\n")
         arch_key = arch.__name__.lower()
         print(arch_key)
         markdown = callable_to_markdown(arch, arch_key)
         docs[cls_key][arch_key] = markdown
-        # fout.write(f"{markdown}\n")
-        # documented_archs.add(cls)
 
     with open(output_path, "w") as fout:
         fout.write("# Loss reference\n")
         fout.write(
             "This page lists all available parameters for each loss function in traiNNer-redux. While the default configs use recommended default values and shouldn't need to be modified by most users, advanced users may wish to inspect or modify loss function params to suit their specific use case.\n"
         )
-        for arch_group, doc_dict in sorted(docs.items()):
-            # fout.write(f"### {arch_group}\n")
+        for _arch_group, doc_dict in sorted(docs.items()):
             for _, arch_md in sorted(doc_dict.items()):
                 fout.write(f"{arch_md}\n")

@@ -1,4 +1,5 @@
 import inspect
+from collections.abc import Callable
 from inspect import signature
 
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
@@ -21,7 +22,7 @@ FILTERED_REGISTRY = [
 ]
 
 
-def function_to_markdown(func, header):
+def function_to_markdown(func: Callable, header: str) -> str:
     # Start building the Markdown output
     md = [f"#### {header}", ""]
 
@@ -59,7 +60,7 @@ def function_to_markdown(func, header):
     return "\n".join(md)
 
 
-def class_to_markdown(cls, header):
+def class_to_markdown(cls: type, header: str) -> str:
     """
     Converts a Python class's docstring and its parameters' docstrings into Markdown format.
 
@@ -72,27 +73,18 @@ def class_to_markdown(cls, header):
 
     # Document the `__init__` method if available
     init_method = getattr(cls, "__init__", None)
-
+    assert init_method is not None
     return function_to_markdown(init_method, header)
 
 
-def callable_to_markdown(callable, header) -> str:
+def callable_to_markdown(callable: Callable | type, header: str) -> str:
     if inspect.isfunction(callable):
         return function_to_markdown(callable, header)
+    assert isinstance(callable, type)
     return class_to_markdown(callable, header)
 
 
 documented_archs = set()
-# cls_to_names: dict[type, list[str]] = {}
-# for _, arch in FILTERED_REGISTRY:
-#     if inspect.isfunction(arch):
-#         net = arch(scale=4)
-#         cls: type = net.__class__
-#     else:
-#         cls = arch  # type: ignore
-#     if cls not in cls_to_names:
-#         cls_to_names[cls] = []
-#     cls_to_names[cls].append(arch.__name__.lower())
 
 discriminators = {"vggstylediscriminator", "unetdiscriminatorsn", "dunet", "metagan2"}
 
@@ -119,14 +111,10 @@ if __name__ == "__main__":
         if cls_key not in doc:
             doc[cls_key] = {}
 
-        # if cls not in documented_archs:
-        #     fout.write(f"## {cls_key}\n")
         arch_key = arch.__name__.lower()
         print(arch_key)
         markdown = callable_to_markdown(arch, arch_key)
         doc[cls_key][arch_key] = markdown
-        # fout.write(f"{markdown}\n")
-        # documented_archs.add(cls)
 
     with open(output_path, "w") as fout:
         fout.write("# Architecture reference\n")
