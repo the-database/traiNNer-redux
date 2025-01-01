@@ -121,8 +121,10 @@ if __name__ == "__main__":
 
         # if cls not in documented_archs:
         #     fout.write(f"## {cls_key}\n")
-        markdown = callable_to_markdown(arch, arch.__name__)
-        doc[cls_key][arch.__name__.lower()] = markdown
+        arch_key = arch.__name__.lower()
+        print(arch_key)
+        markdown = callable_to_markdown(arch, arch_key)
+        doc[cls_key][arch_key] = markdown
         # fout.write(f"{markdown}\n")
         # documented_archs.add(cls)
 

@@ -229,11 +229,11 @@ num_stages: 16
 freeze_param: false
 ```
 ### FlexNet
-#### FlexNet
+#### flexnet
 
 
 ```yaml
-type: FlexNet
+type: flexnet
 inp_channels: 3
 out_channels: 3
 dim: 64
@@ -446,11 +446,11 @@ attn_drop_rate: 0.0
 drop_path_rate: 0.0
 ```
 ### MAN
-#### MAN
+#### man
 
 
 ```yaml
-type: MAN
+type: man
 n_resblocks: 36
 n_resgroups: 1
 n_colors: 3
@@ -477,11 +477,11 @@ n_colors: 3
 n_feats: 48
 ```
 ### MoESR2
-#### MoESR2
+#### moesr2
 
 
 ```yaml
-type: MoESR2
+type: moesr2
 in_ch: 3
 out_ch: 3
 dim: 64
@@ -574,11 +574,11 @@ with_idt: false
 use_ea: false
 ```
 ### RCAN
-#### RCAN
+#### rcan
 
 
 ```yaml
-type: RCAN
+type: rcan
 n_resgroups: 10
 n_resblocks: 20
 n_feats: 64
@@ -705,11 +705,11 @@ upsampler: pixelshuffle
 layer_norm: true
 ```
 ### SCUNet_aaf6aa
-#### SCUNet_aaf6aa
+#### scunet_aaf6aa
 
 
 ```yaml
-type: SCUNet_aaf6aa
+type: scunet_aaf6aa
 in_nc: 3
 out_nc: 3
 config: ~
@@ -1023,11 +1023,11 @@ resi_connection: 1conv
 start_unshuffle: 1
 ```
 ### TSCUNet
-#### TSCUNet
+#### tscunet
 
 
 ```yaml
-type: TSCUNet
+type: tscunet
 in_nc: 3
 out_nc: 3
 clip_size: 5
@@ -1052,20 +1052,20 @@ out_channels: 3
 ```
 ## Discriminator architectures (`network_d`)
 ### DUnet
-#### DUnet
+#### dunet
 
 
 ```yaml
-type: DUnet
+type: dunet
 num_in_ch: 3
 num_feat: 64
 ```
 ### MetaGan2
-#### MetaGan2
+#### metagan2
 
 
 ```yaml
-type: MetaGan2
+type: metagan2
 in_ch: 3
 n_class: 1
 dims: [48, 96, 192, 288]
@@ -1075,19 +1075,19 @@ drop_path: 0.2
 end_drop: 0.4
 ```
 ### UNetDiscriminatorSN
-#### UNetDiscriminatorSN
+#### unetdiscriminatorsn
 
 
 ```yaml
-type: UNetDiscriminatorSN
+type: unetdiscriminatorsn
 num_feat: 64
 skip_connection: true
 ```
 ### VGGStyleDiscriminator
-#### VGGStyleDiscriminator
+#### vggstylediscriminator
 
 
 ```yaml
-type: VGGStyleDiscriminator
+type: vggstylediscriminator
 input_size: 128
 ```
