@@ -8,12 +8,11 @@ traiNNer-redux documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents
+   :caption: Guides
 
    /index
    /getting_started
    /training_guidelines
-   /benchmarks
 
 .. toctree::
    :maxdepth: 2
@@ -25,6 +24,16 @@ traiNNer-redux documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: Benchmarks
+
+   /benchmarks
+
+.. toctree::
+   :maxdepth: 2
    :caption: Developers
 
    /contributing
+
+
+.. sidebar-links::
+   :github:
