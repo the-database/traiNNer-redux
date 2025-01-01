@@ -686,6 +686,27 @@ num_blocks: 23
 type: esrgan_lite
 use_pixel_unshuffle: true
 ```
+### RTMoSR
+#### rtmosr
+
+
+```yaml
+type: rtmosr
+dim: 32
+ffn_expansion: 1.5
+n_blocks: 2
+unshuffle_mod: false
+```
+#### rtmosr_s
+
+
+```yaml
+type: rtmosr_s
+dim: 32
+ffn_expansion: 1.5
+n_blocks: 2
+unshuffle_mod: true
+```
 ### RealPLKSR
 #### realplksr
 
