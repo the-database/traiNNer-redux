@@ -12,7 +12,7 @@ def omnisr(
     block_num: int = 1,
     pe: bool = True,
     window_size: int = 8,
-    res_num: int = 1,
+    res_num: int = 5,
     bias: bool = True,
 ) -> OmniSR:
     return OmniSR(
