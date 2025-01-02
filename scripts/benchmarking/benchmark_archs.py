@@ -15,7 +15,6 @@ sys.path.append(
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16, OFFICIAL_METRICS
 
-# ALL_REGISTRIES = list(SPANDREL_REGISTRY) + list(ARCH_REGISTRY)
 ALL_REGISTRIES = list(ARCH_REGISTRY)
 EXCLUDE_BENCHMARK_ARCHS = {
     "artcnn",
@@ -116,6 +115,7 @@ def get_line(
     fps_channels_last: float,
     vram_channels_last: float,
     channels_last_vs_baseline: float,
+    best_fps: float,
     print_markdown: bool = False,
 ) -> str:
     name_separator = "|" if print_markdown else ": "
@@ -251,46 +251,34 @@ if __name__ == "__main__":
 
     input_shape = (1, 3, 480, 640)
 
-    warmup_runs = 5  # 1
-    num_runs = 10  # 5
+    warmup_runs = 1  # 1
+    num_runs = 5  # 5
     lightweight_num_runs = 250
     print_markdown = True
     n, c, h, w = input_shape
+    row_type = tuple[
+        str,
+        str,
+        float,
+        float,
+        float,
+        int,
+        int,
+        dict[str, Any],
+        float,
+        float,
+        float,
+        float,
+    ]
     results_by_scale: dict[
         int,
-        list[
-            tuple[
-                str,
-                str,
-                float,
-                float,
-                float,
-                int,
-                int,
-                dict[str, Any],
-                float,
-                float,
-                float,
-            ]
-        ],
+        list[row_type],
     ] = {}
     results_by_arch: dict[
         str,
         dict[
             int,
-            tuple[
-                str,
-                str,
-                float,
-                float,
-                float,
-                int,
-                int,
-                dict[str, Any],
-                float,
-                float,
-                float,
-            ],
+            row_type,
         ],
     ] = {}
 
@@ -336,11 +324,15 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                     results_by_scale[scale] = []
 
                     for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
-                        arch_key = f"{name} {format_extra_params(extra_arch_params)}"
+                        arch_key = (
+                            f"{name} {format_extra_params(extra_arch_params)}".strip()
+                        )
                         dtype_str, dtype = get_dtype(name, use_amp)
                         try:
                             # if name not in {
-                            #     "realplksr",
+                            #     "compact",
+                            #     "ultracompact",
+                            #     "superultracompact",
                             # }:
                             #     continue
                             if arch_key not in results_by_arch:
@@ -365,13 +357,16 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                                 row_channels_last[3],  # fps (CL)
                                 row_channels_last[4],  # vram (CL)
                                 channels_last_improvement,
+                                row[3]
+                                if row[3] > row_channels_last[3]
+                                else row_channels_last[3],  # better fps
                             )
                             results_by_scale[scale].append(new_row)
                             results_by_arch[arch_key][scale] = new_row
 
                             better_row = (
                                 row
-                                if row[3] < row_channels_last[3]
+                                if row[3] > row_channels_last[3]
                                 else row_channels_last
                             )
 
@@ -435,12 +430,13 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                                 float("inf"),
                                 float("inf"),
                                 float("inf"),
+                                float("inf"),
                             )
                             results_by_scale[scale].append(row)
                             results_by_arch[arch_key][scale] = row
                         print(get_line(*results_by_scale[scale][-1]))
 
-                    results_by_scale[scale].sort(key=lambda x: x[8])
+                    results_by_scale[scale].sort(key=lambda x: x[-1], reverse=True)
 
         printfc("## By Scale", f)
 
