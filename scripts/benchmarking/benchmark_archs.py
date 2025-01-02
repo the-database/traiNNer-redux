@@ -329,12 +329,12 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                         )
                         dtype_str, dtype = get_dtype(name, use_amp)
                         try:
-                            if name not in {
-                                "compact",
-                                "ultracompact",
-                                "superultracompact",
-                            }:
-                                continue
+                            # if name not in {
+                            #     "compact",
+                            #     "ultracompact",
+                            #     "superultracompact",
+                            # }:
+                            #     continue
                             if arch_key not in results_by_arch:
                                 results_by_arch[arch_key] = {}
                             row = benchmark_arch(
