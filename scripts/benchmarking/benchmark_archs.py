@@ -251,8 +251,8 @@ if __name__ == "__main__":
 
     input_shape = (1, 3, 480, 640)
 
-    warmup_runs = 5  # 1
-    num_runs = 10  # 5
+    warmup_runs = 1  # 1
+    num_runs = 5  # 5
     lightweight_num_runs = 250
     print_markdown = True
     n, c, h, w = input_shape
