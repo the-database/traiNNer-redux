@@ -125,7 +125,7 @@ OFFICIAL_METRICS: dict[
         3: {"df2k_psnr": 29.05, "df2k_ssim": 0.8698},
         4: {"df2k_psnr": 26.88, "df2k_ssim": 0.8084},
     },
-    "esrgan": {
+    "esrgan use_pixel_unshuffle=True": {
         4: {
             "df2k_psnr": 27.03,
             "df2k_ssim": 0.8153,
@@ -191,6 +191,9 @@ OFFICIAL_METRICS: dict[
     "man_light": {
         4: {"df2k_psnr": 26.70, "df2k_ssim": 0.8052},
     },
+    "moesr2": {
+        4: {"df2k_psnr": 27.05, "df2k_ssim": 0.8177},
+    },
     "omnisr": {
         2: {
             "df2k_psnr": 33.30,
@@ -251,10 +254,25 @@ OFFICIAL_METRICS: dict[
             "div2k_ssim": 0.7888,
         },
     },
+    "realplksr pixelshuffle layer_norm=True": {
+        2: {
+            "df2k_psnr": 33.44,
+            "df2k_ssim": 0.9412,
+        },
+        4: {
+            "df2k_psnr": 26.94,
+            "df2k_ssim": 0.8140,
+        },
+    },
     "rcan": {
         2: {"div2k_psnr": 33.34, "div2k_ssim": 0.9384},
         3: {"div2k_psnr": 29.09, "div2k_ssim": 0.8702},
-        4: {"div2k_psnr": 26.82, "div2k_ssim": 0.8087},
+        4: {
+            "div2k_psnr": 26.82,
+            "div2k_ssim": 0.8087,
+            "df2k_psnr": 27.16,
+            "df2k_ssim": 0.8168,
+        },
     },
     "rcanit": {
         2: {"df2k_psnr": 33.62, "df2k_ssim": 0.9410},

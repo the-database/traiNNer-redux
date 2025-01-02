@@ -1,3 +1,4 @@
+import csv
 import os
 import sys
 import time
@@ -22,6 +23,7 @@ EXCLUDE_BENCHMARK_ARCHS = {
     "dunet",
     "eimn",
     "hat",
+    "metagan2",
     "swinir",
     "swin2sr",
     "lmlt",
@@ -42,6 +44,8 @@ LIGHTWEIGHT_ARCHS = {
     "compact",
     "plksr_tiny",
     "ultracompact",
+    "rtmosr",
+    "rtmosr_s",
     "superultracompact",
     "spanplus",
     "spanplus_s",
@@ -110,6 +114,7 @@ def get_line(
     scale: int,
     extra_arch_params: dict[str, Any],
     fps_channels_last: float,
+    vram_channels_last: float,
     channels_last_vs_baseline: float,
     print_markdown: bool = False,
 ) -> str:
@@ -120,8 +125,8 @@ def get_line(
     name_str = f"{name} {format_extra_params(extra_arch_params)} {scale}x {dtype_str}"
 
     fps_label = "" if print_markdown else "FPS: "
-    fps_cl_label = "" if print_markdown else "FPS (channels last): "
-    channels_last_vs_label = "" if print_markdown else "Channels last vs baseline: "
+    fps_cl_label = "" if print_markdown else "FPS (CL): "
+    channels_last_vs_label = "" if print_markdown else "CL vs base: "
     sec_img_label = "" if print_markdown else "sec/img: "
     vram_label = "" if print_markdown else "VRAM: "
     params_label = "" if print_markdown else "Params: "
@@ -135,19 +140,20 @@ def get_line(
     psnrdiv2k = format(unsupported_value, "<5s")
     ssimdiv2k = format(unsupported_value, "<6s")
 
-    if name in OFFICIAL_METRICS:
-        if scale in OFFICIAL_METRICS[name]:
-            if "df2k_psnr" in OFFICIAL_METRICS[name][scale]:
-                psnrdf2k = format(OFFICIAL_METRICS[name][scale]["df2k_psnr"], ".2f")
-            if "df2k_ssim" in OFFICIAL_METRICS[name][scale]:
-                ssimdf2k = format(OFFICIAL_METRICS[name][scale]["df2k_ssim"], ".4f")
-            if "div2k_psnr" in OFFICIAL_METRICS[name][scale]:
-                psnrdiv2k = format(OFFICIAL_METRICS[name][scale]["div2k_psnr"], ".2f")
-            if "div2k_ssim" in OFFICIAL_METRICS[name][scale]:
-                ssimdiv2k = format(OFFICIAL_METRICS[name][scale]["div2k_ssim"], ".4f")
+    key = f"{name} {format_extra_params(extra_arch_params)}".strip()
+    if key in OFFICIAL_METRICS:
+        if scale in OFFICIAL_METRICS[key]:
+            if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                psnrdf2k = format(OFFICIAL_METRICS[key][scale]["df2k_psnr"], ".2f")
+            if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                ssimdf2k = format(OFFICIAL_METRICS[key][scale]["df2k_ssim"], ".4f")
+            if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                psnrdiv2k = format(OFFICIAL_METRICS[key][scale]["div2k_psnr"], ".2f")
+            if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                ssimdiv2k = format(OFFICIAL_METRICS[key][scale]["div2k_ssim"], ".4f")
 
     if params != -1:
-        return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{fps:>8.2f}{separator}{fps_cl_label}{fps_channels_last:>8.2f}{separator}{channels_last_vs_label}{channels_last_vs_baseline:>1.2f}x{separator}{sec_img_label}{avg_time:>8.4f}{separator}{vram_label}{vram:>8.2f} GB{separator}{psnrdf2k_label}{psnrdf2k}{separator}{ssimdf2k_label}{ssimdf2k}{separator}{psnrdiv2k_label}{psnrdiv2k}{separator}{ssimdiv2k_label}{ssimdiv2k}{separator}{params_label}{params:>10,d}{edge_separator}"
+        return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{fps:>8.2f}{separator}{fps_cl_label}{fps_channels_last:>8.2f}{separator}{channels_last_vs_label}{channels_last_vs_baseline:>1.2f}x{separator}{sec_img_label}{avg_time:>8.4f}{separator}{vram_label}{vram_channels_last:>8.2f} GB{separator}{psnrdf2k_label}{psnrdf2k}{separator}{ssimdf2k_label}{ssimdf2k}{separator}{psnrdiv2k_label}{psnrdiv2k}{separator}{ssimdiv2k_label}{ssimdiv2k}{separator}{params_label}{params:>10,d}{edge_separator}"
 
     return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{unsupported_value:<8}{separator}{fps_cl_label}{unsupported_value:<8}{separator}{channels_last_vs_label}{unsupported_value:<8}{separator}{sec_img_label}{unsupported_value:<8}{separator}{vram_label}{unsupported_value:<8}{separator}{psnrdf2k_label}{unsupported_value}{separator}{ssimdf2k_label}{unsupported_value}{separator}{psnrdiv2k_label}{unsupported_value}{separator}{ssimdiv2k_label}{separator}{params_label}{unsupported_value:<10}{edge_separator}"
 
@@ -245,15 +251,27 @@ if __name__ == "__main__":
 
     input_shape = (1, 3, 480, 640)
 
-    warmup_runs = 1  # 1
-    num_runs = 5  # 5
+    warmup_runs = 5  # 1
+    num_runs = 10  # 5
     lightweight_num_runs = 250
     print_markdown = True
     n, c, h, w = input_shape
     results_by_scale: dict[
         int,
         list[
-            tuple[str, str, float, float, float, int, int, dict[str, Any], float, float]
+            tuple[
+                str,
+                str,
+                float,
+                float,
+                float,
+                int,
+                int,
+                dict[str, Any],
+                float,
+                float,
+                float,
+            ]
         ],
     ] = {}
     results_by_arch: dict[
@@ -261,10 +279,42 @@ if __name__ == "__main__":
         dict[
             int,
             tuple[
-                str, str, float, float, float, int, int, dict[str, Any], float, float
+                str,
+                str,
+                float,
+                float,
+                float,
+                int,
+                int,
+                dict[str, Any],
+                float,
+                float,
+                float,
             ],
         ],
     ] = {}
+
+    csv_header_row = [
+        "name",
+        "variant",
+        "scale",
+        "dtype",
+        "avg_time",
+        "fps",
+        "vram",
+        "avg_time_base",
+        "avg_time_cl",
+        "fps_base",
+        "fps_cl",
+        "vram_base",
+        "vram_cl",
+        "cl_vs_base",
+        "params",
+        "psnr_div2k",
+        "ssim_div2k",
+        "psnr_df2k",
+        "ssim_df2k",
+    ]
 
     with open("docs/source/benchmarks.md", "w") as f:
         f.write("""# PyTorch Inference Benchmarks by Architecture (AMP & channels last)
@@ -278,59 +328,119 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
         for use_amp in [True]:
             for scale in ALL_SCALES:
-                results_by_scale[scale] = []
+                with open(
+                    f"docs/source/resources/benchmark{scale}x.csv", "w", newline=""
+                ) as csvfile:
+                    csvwriter = csv.writer(csvfile)
+                    csvwriter.writerow(csv_header_row)
+                    results_by_scale[scale] = []
 
-                for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
-                    arch_key = f"{name} {format_extra_params(extra_arch_params)}"
-                    dtype_str, dtype = get_dtype(name, use_amp)
-                    try:
-                        # if "rcan" not in name:
-                        #     continue
-                        if arch_key not in results_by_arch:
-                            results_by_arch[arch_key] = {}
-                        row = benchmark_arch(
-                            name, arch, extra_arch_params, torch.preserve_format
-                        )
-                        row_channels_last = benchmark_arch(
-                            name, arch, extra_arch_params, torch.channels_last
-                        )
+                    for name, arch, extra_arch_params in FILTERED_REGISTRIES_PARAMS:
+                        arch_key = f"{name} {format_extra_params(extra_arch_params)}"
+                        dtype_str, dtype = get_dtype(name, use_amp)
+                        try:
+                            # if name not in {
+                            #     "realplksr",
+                            # }:
+                            #     continue
+                            if arch_key not in results_by_arch:
+                                results_by_arch[arch_key] = {}
+                            row = benchmark_arch(
+                                name, arch, extra_arch_params, torch.preserve_format
+                            )
+                            row_channels_last = benchmark_arch(
+                                name, arch, extra_arch_params, torch.channels_last
+                            )
 
-                        channels_last_improvement = row_channels_last[3] / row[3]
-                        new_row = (
-                            row[0],
-                            row[1],
-                            row[2],
-                            row[3],
-                            row_channels_last[4],
-                            row[5],
-                            row[6],
-                            row[7],
-                            row_channels_last[3],
-                            channels_last_improvement,
-                        )
-                        results_by_scale[scale].append(new_row)
-                        results_by_arch[arch_key][scale] = new_row
-                    except Exception as e:
-                        import traceback
+                            channels_last_improvement = row_channels_last[3] / row[3]
+                            new_row = (
+                                row[0],  # name
+                                row[1],  # dtype
+                                row[2],  # avg time
+                                row[3],  # fps
+                                row[4],  # vram
+                                row[5],  # param count
+                                row[6],  # scale
+                                row[7],  # extra arch count
+                                row_channels_last[3],  # fps (CL)
+                                row_channels_last[4],  # vram (CL)
+                                channels_last_improvement,
+                            )
+                            results_by_scale[scale].append(new_row)
+                            results_by_arch[arch_key][scale] = new_row
 
-                        traceback.print_exception(e)
-                        row = (
-                            name,
-                            dtype_str,
-                            float("inf"),
-                            float("inf"),
-                            float("inf"),
-                            -1,
-                            scale,
-                            extra_arch_params,
-                            float("inf"),
-                            float("inf"),
-                        )
-                        results_by_scale[scale].append(row)
-                        results_by_arch[arch_key][scale] = row
-                    print(get_line(*results_by_scale[scale][-1]))
+                            better_row = (
+                                row
+                                if row[3] < row_channels_last[3]
+                                else row_channels_last
+                            )
 
-                results_by_scale[scale].sort(key=lambda x: x[8])
+                            psnrdf2k = ssimdf2k = psnrdiv2k = ssimdiv2k = "-"
+                            key = f"{row[0]} {format_extra_params(extra_arch_params)}".strip()
+                            if key in OFFICIAL_METRICS:
+                                if scale in OFFICIAL_METRICS[key]:
+                                    if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                                        psnrdf2k = OFFICIAL_METRICS[key][scale][
+                                            "df2k_psnr"
+                                        ]
+                                    if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                                        ssimdf2k = OFFICIAL_METRICS[key][scale][
+                                            "df2k_ssim"
+                                        ]
+                                    if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                                        psnrdiv2k = OFFICIAL_METRICS[key][scale][
+                                            "div2k_psnr"
+                                        ]
+                                    if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                                        ssimdiv2k = OFFICIAL_METRICS[key][scale][
+                                            "div2k_ssim"
+                                        ]
+
+                            csvwriter.writerow(
+                                [
+                                    row[0],
+                                    format_extra_params(extra_arch_params),
+                                    scale,
+                                    row[1],
+                                    better_row[2],
+                                    better_row[3],
+                                    better_row[4],
+                                    row[2],
+                                    row_channels_last[2],
+                                    row[3],
+                                    row_channels_last[3],
+                                    row[4],
+                                    row_channels_last[4],
+                                    channels_last_improvement,
+                                    row[5],
+                                    psnrdiv2k,
+                                    ssimdiv2k,
+                                    psnrdf2k,
+                                    ssimdf2k,
+                                ]
+                            )
+                        except Exception as e:
+                            import traceback
+
+                            traceback.print_exception(e)
+                            row = (
+                                name,
+                                dtype_str,
+                                float("inf"),
+                                float("inf"),
+                                float("inf"),
+                                -1,
+                                scale,
+                                extra_arch_params,
+                                float("inf"),
+                                float("inf"),
+                                float("inf"),
+                            )
+                            results_by_scale[scale].append(row)
+                            results_by_arch[arch_key][scale] = row
+                        print(get_line(*results_by_scale[scale][-1]))
+
+                    results_by_scale[scale].sort(key=lambda x: x[8])
 
         printfc("## By Scale", f)
 
