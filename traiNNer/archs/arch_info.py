@@ -265,7 +265,12 @@ OFFICIAL_METRICS: dict[
         },
     },
     "rcan": {
-        2: {"div2k_psnr": 33.34, "div2k_ssim": 0.9384},
+        2: {
+            "div2k_psnr": 33.34,
+            "div2k_ssim": 0.9384,
+            "df2k_psnr": 33.62,
+            "df2k_ssim": 0.9410,
+        },
         3: {"div2k_psnr": 29.09, "div2k_ssim": 0.8702},
         4: {
             "div2k_psnr": 26.82,
