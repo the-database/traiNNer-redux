@@ -8,6 +8,22 @@ from torch.nn.init import trunc_normal_
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
+# channels_first
+class RMSNorm(nn.Module):
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
+        super().__init__()
+        self.eps = eps
+        self.scale = nn.Parameter(torch.ones(dim))
+        self.offset = nn.Parameter(torch.zeros(dim))
+
+    def forward(self, x: Tensor) -> Tensor:
+        norm_x = x.norm(2, dim=1, keepdim=True)
+        d_x = x.size(1)
+        rms_x = norm_x * (d_x ** (-1.0 / 2))
+        x_normed = x / (rms_x + self.eps)
+        return self.scale[..., None, None] * x_normed + self.offset[..., None, None]
+
+
 class LayerNorm(nn.Module):
     def __init__(self, dim: int = 64, eps: float = 1e-6) -> None:
         super().__init__()
@@ -151,7 +167,7 @@ class Conv3XC(nn.Module):
         self.eval_conv.weight.data = self.weight_concat
         self.eval_conv.bias.data = self.bias_concat  # type: ignore
 
-    def forward(self, x):  # noqa: ANN201, ANN001
+    def forward(self, x: Tensor) -> Tensor:
         x_pad = F.pad(x, (1, 1, 1, 1), "constant", 0)
         out = self.conv(x_pad) + self.sk(x)
         return out
@@ -165,19 +181,23 @@ class RepConv(nn.Module):
         self.conv3 = Conv3XC(in_dim, out_dim)
         self.conv_3x3_rep = nn.Conv2d(in_dim, out_dim, 3, 1, 1)
         self.alpha = nn.Parameter(torch.randn(3), requires_grad=True)
+        self.forward_module = self.train_forward
 
     def fuse(self) -> None:
         self.conv3.update_params()
         pad_conv_1x1 = F.pad(self.conv1.weight, (1, 1, 1, 1))
+        weight_3x3 = self.conv2.weight
+        bias_3x3 = self.conv2.bias
+        conv_1x1_bias = self.conv1.bias
         device = self.conv_3x3_rep.weight.device
         sum_weight = (
             self.alpha[0] * pad_conv_1x1
-            + self.alpha[1] * self.conv2.weight
+            + self.alpha[1] * weight_3x3
             + self.conv3.eval_conv.weight * self.alpha[2]
         ).to(device)
         sum_bias = (
-            self.alpha[0] * self.conv1.bias
-            + self.alpha[1] * self.conv2.bias
+            self.alpha[0] * conv_1x1_bias
+            + self.alpha[1] * bias_3x3
             + self.alpha[2] * self.conv3.eval_conv.bias
         ).to(device)
         self.conv_3x3_rep.weight = nn.Parameter(sum_weight)
@@ -185,8 +205,11 @@ class RepConv(nn.Module):
 
     def train(self, mode: bool = True) -> Self:
         super().train(mode)
-        if not mode:
+        if mode:
+            self.forward_module = self.train_forward
+        else:
             self.fuse()
+            self.forward_module = self.conv_3x3_rep
         return self
 
     def train_forward(self, x: Tensor) -> Tensor:
@@ -196,10 +219,7 @@ class RepConv(nn.Module):
         return self.alpha[0] * x1 + self.alpha[1] * x2 + self.alpha[2] * x3
 
     def forward(self, x: Tensor) -> Tensor:
-        if self.training:
-            return self.train_forward(x)
-        else:
-            return self.conv_3x3_rep(x)
+        return self.forward_module(x)
 
 
 class GatedCNNBlock(nn.Module):
@@ -215,7 +235,7 @@ class GatedCNNBlock(nn.Module):
         conv_ratio: float = 1.0,
     ) -> None:
         super().__init__()
-        self.norm = LayerNorm(dim)
+        self.norm = RMSNorm(dim)
         hidden = int(expansion_ratio * dim)
         self.fc1 = RepConv(dim, hidden * 2)
 
@@ -224,7 +244,7 @@ class GatedCNNBlock(nn.Module):
         self.split_indices = [hidden, hidden - conv_channels, conv_channels]
 
         self.conv = InceptionDWConv2d(dim)
-        self.fc2 = nn.Conv2d(hidden, dim, 1, 1, 0)
+        self.fc2 = nn.Conv2d(hidden, dim, 1, 1)
         self.apply(self._init_weights)
 
     @staticmethod
@@ -245,11 +265,9 @@ class GatedCNNBlock(nn.Module):
 
 @ARCH_REGISTRY.register()
 class RTMoSR(nn.Module):
-    """Real-Time Mamba Out Super-Resolution"""
-
     def __init__(
         self,
-        scale: int = 4,
+        scale: int = 2,
         dim: int = 32,
         ffn_expansion: float = 1.5,
         n_blocks: int = 2,
@@ -292,7 +310,7 @@ class RTMoSR(nn.Module):
         if self.unshuffle:
             x = self.check_img_size(x, (h, w))
         x = self.to_feat(x)
-        x = self.body(x) + x
+        x = self.body(x)
         return self.to_img(x)[:, :, : h * self.scale, : w * self.scale] + F.interpolate(
             short, scale_factor=self.scale
         )
