@@ -27,6 +27,7 @@ traiNNer-redux documentation
    :caption: Benchmarks
 
    /benchmarks
+   /benchmark_charts
 
 .. toctree::
    :maxdepth: 2
