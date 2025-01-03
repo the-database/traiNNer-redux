@@ -106,10 +106,12 @@ def main() -> None:
             dfsmall = process_table(pd.DataFrame(dsmall))
             dfmed = process_table(pd.DataFrame(dmed))
             dflarge = process_table(pd.DataFrame(dlarge))
+            df = process_table(pd.DataFrame(d))
 
             plot_scatter(dfsmall, scale, "Small")
             plot_scatter(dfmed, scale, "Medium")
             plot_scatter(dflarge, scale, "Large")
+            plot_scatter(df, scale, "All")
 
 
 if __name__ == "__main__":

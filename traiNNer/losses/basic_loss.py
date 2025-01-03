@@ -163,10 +163,11 @@ class ColorLoss(nn.Module):
         # Get just the UV channels
         input_uv = input_yuv[:, 1:, :, :]
         target_uv = target_yuv[:, 1:, :, :]
-        # input_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
-        # target_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
-        print(input_uv.shape, target_uv.shape)
-        return self.criterion(input_uv, target_uv) * self.loss_weight
+        input_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(input_uv)
+        target_uv_downscale = torch.nn.AvgPool2d(kernel_size=int(self.scale))(target_uv)
+        return (
+            self.criterion(input_uv_downscale, target_uv_downscale) * self.loss_weight
+        )
 
 
 @LOSS_REGISTRY.register()
