@@ -132,6 +132,18 @@ OFFICIAL_METRICS: dict[
             "div2k_psnr": 26.73,
             "div2k_ssim": 0.8072,
         },
+        2: {
+            "df2k_psnr": 33.08,
+            "df2k_ssim": 0.9387,
+        },
+        # 2 pixel unshuffle: 33.08   0.9387    (batch 32 lqcrop128 1m iter)
+        # 2 not pixel unshuffle: 33.41   0.9407    (batch 16 lqcrop64 1m iter)
+    },
+    "esrgan use_pixel_unshuffle=False": {
+        2: {
+            "df2k_psnr": 33.41,
+            "df2k_ssim": 0.9407,
+        }
         # 2 pixel unshuffle: 33.08   0.9387    (batch 32 lqcrop128 1m iter)
         # 2 not pixel unshuffle: 33.41   0.9407    (batch 16 lqcrop64 1m iter)
     },

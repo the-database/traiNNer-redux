@@ -520,6 +520,8 @@ class BaseModel:
                     file_path,
                     overlap,
                 )
+                if overlap == 0:
+                    valid = False  # even with strict false, reject 0% match as likely user error
         return valid
 
     def load_network(
