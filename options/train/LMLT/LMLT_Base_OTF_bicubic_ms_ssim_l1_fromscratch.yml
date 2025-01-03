@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/the-database/traiNNer-redux/refs/heads/master/schemas/redux-config.schema.json
-####################
+#########################################################################################
 # General Settings
-####################
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
+#########################################################################################
 name: 4x_LMLT_Base_OTF_bicubic_ms_ssim_l1
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
@@ -47,9 +48,10 @@ resize_mode_prob3: [1]  # Probability each resize mode is selected.
 
 queue_size: 180
 
-#################################
+########################################################################################################################
 # Dataset and Dataloader Settings
-#################################
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#dataset-options-datasets-train-and-datasets-val
+########################################################################################################################
 datasets:
   # Settings for the training dataset.
   train:
@@ -101,22 +103,25 @@ datasets:
       datasets/val/dataset1/lr2
     ]
 
-#####################
+#####################################################################
 # Network Settings
-#####################
+# https://trainner-redux.readthedocs.io/en/latest/arch_reference.html
+#####################################################################
 # Generator model settings
 network_g:
   type: lmlt_base
 
-############################
+#########################################################################################
 # Pretrain and Resume Paths
-############################
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#path-options-path
+#########################################################################################
 path:
   resume_state: ~
 
-#####################
+###########################################################################################
 # Training Settings
-#####################
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#train-options-train
+###########################################################################################
 train:
   ema_decay: 0.999
   grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
@@ -136,15 +141,17 @@ train:
   warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
+  # https://trainner-redux.readthedocs.io/en/latest/loss_reference.html
   losses:
     # MS-SSIM L1 loss
     - type: msssiml1loss
       alpha: 0.1
       loss_weight: 1.0
 
-#############
+##############################################################################################
 # Validation
-#############
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#validation-options-val
+##############################################################################################
 val:
   val_enabled: false  # Whether to enable validations. If disabled, all validation settings below are ignored.
   val_freq: 1000  # How often to run validations, in iterations.
@@ -164,9 +171,10 @@ val:
       type: calculate_dists
       better: lower
 
-##########
+##############################################################################################
 # Logging
-##########
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#logging-options-logger
+##############################################################################################
 logger:
   print_freq: 100
   save_checkpoint_freq: 1000
