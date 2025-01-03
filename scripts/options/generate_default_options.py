@@ -131,6 +131,9 @@ archs: list[ArchInfo] = [
     {
         "names": ["ESRGAN", "ESRGAN_lite"],
         "scales": ALL_SCALES,
+        "extras": {
+            "use_pixel_shuffle": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality."
+        },
     },
     {"names": ["ATD"], "scales": ALL_SCALES},
     {"names": ["DAT", "DAT_2", "DAT_S", "DAT_light"], "scales": ALL_SCALES},

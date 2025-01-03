@@ -12,6 +12,7 @@ num_gpu: auto
 # Generator model settings
 network_g:
   type: esrgan_lite
+  use_pixel_shuffle: true  # has no effect on scales larger than 2. for scales 1 and 2, setting to true speeds up the model and reduces vram usage significantly, but reduces quality.
 
 ############################
 # Pretrain and Resume Paths
