@@ -361,12 +361,10 @@ class ContextualLoss(nn.Module):
         if torch.sum(torch.isnan(i_features)) == torch.numel(i_features) or torch.sum(
             torch.isinf(i_features)
         ) == torch.numel(i_features):
-            print(i_features)
             raise ValueError("NaN or Inf in i_features")
         if torch.sum(torch.isnan(t_features)) == torch.numel(t_features) or torch.sum(
             torch.isinf(t_features)
         ) == torch.numel(t_features):
-            print(t_features)
             raise ValueError("NaN or Inf in t_features")
 
         # calculate raw distances
@@ -379,7 +377,6 @@ class ContextualLoss(nn.Module):
         if torch.sum(torch.isnan(raw_distance)) == torch.numel(
             raw_distance
         ) or torch.sum(torch.isinf(raw_distance)) == torch.numel(raw_distance):
-            print(raw_distance)
             raise ValueError("NaN or Inf in raw_distance")
 
         # normalizing the distances
@@ -389,7 +386,6 @@ class ContextualLoss(nn.Module):
         ) or torch.sum(torch.isinf(relative_distance)) == torch.numel(
             relative_distance
         ):
-            print(relative_distance)
             raise ValueError("NaN or Inf in relative_distance")
         del raw_distance
 
@@ -401,7 +397,6 @@ class ContextualLoss(nn.Module):
         if torch.sum(torch.isnan(exp_distance)) == torch.numel(
             exp_distance
         ) or torch.sum(torch.isinf(exp_distance)) == torch.numel(exp_distance):
-            print(exp_distance)
             raise ValueError("NaN or Inf in exp_distance")
         del relative_distance
 
@@ -412,7 +407,6 @@ class ContextualLoss(nn.Module):
         if torch.sum(torch.isnan(contextual_sim)) == torch.numel(
             contextual_sim
         ) or torch.sum(torch.isinf(contextual_sim)) == torch.numel(contextual_sim):
-            print(contextual_sim)
             raise ValueError("NaN or Inf in contextual_sim")
         del exp_distance
 
