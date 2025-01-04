@@ -14,6 +14,9 @@ ARCHS_WITHOUT_FP16 = {
     "drct_l",
     "drct_xl",
     # "flexnet",
+    "grl_base",
+    "grl_small",
+    "grl_tiny",
     "hat_l",
     "hat_m",
     "hat_s",
@@ -147,6 +150,11 @@ OFFICIAL_METRICS: dict[
         # 2 pixel unshuffle: 33.08   0.9387    (batch 32 lqcrop128 1m iter)
         # 2 not pixel unshuffle: 33.41   0.9407    (batch 16 lqcrop64 1m iter)
     },
+    # "grl_base": {
+    #     # ...
+    #     3: {"df2k_psnr": 28.53, "df2k_ssim": 0.8504},
+    #     4: {"df2k_psnr": 28.53, "df2k_ssim": 0.8504},
+    # },
     "hat_s": {
         2: {"df2k_psnr": 34.31, "df2k_ssim": 0.9459},
         3: {"df2k_psnr": 30.15, "df2k_ssim": 0.8879},
