@@ -47,6 +47,8 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "eimn_a",
     "eimn_l",
     "flexnet",
+    "grl_b",
+    "grl_s",
     "hit_sir",
     "hit_sng",
     "hit_srf",

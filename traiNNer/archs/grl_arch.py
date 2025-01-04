@@ -7,7 +7,7 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 
 @SPANDREL_REGISTRY.register()
-def grl_base(
+def grl_b(
     scale: int = 4,
     img_size: int = 64,
     in_channels: int = 3,
@@ -83,7 +83,7 @@ def grl_base(
 
 
 @SPANDREL_REGISTRY.register()
-def grl_small(
+def grl_s(
     scale: int = 4,
     img_size: int = 64,
     in_channels: int = 3,
@@ -159,7 +159,7 @@ def grl_small(
 
 
 @SPANDREL_REGISTRY.register()
-def grl_tiny(
+def grl_t(
     scale: int = 4,
     img_size: int = 64,
     in_channels: int = 3,

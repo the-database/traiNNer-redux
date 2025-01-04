@@ -3,7 +3,7 @@
 # General Settings
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
 #########################################################################################
-name: 4x_MetaFlexNet_OTF_fromscratch
+name: 4x_GRL_T_OTF_fromscratch
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
@@ -117,8 +117,7 @@ datasets:
 #####################################################################
 # Generator model settings
 network_g:
-  type: metaflexnet
-  upsampler: pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic onnx)
+  type: grl_t
 
 #########################################################################################
 # Pretrain and Resume Paths

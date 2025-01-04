@@ -62,17 +62,23 @@ def final_template(
     if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:
         template = template.replace("amp_bf16: false", "amp_bf16: true")
 
-    if arch["names"][0].lower() in ARCHS_WITHOUT_CHANNELS_LAST:
+    arch_key = variant.lower()
+
+    print(
+        arch_key,
+        arch_key in ARCHS_WITHOUT_CHANNELS_LAST,
+    )
+
+    if arch_key in ARCHS_WITHOUT_CHANNELS_LAST:
         template = template.replace(
             "use_channels_last: true", "use_channels_last: false"
         )
 
-    arch_key = variant.lower()
-
     if training_settings is not None:
         settings = training_settings.get(arch_key, training_settings[""])
         if arch_key not in training_settings:
-            print(arch_key)
+            # print(arch_key)
+            pass
         for name, value in settings.items():
             # print("training settings", arch_key, name, value)
             template = template.replace(f"%{name}%", str(value))
@@ -235,6 +241,11 @@ archs: list[ArchInfo] = [
     },
     {"names": ["RCAN"], "scales": ALL_SCALES},
     {"names": ["RTMoSR", "RTMoSR_S"], "scales": ALL_SCALES},
+    {
+        "names": ["GRL_B", "GRL_S", "GRL_T"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "GRL",
+    },
 ]
 
 for arch in archs:
