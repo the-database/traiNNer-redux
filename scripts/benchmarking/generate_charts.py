@@ -7,7 +7,7 @@ import pandas as pd
 
 def process_table(df: pd.DataFrame) -> pd.DataFrame:
     df["psnr_df2k"] = pd.to_numeric(df["psnr_df2k"], errors="coerce")
-    return df[["name", "fps", "psnr_df2k", "vram"]]
+    return df[["name", "fps", "psnr_df2k", "vram", "params"]]  # pyright: ignore[reportReturnType]
 
 
 def plot_scatter(df: pd.DataFrame, scale: int, size: str) -> None:
@@ -40,8 +40,8 @@ def plot_scatter(df: pd.DataFrame, scale: int, size: str) -> None:
 
         # Annotate each point with the model name
         plt.annotate(
-            row["name"],
-            (row["fps"], row["psnr_df2k"]),
+            row["name"],  # pyright: ignore[reportArgumentType]
+            (row["fps"], row["psnr_df2k"]),  # pyright: ignore[reportArgumentType]
             textcoords="offset points",
             xytext=(5, 5),
             ha="center",
@@ -60,27 +60,21 @@ def plot_scatter(df: pd.DataFrame, scale: int, size: str) -> None:
     plt.savefig(f"docs/source/resources/benchmark{scale}x_{size.lower()}.png")
 
 
-def plot_fps(df: pd.DataFrame) -> None:
-    df = df.sort_values(by="fps", ascending=False)
-    plt.figure(figsize=(10, 6))
-    plt.bar(df["name"], df["fps"], color="green", edgecolor="black")
-    plt.title("FPS for each model", fontsize=16)
+def plot_single(df: pd.DataFrame, scale: int, key: str) -> None:
+    df = df.sort_values(by=key, ascending=False)
+
+    plt.figure(figsize=(20, 6), dpi=300)
+    plt.bar(df["name"], df[key], color="purple", edgecolor="black")
+    plt.title(f"{scale}x Model {key}", fontsize=16)
     plt.xlabel("Model", fontsize=12)
-    plt.ylabel("FPS", fontsize=12)
+    plt.ylabel(key, fontsize=12)
     plt.xticks(rotation=45, ha="right")
     plt.grid(True)
-    plt.tight_layout()
-    plt.show()
 
+    min_params = df[key].min()
+    max_params = df[key].max()
+    plt.ylim(min_params - 1, max_params + 1)
 
-def plot_psnr(df: pd.DataFrame) -> None:
-    plt.figure(figsize=(10, 6))
-    plt.bar(df["name"], df["psnr_df2k"], color="purple", edgecolor="black")
-    plt.title("DF2K PSNR for each model", fontsize=16)
-    plt.xlabel("Model", fontsize=12)
-    plt.ylabel("PSNR", fontsize=12)
-    plt.xticks(rotation=45, ha="right")
-    plt.grid(True)
     plt.tight_layout()
     plt.show()
 
@@ -91,9 +85,14 @@ def main() -> None:
 
         with open(file_path, newline="") as f:
             reader = csv.DictReader(f)
-            d = [row for row in reader if row["psnr_df2k"] != ""]
+            d = list(reader)
+            d = [row for row in d if row["psnr_df2k"] != "-"]
             for row in d:
+                row["params"] = int(row["params"])
                 row["fps"] = float(row["fps"])
+                row["vram"] = float(row["vram"])
+                if row["psnr_df2k"] != "-":
+                    row["psnr_df2k"] = float(row["psnr_df2k"])
                 row["name"] = f"{row["name"]} {row["variant"]}".strip()
 
             threshold1 = 2
@@ -112,6 +111,7 @@ def main() -> None:
             plot_scatter(dfmed, scale, "Medium")
             plot_scatter(dflarge, scale, "Large")
             plot_scatter(df, scale, "All")
+            # plot_single(df, scale, "psnr_df2k")
 
 
 if __name__ == "__main__":
