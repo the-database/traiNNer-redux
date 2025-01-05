@@ -8,6 +8,23 @@ from torch.nn.init import trunc_normal_
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
+class CSELayer(nn.Module):
+    def __init__(self, num_channels: int = 48, reduction_ratio: int = 2) -> None:
+        super().__init__()
+        num_channels_reduced = num_channels // reduction_ratio
+        self.squeezing = nn.Sequential(
+            nn.Conv2d(num_channels, num_channels_reduced, 1, 1),
+            nn.ReLU(True),
+            nn.Conv2d(num_channels_reduced, num_channels, 1, 1),
+            nn.Hardsigmoid(True),
+        )
+
+    def forward(self, input_tensor: Tensor) -> Tensor:
+        squeeze_tensor = torch.mean(input_tensor, dim=[2, 3], keepdim=True)
+        output_tensor = input_tensor * self.squeezing(squeeze_tensor)
+        return output_tensor
+
+
 # channels_first
 class RMSNorm(nn.Module):
     def __init__(self, dim: int, eps: float = 1e-6) -> None:
@@ -22,60 +39,6 @@ class RMSNorm(nn.Module):
         rms_x = norm_x * (d_x ** (-1.0 / 2))
         x_normed = x / (rms_x + self.eps)
         return self.scale[..., None, None] * x_normed + self.offset[..., None, None]
-
-
-class LayerNorm(nn.Module):
-    def __init__(self, dim: int = 64, eps: float = 1e-6) -> None:
-        super().__init__()
-        self.weight = nn.Parameter(torch.ones(dim))
-        self.bias = nn.Parameter(torch.zeros(dim))
-        self.eps = eps
-
-    def forward(self, x: Tensor) -> Tensor:
-        u = x.mean(1, keepdim=True)
-        s = (x - u).pow(2).mean(1, keepdim=True)
-        x = (x - u) / torch.sqrt(s + self.eps)
-        return self.weight[:, None, None] * x + self.bias[:, None, None]
-
-
-class InceptionDWConv2d(nn.Module):
-    """Inception depthwise convolution"""
-
-    def __init__(
-        self,
-        in_channels: int,
-        square_kernel_size: int = 3,
-        band_kernel_size: int = 11,
-        branch_ratio: float = 0.125,
-    ) -> None:
-        super().__init__()
-
-        gc = int(in_channels * branch_ratio)  # channel numbers of a convolution branch
-        self.dwconv_hw = nn.Conv2d(
-            gc, gc, square_kernel_size, padding=square_kernel_size // 2, groups=gc
-        )
-        self.dwconv_w = nn.Conv2d(
-            gc,
-            gc,
-            kernel_size=(1, band_kernel_size),
-            padding=(0, band_kernel_size // 2),
-            groups=gc,
-        )
-        self.dwconv_h = nn.Conv2d(
-            gc,
-            gc,
-            kernel_size=(band_kernel_size, 1),
-            padding=(band_kernel_size // 2, 0),
-            groups=gc,
-        )
-        self.split_indexes = [in_channels - 3 * gc, gc, gc, gc]
-
-    def forward(self, x: Tensor) -> Tensor:
-        x_id, x_hw, x_w, x_h = torch.split(x, self.split_indexes, dim=1)
-        return torch.cat(
-            (x_id, self.dwconv_hw(x_hw), self.dwconv_w(x_w), self.dwconv_h(x_h)),
-            dim=1,
-        )
 
 
 class Conv3XC(nn.Module):
@@ -167,50 +130,87 @@ class Conv3XC(nn.Module):
         self.eval_conv.weight.data = self.weight_concat
         self.eval_conv.bias.data = self.bias_concat  # type: ignore
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x):  # noqa: ANN201, ANN001
         x_pad = F.pad(x, (1, 1, 1, 1), "constant", 0)
         out = self.conv(x_pad) + self.sk(x)
         return out
 
 
+class SeqConv3x3(nn.Module):
+    def __init__(self, inp_planes: int, out_planes: int, depth_multiplier: int) -> None:
+        super().__init__()
+        self.inp_planes = inp_planes
+        self.out_planes = out_planes
+        self.mid_planes = int(out_planes * depth_multiplier)
+        conv0 = torch.nn.Conv2d(
+            self.inp_planes, self.mid_planes, kernel_size=1, padding=0
+        )
+        self.k0 = conv0.weight
+        self.b0 = conv0.bias
+
+        conv1 = torch.nn.Conv2d(self.mid_planes, self.out_planes, kernel_size=3)
+        self.k1 = conv1.weight
+        self.b1 = conv1.bias
+
+    def forward(self, x: Tensor) -> Tensor:
+        # conv-1x1
+        y0 = F.conv2d(input=x, weight=self.k0, bias=self.b0, stride=1)
+        # explicitly padding with bias
+        y0 = F.pad(y0, (1, 1, 1, 1), "constant", 0)
+        b0_pad = self.b0.view(1, -1, 1, 1)  # type: ignore
+        y0[:, :, 0:1, :] = b0_pad
+        y0[:, :, -1:, :] = b0_pad
+        y0[:, :, :, 0:1] = b0_pad
+        y0[:, :, :, -1:] = b0_pad
+        # conv-3x3
+        return F.conv2d(input=y0, weight=self.k1, bias=self.b1, stride=1)
+
+    def rep_params(self) -> tuple[Tensor, Tensor]:
+        device = self.k0.get_device()
+        if device < 0:
+            device = None
+        # re-param conv kernel
+        RK = F.conv2d(input=self.k1, weight=self.k0.permute(1, 0, 2, 3))  # noqa: N806
+        # re-param conv bias
+
+        RB = torch.ones(1, self.mid_planes, 3, 3, device=device) * self.b0.view(  # noqa: N806 # type: ignore
+            1, -1, 1, 1
+        )
+        RB = (  # noqa: N806
+            F.conv2d(input=RB, weight=self.k1).view(
+                -1,
+            )
+            + self.b1
+        )
+        return RK, RB
+
+
 class RepConv(nn.Module):
     def __init__(self, in_dim: int = 3, out_dim: int = 32) -> None:
         super().__init__()
-        self.conv1 = nn.Conv2d(in_dim, out_dim, 1, 1, 0)
+        self.conv1 = SeqConv3x3(in_dim, out_dim, 2)
         self.conv2 = nn.Conv2d(in_dim, out_dim, 3, 1, 1)
         self.conv3 = Conv3XC(in_dim, out_dim)
         self.conv_3x3_rep = nn.Conv2d(in_dim, out_dim, 3, 1, 1)
         self.alpha = nn.Parameter(torch.randn(3), requires_grad=True)
         self.forward_module = self.train_forward
 
+        nn.init.constant_(self.alpha, 1.0)
+
     def fuse(self) -> None:
+        conv1_w, conv1_b = self.conv1.rep_params()
+        conv2_w, conv2_b = self.conv2.weight, self.conv2.bias
         self.conv3.update_params()
-        pad_conv_1x1 = F.pad(self.conv1.weight, (1, 1, 1, 1))
-        weight_3x3 = self.conv2.weight
-        bias_3x3 = self.conv2.bias
-        conv_1x1_bias = self.conv1.bias
+        conv3_w, conv3_b = self.conv3.eval_conv.weight, self.conv3.eval_conv.bias
         device = self.conv_3x3_rep.weight.device
         sum_weight = (
-            self.alpha[0] * pad_conv_1x1
-            + self.alpha[1] * weight_3x3
-            + self.conv3.eval_conv.weight * self.alpha[2]
+            self.alpha[0] * conv1_w + self.alpha[1] * conv2_w + self.alpha[2] * conv3_w
         ).to(device)
         sum_bias = (
-            self.alpha[0] * conv_1x1_bias
-            + self.alpha[1] * bias_3x3
-            + self.alpha[2] * self.conv3.eval_conv.bias
+            self.alpha[0] * conv1_b + self.alpha[1] * conv2_b + self.alpha[2] * conv3_b
         ).to(device)
         self.conv_3x3_rep.weight = nn.Parameter(sum_weight)
         self.conv_3x3_rep.bias = nn.Parameter(sum_bias)
-
-    def train(self, mode: bool = True) -> Self:
-        super().train(mode)
-        if mode:
-            self.forward_module = self.train_forward
-        else:
-            self.fuse()
-            self.forward_module = self.conv_3x3_rep
-        return self
 
     def train_forward(self, x: Tensor) -> Tensor:
         x1 = self.conv1(x)
@@ -218,8 +218,122 @@ class RepConv(nn.Module):
         x3 = self.conv3(x)
         return self.alpha[0] * x1 + self.alpha[1] * x2 + self.alpha[2] * x3
 
+    def train(self, mode: bool = True) -> Self:
+        super().train(mode)
+        if not mode:
+            self.fuse()
+        return self
+
     def forward(self, x: Tensor) -> Tensor:
-        return self.forward_module(x)
+        if self.training:
+            return self.train_forward(x)
+        else:
+            return self.conv_3x3_rep(x)
+
+
+class OmniShift(nn.Module):
+    def __init__(self, dim: int = 48) -> None:
+        super().__init__()
+        # Define the layers for training
+        self.conv1x1 = nn.Conv2d(
+            in_channels=dim, out_channels=dim, kernel_size=1, groups=dim, bias=True
+        )
+        self.conv3x3 = nn.Conv2d(
+            in_channels=dim,
+            out_channels=dim,
+            kernel_size=3,
+            padding=1,
+            groups=dim,
+            bias=True,
+        )
+        self.conv5x5 = nn.Conv2d(
+            in_channels=dim,
+            out_channels=dim,
+            kernel_size=5,
+            padding=2,
+            groups=dim,
+            bias=True,
+        )
+        self.alpha1 = nn.Parameter(torch.ones(1, dim, 1, 1), requires_grad=True)
+        self.alpha2 = nn.Parameter(torch.ones(1, dim, 1, 1), requires_grad=True)
+        self.alpha3 = nn.Parameter(torch.ones(1, dim, 1, 1), requires_grad=True)
+        self.alpha4 = nn.Parameter(torch.ones(1, dim, 1, 1), requires_grad=True)
+
+        # Define the layers for testing
+        self.conv5x5_reparam = nn.Conv2d(
+            in_channels=dim,
+            out_channels=dim,
+            kernel_size=5,
+            padding=2,
+            groups=dim,
+            bias=True,
+        )
+
+    def forward_train(self, x: Tensor) -> Tensor:
+        out1x1 = self.conv1x1(x)
+        out3x3 = self.conv3x3(x)
+        out5x5 = self.conv5x5(x)
+
+        out = (
+            self.alpha1 * x
+            + self.alpha2 * out1x1
+            + self.alpha3 * out3x3
+            + self.alpha4 * out5x5
+        )
+        return out
+
+    def reparam_5x5(self) -> None:
+        # Combine the parameters of conv1x1, conv3x3, and conv5x5 to form a single 5x5 depth-wise convolution
+
+        padded_weight_1x1 = F.pad(self.conv1x1.weight, (2, 2, 2, 2))
+        padded_weight_3x3 = F.pad(self.conv3x3.weight, (1, 1, 1, 1))
+
+        identity_weight = F.pad(torch.ones_like(self.conv1x1.weight), (2, 2, 2, 2))
+        combined_weight = (
+            self.alpha1.transpose(0, 1) * identity_weight
+            + self.alpha2.transpose(0, 1) * padded_weight_1x1
+            + self.alpha3.transpose(0, 1) * padded_weight_3x3
+            + self.alpha4.transpose(0, 1) * self.conv5x5.weight
+        )
+
+        combined_bias = (
+            self.alpha2.squeeze() * self.conv1x1.bias
+            + self.alpha3.squeeze() * self.conv3x3.bias
+            + self.alpha4.squeeze() * self.conv5x5.bias
+        )
+
+        device = self.conv5x5_reparam.weight.device
+
+        combined_weight = combined_weight.to(device)
+        combined_bias = combined_bias.to(device)
+
+        self.conv5x5_reparam.weight = nn.Parameter(combined_weight)
+        self.conv5x5_reparam.bias = nn.Parameter(combined_bias)
+
+    def train(self, mode: bool = True) -> Self:
+        super().train(mode)
+        if not mode:
+            self.reparam_5x5()
+        return self
+
+    def forward(self, x: Tensor) -> Tensor:
+        if self.training:
+            out = self.forward_train(x)
+        else:
+            out = self.conv5x5_reparam(x)
+        return out
+
+
+class ParPixelUnshuffle(nn.Module):
+    def __init__(self, in_dim: int, out_dim: int, down: int) -> None:
+        super().__init__()
+        self.pu = nn.PixelUnshuffle(down)
+        self.poll = nn.Sequential(
+            nn.MaxPool2d(kernel_size=down, stride=down), RepConv(in_dim, out_dim)
+        )
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.pu(x) + self.poll(x)
 
 
 class GatedCNNBlock(nn.Module):
@@ -233,26 +347,23 @@ class GatedCNNBlock(nn.Module):
         dim: int = 64,
         expansion_ratio: float = 8 / 3,
         conv_ratio: float = 1.0,
+        dccm: bool = True,
+        se: bool = False,
     ) -> None:
         super().__init__()
         self.norm = RMSNorm(dim)
         hidden = int(expansion_ratio * dim)
         self.fc1 = RepConv(dim, hidden * 2)
-
         self.act = nn.Mish()
         conv_channels = int(conv_ratio * dim)
         self.split_indices = [hidden, hidden - conv_channels, conv_channels]
-
-        self.conv = InceptionDWConv2d(dim)
-        self.fc2 = nn.Conv2d(hidden, dim, 1, 1)
-        self.apply(self._init_weights)
-
-    @staticmethod
-    def _init_weights(m: nn.Module) -> None:
-        if isinstance(m, nn.Conv2d | nn.Linear):
-            trunc_normal_(m.weight, std=0.02)
-            if m.bias is not None:
-                nn.init.constant_(m.bias, 0)
+        self.conv = nn.Sequential(
+            ParPixelUnshuffle(dim, dim * 4, 2),
+            OmniShift(dim * 4),
+            CSELayer(dim * 4) if se else nn.Identity(),
+            nn.PixelShuffle(2),
+        )  # InceptionDWConv2d(dim*4)
+        self.fc2 = RepConv(hidden, dim) if dccm else nn.Conv2d(hidden, dim, 1, 1)
 
     def forward(self, x: Tensor) -> Tensor:
         shortcut = x
@@ -269,60 +380,73 @@ class RTMoSR(nn.Module):
         self,
         scale: int = 2,
         dim: int = 32,
-        ffn_expansion: float = 1.5,
+        ffn_expansion: float = 2,
         n_blocks: int = 2,
         unshuffle_mod: bool = False,
+        dccm: bool = True,
+        se: bool = True,
     ) -> None:
         super().__init__()
         self.scale = scale
-
         unshuffle = 0
         if scale < 4 and unshuffle_mod:
             if scale == 3:
                 raise ValueError("Unshuffle_mod does not support 3x")
             unshuffle = 4 // scale
             scale = 4
-        self.unshuffle = unshuffle
+        self.pad = unshuffle if unshuffle > 0 else 1
+        self.pad *= 2
         self.to_feat = (
-            nn.Conv2d(3, dim, 3, 1, 1)
+            RepConv(3, dim)
             if not unshuffle
             else nn.Sequential(
-                nn.PixelUnshuffle(unshuffle), nn.Conv2d(3 * unshuffle**2, dim, 3, 1, 1)
+                nn.PixelUnshuffle(unshuffle), RepConv(3 * unshuffle * unshuffle, dim)
             )
         )
         self.body = nn.Sequential(
-            *[GatedCNNBlock(dim, ffn_expansion) for _ in range(n_blocks)]
+            *[
+                GatedCNNBlock(dim, ffn_expansion, dccm=dccm, se=se)
+                for _ in range(n_blocks)
+            ]
         )
         self.to_img = nn.Sequential(
-            nn.Conv2d(dim, 3 * scale**2, 3, 1, 1),
+            RepConv(dim, 3 * scale**2),
             nn.PixelShuffle(scale),
         )
+        self.apply(self._init_weights)
+
+    @staticmethod
+    def _init_weights(m: nn.Module) -> None:
+        if isinstance(m, nn.Conv2d | nn.Linear):
+            trunc_normal_(m.weight, std=0.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
 
     def check_img_size(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
-        scaled_size = self.unshuffle
+        scaled_size = self.pad
         mod_pad_h = (scaled_size - resolution[0] % scaled_size) % scaled_size
         mod_pad_w = (scaled_size - resolution[1] % scaled_size) % scaled_size
         return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
     def forward(self, x: Tensor) -> Tensor:
-        short = x
-        _, _, h, w = x.shape
-        if self.unshuffle:
-            x = self.check_img_size(x, (h, w))
-        x = self.to_feat(x)
-        x = self.body(x)
-        return self.to_img(x)[:, :, : h * self.scale, : w * self.scale] + F.interpolate(
-            short, scale_factor=self.scale
-        )
+        _b, _c, h, w = x.shape
+        out = self.check_img_size(x, (h, w))
+        out = self.to_feat(out)
+        out = self.body(out)
+        return self.to_img(out)[
+            :, :, : h * self.scale, : w * self.scale
+        ] + F.interpolate(x, scale_factor=self.scale)
 
 
 @ARCH_REGISTRY.register()
-def rtmosr_s(
-    scale: int = 4,
+def rtmosr_l(
+    scale: int = 2,
     dim: int = 32,
-    ffn_expansion: float = 1.5,
+    ffn_expansion: float = 2,
     n_blocks: int = 2,
     unshuffle_mod: bool = True,
+    dccm: bool = True,
+    se: bool = True,
 ) -> RTMoSR:
     return RTMoSR(
         scale=scale,
@@ -330,4 +454,27 @@ def rtmosr_s(
         ffn_expansion=ffn_expansion,
         n_blocks=n_blocks,
         unshuffle_mod=unshuffle_mod,
+        dccm=dccm,
+        se=se,
+    )
+
+
+@ARCH_REGISTRY.register()
+def rtmosr_ul(
+    scale: int = 2,
+    dim: int = 32,
+    ffn_expansion: float = 1.5,
+    n_blocks: int = 2,
+    unshuffle_mod: bool = True,
+    dccm: bool = False,
+    se: bool = True,
+) -> RTMoSR:
+    return RTMoSR(
+        scale=scale,
+        dim=dim,
+        ffn_expansion=ffn_expansion,
+        n_blocks=n_blocks,
+        unshuffle_mod=unshuffle_mod,
+        dccm=dccm,
+        se=se,
     )

@@ -41,10 +41,17 @@ LIGHTWEIGHT_ARCHS = {
     "realcugan",
     "span",
     "compact",
+    "ditn_real",
     "plksr_tiny",
     "ultracompact",
+    "realmosr",
     "rtmosr",
-    "rtmosr_s",
+    "rtmosr_l",
+    "rtmosr_ul",
+    "safmn",
+    "sebica",
+    "sebica_mini",
+    "seemore_t",
     "superultracompact",
     "spanplus",
     "spanplus_s",
@@ -250,10 +257,12 @@ if __name__ == "__main__":
     device = "cuda"
 
     input_shape = (1, 3, 480, 640)
+    # input_shape = (1, 3, 554, 554)
+    # input_shape = (1, 3, 1080, 1920)
 
     warmup_runs = 1  # 1
     num_runs = 5  # 5
-    lightweight_num_runs = 250
+    lightweight_num_runs = 500
     print_markdown = True
     n, c, h, w = input_shape
     row_type = tuple[
@@ -330,18 +339,29 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                         dtype_str, dtype = get_dtype(name, use_amp)
                         try:
                             # if name not in {
-                            #     "compact",
-                            #     "ultracompact",
-                            #     "superultracompact",
+                            #     "dctlsa",
+                            #     "ditn_real",
+                            #     # "dwt",
+                            #     "dwt_s",
+                            #     "elan",
+                            #     "elan_light",
+                            #     "emt",
+                            #     "safmn",
+                            #     "safmn_l",
+                            #     "sebica",
+                            #     "sebica_mini",
+                            #     "seemore_t",
                             # }:
                             #     continue
                             if arch_key not in results_by_arch:
                                 results_by_arch[arch_key] = {}
-                            row = benchmark_arch(
-                                name, arch, extra_arch_params, torch.preserve_format
-                            )
+
                             row_channels_last = benchmark_arch(
                                 name, arch, extra_arch_params, torch.channels_last
+                            )
+
+                            row = benchmark_arch(
+                                name, arch, extra_arch_params, torch.preserve_format
                             )
 
                             channels_last_improvement = row_channels_last[3] / row[3]

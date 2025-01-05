@@ -240,12 +240,20 @@ archs: list[ArchInfo] = [
         },
     },
     {"names": ["RCAN"], "scales": ALL_SCALES},
-    {"names": ["RTMoSR", "RTMoSR_S"], "scales": ALL_SCALES},
+    {"names": ["RTMoSR", "RTMoSR_L", "RTMoSR_UL"], "scales": ALL_SCALES},
     {
         "names": ["GRL_B", "GRL_S", "GRL_T"],
         "scales": ALL_SCALES,
         "folder_name_override": "GRL",
     },
+    {"names": ["ELAN", "ELAN_light"], "scales": ALL_SCALES},
+    {"names": ["DCTLSA"], "scales": ALL_SCALES},
+    {"names": ["DITN_Real"], "scales": ALL_SCALES, "folder_name_override": "DITN"},
+    {"names": ["DWT", "DWT_S"], "scales": ALL_SCALES},
+    {"names": ["EMT"], "scales": ALL_SCALES},
+    {"names": ["SAFMN", "SAFMN_L"], "scales": ALL_SCALES},
+    {"names": ["Sebica"], "scales": ALL_SCALES},
+    {"names": ["SeemoRe_T"], "scales": ALL_SCALES, "folder_name_override": "SeemoRe"},
 ]
 
 for arch in archs:

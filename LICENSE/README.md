@@ -11,12 +11,17 @@ traiNNer-redux is released under Apache License 2.0.
 |[chaiNNer](https://github.com/chaiNNer-org/chaiNNer) | [GPL 3.0 License](https://github.com/chaiNNer-org/chaiNNer/blob/main/LICENSE)|
 |[CutBlur](https://github.com/clovaai/cutblur/) | [MIT License](https://github.com/clovaai/cutblur/blob/master/LICENSE)|
 |[DAT](https://github.com/zhengchen1999/dat) | [Apache License 2.0](https://github.com/zhengchen1999/DAT/blob/main/LICENSE)|
+|[DCTLSA](https://github.com/zengkun301/DCTLSA/)| [Apache License 2.0](https://github.com/zengkun301/DCTLSA/?tab=readme-ov-file#license)|
 |[DiffJPEG](https://github.com/mlomnitz/DiffJPEG) | [MIT License](https://github.com/mlomnitz/DiffJPEG/blob/master/LICENSE) |
 |[DISTS](https://github.com/dingkeyan93/DISTS) | [MIT License](https://github.com/dingkeyan93/DISTS/blob/master/LICENSE)|
+|[DITN](https://github.com/yongliuy/DITN)| [Apache License 2.0](https://github.com/yongliuy/DITN/blob/main/LICENSE)|
 |[DRCT](https://github.com/ming053l/DRCT) | [MIT License](https://github.com/ming053l/DRCT/blob/main/LICENSE)|
 |[DUnet](https://github.com/umzi2/DUnet)| [MIT License](https://github.com/umzi2/DUnet/blob/master/LICENSE)|
+|[DWT](https://github.com/soobin419/DWT)| [Apache License 2.0](https://github.com/soobin419/DWT/blob/main/LICENSE)|
 |[DySample](https://github.com/tiny-smart/dysample)| [MIT License](https://github.com/tiny-smart/dysample/blob/main/LICENSE)|
 |[EIMN](https://github.com/liux520/EIMN)|[MIT License](https://github.com/liux520/EIMN/blob/main/LICENSE)|
+|[ELAN](https://github.com/xindongzhang/ELAN)| [Apache License 2.0](https://github.com/xindongzhang/ELAN/blob/main/LICENSE)|
+|[EMT](https://github.com/Fried-Rice-Lab/EMT)| [MIT License](https://github.com/Fried-Rice-Lab/EMT/blob/main/LICENSE)|
 |[FDL](https://github.com/eezkni/FDL)| [MIT License](https://github.com/eezkni/FDL?tab=readme-ov-file#license)|
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
 |[Focal Frequency Loss](https://github.com/EndlessSora/focal-frequency-loss)| [MIT License](https://github.com/EndlessSora/focal-frequency-loss/blob/master/LICENSE.md)|
@@ -42,6 +47,9 @@ traiNNer-redux is released under Apache License 2.0.
 |[RTMoSR](https://github.com/rewaifu/RTMoSR)| [MIT License](https://github.com/rewaifu/RTMoSR/blob/main/LICENSE)|
 |[RGT](https://github.com/zhengchen1999/RGT) | [Apache License 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)|
 |[aaf6aa/SCUNet](https://github.com/aaf6aa/SCUNet) | [Apache License 2.0](https://github.com/aaf6aa/SCUNet/blob/main/LICENSE)|
+|[SAFMN](https://github.com/sunny2109/SAFMN)| [Apache License 2.0](https://github.com/sunny2109/SAFMN/blob/main/LICENSE/LICENSE)|
+|[Sebica](https://github.com/idiosyncracies/Sebica)| [MIT License](https://github.com/idiosyncracies/Sebica/blob/main/LICENSE)|
+|[SeemoRe](https://github.com/eduardzamfir/seemoredetails)| [Apache License 2.0](https://github.com/eduardzamfir/seemoredetails/blob/main/LICENSE)|
 |[SCUNet](https://github.com/cszn/SCUNet) | [Apache License 2.0](https://github.com/cszn/SCUNet/blob/main/LICENSE)|
 |[See360](https://github.com/Holmes-Alan/See360)| [MIT License](https://github.com/Holmes-Alan/See360/blob/main/LICENSE)|
 |[Spandrel](https://github.com/chaiNNer-org/spandrel) | [MIT License](https://github.com/chaiNNer-org/spandrel/blob/main/LICENSE)
