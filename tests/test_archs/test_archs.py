@@ -75,7 +75,8 @@ EXCLUDE_ARCH_SCALES = {
     "realcugan": [{"scale": 1, "extra_arch_params": {}}],
     "tscunet": [{"scale": 3, "extra_arch_params": {}}],
     "scunet_aaf6aa": [{"scale": 3, "extra_arch_params": {}}],
-    "rtmosr_s": [{"scale": 3, "extra_arch_params": {}}],
+    "rtmosr_l": [{"scale": 3, "extra_arch_params": {}}],
+    "rtmosr_ul": [{"scale": 3, "extra_arch_params": {}}],
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
