@@ -18,12 +18,12 @@ def grl_b(
     depths: list[int] = [4, 4, 8, 8, 8, 4, 4],  # noqa: B006
     num_heads_window: list[int] = [3, 3, 3, 3, 3, 3, 3],  # noqa: B006
     num_heads_stripe: list[int] = [3, 3, 3, 3, 3, 3, 3],  # noqa: B006
-    window_size: int = 8,
+    window_size: int = 32,
     stripe_size: list[int] = [  # noqa: B006
-        8,
-        None,
-    ],  # used for stripe window attention # type: ignore
-    stripe_groups: list[int | None] = [None, 4],  # noqa: B006
+        64,
+        64,
+    ],
+    stripe_groups: list[int | None] = [None, None],  # noqa: B006
     stripe_shift: bool = True,
     mlp_ratio: float = 2.0,
     qkv_bias: bool = True,
@@ -94,12 +94,12 @@ def grl_s(
     depths: list[int] = [4, 4, 4, 4],  # noqa: B006
     num_heads_window: list[int] = [2, 2, 2, 2],  # noqa: B006
     num_heads_stripe: list[int] = [2, 2, 2, 2],  # noqa: B006
-    window_size: int = 8,
+    window_size: int = 32,
     stripe_size: list[int] = [  # noqa: B006
-        8,
-        None,
-    ],  # used for stripe window attention # type: ignore
-    stripe_groups: list[int | None] = [None, 4],  # noqa: B006
+        64,
+        64,
+    ],
+    stripe_groups: list[int | None] = [None, None],  # noqa: B006
     stripe_shift: bool = True,
     mlp_ratio: float = 2.0,
     qkv_bias: bool = True,
@@ -170,12 +170,12 @@ def grl_t(
     depths: list[int] = [4, 4, 4, 4],  # noqa: B006
     num_heads_window: list[int] = [2, 2, 2, 2],  # noqa: B006
     num_heads_stripe: list[int] = [2, 2, 2, 2],  # noqa: B006
-    window_size: int = 8,
+    window_size: int = 32,
     stripe_size: list[int] = [  # noqa: B006
-        8,
-        None,
-    ],  # used for stripe window attention # type: ignore
-    stripe_groups: list[int | None] = [None, 4],  # noqa: B006
+        64,
+        64,
+    ],
+    stripe_groups: list[int | None] = [None, None],  # noqa: B006
     stripe_shift: bool = True,
     mlp_ratio: float = 2.0,
     qkv_bias: bool = True,
