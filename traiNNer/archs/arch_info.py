@@ -574,6 +574,15 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": 4,
         "accum_iter": "1  # paper: 8",
     },
+    "rcan": {
+        "milestones": [100000, 200000, 300000, 400000, 450000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 2e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "8  # recommended: 32 or 64",
+        "accum_iter": "1",
+    },
     "seemore_t": {
         "milestones": [250000, 400000, 450000, 475000],
         "total_iter": 500000,
@@ -828,6 +837,15 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
         "lq_size": 64,
         "batch_size_per_gpu": 4,
         "accum_iter": "1  # paper: 8",
+    },
+    "rcan": {
+        "milestones": [125000, 200000, 225000, 237500],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": 8,
+        "accum_iter": 1,
     },
     "safmn": {
         "milestones": [125000, 200000, 225000, 237500],
