@@ -85,7 +85,7 @@ ADD_VSR_DIM = {"tscunet"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
-REQUIRE_32_HW = {"realcugan", "hit_srf", "emt"}
+REQUIRE_32_HW = {"dwt", "emt", "hit_srf", "realcugan"}
 REQUIRE_64_HW = {
     "hit_lmlt",
     "hit_sir",
