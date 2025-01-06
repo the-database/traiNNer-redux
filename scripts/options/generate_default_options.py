@@ -229,7 +229,7 @@ archs: list[ArchInfo] = [
             "upsampler": "pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)"
         },
     },
-    {"names": ["RCAN_B", "RCAN"], "scales": ALL_SCALES},
+    {"names": ["RCAN"], "scales": ALL_SCALES},
     {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
     {
         "names": ["MoESR2"],

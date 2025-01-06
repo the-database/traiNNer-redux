@@ -830,54 +830,6 @@ reduction: 16
 res_scale: 1
 act_mode: relu
 ```
-#### rcan_nf128
-
-
-```yaml
-type: rcan_nf128
-n_resgroups: 10
-n_resblocks: 20
-n_feats: 128
-n_colors: 3
-rgb_range: 255
-norm: false
-kernel_size: 3
-reduction: 16
-res_scale: 1
-act_mode: relu
-```
-#### rcan_rb40
-
-
-```yaml
-type: rcan_rb40
-n_resgroups: 10
-n_resblocks: 40
-n_feats: 64
-n_colors: 3
-rgb_range: 255
-norm: false
-kernel_size: 3
-reduction: 16
-res_scale: 1
-act_mode: relu
-```
-#### rcan_rg20
-
-
-```yaml
-type: rcan_rg20
-n_resgroups: 20
-n_resblocks: 20
-n_feats: 64
-n_colors: 3
-rgb_range: 255
-norm: false
-kernel_size: 3
-reduction: 16
-res_scale: 1
-act_mode: relu
-```
 ### RGT
 #### rgt
 
@@ -941,6 +893,10 @@ num_blocks: 23
 ```yaml
 type: esrgan_lite
 use_pixel_unshuffle: true
+in_nc: 3
+out_nc: 3
+num_filters: 32
+num_blocks: 12
 ```
 ### RTMoSR
 #### rtmosr
