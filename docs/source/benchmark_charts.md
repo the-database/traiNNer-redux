@@ -1,6 +1,6 @@
 # Inference Speed vs VRAM vs PSNR Charts
 
-All charts were generated using [generate_charts.py](https://github.com/the-database/traiNNer-redux/blob/master/scripts/benchmarking/generate_charts.py). For this benchmark data in tabular format please see the [Benchmarks](/benchmarks) page.
+All charts were generated using [generate_charts.py](https://github.com/the-database/traiNNer-redux/blob/master/scripts/benchmarking/generate_charts.py). For this benchmark data in tabular format please see the [Benchmarks](/benchmarks) page. An interactive tableau chart of this data is also available [here](https://public.tableau.com/app/profile/vaibhav.bhat1737/viz/shared/R9CDXNN7X), created by Enhance Everything Discord member SharekhaN.
 
 Architectures are separated into groups based on their inference speed. The grouping is arbitrary and shouldn't be considered as any official categorization. The groups are currently defined as follows:
 - Small: On 4x model, inference speed of 640x480 input on RTX 4090 is more than 24 fps.
