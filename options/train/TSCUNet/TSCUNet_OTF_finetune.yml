@@ -68,8 +68,6 @@ datasets:
     ]
     # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
     # meta_info: data/meta_info/dataset1.txt
-    io_backend:
-      type: disk
 
     blur_kernel_size: 12
     kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
@@ -113,8 +111,6 @@ datasets:
       datasets/val/dataset1/lr2
     ]
     clip_size: 5
-    io_backend:
-      type: disk
 
 #####################################################################
 # Network Settings

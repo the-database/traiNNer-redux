@@ -7,7 +7,7 @@ name: 4x_SPANPlus_ST
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
-use_channels_last: false  # Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.
+use_channels_last: true  # Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.
 fast_matmul: false  # Trade precision for performance.
 num_gpu: auto
 # manual_seed: 1024  # Deterministic mode, slows down training.
@@ -33,8 +33,6 @@ datasets:
       datasets/train/dataset1/lr2
     ]
     # meta_info: data/meta_info/dataset1.txt
-    io_backend:
-      type: disk
 
 
     lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
@@ -57,8 +55,6 @@ datasets:
       datasets/val/dataset1/lr,
       datasets/val/dataset1/lr2
     ]
-    io_backend:
-      type: disk
 
 #####################################################################
 # Network Settings

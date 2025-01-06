@@ -151,3 +151,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 /onnx
+/tb_logger_df2k

@@ -75,7 +75,8 @@ EXCLUDE_ARCH_SCALES = {
     "realcugan": [{"scale": 1, "extra_arch_params": {}}],
     "tscunet": [{"scale": 3, "extra_arch_params": {}}],
     "scunet_aaf6aa": [{"scale": 3, "extra_arch_params": {}}],
-    "rtmosr_s": [{"scale": 3, "extra_arch_params": {}}],
+    "rtmosr_l": [{"scale": 3, "extra_arch_params": {}}],
+    "rtmosr_ul": [{"scale": 3, "extra_arch_params": {}}],
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
@@ -84,7 +85,7 @@ ADD_VSR_DIM = {"tscunet"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
-REQUIRE_32_HW = {"realcugan", "hit_srf"}
+REQUIRE_32_HW = {"dwt", "emt", "hit_srf", "realcugan"}
 REQUIRE_64_HW = {
     "hit_lmlt",
     "hit_sir",

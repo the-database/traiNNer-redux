@@ -152,6 +152,34 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 ```
+### DCTLSA
+#### dctlsa
+
+
+```yaml
+type: dctlsa
+in_nc: 3
+nf: 55
+num_modules: 6
+out_nc: 3
+num_head: 5
+```
+### DITN_Real
+#### ditn_real
+
+
+```yaml
+type: ditn_real
+inp_channels: 3
+dim: 60
+ITL_blocks: 4
+SAL_blocks: 4
+UFONE_blocks: 1
+ffn_expansion_factor: 2
+bias: false
+LayerNorm_type: WithBias
+patch_size: 8
+```
 ### DRCT
 #### drct
 
@@ -201,6 +229,59 @@ mlp_ratio: 2.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 ```
+### DWT
+#### dwt
+
+
+```yaml
+type: dwt
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 180
+depths: [6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6]
+window_size: 16
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+img_range: 1.0
+upsampler: pixelshuffle
+resi_connection: 1conv
+layer_kinds: [[0, -1, 0, -1, 0, -1], [0, -1, 0, -1, 0, -1], [0, 2, 0, 2, 0, 2], [0, 2, 0, 2, 0, 2], [0, 1, 0, 1, 0, 1], [0, 1, 0, 1, 0, 1]]
+```
+#### dwt_s
+
+
+```yaml
+type: dwt_s
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 180
+depths: [6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6]
+window_size: 8
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+img_range: 1.0
+upsampler: pixelshuffle
+resi_connection: 1conv
+layer_kinds: [[0, -1, 0, -1, 0, -1], [0, -1, 0, -1, 0, -1], [0, 2, 0, 2, 0, 2], [0, 2, 0, 2, 0, 2], [0, 1, 0, 1, 0, 1], [0, 1, 0, 1, 0, 1]]
+```
 ### EIMN
 #### eimn_a
 
@@ -227,6 +308,53 @@ drop_rate: 0.0
 drop_path_rate: 0.0
 num_stages: 16
 freeze_param: false
+```
+### ELAN
+#### elan
+
+
+```yaml
+type: elan
+colors: 3
+rgb_range: 255
+norm: false
+window_sizes: ~
+m_elan: 36
+c_elan: 180
+n_share: 0
+r_expand: 2
+```
+#### elan_light
+
+
+```yaml
+type: elan_light
+colors: 3
+rgb_range: 255
+norm: false
+window_sizes: ~
+m_elan: 24
+c_elan: 60
+n_share: 1
+r_expand: 2
+```
+### EMT
+#### emt
+
+
+```yaml
+type: emt
+num_in_ch: 3
+num_out_ch: 3
+upsampler: pixelshuffle
+dim: 60
+n_blocks: 6
+n_layers: 6
+num_heads: 3
+mlp_ratio: 2
+n_GTLs: 2
+window_list: [[32, 8], [8, 32]]
+shift_list: [[16, 4], [4, 16]]
 ```
 ### FlexNet
 #### flexnet
@@ -262,6 +390,118 @@ attn_drop: 0.0
 proj_drop: 0.0
 pipeline_type: meta
 upsampler: pixelshuffle
+```
+### GRL
+#### grl_b
+
+
+```yaml
+type: grl_b
+img_size: 64
+in_channels: 3
+out_channels: 3
+embed_dim: 180
+img_range: 1.0
+upsampler: pixelshuffle
+depths: [4, 4, 8, 8, 8, 4, 4]
+num_heads_window: [3, 3, 3, 3, 3, 3, 3]
+num_heads_stripe: [3, 3, 3, 3, 3, 3, 3]
+window_size: 32
+stripe_size: [64, 64]
+stripe_groups: [None, None]
+stripe_shift: true
+mlp_ratio: 2.0
+qkv_bias: true
+qkv_proj_type: linear
+anchor_proj_type: avgpool
+anchor_one_stage: true
+anchor_window_down_factor: 4
+out_proj_type: linear
+local_connection: true
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+pretrained_window_size: [0, 0]
+pretrained_stripe_size: [0, 0]
+conv_type: 1conv
+init_method: n
+fairscale_checkpoint: false
+offload_to_cpu: false
+euclidean_dist: false
+```
+#### grl_s
+
+
+```yaml
+type: grl_s
+img_size: 64
+in_channels: 3
+out_channels: 3
+embed_dim: 128
+img_range: 1.0
+upsampler: pixelshuffle
+depths: [4, 4, 4, 4]
+num_heads_window: [2, 2, 2, 2]
+num_heads_stripe: [2, 2, 2, 2]
+window_size: 32
+stripe_size: [64, 64]
+stripe_groups: [None, None]
+stripe_shift: true
+mlp_ratio: 2.0
+qkv_bias: true
+qkv_proj_type: linear
+anchor_proj_type: avgpool
+anchor_one_stage: true
+anchor_window_down_factor: 4
+out_proj_type: linear
+local_connection: false
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+pretrained_window_size: [0, 0]
+pretrained_stripe_size: [0, 0]
+conv_type: 1conv
+init_method: n
+fairscale_checkpoint: false
+offload_to_cpu: false
+euclidean_dist: false
+```
+#### grl_t
+
+
+```yaml
+type: grl_t
+img_size: 64
+in_channels: 3
+out_channels: 3
+embed_dim: 64
+img_range: 1.0
+upsampler: pixelshuffledirect
+depths: [4, 4, 4, 4]
+num_heads_window: [2, 2, 2, 2]
+num_heads_stripe: [2, 2, 2, 2]
+window_size: 32
+stripe_size: [64, 64]
+stripe_groups: [None, None]
+stripe_shift: true
+mlp_ratio: 2.0
+qkv_bias: true
+qkv_proj_type: linear
+anchor_proj_type: avgpool
+anchor_one_stage: true
+anchor_window_down_factor: 4
+out_proj_type: linear
+local_connection: false
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+pretrained_window_size: [0, 0]
+pretrained_stripe_size: [0, 0]
+conv_type: 1conv
+init_method: n
+fairscale_checkpoint: false
+offload_to_cpu: false
+euclidean_dist: false
 ```
 ### HAT
 #### hat_l
@@ -535,7 +775,7 @@ num_feat: 64
 block_num: 1
 pe: true
 window_size: 8
-res_num: 1
+res_num: 5
 bias: true
 ```
 ### PLKSR
@@ -584,41 +824,57 @@ n_resblocks: 20
 n_feats: 64
 n_colors: 3
 rgb_range: 255
-norm: true
+norm: false
 kernel_size: 3
 reduction: 16
 res_scale: 1
 act_mode: relu
 ```
-#### rcan_b
+#### rcan_nf128
 
 
 ```yaml
-type: rcan_b
+type: rcan_nf128
 n_resgroups: 10
+n_resblocks: 20
+n_feats: 128
+n_colors: 3
+rgb_range: 255
+norm: false
+kernel_size: 3
+reduction: 16
+res_scale: 1
+act_mode: relu
+```
+#### rcan_rb40
+
+
+```yaml
+type: rcan_rb40
+n_resgroups: 10
+n_resblocks: 40
+n_feats: 64
+n_colors: 3
+rgb_range: 255
+norm: false
+kernel_size: 3
+reduction: 16
+res_scale: 1
+act_mode: relu
+```
+#### rcan_rg20
+
+
+```yaml
+type: rcan_rg20
+n_resgroups: 20
 n_resblocks: 20
 n_feats: 64
 n_colors: 3
 rgb_range: 255
 norm: false
 kernel_size: 3
-reduction: 1
-res_scale: 1
-act_mode: relu
-```
-#### rcan_b2
-
-
-```yaml
-type: rcan_b2
-n_resgroups: 6
-n_resblocks: 12
-n_feats: 64
-n_colors: 3
-rgb_range: 255
-norm: false
-kernel_size: 3
-reduction: 1
+reduction: 16
 res_scale: 1
 act_mode: relu
 ```
@@ -693,19 +949,35 @@ use_pixel_unshuffle: true
 ```yaml
 type: rtmosr
 dim: 32
-ffn_expansion: 1.5
+ffn_expansion: 2
 n_blocks: 2
 unshuffle_mod: false
+dccm: true
+se: true
 ```
-#### rtmosr_s
+#### rtmosr_l
 
 
 ```yaml
-type: rtmosr_s
+type: rtmosr_l
+dim: 32
+ffn_expansion: 2
+n_blocks: 2
+unshuffle_mod: true
+dccm: true
+se: true
+```
+#### rtmosr_ul
+
+
+```yaml
+type: rtmosr_ul
 dim: 32
 ffn_expansion: 1.5
 n_blocks: 2
 unshuffle_mod: true
+dccm: false
+se: true
 ```
 ### RealPLKSR
 #### realplksr
@@ -724,6 +996,25 @@ norm_groups: 4
 dropout: 0
 upsampler: pixelshuffle
 layer_norm: true
+```
+### SAFMN
+#### safmn
+
+
+```yaml
+type: safmn
+dim: 36
+n_blocks: 8
+ffn_scale: 2.0
+```
+#### safmn_l
+
+
+```yaml
+type: safmn_l
+dim: 128
+n_blocks: 16
+ffn_scale: 2.0
 ```
 ### SCUNet_aaf6aa
 #### scunet_aaf6aa
@@ -841,6 +1132,38 @@ num_feat: 64
 num_conv: 8
 act_type: prelu
 learn_residual: true
+```
+### Sebica
+#### sebica
+
+
+```yaml
+type: sebica
+N: 16
+```
+#### sebica_mini
+
+
+```yaml
+type: sebica_mini
+N: 8
+```
+### SeemoRe
+#### seemore_t
+
+
+```yaml
+type: seemore_t
+in_chans: 3
+num_experts: 3
+num_layers: 6
+embedding_dim: 36
+img_range: 1.0
+use_shuffle: true
+global_kernel_size: 11
+recursive: 2
+lr_space: exp
+topk: 1
 ```
 ### SpanPlus
 #### spanplus

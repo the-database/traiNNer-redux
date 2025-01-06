@@ -52,5 +52,5 @@ jobs:
               with:
                   python-version: '3.11'
                   cache: 'pip'
-            - run: pip install .[dev,onnx]
+            - run: pip install .[dev,onnx,scripts]
             - run: pyright
