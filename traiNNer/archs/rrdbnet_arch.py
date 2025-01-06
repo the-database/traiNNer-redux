@@ -38,10 +38,19 @@ def esrgan(
 
 
 @SPANDREL_REGISTRY.register()
-def esrgan_lite(scale: int = 4, use_pixel_unshuffle: bool = True) -> ESRGAN:
+def esrgan_lite(
+    scale: int = 4,
+    use_pixel_unshuffle: bool = True,
+    in_nc: int = 3,
+    out_nc: int = 3,
+    num_filters: int = 32,
+    num_blocks: int = 12,
+) -> ESRGAN:
     return esrgan(
         scale=scale,
         use_pixel_unshuffle=use_pixel_unshuffle,
-        num_filters=32,
-        num_blocks=12,
+        in_nc=in_nc,
+        out_nc=out_nc,
+        num_filters=num_filters,
+        num_blocks=num_blocks,
     )
