@@ -34,7 +34,7 @@ keywords = ["machine learning", "deep learning", "neural network", "pytorch", "s
 dev = ["ruff", "pyright", "pytest", "syrupy", "torchfix"]
 onnx = ["onnx", "onnxruntime", "onnxconverter-common", "onnxslim"]
 docs = ["sphinx", "sphinx-rtd-theme"]
-scripts = ["matplotlib", "pandas"]
+scripts = ["chainner_ext", "matplotlib", "pandas"]
 
 [project.urls]
 Repository = "https://github.com/the-database/traiNNer-redux.git"
