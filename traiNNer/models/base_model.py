@@ -560,7 +560,7 @@ class BaseModel:
             logger.info(
                 "Loading %s model from %s, with spandrel.",
                 net.__class__.__name__,
-                clickable_file_path(Path(load_path).parent, load_path),
+                clickable_file_path(Path(load_path).absolute().parent, load_path),
             )
         else:
             net = self.get_bare_model(net)
@@ -592,7 +592,7 @@ class BaseModel:
             logger.info(
                 "Loading %s model from %s, with param key: [bold]%s[/bold].",
                 net.__class__.__name__,
-                clickable_file_path(Path(load_path).parent, load_path),
+                clickable_file_path(Path(load_path).absolute().parent, load_path),
                 param_key,
                 extra={"markup": True},
             )
