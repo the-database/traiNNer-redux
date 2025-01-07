@@ -52,12 +52,12 @@ def format_extra_params(extra_arch_params: dict[str, Any]) -> str:
 def compare_precision(
     net: nn.Module, input_tensor: Tensor, criterion: nn.Module
 ) -> tuple[float, float]:
-    with torch.no_grad():
+    with torch.inference_mode():
         fp32_output = net(input_tensor)
 
     fp16_loss = None
     try:
-        with autocast(dtype=torch.float16, device_type="cuda"):
+        with autocast(dtype=torch.float16, device_type="cuda"), torch.inference_mode():
             fp16_output = net(input_tensor)
         fp16_loss = criterion(fp16_output.float(), fp32_output).item()
     except Exception as e:
@@ -66,7 +66,7 @@ def compare_precision(
 
     bf16_loss = None
     try:
-        with autocast(dtype=torch.bfloat16, device_type="cuda"):
+        with autocast(dtype=torch.bfloat16, device_type="cuda"), torch.inference_mode():
             bf16_output = net(input_tensor)
         bf16_loss = criterion(bf16_output.float(), fp32_output).item()
     except Exception as e:
@@ -82,7 +82,15 @@ if __name__ == "__main__":
         label = f"{name} {format_extra_params(extra_arch_params)} {scale}x"
 
         try:
-            if "realplksr" not in name:
+            if name not in {
+                "rcan",
+                "esrgan",
+                "compact",
+                "span",
+                "dat_2",
+                "spanplus",
+                "realplksr",
+            }:
                 continue
 
             net: nn.Module = arch(scale=scale, **extra_arch_params).eval().to("cuda")

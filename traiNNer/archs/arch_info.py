@@ -26,6 +26,8 @@ ARCHS_WITHOUT_FP16 = {
     "hit_sir",
     "hit_sng",
     "hit_srf",
+    "rcan",
+    "moesr2",
     "rgt_s",
     "rgt",
     "seemore_t",
