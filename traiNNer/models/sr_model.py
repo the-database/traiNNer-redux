@@ -23,6 +23,7 @@ from traiNNer.losses import build_loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
@@ -493,9 +494,11 @@ class SRModel(BaseModel):
         logger = get_root_logger()
         if save_img and len(dataloader) > 0:
             logger.info(
-                "Saving %d validation images to: %s",
+                "Saving %d validation images to %s.",
                 len(dataloader),
-                self.opt.path.visualization,
+                clickable_file_path(
+                    self.opt.path.visualization, "visualization folder"
+                ),
             )
 
         gt_key = "img2"

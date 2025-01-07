@@ -953,6 +953,23 @@ dropout: 0
 upsampler: pixelshuffle
 layer_norm: true
 ```
+#### realplksr_tiny
+
+
+```yaml
+type: realplksr_tiny
+in_ch: 3
+out_ch: 3
+dim: 64
+n_blocks: 12
+kernel_size: 13
+split_ratio: 0.25
+use_ea: false
+norm_groups: 4
+dropout: 0
+upsampler: pixelshuffle
+layer_norm: true
+```
 ### SAFMN
 #### safmn
 

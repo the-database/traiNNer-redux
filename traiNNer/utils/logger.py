@@ -2,6 +2,7 @@ import datetime
 import logging
 import time
 from logging import Logger
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -182,7 +183,8 @@ def init_wandb_logger(opt: ReduxOptions) -> None:
 
 def get_root_logger(
     logger_name: str = "traiNNer",
-    log_level: int = logging.INFO,
+    log_level_console: int = logging.INFO,
+    log_level_file: int = logging.DEBUG,
     log_file: str | None = None,
 ) -> Logger:
     """Get the root logger.
@@ -207,7 +209,10 @@ def get_root_logger(
     if logger_name in initialized_logger:
         return logger
     format_str = "%(asctime)s %(levelname)s: %(message)s"
-    rich_handler = RichHandler(rich_tracebacks=True, omit_repeated_times=False)
+    rich_handler = RichHandler(
+        markup=True, rich_tracebacks=True, omit_repeated_times=False
+    )
+    rich_handler.setLevel(log_level_console)
     logger.addHandler(rich_handler)
     logger.propagate = False
 
@@ -215,12 +220,12 @@ def get_root_logger(
     if rank != 0:
         logger.setLevel("ERROR")
     else:
-        logger.setLevel(log_level)
+        logger.setLevel(log_level_file)
         if log_file is not None:
             # add file handler
             file_handler = logging.FileHandler(log_file, "w")
             file_handler.setFormatter(logging.Formatter(format_str))
-            file_handler.setLevel(log_level)
+            file_handler.setLevel(log_level_file)
             logger.addHandler(file_handler)
     initialized_logger[logger_name] = True
     return logger
@@ -263,3 +268,10 @@ def get_env_info() -> str:
         f"\n\tTorchVision: {torchvision.__version__}"
     )
     return msg
+
+
+def clickable_file_path(file_path: str | Path, display_text: str) -> str:
+    file_path = str(file_path).replace(" ", "%20")
+    out = f"[link=file:///{file_path}]{display_text}[/link]"
+    # print(out)
+    return out

@@ -153,7 +153,7 @@ archs: list[ArchInfo] = [
         },
     },
     {
-        "names": ["RealPLKSR"],
+        "names": ["RealPLKSR", "RealPLKSR_Tiny"],
         "scales": ALL_SCALES,
         "extras": {
             "upsampler": "pixelshuffle  # pixelshuffle, dysample (better quality on even number scales, but does not support dynamic ONNX)",

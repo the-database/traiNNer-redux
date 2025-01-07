@@ -139,11 +139,9 @@ def train_pipeline(root_path: str) -> None:
     # WARNING: should not use get_root_logger in the above codes, including the called functions
     # Otherwise the logger will not be properly initialized
     log_file = osp.join(opt.path.log, f"train_{opt.name}_{get_time_str()}.log")
-    logger = get_root_logger(
-        logger_name="traiNNer", log_level=logging.INFO, log_file=log_file
-    )
+    logger = get_root_logger(logger_name="traiNNer", log_file=log_file)
     logger.info(get_env_info())
-    logger.info(pretty_repr(opt))
+    logger.debug(pretty_repr(opt))
 
     if opt.deterministic:
         logger.info(

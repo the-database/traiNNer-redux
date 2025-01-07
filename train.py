@@ -46,6 +46,7 @@ from traiNNer.utils import (
     scandir,
 )
 from traiNNer.utils.config import Config
+from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import free_space_gb_str, set_random_seed
 from traiNNer.utils.options import copy_opt_file
 from traiNNer.utils.redux_options import ReduxOptions
@@ -280,11 +281,9 @@ def train_pipeline(root_path: str) -> None:
     # WARNING: should not use get_root_logger in the above codes, including the called functions
     # Otherwise the logger will not be properly initialized
     log_file = osp.join(opt.path.log, f"train_{opt.name}_{get_time_str()}.log")
-    logger = get_root_logger(
-        logger_name="traiNNer", log_level=logging.INFO, log_file=log_file
-    )
+    logger = get_root_logger(logger_name="traiNNer", log_file=log_file)
     logger.info(get_env_info())
-    logger.info(pretty_repr(opt))
+    logger.debug(pretty_repr(opt))
 
     if opt.deterministic:
         logger.info(
@@ -386,6 +385,7 @@ def train_pipeline(root_path: str) -> None:
     epoch = start_epoch
     apply_gradient = False
     train_data = None
+    assert model.opt.path.models is not None
 
     for epoch in range(start_epoch, total_epochs + 1):
         train_sampler.set_epoch(epoch)
@@ -448,7 +448,8 @@ def train_pipeline(root_path: str) -> None:
             # save models and training states
             if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
                 logger.info(
-                    "Saving models and training states. Free space: %s",
+                    "Saving models and training states to %s. Free space: %s",
+                    clickable_file_path(model.opt.path.models, "experiments folder"),
                     free_space_gb_str(),
                 )
                 model.save(
@@ -494,7 +495,8 @@ def train_pipeline(root_path: str) -> None:
             current_iter -= 1
 
         logger.info(
-            "Saving models and training states for epoch: %d, iter: %d.",
+            "Saving models and training states to %s for epoch: %d, iter: %d.",
+            clickable_file_path(model.opt.path.models, "experiments folder"),
             epoch,
             current_iter,
         )
