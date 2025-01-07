@@ -122,7 +122,7 @@ network_g:
 
 # Discriminator model settings
 network_d:
-  type: metagan2  # metagan2, dunet, unetdiscriminatorsn
+  type: dunet  # dunet, metagan2, unetdiscriminatorsn
 
 #########################################################################################
 # Pretrain and Resume Paths

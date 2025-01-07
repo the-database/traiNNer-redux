@@ -4,6 +4,7 @@ import time
 from abc import abstractmethod
 from collections import OrderedDict
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 import pytorch_optimizer
@@ -23,6 +24,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
+from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import is_json_compatible
 from traiNNer.utils.options import struct2dict
 from traiNNer.utils.redux_options import ReduxOptions
@@ -558,7 +560,7 @@ class BaseModel:
             logger.info(
                 "Loading %s model from %s, with spandrel.",
                 net.__class__.__name__,
-                load_path,
+                clickable_file_path(Path(load_path).parent, load_path),
             )
         else:
             net = self.get_bare_model(net)
@@ -590,7 +592,7 @@ class BaseModel:
             logger.info(
                 "Loading %s model from %s, with param key: [bold]%s[/bold].",
                 net.__class__.__name__,
-                load_path,
+                clickable_file_path(Path(load_path).parent, load_path),
                 param_key,
                 extra={"markup": True},
             )

@@ -211,3 +211,36 @@ def realplksr(
         upsampler=upsampler,
         layer_norm=layer_norm,
     )
+
+
+@ARCH_REGISTRY.register()
+def realplksr_tiny(
+    in_ch: int = 3,
+    out_ch: int = 3,
+    dim: int = 64,
+    n_blocks: int = 12,
+    scale: int = 4,
+    kernel_size: int = 13,
+    split_ratio: float = 0.25,
+    use_ea: bool = False,
+    norm_groups: int = 4,
+    dropout: float = 0,
+    upsampler: Literal[
+        "dysample", "pixelshuffle"
+    ] = "pixelshuffle",  # dysample, pixelshuffle
+    layer_norm: bool = True,
+) -> RealPLKSR:
+    return RealPLKSR(
+        upscaling_factor=scale,
+        in_ch=in_ch,
+        out_ch=out_ch,
+        dim=dim,
+        n_blocks=n_blocks,
+        kernel_size=kernel_size,
+        split_ratio=split_ratio,
+        use_ea=use_ea,
+        norm_groups=norm_groups,
+        dropout=dropout,
+        upsampler=upsampler,
+        layer_norm=layer_norm,
+    )
