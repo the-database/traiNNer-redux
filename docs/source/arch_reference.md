@@ -53,6 +53,16 @@ filters: 96
 n_block: 16
 kernel_size: 3
 ```
+#### artcnn_r8f48
+
+
+```yaml
+type: artcnn_r8f48
+in_ch: 3
+filters: 48
+n_block: 8
+kernel_size: 3
+```
 #### artcnn_r8f64
 
 
