@@ -334,7 +334,7 @@ OFFICIAL_METRICS: dict[
             "df2k_ssim": 0.8140,
         },
     },
-    "rcan": {
+    "rcan unshuffle_mod=False": {
         2: {
             "div2k_psnr": 33.34,
             "div2k_ssim": 0.9384,
