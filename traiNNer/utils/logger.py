@@ -112,8 +112,8 @@ class MessageLogger:
         lrs = log_vars.pop("lrs")
 
         # Construct the base message with epoch, iteration, and learning rates
-        message = f"[ epoch:{epoch:4,d}, iter:{current_iter:8,d}, lr:("
-        message += ", ".join([f"{v:.3e}" for v in lrs]) + ") ] "
+        message = f"[epoch:{epoch:4,d}, iter:{current_iter:8,d}, lr:("
+        message += ", ".join([f"{v:.3e}" for v in lrs]) + ")] "
 
         # performance, eta
         if "time" in log_vars.keys():
@@ -125,11 +125,11 @@ class MessageLogger:
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
 
-            message += f"[ performance: {iter_time:.3f} it/s ] [ eta: {eta_str} ] "
+            message += f"[performance: {iter_time:.3f} it/s] [eta: {eta_str}] "
 
         # peak VRAM
         message += (
-            f"[ peak VRAM: {torch.cuda.max_memory_allocated() / (1024**3):.2f} GB ] "
+            f"[peak VRAM: {torch.cuda.max_memory_allocated() / (1024**3):.2f} GB] "
         )
 
         # Log any additional variables (typically losses)
@@ -141,8 +141,7 @@ class MessageLogger:
                 self.tb_logger.add_scalar(label, value, current_iter)
 
         # Log the final constructed message
-
-        self.logger.info(message)
+        self.logger.info(message, extra={"markup": False})
 
 
 @master_only
@@ -243,18 +242,7 @@ def get_env_info() -> str:
     device_info = torch.cuda.get_device_properties(torch.cuda.current_device())
 
     # from traiNNer.version import __version__
-    msg = r"""
-   __             _ _   ___   __                              __
-  / /__________ _(_) | / / | / /__  _____      ________  ____/ /_  ___  __
- / __/ ___/ __ `/ /  |/ /  |/ / _ \/ ___/_____/ ___/ _ \/ __  / / / / |/_/
-/ /_/ /  / /_/ / / /|  / /|  /  __/ /  /_____/ /  /  __/ /_/ / /_/ />  <
-\__/_/   \__,_/_/_/ |_/_/ |_/\___/_/        /_/   \___/\__,_/\__,_/_/|_|
-     ______                   __   __                 __      __
-    / ____/____   ____   ____/ /  / /   __  __ _____ / /__   / /
-   / / __ / __ \ / __ \ / __  /  / /   / / / // ___// //_/  / /
-  / /_/ // /_/ // /_/ // /_/ /  / /___/ /_/ // /__ / /<    /_/
-  \____/ \____/ \____/ \____/  /_____/\____/ \___//_/|_|  (_)
-    """
+    msg = r"[italic red]:rocket:  traiNNer-redux: good luck! :rocket:[/]"
     msg += (
         "\nSystem Information: "
         f"\n\tCurrent GPU: "
