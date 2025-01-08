@@ -6,6 +6,7 @@ from collections.abc import Callable
 from io import TextIOWrapper
 from typing import Any
 
+import numpy as np
 import torch
 from torch import Tensor, memory_format, nn
 
@@ -37,6 +38,8 @@ FILTERED_REGISTRY = [
 ]
 ALL_SCALES = [4, 3, 2, 1]
 LIGHTWEIGHT_ARCHS = {
+    "artcnn_r8f64",
+    "artcnn_r8f48",
     "cfsr",
     "realcugan",
     "span",
@@ -166,25 +169,42 @@ def get_line(
 
 
 def benchmark_model(
-    model: nn.Module, input_tensor: Tensor, warmup_runs: int = 5, num_runs: int = 10
-) -> tuple[float, Tensor]:
-    for _ in range(warmup_runs):
-        with torch.inference_mode():
+    name: str,
+    model: nn.Module,
+    input_tensor: Tensor,
+    warmup_runs: int = 5,
+    num_runs: int = 10,
+) -> tuple[float, float, Tensor]:
+    # https://github.com/dslisleedh/PLKSR/blob/main/scripts/test_direct_metrics.py
+    with torch.inference_mode():
+        for _ in range(warmup_runs):
             model(input_tensor)
+            torch.cuda.synchronize()
 
-    output = None
-    torch.cuda.synchronize()
-    start_time = time.time()
+        output = None
 
-    for _ in range(num_runs):
-        with torch.inference_mode():
-            output = model(input_tensor)
+        torch.cuda.reset_peak_memory_stats()
         torch.cuda.synchronize()
+        starter, ender = (
+            torch.cuda.Event(enable_timing=True),
+            torch.cuda.Event(enable_timing=True),
+        )
+        current_stream = torch.cuda.current_stream()
+        timings = np.zeros((num_runs, 1))
 
-    end_time = time.time()
-    avg_time = (end_time - start_time) / num_runs
+        # for i in trange(num_runs, desc=name, leave=False):
+        for i in range(num_runs):
+            starter.record(current_stream)
+            output = model(input_tensor)
+            ender.record(current_stream)
+            torch.cuda.synchronize()
+            curr_time = starter.elapsed_time(ender)
+            timings[i] = curr_time
+
+    avg_time: float = np.sum(timings).item() / (num_runs * 1000)
+    vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
     assert output is not None
-    return avg_time, output
+    return avg_time, vram_usage, output
 
 
 def get_dtype(name: str, use_amp: bool) -> tuple[str, torch.dtype]:
@@ -197,7 +217,11 @@ def get_dtype(name: str, use_amp: bool) -> tuple[str, torch.dtype]:
 
 
 def benchmark_arch(
-    name: str, arch: Callable, extra_arch_params: dict, memory_format: memory_format
+    arch_key: str,
+    name: str,
+    arch: Callable,
+    extra_arch_params: dict,
+    memory_format: memory_format,
 ) -> tuple:
     random_input = torch.rand(
         input_shape,
@@ -218,16 +242,17 @@ def benchmark_arch(
         )
     )
 
-    total_params = sum(p[1].numel() for p in model.named_parameters())
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     runs = lightweight_num_runs if name in LIGHTWEIGHT_ARCHS else num_runs
-    torch.cuda.empty_cache()
-    torch.cuda.reset_peak_memory_stats()
+
     with torch.autocast(
         device_type="cuda",
         dtype=dtype,
         enabled=use_amp,
     ):
-        avg_time, output = benchmark_model(model, random_input, warmup_runs, runs)
+        avg_time, vram_usage, output = benchmark_model(
+            arch_key, model, random_input, warmup_runs, runs
+        )
 
     if not (
         output.shape[2] == random_input.shape[2] * scale
@@ -237,7 +262,6 @@ def benchmark_arch(
         print(msg)
         # raise ValueError(msg)  # TODO restore
 
-    vram_usage = torch.cuda.max_memory_allocated(device) / (1024**3)
     row = (
         name,
         dtype_str,
@@ -253,11 +277,12 @@ def benchmark_arch(
 
 
 if __name__ == "__main__":
+    torch.backends.cudnn.benchmark = True
     start_script_time = time.time()
     device = "cuda"
 
     input_shape = (1, 3, 480, 640)
-    # input_shape = (1, 3, 554, 554)
+    # input_shape = (1, 3, 240, 320)
     # input_shape = (1, 3, 1080, 1920)
 
     warmup_runs = 1  # 1
@@ -338,30 +363,25 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                         )
                         dtype_str, dtype = get_dtype(name, use_amp)
                         try:
-                            # if name not in {
-                            #     "dctlsa",
-                            #     "ditn_real",
-                            #     # "dwt",
-                            #     "dwt_s",
-                            #     "elan",
-                            #     "elan_light",
-                            #     "emt",
-                            #     "safmn",
-                            #     "safmn_l",
-                            #     "sebica",
-                            #     "sebica_mini",
-                            #     "seemore_t",
-                            # }:
+                            # if name not in {"rcan", "esrgan"}:
                             #     continue
                             if arch_key not in results_by_arch:
                                 results_by_arch[arch_key] = {}
 
                             row_channels_last = benchmark_arch(
-                                name, arch, extra_arch_params, torch.channels_last
+                                arch_key,
+                                name,
+                                arch,
+                                extra_arch_params,
+                                torch.channels_last,
                             )
 
                             row = benchmark_arch(
-                                name, arch, extra_arch_params, torch.preserve_format
+                                arch_key,
+                                name,
+                                arch,
+                                extra_arch_params,
+                                torch.preserve_format,
                             )
 
                             channels_last_improvement = row_channels_last[3] / row[3]
