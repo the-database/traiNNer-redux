@@ -193,6 +193,18 @@ OFFICIAL_METRICS: dict[
         # 2 pixel unshuffle: 33.08   0.9387    (batch 32 lqcrop128 1m iter)
         # 2 not pixel unshuffle: 33.41   0.9407    (batch 16 lqcrop64 1m iter)
     },
+    "grl_b": {
+        2: {"df2k_psnr": 35.06, "df2k_ssim": 0.9505},
+        4: {"df2k_psnr": 28.53, "df2k_ssim": 0.8504},
+    },
+    "grl_s": {
+        2: {"df2k_psnr": 34.36, "df2k_ssim": 0.9463},
+        4: {"df2k_psnr": 27.90, "df2k_ssim": 0.8357},
+    },
+    "grl_t": {
+        2: {"df2k_psnr": 33.60, "df2k_ssim": 0.9411},
+        4: {"df2k_psnr": 27.15, "df2k_ssim": 0.8185},
+    },
     "hat_s": {
         2: {"df2k_psnr": 34.31, "df2k_ssim": 0.9459},
         3: {"df2k_psnr": 30.15, "df2k_ssim": 0.8879},
