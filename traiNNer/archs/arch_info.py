@@ -82,6 +82,9 @@ OFFICIAL_METRICS: dict[
         int, dict[Literal["df2k_psnr", "df2k_ssim", "div2k_psnr", "div2k_ssim"], float]
     ],
 ] = {
+    "artcnn_r8f64": {
+        2: {"df2k_psnr": 32.1, "df2k_ssim": 0.9293},
+    },
     "atd": {
         2: {"df2k_psnr": 34.73, "df2k_ssim": 0.9476},
         3: {"df2k_psnr": 30.52, "df2k_ssim": 0.8924},
@@ -334,7 +337,7 @@ OFFICIAL_METRICS: dict[
             "df2k_ssim": 0.8140,
         },
     },
-    "rcan unshuffle_mod=False": {
+    "rcan": {
         2: {
             "div2k_psnr": 33.34,
             "div2k_ssim": 0.9384,
