@@ -2,6 +2,7 @@ import math
 from collections.abc import Callable
 
 import torch
+from spandrel.architectures.__arch_helpers.padding import pad_to_multiple
 from spandrel.util import store_hyperparameters
 from torch import Tensor, nn
 
@@ -256,9 +257,12 @@ class RCAN(nn.Module):
         reduction: int = 16,
         res_scale: float = 1,
         act_mode: str = "relu",
+        unshuffle_mod: bool = True,
         conv: Callable[..., nn.Conv2d] = default_conv,
     ) -> None:
         super().__init__()
+
+        self.scale = scale
 
         if norm:
             # RGB mean for DIV2K
@@ -273,7 +277,21 @@ class RCAN(nn.Module):
             self.add_mean = nn.Identity()
 
         # define head module
-        modules_head = [conv(n_colors, n_feats, kernel_size)]
+        unshuffle_mod = unshuffle_mod and scale <= 2
+        self.downscale_factor = 1
+        if unshuffle_mod:
+            self.downscale_factor = 4 // scale
+            scale = 4
+            modules_head = [
+                nn.PixelUnshuffle(self.downscale_factor),
+                conv(
+                    n_colors * self.downscale_factor * self.downscale_factor,
+                    n_feats,
+                    kernel_size,
+                ),
+            ]
+        else:
+            modules_head = [conv(n_colors, n_feats, kernel_size)]
 
         # define body module
         modules_body: list[nn.Module] = [
@@ -301,7 +319,12 @@ class RCAN(nn.Module):
         self.body = nn.Sequential(*modules_body)
         self.tail = nn.Sequential(*modules_tail)
 
+    def check_img_size(self, x: Tensor) -> Tensor:
+        return pad_to_multiple(x, self.downscale_factor, mode="reflect")
+
     def forward(self, x: Tensor) -> Tensor:
+        _b, _c, h, w = x.shape
+        x = self.check_img_size(x)
         x *= self.rgb_range
         x = self.sub_mean(x)
         x = self.head(x)
@@ -311,97 +334,4 @@ class RCAN(nn.Module):
 
         x = self.tail(res)
         x = self.add_mean(x)
-        return x / self.rgb_range
-
-
-# @ARCH_REGISTRY.register()
-# def rcan_rg20(
-#     scale: int = 4,
-#     n_resgroups: int = 20,
-#     n_resblocks: int = 20,
-#     n_feats: int = 64,
-#     n_colors: int = 3,
-#     rgb_range: int = 255,
-#     norm: bool = False,
-#     kernel_size: int = 3,
-#     reduction: int = 16,
-#     res_scale: float = 1,
-#     act_mode: str = "relu",
-#     conv: Callable[..., nn.Conv2d] = default_conv,
-# ) -> RCAN:
-#     return RCAN(
-#         scale=scale,
-#         n_resgroups=n_resgroups,
-#         n_resblocks=n_resblocks,
-#         n_feats=n_feats,
-#         n_colors=n_colors,
-#         rgb_range=rgb_range,
-#         norm=norm,
-#         kernel_size=kernel_size,
-#         reduction=reduction,
-#         res_scale=res_scale,
-#         act_mode=act_mode,
-#         conv=conv,
-#     )
-
-
-# @ARCH_REGISTRY.register()
-# def rcan_rb40(
-#     scale: int = 4,
-#     n_resgroups: int = 10,
-#     n_resblocks: int = 40,
-#     n_feats: int = 64,
-#     n_colors: int = 3,
-#     rgb_range: int = 255,
-#     norm: bool = False,
-#     kernel_size: int = 3,
-#     reduction: int = 16,
-#     res_scale: float = 1,
-#     act_mode: str = "relu",
-#     conv: Callable[..., nn.Conv2d] = default_conv,
-# ) -> RCAN:
-#     return RCAN(
-#         scale=scale,
-#         n_resgroups=n_resgroups,
-#         n_resblocks=n_resblocks,
-#         n_feats=n_feats,
-#         n_colors=n_colors,
-#         rgb_range=rgb_range,
-#         norm=norm,
-#         kernel_size=kernel_size,
-#         reduction=reduction,
-#         res_scale=res_scale,
-#         act_mode=act_mode,
-#         conv=conv,
-#     )
-
-
-# @ARCH_REGISTRY.register()
-# def rcan_nf128(
-#     scale: int = 4,
-#     n_resgroups: int = 10,
-#     n_resblocks: int = 20,
-#     n_feats: int = 128,
-#     n_colors: int = 3,
-#     rgb_range: int = 255,
-#     norm: bool = False,
-#     kernel_size: int = 3,
-#     reduction: int = 16,
-#     res_scale: float = 1,
-#     act_mode: str = "relu",
-#     conv: Callable[..., nn.Conv2d] = default_conv,
-# ) -> RCAN:
-#     return RCAN(
-#         scale=scale,
-#         n_resgroups=n_resgroups,
-#         n_resblocks=n_resblocks,
-#         n_feats=n_feats,
-#         n_colors=n_colors,
-#         rgb_range=rgb_range,
-#         norm=norm,
-#         kernel_size=kernel_size,
-#         reduction=reduction,
-#         res_scale=res_scale,
-#         act_mode=act_mode,
-#         conv=conv,
-#     )
+        return (x / self.rgb_range)[:, :, : h * self.scale, : w * self.scale]
