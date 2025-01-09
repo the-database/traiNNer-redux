@@ -56,6 +56,11 @@ EXTRA_ARCH_PARAMS["mosr_t"] = [
     {"upsampler": "geoensemblepixelshuffle"},
 ]
 
+EXTRA_ARCH_PARAMS["rcan"] = [
+    {"unshuffle_mod": True},
+    {"unshuffle_mod": False},
+]
+
 # A list of tuples in the format of (name, arch, scale, extra_params).
 FILTERED_REGISTRIES_SCALES_PARAMS = [
     (name, arch, scale, extra_params)
