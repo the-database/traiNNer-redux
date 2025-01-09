@@ -839,6 +839,23 @@ kernel_size: 3
 reduction: 16
 res_scale: 1
 act_mode: relu
+unshuffle_mod: false
+```
+#### rcan_unshuffle
+
+
+```yaml
+type: rcan_unshuffle
+n_resgroups: 10
+n_resblocks: 20
+n_feats: 64
+n_colors: 3
+rgb_range: 255
+norm: false
+kernel_size: 3
+reduction: 16
+res_scale: 1
+act_mode: relu
 unshuffle_mod: true
 ```
 ### RGT

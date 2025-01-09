@@ -2,7 +2,7 @@
 ####################
 # General Settings
 ####################
-name: 4x_RCAN
+name: 4x_RCAN_unshuffle
 scale: 4  # 1, 2, 3, 4, 8
 num_gpu: auto
 
@@ -11,14 +11,14 @@ num_gpu: auto
 #####################
 # Generator model settings
 network_g:
-  type: rcan
+  type: rcan_unshuffle
 
 ############################
 # Pretrain and Resume Paths
 ############################
 path:
   # Path of the model to convert to ONNX.
-  pretrain_network_g: experiments/4x_RCAN/models/net_g_ema_1000.safetensors
+  pretrain_network_g: experiments/4x_RCAN_unshuffle/models/net_g_ema_1000.safetensors
 
 #########################
 # ONNX conversion options
