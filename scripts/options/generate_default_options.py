@@ -239,11 +239,8 @@ archs: list[ArchInfo] = [
         },
     },
     {
-        "names": ["RCAN"],
+        "names": ["RCAN", "RCAN_unshuffle"],
         "scales": ALL_SCALES,
-        "extras": {
-            "unshuffle_mod": "true # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality."
-        },
     },
     {"names": ["RTMoSR", "RTMoSR_L", "RTMoSR_UL"], "scales": ALL_SCALES},
     {

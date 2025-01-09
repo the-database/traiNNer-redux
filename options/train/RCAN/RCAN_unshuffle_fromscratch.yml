@@ -3,7 +3,7 @@
 # General Settings
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
 #########################################################################################
-name: 4x_RCAN
+name: 4x_RCAN_unshuffle
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
@@ -62,20 +62,13 @@ datasets:
 #####################################################################
 # Generator model settings
 network_g:
-  type: rcan
-
-# Discriminator model settings
-network_d:
-  type: dunet  # dunet, metagan2, unetdiscriminatorsn
+  type: rcan_unshuffle
 
 #########################################################################################
 # Pretrain and Resume Paths
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#path-options-path
 #########################################################################################
 path:
-  pretrain_network_g: experiments/pretrained_models/pretrain.pth
-  param_key_g: ~
-  strict_load_g: true    # Disable strict loading to partially load a pretrain model with a different scale
   resume_state: ~
 
 ###########################################################################################
@@ -88,22 +81,16 @@ train:
   # Optimizer for generator model
   optim_g:
     type: AdamW
-    lr: !!float 1e-4
-    weight_decay: 0
-    betas: [0.9, 0.99]
-  # Optimizer for discriminator model
-  optim_d:
-    type: AdamW
-    lr: !!float 1e-4
+    lr: !!float 2e-4
     weight_decay: 0
     betas: [0.9, 0.99]
 
   scheduler:
     type: MultiStepLR
-    milestones: [125000, 200000, 225000, 237500]
+    milestones: [250000, 400000, 450000, 475000]
     gamma: 0.5
 
-  total_iter: 250000  # Total number of iterations.
+  total_iter: 500000  # Total number of iterations.
   warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
@@ -113,37 +100,6 @@ train:
     - type: msssiml1loss
       alpha: 0.1
       loss_weight: 1.0
-    # Perceptual loss
-    - type: perceptualloss
-      criterion: pd+l1  # pd+l1 (good quality), fd+l1 (slower), pd, fd, charbonnier, l1 (lower quality, legacy)
-      loss_weight: 0.01
-    # HSLuv loss (hue, saturation, lightness)
-    - type: hsluvloss
-      criterion: charbonnier
-      loss_weight: 1.0
-    # GAN loss
-    - type: ganloss
-      gan_type: vanilla
-      loss_weight: 0.1
-    # Additional losses - disabled by default.
-    # To enable, change the loss_weight from 0 to the recommended loss_weight which appears as a comment next to the loss weight.
-    # For example to enable DISTS loss, change the loss weight from 0 to 0.25; to enable color loss change loss weight from 0 to 1.
-    # DISTS perceptual loss
-    - type: distsloss
-      loss_weight: 0  # 0.3
-    # LDL loss
-    - type: ldlloss
-      loss_weight: 0  # 1.0
-    # FF loss
-    - type: ffloss
-      loss_weight: 0  # 0.2
-
-  # Mix of Augmentations (MoA)
-  use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
-  moa_augs: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']  # The list of augmentations to choose from, only one is selected per iteration.
-  moa_probs: [0.4, 0.084, 0.084, 0.084, 0.348]  # The probability each augmentation in moa_augs will be applied. Total should add up to 1.
-  moa_debug: false  # Save images before and after augment to debug/moa folder inside of the root training directory.
-  moa_debug_limit: 100  # The max number of iterations to save augmentation images for.
 
 ##############################################################################################
 # Validation
