@@ -229,7 +229,6 @@ archs: list[ArchInfo] = [
             "upsampler": "pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)"
         },
     },
-    {"names": ["RCAN"], "scales": ALL_SCALES},
     {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
     {
         "names": ["MoESR2"],
@@ -239,7 +238,13 @@ archs: list[ArchInfo] = [
             "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
         },
     },
-    {"names": ["RCAN"], "scales": ALL_SCALES},
+    {
+        "names": ["RCAN"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "unshuffle_mod": "true # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality."
+        },
+    },
     {"names": ["RTMoSR", "RTMoSR_L", "RTMoSR_UL"], "scales": ALL_SCALES},
     {
         "names": ["GRL_B", "GRL_S", "GRL_T"],

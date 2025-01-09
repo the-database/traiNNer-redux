@@ -839,6 +839,7 @@ kernel_size: 3
 reduction: 16
 res_scale: 1
 act_mode: relu
+unshuffle_mod: false
 ```
 ### RGT
 #### rgt

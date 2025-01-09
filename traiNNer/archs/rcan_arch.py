@@ -257,7 +257,7 @@ class RCAN(nn.Module):
         reduction: int = 16,
         res_scale: float = 1,
         act_mode: str = "relu",
-        unshuffle_mod: bool = False,
+        unshuffle_mod: bool = True,
         conv: Callable[..., nn.Conv2d] = default_conv,
     ) -> None:
         super().__init__()
@@ -334,98 +334,4 @@ class RCAN(nn.Module):
 
         x = self.tail(res)
         x = self.add_mean(x)
-        out = (x / self.rgb_range)[:, :, : h * self.scale, : w * self.scale]
-        return out
-
-
-# @ARCH_REGISTRY.register()
-# def rcan_rg20(
-#     scale: int = 4,
-#     n_resgroups: int = 20,
-#     n_resblocks: int = 20,
-#     n_feats: int = 64,
-#     n_colors: int = 3,
-#     rgb_range: int = 255,
-#     norm: bool = False,
-#     kernel_size: int = 3,
-#     reduction: int = 16,
-#     res_scale: float = 1,
-#     act_mode: str = "relu",
-#     conv: Callable[..., nn.Conv2d] = default_conv,
-# ) -> RCAN:
-#     return RCAN(
-#         scale=scale,
-#         n_resgroups=n_resgroups,
-#         n_resblocks=n_resblocks,
-#         n_feats=n_feats,
-#         n_colors=n_colors,
-#         rgb_range=rgb_range,
-#         norm=norm,
-#         kernel_size=kernel_size,
-#         reduction=reduction,
-#         res_scale=res_scale,
-#         act_mode=act_mode,
-#         conv=conv,
-#     )
-
-
-# @ARCH_REGISTRY.register()
-# def rcan_rb40(
-#     scale: int = 4,
-#     n_resgroups: int = 10,
-#     n_resblocks: int = 40,
-#     n_feats: int = 64,
-#     n_colors: int = 3,
-#     rgb_range: int = 255,
-#     norm: bool = False,
-#     kernel_size: int = 3,
-#     reduction: int = 16,
-#     res_scale: float = 1,
-#     act_mode: str = "relu",
-#     conv: Callable[..., nn.Conv2d] = default_conv,
-# ) -> RCAN:
-#     return RCAN(
-#         scale=scale,
-#         n_resgroups=n_resgroups,
-#         n_resblocks=n_resblocks,
-#         n_feats=n_feats,
-#         n_colors=n_colors,
-#         rgb_range=rgb_range,
-#         norm=norm,
-#         kernel_size=kernel_size,
-#         reduction=reduction,
-#         res_scale=res_scale,
-#         act_mode=act_mode,
-#         conv=conv,
-#     )
-
-
-# @ARCH_REGISTRY.register()
-# def rcan_nf128(
-#     scale: int = 4,
-#     n_resgroups: int = 10,
-#     n_resblocks: int = 20,
-#     n_feats: int = 128,
-#     n_colors: int = 3,
-#     rgb_range: int = 255,
-#     norm: bool = False,
-#     kernel_size: int = 3,
-#     reduction: int = 16,
-#     res_scale: float = 1,
-#     act_mode: str = "relu",
-#     conv: Callable[..., nn.Conv2d] = default_conv,
-# ) -> RCAN:
-#     return RCAN(
-#         scale=scale,
-#         n_resgroups=n_resgroups,
-#         n_resblocks=n_resblocks,
-#         n_feats=n_feats,
-#         n_colors=n_colors,
-#         rgb_range=rgb_range,
-#         norm=norm,
-#         kernel_size=kernel_size,
-#         reduction=reduction,
-#         res_scale=res_scale,
-#         act_mode=act_mode,
-#         conv=conv,
-#     )
+        return (x / self.rgb_range)[:, :, : h * self.scale, : w * self.scale]
