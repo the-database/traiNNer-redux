@@ -370,7 +370,7 @@ def rcan_unshuffle(
     )
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 def rcan_l(
     scale: int = 4,
     n_resgroups: int = 10,
@@ -383,7 +383,7 @@ def rcan_l(
     reduction: int = 16,
     res_scale: float = 1,
     act_mode: str = "relu",
-    unshuffle_mod: bool = True,
+    unshuffle_mod: bool = False,
     conv: Callable[..., nn.Conv2d] = default_conv,
 ) -> RCAN:
     return RCAN(
@@ -403,7 +403,7 @@ def rcan_l(
     )
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 def rcan_xl(
     scale: int = 4,
     n_resgroups: int = 12,
@@ -416,7 +416,7 @@ def rcan_xl(
     reduction: int = 16,
     res_scale: float = 1,
     act_mode: str = "relu",
-    unshuffle_mod: bool = True,
+    unshuffle_mod: bool = False,
     conv: Callable[..., nn.Conv2d] = default_conv,
 ) -> RCAN:
     return RCAN(
@@ -436,7 +436,7 @@ def rcan_xl(
     )
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 def rcan_s(
     scale: int = 4,
     n_resgroups: int = 8,
@@ -449,7 +449,7 @@ def rcan_s(
     reduction: int = 16,
     res_scale: float = 1,
     act_mode: str = "relu",
-    unshuffle_mod: bool = True,
+    unshuffle_mod: bool = False,
     conv: Callable[..., nn.Conv2d] = default_conv,
 ) -> RCAN:
     return RCAN(
