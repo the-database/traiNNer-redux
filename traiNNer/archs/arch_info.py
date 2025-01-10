@@ -82,8 +82,14 @@ OFFICIAL_METRICS: dict[
         int, dict[Literal["df2k_psnr", "df2k_ssim", "div2k_psnr", "div2k_ssim"], float]
     ],
 ] = {
+    "artcnn_r8f48": {
+        2: {"df2k_psnr": 31.82, "df2k_ssim": 0.9266},
+    },
     "artcnn_r8f64": {
         2: {"df2k_psnr": 32.1, "df2k_ssim": 0.9293},
+    },
+    "artcnn_r16f64": {
+        2: {"df2k_psnr": 32.81, "df2k_ssim": 0.9358},
     },
     "atd": {
         2: {"df2k_psnr": 34.73, "df2k_ssim": 0.9476},
@@ -99,6 +105,9 @@ OFFICIAL_METRICS: dict[
         2: {"df2k_psnr": 32.28, "df2k_ssim": 0.9300},
         3: {"df2k_psnr": 28.29, "df2k_ssim": 0.8553},
         4: {"df2k_psnr": 26.21, "df2k_ssim": 0.7897},
+    },
+    "compact": {
+        2: {"df2k_psnr": 31.72, "df2k_ssim": 0.9257},
     },
     "dat": {
         2: {"df2k_psnr": 34.37, "df2k_ssim": 0.9458},
@@ -380,6 +389,10 @@ OFFICIAL_METRICS: dict[
     "span": {
         2: {"df2k_psnr": 32.24, "df2k_ssim": 0.9294},
         4: {"df2k_psnr": 26.18, "df2k_ssim": 0.7879},
+    },
+    "span_s": {
+        2: {"df2k_psnr": 32.20, "df2k_ssim": 0.9288},
+        4: {"df2k_psnr": 26.13, "df2k_ssim": 0.7865},
     },
     "srformer": {
         2: {"df2k_psnr": 34.09, "df2k_ssim": 0.9449},
