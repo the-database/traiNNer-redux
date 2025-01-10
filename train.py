@@ -260,7 +260,7 @@ def train_pipeline(root_path: str) -> None:
 
     if opt.deterministic:
         torch.backends.cudnn.benchmark = False
-        torch.use_deterministic_algorithms(True)
+        torch.use_deterministic_algorithms(True, warn_only=True)
         os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
     else:
         torch.backends.cudnn.benchmark = True
