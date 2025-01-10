@@ -370,7 +370,7 @@ def rcan_unshuffle(
     )
 
 
-# @ARCH_REGISTRY.register()
+@ARCH_REGISTRY.register()
 def rcan_l(
     scale: int = 4,
     n_resgroups: int = 10,
@@ -403,7 +403,7 @@ def rcan_l(
     )
 
 
-# @ARCH_REGISTRY.register()
+@ARCH_REGISTRY.register()
 def rcan_xl(
     scale: int = 4,
     n_resgroups: int = 12,
@@ -436,7 +436,7 @@ def rcan_xl(
     )
 
 
-# @ARCH_REGISTRY.register()
+@ARCH_REGISTRY.register()
 def rcan_s(
     scale: int = 4,
     n_resgroups: int = 8,
