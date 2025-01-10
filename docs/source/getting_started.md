@@ -17,7 +17,7 @@ The repository comes with several configs that are ready to use out of the box, 
 
 ```
 venv\Scripts\activate
-python train.py --auto_resume -opt ./options/train/SPAN/SPAN.yml
+python train.py --auto_resume -opt ./options/train/SPAN/SPAN_fromscratch.yml
 ```
 
 You should see the following output within a few minutes, depending on your GPU speed:
@@ -32,7 +32,7 @@ You should see the following output within a few minutes, depending on your GPU 
 The last line shows the progress of training after 100 iterations. If you get this far without any errors, your PC is able to train successfully. Press `ctrl+C` to end the training run.
 
 #### Set up config file
-1. Navigate to `traiNNer-redux/options/train`, select the architecture you want to train, and open the `yml` file in that folder in a text editor. A text editor that supports YAML syntax highlighting is recommended, such as [VS Code](https://code.visualstudio.com/) (with the [YAML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) extension) or [Sublime Text](https://www.sublimetext.com/) (with the [LSP](https://packagecontrol.io/packages/LSP) and [LSP-yaml](https://packagecontrol.io/packages/LSP-yaml) packages). For example, to train SPAN, open `traiNNer-redux/options/train/SPAN/SPAN.yml`.
+1. Navigate to `traiNNer-redux/options/train`, select the architecture you want to train, and open the `yml` file in that folder in a text editor. A text editor that supports YAML syntax highlighting is recommended, such as [VS Code](https://code.visualstudio.com/) (with the [YAML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) extension) or [Sublime Text](https://www.sublimetext.com/) (with the [LSP](https://packagecontrol.io/packages/LSP) and [LSP-yaml](https://packagecontrol.io/packages/LSP-yaml) packages). For example, to train SPAN, open `traiNNer-redux/options/train/SPAN/SPAN_fromscratch.yml`.
 2. At the top of the file, set the `name` to the name of the model you want to train. Give it a unique name so you can differentiate it from other training runs.
 3. Set the scale depending on what scale you want to train the model on. 2x doubles the width and height of the image, for example. Not all architectures support all scales. Supported scales appear next to the scale in a comment, so `# 2, 4` means the architecture only supports a scale of 2 or 4.
 4. Set the paths to your dataset HR and LR images, at `dataroot_gt` and `dataroot_lq` under the `train:` section. The HR images and LR images should match in numer of images and filenames. For each matching LR/HR pair, the image resolutions should work with the selected scale, so if a scale of 2 is selected then each HR must be 2x the resolution of its matching LR image.
@@ -50,7 +50,7 @@ python train.py --auto_resume -opt ./options/train/arch/config.yml
 For example, to train with the SPAN config:
 ```
 venv\Scripts\activate
-python train.py --auto_resume -opt ./options/train/SPAN/SPAN.yml
+python train.py --auto_resume -opt ./options/train/SPAN/SPAN_fromscratch.yml
 ```
 
 To pause training, press `ctrl+C` or close the command window. To resume training, run the same command that was used to start training. The `--auto_resume` flag will resume training from when it was paused.
