@@ -88,7 +88,7 @@ OFFICIAL_METRICS: dict[
     "artcnn_r8f64": {
         2: {"df2k_psnr": 32.1, "df2k_ssim": 0.9293},
     },
-    "artcnn_r16f64": {
+    "artcnn_r16f96": {
         2: {"df2k_psnr": 32.81, "df2k_ssim": 0.9358},
     },
     "atd": {

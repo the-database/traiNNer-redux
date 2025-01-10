@@ -283,7 +283,7 @@ if __name__ == "__main__":
     # input_shape = (1, 3, 240, 320)
     # input_shape = (1, 3, 1080, 1920)
 
-    warmup_runs = 1  # 1
+    warmup_runs = 5  # 1
     num_runs = 5  # 5
     lightweight_num_runs = 500
     print_markdown = True
@@ -362,7 +362,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                         )
                         dtype_str, dtype = get_dtype(name, use_amp)
                         try:
-                            # if name not in {"rcan", "esrgan"}:
+                            # if "rcan" not in name:
                             #     continue
                             if arch_key not in results_by_arch:
                                 results_by_arch[arch_key] = {}
