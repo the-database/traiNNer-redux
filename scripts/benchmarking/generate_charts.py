@@ -54,7 +54,7 @@ def plot_scatter(df: pd.DataFrame, scale: int, size: str) -> None:
         f"{scale}x {type} {size} DF2K Urban100 PSNR vs FPS on 640x480 input with RTX 4090",
         fontsize=16,
     )
-    plt.xlabel("FPS", fontsize=12)
+    plt.xlabel("FPS (PyTorch)", fontsize=12)
     plt.ylabel("DF2K Urban100 PSNR", fontsize=12)
     plt.grid(True)
     plt.savefig(f"docs/source/resources/benchmark{scale}x_{size.lower()}.png")
@@ -107,9 +107,9 @@ def main() -> None:
             dflarge = process_table(pd.DataFrame(dlarge))
             df = process_table(pd.DataFrame(d))
 
-            plot_scatter(dfsmall, scale, "Small")
+            plot_scatter(dfsmall, scale, "Fast")
             plot_scatter(dfmed, scale, "Medium")
-            plot_scatter(dflarge, scale, "Large")
+            plot_scatter(dflarge, scale, "Slow")
             plot_scatter(df, scale, "All")
             # plot_single(df, scale, "psnr_df2k")
 
