@@ -88,7 +88,7 @@ OFFICIAL_METRICS: dict[
     "artcnn_r8f64": {
         2: {"df2k_psnr": 32.1, "df2k_ssim": 0.9293},
     },
-    "artcnn_r16f64": {
+    "artcnn_r16f96": {
         2: {"df2k_psnr": 32.81, "df2k_ssim": 0.9358},
     },
     "atd": {
@@ -108,6 +108,11 @@ OFFICIAL_METRICS: dict[
     },
     "compact": {
         2: {"df2k_psnr": 31.72, "df2k_ssim": 0.9257},
+    },
+    "craft": {
+        2: {"df2k_psnr": 32.86, "df2k_ssim": 0.9343},
+        3: {"df2k_psnr": 28.77, "df2k_ssim": 0.8635},
+        4: {"df2k_psnr": 26.56, "df2k_ssim": 0.7995},
     },
     "dat": {
         2: {"df2k_psnr": 34.37, "df2k_ssim": 0.9458},

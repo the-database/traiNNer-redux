@@ -73,6 +73,24 @@ filters: 64
 n_block: 8
 kernel_size: 3
 ```
+### CRAFT
+#### craft
+
+
+```yaml
+type: craft
+window_size: 16
+embed_dim: 48
+depths: [2, 2, 2, 2]
+num_heads: [6, 6, 6, 6]
+split_size_0: 4
+split_size_1: 16
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+img_range: 1.0
+resi_connection: 1conv
+```
 ### DAT
 #### dat
 
@@ -1038,6 +1056,19 @@ state: ~
 
 ```yaml
 type: span
+num_in_ch: 3
+num_out_ch: 3
+feature_channels: 52
+bias: true
+norm: false
+img_range: 255.0
+rgb_mean: [0.4488, 0.4371, 0.404]
+```
+#### span_s
+
+
+```yaml
+type: span_s
 num_in_ch: 3
 num_out_ch: 3
 feature_channels: 48
