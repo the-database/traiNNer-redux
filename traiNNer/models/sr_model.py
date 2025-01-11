@@ -535,9 +535,9 @@ class SRModel(BaseModel):
                             self.opt.path.visualization, f"{dataset_name} - {img_name}"
                         )
                     else:
-                        assert (
-                            dataloader.dataset.opt.dataroot_lq is not None
-                        ), "dataroot_lq is required for val set"
+                        assert dataloader.dataset.opt.dataroot_lq is not None, (
+                            "dataroot_lq is required for val set"
+                        )
                         lq_path = val_data["lq_path"][0]
 
                         # multiple root paths are supported, find the correct root path for each lq_path
@@ -622,8 +622,8 @@ class SRModel(BaseModel):
             log_str += f"\t # {metric:<5}: {value:7.4f}"
             if len(self.best_metric_results) > 0:
                 log_str += (
-                    f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:7.4f} @ '
-                    f'{self.best_metric_results[dataset_name][metric]["iter"]:9,} iter'
+                    f"\tBest: {self.best_metric_results[dataset_name][metric]['val']:7.4f} @ "
+                    f"{self.best_metric_results[dataset_name][metric]['iter']:9,} iter"
                 )
             log_str += "\n"
 

@@ -263,12 +263,12 @@ class ELAB(nn.Module):
             calc_attn=True,
         )
         for i in range(shared_depth):
-            modules_lfe[f"lfe_{i+1}"] = LFE(
+            modules_lfe[f"lfe_{i + 1}"] = LFE(
                 inp_channels=inp_channels,
                 out_channels=out_channels,
                 exp_ratio=exp_ratio,
             )
-            modules_gmsa[f"gmsa_{i+1}"] = GMSA(
+            modules_gmsa[f"gmsa_{i + 1}"] = GMSA(
                 channels=inp_channels,
                 shifts=shifts,
                 window_sizes=window_sizes,

@@ -14,7 +14,9 @@ class TestArchInfo:
         self,
     ) -> None:
         failures = {name for name in ARCHS_WITHOUT_FP16 if name not in ALL_ARCH_NAMES}
-        assert not failures, f"The following ARCHS_WITHOUT_FP16 are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        assert not failures, (
+            f"The following ARCHS_WITHOUT_FP16 are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        )
 
     def test_archs_without_channels_last(
         self,
@@ -22,7 +24,9 @@ class TestArchInfo:
         failures = {
             name for name in ARCHS_WITHOUT_CHANNELS_LAST if name not in ALL_ARCH_NAMES
         }
-        assert not failures, f"The following ARCHS_WITHOUT_CHANNELS_LAST are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        assert not failures, (
+            f"The following ARCHS_WITHOUT_CHANNELS_LAST are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        )
 
     # def test_official_metrics(
     #     self,
@@ -39,7 +43,9 @@ class TestArchInfo:
             if name not in ALL_ARCH_NAMES
             if name
         }
-        assert not failures, f"The following OFFICIAL_SETTINGS_FROMSCRATCH are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        assert not failures, (
+            f"The following OFFICIAL_SETTINGS_FROMSCRATCH are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        )
 
     def test_official_settings_finetune(
         self,
@@ -50,4 +56,6 @@ class TestArchInfo:
             if name not in ALL_ARCH_NAMES
             if name
         }
-        assert not failures, f"The following OFFICIAL_SETTINGS_FINETUNE are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        assert not failures, (
+            f"The following OFFICIAL_SETTINGS_FINETUNE are missing from ALL_ARCH_NAMES: {', '.join(failures)}"
+        )

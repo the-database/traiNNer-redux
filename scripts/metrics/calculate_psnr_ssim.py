@@ -66,7 +66,7 @@ def main(args: argparse.Namespace) -> None:
             crop_border=args.crop_border,
             input_order="HWC",
         )
-        print(f"{i+1:3d}: {basename:25}. \tPSNR: {psnr:.6f} dB, \tSSIM: {ssim:.6f}")
+        print(f"{i + 1:3d}: {basename:25}. \tPSNR: {psnr:.6f} dB, \tSSIM: {ssim:.6f}")
         psnr_all.append(psnr)
         ssim_all.append(ssim)
     print(args.gt)

@@ -79,7 +79,7 @@ class PerceptualFP16Loss(nn.Module):
         layer_weights: dict[str, float] | None = None,
         w_lambda: float = 0.01,
         alpha: list[float] | None = None,
-        criterion: Literal["pd+l1", "fd+l1" "pd", "fd", "charbonnier", "l1"] = "pd+l1",
+        criterion: Literal["pd+l1", "fd+l1", "pd", "fd", "charbonnier", "l1"] = "pd+l1",
         num_proj_fd: int = 256,
         phase_weight_fd: float = 1.0,
         stride_fd: int = 1,

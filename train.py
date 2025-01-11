@@ -459,9 +459,9 @@ def train_pipeline(root_path: str) -> None:
 
             # validation
             if opt.val is not None:
-                assert (
-                    opt.val.val_freq is not None
-                ), "val_freq must be defined under the val section"
+                assert opt.val.val_freq is not None, (
+                    "val_freq must be defined under the val section"
+                )
                 if current_iter % opt.val.val_freq == 0 and apply_gradient:
                     multi_val_datasets = len(val_loaders) > 1
                     for val_loader in val_loaders:

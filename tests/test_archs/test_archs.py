@@ -251,16 +251,16 @@ class TestArchs:
 
         for param in model.parameters():
             if param.grad is not None:
-                assert not torch.isnan(
-                    param.grad
-                ).any(), f"NaN detected in gradients of parameter {param}"
+                assert not torch.isnan(param.grad).any(), (
+                    f"NaN detected in gradients of parameter {param}"
+                )
 
         optimizer.step()
 
         for param in model.parameters():
-            assert not torch.isnan(
-                param
-            ).any(), f"NaN detected in parameter {param} after optimizer step"
+            assert not torch.isnan(param).any(), (
+                f"NaN detected in parameter {param} after optimizer step"
+            )
 
     # @pytest.mark.parametrize(
     #     "name,arch,scale,extra_arch_params",
