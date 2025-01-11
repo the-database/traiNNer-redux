@@ -93,7 +93,7 @@ def main() -> None:
                 row["vram"] = float(row["vram"])
                 if row["psnr_df2k"] != "-":
                     row["psnr_df2k"] = float(row["psnr_df2k"])
-                row["name"] = f"{row["name"]} {row["variant"]}".strip()
+                row["name"] = f"{row['name']} {row['variant']}".strip()
 
             threshold1 = 2
             threshold2 = 24

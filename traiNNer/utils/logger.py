@@ -247,7 +247,7 @@ def get_env_info() -> str:
         "\nSystem Information: "
         f"\n\tCurrent GPU: "
         f"\n\t\tName: {device_info.name}"
-        f"\n\t\tTotal VRAM: {device_info.total_memory / (1024 ** 3):.2f} GB"
+        f"\n\t\tTotal VRAM: {device_info.total_memory / (1024**3):.2f} GB"
         f"\n\t\tCompute Capability: {device_info.major}.{device_info.minor}"
         f"\n\t\tMultiprocessors: {device_info.multi_processor_count}"
         f"\n\tStorage:"

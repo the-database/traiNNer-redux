@@ -106,22 +106,22 @@ if __name__ == "__main__":
 
     with open(output_path, "w") as fout:
         fout.write("# Config file reference\n")
-        fout.write(f"{generate_markdown_doc(ReduxOptions, "Top level options")}\n")
+        fout.write(f"{generate_markdown_doc(ReduxOptions, 'Top level options')}\n")
         fout.write(
-            f"{generate_markdown_doc(DatasetOptions, "Dataset options (`datasets.train` and `datasets.val`)")}\n"
+            f"{generate_markdown_doc(DatasetOptions, 'Dataset options (`datasets.train` and `datasets.val`)')}\n"
         )
-        fout.write(f"{generate_markdown_doc(PathOptions, "Path options (`path`)")}\n")
+        fout.write(f"{generate_markdown_doc(PathOptions, 'Path options (`path`)')}\n")
         fout.write(
-            f"{generate_markdown_doc(TrainOptions, "Train options (`train`)")}\n"
-        )
-        fout.write(
-            f"{generate_markdown_doc(SchedulerOptions, "Scheduler options (`train.scheduler`)")}\n"
+            f"{generate_markdown_doc(TrainOptions, 'Train options (`train`)')}\n"
         )
         fout.write(
-            f"{generate_markdown_doc(ValOptions, "Validation options (`val`)")}\n"
+            f"{generate_markdown_doc(SchedulerOptions, 'Scheduler options (`train.scheduler`)')}\n"
         )
         fout.write(
-            f"{generate_markdown_doc(LogOptions, "Logging options (`logger`)")}\n"
+            f"{generate_markdown_doc(ValOptions, 'Validation options (`val`)')}\n"
+        )
+        fout.write(
+            f"{generate_markdown_doc(LogOptions, 'Logging options (`logger`)')}\n"
         )
 
     print(f"Documentation written to {output_path}")

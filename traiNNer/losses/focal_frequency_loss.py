@@ -44,9 +44,9 @@ class FFLoss(nn.Module):
         # crop image patches
         patch_factor = self.patch_factor
         _, _, h, w = x.shape
-        assert (
-            h % patch_factor == 0 and w % patch_factor == 0
-        ), "Patch factor should be divisible by image height and width"
+        assert h % patch_factor == 0 and w % patch_factor == 0, (
+            "Patch factor should be divisible by image height and width"
+        )
         patch_list = []
         patch_h = h // patch_factor
         patch_w = w // patch_factor

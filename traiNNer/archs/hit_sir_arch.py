@@ -383,12 +383,12 @@ class HierarchicalTransformerBlock(nn.Module):
 
         # check window size
         if (window_size[0] > base_win_size[0]) and (window_size[1] > base_win_size[1]):
-            assert (
-                window_size[0] % base_win_size[0] == 0
-            ), "please ensure the window size is smaller than or divisible by the base window size"
-            assert (
-                window_size[1] % base_win_size[1] == 0
-            ), "please ensure the window size is smaller than or divisible by the base window size"
+            assert window_size[0] % base_win_size[0] == 0, (
+                "please ensure the window size is smaller than or divisible by the base window size"
+            )
+            assert window_size[1] % base_win_size[1] == 0, (
+                "please ensure the window size is smaller than or divisible by the base window size"
+            )
 
         self.norm1 = norm_layer(dim)
         self.correlation = SCC(
@@ -783,7 +783,7 @@ class Upsample(nn.Sequential):
             m.append(nn.PixelShuffle(3))
         else:
             raise ValueError(
-                f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
+                f"scale {scale} is not supported. Supported scales: 2^n and 3."
             )
         super().__init__(*m)
 

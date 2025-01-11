@@ -743,12 +743,12 @@ class BaseModel:
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
 
-        assert len(resume_optimizers) == len(
-            self.optimizers
-        ), "Wrong lengths of optimizers"
-        assert len(resume_schedulers) == len(
-            self.schedulers
-        ), "Wrong lengths of schedulers"
+        assert len(resume_optimizers) == len(self.optimizers), (
+            "Wrong lengths of optimizers"
+        )
+        assert len(resume_schedulers) == len(self.schedulers), (
+            "Wrong lengths of schedulers"
+        )
 
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)

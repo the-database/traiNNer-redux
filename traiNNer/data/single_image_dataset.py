@@ -38,9 +38,9 @@ class SingleImageDataset(BaseDataset):
         self.std = opt.std
         self.lq_folder = opt.dataroot_lq
 
-        assert self.lq_folder is not None and isinstance(
-            self.lq_folder, list
-        ), f"dataroot_lq must be defined as a list of paths for dataset {opt.name}"
+        assert self.lq_folder is not None and isinstance(self.lq_folder, list), (
+            f"dataroot_lq must be defined as a list of paths for dataset {opt.name}"
+        )
 
         if self.io_backend_opt["type"] == "lmdb":
             self.io_backend_opt["db_paths"] = self.lq_folder

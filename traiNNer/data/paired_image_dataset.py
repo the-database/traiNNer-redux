@@ -52,12 +52,12 @@ class PairedImageDataset(BaseDataset):
         self.std = opt.std
         self.color = opt.color != "y"
 
-        assert isinstance(
-            opt.dataroot_lq, list
-        ), f"dataroot_lq must be defined for dataset {opt.name}"
-        assert isinstance(
-            opt.dataroot_gt, list
-        ), f"dataroot_gt must be defined for dataset {opt.name}"
+        assert isinstance(opt.dataroot_lq, list), (
+            f"dataroot_lq must be defined for dataset {opt.name}"
+        )
+        assert isinstance(opt.dataroot_gt, list), (
+            f"dataroot_gt must be defined for dataset {opt.name}"
+        )
 
         self.filename_tmpl = opt.filename_tmpl
         self.gt_folder, self.lq_folder = opt.dataroot_gt, opt.dataroot_lq

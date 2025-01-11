@@ -137,9 +137,9 @@ def paired_paths_from_lmdb(
     input_key, gt_key = keys
     paired_paths = []
 
-    assert len(input_folders) == len(
-        gt_folders
-    ), "The lengths of input_folders and gt_folders must be the same."
+    assert len(input_folders) == len(gt_folders), (
+        "The lengths of input_folders and gt_folders must be the same."
+    )
 
     def process_folder_pair(
         input_folder: str, gt_folder: str, input_key: str, gt_key: str
@@ -216,9 +216,9 @@ def paired_paths_from_meta_info_file(
     input_key, gt_key = keys
     paired_paths = []
 
-    assert len(input_folders) == len(
-        gt_folders
-    ), "The lengths of input_folders and gt_folders must be the same."
+    assert len(input_folders) == len(gt_folders), (
+        "The lengths of input_folders and gt_folders must be the same."
+    )
 
     with open(meta_info_file) as fin:
         gt_names = [line.strip().split(" ")[0] for line in fin]

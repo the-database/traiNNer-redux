@@ -39,8 +39,7 @@ def check_dependencies() -> None:
             installed_version = importlib.metadata.version(package)
         except Exception:
             raise RuntimeError(
-                f"{package} is not installed. "
-                f"Please run this command to install: {cmd}"
+                f"{package} is not installed. Please run this command to install: {cmd}"
             ) from None
 
         if min_version:

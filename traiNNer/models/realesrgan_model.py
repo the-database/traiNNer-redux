@@ -75,9 +75,9 @@ class RealESRGANModel(SRModel):
         # initialize
         b, c, h, w = self.lq.size()
         if self.queue_lr is None:
-            assert (
-                self.queue_size % b == 0
-            ), f"queue size {self.queue_size} should be divisible by batch size {b}"
+            assert self.queue_size % b == 0, (
+                f"queue size {self.queue_size} should be divisible by batch size {b}"
+            )
             self.queue_lr = torch.zeros(self.queue_size, c, h, w).cuda()
             _, c, h, w = self.gt.size()
             self.queue_gt = torch.zeros(self.queue_size, c, h, w).cuda()
@@ -266,9 +266,9 @@ class RealESRGANModel(SRModel):
             #   2. JPEG compression + [resize back + sinc filter]
             # Empirically, we find other combinations (sinc + JPEG + Resize) will introduce twisted lines.
 
-            assert len(self.opt.resize_mode_list3) == len(
-                self.opt.resize_mode_prob3
-            ), "resize_mode_list3 and resize_mode_prob3 must be the same length"
+            assert len(self.opt.resize_mode_list3) == len(self.opt.resize_mode_prob3), (
+                "resize_mode_list3 and resize_mode_prob3 must be the same length"
+            )
 
             mode = random.choices(
                 self.opt.resize_mode_list3, weights=self.opt.resize_mode_prob3

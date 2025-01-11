@@ -92,9 +92,9 @@ class ContextualLoss(nn.Module):
         device = images.device
 
         if hasattr(self, "vgg_model"):
-            assert (
-                images.shape[1] == 3 and gt.shape[1] == 3
-            ), "VGG model takes 3 channel images."
+            assert images.shape[1] == 3 and gt.shape[1] == 3, (
+                "VGG model takes 3 channel images."
+            )
 
             loss = torch.tensor(0, device=images.device)
             vgg_images = self.vgg_model(images)
