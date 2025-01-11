@@ -9,6 +9,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary) | [Apache License 2.0](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary/blob/main/LICENSE.txt)|
 |[BasicSR](https://github.com/XPixelGroup/BasicSR) | [Apache License 2.0](https://github.com/XPixelGroup/BasicSR/blob/master/LICENSE.txt)|
 |[chaiNNer](https://github.com/chaiNNer-org/chaiNNer) | [GPL 3.0 License](https://github.com/chaiNNer-org/chaiNNer/blob/main/LICENSE)|
+|[CRAFT](https://github.com/AVC2-UESTC/CRAFT-SR)| [Apache License 2.0](https://github.com/AVC2-UESTC/CRAFT-SR/blob/main/LICENSE.txt)|
 |[CutBlur](https://github.com/clovaai/cutblur/) | [MIT License](https://github.com/clovaai/cutblur/blob/master/LICENSE)|
 |[DAT](https://github.com/zhengchen1999/dat) | [Apache License 2.0](https://github.com/zhengchen1999/DAT/blob/main/LICENSE)|
 |[DCTLSA](https://github.com/zengkun301/DCTLSA/)| [Apache License 2.0](https://github.com/zengkun301/DCTLSA/?tab=readme-ov-file#license)|

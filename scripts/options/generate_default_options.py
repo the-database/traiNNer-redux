@@ -169,7 +169,7 @@ archs: list[ArchInfo] = [
         "extras": {"pro": "true", "fast": "false"},
     },
     {
-        "names": ["SPAN"],
+        "names": ["SPAN", "SPAN_S"],
         "scales": ALL_SCALES,
         "extras": {"norm": "false  # some pretrains require norm: true"},
     },
@@ -256,6 +256,7 @@ archs: list[ArchInfo] = [
     {"names": ["SAFMN", "SAFMN_L"], "scales": ALL_SCALES},
     {"names": ["Sebica"], "scales": ALL_SCALES},
     {"names": ["SeemoRe_T"], "scales": ALL_SCALES, "folder_name_override": "SeemoRe"},
+    {"names": ["CRAFT"], "scales": ALL_SCALES},
 ]
 
 for arch in archs:
@@ -409,25 +410,25 @@ for arch in archs:
                     )
                 )
 
-            with open(
-                osp.join(
-                    train_folder_path,
-                    f"{variant}_OTF_bicubic_ms_ssim_l1_fromscratch.yml",
-                ),
-                mode="w",
-            ) as fw:
-                fw.write(
-                    final_template(
-                        template_paired_fromscratch,
-                        arch,
-                        variant,
-                        OFFICIAL_SETTINGS_FROMSCRATCH,
-                        template_otfbicubic1,
-                        template_otfbicubic2,
-                        "OTF_bicubic_ms_ssim_l1",
-                        True,
-                    )
-                )
+            # with open(
+            #     osp.join(
+            #         train_folder_path,
+            #         f"{variant}_OTF_bicubic_ms_ssim_l1_fromscratch.yml",
+            #     ),
+            #     mode="w",
+            # ) as fw:
+            #     fw.write(
+            #         final_template(
+            #             template_paired_fromscratch,
+            #             arch,
+            #             variant,
+            #             OFFICIAL_SETTINGS_FROMSCRATCH,
+            #             template_otfbicubic1,
+            #             template_otfbicubic2,
+            #             "OTF_bicubic_ms_ssim_l1",
+            #             True,
+            #         )
+            #     )
 
             with open(osp.join(test_folder_path, f"{variant}.yml"), mode="w") as fw:
                 fw.write(final_template(template_test_single, arch, variant))

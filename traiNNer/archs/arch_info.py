@@ -109,6 +109,11 @@ OFFICIAL_METRICS: dict[
     "compact": {
         2: {"df2k_psnr": 31.72, "df2k_ssim": 0.9257},
     },
+    "craft": {
+        2: {"df2k_psnr": 32.86, "df2k_ssim": 0.9343},
+        3: {"df2k_psnr": 28.77, "df2k_ssim": 0.8635},
+        4: {"df2k_psnr": 26.56, "df2k_ssim": 0.7995},
+    },
     "dat": {
         2: {"df2k_psnr": 34.37, "df2k_ssim": 0.9458},
         3: {"df2k_psnr": 30.18, "df2k_ssim": 0.8886},
