@@ -105,8 +105,8 @@ def get_line(
     fps_channels_last: float,
     vram_channels_last: float,
     channels_last_vs_baseline: float,
-    best_fps: float,
     num_runs: int,
+    best_fps: float,
     print_markdown: bool = False,
 ) -> str:
     name_separator = "|" if print_markdown else ": "
@@ -300,8 +300,8 @@ if __name__ == "__main__":
         float,
         float,
         float,
-        float,
         int,
+        float,
     ]
     results_by_scale: dict[
         int,
@@ -362,7 +362,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                         )
                         dtype_str, dtype = get_dtype(name, use_amp)
                         try:
-                            # if "rcan" not in name:
+                            # if "artcnn" not in name and "rgt" not in name:
                             #     continue
                             if arch_key not in results_by_arch:
                                 results_by_arch[arch_key] = {}
@@ -396,10 +396,10 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                                 row_channels_last[3],  # fps (CL)
                                 row_channels_last[4],  # vram (CL)
                                 channels_last_improvement,
+                                row[8],  # num runs
                                 row[3]
                                 if row[3] > row_channels_last[3]
                                 else row_channels_last[3],  # better fps
-                                row[8],  # num runs
                             )
                             results_by_scale[scale].append(new_row)
                             results_by_arch[arch_key][scale] = new_row
@@ -461,17 +461,17 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                             row = (
                                 name,
                                 dtype_str,
-                                float("inf"),
-                                float("inf"),
-                                float("inf"),
+                                float("-inf"),
+                                float("-inf"),
+                                float("-inf"),
                                 -1,
                                 scale,
                                 extra_arch_params,
-                                float("inf"),
-                                float("inf"),
-                                float("inf"),
-                                float("inf"),
+                                float("-inf"),
+                                float("-inf"),
+                                float("-inf"),
                                 0,
+                                float("-inf"),
                             )
                             results_by_scale[scale].append(row)
                             results_by_arch[arch_key][scale] = row
