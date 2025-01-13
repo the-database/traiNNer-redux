@@ -7,6 +7,7 @@ from typing import Any
 
 import torch
 from rich.logging import RichHandler
+from rich.markup import escape
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.utils.dist_util import get_dist_info, master_only
@@ -261,6 +262,6 @@ def get_env_info() -> str:
 
 def clickable_file_path(file_path: str | Path, display_text: str) -> str:
     file_path = str(file_path).replace(" ", "%20")
-    out = f"[link=file:///{file_path}]{display_text}[/link]"
+    out = f"[link=file:///{file_path}]{escape(display_text)}[/link]"
     # print(out)
     return out
