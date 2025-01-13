@@ -28,6 +28,7 @@ ARCHS_WITHOUT_FP16 = {
     "hit_srf",
     "rcan",
     "rcan_unshuffle",
+    "rcan_l",
     "moesr2",
     "rgt_s",
     "rgt",
