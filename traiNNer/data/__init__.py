@@ -60,6 +60,7 @@ def build_dataset(dataset_opt: DatasetOptions) -> BaseDataset:
 def build_dataloader(
     dataset: Dataset,
     dataset_opt: DatasetOptions,
+    current_batch_size: int,
     num_gpu: int = 1,
     dist: bool = False,
     sampler: EnlargedSampler | None = None,
@@ -86,11 +87,11 @@ def build_dataloader(
         assert dataset_opt.num_worker_per_gpu is not None
 
         if dist:  # distributed training
-            batch_size = dataset_opt.batch_size_per_gpu
+            batch_size = current_batch_size
             num_workers = dataset_opt.num_worker_per_gpu
         else:  # non-distributed training
             multiplier = 1 if num_gpu == 0 else num_gpu
-            batch_size = dataset_opt.batch_size_per_gpu * multiplier
+            batch_size = current_batch_size * multiplier
             num_workers = dataset_opt.num_worker_per_gpu * multiplier
         dataloader_args: DataLoaderArgs = {
             "dataset": dataset,
