@@ -532,11 +532,12 @@ def train_pipeline(root_path: str) -> None:
             if current_iter > total_iters:
                 break
             # training
-            model.feed_data(train_data)
+            # model.feed_data(train_data)
             try:
-                model.optimize_parameters(
-                    current_iter, current_accum_iter, apply_gradient
-                )
+                pass
+                # model.optimize_parameters(
+                #     current_iter, current_accum_iter, apply_gradient
+                # )
             except RuntimeError as e:
                 # Check to see if its actually the CUDA out of memory error
                 if "allocate" in str(e) or "CUDA" in str(e):
