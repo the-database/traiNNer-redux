@@ -124,3 +124,136 @@ def artcnn_r8f48(
         kernel_size=kernel_size,
         act=act,
     )
+
+
+# @ARCH_REGISTRY.register()
+# def artcnn_r8f32(
+#     in_ch: int = 3,
+#     scale: int = 4,
+#     filters: int = 32,
+#     n_block: int = 8,
+#     kernel_size: int = 3,
+#     act: type[nn.Module] = nn.ReLU,
+# ) -> ArtCNN:
+#     return ArtCNN(
+#         scale=scale,
+#         in_ch=in_ch,
+#         n_block=n_block,
+#         filters=filters,
+#         kernel_size=kernel_size,
+#         act=act,
+#     )
+
+
+# @ARCH_REGISTRY.register()
+# def artcnn_r8f24(
+#     in_ch: int = 3,
+#     scale: int = 4,
+#     filters: int = 24,
+#     n_block: int = 8,
+#     kernel_size: int = 3,
+#     act: type[nn.Module] = nn.ReLU,
+# ) -> ArtCNN:
+#     return ArtCNN(
+#         scale=scale,
+#         in_ch=in_ch,
+#         n_block=n_block,
+#         filters=filters,
+#         kernel_size=kernel_size,
+#         act=act,
+#     )
+
+
+# @ARCH_REGISTRY.register()
+# def artcnn_r4f48(
+#     in_ch: int = 3,
+#     scale: int = 4,
+#     filters: int = 48,
+#     n_block: int = 4,
+#     kernel_size: int = 3,
+#     act: type[nn.Module] = nn.ReLU,
+# ) -> ArtCNN:
+#     return ArtCNN(
+#         scale=scale,
+#         in_ch=in_ch,
+#         n_block=n_block,
+#         filters=filters,
+#         kernel_size=kernel_size,
+#         act=act,
+#     )
+
+
+@ARCH_REGISTRY.register()
+def artcnn_r4f64(
+    in_ch: int = 3,
+    scale: int = 4,
+    filters: int = 64,
+    n_block: int = 4,
+    kernel_size: int = 3,
+    act: type[nn.Module] = nn.ReLU,
+) -> ArtCNN:
+    return ArtCNN(
+        scale=scale,
+        in_ch=in_ch,
+        n_block=n_block,
+        filters=filters,
+        kernel_size=kernel_size,
+        act=act,
+    )
+
+
+# @ARCH_REGISTRY.register()
+# def artcnn_r4f32(
+#     in_ch: int = 3,
+#     scale: int = 4,
+#     filters: int = 32,
+#     n_block: int = 4,
+#     kernel_size: int = 3,
+#     act: type[nn.Module] = nn.ReLU,
+# ) -> ArtCNN:
+#     return ArtCNN(
+#         scale=scale,
+#         in_ch=in_ch,
+#         n_block=n_block,
+#         filters=filters,
+#         kernel_size=kernel_size,
+#         act=act,
+#     )
+
+
+# @ARCH_REGISTRY.register()
+# def artcnn_r4f16(
+#     in_ch: int = 3,
+#     scale: int = 4,
+#     filters: int = 16,
+#     n_block: int = 4,
+#     kernel_size: int = 3,
+#     act: type[nn.Module] = nn.ReLU,
+# ) -> ArtCNN:
+#     return ArtCNN(
+#         scale=scale,
+#         in_ch=in_ch,
+#         n_block=n_block,
+#         filters=filters,
+#         kernel_size=kernel_size,
+#         act=act,
+#     )
+
+
+# @ARCH_REGISTRY.register()
+# def artcnn_r2f16(
+#     in_ch: int = 3,
+#     scale: int = 4,
+#     filters: int = 16,
+#     n_block: int = 2,
+#     kernel_size: int = 3,
+#     act: type[nn.Module] = nn.ReLU,
+# ) -> ArtCNN:
+#     return ArtCNN(
+#         scale=scale,
+#         in_ch=in_ch,
+#         n_block=n_block,
+#         filters=filters,
+#         kernel_size=kernel_size,
+#         act=act,
+#     )
