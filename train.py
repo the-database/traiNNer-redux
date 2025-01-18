@@ -84,6 +84,7 @@ def get_current_list_value_for_milestone(
         f"when using {values_label} schedule, the total number of {values_label} must be 1 more than the total number of scheduler milestones."
     )
     for i, (m1, m2) in enumerate(itertools.pairwise([0, *milestones, math.inf])):
+        print(m1, current_iter, m2)
         if m1 <= current_iter < m2:
             return values[i]
     raise ValueError("Unable to determine batch size from milestones")
