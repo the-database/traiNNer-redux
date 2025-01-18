@@ -1,5 +1,4 @@
 import os
-from copy import deepcopy
 
 from traiNNer.data.old_paired_image_dataset import OldPairedImageDataset
 
@@ -10,9 +9,9 @@ if __name__ == "__main__":
     check_dependencies()
 
 
+import argparse
 import datetime
 import gc
-import itertools
 import logging
 import math
 import signal
@@ -50,7 +49,7 @@ from traiNNer.utils.config import Config
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import free_space_gb_str, set_random_seed
 from traiNNer.utils.options import copy_opt_file
-from traiNNer.utils.redux_options import DatasetOptions, ReduxOptions
+from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import TrainingState
 
 
@@ -74,51 +73,18 @@ def init_tb_loggers(opt: ReduxOptions) -> SummaryWriter | None:
     return tb_logger
 
 
-def get_current_list_value_for_milestone(
-    current_iter: int, values: int | list[int], values_label: str, milestones: list[int]
-) -> int:
-    if isinstance(values, int):
-        return values
-
-    assert len(milestones) + 1 == len(values), (
-        f"when using {values_label} schedule, the total number of {values_label} must be 1 more than the total number of scheduler milestones."
-    )
-    for i, (m1, m2) in enumerate(itertools.pairwise([0, *milestones, math.inf])):
-        print(m1, current_iter, m2)
-        if m1 <= current_iter < m2:
-            return values[i]
-    raise ValueError("Unable to determine batch size from milestones")
-
-
 def create_train_val_dataloader(
     opt: ReduxOptions,
-    current_iter: int,
+    args: argparse.Namespace,
     val_enabled: bool,
     logger: logging.Logger,
-) -> tuple[
-    DataLoader | None,
-    EnlargedSampler | None,
-    DatasetOptions | None,
-    list[DataLoader],
-    int,
-    int,
-]:
+) -> tuple[DataLoader | None, EnlargedSampler | None, list[DataLoader], int, int]:
     assert isinstance(opt.num_gpu, int)
     assert opt.world_size is not None
     assert opt.dist is not None
-    assert opt.train is not None
-    assert opt.train.scheduler is not None
 
     # create train and val dataloaders
-    (
-        train_loader,
-        train_sampler,
-        train_dataset_opt,
-        val_loaders,
-        total_epochs,
-        total_iters,
-    ) = (
-        None,
+    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
         None,
         None,
         [],
@@ -128,91 +94,29 @@ def create_train_val_dataloader(
     for phase, dataset_opt in opt.datasets.items():
         if phase == "train":
             assert opt.train is not None
+            assert dataset_opt.batch_size_per_gpu is not None
 
-            train_dataset_opt = deepcopy(dataset_opt)
-            assert train_dataset_opt.batch_size_per_gpu is not None
-
-            # current batch size based on milestone
-            current_batch_size = 0
-            if isinstance(train_dataset_opt.batch_size_per_gpu, list):
-                current_batch_size = get_current_list_value_for_milestone(
-                    current_iter,
-                    train_dataset_opt.batch_size_per_gpu,
-                    "batch_size_per_gpu",
-                    opt.train.scheduler.milestones,
-                )
-            else:
-                current_batch_size = train_dataset_opt.batch_size_per_gpu
-
-            # current gt size based on milestone
-            if isinstance(train_dataset_opt.gt_size, list):
-                current_gt_size = get_current_list_value_for_milestone(
-                    current_iter,
-                    train_dataset_opt.gt_size,
-                    "gt_size",
-                    opt.train.scheduler.milestones,
-                )
-                train_dataset_opt.gt_size = current_gt_size
-            else:
-                current_gt_size = train_dataset_opt.gt_size
-
-            # current lq size based on milestone
-            if isinstance(train_dataset_opt.lq_size, list):
-                current_lq_size = get_current_list_value_for_milestone(
-                    current_iter,
-                    train_dataset_opt.lq_size,
-                    "lq_size",
-                    opt.train.scheduler.milestones,
-                )
-                train_dataset_opt.lq_size = current_lq_size
-            else:
-                current_lq_size = train_dataset_opt.lq_size
-
-            if current_lq_size is not None:
-                train_dataset_opt.gt_size = current_lq_size * opt.scale
-
-            if current_gt_size is None and current_lq_size is not None:
-                current_gt_size = current_lq_size * opt.scale
-            elif current_lq_size is None and current_gt_size is not None:
-                current_lq_size = current_gt_size // opt.scale
-            elif (
-                train_dataset_opt.gt_size is not None
-                and train_dataset_opt.lq_size is not None
-            ):
-                if isinstance(train_dataset_opt.lq_size, list) and isinstance(
-                    train_dataset_opt.gt_size, list
-                ):
-                    assert all(
-                        gt == lq * opt.scale
-                        for lq, gt in zip(
-                            train_dataset_opt.lq_size,
-                            train_dataset_opt.gt_size,
-                            strict=False,
-                        )
-                    )
-                else:
-                    assert (
-                        train_dataset_opt.gt_size
-                        == train_dataset_opt.lq_size * opt.scale
-                    )
+            if dataset_opt.gt_size is None and dataset_opt.lq_size is not None:
+                dataset_opt.gt_size = dataset_opt.lq_size * opt.scale
+            elif dataset_opt.lq_size is None and dataset_opt.gt_size is not None:
+                dataset_opt.lq_size = dataset_opt.gt_size // opt.scale
             else:
                 raise ValueError(
                     "Exactly one of gt_size or lq_size must be defined in the train dataset"
                 )
 
-            train_set = build_dataset(train_dataset_opt)
-            dataset_enlarge_ratio = train_dataset_opt.dataset_enlarge_ratio
+            train_set = build_dataset(dataset_opt)
+            dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
             if dataset_enlarge_ratio == "auto":
                 dataset_enlarge_ratio = max(
-                    2000 * current_batch_size // len(train_set), 1
+                    2000 * dataset_opt.batch_size_per_gpu // len(train_set), 1
                 )
             train_sampler = EnlargedSampler(
                 train_set, opt.world_size, opt.rank, dataset_enlarge_ratio
             )
             train_loader = build_dataloader(
                 train_set,
-                train_dataset_opt,
-                current_batch_size,
+                dataset_opt,
                 num_gpu=opt.num_gpu,
                 dist=opt.dist,
                 sampler=train_sampler,
@@ -222,12 +126,16 @@ def create_train_val_dataloader(
             num_iter_per_epoch = (
                 len(train_set)
                 * dataset_enlarge_ratio
-                // (current_batch_size * train_dataset_opt.accum_iter * opt.world_size)
+                // (
+                    dataset_opt.batch_size_per_gpu
+                    * dataset_opt.accum_iter
+                    * opt.world_size
+                )
             )
 
             total_iters = int(opt.train.total_iter)
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
-            assert current_gt_size is not None, "gt_size is required for train set"
+            assert dataset_opt.gt_size is not None, "gt_size is required for train set"
             logger.info(
                 "Training statistics:\n"
                 "\t%-25s %10s\t%-25s %10s\n"
@@ -240,13 +148,13 @@ def create_train_val_dataloader(
                 "Dataset enlarge ratio:",
                 f"{dataset_enlarge_ratio:,}",
                 "Batch size per gpu:",
-                f"{current_batch_size:,}",
+                f"{dataset_opt.batch_size_per_gpu:,}",
                 "Accumulate iterations:",
-                f"{train_dataset_opt.accum_iter:,}",
+                f"{dataset_opt.accum_iter:,}",
                 "HR crop size:",
-                f"{current_gt_size:,}",
+                f"{dataset_opt.gt_size:,}",
                 "LR crop size:",
-                f"{current_lq_size:,}",
+                f"{dataset_opt.lq_size:,}",
                 "World size (gpu number):",
                 f"{opt.world_size:,}",
                 "Require iter per epoch:",
@@ -267,7 +175,6 @@ def create_train_val_dataloader(
                 val_loader = build_dataloader(
                     val_set,
                     dataset_opt,
-                    current_batch_size=1,
                     num_gpu=opt.num_gpu,
                     dist=opt.dist,
                     sampler=None,
@@ -287,14 +194,7 @@ def create_train_val_dataloader(
         else:
             raise ValueError(f"Dataset phase {phase} is not recognized.")
 
-    return (
-        train_loader,
-        train_sampler,
-        train_dataset_opt,
-        val_loaders,
-        total_epochs,
-        total_iters,
-    )
+    return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
 def load_resume_state(opt: ReduxOptions) -> Any | None:
@@ -395,27 +295,13 @@ def train_pipeline(root_path: str) -> None:
     tb_logger = init_tb_loggers(opt)
 
     # create train and validation dataloaders
-    if resume_state:
-        start_epoch = resume_state["epoch"]
-        current_iter = resume_state["iter"]
-    else:
-        start_epoch = 0
-        current_iter = 0
-
-    current_accum_iter = 0
-
     val_enabled = False
     if opt.val:
         val_enabled = opt.val.val_enabled
 
-    (
-        train_loader,
-        train_sampler,
-        train_dataset_opts,
-        val_loaders,
-        total_epochs,
-        total_iters,
-    ) = create_train_val_dataloader(opt, current_iter, val_enabled, logger)
+    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
+        create_train_val_dataloader(opt, args, val_enabled, logger)
+    )
 
     if train_loader is None or train_sampler is None:
         raise ValueError(
@@ -452,8 +338,15 @@ def train_pipeline(root_path: str) -> None:
             resume_state["epoch"],
             resume_state["iter"],
         )
+        start_epoch = resume_state["epoch"]
+        current_iter = resume_state["iter"]
 
         del resume_state
+    else:
+        start_epoch = 0
+        current_iter = 0
+
+    current_accum_iter = 0
 
     # create message logger (formatted outputs)
     msg_logger = MessageLogger(opt, current_iter, tb_logger)
@@ -507,25 +400,6 @@ def train_pipeline(root_path: str) -> None:
             if current_accum_iter >= model.accum_iters:
                 current_accum_iter = 0
                 current_iter += 1
-
-                # re-initialize the train loader if batch size needs to change
-                if train_loader.batch_size != get_current_list_value_for_milestone(
-                    current_iter,
-                    train_dataset_opts.batch_size_per_gpu,
-                    "batch_size_per_gpu",
-                    opt.train.scheduler.milestones,
-                ):
-                    (
-                        train_loader,
-                        train_sampler,
-                        train_dataset_opts,
-                        val_loaders,
-                        total_epochs,
-                        total_iters,
-                    ) = create_train_val_dataloader(
-                        opt, current_iter, val_enabled, logger
-                    )
-
                 apply_gradient = True
             else:
                 apply_gradient = False
@@ -533,12 +407,11 @@ def train_pipeline(root_path: str) -> None:
             if current_iter > total_iters:
                 break
             # training
-            # model.feed_data(train_data)
+            model.feed_data(train_data)
             try:
-                pass
-                # model.optimize_parameters(
-                #     current_iter, current_accum_iter, apply_gradient
-                # )
+                model.optimize_parameters(
+                    current_iter, current_accum_iter, apply_gradient
+                )
             except RuntimeError as e:
                 # Check to see if its actually the CUDA out of memory error
                 if "allocate" in str(e) or "CUDA" in str(e):

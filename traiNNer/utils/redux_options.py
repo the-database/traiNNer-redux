@@ -50,7 +50,7 @@ class DatasetOptions(StrictStruct):
         ),
     ] = None
     batch_size_per_gpu: Annotated[
-        int | list[int] | None,
+        int | None,
         Meta(
             description="Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP. A higher batch size, like 32 or 64 is more important when training from scratch, while smaller batches like 8 can be used when training with a quality pretrain model."
         ),
@@ -68,9 +68,9 @@ class DatasetOptions(StrictStruct):
     use_rot: Annotated[bool, Meta(description="Randomly rotate the images.")] = True
     mean: list[float] | None = None
     std: list[float] | None = None
-    gt_size: int | list[int] | None = None
+    gt_size: int | None = None
     lq_size: Annotated[
-        int | list[int] | None,
+        int | None,
         Meta(
             description="During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
         ),
