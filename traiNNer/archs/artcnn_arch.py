@@ -126,23 +126,23 @@ def artcnn_r8f48(
     )
 
 
-# @ARCH_REGISTRY.register()
-# def artcnn_r8f32(
-#     in_ch: int = 3,
-#     scale: int = 4,
-#     filters: int = 32,
-#     n_block: int = 8,
-#     kernel_size: int = 3,
-#     act: type[nn.Module] = nn.ReLU,
-# ) -> ArtCNN:
-#     return ArtCNN(
-#         scale=scale,
-#         in_ch=in_ch,
-#         n_block=n_block,
-#         filters=filters,
-#         kernel_size=kernel_size,
-#         act=act,
-#     )
+@ARCH_REGISTRY.register()
+def artcnn_r8f32(
+    in_ch: int = 3,
+    scale: int = 4,
+    filters: int = 32,
+    n_block: int = 8,
+    kernel_size: int = 3,
+    act: type[nn.Module] = nn.ReLU,
+) -> ArtCNN:
+    return ArtCNN(
+        scale=scale,
+        in_ch=in_ch,
+        n_block=n_block,
+        filters=filters,
+        kernel_size=kernel_size,
+        act=act,
+    )
 
 
 # @ARCH_REGISTRY.register()
