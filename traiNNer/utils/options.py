@@ -204,6 +204,11 @@ def parse_options(
         opt.path.pretrain_network_g_ema = opt.path.pretrain_network_g
     if opt.path.pretrain_network_d is not None:
         opt.path.pretrain_network_d = osp.expanduser(opt.path.pretrain_network_d)
+    if opt.path.pretrain_network_ae_decoder is not None:
+        opt.path.pretrain_network_ae_decoder = osp.expanduser(
+            opt.path.pretrain_network_ae_decoder
+        )
+        opt.path.pretrain_network_ae_decoder_ema = opt.path.pretrain_network_ae_decoder
 
     if is_train:
         assert opt.logger is not None, "logger section must be defined when training"

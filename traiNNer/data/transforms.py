@@ -29,6 +29,23 @@ def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     return img
 
 
+def single_random_crop_vips(img: pyvips.Image, patch_size: int) -> np.ndarray:
+    h: int = img.height  # type: ignore
+    w: int = img.width  # type: ignore
+
+    y = random.randint(0, h - patch_size)
+    x = random.randint(0, w - patch_size)
+    region_gt = pyvips.Region.new(img)
+    data_gt = region_gt.fetch(x, y, patch_size, patch_size)
+    return img2rgb(
+        np.ndarray(
+            buffer=data_gt,
+            dtype=np.uint8,
+            shape=[patch_size, patch_size, img.bands],  # pyright: ignore
+        )
+    )
+
+
 @overload
 def paired_random_crop(
     img_gt: np.ndarray,
