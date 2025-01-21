@@ -213,7 +213,7 @@ class AEModel(BaseModel):
             assert "type" in loss, "all losses must define type"
             assert "loss_weight" in loss, f"{loss['type']} must define loss_weight"
             if float(loss["loss_weight"]) > 0:
-                label = loss_type_to_label(loss["type"])
+                label = loss_type_to_label(loss["type"], "ae")
                 self.losses[label] = build_loss(loss).to(
                     self.device,
                     memory_format=self.memory_format,
