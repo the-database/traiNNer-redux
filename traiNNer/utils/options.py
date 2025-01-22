@@ -209,8 +209,20 @@ def parse_options(
             opt.path.pretrain_network_ae_decoder
         )
         opt.path.pretrain_network_ae_decoder_ema = opt.path.pretrain_network_ae_decoder
+    if opt.path.pretrain_network_ae is not None:
+        opt.path.pretrain_network_ae = osp.expanduser(opt.path.pretrain_network_ae)
 
     if is_train:
+        assert opt.train is not None
+        if opt.train.losses is not None:
+            for loss in opt.train.losses:
+                if loss["type"].lower() == "aesoploss":
+                    if opt.path.pretrain_network_ae is None:
+                        raise ValueError(
+                            "path.pretrain_network_ae is required for aesoploss"
+                        )
+                    loss["scale"] = opt.scale
+                    loss["pretrain_network_ae"] = opt.path.pretrain_network_ae
         assert opt.logger is not None, "logger section must be defined when training"
         experiments_root = osp.join(root_path, "experiments", opt.name)
         opt.path.experiments_root = experiments_root

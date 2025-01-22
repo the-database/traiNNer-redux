@@ -23,7 +23,10 @@ def test_pipeline(root_path: str) -> None:
     assert opt.val is not None
     assert opt.dist is not None
     assert opt.path.log is not None
-    assert opt.path.pretrain_network_g is not None, (
+    assert (
+        opt.path.pretrain_network_g is not None
+        or opt.path.pretrain_network_ae is not None
+    ), (
         "pretrain_network_g is required. Please enter the path to the model at pretrain_network_g."
     )
     assert isinstance(opt.num_gpu, int)
