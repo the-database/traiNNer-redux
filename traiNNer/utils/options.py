@@ -213,8 +213,7 @@ def parse_options(
         opt.path.pretrain_network_ae = osp.expanduser(opt.path.pretrain_network_ae)
 
     if is_train:
-        assert opt.train is not None
-        if opt.train.losses is not None:
+        if opt.train and opt.train.losses is not None:
             for loss in opt.train.losses:
                 if loss["type"].lower() == "aesoploss":
                     if opt.path.pretrain_network_ae is None:
