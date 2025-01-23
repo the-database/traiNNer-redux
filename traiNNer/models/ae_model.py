@@ -67,7 +67,9 @@ class AEModel(BaseModel):
         self.net_ae = self.model_to_device(self.net_ae)
 
         self.gt: Tensor | None = None
-        self.output: Tensor | None = None
+        self.lq: Tensor | None = None
+        self.output_gt: Tensor | None = None
+        self.output_lq: Tensor | None = None
         logger = get_root_logger()
 
         if self.use_amp:
@@ -250,12 +252,18 @@ class AEModel(BaseModel):
         self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
 
     def feed_data(self, data: DataFeed) -> None:
-        assert "gt" in data
-        self.gt = data["gt"].to(
+        assert "lq" in data
+        self.lq = data["lq"].to(
             self.device,
             memory_format=self.memory_format,
             non_blocking=True,
         )
+        if "gt" in data:
+            self.gt = data["gt"].to(
+                self.device,
+                memory_format=self.memory_format,
+                non_blocking=True,
+            )
 
     def optimize_parameters(
         self, current_iter: int, current_accum_iter: int, apply_gradient: bool
@@ -270,15 +278,20 @@ class AEModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
-            self.output = self.net_ae(self.gt)  # AE only
-            assert isinstance(self.output, Tensor)
-            l_ae_total = torch.tensor(0.0, device=self.output.device)
+            self.output_lq = self.net_ae.encode(self.gt)
+            self.output_gt = self.net_ae.decode(self.output_lq)
+            assert isinstance(self.output_gt, Tensor)
+            l_ae_total = torch.tensor(0.0, device=self.output_gt.device)
             loss_dict = OrderedDict()
 
             for label, loss in self.losses.items():
-                l_ae_loss = loss(self.output, self.gt)
-                l_ae_total += l_ae_loss / self.accum_iters
-                loss_dict[label] = l_ae_loss
+                for output_type in ["gt", "lq"]:
+                    l_ae_loss = loss(
+                        getattr(self, f"output_{output_type}"),
+                        getattr(self, output_type),
+                    )
+                    l_ae_total += l_ae_loss / self.accum_iters
+                    loss_dict[f"{label}_{output_type}"] = l_ae_loss
 
             # add total generator loss for tensorboard tracking
             loss_dict["l_ae_total"] = l_ae_total
@@ -314,11 +327,13 @@ class AEModel(BaseModel):
             if self.net_ae_ema is not None:
                 self.net_ae_ema.eval()
                 with torch.inference_mode():
-                    self.output = self.net_ae_ema(self.gt)
+                    self.output_lq = self.net_ae_ema.module.encode(self.gt)
+                    self.output_gt = self.net_ae_ema.module.decode(self.output_lq)
             else:
                 self.net_ae.eval()
                 with torch.inference_mode():
-                    self.output = self.net_ae(self.gt)
+                    self.output_lq = self.net_ae.encode(self.gt)
+                    self.output_gt = self.net_ae.decode(self.output_lq)
                 self.net_ae.train()
 
     def dist_validation(
@@ -373,8 +388,8 @@ class AEModel(BaseModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = tensor2img(visuals["result"])
-            metric_data["img"] = sr_img
+            ae_img_lq = tensor2img(visuals["result_lq"])
+            metric_data["img"] = ae_img_lq
             if "gt" in visuals:
                 gt_img = tensor2img(visuals["gt"])
                 metric_data[gt_key] = gt_img
@@ -382,7 +397,8 @@ class AEModel(BaseModel):
 
             # tentative for out of GPU memory
             self.gt = None
-            self.output = None
+            self.output_lq = None
+            self.output_gt = None
             torch.cuda.empty_cache()
 
             save_img_dir = None
@@ -436,7 +452,7 @@ class AEModel(BaseModel):
                         dataset_name,
                         f"{img_name}.png",
                     )
-                imwrite(sr_img, save_img_path)
+                imwrite(ae_img_lq, save_img_path)  # TODO lq and gt
                 if (
                     self.opt.is_train
                     and not self.first_val_completed
@@ -478,13 +494,17 @@ class AEModel(BaseModel):
                 )
 
     def get_current_visuals(self) -> dict[str, Tensor]:
-        assert self.output is not None
+        assert self.output_lq is not None
+        assert self.output_gt is not None
         assert self.gt is not None
 
         out_dict = OrderedDict()
         out_dict["gt"] = self.gt.detach().cpu()
-        out_dict["result"] = self.output.detach().cpu()
+        out_dict["result_lq"] = self.output_lq.detach().cpu()
+        out_dict["result_gt"] = self.output_gt.detach().cpu()
 
+        if self.gt is not None:
+            out_dict["gt"] = self.gt.detach().cpu()
         return out_dict
 
     def save(
