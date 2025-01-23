@@ -388,8 +388,8 @@ class AEModel(BaseModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            ae_img_lq = tensor2img(visuals["result_lq"])
-            metric_data["img"] = ae_img_lq
+            ae_img_gt = tensor2img(visuals["result_gt"])
+            metric_data["img"] = ae_img_gt
             if "gt" in visuals:
                 gt_img = tensor2img(visuals["gt"])
                 metric_data[gt_key] = gt_img
@@ -452,7 +452,7 @@ class AEModel(BaseModel):
                         dataset_name,
                         f"{img_name}.png",
                     )
-                imwrite(ae_img_lq, save_img_path)  # TODO lq and gt
+                imwrite(ae_img_gt, save_img_path)  # TODO lq and gt
                 if (
                     self.opt.is_train
                     and not self.first_val_completed
