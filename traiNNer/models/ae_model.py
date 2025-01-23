@@ -283,9 +283,10 @@ class AEModel(BaseModel):
             assert isinstance(self.output_gt, Tensor)
             l_ae_total = torch.tensor(0.0, device=self.output_gt.device)
             loss_dict = OrderedDict()
+            weights = {"gt": 1 / self.opt.scale**2, "lq": 1.0}
 
             for label, loss in self.losses.items():
-                for output_type in ["gt", "lq"]:
+                for output_type in weights.keys():
                     l_ae_loss = loss(
                         getattr(self, f"output_{output_type}"),
                         getattr(self, output_type),
