@@ -1,4 +1,3 @@
-import torch
 from safetensors.torch import load_file
 from torch import Tensor, nn
 
@@ -21,6 +20,6 @@ class AESOPLoss(nn.Module):
         self.criterion = MSSSIML1Loss(1.0)  # TODO support other loss?
 
     def forward(self, sr: Tensor, hr: Tensor) -> Tensor:
-        ae_sr = self.ae(sr)
-        ae_hr = self.ae(hr.detach())
+        ae_sr = self.ae(sr).clamp(0, 1)
+        ae_hr = self.ae(hr.detach()).clamp(0, 1)
         return self.loss_weight * self.criterion(ae_sr, ae_hr)
