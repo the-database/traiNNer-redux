@@ -56,7 +56,14 @@ def plot_scatter(df: pd.DataFrame, scale: int, size: str) -> None:
     )
     plt.xlabel("FPS (PyTorch)", fontsize=12)
     plt.ylabel("DF2K Urban100 PSNR", fontsize=12)
-    plt.grid(True)
+    # plt.grid(True)
+    plt.grid(
+        which="major", linestyle="-", linewidth=0.75, color="darkgray", alpha=0.75
+    )  # Solid major gridlines
+    plt.grid(
+        which="minor", linestyle="-", linewidth=0.5, color="gray", alpha=0.25
+    )  # Dashed minor gridlines
+    plt.minorticks_on()
     plt.savefig(f"docs/source/resources/benchmark{scale}x_{size.lower()}.png")
 
 

@@ -70,6 +70,7 @@ class AEModel(BaseModel):
         self.lq: Tensor | None = None
         self.output_gt: Tensor | None = None
         self.output_lq: Tensor | None = None
+        self.loss_weights = {"gt": 1 / self.opt.scale**2, "lq": 1.0}
         logger = get_root_logger()
 
         if self.use_amp:
@@ -283,10 +284,9 @@ class AEModel(BaseModel):
             assert isinstance(self.output_gt, Tensor)
             l_ae_total = torch.tensor(0.0, device=self.output_gt.device)
             loss_dict = OrderedDict()
-            weights = {"gt": 1 / self.opt.scale**2, "lq": 1.0}
 
             for label, loss in self.losses.items():
-                for output_type in weights.keys():
+                for output_type in self.loss_weights.keys():
                     l_ae_loss = loss(
                         getattr(self, f"output_{output_type}"),
                         getattr(self, output_type),
