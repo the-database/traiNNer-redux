@@ -286,8 +286,8 @@ class AEModel(BaseModel):
             loss_dict = OrderedDict()
 
             for label, loss in self.losses.items():
-                for output_type in self.loss_weights.keys():
-                    l_ae_loss = loss(
+                for output_type, loss_weight in self.loss_weights.items():
+                    l_ae_loss = loss_weight * loss(
                         getattr(self, f"output_{output_type}"),
                         getattr(self, output_type),
                     )
