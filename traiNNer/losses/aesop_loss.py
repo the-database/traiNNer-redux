@@ -32,6 +32,6 @@ class AESOPLoss(nn.Module):
             self.criterion = MSSSIML1Loss(1.0)
 
     def forward(self, sr: Tensor, hr: Tensor) -> Tensor:
-        ae_sr = self.ae(sr).clamp(0, 1)
+        ae_sr = self.ae(sr.clamp(0, 1)).clamp(0, 1)
         ae_hr = self.ae(hr.detach()).clamp(0, 1)
         return self.loss_weight * self.criterion(ae_sr, ae_hr)
