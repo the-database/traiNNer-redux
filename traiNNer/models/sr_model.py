@@ -360,6 +360,13 @@ class SRModel(BaseModel):
                     assert self.net_d is not None
                     fake_g_pred = self.net_d(self.output)
                     l_g_loss = loss(fake_g_pred, True, is_disc=False)
+                elif label == "l_g_ldl":
+                    assert self.net_g_ema is not None, (
+                        "ema_decay must be enabled for LDL loss"
+                    )
+                    with torch.inference_mode():
+                        output_ema = self.net_g_ema(self.lq)
+                    l_g_loss = loss(self.output, output_ema, self.gt)
                 else:
                     l_g_loss = loss(self.output, self.gt)
 

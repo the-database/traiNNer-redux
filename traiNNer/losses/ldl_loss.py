@@ -33,7 +33,7 @@ def get_local_weights(residual: Tensor, ksize: int) -> Tensor:
 
 
 def get_refined_artifact_map(
-    img_gt: Tensor, img_output: Tensor, ksize: int = 7
+    img_gt: Tensor, img_output: Tensor, img_ema: Tensor, ksize: int = 7
 ) -> Tensor:
     """Calculate the artifact map of LDL
     (Details or Artifacts: A Locally Discriminative Learning Approach to Realistic Image Super-Resolution. In CVPR 2022)
@@ -48,14 +48,18 @@ def get_refined_artifact_map(
         overall_weight: weight for each pixel to be discriminated as an artifact pixel
         (calculated based on both local and global observations).
     """
-
+    residual_ema = torch.sum(torch.abs(img_gt - img_ema), 1, keepdim=True)
     residual_sr = torch.sum(torch.abs(img_gt - img_output), 1, keepdim=True)
 
     patch_level_weight = torch.var(
         residual_sr.clone(), dim=(-1, -2, -3), keepdim=True
     ) ** (1 / 5)
     pixel_level_weight = get_local_weights(residual_sr.clone(), ksize)
-    return patch_level_weight * pixel_level_weight
+    overall_weight = patch_level_weight * pixel_level_weight
+
+    overall_weight[residual_sr < residual_ema] = 0
+
+    return overall_weight
 
 
 @LOSS_REGISTRY.register()
@@ -76,8 +80,8 @@ class LDLLoss(nn.Module):
         elif self.criterion_type == "charbonnier":
             self.criterion = charbonnier_loss
 
-    def forward(self, output: Tensor, gt: Tensor) -> Tensor:
-        pixel_weight = get_refined_artifact_map(gt, output)
+    def forward(self, output: Tensor, output_ema: Tensor, gt: Tensor) -> Tensor:
+        pixel_weight = get_refined_artifact_map(gt, output, output_ema)
         return self.loss_weight * self.criterion(
             torch.mul(pixel_weight, output), torch.mul(pixel_weight, gt)
         )
