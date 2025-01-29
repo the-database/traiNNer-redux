@@ -1,6 +1,5 @@
 from typing import Literal
 
-import torch
 from safetensors.torch import load_file
 from torch import Tensor, nn
 
@@ -32,7 +31,6 @@ class AESOPLoss(nn.Module):
         else:
             self.criterion = MSSSIML1Loss(1.0)
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, sr: Tensor, hr: Tensor) -> Tensor:
         # ae_sr = self.ae(sr.clamp(0, 1)).clamp(0, 1)
         # ae_hr = self.ae(hr.detach()).clamp(0, 1)
