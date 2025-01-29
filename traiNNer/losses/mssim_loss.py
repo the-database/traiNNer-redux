@@ -4,7 +4,18 @@ import torch
 from torch import SymInt, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
+from traiNNer.losses.basic_loss import CharbonnierLoss
 from traiNNer.utils.registry import LOSS_REGISTRY
+
+####################################
+# Modified MSSIM Loss with cosine similarity from neosr
+# https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
+####################################
+
+
+def smoothstep(x: Tensor, min: float = 0, max: float = 1) -> Tensor:
+    t = torch.clamp((x - min) / (max - min), 0.0, 1.0)
+    return t * t * (3 - 2 * t)
 
 
 class GaussianFilter2D(nn.Module):
@@ -62,7 +73,7 @@ class GaussianFilter2D(nn.Module):
 
 
 @LOSS_REGISTRY.register()
-class MSSSIMLoss(nn.Module):
+class MSSIMLoss(nn.Module):
     def __init__(
         self,
         loss_weight: float,
@@ -73,6 +84,8 @@ class MSSSIMLoss(nn.Module):
         k2: float = 0.03,
         l: int = 1,
         padding: int | None = None,
+        cosim: bool = True,
+        cosim_lambda: int = 5,
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -89,6 +102,8 @@ class MSSSIMLoss(nn.Module):
             L (int): The dynamic range of the pixel values (255 for 8-bit grayscale images). Defaults to 1.
             padding (int, optional): The padding of the gaussian filter. Defaults to None. If it is set to None,
                 the filter will use window_size//2 as the padding. Another common setting is 0.
+            cosim (bool): Enables CosineSimilary on final loss, to keep better color consistency.
+            cosim_lambda (float): Lambda value to increase CosineSimilarity weight.
             loss_weight (float): Weight of final loss value.
         """
         super().__init__()
@@ -96,7 +111,11 @@ class MSSSIMLoss(nn.Module):
         self.window_size = window_size
         self.C1 = (k1 * l) ** 2  # equ 7 in ref1
         self.C2 = (k2 * l) ** 2  # equ 7 in ref1
+        self.cosim = cosim
+        self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
+        self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
+        self.charbonnier = CharbonnierLoss(1)
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -118,13 +137,26 @@ class MSSSIMLoss(nn.Module):
         if y.type() != self.gaussian_filter.gaussian_window.type():
             y = y.type_as(self.gaussian_filter.gaussian_window)
 
+        charbonnier = 0
+        charbonnier_weight = torch.mean(torch.abs(x - x.clamp(1e-12, 1))).clamp(0, 1)
+        charbonnier_weight = smoothstep(charbonnier_weight, 0.1, 0.9)
+        if charbonnier_weight > 0:
+            charbonnier = self.charbonnier(x, y)
+            if charbonnier_weight >= 1:  # skip mssim
+                return charbonnier
+
         loss = 1 - self.msssim(x, y)
+        if charbonnier_weight > 0:
+            loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
+
+        if self.cosim:
+            loss += self.cosim_penalty(x, y)
 
         return self.loss_weight * loss
 
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
-        x = torch.clamp(x, 0, 1)
-        y = torch.clamp(y, 0, 1)
+        x = torch.clamp(x, 1e-12, 1)
+        y = torch.clamp(y, 1e-12, 1)
 
         msssim = torch.tensor(1.0, device=x.device)
 
@@ -142,6 +174,13 @@ class MSSSIMLoss(nn.Module):
                 y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
 
         return msssim
+
+    def cosim_penalty(self, x: Tensor, y: Tensor) -> Tensor:
+        x = torch.where(torch.abs(x) < 1e-12, 1e-12, x)
+        y = torch.where(torch.abs(y) < 1e-12, 1e-12, y)
+
+        distance = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
+        return self.cosim_lambda * distance
 
     def _ssim(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
         mu_x = self.gaussian_filter(x)  # equ 14

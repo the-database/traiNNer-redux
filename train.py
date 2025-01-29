@@ -137,13 +137,12 @@ def create_train_val_dataloader(
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
             assert dataset_opt.gt_size is not None, "gt_size is required for train set"
             logger.info(
-                "Training statistics for %s:\n"
+                "Training statistics:\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s",
-                opt.name,
                 "Number of train images:",
                 f"{len(train_set):,}",
                 "Dataset enlarge ratio:",
