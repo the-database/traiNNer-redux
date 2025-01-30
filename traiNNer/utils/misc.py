@@ -216,9 +216,13 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
                     )
 
         # set ae ema path
-        if opt.train.ema_decay > 0 and (
-            opt.path.ignore_resume_networks is None
-            or "network_ae_ema" not in opt.path.ignore_resume_networks
+        if (
+            not opt.network_g
+            and opt.train.ema_decay > 0
+            and (
+                opt.path.ignore_resume_networks is None
+                or "network_ae_ema" not in opt.path.ignore_resume_networks
+            )
         ):
             model_exists = False
             basepath = ""
@@ -237,7 +241,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
                 )
 
         # set ae path
-        if (
+        if not opt.network_g and (
             opt.path.ignore_resume_networks is None
             or "network_ae" not in opt.path.ignore_resume_networks
         ):
