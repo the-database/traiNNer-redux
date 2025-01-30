@@ -362,8 +362,8 @@ class ESRGANModel(BaseModel):
                     assert self.net_d is not None
                     real_d_pred = self.net_d(self.gt).detach()
                     # print(self.net_d)
-                    for i, param in enumerate(self.net_d.parameters()):
-                        print(i, param.data.min(), param.data.max(), param.data.mean())
+                    # for i, param in enumerate(self.net_d.parameters()):
+                    #     print(i, param.data.min(), param.data.max(), param.data.mean())
                     # print(
                     #     "self.gt",
                     #     self.gt.shape,
