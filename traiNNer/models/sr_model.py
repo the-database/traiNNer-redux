@@ -513,15 +513,16 @@ class SRModel(BaseModel):
         run_metrics = self.with_metrics
 
         for val_data in dataloader:
+            print(val_data.keys())
             img_name = osp.splitext(osp.basename(val_data["lq_path"][0]))[0]
             self.feed_data(val_data)
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = tensor2img(visuals["result"])
+            sr_img = tensor2img(visuals["result"], rgb2bgr=False)
             metric_data["img"] = sr_img
             if "gt" in visuals:
-                gt_img = tensor2img(visuals["gt"])
+                gt_img = tensor2img(visuals["gt"], rgb2bgr=False)
                 metric_data[gt_key] = gt_img
                 self.gt = None
             else:
