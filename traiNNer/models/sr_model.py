@@ -5,6 +5,7 @@ from collections import OrderedDict
 from os import path as osp
 from typing import Any
 
+import cv2
 import torch
 from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
@@ -584,7 +585,7 @@ class SRModel(BaseModel):
                         dataset_name,
                         f"{img_name}.png",
                     )
-                imwrite(sr_img, save_img_path)
+                imwrite(cv2.cvtColor(sr_img, cv2.COLOR_RGB2BGR), save_img_path)
                 if (
                     self.opt.is_train
                     and not self.first_val_completed

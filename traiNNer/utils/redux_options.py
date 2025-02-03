@@ -177,6 +177,7 @@ class PathOptions(StrictStruct):
         ),
     ] = None
     pretrain_network_g_path: str | None = None
+    pretrain_network_ae_path: str | None = None
     param_key_g: str | None = None
     strict_load_g: Annotated[
         bool,
@@ -419,7 +420,8 @@ class ReduxOptions(StrictStruct):
     rank: int | None = None
     world_size: int | None = None
     auto_resume: bool | None = None
-    resume: int = 0
+    # resume: int = 0
+    watch: bool = False
     is_train: bool | None = None
     root_path: str | None = None
 
