@@ -70,7 +70,6 @@ class SqueezeNet(torch.nn.Module):
 class AlexNet(torch.nn.Module):
     def __init__(self, requires_grad: bool = False, pretrained: bool = True) -> None:
         super().__init__()
-        print("alex?")
         alexnet_pretrained_features = tv.alexnet(
             weights=AlexNet_Weights.DEFAULT if pretrained else None
         ).features
