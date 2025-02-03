@@ -758,10 +758,8 @@ class BaseModel:
         )
 
         for i, o in enumerate(resume_optimizers):
-            print("resume optimizer", i)
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):
-            print("resume scheduler", i)
             self.schedulers[i].load_state_dict(s)
 
         if "scaler_g" in resume_state:
@@ -772,7 +770,6 @@ class BaseModel:
             self.scaler_d.load_state_dict(resume_state["scaler_d"])
         if "scaler_ae" in resume_state:
             assert self.scaler_ae is not None
-            print("resume scaler ae")
             self.scaler_ae.load_state_dict(resume_state["scaler_ae"])
 
         if "ema_n_averaged" in resume_state:
@@ -781,7 +778,6 @@ class BaseModel:
                     "n_averaged", resume_state["ema_n_averaged"]
                 )
             elif self.net_ae_ema is not None:
-                print("resume n_averaged")
                 self.net_ae_ema.register_buffer(
                     "n_averaged", resume_state["ema_n_averaged"]
                 )
