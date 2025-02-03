@@ -147,6 +147,22 @@ def train_pipeline(root_path: str) -> None:
     assert opt.manual_seed is not None
     set_random_seed(opt.manual_seed + opt.rank)
 
+    current_iter = 0
+    # initialize wandb and tb loggers
+    tb_logger = init_tb_loggers(opt)
+    assert tb_logger is not None, "tb_logger must be enabled"
+    start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
+
+    # load resume states if necessary
+    make_exp_dirs(opt, start_iter > 0)
+    # mkdir for experiments and logger
+    if start_iter == 0:
+        if opt.logger.use_tb_logger and "debug" not in opt.name and opt.rank == 0:
+            mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
+
+    # copy the yml file to the experiment root
+    copy_opt_file(args.opt, opt.path.experiments_root)
+
     # WARNING: should not use get_root_logger in the above codes, including the called functions
     # Otherwise the logger will not be properly initialized
     log_file = osp.join(opt.path.log, f"train_{opt.name}_{get_time_str()}.log")
@@ -159,9 +175,6 @@ def train_pipeline(root_path: str) -> None:
             "Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.",
             opt.manual_seed,
         )
-
-    # initialize wandb and tb loggers
-    tb_logger = init_tb_loggers(opt)
 
     # create train and validation dataloaders
     val_enabled = False
@@ -186,20 +199,6 @@ def train_pipeline(root_path: str) -> None:
             raise ValueError(
                 "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
             )
-
-    current_iter = 0
-    assert tb_logger is not None, "tb_logger must be enabled"
-    start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
-
-    # load resume states if necessary
-    make_exp_dirs(opt, start_iter > 0)
-    # mkdir for experiments and logger
-    if start_iter == 0:
-        if opt.logger.use_tb_logger and "debug" not in opt.name and opt.rank == 0:
-            mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
-
-    # copy the yml file to the experiment root
-    copy_opt_file(args.opt, opt.path.experiments_root)
 
     logger.info("Start testing from iter: %d.", start_iter)
 
