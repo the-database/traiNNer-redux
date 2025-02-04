@@ -242,7 +242,7 @@ def train_pipeline(root_path: str) -> None:
                 net_path = osp.join(
                     pretrain_net_path, f"net_{net_type}_ema_{net_iter}.{ext}"
                 )
-                print(net_path, osp.exists(net_path))
+                # print(net_path, osp.exists(net_path))
                 if not osp.exists(net_path):
                     net_path = osp.join(
                         pretrain_net_path, f"net_{net_type}_{net_iter}.{ext}"
