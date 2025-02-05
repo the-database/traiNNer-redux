@@ -203,7 +203,7 @@ class PerceptualNewLoss(nn.Module):
     def forward_once(self, x: Tensor) -> dict[str, Tensor]:
         return self.vgg(x)
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
         score1 = torch.tensor(0.0, device=x.device)
@@ -311,7 +311,7 @@ class VGG(nn.Module):
             if isinstance(module, nn.ReLU):
                 module.inplace = False
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         h = (x - self.mean) / self.std
 
