@@ -6,6 +6,8 @@ from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.utils.registry import LOSS_REGISTRY
 
+USE_BOOL_TARGET = {"wgan", "wgan_softplus"}
+
 
 @LOSS_REGISTRY.register()
 class GANLoss(nn.Module):
@@ -26,12 +28,14 @@ class GANLoss(nn.Module):
         gan_type: str = "vanilla",
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
+        eps: float = 1e-8,
     ) -> None:
         super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
+        self.eps = eps
 
         if self.gan_type == "vanilla":
             self.loss = nn.BCEWithLogitsLoss()
@@ -43,6 +47,8 @@ class GANLoss(nn.Module):
             self.loss = self._wgan_softplus_loss
         elif self.gan_type == "hinge":
             self.loss = nn.ReLU()
+        elif self.gan_type == "ganetic":
+            self.loss = self._ganetic_loss
         else:
             raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
@@ -77,6 +83,19 @@ class GANLoss(nn.Module):
         assert isinstance(target, bool)
         return F.softplus(-input).mean() if target else F.softplus(input).mean()
 
+    def _ganetic_loss(self, x: Tensor, target: Tensor | bool) -> Tensor:
+        assert isinstance(target, Tensor)
+        if x.shape != target.shape:
+            raise ValueError(
+                "Input and target must have the same shape for GANetic loss"
+            )
+
+        x = torch.sigmoid(x)
+        loss = x**3 + torch.sqrt(
+            torch.abs(3.985 * target / (torch.sum(x) + self.eps)) + self.eps
+        )
+        return loss.mean()
+
     def get_target_label(self, input: Tensor, target_is_real: bool) -> Tensor | bool:
         """Get target label.
 
@@ -89,7 +108,7 @@ class GANLoss(nn.Module):
                 return Tensor.
         """
 
-        if self.gan_type in ["wgan", "wgan_softplus"]:
+        if self.gan_type in USE_BOOL_TARGET:
             return target_is_real
         target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
@@ -108,7 +127,6 @@ class GANLoss(nn.Module):
         Returns:
             Tensor: GAN loss value.
         """
-        target_label = self.get_target_label(input, target_is_real)
         if self.gan_type == "hinge":
             if is_disc:  # for discriminators in hinge-gan
                 input = -input if target_is_real else input
@@ -117,6 +135,7 @@ class GANLoss(nn.Module):
             else:  # for generators in hinge-gan
                 loss = -input.mean()
         else:  # other gan types
+            target_label = self.get_target_label(input, target_is_real)
             loss = self.loss(input, target_label)
 
         # loss_weight is always 1.0 for discriminators
