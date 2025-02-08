@@ -44,6 +44,9 @@ class BaseModel:
         self.optimizers_schedule_free: list[bool] = []
         self.batch_augment = None
         self.log_dict = {}
+        self.l_g_gan_ema = torch.tensor(0.0, device=self.device)
+        self.l_g_gan_ema_decay = 0.9
+        self.adaptive_d = False
         self.loss_samples = 0
         self.with_metrics = (
             opt.val is not None

@@ -232,6 +232,12 @@ class TrainOptions(StrictStruct):
     total_iter: Annotated[
         int, Meta(description="The total number of iterations to train.")
     ]
+    adaptive_d: Annotated[
+        bool,
+        Meta(
+            description="Whether the discriminator updates adaptively. That is, discriminator updates are paused whenever the generator falls behind the discriminator (whenever smoothed l_g_gan increases). Can mitigate GAN collapse by preventing the discriminator from overpowering the generator."
+        ),
+    ] = False
     optim_g: Annotated[
         dict[str, Any] | None,
         Meta(description="The optimizer to use for the generator model."),

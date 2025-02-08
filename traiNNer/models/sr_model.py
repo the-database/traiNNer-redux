@@ -181,7 +181,9 @@ class SRModel(BaseModel):
 
         self.accum_iters = self.opt.datasets["train"].accum_iter
 
+        self.adaptive_d = train_opt.adaptive_d
         self.ema_decay = train_opt.ema_decay
+
         if self.ema_decay > 0:
             logger.info(
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
@@ -340,6 +342,8 @@ class SRModel(BaseModel):
         assert self.scaler_d is not None
         assert self.scaler_g is not None
 
+        skip_d_update = False
+
         # optimize net_d
         if self.net_d is not None:
             for p in self.net_d.parameters():
@@ -361,6 +365,19 @@ class SRModel(BaseModel):
                     assert self.net_d is not None
                     fake_g_pred = self.net_d(self.output)
                     l_g_loss = loss(fake_g_pred, True, is_disc=False)
+
+                    if self.adaptive_d:
+                        l_g_gan_ema = (
+                            self.l_g_gan_ema_decay * self.l_g_gan_ema
+                            + (1 - self.l_g_gan_ema_decay) * l_g_loss.detach()
+                        )
+
+                        if l_g_gan_ema > self.l_g_gan_ema:
+                            skip_d_update = True
+                            # print(f"iter {current_iter}: skip_d_update")
+
+                        self.l_g_gan_ema = l_g_gan_ema
+
                 elif label == "l_g_ldl":
                     assert self.net_g_ema is not None, (
                         "ema_decay must be enabled for LDL loss"
@@ -387,6 +404,12 @@ class SRModel(BaseModel):
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
             self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
+            if self.optimizers_skipped[0]:
+                logger = get_root_logger()
+                logger.warning(
+                    "AMP: iter %d: optimizer_g update step will be skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
+                    current_iter,
+                )
             self.optimizer_g.zero_grad()
 
         cri_gan = self.losses.get("l_g_gan")
@@ -395,6 +418,7 @@ class SRModel(BaseModel):
             self.net_d is not None
             and cri_gan is not None
             and self.optimizer_d is not None
+            and not skip_d_update
         ):
             # optimize net_d
             for p in self.net_d.parameters():
@@ -426,6 +450,12 @@ class SRModel(BaseModel):
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
                 self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
+                if self.optimizers_skipped[1]:
+                    logger = get_root_logger()
+                    logger.warning(
+                        "AMP: iter %d: optimizer_d update step will be skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
+                        current_iter,
+                    )
                 self.optimizer_d.zero_grad()
 
         for key, value in loss_dict.items():

@@ -363,6 +363,11 @@
   The total number of iterations to train.
 
   Type: int
+### adaptive_d
+
+  Whether the discriminator updates adaptively. That is, discriminator updates are paused whenever the generator falls behind the discriminator (whenever smoothed l_g_gan increases). Can mitigate GAN collapse by preventing the discriminator from overpowering the generator.
+
+  Type: bool
 ### optim_g
 
   The optimizer to use for the generator model.
