@@ -374,7 +374,7 @@ class SRModel(BaseModel):
 
                         if l_g_gan_ema > self.l_g_gan_ema:
                             skip_d_update = True
-                            # print(f"iter {current_iter}: skip_d_update")
+                            self.optimizers_skipped[1] = True
 
                         self.l_g_gan_ema = l_g_gan_ema
 
