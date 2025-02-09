@@ -377,6 +377,7 @@ class SRModel(BaseModel):
                         if l_g_gan_ema > self.l_g_gan_ema * self.adaptive_d_threshold:
                             skip_d_update = True
                             self.optimizers_skipped[1] = True
+                            # print(current_iter, "skip_d_update")
 
                         self.l_g_gan_ema = l_g_gan_ema
 
@@ -408,8 +409,8 @@ class SRModel(BaseModel):
             self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
             if self.optimizers_skipped[0]:
                 logger = get_root_logger()
-                logger.warning(
-                    "AMP: iter %d: optimizer_g update step will be skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
+                logger.info(
+                    "AMP: iter %d: optimizer_g update step skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
                     current_iter,
                 )
             self.optimizer_g.zero_grad()
@@ -454,8 +455,8 @@ class SRModel(BaseModel):
                 self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
                 if self.optimizers_skipped[1]:
                     logger = get_root_logger()
-                    logger.warning(
-                        "AMP: iter %d: optimizer_d update step will be skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
+                    logger.info(
+                        "AMP: iter %d: optimizer_d update step skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
                         current_iter,
                     )
                 self.optimizer_d.zero_grad()
