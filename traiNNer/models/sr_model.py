@@ -182,6 +182,8 @@ class SRModel(BaseModel):
         self.accum_iters = self.opt.datasets["train"].accum_iter
 
         self.adaptive_d = train_opt.adaptive_d
+        self.adaptive_d_ema_decay = train_opt.adaptive_d_ema_decay
+        self.adaptive_d_threshold = train_opt.adaptive_d_threshold
         self.ema_decay = train_opt.ema_decay
 
         if self.ema_decay > 0:
@@ -368,11 +370,11 @@ class SRModel(BaseModel):
 
                     if self.adaptive_d:
                         l_g_gan_ema = (
-                            self.l_g_gan_ema_decay * self.l_g_gan_ema
-                            + (1 - self.l_g_gan_ema_decay) * l_g_loss.detach()
+                            self.adaptive_d_ema_decay * self.l_g_gan_ema
+                            + (1 - self.adaptive_d_ema_decay) * l_g_loss.detach()
                         )
 
-                        if l_g_gan_ema > self.l_g_gan_ema * self.l_g_gan_ema_threshold:
+                        if l_g_gan_ema > self.l_g_gan_ema * self.adaptive_d_threshold:
                             skip_d_update = True
                             self.optimizers_skipped[1] = True
 

@@ -238,6 +238,8 @@ class TrainOptions(StrictStruct):
             description="Whether the discriminator updates adaptively. That is, discriminator updates are paused whenever the generator falls behind the discriminator (whenever smoothed l_g_gan increases). Can mitigate GAN collapse by preventing the discriminator from overpowering the generator."
         ),
     ] = False
+    adaptive_d_ema_decay: float = 0.999
+    adaptive_d_threshold: float = 1.02
     optim_g: Annotated[
         dict[str, Any] | None,
         Meta(description="The optimizer to use for the generator model."),
