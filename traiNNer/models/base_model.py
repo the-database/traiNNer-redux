@@ -45,7 +45,8 @@ class BaseModel:
         self.batch_augment = None
         self.log_dict = {}
         self.l_g_gan_ema = torch.tensor(0.0, device=self.device)
-        self.l_g_gan_ema_decay = 0.9
+        self.l_g_gan_ema_decay = 0.999
+        self.l_g_gan_ema_threshold = 1.02
         self.adaptive_d = False
         self.loss_samples = 0
         self.with_metrics = (

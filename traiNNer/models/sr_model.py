@@ -372,7 +372,7 @@ class SRModel(BaseModel):
                             + (1 - self.l_g_gan_ema_decay) * l_g_loss.detach()
                         )
 
-                        if l_g_gan_ema > self.l_g_gan_ema:
+                        if l_g_gan_ema > self.l_g_gan_ema * self.l_g_gan_ema_threshold:
                             skip_d_update = True
                             self.optimizers_skipped[1] = True
 
