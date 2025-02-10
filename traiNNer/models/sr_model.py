@@ -11,7 +11,11 @@ from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
+
+# from ema_pytorch import EMA
 from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
+
+# from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import TqdmExperimentalWarning
@@ -207,12 +211,20 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
+            # self.net_g_ema = EMA(
+            #     init_net_g_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
+            #     beta=self.ema_decay,
+            #     power=3 / 4,
+            #     allow_different_devices=True,
+            #     # device=self.device,
+            # )
             self.net_g_ema = AveragedModel(
                 init_net_g_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
                 device=self.device,
             )
 
+            # self.net_g_ema.steps = self.net_g_ema.steps.to(device=torch.device("cpu"))
             self.net_g_ema.n_averaged = self.net_g_ema.n_averaged.to(
                 device=torch.device("cpu")
             )
@@ -406,12 +418,14 @@ class SRModel(BaseModel):
             scale_before = self.scaler_g.get_scale()
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
-            self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
+            scale_after = self.scaler_g.get_scale()
+            self.optimizers_skipped[0] = scale_after < scale_before
             if self.optimizers_skipped[0]:
                 logger = get_root_logger()
                 logger.info(
-                    "AMP: iter %d: optimizer_g update step skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
+                    "AMP: iter %d: optimizer_g update step skipped due to NaN/Inf in gradients. Current gradscaler_g scale: %.1f",
                     current_iter,
+                    scale_after,
                 )
             self.optimizer_g.zero_grad()
 
@@ -452,12 +466,14 @@ class SRModel(BaseModel):
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
-                self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
+                scale_after = self.scaler_d.get_scale()
+                self.optimizers_skipped[1] = scale_after < scale_before
                 if self.optimizers_skipped[1]:
                     logger = get_root_logger()
                     logger.info(
-                        "AMP: iter %d: optimizer_d update step skipped due to NaN/Inf in gradients. This is only an issue if this happens very frequently and never stops.",
+                        "AMP: iter %d: optimizer_d update step skipped due to NaN/Inf in gradients. Current gradscaler_d scale: %.1f",
                         current_iter,
+                        scale_after,
                     )
                 self.optimizer_d.zero_grad()
 
