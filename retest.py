@@ -263,7 +263,7 @@ def train_pipeline(root_path: str) -> None:
                             opt.val.save_img,
                             multi_val_datasets,
                         )
-        time.sleep(1)
+        time.sleep(5)
         validate = opt.watch
     if tb_logger:
         tb_logger.close()

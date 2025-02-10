@@ -16,7 +16,7 @@ class AESOPLoss(nn.Module):
         loss_weight: float,
         scale: int,
         pretrain_network_ae: str,
-        criterion: Literal["l1", "charbonnier", "msssiml1"] = "msssiml1",
+        criterion: Literal["l1", "charbonnier", "msssiml1"] = "l1",
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
