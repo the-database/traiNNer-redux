@@ -272,7 +272,7 @@ class HSLuvLoss(nn.Module):
                 scale_factor=1 / self.downscale_factor,
                 mode="bicubic",
                 antialias=True,
-            )
+            ).clamp(0, 1)
 
         x_hsluv = rgb_to_hsluv(x)
 
