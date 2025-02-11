@@ -61,7 +61,7 @@ class MSSSIML1Loss(nn.Module):
         gaussian_vec = self._fspecial_gauss_1d(size, sigma)
         return torch.outer(gaussian_vec, gaussian_vec)
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         g_masks: Tensor = torch.jit.annotate(Tensor, self._g_masks)
         ch = x.shape[-3]

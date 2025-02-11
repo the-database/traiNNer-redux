@@ -202,7 +202,7 @@ class ADISTSLoss(torch.nn.Module):
         weight = weight / (weight.sum(dim=1, keepdim=True) + c0)
         return weight * c
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         assert x.shape == y.shape
 
