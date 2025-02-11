@@ -272,9 +272,9 @@ class VGG(nn.Module):
                 self.stages[layer_name].add_module(str(x), vgg_pretrained_features[x])
             prev_breakpoint = idx
 
-        # for _layer_name, stage in self.stages.items():
-        #     stage[0] = self._change_padding_mode(stage[0], "replicate")  # pyright: ignore[reportIndexIssue]
-        #     break
+        for _layer_name, stage in self.stages.items():
+            stage[0] = self._change_padding_mode(stage[0], "replicate")  # pyright: ignore[reportIndexIssue]
+            break
 
         for param in self.parameters():
             param.requires_grad = False
