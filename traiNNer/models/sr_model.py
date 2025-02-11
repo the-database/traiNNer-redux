@@ -370,44 +370,60 @@ class SRModel(BaseModel):
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
             self.output = self.net_g(self.lq)
-            assert isinstance(self.output, Tensor)
-            l_g_total = torch.tensor(0.0, device=self.output.device)
-            loss_dict = OrderedDict()
 
-            for label, loss in self.losses.items():
-                if label == "l_g_gan":
-                    assert self.net_d is not None
+        assert isinstance(self.output, Tensor)
+        self.output = self.output.to(torch.float32)
+        l_g_total = torch.tensor(0.0, device=self.output.device, dtype=torch.float32)
+        loss_dict = OrderedDict()
+
+        for label, loss in self.losses.items():
+            if label == "l_g_gan":
+                assert self.net_d is not None
+                with torch.autocast(
+                    device_type=self.device.type,
+                    dtype=self.amp_dtype,
+                    enabled=self.use_amp,
+                ):
                     fake_g_pred = self.net_d(self.output)
-                    l_g_loss = loss(fake_g_pred, True, is_disc=False)
 
-                    if self.adaptive_d:
-                        l_g_gan_ema = (
-                            self.adaptive_d_ema_decay * self.l_g_gan_ema
-                            + (1 - self.adaptive_d_ema_decay) * l_g_loss.detach()
-                        )
+                fake_g_pred = fake_g_pred.to(torch.float32)
+                l_g_loss = loss(fake_g_pred, True, is_disc=False)
 
-                        if l_g_gan_ema > self.l_g_gan_ema * self.adaptive_d_threshold:
-                            skip_d_update = True
-                            self.optimizers_skipped[1] = True
-                            # print(current_iter, "skip_d_update")
+                if self.adaptive_d:
+                    l_g_gan_ema = (
+                        self.adaptive_d_ema_decay * self.l_g_gan_ema
+                        + (1 - self.adaptive_d_ema_decay) * l_g_loss.detach()
+                    )
 
-                        self.l_g_gan_ema = l_g_gan_ema
+                    if l_g_gan_ema > self.l_g_gan_ema * self.adaptive_d_threshold:
+                        skip_d_update = True
+                        self.optimizers_skipped[1] = True
+                        # print(current_iter, "skip_d_update")
 
-                elif label == "l_g_ldl":
+                    self.l_g_gan_ema = l_g_gan_ema
+
+            elif label == "l_g_ldl":
+                with (
+                    torch.autocast(
+                        device_type=self.device.type,
+                        dtype=self.amp_dtype,
+                        enabled=self.use_amp,
+                    ),
+                    torch.inference_mode(),
+                ):
                     assert self.net_g_ema is not None, (
                         "ema_decay must be enabled for LDL loss"
                     )
-                    with torch.inference_mode():
-                        output_ema = self.net_g_ema(self.lq)
-                    l_g_loss = loss(self.output, output_ema, self.gt)
-                else:
-                    l_g_loss = loss(self.output, self.gt)
+                    output_ema = self.net_g_ema(self.lq)
+                l_g_loss = loss(self.output, output_ema.float(), self.gt)
+            else:
+                l_g_loss = loss(self.output, self.gt)
 
-                l_g_total += l_g_loss / self.accum_iters
-                loss_dict[label] = l_g_loss
+            l_g_total += l_g_loss / self.accum_iters
+            loss_dict[label] = l_g_loss
 
-            # add total generator loss for tensorboard tracking
-            loss_dict["l_g_total"] = l_g_total
+        # add total generator loss for tensorboard tracking
+        loss_dict["l_g_total"] = l_g_total
 
         self.scaler_g.scale(l_g_total).backward()
         if apply_gradient:
@@ -446,16 +462,19 @@ class SRModel(BaseModel):
                 dtype=self.amp_dtype,
                 enabled=self.use_amp,
             ):
-                # real
                 real_d_pred = self.net_d(self.gt)
-                l_d_real = cri_gan(real_d_pred, True, is_disc=True)
-                loss_dict["l_d_real"] = l_d_real
-                loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
-                # fake
                 fake_d_pred = self.net_d(self.output.detach())
-                l_d_fake = cri_gan(fake_d_pred, False, is_disc=True)
-                loss_dict["l_d_fake"] = l_d_fake
-                loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
+
+            # real
+            real_d_pred = real_d_pred.to(torch.float32)
+            l_d_real = cri_gan(real_d_pred, True, is_disc=True)
+            loss_dict["l_d_real"] = l_d_real
+            loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
+            # fake
+            fake_d_pred = fake_d_pred.to(torch.float32)
+            l_d_fake = cri_gan(fake_d_pred, False, is_disc=True)
+            loss_dict["l_d_fake"] = l_d_fake
+            loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
             self.scaler_d.scale(l_d_real / self.accum_iters).backward()
             self.scaler_d.scale(l_d_fake / self.accum_iters).backward()
