@@ -9,7 +9,7 @@ import torch
 
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.degradations import circular_lowpass_kernel, random_mixed_kernels
-from traiNNer.data.transforms import augment_vips
+from traiNNer.data.transforms import augment_vips, single_random_crop_vips
 from traiNNer.utils import (
     RNG,
     FileClient,
@@ -142,17 +142,7 @@ class RealESRGANDataset(BaseDataset):
             vips_img_gt: pyvips.Image = vips_img_gt.embed(0, 0, w + pad_w, h + pad_h)  # type: ignore
         # crop
         if w > crop_pad_size or h > crop_pad_size:
-            y = random.randint(0, h - crop_pad_size)
-            x = random.randint(0, w - crop_pad_size)
-            region_gt = pyvips.Region.new(vips_img_gt)
-            data_gt = region_gt.fetch(x, y, crop_pad_size, crop_pad_size)
-            img_gt = img2rgb(
-                np.ndarray(
-                    buffer=data_gt,
-                    dtype=np.uint8,
-                    shape=[crop_pad_size, crop_pad_size, vips_img_gt.bands],  # pyright: ignore
-                )
-            )
+            img_gt = single_random_crop_vips(vips_img_gt, crop_pad_size)
         else:
             img_gt = img2rgb(vips_img_gt.numpy())
 

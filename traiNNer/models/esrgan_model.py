@@ -7,13 +7,11 @@ from typing import Any
 
 import cv2
 import torch
-from ema_pytorch import EMA
 from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
-
-# from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
+from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import TqdmExperimentalWarning
@@ -32,7 +30,7 @@ from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
 
-class SRModel(BaseModel):
+class ESRGANModel(BaseModel):
     """Base SR model for single image super-resolution."""
 
     def __init__(self, opt: ReduxOptions) -> None:
@@ -147,6 +145,7 @@ class SRModel(BaseModel):
                         "GAN loss requires discriminator network (network_d). Define network_d or disable GAN loss."
                     )
                 else:
+                    # torch.manual_seed(1024)
                     self.net_d = build_network(self.opt.network_d)
                     # load pretrained models
                     if self.opt.path.pretrain_network_d is not None:
@@ -161,7 +160,6 @@ class SRModel(BaseModel):
             self.losses = {}
 
             self.ema_decay = 0
-            self.ema_switch_iter = None
             self.net_g_ema = None
 
             self.optimizer_g: Optimizer | None = None
@@ -184,25 +182,18 @@ class SRModel(BaseModel):
 
         self.accum_iters = self.opt.datasets["train"].accum_iter
 
-        self.adaptive_d = train_opt.adaptive_d
-        self.adaptive_d_ema_decay = train_opt.adaptive_d_ema_decay
-        self.adaptive_d_threshold = train_opt.adaptive_d_threshold
         self.ema_decay = train_opt.ema_decay
-        self.ema_switch_iter = train_opt.ema_switch_iter
-
         if self.ema_decay > 0:
             logger.info(
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
             )
             assert self.opt.network_g is not None, "network_g must be defined"
-
-            init_net_g_ema = None
+            init_net_g_ema = build_network(
+                {**self.opt.network_g, "scale": self.opt.scale}
+            )
 
             # load pretrained model
             if self.opt.path.pretrain_network_g_ema is not None:
-                init_net_g_ema = build_network(
-                    {**self.opt.network_g, "scale": self.opt.scale}
-                )
                 self.load_network(
                     init_net_g_ema,
                     self.opt.path.pretrain_network_g_ema,
@@ -213,17 +204,15 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = EMA(
-                self.net_g,
-                ema_model=init_net_g_ema,
-                beta=self.ema_decay,
-                allow_different_devices=True,
-                update_after_step=100,  # TODO parameterize
-                update_every=1,  # TODO parameterize
-                update_model_with_ema_every=self.ema_switch_iter,
-            ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
+            self.net_g_ema = AveragedModel(
+                init_net_g_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
+                multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
+                device=self.device,
+            )
 
-            self.net_g_ema.step = self.net_g_ema.step.to(device=torch.device("cpu"))
+            self.net_g_ema.n_averaged = self.net_g_ema.n_averaged.to(
+                device=torch.device("cpu")
+            )
 
         self.grad_clip = train_opt.grad_clip
         if self.grad_clip:
@@ -352,8 +341,6 @@ class SRModel(BaseModel):
         assert self.scaler_d is not None
         assert self.scaler_g is not None
 
-        skip_d_update = False
-
         # optimize net_d
         if self.net_d is not None:
             for p in self.net_d.parameters():
@@ -372,23 +359,34 @@ class SRModel(BaseModel):
 
             for label, loss in self.losses.items():
                 if label == "l_g_gan":
+                    # relativistic gan loss for ESRGAN only
                     assert self.net_d is not None
+                    real_d_pred = self.net_d(self.gt).detach()
+                    # print(self.net_d)
+                    # for i, param in enumerate(self.net_d.parameters()):
+                    #     print(i, param.data.min(), param.data.max(), param.data.mean())
+                    # print(
+                    #     "self.gt",
+                    #     self.gt.shape,
+                    #     self.gt.min(),
+                    #     self.gt.max(),
+                    #     self.gt.mean(),
+                    # )
+                    # print(
+                    #     "real_d_pred",
+                    #     real_d_pred.shape,
+                    #     real_d_pred.min(),
+                    #     real_d_pred.max(),
+                    #     real_d_pred.mean(),
+                    # )
                     fake_g_pred = self.net_d(self.output)
-                    l_g_loss = loss(fake_g_pred, True, is_disc=False)
-
-                    if self.adaptive_d:
-                        l_g_gan_ema = (
-                            self.adaptive_d_ema_decay * self.l_g_gan_ema
-                            + (1 - self.adaptive_d_ema_decay) * l_g_loss.detach()
-                        )
-
-                        if l_g_gan_ema > self.l_g_gan_ema * self.adaptive_d_threshold:
-                            skip_d_update = True
-                            self.optimizers_skipped[1] = True
-                            # print(current_iter, "skip_d_update")
-
-                        self.l_g_gan_ema = l_g_gan_ema
-
+                    l_g_real = loss(
+                        real_d_pred - torch.mean(fake_g_pred), False, is_disc=False
+                    )
+                    l_g_fake = loss(
+                        fake_g_pred - torch.mean(real_d_pred), True, is_disc=False
+                    )
+                    l_g_loss = (l_g_real + l_g_fake) / 2
                 elif label == "l_g_ldl":
                     assert self.net_g_ema is not None, (
                         "ema_decay must be enabled for LDL loss"
@@ -414,15 +412,7 @@ class SRModel(BaseModel):
             scale_before = self.scaler_g.get_scale()
             self.scaler_g.step(self.optimizer_g)
             self.scaler_g.update()
-            scale_after = self.scaler_g.get_scale()
-            self.optimizers_skipped[0] = scale_after < scale_before
-            if self.optimizers_skipped[0]:
-                logger = get_root_logger()
-                logger.info(
-                    "AMP: iter %d: optimizer_g update step skipped due to NaN/Inf in gradients. Current gradscaler_g scale: %.1f",
-                    current_iter,
-                    scale_after,
-                )
+            self.optimizers_skipped[0] = self.scaler_g.get_scale() < scale_before
             self.optimizer_g.zero_grad()
 
         cri_gan = self.losses.get("l_g_gan")
@@ -431,7 +421,6 @@ class SRModel(BaseModel):
             self.net_d is not None
             and cri_gan is not None
             and self.optimizer_d is not None
-            and not skip_d_update
         ):
             # optimize net_d
             for p in self.net_d.parameters():
@@ -443,13 +432,22 @@ class SRModel(BaseModel):
                 enabled=self.use_amp,
             ):
                 # real
+                fake_d_pred = self.net_d(self.output).detach()
                 real_d_pred = self.net_d(self.gt)
-                l_d_real = cri_gan(real_d_pred, True, is_disc=True)
-                loss_dict["l_d_real"] = l_d_real
-                loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
+                l_d_real = (
+                    cri_gan(real_d_pred - torch.mean(fake_d_pred), True, is_disc=True)
+                    * 0.5
+                )
                 # fake
                 fake_d_pred = self.net_d(self.output.detach())
-                l_d_fake = cri_gan(fake_d_pred, False, is_disc=True)
+                l_d_fake = (
+                    cri_gan(
+                        fake_d_pred - torch.mean(real_d_pred.detach()),
+                        False,
+                        is_disc=True,
+                    )
+                    * 0.5
+                )
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
@@ -462,15 +460,7 @@ class SRModel(BaseModel):
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
-                scale_after = self.scaler_d.get_scale()
-                self.optimizers_skipped[1] = scale_after < scale_before
-                if self.optimizers_skipped[1]:
-                    logger = get_root_logger()
-                    logger.info(
-                        "AMP: iter %d: optimizer_d update step skipped due to NaN/Inf in gradients. Current gradscaler_d scale: %.1f",
-                        current_iter,
-                        scale_after,
-                    )
+                self.optimizers_skipped[1] = self.scaler_d.get_scale() < scale_before
                 self.optimizer_d.zero_grad()
 
         for key, value in loss_dict.items():
@@ -483,7 +473,7 @@ class SRModel(BaseModel):
 
         if self.net_g_ema is not None and apply_gradient:
             if not (self.use_amp and self.optimizers_skipped[0]):
-                self.net_g_ema.update()
+                self.net_g_ema.update_parameters(self.net_g)
 
     def test(self) -> None:
         with torch.autocast(
@@ -709,7 +699,7 @@ class SRModel(BaseModel):
 
         if self.net_g_ema is not None:
             self.save_network(
-                self.net_g_ema.ema_model,
+                self.net_g_ema,
                 "net_g_ema",
                 self.opt.path.models,
                 current_iter,

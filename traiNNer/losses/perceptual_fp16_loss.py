@@ -100,9 +100,7 @@ class PerceptualFP16Loss(nn.Module):
                 use_relu_layers = True
                 layer_weights |= VGG19_RELU_LAYER_WEIGHTS
 
-        self.vgg = VGGFP16(list(layer_weights.keys())).to(
-            memory_format=torch.channels_last
-        )  # pyright: ignore[reportCallIssue]
+        self.vgg = VGG(list(layer_weights.keys())).to(memory_format=torch.channels_last)  # pyright: ignore[reportCallIssue]
 
         if alpha is None:
             alpha = []
@@ -205,6 +203,7 @@ class PerceptualFP16Loss(nn.Module):
     def forward_once(self, x: Tensor) -> dict[str, Tensor]:
         return self.vgg(x)
 
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
         score1 = torch.tensor(0.0, device=x.device)
@@ -247,7 +246,7 @@ class PerceptualFP16Loss(nn.Module):
         return score * self.loss_weight
 
 
-class VGGFP16(nn.Module):
+class VGG(nn.Module):
     def __init__(self, layer_name_list: list[str]) -> None:
         super().__init__()
 
@@ -312,6 +311,7 @@ class VGGFP16(nn.Module):
             if isinstance(module, nn.ReLU):
                 module.inplace = False
 
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         h = (x - self.mean) / self.std
 

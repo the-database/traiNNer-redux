@@ -12,6 +12,20 @@ from torch import Tensor
 from torchvision.utils import make_grid
 
 
+def img2batchedtensor(
+    img: np.ndarray,
+    device: torch.device,
+    color: bool = True,
+    bgr2rgb: bool = True,
+    float32: bool = True,
+) -> Tensor:
+    return (
+        img2tensor(img, color=color, bgr2rgb=bgr2rgb, float32=float32)
+        .to(device)
+        .unsqueeze(0)
+    )
+
+
 def img2tensor(
     img: np.ndarray,
     color: bool = True,

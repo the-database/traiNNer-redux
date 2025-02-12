@@ -1,6 +1,6 @@
 import numpy as np
 
-from traiNNer.utils import bgr2ycbcr
+from traiNNer.utils import rgb2ycbcr
 
 
 def reorder_image(img: np.ndarray, input_order: str = "HWC") -> np.ndarray:
@@ -42,6 +42,6 @@ def to_y_channel(img: np.ndarray) -> np.ndarray:
     """
     img = img.astype(np.float32) / 255.0
     if img.ndim == 3 and img.shape[2] == 3:
-        img = bgr2ycbcr(img, y_only=True)
+        img = rgb2ycbcr(img, y_only=True)
         img = img[..., None]
     return img * 255.0

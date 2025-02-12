@@ -163,8 +163,8 @@ class MetaGan2(nn.Module):
         dims: Sequence[int] = (48, 96, 192, 288),
         blocks: Sequence[int] = (3, 3, 9, 3),
         downs: Sequence[int] = (4, 4, 2, 2),
-        drop_path: float = 0.2,
-        end_drop: float = 0.4,
+        drop_path: float = 0.0,
+        end_drop: float = 0.0,
     ) -> None:
         super().__init__()
         dims = [in_ch, *list(dims)]
