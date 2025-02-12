@@ -250,6 +250,9 @@ class TrainOptions(StrictStruct):
             description="The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA."
         ),
     ] = 0
+    ema_switch_iter: Annotated[
+        float, Meta(description="Epoch at which to switch EMA model to online model.")
+    ] = 1.0
     grad_clip: Annotated[
         bool,
         Meta(
