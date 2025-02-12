@@ -13,7 +13,7 @@ from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN import ESRGAN
-from torch import Tensor, nn
+from torch import nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
@@ -75,7 +75,6 @@ class BaseModel:
         self.scaler_d: GradScaler | None = None
         self.scaler_ae: GradScaler | None = None
         self.accum_iters: int = 1
-        self.ema_step: Tensor | None = None
         self.grad_clip: bool = False
 
     @abstractmethod
