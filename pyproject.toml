@@ -3,6 +3,7 @@ name = "traiNNer-redux"
 requires-python = ">=3.11"
 dynamic = ["version"]
 dependencies = [
+"ema-pytorch",
 "msgspec",
 "numpy>=2",
 "opencv-python",
@@ -20,7 +21,7 @@ dependencies = [
 "spandrel-extra-arches>=0.2.0",
 "tb-nightly",
 "timm",
-"torch>=2.5.0",
+"torch>=2.6.0",
 "torchvision",
 "tqdm",
 ]
