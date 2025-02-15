@@ -29,6 +29,7 @@ class Downsample(nn.Module):
         )
 
     def forward(self, input: Tensor) -> Tensor:
+        assert isinstance(self.filter, Tensor)
         input = input**2
         out = F.conv2d(
             input,
@@ -174,7 +175,8 @@ class ADISTSLoss(torch.nn.Module):
 
     def forward_once(self, x: Tensor) -> list[Tensor]:
         h = x
-
+        assert isinstance(self.mean, Tensor)
+        assert isinstance(self.std, Tensor)
         h = (h - self.mean) / self.std
         h = self.stage1(h)
         h_relu1_2 = h

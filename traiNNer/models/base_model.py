@@ -239,7 +239,7 @@ class BaseModel:
             "ADAMP": pytorch_optimizer.AdamP,
         }
         if optim_type_upper in optim_map:
-            optimizer = optim_map[optim_type_upper](params, lr, **kwargs)
+            optimizer = optim_map[optim_type_upper](params, lr, **kwargs)  # pyright: ignore[reportArgumentType]
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
         return optimizer
@@ -408,6 +408,7 @@ class BaseModel:
 
         metadata: dict[str, Any] | None = None
         if hasattr(net, "hyperparameters"):
+            assert isinstance(net.hyperparameters, dict)
             metadata = {
                 k: v for k, v in net.hyperparameters.items() if is_json_compatible(v)
             }
@@ -795,6 +796,7 @@ class BaseModel:
         """
         with torch.no_grad():
             if self.opt.dist:
+                assert self.opt.world_size is not None
                 keys = []
                 losses = []
                 for name, value in loss_dict.items():

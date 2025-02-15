@@ -30,6 +30,7 @@ class DCCM(nn.Sequential):
     "Doubled Convolutional Channel Mixer"
 
     def __init__(self, dim: int) -> None:
+        assert isinstance(self[-1].weight, Tensor)
         super().__init__(
             nn.Conv2d(dim, dim * 2, 3, 1, 1),
             nn.Mish(),
@@ -62,6 +63,7 @@ class EA(nn.Module):
     def __init__(self, dim: int) -> None:
         super().__init__()
         self.f = nn.Sequential(nn.Conv2d(dim, dim, 3, 1, 1), nn.Sigmoid())
+        assert isinstance(self.f[0].weight, Tensor)
         trunc_normal_(self.f[0].weight, std=0.02)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -153,6 +155,8 @@ class RealPLKSR(nn.Module):
             + [nn.Dropout2d(dropout)]
             + [nn.Conv2d(dim, out_ch * upscaling_factor**2, 3, 1, 1)]
         )
+        assert isinstance(self.feats[0].weight, Tensor)
+        assert isinstance(self.feats[-1].weight, Tensor)
         trunc_normal_(self.feats[0].weight, std=0.02)
         trunc_normal_(self.feats[-1].weight, std=0.02)
 

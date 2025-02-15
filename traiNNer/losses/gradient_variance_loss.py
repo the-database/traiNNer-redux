@@ -68,6 +68,8 @@ class GradientVarianceLoss(nn.Module):
         )
 
         # calculation of the gradient maps of x and y directions
+        assert isinstance(self.kernel_x, Tensor)
+        assert isinstance(self.kernel_y, Tensor)
         gx_target = F.conv2d(gray_target, self.kernel_x, stride=1, padding=1)
         gy_target = F.conv2d(gray_target, self.kernel_y, stride=1, padding=1)
         gx_output = F.conv2d(gray_output, self.kernel_x, stride=1, padding=1)

@@ -515,7 +515,7 @@ def circular_lowpass_kernel(
 
 
 def generate_gaussian_noise(
-    img: np.ndarray, sigma: float | Tensor = 10, gray_noise: bool = False
+    img: np.ndarray, sigma: float = 10, gray_noise: bool = False
 ) -> np.ndarray:
     """Generate Gaussian noise.
 
@@ -540,7 +540,7 @@ def generate_gaussian_noise(
 
 def add_gaussian_noise(
     img: np.ndarray,
-    sigma: float | Tensor = 10,
+    sigma: float = 10,
     clip: bool = True,
     rounds: bool = False,
     gray_noise: bool = False,

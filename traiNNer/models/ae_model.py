@@ -5,11 +5,11 @@ from collections import OrderedDict
 from os import path as osp
 
 import torch
+from ema_pytorch import EMA
 from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
-from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import TqdmExperimentalWarning
@@ -17,6 +17,7 @@ from tqdm.rich import tqdm
 
 from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
+from traiNNer.archs.autoencoder_arch import AutoEncoder
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
 from traiNNer.models.base_model import BaseModel
@@ -48,9 +49,9 @@ class AEModel(BaseModel):
 
         # define network
         assert opt.network_ae is not None
-        self.net_ae = build_network(
+        self.net_ae: AutoEncoder = build_network(
             {**opt.network_ae, "scale": opt.scale, "freeze": False}
-        )
+        )  # pyright: ignore[reportAttributeAccessIssue]
 
         # load pretrained models
         if self.opt.path.pretrain_network_ae is not None:
@@ -64,7 +65,7 @@ class AEModel(BaseModel):
                 self.opt.path.pretrain_network_ae_decoder,
             )
 
-        self.net_ae = self.model_to_device(self.net_ae)
+        self.net_ae = self.model_to_device(self.net_ae)  # pyright: ignore[reportAttributeAccessIssue]
 
         self.gt: Tensor | None = None
         self.lq: Tensor | None = None
@@ -121,7 +122,8 @@ class AEModel(BaseModel):
             self.losses = {}
 
             self.ema_decay = 0
-            self.net_ae_ema = None
+            self.ema_switch_iter = None
+            self.net_ae_ema: EMA | None = None
 
             self.optimizer_ae: Optimizer | None = None
 
@@ -145,12 +147,15 @@ class AEModel(BaseModel):
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
             )
             assert self.opt.network_ae is not None
-            init_net_ae_ema = build_network(
-                {**self.opt.network_ae, "scale": self.opt.scale, "freeze": False}
-            )
+
+            init_net_ae_ema: AutoEncoder | None = None
 
             # load pretrained model
             if self.opt.path.pretrain_network_ae_ema is not None:
+                init_net_ae_ema = build_network(
+                    {**self.opt.network_ae, "scale": self.opt.scale, "freeze": False}
+                )  # pyright: ignore[reportAssignmentType]
+                assert init_net_ae_ema is not None
                 self.load_network(
                     init_net_ae_ema,
                     self.opt.path.pretrain_network_ae_ema,
@@ -168,15 +173,18 @@ class AEModel(BaseModel):
             # define network net_ae with Exponential Moving Average (EMA)
             # net_ae_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
-            self.net_ae_ema = AveragedModel(
-                init_net_ae_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
-                multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
-                device=self.device,
-            )
+            self.net_ae_ema = EMA(
+                self.net_ae,
+                ema_model=init_net_ae_ema,  # TODO ???
+                beta=self.ema_decay,
+                allow_different_devices=True,
+                update_after_step=100,
+                update_every=1,
+                update_model_with_ema_every=self.ema_switch_iter,
+            ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
-            self.net_ae_ema.n_averaged = self.net_ae_ema.n_averaged.to(
-                device=torch.device("cpu")
-            )
+            assert self.net_ae_ema is not None
+            self.net_ae_ema.step = self.net_ae_ema.step.to(device=torch.device("cpu"))
 
         self.grad_clip = train_opt.grad_clip
         if self.grad_clip:
@@ -235,6 +243,7 @@ class AEModel(BaseModel):
         train_opt = self.opt.train
         assert train_opt is not None
         assert train_opt.optim_ae is not None
+        assert self.net_ae is not None
         optim_params = []
         for k, v in self.net_ae.named_parameters():
             if v.requires_grad:
@@ -271,6 +280,7 @@ class AEModel(BaseModel):
         assert self.optimizer_ae is not None
         assert self.gt is not None
         assert self.scaler_ae is not None
+        assert self.net_ae is not None
 
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
@@ -318,18 +328,21 @@ class AEModel(BaseModel):
 
         if self.net_ae_ema is not None and apply_gradient:
             if not (self.use_amp and self.optimizers_skipped[0]):
-                self.net_ae_ema.update_parameters(self.net_ae)
+                self.net_ae_ema.update()
 
     def test(self) -> None:
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
+            assert self.gt is not None
             if self.net_ae_ema is not None:
                 self.net_ae_ema.eval()
                 with torch.inference_mode():
-                    self.output_lq = self.net_ae_ema.module.encode(self.gt)
-                    self.output_gt = self.net_ae_ema.module.decode(self.output_lq)
+                    assert isinstance(self.net_ae_ema.ema_model, AutoEncoder)
+                    self.output_lq = self.net_ae_ema.ema_model.encode(self.gt)
+                    self.output_gt = self.net_ae_ema.ema_model.decode(self.output_lq)
             else:
+                assert isinstance(self.net_ae, AutoEncoder)
                 self.net_ae.eval()
                 with torch.inference_mode():
                     self.output_lq = self.net_ae.encode(self.gt)
@@ -514,6 +527,7 @@ class AEModel(BaseModel):
     ) -> None:
         assert self.opt.path.models is not None
         assert self.opt.path.resume_models is not None
+        assert self.net_ae is not None
 
         if self.net_ae_ema is not None:
             self.save_network(

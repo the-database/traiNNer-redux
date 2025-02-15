@@ -93,6 +93,12 @@ class Conv3XC(nn.Module):
         )
 
     def update_params(self) -> None:
+        assert isinstance(self.conv[0].weight, Tensor)
+        assert isinstance(self.conv[0].bias, Tensor)
+        assert isinstance(self.conv[1].weight, Tensor)
+        assert isinstance(self.conv[1].bias, Tensor)
+        assert isinstance(self.conv[2].weight, Tensor)
+        assert isinstance(self.conv[2].bias, Tensor)
         w1 = self.conv[0].weight.data.clone().detach()
         b1 = self.conv[0].bias.data.clone().detach()
         w2 = self.conv[1].weight.data.clone().detach()
@@ -150,6 +156,7 @@ class SeqConv3x3(nn.Module):
 
         conv1 = torch.nn.Conv2d(self.mid_planes, self.out_planes, kernel_size=3)
         self.k1 = conv1.weight
+        assert conv1.bias is not None
         self.b1 = conv1.bias
 
     def forward(self, x: Tensor) -> Tensor:
@@ -200,8 +207,10 @@ class RepConv(nn.Module):
     def fuse(self) -> None:
         conv1_w, conv1_b = self.conv1.rep_params()
         conv2_w, conv2_b = self.conv2.weight, self.conv2.bias
+        assert conv2_b is not None
         self.conv3.update_params()
         conv3_w, conv3_b = self.conv3.eval_conv.weight, self.conv3.eval_conv.bias
+        assert conv3_b is not None
         device = self.conv_3x3_rep.weight.device
         sum_weight = (
             self.alpha[0] * conv1_w + self.alpha[1] * conv2_w + self.alpha[2] * conv3_w
@@ -283,6 +292,9 @@ class OmniShift(nn.Module):
         return out
 
     def reparam_5x5(self) -> None:
+        assert self.conv1x1.bias is not None
+        assert self.conv3x3.bias is not None
+        assert self.conv5x5.bias is not None
         # Combine the parameters of conv1x1, conv3x3, and conv5x5 to form a single 5x5 depth-wise convolution
 
         padded_weight_1x1 = F.pad(self.conv1x1.weight, (2, 2, 2, 2))

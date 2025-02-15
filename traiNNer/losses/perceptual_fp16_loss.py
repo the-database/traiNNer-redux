@@ -154,7 +154,9 @@ class PerceptualFP16Loss(nn.Module):
         """
         x, y: input image tensors with the shape of (N, C, H, W)
         """
+        assert isinstance(self.stride_fd, int)
         rand = self.__getattr__(f"rand_{idx}")
+        assert isinstance(rand, Tensor)
         projx = F.conv2d(x, rand, stride=self.stride_fd)
         projx = projx.reshape(projx.shape[0], projx.shape[1], -1)
         projy = F.conv2d(y, rand, stride=self.stride_fd)
@@ -236,6 +238,7 @@ class PerceptualFP16Loss(nn.Module):
             s1 *= self.layer_weights[k]
             score1 += s1
             if s2 is not None:
+                assert score2 is not None
                 s2 *= self.layer_weights[k]
                 score2 += s2
 
@@ -291,6 +294,13 @@ class VGG(nn.Module):
 
     @staticmethod
     def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
+        assert isinstance(conv.in_channels, int)
+        assert isinstance(conv.out_channels, int)
+        assert isinstance(conv.kernel_size, int)
+        assert isinstance(conv.stride, int)
+        assert isinstance(conv.padding, int)
+        assert isinstance(conv.weight, Tensor)
+        assert isinstance(conv.bias, Tensor)
         new_conv = nn.Conv2d(
             conv.in_channels,
             conv.out_channels,
@@ -313,6 +323,8 @@ class VGG(nn.Module):
 
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
+        assert isinstance(self.mean, Tensor)
+        assert isinstance(self.std, Tensor)
         h = (x - self.mean) / self.std
 
         feats = {}

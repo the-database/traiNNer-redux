@@ -35,6 +35,7 @@ class L2pooling(nn.Module):
         )
 
     def forward(self, input: Tensor) -> Tensor:
+        assert isinstance(self.filter, Tensor)
         input = input**2
         out = F.conv2d(
             input,
@@ -116,6 +117,8 @@ class DISTSLoss(nn.Module):
         )
         self.register_parameter("alpha", alpha_param)
         self.register_parameter("beta", beta_param)
+        assert isinstance(self.alpha, nn.Parameter)
+        assert isinstance(self.beta, nn.Parameter)
         self.alpha.data.normal_(0.1, 0.01)
         self.beta.data.normal_(0.1, 0.01)
 
@@ -136,6 +139,8 @@ class DISTSLoss(nn.Module):
         h = x
 
         if self.use_input_norm:
+            assert isinstance(self.mean, Tensor)
+            assert isinstance(self.std, Tensor)
             h = (h - self.mean) / self.std
 
         h = self.stage1(h)
@@ -163,7 +168,8 @@ class DISTSLoss(nn.Module):
         dist2 = torch.tensor(0, device=x.device)
         c1 = 1e-6
         c2 = 1e-6
-
+        assert isinstance(self.alpha, nn.Parameter)
+        assert isinstance(self.beta, nn.Parameter)
         w_sum = self.alpha.sum() + self.beta.sum()
         alpha = torch.split(self.alpha / w_sum, self.chns, dim=1)
         beta = torch.split(self.beta / w_sum, self.chns, dim=1)

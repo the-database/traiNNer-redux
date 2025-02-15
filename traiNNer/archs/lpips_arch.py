@@ -341,7 +341,7 @@ class LPIPS(nn.Module):
                 for kk in range(self.L)
             ]
 
-        val = 0
+        val = torch.tensor(0, device=res[0].device)
         for l in range(self.L):
             val += res[l]
 
@@ -362,6 +362,8 @@ class ScalingLayer(nn.Module):
         )
 
     def forward(self, inp: Tensor) -> Tensor:
+        assert isinstance(self.shift, Tensor)
+        assert isinstance(self.scale, Tensor)
         return (inp - self.shift) / self.scale
 
 

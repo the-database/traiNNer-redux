@@ -8,7 +8,7 @@ from typing import Any
 import cv2
 import torch
 from ema_pytorch import EMA
-from torch import Tensor
+from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
@@ -162,7 +162,7 @@ class SRModel(BaseModel):
 
             self.ema_decay = 0
             self.ema_switch_iter = None
-            self.net_g_ema = None
+            self.net_g_ema: EMA | None = None
 
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
@@ -223,6 +223,7 @@ class SRModel(BaseModel):
                 update_model_with_ema_every=self.ema_switch_iter,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
+            assert self.net_g_ema is not None
             self.net_g_ema.step = self.net_g_ema.step.to(device=torch.device("cpu"))
 
         self.grad_clip = train_opt.grad_clip
@@ -296,6 +297,7 @@ class SRModel(BaseModel):
     def setup_optimizers(self) -> None:
         train_opt = self.opt.train
         assert train_opt is not None
+        assert train_opt.optim_g is not None
         optim_params = []
         for k, v in self.net_g.named_parameters():
             if v.requires_grad:
@@ -708,6 +710,7 @@ class SRModel(BaseModel):
         assert self.opt.path.resume_models is not None
 
         if self.net_g_ema is not None:
+            assert isinstance(self.net_g_ema.ema_model, nn.Module)
             self.save_network(
                 self.net_g_ema.ema_model,
                 "net_g_ema",
