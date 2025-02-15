@@ -162,13 +162,6 @@ class AEModel(BaseModel):
                     True,
                     "params_ema",
                 )
-            elif self.opt.path.pretrain_network_ae_decoder_ema is not None:
-                self.load_network(
-                    init_net_ae_ema.decoder,
-                    self.opt.path.pretrain_network_ae_decoder_ema,
-                    True,
-                    "params_ema",
-                )
 
             # define network net_ae with Exponential Moving Average (EMA)
             # net_ae_ema is used only for testing on one GPU and saving

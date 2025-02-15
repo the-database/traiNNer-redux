@@ -16,11 +16,11 @@ from traiNNer.losses.basic_loss import (
 from traiNNer.losses.dists_loss import DISTSLoss
 from traiNNer.losses.ldl_loss import LDLLoss
 from traiNNer.losses.mssim_loss import MSSIMLoss
-from traiNNer.losses.perceptual_loss import (
+from traiNNer.losses.perceptual_fp16_loss import (
     VGG19_CONV_LAYER_WEIGHTS,
     VGG19_RELU_LAYER_WEIGHTS,
-    PerceptualLoss,
 )
+from traiNNer.losses.perceptual_loss import PerceptualLoss
 
 LOSS_FUNCTIONS = [
     L1Loss(
