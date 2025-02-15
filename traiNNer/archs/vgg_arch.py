@@ -311,9 +311,9 @@ class VGGFeatureExtractor(nn.Module):
     def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
         assert isinstance(conv.in_channels, int)
         assert isinstance(conv.out_channels, int)
-        assert isinstance(conv.kernel_size, int)
-        assert isinstance(conv.stride, int)
-        assert isinstance(conv.padding, int)
+        assert isinstance(conv.kernel_size, int | tuple)
+        assert isinstance(conv.stride, int | tuple)
+        assert isinstance(conv.padding, int | tuple)
         assert isinstance(conv.weight, Tensor)
         assert isinstance(conv.bias, Tensor)
         new_conv = nn.Conv2d(
