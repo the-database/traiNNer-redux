@@ -30,12 +30,12 @@ class DCCM(nn.Sequential):
     "Doubled Convolutional Channel Mixer"
 
     def __init__(self, dim: int) -> None:
-        assert isinstance(self[-1].weight, Tensor)
         super().__init__(
             nn.Conv2d(dim, dim * 2, 3, 1, 1),
             nn.Mish(),
             nn.Conv2d(dim * 2, dim, 3, 1, 1),
         )
+        assert isinstance(self[-1].weight, Tensor)
         trunc_normal_(self[-1].weight, std=0.02)
 
 
