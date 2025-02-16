@@ -250,7 +250,7 @@ class TrainOptions(StrictStruct):
             description="The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA."
         ),
     ] = 0
-    ema_switch_iter: Annotated[
+    ema_switch_epoch: Annotated[
         float, Meta(description="Epoch at which to switch EMA model to online model.")
     ] = 1.0
     grad_clip: Annotated[
@@ -435,6 +435,7 @@ class ReduxOptions(StrictStruct):
     watch: bool = False
     is_train: bool | None = None
     root_path: str | None = None
+    train_iter_per_epoch: int = 1
 
     use_amp: Annotated[
         bool, Meta(description="Speed up training and reduce VRAM usage. NVIDIA only.")
