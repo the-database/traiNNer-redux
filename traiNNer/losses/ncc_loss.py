@@ -12,7 +12,7 @@ class NCCLoss(nn.Module):
 
     def forward(self, sr: Tensor, hr: Tensor) -> Tensor:
         cc_value = _cc_single_torch(sr, hr)
-        return 1 - ((cc_value + 1) * 0.5)
+        return self.loss_weight * (1 - ((cc_value + 1) * 0.5))
 
 
 def _cc_single_torch(raw_tensor: Tensor, dst_tensor: Tensor) -> Tensor:

@@ -3,7 +3,10 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 
+from traiNNer.losses.basic_loss import CharbonnierLoss
 from traiNNer.utils.registry import LOSS_REGISTRY
+
+MS_WEIGHTS = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333)
 
 
 @LOSS_REGISTRY.register()
@@ -17,13 +20,15 @@ class MSSSIML1Loss(nn.Module):
         alpha: float = 0.1,
     ) -> None:
         if gaussian_sigmas is None:
-            gaussian_sigmas = [0.5, 1.0, 2.0, 4.0, 8.0]
+            gaussian_sigmas = [0.1, 1.0, 2.0, 4.0, 8.0]
         super().__init__()
         self.DR = data_range
         self.C1 = (k[0] * data_range) ** 2
         self.C2 = (k[1] * data_range) ** 2
         self.pad = int(2 * gaussian_sigmas[-1])
+        self.padt = (self.pad,) * 4
         self.alpha = alpha
+        self.charbonnier = CharbonnierLoss(1, reduction="none")
         filter_size = int(4 * gaussian_sigmas[-1] + 1)
         g_masks = torch.zeros((3 * len(gaussian_sigmas), 1, filter_size, filter_size))
         for idx, sigma in enumerate(gaussian_sigmas):
@@ -64,17 +69,24 @@ class MSSSIML1Loss(nn.Module):
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         g_masks: Tensor = torch.jit.annotate(Tensor, self._g_masks)
+        mode = "replicate"
         ch = x.shape[-3]
-        mux = F.conv2d(x, g_masks, groups=ch, padding=self.pad)
-        muy = F.conv2d(y, g_masks, groups=ch, padding=self.pad)
+        mux = F.conv2d(F.pad(x, self.padt, mode=mode), g_masks, groups=ch)
+        muy = F.conv2d(F.pad(y, self.padt, mode=mode), g_masks, groups=ch)
 
         mux2 = mux * mux
         muy2 = muy * muy
         muxy = mux * muy
 
-        sigmax2 = F.conv2d(x * x, g_masks, groups=ch, padding=self.pad) - mux2
-        sigmay2 = F.conv2d(y * y, g_masks, groups=ch, padding=self.pad) - muy2
-        sigmaxy = F.conv2d(x * y, g_masks, groups=ch, padding=self.pad) - muxy
+        sigmax2 = (
+            F.conv2d(F.pad(x * x, self.padt, mode=mode), g_masks, groups=ch) - mux2
+        )
+        sigmay2 = (
+            F.conv2d(F.pad(y * y, self.padt, mode=mode), g_masks, groups=ch) - muy2
+        )
+        sigmaxy = (
+            F.conv2d(F.pad(x * y, self.padt, mode=mode), g_masks, groups=ch) - muxy
+        )
 
         # l(j), cs(j) in MS-SSIM
         l = (2 * muxy + self.C1) / (mux2 + muy2 + self.C1)  # [B, 15, H, W]
@@ -85,13 +97,12 @@ class MSSSIML1Loss(nn.Module):
 
         loss_ms_ssim = 1 - lm * pics  # [B, H, W]
 
-        loss_l1 = F.l1_loss(x, y, reduction="none")  # [B, 3, H, W]
+        loss_l1 = self.charbonnier(x, y)  # [B, 3, H, W]
         # average l1 loss in 3 channels
         gaussian_l1 = F.conv2d(
-            loss_l1,
+            F.pad(loss_l1, self.padt, mode=mode),
             g_masks[-ch:],
             groups=ch,
-            padding=self.pad,
         ).mean(1)  # [B, H, W]
         loss_mix = self.alpha * loss_ms_ssim + (1 - self.alpha) * gaussian_l1 / self.DR
 
