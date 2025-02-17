@@ -249,7 +249,7 @@ class LumaLoss(nn.Module):
 @LOSS_REGISTRY.register()
 class HSLuvLoss(nn.Module):
     def __init__(
-        self, loss_weight: float, criterion: str = "l1", downscale_factor: int = 4
+        self, loss_weight: float, criterion: str = "l1", downscale_factor: int = 1
     ) -> None:
         super().__init__()
         self.downscale_factor = downscale_factor
