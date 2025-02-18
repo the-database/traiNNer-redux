@@ -998,7 +998,7 @@ def _resample(input: Tensor, size: tuple[int, int], a: int = 3) -> Tensor:
         input = F.conv2d(input, kernel_w[None, None, None, :], padding=0)
 
     input = input.view([n, c, h, w])
-    return F.interpolate(input, size, mode="bicubic", align_corners=False)
+    return F.interpolate(input, size, mode="bicubic", align_corners=False).clamp(0, 1)
 
 
 def resize_pt(
@@ -1016,4 +1016,4 @@ def resize_pt(
             size,
         )
 
-    return F.interpolate(img, size=size, mode=mode, antialias=mode in ANTIALIAS_MODES)
+    return F.interpolate(img, size=size, mode=mode, antialias=mode in ANTIALIAS_MODES).clamp(0, 1)

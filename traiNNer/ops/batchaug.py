@@ -293,13 +293,13 @@ def resizemix(
         (gt_bby2 - gt_bby1, gt_bbx2 - gt_bbx1),
         mode="bicubic",
         antialias=True,
-    )
+    ).clamp(0, 1)
     img_lq_resize = F.interpolate(
         img_lq_resize,
         (lq_bby2 - lq_bby1, lq_bbx2 - lq_bbx1),
         mode="bicubic",
         antialias=True,
-    )
+    ).clamp(0, 1)
 
     # mix
     img_gt[:, :, gt_bby1:gt_bby2, gt_bbx1:gt_bbx2] = img_gt_resize
