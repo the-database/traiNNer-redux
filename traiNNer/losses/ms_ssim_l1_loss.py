@@ -1,4 +1,3 @@
-# Modified from https://github.com/psyrocloud/MS-SSIM_L1_LOSS/blob/main/MS_SSIM_L1_loss.py
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
@@ -17,7 +16,7 @@ class MSSSIML1Loss(nn.Module):
         gaussian_sigmas: list[float] | None = None,
         data_range: float = 1.0,
         k: tuple[float, float] = (0.01, 0.03),
-        alpha: float = 0.1,
+        alpha: float = 0.05,
     ) -> None:
         if gaussian_sigmas is None:
             gaussian_sigmas = [0.1, 1.0, 2.0, 4.0, 8.0]
@@ -37,6 +36,8 @@ class MSSSIML1Loss(nn.Module):
             g_masks[3 * idx + 1, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
             g_masks[3 * idx + 2, 0, :, :] = self._fspecial_gauss_2d(filter_size, sigma)
         self.register_buffer("_g_masks", g_masks)
+
+        self.ms_weights = torch.tensor(MS_WEIGHTS).repeat_interleave(3).view(-1, 1, 1)
         self.loss_weight = loss_weight
 
     def _fspecial_gauss_1d(self, size: int, sigma: float) -> Tensor:
@@ -88,12 +89,16 @@ class MSSSIML1Loss(nn.Module):
             F.conv2d(F.pad(x * y, self.padt, mode=mode), g_masks, groups=ch) - muxy
         )
 
-        # l(j), cs(j) in MS-SSIM
-        l = (2 * muxy + self.C1) / (mux2 + muy2 + self.C1)  # [B, 15, H, W]
-        cs = (2 * sigmaxy + self.C2) / (sigmax2 + sigmay2 + self.C2)
+        l = (2 * muxy[:, -3:, :, :] + self.C1) / (
+            mux2[:, -3:, :, :] + muy2[:, -3:, :, :] + self.C1
+        )  # [B, 3, H, W]
+        lm = l.prod(dim=1)  # [B, H, W]
+        cs = F.relu(
+            (2 * sigmaxy + self.C2) / (sigmax2 + sigmay2 + self.C2)
+        )  # [B, 15, H, W]
 
-        lm = l[:, -1, :, :] * l[:, -2, :, :] * l[:, -3, :, :]
-        pics = cs.prod(dim=1)
+        cs_weighted = cs ** self.ms_weights.to(cs.device)  # [B, 15, H, W]
+        pics = cs_weighted.prod(dim=1)  # [B, H, W]
 
         loss_ms_ssim = 1 - lm * pics  # [B, H, W]
 
