@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 
-from traiNNer.losses.basic_loss import CharbonnierLoss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 MS_WEIGHTS = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333)
@@ -27,7 +26,6 @@ class MSSSIML1Loss(nn.Module):
         self.pad = int(2 * gaussian_sigmas[-1])
         self.padt = (self.pad,) * 4
         self.alpha = alpha
-        self.charbonnier = CharbonnierLoss(1, reduction="none")
         filter_size = int(4 * gaussian_sigmas[-1] + 1)
         g_masks = torch.zeros((3 * len(gaussian_sigmas), 1, filter_size, filter_size))
         for idx, sigma in enumerate(gaussian_sigmas):
@@ -102,7 +100,7 @@ class MSSSIML1Loss(nn.Module):
 
         loss_ms_ssim = 1 - lm * pics  # [B, H, W]
 
-        loss_l1 = self.charbonnier(x, y)  # [B, 3, H, W]
+        loss_l1 = F.l1_loss(x, y, reduction="none")  # [B, 3, H, W]
         # average l1 loss in 3 channels
         gaussian_l1 = F.conv2d(
             F.pad(loss_l1, self.padt, mode=mode),
