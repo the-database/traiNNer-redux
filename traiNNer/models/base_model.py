@@ -18,8 +18,6 @@ from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import Optimizer, ParamsT
-
-# from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 

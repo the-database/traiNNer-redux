@@ -47,6 +47,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[Real-CUGAN](https://github.com/bilibili/ailab) | [MIT License](https://github.com/bilibili/ailab/blob/main/Real-CUGAN/LICENSE)|
 |[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | [BSD 3-Clause "New" or "Revised" License](https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE)|
 |[RealPLKSR](https://github.com/muslll/neosr/blob/master/neosr/archs/realplksr_arch.py) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
+|[robust_loss_pytorch](https://github.com/jonbarron/robust_loss_pytorch)| [Apache License 2.0](https://github.com/jonbarron/robust_loss_pytorch/blob/master/LICENSE)|
 |[RTMoSR](https://github.com/rewaifu/RTMoSR)| [MIT License](https://github.com/rewaifu/RTMoSR/blob/main/LICENSE)|
 |[RGT](https://github.com/zhengchen1999/RGT) | [Apache License 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)|
 |[aaf6aa/SCUNet](https://github.com/aaf6aa/SCUNet) | [Apache License 2.0](https://github.com/aaf6aa/SCUNet/blob/main/LICENSE)|

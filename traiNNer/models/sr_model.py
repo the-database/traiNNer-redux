@@ -24,6 +24,7 @@ from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
+from traiNNer.losses.adaptive_loss import AdaptiveLoss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -301,6 +302,11 @@ class SRModel(BaseModel):
         assert train_opt is not None
         assert train_opt.optim_g is not None
         optim_params = []
+
+        for _key, loss in self.losses.items():
+            if isinstance(loss, AdaptiveLoss):
+                optim_params.extend(loss.adaptive.parameters())
+
         for k, v in self.net_g.named_parameters():
             if v.requires_grad:
                 optim_params.append(v)
@@ -428,6 +434,12 @@ class SRModel(BaseModel):
                     scale_after,
                 )
             self.optimizer_g.zero_grad()
+            for _key, loss in self.losses.items():
+                print(loss, isinstance(loss, AdaptiveLoss))
+                if isinstance(loss, AdaptiveLoss):
+                    print(
+                        f"{current_iter:<6}:  alpha={loss.adaptive.alpha().mean()}  scale={loss.adaptive.scale().mean()}"
+                    )
 
         cri_gan = self.losses.get("l_g_gan")
 
