@@ -434,12 +434,11 @@ class SRModel(BaseModel):
                     scale_after,
                 )
             self.optimizer_g.zero_grad()
-            for _key, loss in self.losses.items():
-                print(loss, isinstance(loss, AdaptiveLoss))
-                if isinstance(loss, AdaptiveLoss):
-                    print(
-                        f"{current_iter:<6}:  alpha={loss.adaptive.alpha().mean()}  scale={loss.adaptive.scale().mean()}"
-                    )
+            # for _key, loss in self.losses.items():
+            #     if isinstance(loss, AdaptiveLoss):
+            #         print(
+            #             f"{current_iter:<6}:  alpha={loss.adaptive.alpha().mean()}  scale={loss.adaptive.scale().mean()}"
+            #         )
 
         cri_gan = self.losses.get("l_g_gan")
 

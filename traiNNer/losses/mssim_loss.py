@@ -170,9 +170,12 @@ class MSSIMLoss(nn.Module):
                 msssim *= ssim**w
             else:
                 msssim *= cs**w
-                padding = [s % 2 for s in x.shape[2:]]  # spatial padding
-                x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
-                y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
+                x = F.interpolate(
+                    x, scale_factor=1 / 2, mode="bicubic", antialias=True
+                ).clamp(0, 1)
+                y = F.interpolate(
+                    y, scale_factor=1 / 2, mode="bicubic", antialias=True
+                ).clamp(0, 1)
 
         return msssim
 
