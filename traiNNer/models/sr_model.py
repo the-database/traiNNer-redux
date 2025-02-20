@@ -503,7 +503,7 @@ class SRModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
-            if self.optimizers_schedule_free[0]:
+            if self.optimizers_schedule_free and self.optimizers_schedule_free[0]:
                 assert self.optimizer_g is not None
                 self.optimizer_g.eval()  # pyright: ignore[reportAttributeAccessIssue]
 
@@ -517,7 +517,7 @@ class SRModel(BaseModel):
                     self.output = self.net_g(self.lq)
                 self.net_g.train()
 
-            if self.optimizers_schedule_free[0]:
+            if self.optimizers_schedule_free and self.optimizers_schedule_free[0]:
                 assert self.optimizer_g is not None
                 self.optimizer_g.train()  # pyright: ignore[reportAttributeAccessIssue]
 
