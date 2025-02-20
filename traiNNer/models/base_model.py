@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pytorch_optimizer
+import schedulefree
 import torch
 from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
@@ -22,6 +23,8 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
+from traiNNer.optimizers.adan import Adan
+from traiNNer.optimizers.adanschedulefree import AdanScheduleFree
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.logger import clickable_file_path
@@ -229,17 +232,23 @@ class BaseModel:
             "RMSPROP": torch.optim.RMSprop,
             "NADAM": torch.optim.NAdam,
             "LBFGS": torch.optim.LBFGS,
-            "ADAN": pytorch_optimizer.Adan,
+            "ADAN": Adan,
+            "ADANSCHEDULEFREE": AdanScheduleFree,
             "LAMB": pytorch_optimizer.Lamb,
             "PRODIGY": pytorch_optimizer.Prodigy,
             "LION": pytorch_optimizer.Lion,
             "TIGER": pytorch_optimizer.Tiger,
             "ADAMP": pytorch_optimizer.AdamP,
+            "ADAMWSCHEDULEFREE": schedulefree.AdamWScheduleFree,
         }
         if optim_type_upper in optim_map:
             optimizer = optim_map[optim_type_upper](params, lr, **kwargs)  # pyright: ignore[reportArgumentType]
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
+
+        if hasattr(optimizer, "train"):
+            optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
+
         return optimizer
 
     def setup_schedulers(self) -> None:
@@ -710,6 +719,8 @@ class BaseModel:
                     state["scaler_ae"] = self.scaler_ae.state_dict()
 
             for o in self.optimizers:
+                if hasattr(o, "eval"):
+                    o.eval()  # pyright: ignore[reportAttributeAccessIssue]
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
@@ -727,6 +738,9 @@ class BaseModel:
             while retry > 0:
                 try:
                     torch.save(state, save_path)
+                    for o in self.optimizers:
+                        if hasattr(o, "train"):
+                            o.train()  # pyright: ignore[reportAttributeAccessIssue]
                 except Exception as e:
                     logger = get_root_logger()
                     logger.warning(
@@ -763,6 +777,8 @@ class BaseModel:
 
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
+            if hasattr(self.optimizers[i], "train"):
+                self.optimizers[i].train()  # pyright: ignore[reportAttributeAccessIssue]
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
 

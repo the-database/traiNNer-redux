@@ -320,7 +320,7 @@ class SRModel(BaseModel):
         )
         self.optimizers.append(self.optimizer_g)
         self.optimizers_skipped.append(False)
-        self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
+        self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
 
         # optimizer d
         if self.net_d is not None:
@@ -331,7 +331,7 @@ class SRModel(BaseModel):
             )
             self.optimizers.append(self.optimizer_d)
             self.optimizers_skipped.append(False)
-            self.optimizers_schedule_free.append("ScheduleFree" in optim_type)
+            self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
 
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data
@@ -355,7 +355,6 @@ class SRModel(BaseModel):
         self, current_iter: int, current_accum_iter: int, apply_gradient: bool
     ) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
-
         assert self.optimizer_g is not None
         assert self.lq is not None
         assert self.gt is not None
@@ -504,6 +503,10 @@ class SRModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
+            if self.optimizers_schedule_free[0]:
+                assert self.optimizer_g is not None
+                self.optimizer_g.eval()  # pyright: ignore[reportAttributeAccessIssue]
+
             if self.net_g_ema is not None:
                 self.net_g_ema.eval()
                 with torch.inference_mode():
@@ -513,6 +516,10 @@ class SRModel(BaseModel):
                 with torch.inference_mode():
                     self.output = self.net_g(self.lq)
                 self.net_g.train()
+
+            if self.optimizers_schedule_free[0]:
+                assert self.optimizer_g is not None
+                self.optimizer_g.train()  # pyright: ignore[reportAttributeAccessIssue]
 
     def dist_validation(
         self,
