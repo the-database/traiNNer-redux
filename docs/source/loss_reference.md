@@ -92,12 +92,22 @@ real_label_val: 1.0
 fake_label_val: 0.0
 loss_weight: 1.0
 ```
+## gradientvarianceloss
+
+
+```yaml
+type: gradientvarianceloss
+patch_size: 16
+criterion: charbonnier
+loss_weight: 1.0
+```
 ## hsluvloss
 
 
 ```yaml
 type: hsluvloss
 criterion: l1
+downscale_factor: 1
 loss_weight: 1.0
 ```
 ## l1loss

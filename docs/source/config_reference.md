@@ -27,16 +27,12 @@
   The options for the discriminator model.
 
   Type: dict
-### network_ae
-
-  The options for the autoencoder model.
-
-  Type: dict
 ### manual_seed
 
   Deterministic mode, slows down training. Only use for reproducible experiments.
 
   Type: int
+
 
 
 
@@ -324,7 +320,6 @@
   Type: str
 
 
-
 ### strict_load_g
 
   Whether to load the pretrain model for the generator in strict mode. It should be enabled in most cases, unless you want to partially load a pretrain of a different scale or with slightly different hyperparameters.
@@ -343,18 +338,6 @@
   Whether to load the pretrain model for the discriminator in strict mode. It should be enabled in most cases.
 
   Type: bool
-### pretrain_network_ae
-
-  Path to the pretrain model for the autoencoder. `pth` and `safetensors` formats are supported.
-
-  Type: str
-
-### pretrain_network_ae_decoder
-
-  Path to the pretrain model for the decoder of the autoencoder. `pth` and `safetensors` formats are supported.
-
-  Type: str
-
 
 ## Train options (`train`)
 
@@ -368,6 +351,8 @@
   Whether the discriminator updates adaptively. That is, discriminator updates are paused whenever the generator falls behind the discriminator (whenever smoothed l_g_gan increases). Can mitigate GAN collapse by preventing the discriminator from overpowering the generator.
 
   Type: bool
+
+
 ### optim_g
 
   The optimizer to use for the generator model.
@@ -376,6 +361,11 @@
 ### ema_decay
 
   The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA.
+
+  Type: float
+### ema_switch_epoch
+
+  Epoch at which to switch EMA model to online model.
 
   Type: float
 ### grad_clip
@@ -396,11 +386,6 @@
 ### optim_d
 
   The optimizer to use for the discriminator model.
-
-  Type: dict
-### optim_ae
-
-  The optimizer to use for the autoencoder model.
 
   Type: dict
 ### losses

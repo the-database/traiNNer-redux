@@ -28,14 +28,12 @@ class GANLoss(nn.Module):
         gan_type: str = "vanilla",
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
-        eps: float = 1e-8,
     ) -> None:
         super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
-        self.eps = eps
 
         if self.gan_type == "vanilla":
             self.loss = nn.BCEWithLogitsLoss()
