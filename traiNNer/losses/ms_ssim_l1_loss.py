@@ -97,6 +97,5 @@ class MSSSIML1Loss(nn.Module):
         ).mean(1)  # [B, H, W]
 
         loss_mix = self.alpha * loss_ms_ssim + (1 - self.alpha) * gaussian_l1 / self.DR
-        print(self.alpha * loss_ms_ssim.mean(), (1 - self.alpha) * gaussian_l1.mean())
 
         return self.loss_weight * loss_mix.mean()
