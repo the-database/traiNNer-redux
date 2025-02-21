@@ -24,7 +24,6 @@ class TrainingState(TypedDict):
     schedulers: list[StateDict]
     scaler_g: NotRequired[StateDict]
     scaler_d: NotRequired[StateDict]
-    scaler_ae: NotRequired[StateDict]
     ema_step: NotRequired[Tensor]
 
 

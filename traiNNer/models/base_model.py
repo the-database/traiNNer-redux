@@ -74,7 +74,6 @@ class BaseModel:
         self.amp_dtype = torch.float16
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
-        self.scaler_ae: GradScaler | None = None
         self.accum_iters: int = 1
         self.grad_clip: bool = False
 
@@ -715,8 +714,6 @@ class BaseModel:
                     state["scaler_d"] = self.scaler_d.state_dict()
                 if self.scaler_g is not None:
                     state["scaler_g"] = self.scaler_g.state_dict()
-                if self.scaler_ae is not None:
-                    state["scaler_ae"] = self.scaler_ae.state_dict()
 
             for o in self.optimizers:
                 if hasattr(o, "eval"):
@@ -788,9 +785,6 @@ class BaseModel:
         if "scaler_d" in resume_state:
             assert self.scaler_d is not None
             self.scaler_d.load_state_dict(resume_state["scaler_d"])
-        if "scaler_ae" in resume_state:
-            assert self.scaler_ae is not None
-            self.scaler_ae.load_state_dict(resume_state["scaler_ae"])
 
         if "ema_step" in resume_state:
             if self.net_g_ema is not None:
