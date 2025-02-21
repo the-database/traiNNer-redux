@@ -75,6 +75,7 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "seemore_t",
     "spanplus_s",
     "spanplus",
+    "tscunet",  # rank 5 tensors don't support channels last
 }
 
 # Urban100

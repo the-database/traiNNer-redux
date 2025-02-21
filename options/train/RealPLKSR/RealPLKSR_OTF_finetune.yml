@@ -140,7 +140,7 @@ path:
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#train-options-train
 ###########################################################################################
 train:
-  ema_decay: 0.999
+  ema_decay: 0.9999
   grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:
@@ -166,13 +166,13 @@ train:
   # Losses - for any loss set the loss_weight to 0 to disable it.
   # https://trainner-redux.readthedocs.io/en/latest/loss_reference.html
   losses:
-    # MS-SSIM L1 loss
-    - type: msssiml1loss
-      alpha: 0.1
+    # MS-SSIM loss
+    - type: mssimloss
+      cosim: true
       loss_weight: 1.0
     # Perceptual loss
     - type: perceptualloss
-      criterion: pd+l1  # pd+l1 (good quality), fd+l1 (slower), pd, fd, charbonnier, l1 (lower quality, legacy)
+      criterion: charbonnier  # charbonnier, l1, pd+l1, fd+l1, pd, fd
       loss_weight: 0.01
     # HSLuv loss (hue, saturation, lightness)
     - type: hsluvloss
@@ -221,6 +221,9 @@ val:
       type: calculate_ssim
       crop_border: 4  # Whether to crop border during validation.
       test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
+    lpips:
+      type: calculate_lpips
+      better: lower
     dists:
       type: calculate_dists
       better: lower
