@@ -435,7 +435,7 @@ class ReduxOptions(StrictStruct):
     watch: bool = False
     is_train: bool | None = None
     root_path: str | None = None
-    train_iter_per_epoch: int = 1
+    switch_iter_per_epoch: int = 1
 
     use_amp: Annotated[
         bool, Meta(description="Speed up training and reduce VRAM usage. NVIDIA only.")

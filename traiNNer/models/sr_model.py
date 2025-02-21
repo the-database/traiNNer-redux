@@ -162,7 +162,7 @@ class SRModel(BaseModel):
             self.losses = {}
 
             self.ema_decay = 0
-            self.iters_per_epoch = opt.train_iter_per_epoch
+            self.iters_per_epoch = opt.switch_iter_per_epoch
             self.ema_switch_epoch = None
             self.net_g_ema: EMA | None = None
 
