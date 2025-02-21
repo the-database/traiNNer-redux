@@ -177,7 +177,6 @@ class PathOptions(StrictStruct):
         ),
     ] = None
     pretrain_network_g_path: str | None = None
-    pretrain_network_ae_path: str | None = None
     param_key_g: str | None = None
     strict_load_g: Annotated[
         bool,
@@ -201,20 +200,6 @@ class PathOptions(StrictStruct):
             description="Whether to load the pretrain model for the discriminator in strict mode. It should be enabled in most cases."
         ),
     ] = True
-    pretrain_network_ae: Annotated[
-        str | None,
-        Meta(
-            description="Path to the pretrain model for the autoencoder. `pth` and `safetensors` formats are supported."
-        ),
-    ] = None
-    pretrain_network_ae_ema: str | None = None
-    pretrain_network_ae_decoder: Annotated[
-        str | None,
-        Meta(
-            description="Path to the pretrain model for the decoder of the autoencoder. `pth` and `safetensors` formats are supported."
-        ),
-    ] = None
-    pretrain_network_ae_decoder_ema: str | None = None
     ignore_resume_networks: list[str] | None = None
 
 
@@ -274,10 +259,6 @@ class TrainOptions(StrictStruct):
     optim_d: Annotated[
         dict[str, Any] | None,
         Meta(description="The optimizer to use for the discriminator model."),
-    ] = None
-    optim_ae: Annotated[
-        dict[str, Any] | None,
-        Meta(description="The optimizer to use for the autoencoder model."),
     ] = None
 
     # new losses format
@@ -414,11 +395,6 @@ class ReduxOptions(StrictStruct):
         Meta(description="The options for the discriminator model."),
     ] = None
 
-    network_ae: Annotated[
-        dict[str, Any] | None,
-        Meta(description="The options for the autoencoder model."),
-    ] = None
-
     manual_seed: Annotated[
         int | None,
         Meta(
@@ -431,7 +407,6 @@ class ReduxOptions(StrictStruct):
     rank: int | None = None
     world_size: int | None = None
     auto_resume: bool | None = None
-    # resume: int = 0
     watch: bool = False
     is_train: bool | None = None
     root_path: str | None = None

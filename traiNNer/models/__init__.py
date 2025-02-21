@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-from traiNNer.models.ae_model import AEModel
 from traiNNer.models.base_model import BaseModel
 from traiNNer.models.realesrgan_model import RealESRGANModel
 from traiNNer.models.realesrgan_paired_model import (
@@ -27,11 +26,7 @@ def build_model(opt: ReduxOptions) -> BaseModel:
             model = RealESRGANPairedModel(opt)
         else:
             model = RealESRGANModel(opt)
-    elif opt.network_ae and not opt.network_g:
-        model = AEModel(opt)
     else:
-        # logger.warning("ESRGANModel for testing only")
-        # model = ESRGANModel(opt)  # TODO testing, remove
         model = SRModel(opt)
 
     logger.info(
