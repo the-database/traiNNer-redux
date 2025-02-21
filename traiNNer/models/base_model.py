@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import pytorch_optimizer
-import schedulefree
 import torch
 from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
@@ -23,6 +22,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
+from traiNNer.optimizers.adamwschedulefree import AdamWScheduleFree
 from traiNNer.optimizers.adan import Adan
 from traiNNer.optimizers.adanschedulefree import AdanScheduleFree
 from traiNNer.utils import get_root_logger
@@ -239,7 +239,7 @@ class BaseModel:
             "LION": pytorch_optimizer.Lion,
             "TIGER": pytorch_optimizer.Tiger,
             "ADAMP": pytorch_optimizer.AdamP,
-            "ADAMWSCHEDULEFREE": schedulefree.AdamWScheduleFree,
+            "ADAMWSCHEDULEFREE": AdamWScheduleFree,
         }
         if optim_type_upper in optim_map:
             optimizer = optim_map[optim_type_upper](params, lr, **kwargs)  # pyright: ignore[reportArgumentType]
