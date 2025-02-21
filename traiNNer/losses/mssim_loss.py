@@ -62,10 +62,9 @@ class GaussianFilter2D(nn.Module):
         return w
 
     def forward(self, x: Tensor) -> Tensor:
-        assert isinstance(self.gaussian_window, Tensor)
         x = F.conv2d(
             input=x,
-            weight=self.gaussian_window,
+            weight=self.gaussian_window,  # pyright: ignore[reportCallIssue,reportArgumentType]
             stride=1,
             padding=self.padding,
             groups=x.shape[1],
