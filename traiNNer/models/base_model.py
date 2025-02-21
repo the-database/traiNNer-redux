@@ -66,8 +66,6 @@ class BaseModel:
         self.net_g = None
         self.net_g_ema: EMA | None = None
         self.net_d = None
-        self.net_ae = None
-        self.net_ae_ema: EMA | None = None
         self.use_amp = False
         self.use_channels_last = False
         self.memory_format = torch.preserve_format
@@ -723,8 +721,6 @@ class BaseModel:
                 state["schedulers"].append(s.state_dict())
             if self.net_g_ema is not None:
                 state["ema_step"] = self.net_g_ema.step
-            elif self.net_ae_ema is not None:
-                state["ema_step"] = self.net_ae_ema.step
 
             save_filename = f"{current_iter}.state"
             save_path = os.path.join(self.opt.path.training_states, save_filename)
@@ -790,9 +786,6 @@ class BaseModel:
             if self.net_g_ema is not None:
                 self.net_g_ema.register_buffer("step", resume_state["ema_step"])
                 self.net_g_ema.register_buffer("initted", torch.tensor(True))
-            elif self.net_ae_ema is not None:
-                self.net_ae_ema.register_buffer("step", resume_state["ema_step"])
-                self.net_ae_ema.register_buffer("initted", torch.tensor(True))
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
