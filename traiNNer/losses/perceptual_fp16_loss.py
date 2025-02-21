@@ -323,9 +323,7 @@ class VGG(nn.Module):
 
     # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
-        assert isinstance(self.mean, Tensor)
-        assert isinstance(self.std, Tensor)
-        h = (x - self.mean) / self.std
+        h = (x - self.mean) / self.std  # pyright: ignore[reportOperatorIssue]
 
         feats = {}
         for layer_name, stage in self.stages.items():
