@@ -207,9 +207,6 @@ def train_pipeline(root_path: str) -> None:
     if opt.path.pretrain_network_g_path is not None:
         pretrain_net_path = opt.path.pretrain_network_g_path
         net_type = "g"
-    elif opt.path.pretrain_network_ae_path is not None:
-        pretrain_net_path = opt.path.pretrain_network_ae_path
-        net_type = "ae"
     else:
         raise ValueError(
             "pretrain_network_g_path is required. Please enter the path to the directory of models at pretrain_network_g_path."
