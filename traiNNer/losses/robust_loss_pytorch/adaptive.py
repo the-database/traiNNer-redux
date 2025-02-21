@@ -350,8 +350,6 @@ class AdaptiveImageLossFunction(nn.Module):
                     self.wavelet_scale_base,
                 )
             )
-        elif self.representation == "DCT":
-            x_stack = util.image_dct(x_stack)
         # If `representation` == 'PIXEL', do nothing.
 
         # Reshape `x_stack` from
@@ -430,7 +428,7 @@ class AdaptiveImageLossFunction(nn.Module):
             raise ValueError(
                 f"`color_space` must be in {color_spaces}, but is {color_space!r}"
             )
-        representations = [*wavelet.generate_filters(), "DCT", "PIXEL"]
+        representations = [*wavelet.generate_filters(), "PIXEL"]
         if representation not in representations:
             raise ValueError(
                 f"`representation` must be in {representations}, but is {representation!r}"
