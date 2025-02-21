@@ -25,7 +25,6 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.optimizers.adan import Adan
 from traiNNer.optimizers.adanschedulefree import AdanScheduleFree
-from traiNNer.optimizers.neoadanschedulefree import NeoAdanScheduleFree
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.logger import clickable_file_path
@@ -234,7 +233,6 @@ class BaseModel:
             "NADAM": torch.optim.NAdam,
             "LBFGS": torch.optim.LBFGS,
             "ADAN": Adan,
-            "NEOADANSCHEDULEFREE": NeoAdanScheduleFree,
             "ADANSCHEDULEFREE": AdanScheduleFree,
             "LAMB": pytorch_optimizer.Lamb,
             "PRODIGY": pytorch_optimizer.Prodigy,

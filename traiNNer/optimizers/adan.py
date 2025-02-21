@@ -13,26 +13,12 @@
 # limitations under the License.
 
 import math
+from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch import Tensor
-from torch.optim.optimizer import Optimizer
-
-
-class MultiTensorApply:
-    available = False
-    warned = False
-
-    def __init__(self, chunk_size) -> None:
-        try:
-            MultiTensorApply.available = True
-            self.chunk_size = chunk_size
-        except ImportError as err:
-            MultiTensorApply.available = False
-            MultiTensorApply.import_err = err
-
-    def __call__(self, op, noop_flag_buffer, tensor_lists, *args):
-        return op(self.chunk_size, noop_flag_buffer, tensor_lists, *args)
+from torch.optim.optimizer import Optimizer, ParamsT
 
 
 class Adan(Optimizer):
@@ -64,15 +50,14 @@ class Adan(Optimizer):
 
     def __init__(
         self,
-        params,
-        lr=1e-3,
-        betas=(0.98, 0.92, 0.99),
-        eps=1e-8,
-        weight_decay=0.0,
-        max_grad_norm=0.0,
-        no_prox=False,
+        params: ParamsT,
+        lr: float = 1e-3,
+        betas: tuple[float, float, float] = (0.98, 0.92, 0.99),
+        eps: float = 1e-8,
+        weight_decay: float = 0.0,
+        max_grad_norm: float = 0.0,
+        no_prox: bool = False,
         foreach: bool = True,
-        fused: bool = False,
     ) -> None:
         if not 0.0 <= max_grad_norm:
             raise ValueError(f"Invalid Max grad norm: {max_grad_norm}")
@@ -86,8 +71,6 @@ class Adan(Optimizer):
             raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
         if not 0.0 <= betas[2] < 1.0:
             raise ValueError(f"Invalid beta parameter at index 2: {betas[2]}")
-        if fused:
-            _check_fused_available()
 
         defaults = {
             "lr": lr,
@@ -97,11 +80,10 @@ class Adan(Optimizer):
             "max_grad_norm": max_grad_norm,
             "no_prox": no_prox,
             "foreach": foreach,
-            "fused": fused,
         }
         super().__init__(params, defaults)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         super().__setstate__(state)
         for group in self.param_groups:
             group.setdefault("no_prox", False)
@@ -123,7 +105,7 @@ class Adan(Optimizer):
                     state["exp_avg_diff"] = torch.zeros_like(p)
 
     @torch.no_grad()
-    def step(self, closure=None):
+    def step(self, closure: Callable[[], float] | None = None) -> float | None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Performs a single optimization step."""
 
         loss = None
@@ -145,7 +127,8 @@ class Adan(Optimizer):
             global_grad_norm = torch.sqrt(global_grad_norm)
 
             clip_global_grad_norm = torch.clamp(
-                max_grad_norm / (global_grad_norm + group["eps"]), max=1.0
+                max_grad_norm / (global_grad_norm + self.param_groups[-1]["eps"]),
+                max=1.0,
             ).item()
         else:
             clip_global_grad_norm = 1.0
@@ -215,20 +198,9 @@ class Adan(Optimizer):
             }
 
             if group["foreach"]:
-                if group["fused"]:
-                    if torch.cuda.is_available():
-                        _fused_adan_multi_tensor(**kwargs)
-                    else:
-                        raise ValueError("Fused Adan does not support CPU")
-                else:
-                    _multi_tensor_adan(**kwargs)
-            elif group["fused"]:
-                if torch.cuda.is_available():
-                    _fused_adan_single_tensor(**kwargs)
-                else:
-                    raise ValueError("Fused Adan does not support CPU")
+                _multi_tensor_adan(**kwargs)  # pyright: ignore[reportArgumentType]
             else:
-                _single_tensor_adan(**kwargs)
+                _single_tensor_adan(**kwargs)  # pyright: ignore[reportArgumentType]
 
         return loss
 
@@ -332,7 +304,7 @@ def _multi_tensor_adan(
         exp_avg_sqs, neg_pre_grads, neg_pre_grads, value=1 - beta3
     )  # n_t
 
-    denom = torch._foreach_sqrt(exp_avg_sqs)
+    denom = torch._foreach_sqrt(exp_avg_sqs)  # noqa: SLF001
     torch._foreach_div_(denom, bias_correction3_sqrt)
     torch._foreach_add_(denom, eps)
 
@@ -349,121 +321,3 @@ def _multi_tensor_adan(
         torch._foreach_div_(params, 1 + lr * weight_decay)
     torch._foreach_zero_(neg_pre_grads)
     torch._foreach_add_(neg_pre_grads, grads, alpha=-1.0)
-
-
-def _fused_adan_multi_tensor(
-    params: list[Tensor],
-    grads: list[Tensor],
-    exp_avgs: list[Tensor],
-    exp_avg_sqs: list[Tensor],
-    exp_avg_diffs: list[Tensor],
-    neg_pre_grads: list[Tensor],
-    *,
-    beta1: float,
-    beta2: float,
-    beta3: float,
-    bias_correction1: float,
-    bias_correction2: float,
-    bias_correction3_sqrt: float,
-    lr: float,
-    weight_decay: float,
-    eps: float,
-    no_prox: bool,
-    clip_global_grad_norm: Tensor,
-) -> None:
-    import fused_adan
-
-    multi_tensor_applier = MultiTensorApply(2048 * 32)
-    _dummy_overflow_buf = torch.cuda.IntTensor([0])
-    multi_tensor_applier(
-        fused_adan.adan_multi_tensor,
-        _dummy_overflow_buf,
-        [params, grads, exp_avgs, exp_avg_sqs, exp_avg_diffs, neg_pre_grads],
-        beta1,
-        beta2,
-        beta3,
-        bias_correction1,
-        bias_correction2,
-        bias_correction3_sqrt,
-        lr,
-        weight_decay,
-        eps,
-        no_prox,
-        clip_global_grad_norm,
-    )
-    torch._foreach_zero_(neg_pre_grads)
-    torch._foreach_add_(neg_pre_grads, grads, alpha=-1.0)
-
-
-def _fused_adan_single_tensor(
-    params: list[Tensor],
-    grads: list[Tensor],
-    exp_avgs: list[Tensor],
-    exp_avg_sqs: list[Tensor],
-    exp_avg_diffs: list[Tensor],
-    neg_pre_grads: list[Tensor],
-    *,
-    beta1: float,
-    beta2: float,
-    beta3: float,
-    bias_correction1: float,
-    bias_correction2: float,
-    bias_correction3_sqrt: float,
-    lr: float,
-    weight_decay: float,
-    eps: float,
-    no_prox: bool,
-    clip_global_grad_norm: Tensor,
-) -> None:
-    for i, param in enumerate(params):
-        p_data_fp32 = param.data.float()
-        out_p = param.data
-        grad = grads[i]
-        exp_avg = exp_avgs[i]
-        exp_avg_sq = exp_avg_sqs[i]
-        exp_avg_diff = exp_avg_diffs[i]
-        neg_grad = neg_pre_grads[i]
-        with torch.cuda.device(param.device):
-            import fused_adan
-
-            fused_adan.adan_single_tensor(
-                p_data_fp32,
-                out_p,
-                grad,
-                exp_avg,
-                exp_avg_sq,
-                exp_avg_diff,
-                neg_grad,
-                beta1,
-                beta2,
-                beta3,
-                bias_correction1,
-                bias_correction2,
-                bias_correction3_sqrt,
-                lr,
-                weight_decay,
-                eps,
-                no_prox,
-                clip_global_grad_norm,
-            )
-        neg_grad.zero_().add_(grad, alpha=-1.0)
-
-
-def _check_fused_available() -> None:
-    try:
-        import fused_adan
-    except ImportError as exc:
-        if torch.cuda.is_available():
-            # The module should be available but isn't. Try to
-            # help the user in this case.
-            raise ImportError(
-                str(exc)
-                + (
-                    "\nThis could be caused by not having compiled "
-                    "the CUDA extension during package installation. "
-                    "Please try to re-install the package with "
-                    "the environment flag `FORCE_CUDA=1` set."
-                )
-            )
-        else:
-            raise ImportError(str(exc) + "\nFused Adan does not support CPU.")

@@ -4,6 +4,7 @@ traiNNer-redux is released under Apache License 2.0.
 
 |Project|License|
 |-|-|
+|[Adan](https://github.com/sail-sg/Adan) | [Apache License 2.0](https://github.com/sail-sg/Adan/blob/main/LICENSE)|
 |[ArtCNN](https://github.com/Artoriuz/ArtCNN) | [MIT License](https://github.com/Artoriuz/ArtCNN/blob/main/LICENSE)|
 |[ArtCNN-PyTorch](https://github.com/umzi2/ArtCNN-PyTorch) | [MIT License](https://github.com/umzi2/ArtCNN-PyTorch/blob/master/LICENSE)|
 |[ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary) | [Apache License 2.0](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary/blob/main/LICENSE.txt)|
@@ -52,6 +53,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[RGT](https://github.com/zhengchen1999/RGT) | [Apache License 2.0](https://github.com/zhengchen1999/RGT/blob/main/LICENSE)|
 |[aaf6aa/SCUNet](https://github.com/aaf6aa/SCUNet) | [Apache License 2.0](https://github.com/aaf6aa/SCUNet/blob/main/LICENSE)|
 |[SAFMN](https://github.com/sunny2109/SAFMN)| [Apache License 2.0](https://github.com/sunny2109/SAFMN/blob/main/LICENSE/LICENSE)|
+|[schedule_free](https://github.com/facebookresearch/schedule_free)| [Apache License 2.0](https://github.com/facebookresearch/schedule_free/blob/main/LICENSE)|
 |[Sebica](https://github.com/idiosyncracies/Sebica)| [MIT License](https://github.com/idiosyncracies/Sebica/blob/main/LICENSE)|
 |[SeemoRe](https://github.com/eduardzamfir/seemoredetails)| [Apache License 2.0](https://github.com/eduardzamfir/seemoredetails/blob/main/LICENSE)|
 |[SCUNet](https://github.com/cszn/SCUNet) | [Apache License 2.0](https://github.com/cszn/SCUNet/blob/main/LICENSE)|
