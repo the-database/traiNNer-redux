@@ -13,8 +13,6 @@ from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
-
-# from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import TqdmExperimentalWarning
@@ -428,11 +426,6 @@ class SRModel(BaseModel):
                     scale_after,
                 )
             self.optimizer_g.zero_grad()
-            # for _key, loss in self.losses.items():
-            #     if isinstance(loss, AdaptiveLoss):
-            #         print(
-            #             f"{current_iter:<6}:  alpha={loss.adaptive.alpha().mean()}  scale={loss.adaptive.scale().mean()}"
-            #         )
 
         cri_gan = self.losses.get("l_g_gan")
 
