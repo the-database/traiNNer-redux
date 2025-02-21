@@ -217,16 +217,27 @@ class TrainOptions(StrictStruct):
     total_iter: Annotated[
         int, Meta(description="The total number of iterations to train.")
     ]
+    adaptive_d: Annotated[
+        bool,
+        Meta(
+            description="Whether the discriminator updates adaptively. That is, discriminator updates are paused whenever the generator falls behind the discriminator (whenever smoothed l_g_gan increases). Can mitigate GAN collapse by preventing the discriminator from overpowering the generator."
+        ),
+    ] = False
+    adaptive_d_ema_decay: float = 0.999
+    adaptive_d_threshold: float = 1.02
     optim_g: Annotated[
-        dict[str, Any],
+        dict[str, Any] | None,
         Meta(description="The optimizer to use for the generator model."),
-    ]
+    ] = None
     ema_decay: Annotated[
         float,
         Meta(
             description="The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA."
         ),
     ] = 0
+    ema_switch_epoch: Annotated[
+        float, Meta(description="Epoch at which to switch EMA model to online model.")
+    ] = 1.0
     grad_clip: Annotated[
         bool,
         Meta(
@@ -377,8 +388,8 @@ class ReduxOptions(StrictStruct):
     path: PathOptions
 
     network_g: Annotated[
-        dict[str, Any], Meta(description="The options for the generator model.")
-    ]
+        dict[str, Any] | None, Meta(description="The options for the generator model.")
+    ] = None
     network_d: Annotated[
         dict[str, Any] | None,
         Meta(description="The options for the discriminator model."),
@@ -396,9 +407,10 @@ class ReduxOptions(StrictStruct):
     rank: int | None = None
     world_size: int | None = None
     auto_resume: bool | None = None
-    resume: int = 0
+    watch: bool = False
     is_train: bool | None = None
     root_path: str | None = None
+    switch_iter_per_epoch: int = 1
 
     use_amp: Annotated[
         bool, Meta(description="Speed up training and reduce VRAM usage. NVIDIA only.")

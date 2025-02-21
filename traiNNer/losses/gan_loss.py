@@ -6,6 +6,8 @@ from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.utils.registry import LOSS_REGISTRY
 
+USE_BOOL_TARGET = {"wgan", "wgan_softplus"}
+
 
 @LOSS_REGISTRY.register()
 class GANLoss(nn.Module):
@@ -89,7 +91,7 @@ class GANLoss(nn.Module):
                 return Tensor.
         """
 
-        if self.gan_type in ["wgan", "wgan_softplus"]:
+        if self.gan_type in USE_BOOL_TARGET:
             return target_is_real
         target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
@@ -108,7 +110,6 @@ class GANLoss(nn.Module):
         Returns:
             Tensor: GAN loss value.
         """
-        target_label = self.get_target_label(input, target_is_real)
         if self.gan_type == "hinge":
             if is_disc:  # for discriminators in hinge-gan
                 input = -input if target_is_real else input
@@ -117,6 +118,7 @@ class GANLoss(nn.Module):
             else:  # for generators in hinge-gan
                 loss = -input.mean()
         else:  # other gan types
+            target_label = self.get_target_label(input, target_is_real)
             loss = self.loss(input, target_label)
 
         # loss_weight is always 1.0 for discriminators

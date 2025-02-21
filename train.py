@@ -123,7 +123,7 @@ def create_train_val_dataloader(
                 seed=opt.manual_seed,
             )
 
-            num_iter_per_epoch = (
+            iter_per_epoch = (
                 len(train_set)
                 * dataset_enlarge_ratio
                 // (
@@ -133,16 +133,21 @@ def create_train_val_dataloader(
                 )
             )
 
+            opt.switch_iter_per_epoch = len(train_set) // (
+                dataset_opt.batch_size_per_gpu * dataset_opt.accum_iter * opt.world_size
+            )
+
             total_iters = int(opt.train.total_iter)
-            total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
+            total_epochs = math.ceil(total_iters / (iter_per_epoch))
             assert dataset_opt.gt_size is not None, "gt_size is required for train set"
             logger.info(
-                "Training statistics:\n"
+                "Training statistics for [b]%s[/b]:\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s\n"
                 "\t%-25s %10s\t%-25s %10s",
+                opt.name,
                 "Number of train images:",
                 f"{len(train_set):,}",
                 "Dataset enlarge ratio:",
@@ -158,7 +163,7 @@ def create_train_val_dataloader(
                 "World size (gpu number):",
                 f"{opt.world_size:,}",
                 "Require iter per epoch:",
-                f"{num_iter_per_epoch:,}",
+                f"{iter_per_epoch:,}",
                 "Total epochs:",
                 f"{total_epochs:,}",
                 "Total iters:",

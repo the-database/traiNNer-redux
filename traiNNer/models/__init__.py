@@ -20,7 +20,7 @@ def build_model(opt: ReduxOptions) -> BaseModel:
             model_type (str): Model type.
     """
     opt = deepcopy(opt)
-
+    logger = get_root_logger()
     if opt.high_order_degradation:
         if opt.dataroot_lq_prob > 0:
             model = RealESRGANPairedModel(opt)
@@ -29,7 +29,6 @@ def build_model(opt: ReduxOptions) -> BaseModel:
     else:
         model = SRModel(opt)
 
-    logger = get_root_logger()
     logger.info(
         "Model [bold]%s[/bold] is created.",
         model.__class__.__name__,

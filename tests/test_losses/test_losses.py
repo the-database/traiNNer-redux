@@ -16,11 +16,11 @@ from traiNNer.losses.basic_loss import (
 from traiNNer.losses.dists_loss import DISTSLoss
 from traiNNer.losses.ldl_loss import LDLLoss
 from traiNNer.losses.mssim_loss import MSSIMLoss
-from traiNNer.losses.perceptual_loss import (
+from traiNNer.losses.perceptual_fp16_loss import (
     VGG19_CONV_LAYER_WEIGHTS,
     VGG19_RELU_LAYER_WEIGHTS,
-    PerceptualLoss,
 )
+from traiNNer.losses.perceptual_loss import PerceptualLoss
 
 LOSS_FUNCTIONS = [
     L1Loss(
@@ -112,7 +112,12 @@ class TestLosses:
         [pytest.param(loss_fn, id=f"{loss_fn}") for loss_fn in LOSS_FUNCTIONS],
     )
     def test_black_vs_black(self, data: TestLossData, loss_fn: nn.Module) -> None:
-        loss_value = loss_fn(data["black_image"], data["black_image"])
+        if isinstance(loss_fn, LDLLoss):
+            loss_value = loss_fn(
+                data["black_image"], data["black_image"], data["black_image"]
+            )
+        else:
+            loss_value = loss_fn(data["black_image"], data["black_image"])
 
         if type(loss_value) is tuple:
             assert loss_value[0] <= EPSILON

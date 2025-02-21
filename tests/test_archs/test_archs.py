@@ -13,6 +13,7 @@ from traiNNer.losses.basic_loss import L1Loss
 # VGG and UNet are not applicable to the tests in this test suite and may
 # require their own test cases.
 EXCLUDE_ARCHS = {
+    "autoencoder",
     "dunet",
     "eimn",
     "hat",

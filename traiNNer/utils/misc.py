@@ -127,9 +127,14 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             print("pretrain_network path will be ignored during resuming.")
 
         # set pretrained model paths
-        if opt.train.ema_decay > 0 and (
-            opt.path.ignore_resume_networks is None
-            or "network_g_ema" not in opt.path.ignore_resume_networks
+        # set generator ema path
+        if (
+            opt.network_g is not None
+            and opt.train.ema_decay > 0
+            and (
+                opt.path.ignore_resume_networks is None
+                or "network_g_ema" not in opt.path.ignore_resume_networks
+            )
         ):
             model_exists = False
             basepath = ""
@@ -147,7 +152,8 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
                     f"Unable to resume, pretrain_network_g_ema not found at path: {basepath}.{model_extensions[0]}"
                 )
 
-        if (
+        # set generator path
+        if opt.network_g is not None and (
             opt.path.ignore_resume_networks is None
             or "network_g" not in opt.path.ignore_resume_networks
         ):
@@ -168,6 +174,7 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
                     f"Unable to resume, pretrain_network_g not found at path: {basepath}.{model_extensions[0]}",
                 )
 
+        # set discriminator path if gan training
         if opt.network_d is not None and (
             opt.path.ignore_resume_networks is None
             or "network_d" not in opt.path.ignore_resume_networks
@@ -261,11 +268,11 @@ def underscore(word: str) -> str:
     return word.lower()
 
 
-def loss_type_to_label(loss_type: str) -> str:
+def loss_type_to_label(loss_type: str, network_label: str = "g") -> str:
     # label = loss_type.replace("HSLuvLoss", "HSLUVLoss")  # hack for HSLuv
     # label = underscore(label)
     label = loss_type.lower().replace("loss", "")
-    return f"l_g_{label}"
+    return f"l_{network_label}_{label}"
 
 
 def is_json_compatible(value: Any) -> bool:

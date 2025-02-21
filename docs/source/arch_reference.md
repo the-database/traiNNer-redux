@@ -859,6 +859,23 @@ res_scale: 1
 act_mode: relu
 unshuffle_mod: false
 ```
+#### rcan_l
+
+
+```yaml
+type: rcan_l
+n_resgroups: 10
+n_resblocks: 20
+n_feats: 96
+n_colors: 3
+rgb_range: 255
+norm: false
+kernel_size: 3
+reduction: 16
+res_scale: 1
+act_mode: relu
+unshuffle_mod: false
+```
 #### rcan_unshuffle
 
 
@@ -990,6 +1007,23 @@ type: realplksr
 in_ch: 3
 out_ch: 3
 dim: 64
+n_blocks: 28
+kernel_size: 17
+split_ratio: 0.25
+use_ea: true
+norm_groups: 4
+dropout: 0
+upsampler: pixelshuffle
+layer_norm: true
+```
+#### realplksr_large
+
+
+```yaml
+type: realplksr_large
+in_ch: 3
+out_ch: 3
+dim: 96
 n_blocks: 28
 kernel_size: 17
 split_ratio: 0.25
@@ -1447,8 +1481,8 @@ n_class: 1
 dims: [48, 96, 192, 288]
 blocks: [3, 3, 9, 3]
 downs: [4, 4, 2, 2]
-drop_path: 0.2
-end_drop: 0.4
+drop_path: 0.0
+end_drop: 0.0
 ```
 ### UNetDiscriminatorSN
 #### unetdiscriminatorsn

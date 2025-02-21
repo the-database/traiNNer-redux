@@ -43,6 +43,7 @@ class USMSharp(nn.Module):
         self.register_buffer("kernel", kernel)
 
     def forward(self, img: Tensor, weight: float = 0.5, threshold: int = 10) -> Tensor:
+        assert isinstance(self.kernel, Tensor)
         blur = filter2d(img, self.kernel)
         residual = img - blur
 

@@ -515,7 +515,7 @@ def circular_lowpass_kernel(
 
 
 def generate_gaussian_noise(
-    img: np.ndarray, sigma: float | Tensor = 10, gray_noise: bool = False
+    img: np.ndarray, sigma: float = 10, gray_noise: bool = False
 ) -> np.ndarray:
     """Generate Gaussian noise.
 
@@ -540,7 +540,7 @@ def generate_gaussian_noise(
 
 def add_gaussian_noise(
     img: np.ndarray,
-    sigma: float | Tensor = 10,
+    sigma: float = 10,
     clip: bool = True,
     rounds: bool = False,
     gray_noise: bool = False,
@@ -998,7 +998,7 @@ def _resample(input: Tensor, size: tuple[int, int], a: int = 3) -> Tensor:
         input = F.conv2d(input, kernel_w[None, None, None, :], padding=0)
 
     input = input.view([n, c, h, w])
-    return F.interpolate(input, size, mode="bicubic", align_corners=False)
+    return F.interpolate(input, size, mode="bicubic", align_corners=False).clamp(0, 1)
 
 
 def resize_pt(
@@ -1016,4 +1016,6 @@ def resize_pt(
             size,
         )
 
-    return F.interpolate(img, size=size, mode=mode, antialias=mode in ANTIALIAS_MODES)
+    return F.interpolate(
+        img, size=size, mode=mode, antialias=mode in ANTIALIAS_MODES
+    ).clamp(0, 1)

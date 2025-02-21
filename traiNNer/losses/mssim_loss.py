@@ -64,7 +64,7 @@ class GaussianFilter2D(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x = F.conv2d(
             input=x,
-            weight=self.gaussian_window,
+            weight=self.gaussian_window,  # pyright: ignore[reportCallIssue,reportArgumentType]
             stride=1,
             padding=self.padding,
             groups=x.shape[1],
@@ -131,7 +131,7 @@ class MSSIMLoss(nn.Module):
         """
         assert x.shape == y.shape, f"x: {x.shape} and y: {y.shape} must be the same"
         assert x.ndim == y.ndim == 4, f"x: {x.ndim} and y: {y.ndim} must be 4"
-
+        assert isinstance(self.gaussian_filter.gaussian_window, Tensor)
         if x.type() != self.gaussian_filter.gaussian_window.type():
             x = x.type_as(self.gaussian_filter.gaussian_window)
         if y.type() != self.gaussian_filter.gaussian_window.type():

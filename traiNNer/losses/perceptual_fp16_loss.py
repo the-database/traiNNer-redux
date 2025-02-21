@@ -100,9 +100,7 @@ class PerceptualFP16Loss(nn.Module):
                 use_relu_layers = True
                 layer_weights |= VGG19_RELU_LAYER_WEIGHTS
 
-        self.vgg = VGGFP16(list(layer_weights.keys())).to(
-            memory_format=torch.channels_last
-        )  # pyright: ignore[reportCallIssue]
+        self.vgg = VGG(list(layer_weights.keys())).to(memory_format=torch.channels_last)  # pyright: ignore[reportCallIssue]
 
         if alpha is None:
             alpha = []
@@ -156,7 +154,9 @@ class PerceptualFP16Loss(nn.Module):
         """
         x, y: input image tensors with the shape of (N, C, H, W)
         """
+        assert isinstance(self.stride_fd, int)
         rand = self.__getattr__(f"rand_{idx}")
+        assert isinstance(rand, Tensor)
         projx = F.conv2d(x, rand, stride=self.stride_fd)
         projx = projx.reshape(projx.shape[0], projx.shape[1], -1)
         projy = F.conv2d(y, rand, stride=self.stride_fd)
@@ -205,6 +205,7 @@ class PerceptualFP16Loss(nn.Module):
     def forward_once(self, x: Tensor) -> dict[str, Tensor]:
         return self.vgg(x)
 
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
         score1 = torch.tensor(0.0, device=x.device)
@@ -237,6 +238,7 @@ class PerceptualFP16Loss(nn.Module):
             s1 *= self.layer_weights[k]
             score1 += s1
             if s2 is not None:
+                assert score2 is not None
                 s2 *= self.layer_weights[k]
                 score2 += s2
 
@@ -247,7 +249,7 @@ class PerceptualFP16Loss(nn.Module):
         return score * self.loss_weight
 
 
-class VGGFP16(nn.Module):
+class VGG(nn.Module):
     def __init__(self, layer_name_list: list[str]) -> None:
         super().__init__()
 
@@ -292,6 +294,13 @@ class VGGFP16(nn.Module):
 
     @staticmethod
     def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
+        assert isinstance(conv.in_channels, int)
+        assert isinstance(conv.out_channels, int)
+        assert isinstance(conv.kernel_size, int | tuple)
+        assert isinstance(conv.stride, int | tuple)
+        assert isinstance(conv.padding, int | tuple)
+        assert isinstance(conv.weight, Tensor)
+        assert isinstance(conv.bias, Tensor)
         new_conv = nn.Conv2d(
             conv.in_channels,
             conv.out_channels,
@@ -312,8 +321,9 @@ class VGGFP16(nn.Module):
             if isinstance(module, nn.ReLU):
                 module.inplace = False
 
+    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
-        h = (x - self.mean) / self.std
+        h = (x - self.mean) / self.std  # pyright: ignore[reportOperatorIssue]
 
         feats = {}
         for layer_name, stage in self.stages.items():

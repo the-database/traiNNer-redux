@@ -1,4 +1,5 @@
 import os
+import time
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 from traiNNer.check.check_dependencies import check_dependencies
@@ -12,6 +13,7 @@ from os import path as osp
 import torch
 from rich.pretty import pretty_repr
 from rich.traceback import install
+from tensorboard.backend.event_processing import event_accumulator
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.data import build_dataloader, build_dataset
@@ -104,9 +106,28 @@ def create_train_val_dataloader(
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
+def get_start_iter(tb_logger: SummaryWriter, save_checkpoint_freq: int) -> int:
+    log_dir = tb_logger.log_dir
+    ea = event_accumulator.EventAccumulator(log_dir)
+    ea.Reload()
+
+    if not ea.scalars.Keys():
+        return 0
+
+    logged_iters = set()
+    for tag in ea.scalars.Keys():
+        logged_iters.update([int(e.step) for e in ea.Scalars(tag)])
+
+    if not logged_iters:
+        return 0
+
+    max_logged_iter = max(logged_iters)
+    start_iter = ((max_logged_iter // save_checkpoint_freq) + 1) * save_checkpoint_freq
+    return start_iter
+
+
 def train_pipeline(root_path: str) -> None:
     install()
-    # torch.autograd.set_detect_anomaly(True)
     # parse options, set distributed setting, set random seed
     opt, args = Config.load_config_from_file(root_path, is_train=True)
     opt.root_path = root_path
@@ -126,10 +147,16 @@ def train_pipeline(root_path: str) -> None:
     assert opt.manual_seed is not None
     set_random_seed(opt.manual_seed + opt.rank)
 
+    current_iter = 0
+    # initialize wandb and tb loggers
+    tb_logger = init_tb_loggers(opt)
+    assert tb_logger is not None, "tb_logger must be enabled"
+    start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
+
     # load resume states if necessary
-    make_exp_dirs(opt, opt.resume > 0)
+    make_exp_dirs(opt, start_iter > 0)
     # mkdir for experiments and logger
-    if opt.resume == 0:
+    if start_iter == 0:
         if opt.logger.use_tb_logger and "debug" not in opt.name and opt.rank == 0:
             mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
 
@@ -148,9 +175,6 @@ def train_pipeline(root_path: str) -> None:
             "Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.",
             opt.manual_seed,
         )
-
-    # initialize wandb and tb loggers
-    tb_logger = init_tb_loggers(opt)
 
     # create train and validation dataloaders
     val_enabled = False
@@ -176,56 +200,68 @@ def train_pipeline(root_path: str) -> None:
                 "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
             )
 
-    current_iter = 0
-    start_iter = opt.resume
-
     logger.info("Start testing from iter: %d.", start_iter)
 
     ext = opt.logger.save_checkpoint_format
 
-    assert opt.path.pretrain_network_g_path is not None, (
-        "pretrain_network_g_path is required. Please enter the path to the directory of models at pretrain_network_g_path."
-    )
-
-    if osp.isdir(opt.path.pretrain_network_g_path):
-        nets = list(
-            scandir(
-                opt.path.pretrain_network_g_path,
-                suffix=ext,
-                recursive=False,
-                full_path=False,
-            )
+    if opt.path.pretrain_network_g_path is not None:
+        pretrain_net_path = opt.path.pretrain_network_g_path
+        net_type = "g"
+    else:
+        raise ValueError(
+            "pretrain_network_g_path is required. Please enter the path to the directory of models at pretrain_network_g_path."
         )
-        nets = [v.split(f".{ext}")[0].split("_")[-1] for v in nets]
-        nets = sorted([int(v) for v in nets if v.isnumeric()])
-        for net_iter in nets:
-            if net_iter < start_iter:
-                continue
-            if net_iter % opt.logger.save_checkpoint_freq != 0:
-                continue
-            net_path = osp.join(
-                opt.path.pretrain_network_g_path, f"net_g_ema_{net_iter}.{ext}"
-            )
-            # print(net_path, osp.exists(net_path))
-            if not osp.exists(net_path):
-                net_path = osp.join(
-                    opt.path.pretrain_network_g_path, f"net_g_{net_iter}.{ext}"
-                )
 
-            assert model.net_g is not None
-            current_iter = net_iter
-            model.load_network(model.net_g, net_path, True, None)
-            # validation
-            if opt.val is not None:
-                multi_val_datasets = len(val_loaders) > 1
-                for val_loader in val_loaders:
-                    model.validation(
-                        val_loader,
-                        current_iter,
-                        tb_logger,
-                        opt.val.save_img,
-                        multi_val_datasets,
+    if opt.watch:
+        logger.info("Watching directory: %s", pretrain_net_path)
+
+    validate = True
+
+    while validate:
+        start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
+        if osp.isdir(pretrain_net_path):
+            nets = list(
+                scandir(
+                    pretrain_net_path,
+                    suffix=ext,
+                    recursive=False,
+                    full_path=False,
+                )
+            )
+            nets = [v.split(f".{ext}")[0].split("_")[-1] for v in nets]
+            nets = sorted([int(v) for v in nets if v.isnumeric()])
+            # print(nets)
+            for net_iter in nets:
+                if net_iter < start_iter:
+                    continue
+                if net_iter % opt.logger.save_checkpoint_freq != 0:
+                    continue
+                net_path = osp.join(
+                    pretrain_net_path, f"net_{net_type}_ema_{net_iter}.{ext}"
+                )
+                # print(net_path, osp.exists(net_path))
+                if not osp.exists(net_path):
+                    net_path = osp.join(
+                        pretrain_net_path, f"net_{net_type}_{net_iter}.{ext}"
                     )
+
+                # assert model.net_g is not None
+                net = getattr(model, f"net_{net_type}")
+                current_iter = net_iter
+                model.load_network(net, net_path, True, None)
+                # validation
+                if opt.val is not None:
+                    multi_val_datasets = len(val_loaders) > 1
+                    for val_loader in val_loaders:
+                        model.validation(
+                            val_loader,
+                            current_iter,
+                            tb_logger,
+                            opt.val.save_img,
+                            multi_val_datasets,
+                        )
+        time.sleep(5)
+        validate = opt.watch
     if tb_logger:
         tb_logger.close()
 

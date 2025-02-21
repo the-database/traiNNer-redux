@@ -9,19 +9,22 @@ from typing import Any
 
 import pytorch_optimizer
 import torch
+from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN import ESRGAN
-from torch import Tensor, nn
+from torch import nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import Optimizer, ParamsT
-from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
+from traiNNer.optimizers.adamwschedulefree import AdamWScheduleFree
+from traiNNer.optimizers.adan import Adan
+from traiNNer.optimizers.adanschedulefree import AdanScheduleFree
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.logger import clickable_file_path
@@ -44,6 +47,10 @@ class BaseModel:
         self.optimizers_schedule_free: list[bool] = []
         self.batch_augment = None
         self.log_dict = {}
+        self.l_g_gan_ema = torch.tensor(0.0, device=self.device)
+        self.adaptive_d = False
+        self.adaptive_d_ema_decay = 0
+        self.adaptive_d_threshold = 1
         self.loss_samples = 0
         self.with_metrics = (
             opt.val is not None
@@ -57,7 +64,7 @@ class BaseModel:
         self.first_val_completed = False
         self.model_loader = ModelLoader()
         self.net_g = None
-        self.net_g_ema: AveragedModel | None = None
+        self.net_g_ema: EMA | None = None
         self.net_d = None
         self.use_amp = False
         self.use_channels_last = False
@@ -66,7 +73,6 @@ class BaseModel:
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
         self.accum_iters: int = 1
-        self.ema_n_averaged: Tensor | None = None
         self.grad_clip: bool = False
 
     @abstractmethod
@@ -223,17 +229,23 @@ class BaseModel:
             "RMSPROP": torch.optim.RMSprop,
             "NADAM": torch.optim.NAdam,
             "LBFGS": torch.optim.LBFGS,
-            "ADAN": pytorch_optimizer.Adan,
+            "ADAN": Adan,
+            "ADANSCHEDULEFREE": AdanScheduleFree,
             "LAMB": pytorch_optimizer.Lamb,
             "PRODIGY": pytorch_optimizer.Prodigy,
             "LION": pytorch_optimizer.Lion,
             "TIGER": pytorch_optimizer.Tiger,
             "ADAMP": pytorch_optimizer.AdamP,
+            "ADAMWSCHEDULEFREE": AdamWScheduleFree,
         }
         if optim_type_upper in optim_map:
-            optimizer = optim_map[optim_type_upper](params, lr, **kwargs)
+            optimizer = optim_map[optim_type_upper](params, lr, **kwargs)  # pyright: ignore[reportArgumentType]
         else:
             raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
+
+        if hasattr(optimizer, "train"):
+            optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
+
         return optimizer
 
     def setup_schedulers(self) -> None:
@@ -394,12 +406,13 @@ class BaseModel:
             key = full_key
             if key.startswith("module."):  # remove unnecessary 'module.'
                 key = key[7:]
-            if key == "n_averaged":  # ema key, breaks compatibility
+            if key in ("step", "initted"):  # ema key, breaks compatibility
                 continue
             new_state_dict[key] = param.to("cpu", memory_format=torch.contiguous_format)
 
         metadata: dict[str, Any] | None = None
         if hasattr(net, "hyperparameters"):
+            assert isinstance(net.hyperparameters, dict)
             metadata = {
                 k: v for k, v in net.hyperparameters.items() if is_json_compatible(v)
             }
@@ -685,8 +698,8 @@ class BaseModel:
         assert self.opt.path.training_states is not None
 
         if current_iter != -1:
-            assert self.scaler_g is not None
-            assert self.scaler_d is not None
+            # assert self.scaler_g is not None
+            # assert self.scaler_d is not None
             state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
@@ -695,15 +708,19 @@ class BaseModel:
             }
 
             if self.use_amp:
-                state["scaler_d"] = self.scaler_d.state_dict()
-                state["scaler_g"] = self.scaler_g.state_dict()
+                if self.scaler_d is not None:
+                    state["scaler_d"] = self.scaler_d.state_dict()
+                if self.scaler_g is not None:
+                    state["scaler_g"] = self.scaler_g.state_dict()
 
             for o in self.optimizers:
+                if hasattr(o, "eval"):
+                    o.eval()  # pyright: ignore[reportAttributeAccessIssue]
                 state["optimizers"].append(o.state_dict())
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
             if self.net_g_ema is not None:
-                state["ema_n_averaged"] = self.net_g_ema.state_dict()["n_averaged"]
+                state["ema_step"] = self.net_g_ema.step
 
             save_filename = f"{current_iter}.state"
             save_path = os.path.join(self.opt.path.training_states, save_filename)
@@ -714,6 +731,9 @@ class BaseModel:
             while retry > 0:
                 try:
                     torch.save(state, save_path)
+                    for o in self.optimizers:
+                        if hasattr(o, "train"):
+                            o.train()  # pyright: ignore[reportAttributeAccessIssue]
                 except Exception as e:
                     logger = get_root_logger()
                     logger.warning(
@@ -737,8 +757,6 @@ class BaseModel:
         Args:
             resume_state (dict): Resume state.
         """
-        assert self.scaler_d is not None
-        assert self.scaler_g is not None
 
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
@@ -752,16 +770,22 @@ class BaseModel:
 
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
+            if hasattr(self.optimizers[i], "train"):
+                self.optimizers[i].train()  # pyright: ignore[reportAttributeAccessIssue]
         for i, s in enumerate(resume_schedulers):
             self.schedulers[i].load_state_dict(s)
 
         if "scaler_g" in resume_state:
+            assert self.scaler_g is not None
             self.scaler_g.load_state_dict(resume_state["scaler_g"])
         if "scaler_d" in resume_state:
+            assert self.scaler_d is not None
             self.scaler_d.load_state_dict(resume_state["scaler_d"])
 
-        if "ema_n_averaged" in resume_state and self.net_g_ema is not None:
-            self.net_g_ema.register_buffer("n_averaged", resume_state["ema_n_averaged"])
+        if "ema_step" in resume_state:
+            if self.net_g_ema is not None:
+                self.net_g_ema.register_buffer("step", resume_state["ema_step"])
+                self.net_g_ema.register_buffer("initted", torch.tensor(True))
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
@@ -773,6 +797,7 @@ class BaseModel:
         """
         with torch.no_grad():
             if self.opt.dist:
+                assert self.opt.world_size is not None
                 keys = []
                 losses = []
                 for name, value in loss_dict.items():

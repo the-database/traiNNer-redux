@@ -6,7 +6,7 @@ from typing import Literal
 import torch
 import torch.nn.functional as F  # noqa: N812
 from spandrel.architectures.__arch_helpers.dysample import DySample
-from torch import nn
+from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
 
 from traiNNer.utils.registry import ARCH_REGISTRY
@@ -74,6 +74,12 @@ class Conv3XC(nn.Module):
             self.update_params()
 
     def update_params(self) -> None:
+        assert isinstance(self.conv[0].weight, Tensor)
+        assert isinstance(self.conv[0].bias, Tensor)
+        assert isinstance(self.conv[1].weight, Tensor)
+        assert isinstance(self.conv[1].bias, Tensor)
+        assert isinstance(self.conv[2].weight, Tensor)
+        assert isinstance(self.conv[2].bias, Tensor)
         w1 = self.conv[0].weight.data.clone().detach()
         b1 = self.conv[0].bias.data.clone().detach()
         w2 = self.conv[1].weight.data.clone().detach()

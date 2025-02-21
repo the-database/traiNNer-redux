@@ -248,8 +248,11 @@ class LumaLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class HSLuvLoss(nn.Module):
-    def __init__(self, loss_weight: float, criterion: str = "l1") -> None:
+    def __init__(
+        self, loss_weight: float, criterion: str = "l1", downscale_factor: int = 1
+    ) -> None:
         super().__init__()
+        self.downscale_factor = downscale_factor
         self.loss_weight = loss_weight
         self.criterion_type = criterion
 
@@ -262,24 +265,34 @@ class HSLuvLoss(nn.Module):
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        x_hsluv = rgb_to_hsluv(x)
-        y_hsluv = rgb_to_hsluv(y)
+    def forward_once(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
+        if self.downscale_factor > 1:
+            x = F.interpolate(
+                x,
+                scale_factor=1 / self.downscale_factor,
+                mode="bicubic",
+                antialias=True,
+            ).clamp(0, 1)
 
-        eps = 0.1
+        x_hsluv = rgb_to_hsluv(x)
 
         # hue: 0 to 360. normalize
         x_hue = x_hsluv[:, 0, :, :] / 360
-        y_hue = y_hsluv[:, 0, :, :] / 360
 
         # saturation: 0 to 100. normalize
         x_saturation = torch.round(x_hsluv[:, 1, :, :], decimals=20) / 100
-        y_saturation = torch.round(y_hsluv[:, 1, :, :], decimals=20) / 100
 
         # lightness: 0 to 100. normalize
         x_lightness = x_hsluv[:, 2, :, :] / 100
-        y_lightness = y_hsluv[:, 2, :, :] / 100
+
+        return x_hue, x_saturation, x_lightness
+
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+        x_hue, x_saturation, x_lightness = self.forward_once(x)
+        y_hue, y_saturation, y_lightness = self.forward_once(y)
+
+        eps = 0.1
 
         # find the shortest distance between angles on a circle. TODO: this is l1, implement other criteria
         # since the max distance is 0.5, multiply by 2 to normalize

@@ -67,7 +67,7 @@ class VGGStyleDiscriminator(nn.Module):
             f"Input size must be identical to input_size, but received {x.size()}."
         )
 
-        feat = self.lrelu(self.conv0_0(x))
+        feat: Tensor = self.lrelu(self.conv0_0(x))
         feat = self.lrelu(self.bn0_1(self.conv0_1(feat)))  # output spatial size: /2
 
         feat = self.lrelu(self.bn1_0(self.conv1_0(feat)))
@@ -89,7 +89,7 @@ class VGGStyleDiscriminator(nn.Module):
             )  # output spatial size: / 64
 
         # spatial size: (4, 4)
-        feat = feat.view(feat.size(0), -1)
+        feat = feat.reshape(feat.size(0), -1)
         feat = self.lrelu(self.linear1(feat))
         out = self.linear2(feat)
         return out

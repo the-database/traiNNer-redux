@@ -32,7 +32,7 @@ class Downsample(nn.Module):
         input = input**2
         out = F.conv2d(
             input,
-            self.filter,
+            self.filter,  # pyright: ignore[reportArgumentType,reportCallIssue]
             stride=self.stride,
             padding=self.padding,
             groups=input.shape[1],
@@ -174,8 +174,7 @@ class ADISTSLoss(torch.nn.Module):
 
     def forward_once(self, x: Tensor) -> list[Tensor]:
         h = x
-
-        h = (h - self.mean) / self.std
+        h = (h - self.mean) / self.std  # pyright: ignore[reportOperatorIssue]
         h = self.stage1(h)
         h_relu1_2 = h
         h = self.stage2(h)

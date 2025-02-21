@@ -177,6 +177,7 @@ class L2pooling(nn.Module):
         )
 
     def forward(self, input: Tensor) -> Tensor:
+        assert isinstance(self.filter, Tensor)
         input = input**2
         out = F.conv2d(
             input,
@@ -308,6 +309,13 @@ class VGGFeatureExtractor(nn.Module):
 
     @staticmethod
     def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
+        assert isinstance(conv.in_channels, int)
+        assert isinstance(conv.out_channels, int)
+        assert isinstance(conv.kernel_size, int | tuple)
+        assert isinstance(conv.stride, int | tuple)
+        assert isinstance(conv.padding, int | tuple)
+        assert isinstance(conv.weight, Tensor)
+        assert isinstance(conv.bias, Tensor)
         new_conv = nn.Conv2d(
             conv.in_channels,
             conv.out_channels,
@@ -335,8 +343,8 @@ class VGGFeatureExtractor(nn.Module):
 
         if self.range_norm:
             x = (x + 1) / 2
-
-        x = (x - self.mean) / self.std
+        # don't want to add type assertions in forward pass, ignore
+        x = (x - self.mean) / self.std  # pyright: ignore[reportOperatorIssue]
 
         output = {}
         for key, layer in self.vgg_net._modules.items():  # noqa: SLF001

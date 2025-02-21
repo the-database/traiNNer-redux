@@ -75,6 +75,7 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "seemore_t",
     "spanplus_s",
     "spanplus",
+    "tscunet",  # rank 5 tensors don't support channels last
 }
 
 # Urban100
@@ -368,6 +369,7 @@ OFFICIAL_METRICS: dict[
             "df2k_ssim": 0.8168,
         },
     },
+    "rcan_l": {2: {"df2k_psnr": 33.80, "df2k_ssim": 0.9437}},
     "rgt": {
         2: {"df2k_psnr": 34.47, "df2k_ssim": 0.9467},
         3: {"df2k_psnr": 30.28, "df2k_ssim": 0.8899},
@@ -417,9 +419,24 @@ OFFICIAL_METRICS: dict[
         4: {"df2k_psnr": 26.47, "df2k_ssim": 0.7980},
     },
     "swinir_m": {
-        2: {"df2k_psnr": 33.81, "df2k_ssim": 0.9427},
-        3: {"df2k_psnr": 29.75, "df2k_ssim": 0.8826},
-        4: {"df2k_psnr": 27.45, "df2k_ssim": 0.8254},
+        2: {
+            "df2k_psnr": 33.81,
+            "df2k_ssim": 0.9427,
+            "div2k_psnr": 33.40,
+            "div2k_ssim": 0.9393,
+        },
+        3: {
+            "df2k_psnr": 29.75,
+            "df2k_ssim": 0.8826,
+            "div2k_psnr": 29.29,
+            "div2k_ssim": 0.8744,
+        },
+        4: {
+            "df2k_psnr": 27.45,
+            "df2k_ssim": 0.8254,
+            "div2k_psnr": 27.07,
+            "div2k_ssim": 0.8164,
+        },
     },
     "swin2sr_m": {
         2: {"df2k_psnr": 33.89, "df2k_ssim": 0.9431},
@@ -427,6 +444,9 @@ OFFICIAL_METRICS: dict[
     },
     "swin2sr_s": {
         2: {"df2k_psnr": 32.85, "df2k_ssim": 0.9349},
+    },
+    "ultracompact": {
+        2: {"df2k_psnr": 31.36, "df2k_ssim": 0.9218},
     },
 }
 

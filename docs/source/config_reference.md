@@ -41,6 +41,7 @@
 
 
 
+
 ### use_amp
 
   Speed up training and reduce VRAM usage. NVIDIA only.
@@ -345,6 +346,13 @@
   The total number of iterations to train.
 
   Type: int
+### adaptive_d
+
+  Whether the discriminator updates adaptively. That is, discriminator updates are paused whenever the generator falls behind the discriminator (whenever smoothed l_g_gan increases). Can mitigate GAN collapse by preventing the discriminator from overpowering the generator.
+
+  Type: bool
+
+
 ### optim_g
 
   The optimizer to use for the generator model.
@@ -353,6 +361,11 @@
 ### ema_decay
 
   The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA.
+
+  Type: float
+### ema_switch_epoch
+
+  Epoch at which to switch EMA model to online model.
 
   Type: float
 ### grad_clip
