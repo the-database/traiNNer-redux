@@ -47,8 +47,6 @@ class GANLoss(nn.Module):
             self.loss = self._wgan_softplus_loss
         elif self.gan_type == "hinge":
             self.loss = nn.ReLU()
-        elif self.gan_type == "ganetic":
-            self.loss = self._ganetic_loss
         else:
             raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
@@ -82,19 +80,6 @@ class GANLoss(nn.Module):
         """
         assert isinstance(target, bool)
         return F.softplus(-input).mean() if target else F.softplus(input).mean()
-
-    def _ganetic_loss(self, x: Tensor, target: Tensor | bool) -> Tensor:
-        assert isinstance(target, Tensor)
-        if x.shape != target.shape:
-            raise ValueError(
-                "Input and target must have the same shape for GANetic loss"
-            )
-
-        x = torch.sigmoid(x)
-        loss = x**3 + torch.sqrt(
-            torch.abs(3.985 * target / (torch.sum(x) + self.eps)) + self.eps
-        )
-        return loss.mean()
 
     def get_target_label(self, input: Tensor, target_is_real: bool) -> Tensor | bool:
         """Get target label.
