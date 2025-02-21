@@ -35,11 +35,10 @@ class L2pooling(nn.Module):
         )
 
     def forward(self, input: Tensor) -> Tensor:
-        assert isinstance(self.filter, Tensor)
         input = input**2
         out = F.conv2d(
             input,
-            self.filter,
+            self.filter,  # pyright: ignore[reportArgumentType,reportCallIssue]
             stride=self.stride,
             padding=self.padding,
             groups=input.shape[1],
@@ -139,9 +138,7 @@ class DISTSLoss(nn.Module):
         h = x
 
         if self.use_input_norm:
-            assert isinstance(self.mean, Tensor)
-            assert isinstance(self.std, Tensor)
-            h = (h - self.mean) / self.std
+            h = (h - self.mean) / self.std  # pyright: ignore[reportOperatorIssue]
 
         h = self.stage1(h)
         h_relu1_2 = h
@@ -168,11 +165,10 @@ class DISTSLoss(nn.Module):
         dist2 = torch.tensor(0, device=x.device)
         c1 = 1e-6
         c2 = 1e-6
-        assert isinstance(self.alpha, nn.Parameter)
-        assert isinstance(self.beta, nn.Parameter)
-        w_sum = self.alpha.sum() + self.beta.sum()
-        alpha = torch.split(self.alpha / w_sum, self.chns, dim=1)
-        beta = torch.split(self.beta / w_sum, self.chns, dim=1)
+
+        w_sum = self.alpha.sum() + self.beta.sum()  # pyright: ignore[reportCallIssue]
+        alpha = torch.split(self.alpha / w_sum, self.chns, dim=1)  # pyright: ignore[reportOperatorIssue]
+        beta = torch.split(self.beta / w_sum, self.chns, dim=1)  # pyright: ignore[reportOperatorIssue]
         for k in range(len(self.chns)):
             x_mean = feats0[k].mean([2, 3], keepdim=True)
             y_mean = feats1[k].mean([2, 3], keepdim=True)

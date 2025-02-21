@@ -96,7 +96,6 @@ class GANLoss(nn.Module):
         target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(
         self, input: Tensor, target_is_real: bool, is_disc: bool = False
     ) -> Tensor:
