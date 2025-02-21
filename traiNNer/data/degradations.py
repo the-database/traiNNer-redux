@@ -1016,4 +1016,6 @@ def resize_pt(
             size,
         )
 
-    return F.interpolate(img, size=size, mode=mode, antialias=mode in ANTIALIAS_MODES).clamp(0, 1)
+    return F.interpolate(
+        img, size=size, mode=mode, antialias=mode in ANTIALIAS_MODES
+    ).clamp(0, 1)

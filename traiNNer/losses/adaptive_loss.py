@@ -4,7 +4,7 @@ from torch import Tensor, nn
 
 from traiNNer.utils.registry import LOSS_REGISTRY
 
-from .robust_loss_pytorch import AdaptiveImageLossFunction
+from .robust_loss_pytorch.adaptive import AdaptiveImageLossFunction
 
 
 @LOSS_REGISTRY.register()
