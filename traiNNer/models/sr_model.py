@@ -22,6 +22,7 @@ from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
+from traiNNer.losses.adaptive_weighted_loss import aw_method
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -167,6 +168,8 @@ class SRModel(BaseModel):
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
 
+            self.adaptive_weighted_loss = aw_method()
+
             self.init_training_settings()
 
     def init_training_settings(self) -> None:
@@ -189,6 +192,8 @@ class SRModel(BaseModel):
         self.adaptive_d_threshold = train_opt.adaptive_d_threshold
         self.ema_decay = train_opt.ema_decay
         ema_switch_iter = math.ceil(train_opt.ema_switch_epoch * self.iters_per_epoch)
+        if ema_switch_iter == 0:
+            ema_switch_iter = None
 
         if self.ema_decay > 0:
             logger.info(
@@ -455,8 +460,19 @@ class SRModel(BaseModel):
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
-            self.scaler_d.scale(l_d_real / self.accum_iters).backward()
-            self.scaler_d.scale(l_d_fake / self.accum_iters).backward()
+                aw_loss = self.adaptive_weighted_loss.aw_loss(
+                    l_d_real,
+                    l_d_fake,
+                    self.optimizer_d,
+                    self.net_d,
+                    real_d_pred,
+                    fake_d_pred,
+                )
+                loss_dict["l_d_aw"] = aw_loss
+
+            # self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
+            self.scaler_d.scale((aw_loss) / self.accum_iters).backward()
+
             if apply_gradient:
                 if self.grad_clip:
                     self.scaler_d.unscale_(self.optimizer_d)
