@@ -45,7 +45,7 @@ class aw_method:
         Dis_opt.zero_grad()
 
         # computing fake batch gradient
-        Dis_scaler(Dloss_fake).backward()  # (retain_graph=True)
+        Dis_scaler.scale(Dloss_fake).backward()  # (retain_graph=True)
         # tensor with real gradients
         grad_fake_tensor = [
             param.grad.clone() for _, param in Dis_Net.named_parameters()
