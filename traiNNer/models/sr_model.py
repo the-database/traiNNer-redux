@@ -464,6 +464,7 @@ class SRModel(BaseModel):
                     l_d_real,
                     l_d_fake,
                     self.optimizer_d,
+                    self.scaler_d,
                     self.net_d,
                     real_d_pred,
                     fake_d_pred,
@@ -471,7 +472,6 @@ class SRModel(BaseModel):
                 loss_dict["l_d_aw"] = aw_loss
 
             # self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
-            self.scaler_d.scale((aw_loss) / self.accum_iters).backward()
 
             if apply_gradient:
                 if self.grad_clip:

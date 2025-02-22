@@ -14,13 +14,20 @@ class aw_method:
         self._normalized_aw = normalized_aw
 
     def aw_loss(
-        self, Dloss_real, Dloss_fake, Dis_opt, Dis_Net, real_validity, fake_validity
+        self,
+        Dloss_real,
+        Dloss_fake,
+        Dis_opt,
+        Dis_scaler,
+        Dis_Net,
+        real_validity,
+        fake_validity,
     ):
         # resetting gradient back to zero
         Dis_opt.zero_grad()
 
         # computing real batch gradient
-        Dloss_real.backward(retain_graph=True)
+        Dis_scaler.scale(Dloss_real).backward(retain_graph=True)
         # tensor with real gradients
         grad_real_tensor = [
             param.grad.clone() for _, param in Dis_Net.named_parameters()
@@ -38,7 +45,7 @@ class aw_method:
         Dis_opt.zero_grad()
 
         # computing fake batch gradient
-        Dloss_fake.backward()  # (retain_graph=True)
+        Dis_scaler(Dloss_fake).backward()  # (retain_graph=True)
         # tensor with real gradients
         grad_fake_tensor = [
             param.grad.clone() for _, param in Dis_Net.named_parameters()
