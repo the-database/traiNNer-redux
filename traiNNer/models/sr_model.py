@@ -302,23 +302,26 @@ class SRModel(BaseModel):
     def setup_optimizers(self) -> None:
         train_opt = self.opt.train
         assert train_opt is not None
-        assert train_opt.optim_g is not None
+        # assert train_opt.optim_g is not None
         optim_params = []
+        logger = get_root_logger()
 
-        for k, v in self.net_g.named_parameters():
-            if v.requires_grad:
-                optim_params.append(v)
-            else:
-                logger = get_root_logger()
-                logger.warning("Params %s will not be optimized.", k)
+        if train_opt.optim_g is not None:
+            for k, v in self.net_g.named_parameters():
+                if v.requires_grad:
+                    optim_params.append(v)
+                else:
+                    logger.warning("Params %s will not be optimized.", k)
 
-        optim_type = train_opt.optim_g.pop("type")
-        self.optimizer_g = self.get_optimizer(
-            optim_type, optim_params, **train_opt.optim_g
-        )
-        self.optimizers.append(self.optimizer_g)
-        self.optimizers_skipped.append(False)
-        self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
+            optim_type = train_opt.optim_g.pop("type")
+            self.optimizer_g = self.get_optimizer(
+                optim_type, optim_params, **train_opt.optim_g
+            )
+            self.optimizers.append(self.optimizer_g)
+            self.optimizers_skipped.append(False)
+            self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
+        else:
+            logger.warning("!!! net_g will not be optimized. !!!")
 
         # optimizer d
         if self.net_d is not None:
@@ -353,13 +356,14 @@ class SRModel(BaseModel):
         self, current_iter: int, current_accum_iter: int, apply_gradient: bool
     ) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
-        assert self.optimizer_g is not None
+        # assert self.optimizer_g is not None
         assert self.lq is not None
         assert self.gt is not None
         assert self.scaler_d is not None
         assert self.scaler_g is not None
 
         skip_d_update = False
+        use_aw = False  # TODO
 
         # optimize net_d
         if self.net_d is not None:
@@ -368,69 +372,77 @@ class SRModel(BaseModel):
 
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
+        loss_dict = OrderedDict()
 
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
-            self.output = self.net_g(self.lq)
-            assert isinstance(self.output, Tensor)
-            l_g_total = torch.tensor(0.0, device=self.output.device)
-            loss_dict = OrderedDict()
+            if self.optimizer_g is not None:
+                self.output = self.net_g(self.lq)
+                assert isinstance(self.output, Tensor)
+                l_g_total = torch.tensor(0.0, device=self.output.device)
 
-            for label, loss in self.losses.items():
-                if label == "l_g_gan":
-                    assert self.net_d is not None
-                    fake_g_pred = self.net_d(self.output)
-                    l_g_loss = loss(fake_g_pred, True, is_disc=False)
+                for label, loss in self.losses.items():
+                    if label == "l_g_gan":
+                        assert self.net_d is not None
+                        fake_g_pred = self.net_d(self.output)
+                        l_g_loss = loss(fake_g_pred, True, is_disc=False)
 
-                    if self.adaptive_d:
-                        l_g_gan_ema = (
-                            self.adaptive_d_ema_decay * self.l_g_gan_ema
-                            + (1 - self.adaptive_d_ema_decay) * l_g_loss.detach()
+                        if self.adaptive_d:
+                            l_g_gan_ema = (
+                                self.adaptive_d_ema_decay * self.l_g_gan_ema
+                                + (1 - self.adaptive_d_ema_decay) * l_g_loss.detach()
+                            )
+
+                            if (
+                                l_g_gan_ema
+                                > self.l_g_gan_ema * self.adaptive_d_threshold
+                            ):
+                                skip_d_update = True
+                                self.optimizers_skipped[1] = True
+                                # print(current_iter, "skip_d_update")
+
+                            self.l_g_gan_ema = l_g_gan_ema
+
+                    elif label == "l_g_ldl":
+                        assert self.net_g_ema is not None, (
+                            "ema_decay must be enabled for LDL loss"
                         )
+                        with torch.inference_mode():
+                            output_ema = self.net_g_ema(self.lq)
+                        l_g_loss = loss(self.output, output_ema, self.gt)
+                    else:
+                        l_g_loss = loss(self.output, self.gt)
 
-                        if l_g_gan_ema > self.l_g_gan_ema * self.adaptive_d_threshold:
-                            skip_d_update = True
-                            self.optimizers_skipped[1] = True
-                            # print(current_iter, "skip_d_update")
+                    l_g_total += l_g_loss / self.accum_iters
+                    loss_dict[label] = l_g_loss
 
-                        self.l_g_gan_ema = l_g_gan_ema
+                # add total generator loss for tensorboard tracking
+                loss_dict["l_g_total"] = l_g_total
 
-                elif label == "l_g_ldl":
-                    assert self.net_g_ema is not None, (
-                        "ema_decay must be enabled for LDL loss"
-                    )
-                    with torch.inference_mode():
-                        output_ema = self.net_g_ema(self.lq)
-                    l_g_loss = loss(self.output, output_ema, self.gt)
-                else:
-                    l_g_loss = loss(self.output, self.gt)
+                self.scaler_g.scale(l_g_total).backward()
+                if apply_gradient:
+                    if self.grad_clip:
+                        self.scaler_g.unscale_(self.optimizer_g)
+                        clip_grad_norm_(self.net_g.parameters(), 1.0)
 
-                l_g_total += l_g_loss / self.accum_iters
-                loss_dict[label] = l_g_loss
-
-            # add total generator loss for tensorboard tracking
-            loss_dict["l_g_total"] = l_g_total
-
-        self.scaler_g.scale(l_g_total).backward()
-        if apply_gradient:
-            if self.grad_clip:
-                self.scaler_g.unscale_(self.optimizer_g)
-                clip_grad_norm_(self.net_g.parameters(), 1.0)
-
-            scale_before = self.scaler_g.get_scale()
-            self.scaler_g.step(self.optimizer_g)
-            self.scaler_g.update()
-            scale_after = self.scaler_g.get_scale()
-            self.optimizers_skipped[0] = scale_after < scale_before
-            if self.optimizers_skipped[0]:
-                logger = get_root_logger()
-                logger.info(
-                    "AMP: iter %d: optimizer_g update step skipped due to NaN/Inf in gradients. Current gradscaler_g scale: %.1f",
-                    current_iter,
-                    scale_after,
-                )
-            self.optimizer_g.zero_grad()
+                    scale_before = self.scaler_g.get_scale()
+                    self.scaler_g.step(self.optimizer_g)
+                    self.scaler_g.update()
+                    scale_after = self.scaler_g.get_scale()
+                    self.optimizers_skipped[0] = scale_after < scale_before
+                    if self.optimizers_skipped[0]:
+                        logger = get_root_logger()
+                        logger.info(
+                            "AMP: iter %d: optimizer_g update step skipped due to NaN/Inf in gradients. Current gradscaler_g scale: %.1f",
+                            current_iter,
+                            scale_after,
+                        )
+                    self.optimizer_g.zero_grad()
+            else:
+                with torch.inference_mode():
+                    self.output = self.net_g(self.lq)
+                    assert isinstance(self.output, Tensor)
 
         cri_gan = self.losses.get("l_g_gan")
 
@@ -460,18 +472,21 @@ class SRModel(BaseModel):
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
-                aw_loss = self.adaptive_weighted_loss.aw_loss(
-                    l_d_real,
-                    l_d_fake,
-                    self.optimizer_d,
-                    self.scaler_d,
-                    self.net_d,
-                    real_d_pred,
-                    fake_d_pred,
-                )
-                loss_dict["l_d_aw"] = aw_loss
+                if use_aw:
+                    aw_loss = self.adaptive_weighted_loss.aw_loss(
+                        l_d_real,
+                        l_d_fake,
+                        self.optimizer_d,
+                        self.scaler_d,
+                        self.net_d,
+                        real_d_pred,
+                        fake_d_pred,
+                        self.device.type,
+                    )
+                    loss_dict["l_d_aw"] = aw_loss
 
-            # self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
+            if not use_aw:
+                self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
 
             if apply_gradient:
                 if self.grad_clip:
@@ -481,8 +496,8 @@ class SRModel(BaseModel):
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
                 scale_after = self.scaler_d.get_scale()
-                self.optimizers_skipped[1] = scale_after < scale_before
-                if self.optimizers_skipped[1]:
+                self.optimizers_skipped[-1] = scale_after < scale_before
+                if self.optimizers_skipped[-1]:
                     logger = get_root_logger()
                     logger.info(
                         "AMP: iter %d: optimizer_d update step skipped due to NaN/Inf in gradients. Current gradscaler_d scale: %.1f",

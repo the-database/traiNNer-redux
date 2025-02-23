@@ -22,12 +22,14 @@ class aw_method:
         Dis_Net,
         real_validity,
         fake_validity,
+        device_type,
     ):
         # resetting gradient back to zero
         Dis_opt.zero_grad()
 
         # computing real batch gradient
-        Dis_scaler.scale(Dloss_real).backward(retain_graph=True)
+        with torch.autocast(enabled=False, device_type=device_type):
+            Dis_scaler.scale(Dloss_real).backward(retain_graph=True)
         # tensor with real gradients
         grad_real_tensor = [
             param.grad.clone() for _, param in Dis_Net.named_parameters()
@@ -45,7 +47,8 @@ class aw_method:
         Dis_opt.zero_grad()
 
         # computing fake batch gradient
-        Dis_scaler.scale(Dloss_fake).backward()  # (retain_graph=True)
+        with torch.autocast(enabled=False, device_type=device_type):
+            Dis_scaler.scale(Dloss_fake).backward()  # (retain_graph=True)
         # tensor with real gradients
         grad_fake_tensor = [
             param.grad.clone() for _, param in Dis_Net.named_parameters()
@@ -123,8 +126,6 @@ class aw_method:
 
         # updating gradient, i.e. getting aw_loss gradient
         for index, (_, param) in enumerate(Dis_Net.named_parameters()):
-            print(grad_real_tensor[index])
-            print(grad_fake_tensor[index])
             param.grad = w_r * grad_real_tensor[index] + w_f * grad_fake_tensor[index]
 
         return aw_loss
