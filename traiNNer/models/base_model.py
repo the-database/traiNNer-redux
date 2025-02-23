@@ -74,7 +74,6 @@ class BaseModel:
         self.scaler_d: GradScaler | None = None
         self.accum_iters: int = 1
         self.grad_clip: bool = False
-        self.adaptive_weighted_loss = None
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
