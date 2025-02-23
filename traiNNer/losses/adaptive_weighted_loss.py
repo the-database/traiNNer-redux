@@ -1,10 +1,18 @@
 import numpy as np
 import torch
+from torch import Tensor, nn
+from torch.amp.grad_scaler import GradScaler
+from torch.optim import Optimizer
 
 
-class aw_method:
+class AdaptiveWeightedDiscriminatorLoss:
     def __init__(
-        self, alpha1=0.5, alpha2=0.75, delta=0.05, epsilon=0.05, normalized_aw=True
+        self,
+        alpha1: float = 0.5,
+        alpha2: float = 0.75,
+        delta: float = 0.05,
+        epsilon: float = 0.05,
+        normalized_aw: bool = True,
     ) -> None:
         assert alpha1 < alpha2
         self._alpha1 = alpha1
@@ -15,25 +23,23 @@ class aw_method:
 
     def aw_loss(
         self,
-        Dloss_real,
-        Dloss_fake,
-        Dis_opt,
-        Dis_scaler,
-        Dis_Net,
-        real_validity,
-        fake_validity,
-        device_type,
-    ):
+        d_loss_real: Tensor,
+        d_loss_fake: Tensor,
+        d_optimizer: Optimizer,
+        d_scaler: GradScaler,
+        d_net: nn.Module,
+        real_validity: Tensor,
+        fake_validity: Tensor,
+        device_type: str,
+    ) -> Tensor:
         # resetting gradient back to zero
-        Dis_opt.zero_grad()
+        d_optimizer.zero_grad()
 
         # computing real batch gradient
         with torch.autocast(enabled=False, device_type=device_type):
-            Dis_scaler.scale(Dloss_real).backward(retain_graph=True)
+            d_scaler.scale(d_loss_real).backward(retain_graph=True)
         # tensor with real gradients
-        grad_real_tensor = [
-            param.grad.clone() for _, param in Dis_Net.named_parameters()
-        ]
+        grad_real_tensor = [param.grad.clone() for _, param in d_net.named_parameters()]
         grad_real_list = torch.cat(
             [grad.reshape(-1) for grad in grad_real_tensor], dim=0
         )
@@ -44,15 +50,13 @@ class aw_method:
         r_norm = np.sqrt(rdotr)
 
         # resetting gradient back to zero
-        Dis_opt.zero_grad()
+        d_optimizer.zero_grad()
 
         # computing fake batch gradient
         with torch.autocast(enabled=False, device_type=device_type):
-            Dis_scaler.scale(Dloss_fake).backward()  # (retain_graph=True)
+            d_scaler.scale(d_loss_fake).backward()  # (retain_graph=True)
         # tensor with real gradients
-        grad_fake_tensor = [
-            param.grad.clone() for _, param in Dis_Net.named_parameters()
-        ]
+        grad_fake_tensor = [param.grad.clone() for _, param in d_net.named_parameters()]
         grad_fake_list = torch.cat(
             [grad.reshape(-1) for grad in grad_fake_tensor], dim=0
         )
@@ -63,7 +67,7 @@ class aw_method:
         f_norm = np.sqrt(fdotf)
 
         # resetting gradient back to zero
-        Dis_opt.zero_grad()
+        d_optimizer.zero_grad()
 
         # dot product between real and fake gradients
         rdotf = torch.dot(grad_real_list, grad_fake_list).item()
@@ -122,10 +126,10 @@ class aw_method:
             w_f = 1 + self._epsilon
 
         # calculating aw_loss
-        aw_loss = w_r * Dloss_real + w_f * Dloss_fake
+        aw_loss = w_r * d_loss_real + w_f * d_loss_fake
 
         # updating gradient, i.e. getting aw_loss gradient
-        for index, (_, param) in enumerate(Dis_Net.named_parameters()):
+        for index, (_, param) in enumerate(d_net.named_parameters()):
             param.grad = w_r * grad_real_tensor[index] + w_f * grad_fake_tensor[index]
 
         return aw_loss

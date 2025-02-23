@@ -22,7 +22,7 @@ from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
-from traiNNer.losses.adaptive_weighted_loss import aw_method
+from traiNNer.losses.adaptive_weighted_loss import AdaptiveWeightedDiscriminatorLoss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -168,7 +168,7 @@ class SRModel(BaseModel):
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
 
-            self.adaptive_weighted_loss = aw_method()
+            self.adaptive_weighted_loss = AdaptiveWeightedDiscriminatorLoss()
 
             self.init_training_settings()
 
@@ -363,7 +363,7 @@ class SRModel(BaseModel):
         assert self.scaler_g is not None
 
         skip_d_update = False
-        use_aw = False  # TODO
+        use_aw = True  # TODO
 
         # optimize net_d
         if self.net_d is not None:
@@ -473,6 +473,7 @@ class SRModel(BaseModel):
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
                 if use_aw:
+                    # TODO handle grad accum
                     aw_loss = self.adaptive_weighted_loss.aw_loss(
                         l_d_real,
                         l_d_fake,
