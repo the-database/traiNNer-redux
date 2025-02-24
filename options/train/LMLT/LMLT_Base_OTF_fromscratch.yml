@@ -136,7 +136,7 @@ train:
   # Optimizer for generator model
   optim_g:
     type: AdanScheduleFree
-    lr: !!float 5e-4
+    lr: !!float 1e-3
     weight_decay: 0.01
     betas: [0.98, 0.92, 0.99]
     warmup_steps: 1600
