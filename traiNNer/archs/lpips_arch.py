@@ -341,7 +341,7 @@ class LPIPS(nn.Module):
                 for kk in range(self.L)
             ]
 
-        val = torch.tensor(0, device=res[0].device)
+        val = torch.zeros((1, 1, 1, 1), device=res[0].device)
         for l in range(self.L):
             val += res[l]
 
