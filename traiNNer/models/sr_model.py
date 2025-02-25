@@ -7,7 +7,7 @@ from typing import Any
 
 import cv2
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
@@ -720,7 +720,6 @@ class SRModel(BaseModel):
         assert self.opt.path.resume_models is not None
 
         if self.net_g_ema is not None:
-            assert isinstance(self.net_g_ema.ema_model, nn.Module)
             self.save_network(
                 self.net_g_ema,
                 "net_g_ema",
