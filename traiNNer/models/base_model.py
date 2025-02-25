@@ -9,7 +9,6 @@ from typing import Any
 
 import pytorch_optimizer
 import torch
-from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN import ESRGAN
@@ -18,6 +17,7 @@ from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
 from torch.optim.optimizer import Optimizer, ParamsT
+from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -64,8 +64,10 @@ class BaseModel:
         self.first_val_completed = False
         self.model_loader = ModelLoader()
         self.net_g = None
-        self.net_g_ema: EMA | None = None
+        self.net_g_ema: AveragedModel | None = None
         self.net_d = None
+        self.net_ae = None
+        self.net_ae_ema: AveragedModel | None = None
         self.use_amp = False
         self.use_channels_last = False
         self.memory_format = torch.preserve_format
@@ -73,7 +75,7 @@ class BaseModel:
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
         self.accum_iters: int = 1
-        self.ema_step: Tensor | None = None
+        self.ema_n_averaged: Tensor | None = None
         self.grad_clip: bool = False
 
     @abstractmethod
@@ -407,7 +409,7 @@ class BaseModel:
             key = full_key
             if key.startswith("module."):  # remove unnecessary 'module.'
                 key = key[7:]
-            if key in ("step", "initted"):  # ema key, breaks compatibility
+            if key == "n_averaged":  # ema key, breaks compatibility
                 continue
             new_state_dict[key] = param.to("cpu", memory_format=torch.contiguous_format)
 
@@ -721,7 +723,9 @@ class BaseModel:
             for s in self.schedulers:
                 state["schedulers"].append(s.state_dict())
             if self.net_g_ema is not None:
-                state["ema_step"] = self.net_g_ema.step
+                state["ema_n_averaged"] = self.net_g_ema.state_dict()["n_averaged"]
+            elif self.net_ae_ema is not None:
+                state["ema_n_averaged"] = self.net_ae_ema.state_dict()["n_averaged"]
 
             save_filename = f"{current_iter}.state"
             save_path = os.path.join(self.opt.path.training_states, save_filename)
@@ -783,10 +787,15 @@ class BaseModel:
             assert self.scaler_d is not None
             self.scaler_d.load_state_dict(resume_state["scaler_d"])
 
-        if "ema_step" in resume_state:
+        if "ema_n_averaged" in resume_state:
             if self.net_g_ema is not None:
-                self.net_g_ema.register_buffer("step", resume_state["ema_step"])
-                self.net_g_ema.register_buffer("initted", torch.tensor(True))
+                self.net_g_ema.register_buffer(
+                    "n_averaged", resume_state["ema_n_averaged"]
+                )
+            elif self.net_ae_ema is not None:
+                self.net_ae_ema.register_buffer(
+                    "n_averaged", resume_state["ema_n_averaged"]
+                )
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
         """reduce loss dict.
