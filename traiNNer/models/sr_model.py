@@ -11,11 +11,7 @@ from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
-
-# from ema_pytorch import EMA
 from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
-
-# from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import TqdmExperimentalWarning
@@ -211,20 +207,12 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
-            # self.net_g_ema = EMA(
-            #     init_net_g_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
-            #     beta=self.ema_decay,
-            #     power=3 / 4,
-            #     allow_different_devices=True,
-            #     # device=self.device,
-            # )
             self.net_g_ema = AveragedModel(
                 init_net_g_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
                 multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
                 device=self.device,
             )
 
-            # self.net_g_ema.steps = self.net_g_ema.steps.to(device=torch.device("cpu"))
             self.net_g_ema.n_averaged = self.net_g_ema.n_averaged.to(
                 device=torch.device("cpu")
             )
