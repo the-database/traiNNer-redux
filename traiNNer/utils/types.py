@@ -24,7 +24,7 @@ class TrainingState(TypedDict):
     schedulers: list[StateDict]
     scaler_g: NotRequired[StateDict]
     scaler_d: NotRequired[StateDict]
-    ema_step: NotRequired[Tensor]
+    ema_n_averaged: NotRequired[Tensor]
 
 
 class DataLoaderArgs(TypedDict):
