@@ -140,7 +140,7 @@ path:
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#train-options-train
 ###########################################################################################
 train:
-  ema_decay: 0.9999
+  ema_decay: 0.999
   grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:
