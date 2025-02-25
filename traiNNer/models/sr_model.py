@@ -1,4 +1,3 @@
-import math
 import os
 import shutil
 import warnings
@@ -160,9 +159,7 @@ class SRModel(BaseModel):
             self.losses = {}
 
             self.ema_decay = 0
-            self.iters_per_epoch = opt.switch_iter_per_epoch
-            self.ema_switch_epoch = None
-            self.net_g_ema: EMA | None = None
+            self.net_g_ema = None
 
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
@@ -188,9 +185,6 @@ class SRModel(BaseModel):
         self.adaptive_d_ema_decay = train_opt.adaptive_d_ema_decay
         self.adaptive_d_threshold = train_opt.adaptive_d_threshold
         self.ema_decay = train_opt.ema_decay
-        ema_switch_iter = math.ceil(train_opt.ema_switch_epoch * self.iters_per_epoch)
-        if ema_switch_iter == 0:
-            ema_switch_iter = None
 
         if self.ema_decay > 0:
             logger.info(
@@ -222,7 +216,7 @@ class SRModel(BaseModel):
                 allow_different_devices=True,
                 update_after_step=100,  # TODO parameterize
                 update_every=1,  # TODO parameterize
-                update_model_with_ema_every=ema_switch_iter,
+                update_model_with_ema_every=5000,  # TODO parameterize
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
             assert self.net_g_ema is not None
