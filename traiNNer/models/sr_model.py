@@ -191,12 +191,14 @@ class SRModel(BaseModel):
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
             )
             assert self.opt.network_g is not None, "network_g must be defined"
-            init_net_g_ema = build_network(
-                {**self.opt.network_g, "scale": self.opt.scale}
-            )
+            init_net_g_ema = self.net_g
 
             # load pretrained model
             if self.opt.path.pretrain_network_g_ema is not None:
+                init_net_g_ema = build_network(
+                    {**self.opt.network_g, "scale": self.opt.scale}
+                )
+
                 self.load_network(
                     init_net_g_ema,
                     self.opt.path.pretrain_network_g_ema,
