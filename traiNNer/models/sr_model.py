@@ -216,6 +216,7 @@ class SRModel(BaseModel):
                 allow_different_devices=True,
                 update_after_step=100,  # TODO parameterize
                 update_every=1,  # TODO parameterize
+                power=3 / 4,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
             assert self.net_g_ema is not None
