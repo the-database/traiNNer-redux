@@ -36,6 +36,9 @@ def final_template(
 ) -> str:
     default_scale = 4
 
+    if arch["scales"] == [1]:
+        default_scale = 1
+
     template = template.replace(
         "scale: %scale%",
         f"scale: {default_scale}  # {', '.join([str(x) for x in arch['scales']])}",
@@ -257,6 +260,7 @@ archs: list[ArchInfo] = [
     {"names": ["Sebica"], "scales": ALL_SCALES},
     {"names": ["SeemoRe_T"], "scales": ALL_SCALES, "folder_name_override": "SeemoRe"},
     {"names": ["CRAFT"], "scales": ALL_SCALES},
+    {"names": ["CascadedGaze"], "scales": [1]},
 ]
 
 for arch in archs:
