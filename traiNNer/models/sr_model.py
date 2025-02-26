@@ -7,11 +7,11 @@ from typing import Any
 
 import cv2
 import torch
-from torch import Tensor
+from ema_pytorch import EMA
+from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
-from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import TqdmExperimentalWarning
@@ -159,7 +159,7 @@ class SRModel(BaseModel):
             self.losses = {}
 
             self.ema_decay = 0
-            self.net_g_ema = None
+            self.net_g_ema: EMA | None = None
 
             self.optimizer_g: Optimizer | None = None
             self.optimizer_d: Optimizer | None = None
@@ -191,14 +191,14 @@ class SRModel(BaseModel):
                 "Using Exponential Moving Average (EMA) with decay: %s.", self.ema_decay
             )
             assert self.opt.network_g is not None, "network_g must be defined"
-            init_net_g_ema = self.net_g
+
+            init_net_g_ema = None
 
             # load pretrained model
             if self.opt.path.pretrain_network_g_ema is not None:
                 init_net_g_ema = build_network(
                     {**self.opt.network_g, "scale": self.opt.scale}
                 )
-
                 self.load_network(
                     init_net_g_ema,
                     self.opt.path.pretrain_network_g_ema,
@@ -209,15 +209,18 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = AveragedModel(
-                init_net_g_ema.to(memory_format=self.memory_format),  # pyright: ignore[reportCallIssue]
-                multi_avg_fn=get_ema_multi_avg_fn(self.ema_decay),
-                device=self.device,
-            )
+            self.net_g_ema = EMA(
+                self.net_g,
+                ema_model=init_net_g_ema,
+                beta=self.ema_decay,
+                allow_different_devices=True,
+                update_after_step=100,  # TODO parameterize
+                update_every=1,  # TODO parameterize
+                power=3 / 4,
+            ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
-            self.net_g_ema.n_averaged = self.net_g_ema.n_averaged.to(
-                device=torch.device("cpu")
-            )
+            assert self.net_g_ema is not None
+            self.net_g_ema.step = self.net_g_ema.step.to(device=torch.device("cpu"))
 
         self.grad_clip = train_opt.grad_clip
         if self.grad_clip:
@@ -489,7 +492,7 @@ class SRModel(BaseModel):
 
         if self.net_g_ema is not None and apply_gradient:
             if not (self.use_amp and self.optimizers_skipped[0]):
-                self.net_g_ema.update_parameters(self.net_g)
+                self.net_g_ema.update()
 
     def test(self) -> None:
         with torch.autocast(
@@ -722,8 +725,9 @@ class SRModel(BaseModel):
         assert self.opt.path.resume_models is not None
 
         if self.net_g_ema is not None:
+            assert isinstance(self.net_g_ema.ema_model, nn.Module)
             self.save_network(
-                self.net_g_ema,
+                self.net_g_ema.ema_model,
                 "net_g_ema",
                 self.opt.path.models,
                 current_iter,
