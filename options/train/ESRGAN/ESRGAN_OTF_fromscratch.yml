@@ -136,13 +136,18 @@ train:
   grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:
-    type: AdanScheduleFree
-    lr: !!float 1e-3
-    weight_decay: 0.01
-    betas: [0.98, 0.92, 0.99]
-    warmup_steps: 1600
+    type: AdamW
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
 
-  total_iter: 500000  # Total number of iterations.
+  scheduler:
+    type: MultiStepLR
+    milestones: [200000, 400000, 600000, 800000]
+    gamma: 0.5
+
+  total_iter: 1000000  # Total number of iterations.
+  warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
   # https://trainner-redux.readthedocs.io/en/latest/loss_reference.html

@@ -260,7 +260,11 @@ def _multi_tensor_adan_schedule_free(
     torch._foreach_addcdiv_(params, exp_avg_diffs, denom, value=-step_size_diff)
 
     # z step
-    torch._foreach_sub_(z, grads, alpha=lr)
+    torch._foreach_mul_(z, 1 - lr * weight_decay)
+    torch._foreach_addcdiv_(z, exp_avgs, denom, value=-lr / bias_correction1)
+    torch._foreach_addcdiv_(
+        z, exp_avg_diffs, denom, value=-lr * beta2 / bias_correction2
+    )
 
     torch._foreach_zero_(neg_pre_grads)
     torch._foreach_add_(neg_pre_grads, grads, alpha=-1.0)

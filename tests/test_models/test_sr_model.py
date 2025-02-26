@@ -40,7 +40,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert isinstance(model.losses["l_g_perceptual"], PerceptualLoss)
     assert isinstance(model.losses["l_g_gan"], GANLoss)
     assert isinstance(model.optimizers[0], AdanScheduleFree)  # pyright: ignore [reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    assert model.ema_decay == 0.9999
+    assert model.ema_decay == 0.999
 
     # prepare data
     gt = torch.rand((1, 3, 32, 32), dtype=torch.float32)
