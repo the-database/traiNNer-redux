@@ -45,6 +45,7 @@ ARCHS_WITHOUT_FP16 = {
 
 # These archs perform slower when using channels last
 ARCHS_WITHOUT_CHANNELS_LAST = {
+    "cascadedgaze",
     "dctlsa",
     "ditn_real",
     "dwt",

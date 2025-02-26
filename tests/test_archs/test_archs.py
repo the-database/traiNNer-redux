@@ -83,6 +83,11 @@ EXCLUDE_ARCH_SCALES = {
     "scunet_aaf6aa": [{"scale": 3, "extra_arch_params": {}}],
     "rtmosr_l": [{"scale": 3, "extra_arch_params": {}}],
     "rtmosr_ul": [{"scale": 3, "extra_arch_params": {}}],
+    "cascadedgaze": [
+        {"scale": 2, "extra_arch_params": {}},
+        {"scale": 3, "extra_arch_params": {}},
+        {"scale": 4, "extra_arch_params": {}},
+    ],
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
@@ -93,6 +98,7 @@ ADD_VSR_DIM = {"tscunet"}
 # image size of 32x32 to do training or inference with.
 REQUIRE_32_HW = {"dwt", "emt", "hit_srf", "realcugan"}
 REQUIRE_64_HW = {
+    "cascadedgaze",
     "hit_lmlt",
     "hit_sir",
     "hit_sng",
