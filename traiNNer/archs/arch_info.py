@@ -559,6 +559,15 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": "16  # paper: 64",
         "accum_iter": "1",
     },
+    "span_s": {
+        "milestones": [200000, 400000, 600000, 800000],
+        "total_iter": 1000000,
+        "warmup_iter": -1,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "16  # paper: 64",
+        "accum_iter": "1",
+    },
     "esrgan": {
         "milestones": [200000, 400000, 600000, 800000],
         "total_iter": 1000000,
@@ -815,6 +824,15 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
         "accum_iter": "1",
     },
     "span": {
+        "milestones": [100000, 200000, 300000, 400000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4  # paper: !!float 2.5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "16  # paper: 64",
+        "accum_iter": "1",
+    },
+    "span_s": {
         "milestones": [100000, 200000, 300000, 400000],
         "total_iter": 500000,
         "warmup_iter": -1,
