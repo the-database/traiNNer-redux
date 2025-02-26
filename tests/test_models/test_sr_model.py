@@ -5,13 +5,13 @@ from os import path as osp
 import torch
 from pytest import MonkeyPatch
 from spandrel.architectures.ESRGAN import ESRGAN
+from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.losses.gan_loss import GANLoss
 from traiNNer.losses.mssim_loss import MSSIMLoss
 from traiNNer.losses.perceptual_loss import PerceptualLoss
 from traiNNer.models.sr_model import SRModel
-from traiNNer.optimizers.adanschedulefree import AdanScheduleFree
 from traiNNer.utils.config import Config
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.types import DataFeed
@@ -39,7 +39,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert isinstance(model.losses["l_g_mssim"], MSSIMLoss)
     assert isinstance(model.losses["l_g_perceptual"], PerceptualLoss)
     assert isinstance(model.losses["l_g_gan"], GANLoss)
-    assert isinstance(model.optimizers[0], AdanScheduleFree)  # pyright: ignore [reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
+    assert isinstance(model.optimizers[0], AdamW)
     assert model.ema_decay == 0.999
 
     # prepare data
