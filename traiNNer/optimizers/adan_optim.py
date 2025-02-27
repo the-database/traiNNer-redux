@@ -14,13 +14,15 @@
 
 import math
 from collections.abc import Callable
-from typing import Any
 
 import torch
 from torch import Tensor
 from torch.optim.optimizer import Optimizer, ParamsT
 
+from traiNNer.utils.registry import OPTIMIZER_REGISTRY
 
+
+@OPTIMIZER_REGISTRY.register()
 class Adan(Optimizer):
     """
     Implements a pytorch variant of Adan
@@ -56,8 +58,6 @@ class Adan(Optimizer):
         eps: float = 1e-8,
         weight_decay: float = 0.0,
         max_grad_norm: float = 0.0,
-        no_prox: bool = False,
-        foreach: bool = True,
     ) -> None:
         if not 0.0 <= max_grad_norm:
             raise ValueError(f"Invalid Max grad norm: {max_grad_norm}")
@@ -78,15 +78,8 @@ class Adan(Optimizer):
             "eps": eps,
             "weight_decay": weight_decay,
             "max_grad_norm": max_grad_norm,
-            "no_prox": no_prox,
-            "foreach": foreach,
         }
         super().__init__(params, defaults)
-
-    def __setstate__(self, state: dict[str, Any]) -> None:
-        super().__setstate__(state)
-        for group in self.param_groups:
-            group.setdefault("no_prox", False)
 
     @torch.no_grad()
     def restart_opt(self) -> None:
@@ -193,73 +186,12 @@ class Adan(Optimizer):
                 "lr": group["lr"],
                 "weight_decay": group["weight_decay"],
                 "eps": group["eps"],
-                "no_prox": group["no_prox"],
                 "clip_global_grad_norm": clip_global_grad_norm,
             }
 
-            if group["foreach"]:
-                _multi_tensor_adan(**kwargs)  # pyright: ignore[reportArgumentType]
-            else:
-                _single_tensor_adan(**kwargs)  # pyright: ignore[reportArgumentType]
+            _multi_tensor_adan(**kwargs)  # pyright: ignore[reportArgumentType]
 
         return loss
-
-
-def _single_tensor_adan(
-    params: list[Tensor],
-    grads: list[Tensor],
-    exp_avgs: list[Tensor],
-    exp_avg_sqs: list[Tensor],
-    exp_avg_diffs: list[Tensor],
-    neg_pre_grads: list[Tensor],
-    *,
-    beta1: float,
-    beta2: float,
-    beta3: float,
-    bias_correction1: float,
-    bias_correction2: float,
-    bias_correction3_sqrt: float,
-    lr: float,
-    weight_decay: float,
-    eps: float,
-    no_prox: bool,
-    clip_global_grad_norm: Tensor,
-) -> None:
-    for i, param in enumerate(params):
-        grad = grads[i]
-        exp_avg = exp_avgs[i]
-        exp_avg_sq = exp_avg_sqs[i]
-        exp_avg_diff = exp_avg_diffs[i]
-        neg_grad_or_diff = neg_pre_grads[i]
-
-        grad.mul_(clip_global_grad_norm)
-
-        # for memory saving, we use `neg_grad_or_diff`
-        # to get some temp variable in a inplace way
-        neg_grad_or_diff.add_(grad)
-
-        exp_avg.mul_(beta1).add_(grad, alpha=1 - beta1)  # m_t
-        exp_avg_diff.mul_(beta2).add_(neg_grad_or_diff, alpha=1 - beta2)  # diff_t
-
-        neg_grad_or_diff.mul_(beta2).add_(grad)
-        exp_avg_sq.mul_(beta3).addcmul_(
-            neg_grad_or_diff, neg_grad_or_diff, value=1 - beta3
-        )  # n_t
-
-        denom = ((exp_avg_sq).sqrt() / bias_correction3_sqrt).add_(eps)
-        step_size_diff = lr * beta2 / bias_correction2
-        step_size = lr / bias_correction1
-
-        if no_prox:
-            param.mul_(1 - lr * weight_decay)
-            param.addcdiv_(exp_avg, denom, value=-step_size)
-            param.addcdiv_(exp_avg_diff, denom, value=-step_size_diff)
-        else:
-            param.addcdiv_(exp_avg, denom, value=-step_size)
-            param.addcdiv_(exp_avg_diff, denom, value=-step_size_diff)
-            param.div_(1 + lr * weight_decay)
-
-        neg_grad_or_diff.zero_().add_(grad, alpha=-1.0)
 
 
 def _multi_tensor_adan(
@@ -279,7 +211,6 @@ def _multi_tensor_adan(
     lr: float,
     weight_decay: float,
     eps: float,
-    no_prox: bool,
     clip_global_grad_norm: Tensor,
 ) -> None:
     if len(params) == 0:
@@ -311,13 +242,9 @@ def _multi_tensor_adan(
     step_size_diff = lr * beta2 / bias_correction2
     step_size = lr / bias_correction1
 
-    if no_prox:
-        torch._foreach_mul_(params, 1 - lr * weight_decay)
-        torch._foreach_addcdiv_(params, exp_avgs, denom, value=-step_size)
-        torch._foreach_addcdiv_(params, exp_avg_diffs, denom, value=-step_size_diff)
-    else:
-        torch._foreach_addcdiv_(params, exp_avgs, denom, value=-step_size)
-        torch._foreach_addcdiv_(params, exp_avg_diffs, denom, value=-step_size_diff)
-        torch._foreach_div_(params, 1 + lr * weight_decay)
+    torch._foreach_mul_(params, 1 - lr * weight_decay)
+    torch._foreach_addcdiv_(params, exp_avgs, denom, value=-step_size)
+    torch._foreach_addcdiv_(params, exp_avg_diffs, denom, value=-step_size_diff)
+
     torch._foreach_zero_(neg_pre_grads)
     torch._foreach_add_(neg_pre_grads, grads, alpha=-1.0)

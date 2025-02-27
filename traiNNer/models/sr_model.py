@@ -304,26 +304,26 @@ class SRModel(BaseModel):
                 else:
                     logger.warning("Params %s will not be optimized.", k)
 
-            optim_type = train_opt.optim_g.pop("type")
-            self.optimizer_g = self.get_optimizer(
-                optim_type, optim_params, **train_opt.optim_g
-            )
+            self.optimizer_g = self.get_optimizer(optim_params, train_opt.optim_g)
             self.optimizers.append(self.optimizer_g)
             self.optimizers_skipped.append(False)
-            self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
+            self.optimizers_schedule_free.append(
+                "SCHEDULEFREE" in train_opt.optim_g["type"].upper()
+            )
         else:
             logger.warning("!!! net_g will not be optimized. !!!")
 
         # optimizer d
         if self.net_d is not None:
             assert train_opt.optim_d is not None
-            optim_type = train_opt.optim_d.pop("type")
             self.optimizer_d = self.get_optimizer(
-                optim_type, self.net_d.parameters(), **train_opt.optim_d
+                self.net_d.parameters(), train_opt.optim_d
             )
             self.optimizers.append(self.optimizer_d)
             self.optimizers_skipped.append(False)
-            self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
+            self.optimizers_schedule_free.append(
+                "SCHEDULEFREE" in train_opt.optim_d["type"].upper()
+            )
 
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data

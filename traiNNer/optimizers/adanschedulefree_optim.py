@@ -5,7 +5,10 @@ import torch
 from torch import Tensor
 from torch.optim.optimizer import Optimizer, ParamsT
 
+from traiNNer.utils.registry import OPTIMIZER_REGISTRY
 
+
+@OPTIMIZER_REGISTRY.register()
 class AdanScheduleFree(Optimizer):
     def __init__(
         self,
