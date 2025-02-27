@@ -393,6 +393,10 @@ class BaseModel:
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
         assert self.opt.logger is not None
 
+        for o in self.optimizers:
+            if hasattr(o, "eval"):
+                o.eval()  # pyright: ignore[reportAttributeAccessIssue]
+
         save_filename = (
             f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
         )
@@ -452,6 +456,10 @@ class BaseModel:
             assert logger is not None
             logger.warning("Still cannot save %s. Just ignore it.", save_path)
             # raise IOError(f'Cannot save {save_path}.')
+
+        for o in self.optimizers:
+            if hasattr(o, "train"):
+                o.train()  # pyright: ignore[reportAttributeAccessIssue]
 
     def _print_different_keys_loading(
         self,
@@ -731,9 +739,6 @@ class BaseModel:
             while retry > 0:
                 try:
                     torch.save(state, save_path)
-                    for o in self.optimizers:
-                        if hasattr(o, "train"):
-                            o.train()  # pyright: ignore[reportAttributeAccessIssue]
                 except Exception as e:
                     logger = get_root_logger()
                     logger.warning(
@@ -750,6 +755,10 @@ class BaseModel:
                 assert logger is not None
                 logger.warning("Still cannot save %s. Just ignore it.", save_path)
                 # raise IOError(f'Cannot save {save_path}.')
+
+            for o in self.optimizers:
+                if hasattr(o, "train"):
+                    o.train()  # pyright: ignore[reportAttributeAccessIssue]
 
     def resume_training(self, resume_state: TrainingState) -> None:
         """Reload the optimizers and schedulers for resumed training.
