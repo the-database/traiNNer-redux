@@ -7,27 +7,6 @@ class StrictStruct(Struct, forbid_unknown_fields=True):
     pass
 
 
-class SchedulerOptions(StrictStruct):
-    type: Annotated[
-        str,
-        Meta(
-            description="Name of the optimizer scheduler to use for all optimizers. For a list of scheduler names, see the [PyTorch documentation](https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)."
-        ),
-    ]
-    milestones: Annotated[
-        list[int],
-        Meta(
-            description="List of milestones, iterations where the learning rate is reduced."
-        ),
-    ]
-    gamma: Annotated[
-        float,
-        Meta(
-            description="At each milestone, the learning rate is multiplied by this number, so a gamma of 0.5 cuts the learning rate in half at each milestone."
-        ),
-    ]
-
-
 class WandbOptions(StrictStruct):
     resume_id: str | None = None
     project: str | None = None
@@ -255,7 +234,7 @@ class TrainOptions(StrictStruct):
         ),
     ] = -1
     scheduler: Annotated[
-        SchedulerOptions | None,
+        dict[str, Any] | None,
         Meta(
             description="Options for the optimizer scheduler. If there are multiple optimizers, both will use the same scheduler options."
         ),

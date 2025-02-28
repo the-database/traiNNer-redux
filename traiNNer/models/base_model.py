@@ -26,7 +26,6 @@ from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import is_json_compatible
-from traiNNer.utils.options import struct2dict
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
@@ -220,7 +219,7 @@ class BaseModel:
         """Set up schedulers."""
         assert self.opt.train is not None
         if self.opt.train.scheduler is not None:
-            scheduler_opts = struct2dict(self.opt.train.scheduler)
+            scheduler_opts = self.opt.train.scheduler
             scheduler_type = scheduler_opts.pop("type")
             # uppercase scheduler_type to make it case insensitive
             sch_typ_upper = scheduler_type.upper()
