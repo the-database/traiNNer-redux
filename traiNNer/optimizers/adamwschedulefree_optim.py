@@ -9,7 +9,10 @@ import torch
 import torch.optim
 from torch.optim.optimizer import ParamsT
 
+from traiNNer.utils.registry import OPTIMIZER_REGISTRY
 
+
+@OPTIMIZER_REGISTRY.register()
 class AdamWScheduleFree(torch.optim.Optimizer):
     r"""
     Schedule-Free AdamW

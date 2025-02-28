@@ -209,6 +209,9 @@ class SRModel(BaseModel):
             # define network net_g with Exponential Moving Average (EMA)
             # net_g_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
+            switch_iter = train_opt.ema_switch_iter
+            if switch_iter == 0:
+                switch_iter = None
             self.net_g_ema = EMA(
                 self.net_g,
                 ema_model=init_net_g_ema,
@@ -216,7 +219,8 @@ class SRModel(BaseModel):
                 allow_different_devices=True,
                 update_after_step=100,  # TODO parameterize
                 update_every=1,  # TODO parameterize
-                power=3 / 4,
+                power=train_opt.ema_power,
+                update_model_with_ema_every=switch_iter,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
             assert self.net_g_ema is not None
@@ -304,26 +308,26 @@ class SRModel(BaseModel):
                 else:
                     logger.warning("Params %s will not be optimized.", k)
 
-            optim_type = train_opt.optim_g.pop("type")
-            self.optimizer_g = self.get_optimizer(
-                optim_type, optim_params, **train_opt.optim_g
-            )
+            self.optimizer_g = self.get_optimizer(optim_params, train_opt.optim_g)
             self.optimizers.append(self.optimizer_g)
             self.optimizers_skipped.append(False)
-            self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
+            self.optimizers_schedule_free.append(
+                "SCHEDULEFREE" in train_opt.optim_g["type"].upper()
+            )
         else:
             logger.warning("!!! net_g will not be optimized. !!!")
 
         # optimizer d
         if self.net_d is not None:
             assert train_opt.optim_d is not None
-            optim_type = train_opt.optim_d.pop("type")
             self.optimizer_d = self.get_optimizer(
-                optim_type, self.net_d.parameters(), **train_opt.optim_d
+                self.net_d.parameters(), train_opt.optim_d
             )
             self.optimizers.append(self.optimizer_d)
             self.optimizers_skipped.append(False)
-            self.optimizers_schedule_free.append("SCHEDULEFREE" in optim_type.upper())
+            self.optimizers_schedule_free.append(
+                "SCHEDULEFREE" in train_opt.optim_d["type"].upper()
+            )
 
     def feed_data(self, data: DataFeed) -> None:
         assert "lq" in data
@@ -406,6 +410,11 @@ class SRModel(BaseModel):
 
                     l_g_total += l_g_loss / self.accum_iters
                     loss_dict[label] = l_g_loss
+
+                if not l_g_total.isfinite():
+                    raise RuntimeError(
+                        "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
+                    )
 
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total

@@ -7,7 +7,6 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-import pytorch_optimizer
 import torch
 from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
@@ -22,14 +21,11 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
-from traiNNer.optimizers.adamwschedulefree import AdamWScheduleFree
-from traiNNer.optimizers.adan import Adan
-from traiNNer.optimizers.adanschedulefree import AdanScheduleFree
+from traiNNer.optimizers import build_optimizer
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import is_json_compatible
-from traiNNer.utils.options import struct2dict
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
@@ -207,41 +203,10 @@ class BaseModel:
 
     def get_optimizer(
         self,
-        optim_type: str,
         params: ParamsT,
-        lr: float,
-        **kwargs,
+        opts: dict[str, Any],
     ) -> Optimizer:
-        # https://github.com/Corpsecreate/neosr/blob/dbb3d012880add41b6e49d4c5252c719c3236892/neosr/models/default.py#L247
-        # uppercase optim_type to make it case insensitive
-        optim_type_upper = optim_type.upper()
-        optim_map = {
-            "ADADELTA": torch.optim.Adadelta,
-            "ADAGRAD": torch.optim.Adagrad,
-            "ADAM": torch.optim.Adam,
-            "ADAMW": torch.optim.AdamW,
-            "SPARSEADAM": torch.optim.SparseAdam,
-            "ADAMAX": torch.optim.Adamax,
-            "ASGD": torch.optim.ASGD,
-            "SGD": torch.optim.SGD,
-            "RADAM": torch.optim.RAdam,
-            "RPROP": torch.optim.Rprop,
-            "RMSPROP": torch.optim.RMSprop,
-            "NADAM": torch.optim.NAdam,
-            "LBFGS": torch.optim.LBFGS,
-            "ADAN": Adan,
-            "ADANSCHEDULEFREE": AdanScheduleFree,
-            "LAMB": pytorch_optimizer.Lamb,
-            "PRODIGY": pytorch_optimizer.Prodigy,
-            "LION": pytorch_optimizer.Lion,
-            "TIGER": pytorch_optimizer.Tiger,
-            "ADAMP": pytorch_optimizer.AdamP,
-            "ADAMWSCHEDULEFREE": AdamWScheduleFree,
-        }
-        if optim_type_upper in optim_map:
-            optimizer = optim_map[optim_type_upper](params, lr, **kwargs)  # pyright: ignore[reportArgumentType]
-        else:
-            raise NotImplementedError(f"optimizer {optim_type} is not supported yet.")
+        optimizer = build_optimizer(params, opts)
 
         if hasattr(optimizer, "train"):
             optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
@@ -254,7 +219,7 @@ class BaseModel:
         """Set up schedulers."""
         assert self.opt.train is not None
         if self.opt.train.scheduler is not None:
-            scheduler_opts = struct2dict(self.opt.train.scheduler)
+            scheduler_opts = self.opt.train.scheduler
             scheduler_type = scheduler_opts.pop("type")
             # uppercase scheduler_type to make it case insensitive
             sch_typ_upper = scheduler_type.upper()
@@ -393,6 +358,10 @@ class BaseModel:
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
         assert self.opt.logger is not None
 
+        for o in self.optimizers:
+            if hasattr(o, "eval"):
+                o.eval()  # pyright: ignore[reportAttributeAccessIssue]
+
         save_filename = (
             f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
         )
@@ -452,6 +421,10 @@ class BaseModel:
             assert logger is not None
             logger.warning("Still cannot save %s. Just ignore it.", save_path)
             # raise IOError(f'Cannot save {save_path}.')
+
+        for o in self.optimizers:
+            if hasattr(o, "train"):
+                o.train()  # pyright: ignore[reportAttributeAccessIssue]
 
     def _print_different_keys_loading(
         self,
@@ -731,9 +704,6 @@ class BaseModel:
             while retry > 0:
                 try:
                     torch.save(state, save_path)
-                    for o in self.optimizers:
-                        if hasattr(o, "train"):
-                            o.train()  # pyright: ignore[reportAttributeAccessIssue]
                 except Exception as e:
                     logger = get_root_logger()
                     logger.warning(
@@ -750,6 +720,10 @@ class BaseModel:
                 assert logger is not None
                 logger.warning("Still cannot save %s. Just ignore it.", save_path)
                 # raise IOError(f'Cannot save {save_path}.')
+
+            for o in self.optimizers:
+                if hasattr(o, "train"):
+                    o.train()  # pyright: ignore[reportAttributeAccessIssue]
 
     def resume_training(self, resume_state: TrainingState) -> None:
         """Reload the optimizers and schedulers for resumed training.
