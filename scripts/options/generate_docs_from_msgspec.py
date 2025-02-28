@@ -7,7 +7,6 @@ from traiNNer.utils.redux_options import (
     LogOptions,
     PathOptions,
     ReduxOptions,
-    SchedulerOptions,
     TrainOptions,
     ValOptions,
 )
@@ -113,9 +112,6 @@ if __name__ == "__main__":
         fout.write(f"{generate_markdown_doc(PathOptions, 'Path options (`path`)')}\n")
         fout.write(
             f"{generate_markdown_doc(TrainOptions, 'Train options (`train`)')}\n"
-        )
-        fout.write(
-            f"{generate_markdown_doc(SchedulerOptions, 'Scheduler options (`train.scheduler`)')}\n"
         )
         fout.write(
             f"{generate_markdown_doc(ValOptions, 'Validation options (`val`)')}\n"
