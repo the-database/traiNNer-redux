@@ -277,7 +277,7 @@ def train_pipeline(root_path: str) -> None:
     make_exp_dirs(opt, resume_state is not None)
     # mkdir for experiments and logger
     if resume_state is None:
-        if opt.logger.use_tb_logger and "debug" not in opt.name and opt.rank == 0:
+        if opt.logger.use_tb_logger and opt.rank == 0:
             mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
 
     # copy the yml file to the experiment root
