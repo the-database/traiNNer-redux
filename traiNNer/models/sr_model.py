@@ -493,8 +493,6 @@ class SRModel(BaseModel):
                     )
                 self.optimizer_d.zero_grad()
 
-        self.log_dict = self.reduce_loss_dict(loss_dict)
-
         for key, value in loss_dict.items():
             val = (
                 value
@@ -502,6 +500,8 @@ class SRModel(BaseModel):
                 else value.to(dtype=torch.float32).detach()
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
+
+        self.log_dict = self.reduce_loss_dict(self.log_dict)
 
         if self.net_g_ema is not None and apply_gradient:
             if not (self.use_amp and self.optimizers_skipped[0]):
