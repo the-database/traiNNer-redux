@@ -58,15 +58,11 @@ def init_tb_loggers(opt: ReduxOptions) -> SummaryWriter | None:
     assert opt.logger is not None
     assert opt.root_path is not None
 
-    if (
-        (opt.logger.wandb is not None)
-        and (opt.logger.wandb.project is not None)
-        and ("debug" not in opt.name)
-    ):
+    if (opt.logger.wandb is not None) and (opt.logger.wandb.project is not None):
         assert opt.logger.use_tb_logger, "should turn on tensorboard when using wandb"
         init_wandb_logger(opt)
     tb_logger = None
-    if opt.logger.use_tb_logger and "debug" not in opt.name:
+    if opt.logger.use_tb_logger:
         tb_logger = init_tb_logger(
             log_dir=osp.join(opt.root_path, "tb_logger", opt.name)
         )

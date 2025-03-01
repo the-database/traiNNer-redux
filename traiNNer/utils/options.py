@@ -175,10 +175,6 @@ def parse_options(
     opt.watch = args.watch
     opt.is_train = is_train
 
-    # debug setting
-    if args.debug and not opt.name.startswith("debug"):
-        opt.name = "debug_" + opt.name
-
     if opt.num_gpu == "auto":
         opt.num_gpu = torch.cuda.device_count()
 
@@ -217,12 +213,6 @@ def parse_options(
         opt.path.log = experiments_root
         opt.path.visualization = osp.join(experiments_root, "visualization")
 
-        # change some options for debug mode
-        if "debug" in opt.name:
-            if opt.val is not None:
-                opt.val.val_freq = 8
-            opt.logger.print_freq = 1
-            opt.logger.save_checkpoint_freq = 8
     else:  # test
         results_root = osp.join(root_path, "results", opt.name)
         opt.path.results_root = results_root
