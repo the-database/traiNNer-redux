@@ -761,7 +761,7 @@ class BaseModel:
                 self.net_g_ema.register_buffer("step", resume_state["ema_step"])
                 self.net_g_ema.register_buffer("initted", torch.tensor(True))
 
-    def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> OrderedDict[str, Any]:
+    def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> dict[str, Any]:
         """reduce loss dict.
 
         In distributed training, it averages the losses among different GPUs .
@@ -783,11 +783,7 @@ class BaseModel:
                     losses /= self.opt.world_size
                 loss_dict = dict(zip(keys, losses, strict=False))
 
-            log_dict = OrderedDict()
-            for name, value in loss_dict.items():
-                log_dict[name] = value.mean().item()
-
-            return log_dict
+            return loss_dict
 
     def setup_batchaug(self) -> None:
         assert self.opt.train is not None
