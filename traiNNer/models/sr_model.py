@@ -305,6 +305,8 @@ class SRModel(BaseModel):
             for k, v in self.net_g.named_parameters():
                 if v.requires_grad:
                     optim_params.append(v)
+                elif "eval_" in k:
+                    pass  # intentionally frozen for reparameterization, skip warning
                 else:
                     logger.warning("Params %s will not be optimized.", k)
 
