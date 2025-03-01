@@ -586,7 +586,9 @@ class ReduxOptions(StrictStruct):
     train: TrainOptions | None = None
     val: ValOptions | None = None
     logger: LogOptions | None = None
-    dist_params: dict[str, Any] | None = {"backend": "nccl", "port": 29500}
+    dist_params: dict[str, Any] | None = field(
+        default_factory=lambda: {"backend": "nccl", "port": 29500}
+    )
     onnx: OnnxOptions | None = None
 
     find_unused_parameters: bool = False
