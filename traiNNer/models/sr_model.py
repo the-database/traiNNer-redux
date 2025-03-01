@@ -491,6 +491,8 @@ class SRModel(BaseModel):
                     )
                 self.optimizer_d.zero_grad()
 
+        self.log_dict = self.reduce_loss_dict(loss_dict)
+
         for key, value in loss_dict.items():
             val = (
                 value
