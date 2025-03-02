@@ -305,6 +305,8 @@ class SRModel(BaseModel):
             for k, v in self.net_g.named_parameters():
                 if v.requires_grad:
                     optim_params.append(v)
+                elif "eval_" in k:
+                    pass  # intentionally frozen for reparameterization, skip warning
                 else:
                     logger.warning("Params %s will not be optimized.", k)
 
@@ -498,6 +500,8 @@ class SRModel(BaseModel):
                 else value.to(dtype=torch.float32).detach()
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
+
+        self.log_dict = self.reduce_loss_dict(self.log_dict)
 
         if self.net_g_ema is not None and apply_gradient:
             if not (self.use_amp and self.optimizers_skipped[0]):

@@ -86,9 +86,6 @@ class MessageLogger:
         self.use_tb_logger = opt.logger.use_tb_logger
         self.tb_logger = tb_logger
 
-        if self.use_tb_logger:
-            assert self.tb_logger is not None
-
         self.start_time = time.time()
         self.logger = get_root_logger()
 
@@ -136,7 +133,7 @@ class MessageLogger:
         # Log any additional variables (typically losses)
         for k, v in log_vars.items():
             message += f"{k}: {v:.4e} "
-            if self.tb_logger is not None and "debug" not in self.exp_name:
+            if self.tb_logger is not None:
                 label = f"losses/{k}" if k.startswith("l_") else k
                 value = v.to(dtype=torch.float32) if v.dtype == torch.bfloat16 else v
                 self.tb_logger.add_scalar(label, value, current_iter)
