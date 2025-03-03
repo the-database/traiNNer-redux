@@ -39,6 +39,26 @@ def final_template(
     if arch["scales"] == [1]:
         default_scale = 1
 
+        # PSNR loss instead of charbonnier loss
+        template = template.replace(
+            """# Charbonnier loss
+    - type: charbonnierloss""",
+            """# PSNR loss
+    - type: psnrloss""",
+        )
+
+        # switch MultiStepLR to CosineAnnealingLR
+        template = template.replace(
+            """scheduler:
+    type: MultiStepLR
+    milestones: %milestones%
+    gamma: 0.5""",
+            """scheduler:
+    type: CosineAnnealingLR
+    T_max: %t_max%
+    eta_min: %eta_min%""",
+        )
+
     template = template.replace(
         "scale: %scale%",
         f"scale: {default_scale}  # {', '.join([str(x) for x in arch['scales']])}",
@@ -85,6 +105,10 @@ def final_template(
         for name, value in settings.items():
             # print("training settings", arch_key, name, value)
             template = template.replace(f"%{name}%", str(value))
+
+    # defaults
+    template = template.replace("%betas%", "[0.9, 0.99]")  # adamw betas
+    template = template.replace("%ema_decay%", "0.999")  # adamw betas
 
     template = template.replace("%archname%", f"{variant}")
     template = template.replace("%scale%", f"{default_scale}x")

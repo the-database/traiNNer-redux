@@ -186,6 +186,15 @@ loss_weight: 1.0
 type: nccloss
 loss_weight: 1.0
 ```
+## psnrloss
+
+
+```yaml
+type: psnrloss
+reduction: mean
+to_y: false
+loss_weight: 1.0
+```
 ## perceptualfp16loss
 
 
@@ -194,7 +203,7 @@ type: perceptualfp16loss
 layer_weights: ~
 w_lambda: 0.01
 alpha: ~
-criterion: pd+l1
+criterion: charbonnier
 num_proj_fd: 256
 phase_weight_fd: 1.0
 stride_fd: 1
@@ -208,7 +217,7 @@ type: perceptualloss
 layer_weights: ~
 w_lambda: 0.01
 alpha: ~
-criterion: pd+l1
+criterion: charbonnier
 num_proj_fd: 256
 phase_weight_fd: 1.0
 stride_fd: 1

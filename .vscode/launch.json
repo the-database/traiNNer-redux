@@ -44,7 +44,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "train.py",
-      "args": ["-opt", "./options/train/TSCUNet/TSCUNet.yml"],
+      "args": ["-opt", "./options/train/TSCUNet/TSCUNet_fromscratch.yml"],
       "console": "integratedTerminal",
       "justMyCode": false
     },
