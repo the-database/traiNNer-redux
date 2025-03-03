@@ -237,7 +237,7 @@ class BaseModel:
                 "ONECYCLELR": torch.optim.lr_scheduler.OneCycleLR,
                 "POLYNOMIALLR": torch.optim.lr_scheduler.PolynomialLR,
                 "COSINEANNEALINGWARMRESTARTS": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
-                "COSINEANNEALING": torch.optim.lr_scheduler.CosineAnnealingLR,
+                "COSINEANNEALINGLR": torch.optim.lr_scheduler.CosineAnnealingLR,
                 "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
             }
             logger = get_root_logger()

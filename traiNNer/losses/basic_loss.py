@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
@@ -134,6 +135,39 @@ class CharbonnierLoss(nn.Module):
         """
         return self.loss_weight * charbonnier_loss(
             pred, target, weight, eps=self.eps, reduction=self.reduction
+        )
+
+
+@LOSS_REGISTRY.register()
+class PSNRLoss(nn.Module):
+    def __init__(
+        self, loss_weight: float, reduction: str = "mean", to_y: bool = False
+    ) -> None:
+        super().__init__()
+        assert reduction == "mean"
+        self.loss_weight = loss_weight
+        self.scale = 10 / np.log(10)
+        self.toY = to_y
+        self.coef = torch.tensor([65.481, 128.553, 24.966]).reshape(1, 3, 1, 1)
+        self.first = True
+
+    def forward(self, pred: Tensor, target: Tensor) -> Tensor:
+        assert len(pred.size()) == 4
+        if self.toY:
+            if self.first:
+                self.coef = self.coef.to(pred.device)
+                self.first = False
+
+            pred = (pred * self.coef).sum(dim=1).unsqueeze(dim=1) + 16.0
+            target = (target * self.coef).sum(dim=1).unsqueeze(dim=1) + 16.0
+
+            pred, target = pred / 255.0, target / 255.0
+        assert len(pred.size()) == 4
+
+        return (
+            self.loss_weight
+            * self.scale
+            * torch.log(((pred - target) ** 2).mean(dim=(1, 2, 3)) + 1e-8).mean()
         )
 
 

@@ -35,13 +35,13 @@ datasets:
     # meta_info: data/meta_info/dataset1.txt
 
 
-    lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
+    lq_size: 64  # paper: 256  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
     use_hflip: true  # Randomly flip the images horizontally.
     use_rot: true  # Randomly rotate the images.
 
     num_worker_per_gpu: 8
     batch_size_per_gpu: 8  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
-    accum_iter: 1  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
+    accum_iter: 1  # paper: 8  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
   # Settings for your validation dataset (optional). These settings will
   # be ignored if val_enabled is false in the Validation section below.
   val:
@@ -83,27 +83,27 @@ path:
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#train-options-train
 ###########################################################################################
 train:
-  ema_decay: 0.999
+  ema_decay: 0
   grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:
     type: AdamW
-    lr: !!float 1e-4
+    lr: !!float 5e-4
     weight_decay: 0
-    betas: [0.9, 0.99]
+    betas: [0.9, 0.9]
   # Optimizer for discriminator model
   optim_d:
     type: AdamW
-    lr: !!float 1e-4
+    lr: !!float 5e-4
     weight_decay: 0
-    betas: [0.9, 0.99]
+    betas: [0.9, 0.9]
 
   scheduler:
-    type: MultiStepLR
-    milestones: [125000, 200000, 225000, 237500]
-    gamma: 0.5
+    type: CosineAnnealingLR
+    T_max: 200000
+    eta_min: !!float 5e-8
 
-  total_iter: 250000  # Total number of iterations.
+  total_iter: 200000  # Total number of iterations.
   warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   # Losses - for any loss set the loss_weight to 0 to disable it.
