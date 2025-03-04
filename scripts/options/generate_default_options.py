@@ -285,6 +285,13 @@ archs: list[ArchInfo] = [
     {"names": ["SeemoRe_T"], "scales": ALL_SCALES, "folder_name_override": "SeemoRe"},
     {"names": ["CRAFT"], "scales": ALL_SCALES},
     {"names": ["CascadedGaze"], "scales": [1]},
+    {
+        "names": ["MoSRV2"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
+        },
+    },
 ]
 
 for arch in archs:
