@@ -242,15 +242,20 @@ class BaseModel:
             }
             logger = get_root_logger()
             if sch_typ_upper in sch_map:
-                for i, optimizer in enumerate(self.optimizers):
-                    if not self.optimizers_schedule_free[i]:
-                        self.schedulers.append(
-                            sch_map[sch_typ_upper](optimizer, **scheduler_opts)
-                        )
-                    else:
-                        logger.warning(
-                            "Scheduler is ignored when using schedule free optimizer."
-                        )
+                logger.info(
+                    "Scheduler [bold]%s[/bold](%s) is created.",
+                    scheduler_type,
+                    scheduler_opts,
+                    extra={"markup": True},
+                )
+                for _i, optimizer in enumerate(self.optimizers):
+                    self.schedulers.append(
+                        sch_map[sch_typ_upper](optimizer, **scheduler_opts)
+                    )
+                    # if self.optimizers_schedule_free[i]:
+                    #     logger.warning(
+                    #         "Scheduler is ignored when using schedule free optimizer."
+                    #     )
 
             else:
                 raise NotImplementedError(
