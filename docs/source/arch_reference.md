@@ -91,6 +91,19 @@ qk_scale: ~
 img_range: 1.0
 resi_connection: 1conv
 ```
+### CascadedGaze
+#### cascadedgaze
+
+
+```yaml
+type: cascadedgaze
+img_channel: 3
+width: 60
+middle_blk_num: 10
+enc_blk_nums: ~
+dec_blk_nums: ~
+GCE_CONVS_nums: ~
+```
 ### DAT
 #### dat
 
@@ -790,6 +803,20 @@ drop_path: 0.0
 kernel_size: 7
 expansion_ratio: 1.5
 conv_ratio: 1.0
+```
+### MoSRv2
+#### mosrv2
+
+
+```yaml
+type: mosrv2
+in_ch: 3
+n_block: 24
+dim: 64
+upsampler: pixelshuffledirect
+expansion_ratio: 1.5
+mid_dim: 32
+unshuffle_mod: true
 ```
 ### OmniSR
 #### omnisr
