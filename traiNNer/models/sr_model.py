@@ -176,8 +176,10 @@ class SRModel(BaseModel):
 
         logger = get_root_logger()
 
-        self.scaler_g = GradScaler(enabled=self.use_amp, device="cuda")
-        self.scaler_d = GradScaler(enabled=self.use_amp, device="cuda")
+        enable_gradscaler = self.use_amp and not self.opt.amp_bf16
+
+        self.scaler_g = GradScaler(enabled=enable_gradscaler, device="cuda")
+        self.scaler_d = GradScaler(enabled=enable_gradscaler, device="cuda")
 
         self.accum_iters = self.opt.datasets["train"].accum_iter
 
