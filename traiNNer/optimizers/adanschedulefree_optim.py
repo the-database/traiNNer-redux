@@ -18,7 +18,7 @@ class AdanScheduleFree(Optimizer):
         eps: float = 1e-8,
         weight_decay: float = 0.01,
         max_grad_norm: float = 0.0,
-        warmup_steps: int = 1600,
+        warmup_steps: int = 10000,
         r: float = 0.0,
         weight_lr_power: float = 2.0,
     ) -> None:
