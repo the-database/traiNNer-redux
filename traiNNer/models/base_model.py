@@ -70,6 +70,7 @@ class BaseModel:
         self.scaler_d: GradScaler | None = None
         self.accum_iters: int = 1
         self.grad_clip: bool = False
+        self.override_lr = -1
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
@@ -765,6 +766,18 @@ class BaseModel:
             if self.net_g_ema is not None:
                 self.net_g_ema.register_buffer("step", resume_state["ema_step"])
                 self.net_g_ema.register_buffer("initted", torch.tensor(True))
+
+        if self.override_lr != -1:
+            old_lr = self._get_init_lr()
+            old_lr_single = old_lr[0][0]
+            if old_lr_single != self.override_lr:
+                self._set_lr([[self.override_lr for _ in row] for row in old_lr])
+                logger = get_root_logger()
+                logger.info(
+                    "Overriding learning rate: replacing %.2e with %.2e",
+                    old_lr_single,
+                    self.override_lr,
+                )
 
     def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> dict[str, Any]:
         """reduce loss dict.
