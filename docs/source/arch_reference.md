@@ -817,6 +817,7 @@ upsampler: pixelshuffledirect
 expansion_ratio: 1.5
 mid_dim: 32
 unshuffle_mod: true
+rms_norm: false
 ```
 ### OmniSR
 #### omnisr
