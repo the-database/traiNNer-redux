@@ -3,6 +3,7 @@ from importlib import import_module
 from os import path as osp
 from typing import Any
 
+from pytorch_optimizer import ADOPT, SCION, SOAP, StableAdamW
 from torch.optim import Adam, AdamW, NAdam, Optimizer
 from torch.optim.optimizer import ParamsT
 
@@ -26,7 +27,7 @@ _arch_modules = [
 
 
 # register built in optimizers
-for o in [Adam, AdamW, NAdam]:
+for o in [Adam, AdamW, NAdam, StableAdamW, SCION, SOAP, ADOPT]:
     OPTIMIZER_REGISTRY.register(o)
 
 
