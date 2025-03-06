@@ -16,9 +16,9 @@ class AdanScheduleFree(Optimizer):
         lr: float = 1e-3,
         betas: tuple[float, float, float] = (0.98, 0.92, 0.99),
         eps: float = 1e-8,
-        weight_decay: float = 0.01,
+        weight_decay: float = 0.0,
         max_grad_norm: float = 0.0,
-        warmup_steps: int = 1600,
+        warmup_steps: int = 10000,
         r: float = 0.0,
         weight_lr_power: float = 2.0,
     ) -> None:

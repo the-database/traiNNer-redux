@@ -187,8 +187,7 @@ class BaseModel:
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
-        if self.opt.use_compile:
-            net = torch.compile(net)  # pyright: ignore[reportAssignmentType]
+        net_name = net.__class__.__name__
 
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters
@@ -199,6 +198,14 @@ class BaseModel:
             )
         elif self.opt.num_gpu > 1:
             net = DataParallel(net)
+
+        if self.opt.use_compile:
+            logger = get_root_logger()
+            logger.info(
+                "Compiling network %s. This may take several minutes...", net_name
+            )
+            net = torch.compile(net)  # pyright: ignore[reportAssignmentType]
+
         return net
 
     def get_optimizer(

@@ -151,19 +151,18 @@ class InceptionDWConv2d(nn.Module):
         )
 
 
-class RMSNorm(nn.Module):
-    def __init__(self, dim: int = 64, eps: float = 1e-6) -> None:
+class LayerNorm(nn.Module):
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
         super().__init__()
+        self.weight = nn.Parameter(torch.ones(dim))
+        self.bias = nn.Parameter(torch.zeros(dim))
         self.eps = eps
-        self.scale = nn.Parameter(torch.ones(dim, 1, 1))
-        self.offset = nn.Parameter(torch.zeros(dim, 1, 1))
 
     def forward(self, x: Tensor) -> Tensor:
-        norm_x = x.norm(2, dim=1, keepdim=True)
-        d_x = x.size(1)
-        rms_x = norm_x * (d_x ** (-1.0 / 2))
-        x_normed = x / (rms_x + self.eps)
-        return self.scale * x_normed + self.offset
+        u = x.mean(1, keepdim=True)
+        s = (x - u).pow(2).mean(1, keepdim=True)
+        x = (x - u) / torch.sqrt(s + self.eps)
+        return self.weight[:, None, None] * x + self.bias[:, None, None]
 
 
 class GatedCNNBlock(nn.Module):
@@ -178,7 +177,7 @@ class GatedCNNBlock(nn.Module):
         expansion_ratio: float = 8 / 3,
     ) -> None:
         super().__init__()
-        self.norm = RMSNorm(dim)
+        self.norm = LayerNorm(dim)
         hidden = int(expansion_ratio * dim)
         self.fc1 = nn.Conv2d(dim, hidden * 2, 3, 1, 1)
 
