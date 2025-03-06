@@ -389,6 +389,7 @@ def train_pipeline(root_path: str) -> None:
     assert model.opt.path.models is not None
 
     if opt.use_compile:
+        logger.info("Compiling train step. This may take several minutes...")
         optimize_parameters = torch.compile(
             model.optimize_parameters, mode="reduce-overhead"
         )
