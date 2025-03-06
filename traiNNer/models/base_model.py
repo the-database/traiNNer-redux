@@ -781,7 +781,7 @@ class BaseModel:
                 self._set_lr([[self.override_lr for _ in row] for row in old_lr])
                 logger = get_root_logger()
                 logger.info(
-                    "Overriding learning rate: replacing %.3e with %.3e",
+                    "Overriding learning rate: replacing %.2e with %.2e",
                     old_lr_single,
                     self.override_lr,
                 )
