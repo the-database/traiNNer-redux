@@ -3,7 +3,7 @@ from importlib import import_module
 from os import path as osp
 from typing import Any
 
-from pytorch_optimizer import ADOPT, SCION, SOAP, StableAdamW
+from pytorch_optimizer import ADOPT, SOAP, StableAdamW
 from torch.optim import Adam, AdamW, NAdam, Optimizer
 from torch.optim.optimizer import ParamsT
 
