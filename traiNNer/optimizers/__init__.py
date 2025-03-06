@@ -27,7 +27,7 @@ _arch_modules = [
 
 
 # register built in optimizers
-for o in [Adam, AdamW, NAdam, StableAdamW, SCION, SOAP, ADOPT]:
+for o in [Adam, AdamW, NAdam, StableAdamW, SOAP, ADOPT]:
     OPTIMIZER_REGISTRY.register(o)
 
 
