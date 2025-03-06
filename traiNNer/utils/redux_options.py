@@ -204,7 +204,6 @@ class TrainOptions(StrictStruct):
     ] = False
     adaptive_d_ema_decay: float = 0.999
     adaptive_d_threshold: float = 1.02
-    override_lr: float = -1
     optim_g: Annotated[
         dict[str, Any] | None,
         Meta(description="The optimizer to use for the generator model."),

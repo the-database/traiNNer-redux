@@ -187,7 +187,6 @@ class SRModel(BaseModel):
         self.adaptive_d_ema_decay = train_opt.adaptive_d_ema_decay
         self.adaptive_d_threshold = train_opt.adaptive_d_threshold
         self.ema_decay = train_opt.ema_decay
-        self.override_lr = train_opt.override_lr
 
         if self.ema_decay > 0:
             logger.info(
