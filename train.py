@@ -388,12 +388,6 @@ def train_pipeline(root_path: str) -> None:
     train_data = None
     assert model.opt.path.models is not None
 
-    optimize_parameters = model.optimize_parameters
-
-    if opt.use_compile:
-        logger.info("Compiling train step. This may take several minutes...")
-        optimize_parameters = torch.compile(model.optimize_parameters)
-
     for epoch in range(start_epoch, total_epochs + 1):
         train_sampler.set_epoch(epoch)
         prefetcher.reset()
@@ -416,7 +410,9 @@ def train_pipeline(root_path: str) -> None:
             # training
             model.feed_data(train_data)
             try:
-                optimize_parameters(current_iter, current_accum_iter, apply_gradient)
+                model.optimize_parameters(
+                    current_iter, current_accum_iter, apply_gradient
+                )
             except RuntimeError as e:
                 # Check to see if its actually the CUDA out of memory error
                 if "allocate" in str(e) or "CUDA" in str(e):
