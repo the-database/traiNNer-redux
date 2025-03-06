@@ -7,9 +7,12 @@ from pytorch_optimizer.base.optimizer import BaseOptimizer
 from pytorch_optimizer.base.type import CLOSURE, DEFAULTS, LOSS, PARAMETERS
 from pytorch_optimizer.optimizer.shampoo_utils import zero_power_via_newton_schulz_5
 
+from traiNNer.utils.registry import OPTIMIZER_REGISTRY
+
 LMO_TYPE = Literal["spectral", "sign", "col_norm", "row_norm"]
 
 
+@OPTIMIZER_REGISTRY.register()
 class SCION(BaseOptimizer):
     r"""Training Deep Learning Models with Norm-Constrained LMOs.
 
