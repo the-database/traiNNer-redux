@@ -13,6 +13,7 @@ num_gpu: auto
 network_g:
   type: mosrv2
   upsampler: pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic onnx)
+  unshuffle_mod: true  # has no effect on scales larger than 2. for scales 1 and 2, setting to true speeds up the model and reduces vram usage significantly, but reduces quality.
 
 ############################
 # Pretrain and Resume Paths

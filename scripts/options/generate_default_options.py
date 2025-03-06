@@ -290,6 +290,7 @@ archs: list[ArchInfo] = [
         "scales": ALL_SCALES,
         "extras": {
             "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
+            "unshuffle_mod": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality.",
         },
     },
 ]
