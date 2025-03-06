@@ -276,11 +276,11 @@ class SRModel(BaseModel):
                     non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
-                if self.use_compile:
-                    logger.info(
-                        "Compiling loss %s. This may take several minutes...", label
-                    )
-                    self.losses[label] = torch.compile(self.losses[label])
+                # if self.use_compile:
+                #     logger.info(
+                #         "Compiling loss %s. This may take several minutes...", label
+                #     )
+                #     self.losses[label] = torch.compile(self.losses[label])
 
         assert self.losses, "At least one loss must be defined."
 
