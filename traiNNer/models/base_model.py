@@ -188,9 +188,6 @@ class BaseModel:
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
-        if self.opt.use_compile:
-            net = torch.compile(net)  # pyright: ignore[reportAssignmentType]
-
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters
             net = DistributedDataParallel(
