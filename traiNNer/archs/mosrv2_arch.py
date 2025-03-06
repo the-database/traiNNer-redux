@@ -151,14 +151,34 @@ class InceptionDWConv2d(nn.Module):
         )
 
 
+class RMSNorm(nn.Module):
+    def __init__(self, dim: int = 64, eps: float = 1e-6) -> None:
+        super().__init__()
+        self.eps = eps
+        self.scale = nn.Parameter(torch.ones(dim, 1, 1))
+        self.offset = nn.Parameter(torch.zeros(dim, 1, 1))
+
+    def forward(self, x: Tensor) -> Tensor:
+        norm_x = x.norm(2, dim=1, keepdim=True)
+        d_x = x.size(1)
+        rms_x = norm_x * (d_x ** (-1.0 / 2))
+        x_normed = x / (rms_x + self.eps)
+        return self.scale * x_normed + self.offset
+
+
 class LayerNorm(nn.Module):
     def __init__(self, dim: int, eps: float = 1e-6) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones(dim))
         self.bias = nn.Parameter(torch.zeros(dim))
         self.eps = eps
+        self.dim = (dim,)
 
     def forward(self, x: Tensor) -> Tensor:
+        if x.is_contiguous(memory_format=torch.channels_last):
+            return F.layer_norm(
+                x.permute(0, 2, 3, 1), self.dim, self.weight, self.bias, self.eps
+            ).permute(0, 3, 1, 2)
         u = x.mean(1, keepdim=True)
         s = (x - u).pow(2).mean(1, keepdim=True)
         x = (x - u) / torch.sqrt(s + self.eps)
@@ -172,12 +192,10 @@ class GatedCNNBlock(nn.Module):
     """
 
     def __init__(
-        self,
-        dim: int = 64,
-        expansion_ratio: float = 8 / 3,
+        self, dim: int = 64, expansion_ratio: float = 8 / 3, rms_norm: bool = True
     ) -> None:
         super().__init__()
-        self.norm = LayerNorm(dim)
+        self.norm = RMSNorm(dim) if rms_norm else LayerNorm(dim)
         hidden = int(expansion_ratio * dim)
         self.fc1 = nn.Conv2d(dim, hidden * 2, 3, 1, 1)
 
@@ -220,6 +238,7 @@ class MoSRv2(nn.Module):
         expansion_ratio: float = 1.5,
         mid_dim: int = 32,
         unshuffle_mod: bool = True,
+        rms_norm: bool = False,
     ) -> None:
         super().__init__()
         self.short = nn.Upsample(scale_factor=scale, mode="bilinear")
@@ -240,8 +259,7 @@ class MoSRv2(nn.Module):
             *in_to_dim
             + [
                 GatedCNNBlock(
-                    dim=dim,
-                    expansion_ratio=expansion_ratio,
+                    dim=dim, expansion_ratio=expansion_ratio, rms_norm=rms_norm
                 )
                 for _ in range(n_block)
             ]
