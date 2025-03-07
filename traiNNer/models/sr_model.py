@@ -431,6 +431,7 @@ class SRModel(BaseModel):
 
                 self.scaler_g.scale(l_g_total).backward()
 
+                self.scaler_g.unscale_(self.optimizer_g)
                 grad_norm_g = torch.sqrt(
                     sum(
                         [
@@ -445,13 +446,13 @@ class SRModel(BaseModel):
 
                 if apply_gradient:
                     if self.grad_clip:
-                        self.scaler_g.unscale_(self.optimizer_g)
                         clip_grad_norm_(self.net_g.parameters(), 1.0)
 
                     scale_before = self.scaler_g.get_scale()
                     self.scaler_g.step(self.optimizer_g)
                     self.scaler_g.update()
                     scale_after = self.scaler_g.get_scale()
+                    loss_dict["scale_g"] = scale_after
                     self.optimizers_skipped[0] = scale_after < scale_before
                     if self.optimizers_skipped[0]:
                         logger = get_root_logger()
@@ -496,6 +497,7 @@ class SRModel(BaseModel):
 
             self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
 
+            self.scaler_d.unscale_(self.optimizer_d)
             grad_norm_d = torch.sqrt(
                 sum(
                     [
@@ -510,12 +512,12 @@ class SRModel(BaseModel):
 
             if apply_gradient:
                 if self.grad_clip:
-                    self.scaler_d.unscale_(self.optimizer_d)
                     clip_grad_norm_(self.net_d.parameters(), 1.0)
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
                 scale_after = self.scaler_d.get_scale()
+                loss_dict["scale_d"] = scale_after
                 self.optimizers_skipped[-1] = scale_after < scale_before
                 if self.optimizers_skipped[-1]:
                     logger = get_root_logger()
