@@ -430,6 +430,19 @@ class SRModel(BaseModel):
                 loss_dict["l_g_total"] = l_g_total
 
                 self.scaler_g.scale(l_g_total).backward()
+
+                grad_norm_g = torch.sqrt(
+                    sum(
+                        [
+                            p.grad.norm(2) ** 2
+                            for p in self.net_g.parameters()
+                            if p.grad is not None
+                        ]
+                    )  # pyright: ignore[reportArgumentType]
+                ).detach()
+
+                loss_dict["grad_norm_g"] = grad_norm_g
+
                 if apply_gradient:
                     if self.grad_clip:
                         self.scaler_g.unscale_(self.optimizer_g)
@@ -482,6 +495,18 @@ class SRModel(BaseModel):
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
 
             self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
+
+            grad_norm_d = torch.sqrt(
+                sum(
+                    [
+                        p.grad.norm(2) ** 2
+                        for p in self.net_d.parameters()
+                        if p.grad is not None
+                    ]
+                )  # pyright: ignore[reportArgumentType]
+            ).detach()
+
+            loss_dict["grad_norm_d"] = grad_norm_d
 
             if apply_gradient:
                 if self.grad_clip:
