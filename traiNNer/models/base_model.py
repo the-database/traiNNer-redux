@@ -13,7 +13,7 @@ from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN import ESRGAN
-from torch import nn
+from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
@@ -796,8 +796,9 @@ class BaseModel:
                 keys = []
                 losses = []
                 for name, value in loss_dict.items():
-                    keys.append(name)
-                    losses.append(value)
+                    if isinstance(value, Tensor):  # TODO
+                        keys.append(name)
+                        losses.append(value)
                 losses = torch.stack(losses, 0)
                 torch.distributed.reduce(losses, dst=0)  # type: ignore
                 if self.opt.rank == 0:
