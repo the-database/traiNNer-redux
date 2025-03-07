@@ -431,20 +431,19 @@ class SRModel(BaseModel):
 
                 self.scaler_g.scale(l_g_total).backward()
 
-                self.scaler_g.unscale_(self.optimizer_g)
-                grad_norm_g = torch.sqrt(
-                    sum(
-                        [
-                            p.grad.norm(2) ** 2
-                            for p in self.net_g.parameters()
-                            if p.grad is not None
-                        ]
-                    )  # pyright: ignore[reportArgumentType]
-                ).detach()
-
-                loss_dict["grad_norm_g"] = grad_norm_g
-
                 if apply_gradient:
+                    self.scaler_g.unscale_(self.optimizer_g)
+                    grad_norm_g = torch.linalg.vector_norm(
+                        torch.stack(
+                            [
+                                torch.linalg.vector_norm(p, 2)
+                                for p in self.net_g.parameters()
+                            ]
+                        )
+                    ).detach()
+
+                    loss_dict["grad_norm_g"] = grad_norm_g
+
                     if self.grad_clip:
                         clip_grad_norm_(self.net_g.parameters(), 1.0)
 
@@ -452,7 +451,7 @@ class SRModel(BaseModel):
                     self.scaler_g.step(self.optimizer_g)
                     self.scaler_g.update()
                     scale_after = self.scaler_g.get_scale()
-                    loss_dict["scale_g"] = scale_after
+                    loss_dict["scale_g"] = torch.tensor(scale_after)
                     self.optimizers_skipped[0] = scale_after < scale_before
                     if self.optimizers_skipped[0]:
                         logger = get_root_logger()
@@ -497,27 +496,26 @@ class SRModel(BaseModel):
 
             self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
 
-            self.scaler_d.unscale_(self.optimizer_d)
-            grad_norm_d = torch.sqrt(
-                sum(
-                    [
-                        p.grad.norm(2) ** 2
-                        for p in self.net_d.parameters()
-                        if p.grad is not None
-                    ]
-                )  # pyright: ignore[reportArgumentType]
-            ).detach()
-
-            loss_dict["grad_norm_d"] = grad_norm_d
-
             if apply_gradient:
+                self.scaler_d.unscale_(self.optimizer_d)
+                grad_norm_d = torch.linalg.vector_norm(
+                    torch.stack(
+                        [
+                            torch.linalg.vector_norm(p, 2)
+                            for p in self.net_d.parameters()
+                        ]
+                    )
+                ).detach()
+
+                loss_dict["grad_norm_d"] = grad_norm_d
+
                 if self.grad_clip:
                     clip_grad_norm_(self.net_d.parameters(), 1.0)
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
                 scale_after = self.scaler_d.get_scale()
-                loss_dict["scale_d"] = scale_after
+                loss_dict["scale_d"] = torch.tensor(scale_after)
                 self.optimizers_skipped[-1] = scale_after < scale_before
                 if self.optimizers_skipped[-1]:
                     logger = get_root_logger()
