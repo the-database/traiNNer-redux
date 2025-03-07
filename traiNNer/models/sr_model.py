@@ -436,8 +436,9 @@ class SRModel(BaseModel):
                     grad_norm_g = torch.linalg.vector_norm(
                         torch.stack(
                             [
-                                torch.linalg.vector_norm(p, 2)
+                                torch.linalg.vector_norm(p.grad, 2)
                                 for p in self.net_g.parameters()
+                                if p.grad is not None
                             ]
                         )
                     ).detach()
@@ -501,8 +502,9 @@ class SRModel(BaseModel):
                 grad_norm_d = torch.linalg.vector_norm(
                     torch.stack(
                         [
-                            torch.linalg.vector_norm(p, 2)
+                            torch.linalg.vector_norm(p.grad, 2)
                             for p in self.net_d.parameters()
+                            if p.grad is not None
                         ]
                     )
                 ).detach()
