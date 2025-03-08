@@ -220,7 +220,8 @@ class TrainOptions(StrictStruct):
             description="How often to switch EMA model to online model, in iterations. Set to 0 to disable."
         ),
     ] = 0
-    ema_power: float = 3 / 4
+    ema_update_after_step: int = 0  # no warmup
+    ema_power: float = 10  # no warmup
     grad_clip: Annotated[
         bool,
         Meta(

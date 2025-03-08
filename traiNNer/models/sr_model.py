@@ -219,8 +219,8 @@ class SRModel(BaseModel):
                 ema_model=init_net_g_ema,
                 beta=self.ema_decay,
                 allow_different_devices=True,
-                update_after_step=100,  # TODO parameterize
-                update_every=1,  # TODO parameterize
+                update_after_step=train_opt.ema_update_after_step,
+                update_every=1,
                 power=train_opt.ema_power,
                 update_model_with_ema_every=switch_iter,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
