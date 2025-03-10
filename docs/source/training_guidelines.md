@@ -1,12 +1,14 @@
 # Training Guidelines
 This page includes a summary of suggested guidelines to follow for training, and best practices based on research and community testing. Note these guidelines may not be optimal for every single architecture, where each may have their own individual quirks.
 
-In general, in super-resolution there is fidelity oriented super resolution and perceptual oriented super resolution.
+
+## Background
+Super resolution methods generally fall into two categories: fidelity oriented and perceptual oriented.
 
 Fidelity oriented super resolution typically uses bicubic degradations for the dataset and only optimizes a pixel loss such as L1. When researchers propose a new super resolution architecture, they use a standard research dataset such as DF2K, train from scratch and evaluate their architecture using the fidelity oriented method, and most offer their pretrained models for download on their original project repository. Most research models are trained on multiple NVIDIA data center GPUs, which allows the use of higher batch such as 32 or 64, and they are trained quickly because multiple GPUs are used in parallel. Since higher batch size results in higher fidelity, it's difficult to match the fidelity of research pretrains on consumer GPUs with limited VRAM on a single GPU.
 
 - Training from scratch on L1 loss is stable as long as the architecture is stable, and the model continues to improve the more it's trained, though there are diminishing returns for training longer.
-- Because these models are trained on datasets with bicubic degradations and pixel loss only, they produce blurry upscales which lack fine detail and texture. But they are faithful to the input image.
+- Because these models are trained on datasets with bicubic degradations and pixel loss only, they produce blurry upscales which lack convincing textures. But they are faithful to the input image.
 
 Perceptual oriented models tend to use more complex degradations, such as one or more of JPEG compression, blur, or noise, and optimize multiple losses, including a pixel loss, perceptual loss, and adversarial (GAN) loss. When training a perceptual model, a pretrain should always be used for the generator. Fidelity oriented models, like the official research models, are well suited for this purpose.
 

@@ -85,9 +85,11 @@ class PerceptualFP16Loss(nn.Module):
         num_proj_fd: int = 256,
         phase_weight_fd: float = 1.0,
         stride_fd: int = 1,
+        clip_min: int = 0,
     ) -> None:
         super().__init__()
 
+        self.clip_min = clip_min
         use_conv_layers = False
         use_relu_layers = False
 
@@ -248,7 +250,7 @@ class PerceptualFP16Loss(nn.Module):
         if score2 is not None:
             score += score2.mean()
 
-        return score * self.loss_weight
+        return torch.clamp(score, min=self.clip_min) * self.loss_weight
 
 
 class VGG(nn.Module):
