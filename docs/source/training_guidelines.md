@@ -17,7 +17,7 @@ Most users find perceptual oriented models more practical and only ever train pe
 
 ## Training a Perceptual Model with an Existing Pretrain
 
-When training a perceptual model, a pretrain model should always be used for the generator. While any model can be used for your pretrain, official research models are often a good choice. When you use a pretrain model, you risk introducing any flaws of the pretrain model into your own model. Official research models are the least likely to have any flaws, and they have high fidelity to give your model a good starting point.
+When training a perceptual model, a pretrain model should always be used for the generator. While any model can be used for your pretrain, official research models are often a good choice. When you use a pretrain model, you risk introducing any flaws of the pretrain model into your own model. Official research models are likely to have the least amount of flaws, and they have high fidelity to give your model a good starting point.
 
 1. Train a perceptual model with degradations:
    - Download an official pretrain for the architecture you want to train, and move it to `experiments/pretrained_models`
