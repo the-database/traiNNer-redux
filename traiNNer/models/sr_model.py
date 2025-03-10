@@ -215,7 +215,7 @@ class SRModel(BaseModel):
             if switch_iter == 0:
                 switch_iter = None
             self.net_g_ema = EMA(
-                self.net_g,
+                self.get_bare_model(self.net_g),
                 ema_model=init_net_g_ema,
                 beta=self.ema_decay,
                 allow_different_devices=True,
