@@ -152,7 +152,8 @@ def parse_options(
     opt.rank, opt.world_size = get_dist_info()
 
     # random seed
-    opt.deterministic = opt.manual_seed is not None and opt.manual_seed > 0
+    if opt.deterministic is None:
+        opt.deterministic = opt.manual_seed is not None and opt.manual_seed > 0
     if not opt.deterministic:
         opt.manual_seed = random.randint(1024, 10000)
 
