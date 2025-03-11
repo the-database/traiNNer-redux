@@ -154,7 +154,7 @@ def parse_options(
     # random seed
     if opt.deterministic is None:
         opt.deterministic = opt.manual_seed is not None and opt.manual_seed > 0
-    if not opt.deterministic:
+    if not opt.manual_seed:
         opt.manual_seed = random.randint(1024, 10000)
 
     # force to update yml options
