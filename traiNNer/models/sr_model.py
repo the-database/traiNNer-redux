@@ -376,7 +376,7 @@ class SRModel(BaseModel):
 
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
-        loss_dict = OrderedDict()
+        loss_dict: dict[str, Tensor | float] = OrderedDict()
 
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
@@ -418,8 +418,13 @@ class SRModel(BaseModel):
                     else:
                         l_g_loss = loss(self.output, self.gt)
 
-                    l_g_total += l_g_loss / self.accum_iters
-                    loss_dict[label] = l_g_loss
+                    if isinstance(l_g_loss, dict):
+                        for sublabel, loss_val in l_g_loss.items():
+                            l_g_total += loss_val / self.accum_iters
+                            loss_dict[f"{label}_{sublabel}"] = loss_val
+                    else:
+                        l_g_total += l_g_loss / self.accum_iters
+                        loss_dict[label] = l_g_loss
 
                 if not l_g_total.isfinite():
                     raise RuntimeError(
