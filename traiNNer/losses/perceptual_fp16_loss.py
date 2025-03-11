@@ -93,15 +93,19 @@ class PerceptualFP16Loss(nn.Module):
         use_conv_layers = False
         use_relu_layers = False
 
+        if criterion in VGG19_CONV_CRITERION:
+            use_conv_layers = True
+
+        if criterion in VGG19_RELU_CRITERION:
+            use_relu_layers = True
+
         if layer_weights is None:
             layer_weights = {}
 
             if criterion in VGG19_CONV_CRITERION:
-                use_conv_layers = True
                 layer_weights |= VGG19_CONV_LAYER_WEIGHTS
 
             if criterion in VGG19_RELU_CRITERION:
-                use_relu_layers = True
                 layer_weights |= VGG19_RELU_LAYER_WEIGHTS
 
         self.vgg = VGG(list(layer_weights.keys())).to(memory_format=torch.channels_last)  # pyright: ignore[reportCallIssue]
@@ -311,7 +315,6 @@ class VGG(nn.Module):
             if isinstance(module, nn.ReLU):
                 module.inplace = False
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         h = (x - self.mean) / self.std  # pyright: ignore[reportOperatorIssue]
 
