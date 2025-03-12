@@ -363,11 +363,13 @@
   The decay factor to use for EMA (exponential moving average). Set to 0 to disable EMA.
 
   Type: float
-### ema_switch_epoch
+### ema_switch_iter
 
-  Epoch at which to switch EMA model to online model.
+  How often to switch EMA model to online model, in iterations. Set to 0 to disable.
 
   Type: float
+
+
 ### grad_clip
 
   Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations.
@@ -382,7 +384,7 @@
 
   Options for the optimizer scheduler. If there are multiple optimizers, both will use the same scheduler options.
 
-  Type: SchedulerOptions
+  Type: dict
 ### optim_d
 
   The optimizer to use for the discriminator model.
@@ -436,23 +438,6 @@
   The max number of iterations to save augmentation images for.
 
   Type: int
-## Scheduler options (`train.scheduler`)
-
-### type
-
-  Name of the optimizer scheduler to use for all optimizers. For a list of scheduler names, see the [PyTorch documentation](https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate).
-
-  Type: str
-### milestones
-
-  List of milestones, iterations where the learning rate is reduced.
-
-  Type: list
-### gamma
-
-  At each milestone, the learning rate is multiplied by this number, so a gamma of 0.5 cuts the learning rate in half at each milestone.
-
-  Type: float
 ## Validation options (`val`)
 
 ### val_enabled
