@@ -321,8 +321,8 @@ class HSLuvLoss(nn.Module):
 
         return x_hue, x_saturation, x_lightness
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
+    def forward(self, x: Tensor, y: Tensor) -> dict[str, Tensor]:
         x_hue, x_saturation, x_lightness = self.forward_once(x)
         y_hue, y_saturation, y_lightness = self.forward_once(y)
 
@@ -350,4 +350,8 @@ class HSLuvLoss(nn.Module):
         saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
         lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
 
-        return (hue_loss + saturation_loss + lightness_loss) * self.loss_weight
+        return {
+            "hue": hue_loss,
+            "saturation": saturation_loss,
+            "lightness": lightness_loss,
+        }
