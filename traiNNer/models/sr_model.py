@@ -538,7 +538,7 @@ class SRModel(BaseModel):
             val = (
                 value
                 if isinstance(value, float)
-                else value.to(dtype=torch.float32).detach()
+                else value.to(dtype=torch.float32).detach()  # pyright: ignore[reportAttributeAccessIssue]
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 

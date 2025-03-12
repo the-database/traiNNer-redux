@@ -80,7 +80,7 @@ class LDLLoss(nn.Module):
         elif self.criterion_type == "charbonnier":
             self.criterion = charbonnier_loss
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, output: Tensor, output_ema: Tensor, gt: Tensor) -> Tensor:
         pixel_weight = get_refined_artifact_map(gt, output, output_ema)
         return self.loss_weight * self.criterion(
