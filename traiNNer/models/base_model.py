@@ -1,9 +1,10 @@
+import functools
 import json
 import os
 import time
 from abc import abstractmethod
 from collections import OrderedDict
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,7 @@ from ema_pytorch import EMA
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN import ESRGAN
-from torch import nn
+from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import LRScheduler
@@ -22,6 +23,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 
 from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.optimizers import build_optimizer
+from traiNNer.schedulers.kneelr_scheduler import KneeLR
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.logger import clickable_file_path
@@ -230,7 +232,7 @@ class BaseModel:
             scheduler_type = scheduler_opts.pop("type")
             # uppercase scheduler_type to make it case insensitive
             sch_typ_upper = scheduler_type.upper()
-            sch_map: dict[str, type[LRScheduler]] = {
+            sch_map: dict[str, Callable[..., LRScheduler]] = {
                 "CONSTANTLR": torch.optim.lr_scheduler.ConstantLR,
                 "LINEARLR": torch.optim.lr_scheduler.LinearLR,
                 "EXPONENTIALLR": torch.optim.lr_scheduler.ExponentialLR,
@@ -246,6 +248,13 @@ class BaseModel:
                 "COSINEANNEALINGWARMRESTARTS": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
                 "COSINEANNEALINGLR": torch.optim.lr_scheduler.CosineAnnealingLR,
                 "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
+                "KNEELR": functools.partial(
+                    KneeLR,
+                    total_steps=self.opt.train.total_iter,
+                    peak_lr=self.opt.train.optim_g["lr"]
+                    if self.opt.train.optim_g
+                    else 0.001,
+                ),
             }
             logger = get_root_logger()
             if sch_typ_upper in sch_map:
@@ -787,8 +796,9 @@ class BaseModel:
                 keys = []
                 losses = []
                 for name, value in loss_dict.items():
-                    keys.append(name)
-                    losses.append(value)
+                    if isinstance(value, Tensor):  # TODO
+                        keys.append(name)
+                        losses.append(value)
                 losses = torch.stack(losses, 0)
                 torch.distributed.reduce(losses, dst=0)  # type: ignore
                 if self.opt.rank == 0:

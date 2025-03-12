@@ -40,7 +40,7 @@ datasets:
     use_rot: true  # Randomly rotate the images.
 
     num_worker_per_gpu: 8
-    batch_size_per_gpu: 4  # Increasing stabilizes training but going too high can cause issues. Use multiple of 8 for best performance with AMP.
+    batch_size_per_gpu: 4  # Increasing stabilizes training but with diminishing returns. Use multiple of 8 for best performance with AMP.
     accum_iter: 1  # paper: 8  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
   # Settings for your validation dataset (optional). These settings will
   # be ignored if val_enabled is false in the Validation section below.
@@ -77,6 +77,7 @@ path:
 ###########################################################################################
 train:
   ema_decay: 0.999
+  ema_power: 0.75  # Gradually warm up ema decay when training from scratch
   grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
   # Optimizer for generator model
   optim_g:

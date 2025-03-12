@@ -121,6 +121,9 @@ class TestLosses:
 
         if type(loss_value) is tuple:
             assert loss_value[0] <= EPSILON
+        elif isinstance(loss_value, dict):
+            for k, v in loss_value.items():
+                assert v <= EPSILON, k
         else:
             assert loss_value <= EPSILON
 
@@ -173,4 +176,31 @@ class TestLosses:
             assert len(perceptual_loss_fn.vgg.stages) == len(VGG19_CONV_LAYER_WEIGHTS)
 
         # Compute losses
-        _loss = perceptual_loss_fn(x, y).item()
+        _loss = perceptual_loss_fn(x, y)
+
+    @pytest.mark.parametrize(
+        "loss_fn",
+        [pytest.param(loss_fn, id=f"{loss_fn}") for loss_fn in LOSS_FUNCTIONS],
+    )
+    def test_batch_size(self, data: TestLossData, loss_fn: nn.Module) -> None:
+        pred = torch.rand(1, 3, 16, 16)
+        gt = torch.rand(1, 3, 16, 16)
+
+        if isinstance(loss_fn, LDLLoss):
+            loss_value = loss_fn(pred, gt, gt)
+        else:
+            loss_value = loss_fn(pred, gt)
+
+        pred2 = torch.cat([pred, pred], dim=0)
+        gt2 = torch.cat([gt, gt], dim=0)
+
+        if isinstance(loss_fn, LDLLoss):
+            loss_value2 = loss_fn(pred2, gt2, gt2)
+        else:
+            loss_value2 = loss_fn(pred2, gt2)
+
+        if isinstance(loss_value, dict):
+            for key, val in loss_value.items():
+                assert torch.allclose(val, loss_value2[key], atol=1e-6)
+        else:
+            assert torch.allclose(loss_value, loss_value2, atol=1e-6)

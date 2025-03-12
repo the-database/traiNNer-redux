@@ -28,7 +28,6 @@ from traiNNer.utils import (
     init_tb_logger,
     init_wandb_logger,
     make_exp_dirs,
-    mkdir_and_rename,
     scandir,
 )
 from traiNNer.utils.config import Config
@@ -151,10 +150,6 @@ def train_pipeline(root_path: str) -> None:
 
     # load resume states if necessary
     make_exp_dirs(opt, start_iter > 0)
-    # mkdir for experiments and logger
-    if start_iter == 0:
-        if opt.logger.use_tb_logger and opt.rank == 0:
-            mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
 
     # copy the yml file to the experiment root
     copy_opt_file(args.opt, opt.path.experiments_root)

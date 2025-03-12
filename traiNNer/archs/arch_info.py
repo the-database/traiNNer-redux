@@ -101,9 +101,9 @@ OFFICIAL_METRICS: dict[
         4: {"df2k_psnr": 28.22, "df2k_ssim": 0.8414},
     },
     "atd_light": {
-        2: {"df2k_psnr": 33.27, "df2k_ssim": 0.9375},
-        3: {"df2k_psnr": 29.17, "df2k_ssim": 0.8709},
-        4: {"df2k_psnr": 26.97, "df2k_ssim": 0.8107},
+        2: {"div2k_psnr": 33.27, "div2k_ssim": 0.9375},
+        3: {"div2k_psnr": 29.17, "div2k_ssim": 0.8709},
+        4: {"div2k_psnr": 26.97, "div2k_ssim": 0.8107},
     },
     "cfsr": {
         2: {"df2k_psnr": 32.28, "df2k_ssim": 0.9300},

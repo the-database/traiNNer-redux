@@ -6,6 +6,8 @@
 traiNNer-redux documentation
 ============================
 
+traiNNer-redux is a deep learning training framework for image super resolution and restoration which allows you to train PyTorch models for upscaling and restoring images and videos. NVIDIA graphics card is recommended, but AMD works on Linux machines with ROCm.
+
 .. toctree::
    :maxdepth: 2
    :caption: Guides

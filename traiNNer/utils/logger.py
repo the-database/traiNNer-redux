@@ -134,8 +134,20 @@ class MessageLogger:
         for k, v in log_vars.items():
             message += f"{k}: {v:.4e} "
             if self.tb_logger is not None:
-                label = f"losses/{k}" if k.startswith("l_") else k
-                value = v.to(dtype=torch.float32) if v.dtype == torch.bfloat16 else v
+                label = k
+                if label.startswith("l_"):
+                    label = f"losses/{label}"
+                elif label.startswith("grad_norm_"):
+                    label = f"grad_norms/{label}"
+                elif label.startswith("scale_"):
+                    label = f"scales/{label}"
+
+                if isinstance(v, float):
+                    value = v
+                else:
+                    value = (
+                        v.to(dtype=torch.float32) if v.dtype == torch.bfloat16 else v
+                    )
                 self.tb_logger.add_scalar(label, value, current_iter)
 
         # Log the final constructed message

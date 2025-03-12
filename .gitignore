@@ -2,12 +2,11 @@
 datasets/*
 experiments/*
 results/*
-tb_logger/*
 wandb/*
 tmp/*
 debug/*
 options_user/*
-tb_logger old/*
+tb_logger*/*
 
 !datasets/train/dataset1/
 !datasets/train/dataset1/hr/

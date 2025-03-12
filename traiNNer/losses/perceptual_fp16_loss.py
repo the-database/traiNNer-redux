@@ -85,21 +85,27 @@ class PerceptualFP16Loss(nn.Module):
         num_proj_fd: int = 256,
         phase_weight_fd: float = 1.0,
         stride_fd: int = 1,
+        clip_min: int = 0,
     ) -> None:
         super().__init__()
 
+        self.clip_min = clip_min
         use_conv_layers = False
         use_relu_layers = False
+
+        if criterion in VGG19_CONV_CRITERION:
+            use_conv_layers = True
+
+        if criterion in VGG19_RELU_CRITERION:
+            use_relu_layers = True
 
         if layer_weights is None:
             layer_weights = {}
 
             if criterion in VGG19_CONV_CRITERION:
-                use_conv_layers = True
                 layer_weights |= VGG19_CONV_LAYER_WEIGHTS
 
             if criterion in VGG19_RELU_CRITERION:
-                use_relu_layers = True
                 layer_weights |= VGG19_RELU_LAYER_WEIGHTS
 
         self.vgg = VGG(list(layer_weights.keys())).to(memory_format=torch.channels_last)  # pyright: ignore[reportCallIssue]
@@ -207,48 +213,34 @@ class PerceptualFP16Loss(nn.Module):
     def forward_once(self, x: Tensor) -> dict[str, Tensor]:
         return self.vgg(x)
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: Tensor, gt: Tensor) -> Tensor:
+    def forward(self, x: Tensor, gt: Tensor) -> dict[str, Tensor]:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
-        score1 = torch.tensor(0.0, device=x.device)
-        score2 = None
+
+        losses = {}
         criterion2_i = 0
         for i, k in enumerate(x_vgg):
             alpha = self.alpha[i]
-            s1 = torch.tensor(0.0, device=x.device)
-            s2 = None
+            layer_loss = torch.tensor(0.0, device=x.device)
+
             if alpha < 1:
                 assert self.criterion1 is not None
-                temp = self.criterion1(x_vgg[k], gt_vgg[k]) * (1 - alpha)
-                # print("l1", k, temp)
-                s1 += temp
+                loss1 = self.criterion1(x_vgg[k], gt_vgg[k]) * (1 - alpha)
+                layer_loss = layer_loss + loss1
+
             if alpha > 0:
                 assert self.criterion2 is not None
-                temp = (
+                loss2 = (
                     self.criterion2(x_vgg[k], gt_vgg[k], criterion2_i)
                     * alpha
                     * self.w_lambda
                 )
-                if score2 is None:
-                    score2 = torch.zeros(temp.shape, device=x.device)
-                if s2 is None:
-                    s2 = torch.zeros(temp.shape, device=x.device)
-                # print("fd", k, temp)
-                s2 += temp
+                layer_loss = layer_loss + loss2
                 criterion2_i += 1
 
-            s1 *= self.layer_weights[k]
-            score1 += s1
-            if s2 is not None:
-                assert score2 is not None
-                s2 *= self.layer_weights[k]
-                score2 += s2
+            layer_loss = layer_loss * self.layer_weights[k]
+            losses[k] = layer_loss * self.loss_weight
 
-        score = score1
-        if score2 is not None:
-            score += score2.mean()
-
-        return score * self.loss_weight
+        return losses
 
 
 class VGG(nn.Module):
@@ -323,7 +315,6 @@ class VGG(nn.Module):
             if isinstance(module, nn.ReLU):
                 module.inplace = False
 
-    # @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor) -> dict[str, Tensor]:
         h = (x - self.mean) / self.std  # pyright: ignore[reportOperatorIssue]
 

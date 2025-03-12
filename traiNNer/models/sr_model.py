@@ -215,12 +215,12 @@ class SRModel(BaseModel):
             if switch_iter == 0:
                 switch_iter = None
             self.net_g_ema = EMA(
-                self.net_g,
+                self.get_bare_model(self.net_g),
                 ema_model=init_net_g_ema,
                 beta=self.ema_decay,
                 allow_different_devices=True,
-                update_after_step=100,  # TODO parameterize
-                update_every=1,  # TODO parameterize
+                update_after_step=train_opt.ema_update_after_step,
+                update_every=1,
                 power=train_opt.ema_power,
                 update_model_with_ema_every=switch_iter,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
@@ -376,7 +376,7 @@ class SRModel(BaseModel):
 
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
-        loss_dict = OrderedDict()
+        loss_dict: dict[str, Tensor | float] = OrderedDict()
 
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
@@ -418,8 +418,14 @@ class SRModel(BaseModel):
                     else:
                         l_g_loss = loss(self.output, self.gt)
 
-                    l_g_total += l_g_loss / self.accum_iters
-                    loss_dict[label] = l_g_loss
+                    if isinstance(l_g_loss, dict):
+                        for sublabel, loss_val in l_g_loss.items():
+                            if loss_val > 0:
+                                l_g_total += loss_val / self.accum_iters
+                                loss_dict[f"{label}_{sublabel}"] = loss_val
+                    else:
+                        l_g_total += l_g_loss / self.accum_iters
+                        loss_dict[label] = l_g_loss
 
                 if not l_g_total.isfinite():
                     raise RuntimeError(
@@ -430,15 +436,29 @@ class SRModel(BaseModel):
                 loss_dict["l_g_total"] = l_g_total
 
                 self.scaler_g.scale(l_g_total).backward()
+
                 if apply_gradient:
+                    self.scaler_g.unscale_(self.optimizer_g)
+                    grad_norm_g = torch.linalg.vector_norm(
+                        torch.stack(
+                            [
+                                torch.linalg.vector_norm(p.grad, 2)
+                                for p in self.net_g.parameters()
+                                if p.grad is not None
+                            ]
+                        )
+                    ).detach()
+
+                    loss_dict["grad_norm_g"] = grad_norm_g
+
                     if self.grad_clip:
-                        self.scaler_g.unscale_(self.optimizer_g)
                         clip_grad_norm_(self.net_g.parameters(), 1.0)
 
                     scale_before = self.scaler_g.get_scale()
                     self.scaler_g.step(self.optimizer_g)
                     self.scaler_g.update()
                     scale_after = self.scaler_g.get_scale()
+                    loss_dict["scale_g"] = scale_after
                     self.optimizers_skipped[0] = scale_after < scale_before
                     if self.optimizers_skipped[0]:
                         logger = get_root_logger()
@@ -484,13 +504,26 @@ class SRModel(BaseModel):
             self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
 
             if apply_gradient:
+                self.scaler_d.unscale_(self.optimizer_d)
+                grad_norm_d = torch.linalg.vector_norm(
+                    torch.stack(
+                        [
+                            torch.linalg.vector_norm(p.grad, 2)
+                            for p in self.net_d.parameters()
+                            if p.grad is not None
+                        ]
+                    )
+                ).detach()
+
+                loss_dict["grad_norm_d"] = grad_norm_d
+
                 if self.grad_clip:
-                    self.scaler_d.unscale_(self.optimizer_d)
                     clip_grad_norm_(self.net_d.parameters(), 1.0)
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
                 scale_after = self.scaler_d.get_scale()
+                loss_dict["scale_d"] = scale_after
                 self.optimizers_skipped[-1] = scale_after < scale_before
                 if self.optimizers_skipped[-1]:
                     logger = get_root_logger()
@@ -505,7 +538,7 @@ class SRModel(BaseModel):
             val = (
                 value
                 if isinstance(value, float)
-                else value.to(dtype=torch.float32).detach()
+                else value.to(dtype=torch.float32).detach()  # pyright: ignore[reportAttributeAccessIssue]
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
