@@ -420,8 +420,9 @@ class SRModel(BaseModel):
 
                     if isinstance(l_g_loss, dict):
                         for sublabel, loss_val in l_g_loss.items():
-                            l_g_total += loss_val / self.accum_iters
-                            loss_dict[f"{label}_{sublabel}"] = loss_val
+                            if loss_val > 0:
+                                l_g_total += loss_val / self.accum_iters
+                                loss_dict[f"{label}_{sublabel}"] = loss_val
                     else:
                         l_g_total += l_g_loss / self.accum_iters
                         loss_dict[label] = l_g_loss

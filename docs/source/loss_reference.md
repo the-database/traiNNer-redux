@@ -106,6 +106,9 @@ loss_weight: 1.0
 
 ```yaml
 type: hsluvloss
+hue_weight: 0.3333333333333333
+saturation_weight: 0.3333333333333333
+lightness_weight: 0.3333333333333333
 criterion: l1
 downscale_factor: 1
 loss_weight: 1.0
@@ -207,6 +210,7 @@ criterion: charbonnier
 num_proj_fd: 256
 phase_weight_fd: 1.0
 stride_fd: 1
+clip_min: 0
 loss_weight: 1.0
 ```
 ## perceptualloss
@@ -221,5 +225,6 @@ criterion: charbonnier
 num_proj_fd: 256
 phase_weight_fd: 1.0
 stride_fd: 1
+clip_min: 0
 loss_weight: 1.0
 ```

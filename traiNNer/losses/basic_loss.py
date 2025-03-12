@@ -283,19 +283,28 @@ class LumaLoss(nn.Module):
 @LOSS_REGISTRY.register()
 class HSLuvLoss(nn.Module):
     def __init__(
-        self, loss_weight: float, criterion: str = "l1", downscale_factor: int = 1
+        self,
+        loss_weight: float,
+        hue_weight: float = 1 / 3,
+        saturation_weight: float = 1 / 3,
+        lightness_weight: float = 1 / 3,
+        criterion: str = "l1",
+        downscale_factor: int = 1,
     ) -> None:
         super().__init__()
         self.downscale_factor = downscale_factor
         self.loss_weight = loss_weight
+        self.hue_weight = hue_weight
+        self.lightness_weight = lightness_weight
+        self.saturation_weight = saturation_weight
         self.criterion_type = criterion
 
         if self.criterion_type == "l1":
-            self.criterion = nn.L1Loss()
+            self.criterion = nn.L1Loss(reduction="none")
         elif self.criterion_type == "l2":
-            self.criterion = nn.MSELoss()
+            self.criterion = nn.MSELoss(reduction="none")
         elif self.criterion_type == "charbonnier":
-            self.criterion = charbonnier_loss
+            self.criterion = CharbonnierLoss(loss_weight=1.0, reduction="none")
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
@@ -314,7 +323,7 @@ class HSLuvLoss(nn.Module):
         x_hue = x_hsluv[:, 0, :, :] / 360
 
         # saturation: 0 to 100. normalize
-        x_saturation = torch.round(x_hsluv[:, 1, :, :], decimals=20) / 100
+        x_saturation = x_hsluv[:, 1, :, :] / 100
 
         # lightness: 0 to 100. normalize
         x_lightness = x_hsluv[:, 2, :, :] / 100
@@ -346,9 +355,23 @@ class HSLuvLoss(nn.Module):
             (x_lightness > 1 - eps) & (y_lightness > eps - 1), 0, hue_diff
         )
 
-        hue_loss = torch.mean(hue_diff) * 1 / 3
-        saturation_loss = self.criterion(x_saturation, y_saturation) * 1 / 3
-        lightness_loss = self.criterion(x_lightness, y_lightness) * 1 / 3
+        hue_loss = torch.mean(hue_diff) * self.hue_weight
+
+        # elementwise saturation loss
+        saturation_diff = self.criterion(x_saturation, y_saturation)
+
+        # weights for x and y lightness: 1 when lightness is 0.5, 0 when lightness is 0 or 1
+        weight_x = torch.min(x_lightness, 1 - x_lightness).clamp(0, 0.5)
+        weight_y = torch.min(y_lightness, 1 - y_lightness).clamp(0, 0.5)
+        weight = weight_x + weight_y
+
+        weighted_sat_diff = saturation_diff * weight
+
+        saturation_loss = torch.mean(weighted_sat_diff) * self.saturation_weight
+
+        lightness_loss = (
+            self.criterion(x_lightness, y_lightness).mean() * self.lightness_weight
+        )
 
         return {
             "hue": hue_loss,
