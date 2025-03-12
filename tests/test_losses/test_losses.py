@@ -176,7 +176,7 @@ class TestLosses:
             assert len(perceptual_loss_fn.vgg.stages) == len(VGG19_CONV_LAYER_WEIGHTS)
 
         # Compute losses
-        _loss = perceptual_loss_fn(x, y).item()
+        _loss = perceptual_loss_fn(x, y)
 
     @pytest.mark.parametrize(
         "loss_fn",
@@ -199,4 +199,8 @@ class TestLosses:
         else:
             loss_value2 = loss_fn(pred2, gt2)
 
-        assert torch.allclose(loss_value, loss_value2, atol=1e-6)
+        if isinstance(loss_value, dict):
+            for key, val in loss_value.items():
+                assert torch.allclose(val, loss_value2[key], atol=1e-6)
+        else:
+            assert torch.allclose(loss_value, loss_value2, atol=1e-6)
