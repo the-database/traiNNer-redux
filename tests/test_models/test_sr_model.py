@@ -61,8 +61,12 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     # check returned keys
     expected_keys = [
         "l_g_mssim",
-        "l_g_perceptual",
-        "l_g_hsluv",
+        "l_g_perceptual_conv3_4",
+        "l_g_perceptual_conv4_4",
+        "l_g_perceptual_conv5_4",
+        "l_g_hsluv_hue",
+        "l_g_hsluv_saturation",
+        "l_g_hsluv_lightness",
         "l_g_gan",
         "l_g_total",
     ]
