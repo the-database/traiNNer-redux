@@ -218,6 +218,8 @@ def paired_random_crop_vips(
     scale: int,
     lq_path: str | None = None,
     gt_path: str | None = None,
+    x: int | None = None,
+    y: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     h_lq: int = img_lq.height  # pyright: ignore[reportAssignmentType]
     w_lq: int = img_lq.width  # pyright: ignore[reportAssignmentType]
@@ -236,8 +238,10 @@ def paired_random_crop_vips(
         )
 
     # randomly choose top and left coordinates for lq patch
-    y = random.randint(0, h_lq - lq_patch_size)
-    x = random.randint(0, w_lq - lq_patch_size)
+    if y is None:
+        y = random.randint(0, h_lq - lq_patch_size)
+    if x is None:
+        x = random.randint(0, w_lq - lq_patch_size)
 
     region_lq = pyvips.Region.new(img_lq)
     try:
@@ -368,6 +372,9 @@ def augment_vips_pair(
     hflip: bool = True,
     vflip: bool = True,
     rot90: bool = True,
+    force_hflip: bool | None = None,
+    force_vflip: bool | None = None,
+    force_rot90: bool | None = None,
 ) -> tuple[pyvips.Image, pyvips.Image]:
     """Augment: horizontal flips OR rotate (0, 90, 180, 270 degrees).
 
@@ -385,9 +392,18 @@ def augment_vips_pair(
             results only have one element, just return pyvips.Image.
     """
 
-    hflip = hflip and random.random() < 0.5
-    vflip = vflip and random.random() < 0.5
-    rot90 = rot90 and random.random() < 0.5
+    if force_hflip is None:
+        hflip = hflip and random.random() < 0.5
+    else:
+        hflip = force_hflip
+    if force_vflip is None:
+        vflip = vflip and random.random() < 0.5
+    else:
+        vflip = force_vflip
+    if force_rot90 is None:
+        rot90 = rot90 and random.random() < 0.5
+    else:
+        rot90 = force_rot90
 
     return augment_vips(imgs[0], hflip, vflip, rot90, randomize=False), augment_vips(
         imgs[1], hflip, vflip, rot90, randomize=False

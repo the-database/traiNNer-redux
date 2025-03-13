@@ -113,7 +113,10 @@ class PairedImageDataset(BaseDataset):
 
             # flip, rotation
             vips_img_gt, vips_img_lq = augment_vips_pair(
-                (vips_img_gt, vips_img_lq), self.opt.use_hflip, self.opt.use_rot
+                (vips_img_gt, vips_img_lq),
+                self.opt.use_hflip,
+                self.opt.use_rot,
+                self.opt.use_rot,
             )
 
             # random crop
