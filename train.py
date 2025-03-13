@@ -393,103 +393,112 @@ def train_pipeline(root_path: str) -> None:
     train_data = None
     assert model.opt.path.models is not None
 
-    for epoch in range(start_epoch, total_epochs + 1):
-        train_sampler.set_epoch(epoch)
-        prefetcher.reset()
-        train_data = prefetcher.next()
-
-        while train_data is not None:
-            data_timer.record()
-
-            current_accum_iter += 1
-
-            if current_accum_iter >= model.accum_iters:
-                current_accum_iter = 0
-                current_iter += 1
-                apply_gradient = True
-            else:
-                apply_gradient = False
-
-            if current_iter > total_iters:
-                break
-            # training
-            model.feed_data(train_data)
-            try:
-                model.optimize_parameters(
-                    current_iter, current_accum_iter, apply_gradient
-                )
-            except RuntimeError as e:
-                # Check to see if its actually the CUDA out of memory error
-                if "allocate" in str(e) or "CUDA" in str(e):
-                    # Collect garbage (clear VRAM)
-                    raise RuntimeError(
-                        "Ran out of VRAM during training. Please reduce lq_size or batch_size_per_gpu and try again."
-                    ) from None
-                else:
-                    # Re-raise the exception if not an OOM error
-                    raise
-            # update learning rate
-            if apply_gradient:
-                model.update_learning_rate(
-                    current_iter, warmup_iter=opt.train.warmup_iter
-                )
-            iter_timer.record()
-            if current_iter == msg_logger.start_iter + 1:
-                # reset start time in msg_logger for more accurate eta_time
-                msg_logger.reset_start_time()
-            # log
-            if current_iter % opt.logger.print_freq == 0 and apply_gradient:
-                log_vars = {"epoch": epoch, "iter": current_iter}
-                log_vars.update({"lrs": model.get_current_learning_rate()})
-                log_vars.update(
-                    {
-                        "time": iter_timer.get_avg_time(),
-                        "data_time": data_timer.get_avg_time(),
-                    }
-                )
-                log_vars.update(model.get_current_log())
-                model.reset_current_log()
-                msg_logger(log_vars)
-
-            # save models and training states
-            if current_iter % opt.logger.save_checkpoint_freq == 0 and apply_gradient:
-                logger.info(
-                    "Saving models and training states to %s. Free space: %s",
-                    clickable_file_path(model.opt.path.models, "experiments folder"),
-                    free_space_gb_str(),
-                )
-                model.save(
-                    epoch,
-                    current_iter,
-                )
-
-            # validation
-            if opt.val is not None:
-                assert opt.val.val_freq is not None, (
-                    "val_freq must be defined under the val section"
-                )
-                if current_iter % opt.val.val_freq == 0 and apply_gradient:
-                    multi_val_datasets = len(val_loaders) > 1
-                    for val_loader in val_loaders:
-                        model.validation(
-                            val_loader,
-                            current_iter,
-                            tb_logger,
-                            opt.val.save_img,
-                            multi_val_datasets,
-                        )
-
-            data_timer.start()
-            iter_timer.start()
+    try:
+        for epoch in range(start_epoch, total_epochs + 1):
+            train_sampler.set_epoch(epoch)
+            prefetcher.reset()
             train_data = prefetcher.next()
 
+            while train_data is not None:
+                data_timer.record()
+
+                current_accum_iter += 1
+
+                if current_accum_iter >= model.accum_iters:
+                    current_accum_iter = 0
+                    current_iter += 1
+                    apply_gradient = True
+                else:
+                    apply_gradient = False
+
+                if current_iter > total_iters:
+                    break
+                # training
+                model.feed_data(train_data)
+                try:
+                    model.optimize_parameters(
+                        current_iter, current_accum_iter, apply_gradient
+                    )
+                except RuntimeError as e:
+                    # Check to see if its actually the CUDA out of memory error
+                    if "allocate" in str(e) or "CUDA" in str(e):
+                        # Collect garbage (clear VRAM)
+                        raise RuntimeError(
+                            "Ran out of VRAM during training. Please reduce lq_size or batch_size_per_gpu and try again."
+                        ) from None
+                    else:
+                        # Re-raise the exception if not an OOM error
+                        raise
+                # update learning rate
+                if apply_gradient:
+                    model.update_learning_rate(
+                        current_iter, warmup_iter=opt.train.warmup_iter
+                    )
+                iter_timer.record()
+                if current_iter == msg_logger.start_iter + 1:
+                    # reset start time in msg_logger for more accurate eta_time
+                    msg_logger.reset_start_time()
+                # log
+                if current_iter % opt.logger.print_freq == 0 and apply_gradient:
+                    log_vars = {"epoch": epoch, "iter": current_iter}
+                    log_vars.update({"lrs": model.get_current_learning_rate()})
+                    log_vars.update(
+                        {
+                            "time": iter_timer.get_avg_time(),
+                            "data_time": data_timer.get_avg_time(),
+                        }
+                    )
+                    log_vars.update(model.get_current_log())
+                    model.reset_current_log()
+                    msg_logger(log_vars)
+
+                # save models and training states
+                if (
+                    current_iter % opt.logger.save_checkpoint_freq == 0
+                    and apply_gradient
+                ):
+                    logger.info(
+                        "Saving models and training states to %s. Free space: %s",
+                        clickable_file_path(
+                            model.opt.path.models, "experiments folder"
+                        ),
+                        free_space_gb_str(),
+                    )
+                    model.save(
+                        epoch,
+                        current_iter,
+                    )
+
+                # validation
+                if opt.val is not None:
+                    assert opt.val.val_freq is not None, (
+                        "val_freq must be defined under the val section"
+                    )
+                    if current_iter % opt.val.val_freq == 0 and apply_gradient:
+                        multi_val_datasets = len(val_loaders) > 1
+                        for val_loader in val_loaders:
+                            model.validation(
+                                val_loader,
+                                current_iter,
+                                tb_logger,
+                                opt.val.save_img,
+                                multi_val_datasets,
+                            )
+
+                data_timer.start()
+                iter_timer.start()
+                train_data = prefetcher.next()
+
+                if interrupt_received:
+                    break
+
+            # end of iter
             if interrupt_received:
                 break
-
-        # end of iter
-        if interrupt_received:
-            break
-    # end of epoch
+        # end of epoch
+    except Exception as e:
+        logger.error(e)
+        interrupt_received = True
 
     # epoch was completed, increment it to set the correct epoch count when interrupted
     if train_data is None:
@@ -500,13 +509,14 @@ def train_pipeline(root_path: str) -> None:
         if not apply_gradient:
             current_iter -= 1
 
-        logger.info(
-            "Saving models and training states to %s for epoch: %d, iter: %d.",
-            clickable_file_path(model.opt.path.models, "experiments folder"),
-            epoch,
-            current_iter,
-        )
-        model.save(epoch, current_iter)
+        if current_iter > 0:
+            logger.info(
+                "Saving models and training states to %s for epoch: %d, iter: %d.",
+                clickable_file_path(model.opt.path.models, "experiments folder"),
+                epoch,
+                current_iter,
+            )
+            model.save(epoch, current_iter)
         sys.exit(0)
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
