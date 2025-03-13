@@ -1,5 +1,6 @@
 # https://github.com/Demetter/TSCUNet_Trainer/blob/main/Train_TSCUNet.py
 import os
+import random
 
 import torch
 
@@ -71,6 +72,14 @@ class PairedVideoDataset(BaseDataset):
                 lr_clip = []
                 hr_clip = []
 
+                assert self.gt_size is not None
+                lq_size = self.gt_size // scale
+                force_x = None
+                force_y = None
+                force_hflip = None
+                force_vflip = None
+                force_rot90 = None
+
                 for i in range(self.clip_size):
                     lq_path, gt_path = clips[idx + i]
 
@@ -78,14 +87,28 @@ class PairedVideoDataset(BaseDataset):
                     vips_img_lq = vipsimfrompath(lq_path)
 
                     if self.opt.phase == "train":
+                        if force_x is None:
+                            force_rot90 = random.random() < 0.5
+                            force_hflip = random.random() < 0.5
+                            force_vflip = random.random() < 0.5
+                            h_lq: int = vips_img_lq.height  # pyright: ignore[reportAssignmentType]
+                            w_lq: int = vips_img_lq.width  # pyright: ignore[reportAssignmentType]
+                            if force_rot90:
+                                h_lq, w_lq = w_lq, h_lq  # swap dimensions if rotating
+                            force_y = random.randint(0, h_lq - lq_size)
+                            force_x = random.randint(0, w_lq - lq_size)
+
                         # flip, rotation
                         vips_img_gt, vips_img_lq = augment_vips_pair(
                             (vips_img_gt, vips_img_lq),
                             self.opt.use_hflip,
                             self.opt.use_rot,
+                            self.opt.use_rot,
+                            force_hflip,
+                            force_vflip,
+                            force_rot90,
                         )
 
-                        assert self.gt_size is not None
                         img_gt, img_lq = paired_random_crop_vips(
                             vips_img_gt,
                             vips_img_lq,
@@ -93,6 +116,8 @@ class PairedVideoDataset(BaseDataset):
                             scale,
                             lq_path,
                             gt_path,
+                            force_x,
+                            force_y,
                         )
                     else:
                         img_gt = img2rgb(vips_img_gt.numpy())
