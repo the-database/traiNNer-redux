@@ -220,3 +220,7 @@ class RealESRGANDataset(BaseDataset):
 
     def __len__(self) -> int:
         return len(self.paths)
+
+    @property
+    def label(self) -> str:
+        return "images"

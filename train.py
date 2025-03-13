@@ -138,13 +138,13 @@ def create_train_val_dataloader(
             assert dataset_opt.gt_size is not None, "gt_size is required for train set"
             logger.info(
                 "Training statistics for [b]%s[/b]:\n"
-                "\t%-25s %10s\t%-25s %10s\n"
-                "\t%-25s %10s\t%-25s %10s\n"
-                "\t%-25s %10s\t%-25s %10s\n"
-                "\t%-25s %10s\t%-25s %10s\n"
-                "\t%-25s %10s\t%-25s %10s",
+                "\t%-40s %10s\t%-40s %10s\n"
+                "\t%-40s %10s\t%-40s %10s\n"
+                "\t%-40s %10s\t%-40s %10s\n"
+                "\t%-40s %10s\t%-40s %10s\n"
+                "\t%-40s %10s\t%-40s %10s",
                 opt.name,
-                "Number of train images:",
+                f"Number of train {train_set.label}:",
                 f"{len(train_set):,}",
                 "Dataset enlarge ratio:",
                 f"{dataset_enlarge_ratio:,}",
@@ -167,8 +167,10 @@ def create_train_val_dataloader(
             )
             if len(train_set) < 100:
                 logger.warning(
-                    "Number of train images is low: %d, training quality may be impacted. Please use more train images for best training results.",
+                    "Number of training %s is low: %d, training quality may be impacted. Please use more training %s for best training results.",
+                    train_set.label,
                     len(train_set),
+                    train_set.label,
                 )
         elif phase.split("_")[0] == "val":
             if val_enabled:

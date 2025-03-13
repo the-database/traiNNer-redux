@@ -75,3 +75,7 @@ class SingleVideoDataset(BaseDataset):
             idx -= len(clips) - self.clip_size + 1
 
         raise IndexError("Index out of range.")
+
+    @property
+    def label(self) -> str:
+        return f"{self.clip_size}-frame sequences"

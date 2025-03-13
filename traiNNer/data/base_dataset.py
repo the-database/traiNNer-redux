@@ -20,3 +20,8 @@ class BaseDataset(data.Dataset):
     @abstractmethod
     def __len__(self) -> int:
         pass
+
+    @property
+    @abstractmethod
+    def label(self) -> str:
+        pass

@@ -60,6 +60,13 @@ class PairedVideoDataset(BaseDataset):
             len(self.frames),
         )
 
+        if opt.phase == "train":
+            if len(self.frames) < 100:
+                logger.warning(
+                    "Number of scene pairs is low: %d, training quality may be impacted. Please use more scene pairs for best training results.",
+                    len(self.frames),
+                )
+
     def __len__(self) -> int:
         return sum(max(0, len(v) - self.clip_size + 1) for v in self.frames.values())
 
@@ -144,3 +151,7 @@ class PairedVideoDataset(BaseDataset):
             idx -= len(clips) - self.clip_size + 1
 
         raise IndexError("Index out of range.")
+
+    @property
+    def label(self) -> str:
+        return f"{self.clip_size}-frame sequence pairs"
