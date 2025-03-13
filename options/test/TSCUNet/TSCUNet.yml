@@ -7,7 +7,7 @@ scale: 4  # 1, 2, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only.
 num_gpu: auto
-
+use_channels_last: false
 
 #################################
 # Dataset and Dataloader Settings
