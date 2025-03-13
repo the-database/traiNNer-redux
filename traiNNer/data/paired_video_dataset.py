@@ -8,6 +8,7 @@ from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
 from traiNNer.utils.file_client import FileClient
 from traiNNer.utils.img_util import img2rgb, imgs2tensors, vipsimfrompath
+from traiNNer.utils.logger import get_root_logger
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -37,6 +38,8 @@ class PairedVideoDataset(BaseDataset):
         self.gt_size = opt.gt_size
         self.frames: dict[str, list[tuple[str, str]]] = {}
 
+        logger = get_root_logger()
+
         for i, lq_path in enumerate(self.dataroot_lq):
             for f in sorted(os.listdir(lq_path)):
                 if f.lower().endswith((".png", ".jpg", ".jpeg")):
@@ -49,11 +52,13 @@ class PairedVideoDataset(BaseDataset):
                             self.frames[show_prefix] = []
                         self.frames[show_prefix].append((lr_path, hr_path))
                     else:
-                        print(f"Warning: No matching HR file for {f}")
+                        logger.warning("No matching HR file for %s", f)
 
-            print(
-                f"Found {sum(len(v) for v in self.frames.values())} valid file pairs across {len(self.frames)} shows"
-            )
+        logger.info(
+            "Found %d valid file pairs across %d scenes.",
+            sum(len(v) for v in self.frames.values()),
+            len(self.frames),
+        )
 
     def __len__(self) -> int:
         return sum(max(0, len(v) - self.clip_size + 1) for v in self.frames.values())
