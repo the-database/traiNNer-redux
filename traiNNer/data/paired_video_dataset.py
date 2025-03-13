@@ -99,7 +99,7 @@ class PairedVideoDataset(BaseDataset):
                         img_lq = img2rgb(vips_img_lq.numpy())
 
                     img_gt, img_lq = imgs2tensors(
-                        [img_gt, img_lq], color=True, bgr2rgb=True, float32=True
+                        [img_gt, img_lq], color=True, bgr2rgb=False, float32=True
                     )
 
                     lr_clip.append(img_lq)
