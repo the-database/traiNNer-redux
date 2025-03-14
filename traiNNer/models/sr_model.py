@@ -602,7 +602,9 @@ class SRModel(BaseModel):
         if self.with_metrics:
             assert self.opt.val.metrics is not None
             if len(self.metric_results) == 0:  # only execute in the first run
-                self.metric_results: dict[str, Any] = dict.fromkeys(self.opt.val.metrics.keys(), 0)
+                self.metric_results: dict[str, Any] = dict.fromkeys(
+                    self.opt.val.metrics.keys(), 0
+                )
             # initialize the best metric results for each dataset_name (supporting multiple validation datasets)
             self._initialize_best_metric_results(dataset_name)
         # zero self.metric_results
