@@ -190,7 +190,7 @@ def train_pipeline(root_path: str) -> None:
 
     for val_set in val_sets:
         logger.info("List of val LRs:")
-        for i in range(len(val_set)):
+        for i in range(len(val_set)):  # pyright: ignore[reportArgumentType]
             log_line(val_set, i, logger)
 
 
