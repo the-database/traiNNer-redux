@@ -91,13 +91,16 @@ class PairedVideoDataset(BaseDataset):
         lr_clip = []
         hr_clip = []
 
-        assert self.gt_size is not None
-        lq_size = self.gt_size // scale
         force_x = None
         force_y = None
         force_hflip = None
         force_vflip = None
         force_rot90 = None
+        lq_size = 0
+
+        if self.opt.phase == "train":
+            assert self.gt_size is not None
+            lq_size = self.gt_size // scale
 
         for i in range(self.clip_size):
             lq_path, gt_path = clips[i]
