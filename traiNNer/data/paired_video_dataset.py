@@ -67,6 +67,12 @@ class PairedVideoDataset(BaseDataset):
                     len(self.frames),
                 )
 
+        self.index_mapping = []
+        for show_prefix, clips in self.frames.items():
+            n_clips = len(clips) - self.clip_size + 1
+            for start_idx in range(max(n_clips, 0)):
+                self.index_mapping.append((show_prefix, start_idx))
+
     def __len__(self) -> int:
         return sum(max(0, len(v) - self.clip_size + 1) for v in self.frames.values())
 
@@ -79,78 +85,76 @@ class PairedVideoDataset(BaseDataset):
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
             )
 
-        for _show_prefix, clips in self.frames.items():
-            if idx < len(clips) - self.clip_size + 1:
-                lr_clip = []
-                hr_clip = []
+        scene, start_idx = self.index_mapping[idx]
+        clips = self.frames[scene][start_idx : start_idx + self.clip_size]
 
-                assert self.gt_size is not None
-                lq_size = self.gt_size // scale
-                force_x = None
-                force_y = None
-                force_hflip = None
-                force_vflip = None
-                force_rot90 = None
+        lr_clip = []
+        hr_clip = []
 
-                for i in range(self.clip_size):
-                    lq_path, gt_path = clips[idx + i]
+        assert self.gt_size is not None
+        lq_size = self.gt_size // scale
+        force_x = None
+        force_y = None
+        force_hflip = None
+        force_vflip = None
+        force_rot90 = None
 
-                    vips_img_gt = vipsimfrompath(gt_path)
-                    vips_img_lq = vipsimfrompath(lq_path)
+        for i in range(self.clip_size):
+            lq_path, gt_path = clips[i]
 
-                    if self.opt.phase == "train":
-                        if force_x is None:
-                            force_rot90 = random.random() < 0.5
-                            force_hflip = random.random() < 0.5
-                            force_vflip = random.random() < 0.5
-                            h_lq: int = vips_img_lq.height  # pyright: ignore[reportAssignmentType]
-                            w_lq: int = vips_img_lq.width  # pyright: ignore[reportAssignmentType]
-                            if force_rot90:
-                                h_lq, w_lq = w_lq, h_lq  # swap dimensions if rotating
-                            force_y = random.randint(0, h_lq - lq_size)
-                            force_x = random.randint(0, w_lq - lq_size)
+            vips_img_gt = vipsimfrompath(gt_path)
+            vips_img_lq = vipsimfrompath(lq_path)
 
-                        # flip, rotation
-                        vips_img_gt, vips_img_lq = augment_vips_pair(
-                            (vips_img_gt, vips_img_lq),
-                            self.opt.use_hflip,
-                            self.opt.use_rot,
-                            self.opt.use_rot,
-                            force_hflip,
-                            force_vflip,
-                            force_rot90,
-                        )
+            if self.opt.phase == "train":
+                if force_x is None:
+                    force_rot90 = random.random() < 0.5
+                    force_hflip = random.random() < 0.5
+                    force_vflip = random.random() < 0.5
+                    h_lq: int = vips_img_lq.height  # pyright: ignore[reportAssignmentType]
+                    w_lq: int = vips_img_lq.width  # pyright: ignore[reportAssignmentType]
+                    if force_rot90:
+                        h_lq, w_lq = w_lq, h_lq  # swap dimensions if rotating
+                    force_y = random.randint(0, h_lq - lq_size)
+                    force_x = random.randint(0, w_lq - lq_size)
 
-                        img_gt, img_lq = paired_random_crop_vips(
-                            vips_img_gt,
-                            vips_img_lq,
-                            self.gt_size,
-                            scale,
-                            lq_path,
-                            gt_path,
-                            force_x,
-                            force_y,
-                        )
-                    else:
-                        img_gt = img2rgb(vips_img_gt.numpy())
-                        img_lq = img2rgb(vips_img_lq.numpy())
+                # flip, rotation
+                vips_img_gt, vips_img_lq = augment_vips_pair(
+                    (vips_img_gt, vips_img_lq),
+                    self.opt.use_hflip,
+                    self.opt.use_rot,
+                    self.opt.use_rot,
+                    force_hflip,
+                    force_vflip,
+                    force_rot90,
+                )
 
-                    img_gt, img_lq = imgs2tensors(
-                        [img_gt, img_lq], color=True, bgr2rgb=False, float32=True
-                    )
+                img_gt, img_lq = paired_random_crop_vips(
+                    vips_img_gt,
+                    vips_img_lq,
+                    self.gt_size,
+                    scale,
+                    lq_path,
+                    gt_path,
+                    force_x,
+                    force_y,
+                )
+            else:
+                img_gt = img2rgb(vips_img_gt.numpy())
+                img_lq = img2rgb(vips_img_lq.numpy())
 
-                    lr_clip.append(img_lq)
-                    hr_clip.append(img_gt)
+            img_gt, img_lq = imgs2tensors(
+                [img_gt, img_lq], color=True, bgr2rgb=False, float32=True
+            )
 
-                return {
-                    "lq": torch.stack(lr_clip),
-                    "gt": hr_clip[self.clip_size // 2],
-                    "gt_path": clips[idx + self.clip_size // 2][1],
-                    "lq_path": clips[idx + self.clip_size // 2][0],
-                }
-            idx -= len(clips) - self.clip_size + 1
+            lr_clip.append(img_lq)
+            hr_clip.append(img_gt)
 
-        raise IndexError("Index out of range.")
+        return {
+            "lq": torch.stack(lr_clip),
+            "gt": hr_clip[self.clip_size // 2],
+            "gt_path": clips[self.clip_size // 2][1],
+            "lq_path": clips[self.clip_size // 2][0],
+        }
 
     @property
     def label(self) -> str:
