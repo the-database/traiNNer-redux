@@ -109,6 +109,7 @@ class PairedVideoDataset(BaseDataset):
             vips_img_lq = vipsimfrompath(lq_path)
 
             if self.opt.phase == "train":
+                assert self.gt_size is not None
                 if force_x is None:
                     force_rot90 = random.random() < 0.5
                     force_hflip = random.random() < 0.5
