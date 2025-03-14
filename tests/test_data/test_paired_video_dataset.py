@@ -68,56 +68,32 @@ phase: train
             f"datasets/train/video/hr/{image_names[i + clip_size // 2]}.png"
         )
 
-    # ------------------ test lmdb backend and with y channel-------------------- #
-    # TODO
-    # opt["dataroot_gt"] = "tests/data/gt.lmdb"
-    # opt["dataroot_lq"] = "tests/data/lq.lmdb"
-    # opt["io_backend"] = {"type": "lmdb"}
-    # opt["color"] = "y"
-    # opt["mean"] = [0.5]
-    # opt["std"] = [0.5]
 
-    # dataset = PairedVideoDataset(opt)
-    # assert dataset.io_backend_opt["type"] == "lmdb"  # io backend
-    # assert len(dataset) == 2  # whether to read correct meta info
-    # assert dataset.std == [0.5]
+# def test_getitem() -> None:
+#     opt = DatasetOptions(
+#         name="train",
+#         type="train",
+#         clip_size=5,
+#         num_worker_per_gpu=0,
+#         persistent_workers=False,
+#         prefetch_factor=None,
+#         scale=2,
+#         gt_size=128,
+#         dataroot_gt=[
+#             "datasets/train/send/HR1",
+#             "datasets/train/send/HR2",
+#             "datasets/train/video/hr",
+#         ],
+#         dataroot_lq=[
+#             "datasets/train/send/LR1",
+#             "datasets/train/send/LR2",
+#             "datasets/train/video/lr",
+#         ],
+#     )
 
-    # # test __getitem__
-    # result = dataset.__getitem__(1)
-    # # check returned keys
-    # expected_keys = ["lq", "gt", "lq_path", "gt_path"]
-    # assert set(expected_keys).issubset(set(result.keys()))
-    # # check shape and contents
-    # assert (
-    #     "gt" in result
-    #     and "lq" in result
-    #     and "lq_path" in result
-    #     and "gt_path" in result
-    # )
-    # assert result["gt"].shape == (1, 128, 128)
-    # assert result["lq"].shape == (1, 32, 32)
-    # assert result["lq_path"] == "comic"
-    # assert result["gt_path"] == "comic"
+#     dataset = PairedVideoDataset(opt)
 
-    # ------------------ test case: val/test mode -------------------- #
-    # TODO
-    # opt["phase"] = "test"
-    # opt["io_backend"] = {"type": "lmdb"}
-    # dataset = PairedVideoDataset(opt)
-
-    # # test __getitem__
-    # result = dataset.__getitem__(0)
-    # # check returned keys
-    # expected_keys = ["lq", "gt", "lq_path", "gt_path"]
-    # assert set(expected_keys).issubset(set(result.keys()))
-    # # check shape and contents
-    # assert (
-    #     "gt" in result
-    #     and "lq" in result
-    #     and "lq_path" in result
-    #     and "gt_path" in result
-    # )
-    # assert result["gt"].shape == (1, 480, 492)
-    # assert result["lq"].shape == (1, 120, 123)
-    # assert result["lq_path"] == "baboon"
-    # assert result["gt_path"] == "baboon"
+#     # test __getitem__
+#     for i in range(len(dataset)):
+#         result = dataset.__getitem__(i)
+#         print(i, result["lq_path"])

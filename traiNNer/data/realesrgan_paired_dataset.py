@@ -43,3 +43,7 @@ class RealESRGANPairedDataset(BaseDataset):
 
     def __len__(self) -> int:
         return len(self.otf_dataset)
+
+    @property
+    def label(self) -> str:
+        return "image pairs"
