@@ -43,14 +43,14 @@ class PairedVideoDataset(BaseDataset):
         for i, lq_path in enumerate(self.dataroot_lq):
             for f in sorted(os.listdir(lq_path)):
                 if f.lower().endswith((".png", ".jpg", ".jpeg")):
-                    show_prefix = f.split("_")[0]
+                    scene_prefix = f"{lq_path}_{f.split('_')[0]}"
                     lr_path = os.path.join(lq_path, f)
                     hr_path = os.path.join(self.dataroot_gt[i], f)
 
                     if os.path.exists(hr_path):
-                        if show_prefix not in self.frames:
-                            self.frames[show_prefix] = []
-                        self.frames[show_prefix].append((lr_path, hr_path))
+                        if scene_prefix not in self.frames:
+                            self.frames[scene_prefix] = []
+                        self.frames[scene_prefix].append((lr_path, hr_path))
                     else:
                         logger.warning("No matching HR file for %s", f)
 
@@ -68,10 +68,10 @@ class PairedVideoDataset(BaseDataset):
                 )
 
         self.index_mapping = []
-        for show_prefix, clips in self.frames.items():
+        for scene_prefix, clips in self.frames.items():
             n_clips = len(clips) - self.clip_size + 1
             for start_idx in range(max(n_clips, 0)):
-                self.index_mapping.append((show_prefix, start_idx))
+                self.index_mapping.append((scene_prefix, start_idx))
 
     def __len__(self) -> int:
         return sum(max(0, len(v) - self.clip_size + 1) for v in self.frames.values())
@@ -109,6 +109,7 @@ class PairedVideoDataset(BaseDataset):
             vips_img_lq = vipsimfrompath(lq_path)
 
             if self.opt.phase == "train":
+                assert self.gt_size is not None
                 if force_x is None:
                     force_rot90 = random.random() < 0.5
                     force_hflip = random.random() < 0.5

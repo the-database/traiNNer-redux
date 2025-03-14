@@ -94,6 +94,15 @@ phase: train
 #     dataset = PairedVideoDataset(opt)
 
 #     # test __getitem__
+#     num_seq = 0
+#     assert isinstance(opt.dataroot_gt, list)
+#     assert opt.clip_size is not None
+#     for p in opt.dataroot_gt:
+#         num_seq += len(list(os.listdir(p))) - opt.clip_size + 1
+
+#     print(num_seq)
+#     assert num_seq == len(dataset)
 #     for i in range(len(dataset)):
 #         result = dataset.__getitem__(i)
+#         assert "lq_path" in result
 #         print(i, result["lq_path"])
