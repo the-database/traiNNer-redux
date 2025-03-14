@@ -18,14 +18,10 @@ class SingleVideoDataset(BaseDataset):
         super().__init__(opt)
 
         assert opt.dataroot_lq is not None
-        assert opt.dataroot_gt is not None
         assert opt.clip_size is not None
 
         assert isinstance(opt.dataroot_lq, list), (
             f"dataroot_lq must be defined for dataset {opt.name}"
-        )
-        assert isinstance(opt.dataroot_gt, list), (
-            f"dataroot_gt must be defined for dataset {opt.name}"
         )
 
         self.file_client = None
@@ -84,7 +80,7 @@ class SingleVideoDataset(BaseDataset):
 
         return {
             "lq": torch.stack(lr_clip),
-            "lq_path": clips[self.clip_size // 2][0],
+            "lq_path": clips[self.clip_size // 2],
         }
 
     @property
