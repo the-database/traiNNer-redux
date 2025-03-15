@@ -4,7 +4,6 @@ import torch
 from torch import SymInt, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
-from traiNNer.losses.basic_loss import CharbonnierLoss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 ####################################
@@ -115,7 +114,6 @@ class MSSIMLoss(nn.Module):
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-        self.charbonnier = CharbonnierLoss(1)
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -125,7 +123,7 @@ class MSSIMLoss(nn.Module):
         )
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> dict[str, Tensor]:
         """x, y (Tensor): tensors of shape (N,C,H,W)
         Returns: Tensor
         """
@@ -137,22 +135,12 @@ class MSSIMLoss(nn.Module):
         if y.type() != self.gaussian_filter.gaussian_window.type():
             y = y.type_as(self.gaussian_filter.gaussian_window)
 
-        charbonnier = 0
-        charbonnier_weight = torch.mean(torch.abs(x - x.clamp(1e-12, 1))).clamp(0, 1)
-        charbonnier_weight = smoothstep(charbonnier_weight, 0.1, 0.9)
-        if charbonnier_weight > 0:
-            charbonnier = self.charbonnier(x, y)
-            if charbonnier_weight >= 1:  # skip mssim
-                return charbonnier
-
-        loss = 1 - self.msssim(x, y)
-        if charbonnier_weight > 0:
-            loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
+        loss = {"msssim": 1 - self.msssim(x, y) * self.loss_weight}
 
         if self.cosim:
-            loss += self.cosim_penalty(x, y)
+            loss["cosim"] = self.cosim_penalty(x, y) * self.loss_weight
 
-        return self.loss_weight * loss
+        return loss
 
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.clamp(x, 1e-12, 1)
