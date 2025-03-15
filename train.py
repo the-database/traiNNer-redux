@@ -1,5 +1,6 @@
 import os
 
+from torch.distributed import destroy_process_group
 from traiNNer.data.old_paired_image_dataset import OldPairedImageDataset
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
@@ -519,6 +520,8 @@ def train_pipeline(root_path: str) -> None:
                 current_iter,
             )
             model.save(epoch, current_iter)
+        if model.opt.dist:
+            destroy_process_group()
         sys.exit(0)
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
@@ -533,6 +536,8 @@ def train_pipeline(root_path: str) -> None:
             model.validation(val_loader, current_iter, tb_logger, opt.val.save_img)
     if tb_logger:
         tb_logger.close()
+    if model.opt.dist:
+        destroy_process_group()
 
 
 if __name__ == "__main__":
