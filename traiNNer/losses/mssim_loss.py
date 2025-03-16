@@ -12,11 +12,6 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 ####################################
 
 
-def smoothstep(x: Tensor, min: float = 0, max: float = 1) -> Tensor:
-    t = torch.clamp((x - min) / (max - min), 0.0, 1.0)
-    return t * t * (3 - 2 * t)
-
-
 class GaussianFilter2D(nn.Module):
     def __init__(
         self,
@@ -85,6 +80,7 @@ class MSSIMLoss(nn.Module):
         padding: int | None = None,
         cosim: bool = True,
         cosim_lambda: int = 5,
+        grayscale: bool = False,
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -114,6 +110,7 @@ class MSSIMLoss(nn.Module):
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
+        self.grayscale = grayscale
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -148,6 +145,18 @@ class MSSIMLoss(nn.Module):
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
+
+        if self.grayscale:
+            x = (
+                0.299 * x[:, 0:1, :, :]
+                + 0.587 * x[:, 1:2, :, :]
+                + 0.114 * x[:, 2:3, :, :]
+            )
+            y = (
+                0.299 * y[:, 0:1, :, :]
+                + 0.587 * y[:, 1:2, :, :]
+                + 0.114 * y[:, 2:3, :, :]
+            )
 
         msssim = torch.tensor(1.0, device=x.device)
 
