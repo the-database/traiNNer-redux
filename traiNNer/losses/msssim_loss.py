@@ -25,7 +25,7 @@ import torch.nn.functional as F  # noqa: N812
 from torch import nn
 
 from traiNNer.archs.arch_util import to_2tuple
-from traiNNer.utils.registry import ARCH_REGISTRY
+from traiNNer.utils.registry import LOSS_REGISTRY
 
 
 def rgb2yiq(x: torch.Tensor) -> torch.Tensor:
@@ -334,7 +334,7 @@ def ssim(
     return ssim_val
 
 
-@ARCH_REGISTRY.register()
+@LOSS_REGISTRY.register()
 class SSIMLoss(torch.nn.Module):
     r"""Args:
     - channel: number of channel.
@@ -434,7 +434,7 @@ def ms_ssim(
     return msssim_val
 
 
-@ARCH_REGISTRY.register()
+@LOSS_REGISTRY.register()
 class MSSSIMLoss(torch.nn.Module):
     r"""Multiscale structure similarity
 
