@@ -291,12 +291,12 @@ def train_pipeline(root_path: str) -> None:
 
     if opt.deterministic:
         logger.info(
-            "Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.",
+            "Training in deterministic mode with manual_seed=%d. Deterministic mode has reduced training speed.",
             opt.manual_seed,
         )
     else:
         logger.info(
-            "Training with seed=%d.",
+            "Training with manual_seed=%d.",
             opt.manual_seed,
         )
 

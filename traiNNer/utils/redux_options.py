@@ -385,7 +385,7 @@ class ReduxOptions(StrictStruct):
             description="Deterministic mode, slows down training. Only use for reproducible experiments."
         ),
     ] = None
-    deterministic: bool | None = None
+    deterministic: bool = False
     dist: bool | None = None
     launcher: str | None = None
     rank: int | None = None
