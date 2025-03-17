@@ -451,6 +451,7 @@ class MSSSIMLoss(torch.nn.Module):
 
     def __init__(
         self,
+        loss_weight: float,
         channels=3,
         downsample=False,
         test_y_channel=True,
@@ -458,6 +459,7 @@ class MSSSIMLoss(torch.nn.Module):
         color_space="yiq",
     ) -> None:
         super().__init__()
+        self.loss_weight = loss_weight
         self.downsample = downsample
         self.test_y_channel = test_y_channel
         self.color_space = color_space
@@ -488,4 +490,4 @@ class MSSSIMLoss(torch.nn.Module):
             downsample=self.downsample,
             is_prod=self.is_prod,
         )
-        return 1 - score
+        return self.loss_weight * (1 - score)
