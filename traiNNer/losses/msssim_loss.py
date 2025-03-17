@@ -141,6 +141,9 @@ def preprocess_rgb(x, test_y_channel, data_range: float = 1, color_space="yiq"):
     Returns:
         torch.Tensor: The preprocessed RGB image tensor.
     """
+
+    x = x.clamp(0, 1)
+
     if test_y_channel and x.shape[1] == 3:
         x = to_y_channel(x, data_range, color_space)
     else:
@@ -490,4 +493,4 @@ class MSSSIMLoss(torch.nn.Module):
             downsample=self.downsample,
             is_prod=self.is_prod,
         )
-        return self.loss_weight * (1 - score)
+        return self.loss_weight * (1 - score.mean())
