@@ -500,7 +500,7 @@ def train_pipeline(root_path: str) -> None:
                 break
         # end of epoch
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
         interrupt_received = True
 
     # epoch was completed, increment it to set the correct epoch count when interrupted
