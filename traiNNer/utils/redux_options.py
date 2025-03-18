@@ -382,10 +382,15 @@ class ReduxOptions(StrictStruct):
     manual_seed: Annotated[
         int | None,
         Meta(
-            description="Deterministic mode, slows down training. Only use for reproducible experiments."
+            description="Random seed for training, useful for removing randomness when testing the effect of different settings."
         ),
     ] = None
-    deterministic: bool | None = None
+    deterministic: Annotated[
+        bool,
+        Meta(
+            description="Enables torch.use_deterministic_algorithms. Slows down training, only use when reproducibility is critical."
+        ),
+    ] = False
     dist: bool | None = None
     launcher: str | None = None
     rank: int | None = None
@@ -593,3 +598,4 @@ class ReduxOptions(StrictStruct):
     onnx: OnnxOptions | None = None
 
     find_unused_parameters: bool = False
+    contents: str | None = None

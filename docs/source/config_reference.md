@@ -29,10 +29,14 @@
   Type: dict
 ### manual_seed
 
-  Deterministic mode, slows down training. Only use for reproducible experiments.
+  Random seed for training, useful for removing randomness when testing the effect of different settings.
 
   Type: int
+### deterministic
 
+  Enables torch.use_deterministic_algorithms. Slows down training, only use when reproducibility is critical.
+
+  Type: bool
 
 
 

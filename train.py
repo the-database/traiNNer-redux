@@ -1,5 +1,6 @@
 import os
 
+from torch.distributed import destroy_process_group
 from traiNNer.data.old_paired_image_dataset import OldPairedImageDataset
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
@@ -22,7 +23,6 @@ from types import FrameType
 from typing import Any
 
 import torch
-from rich.pretty import pretty_repr
 from rich.traceback import install
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -286,16 +286,17 @@ def train_pipeline(root_path: str) -> None:
     log_file = osp.join(opt.path.log, f"train_{opt.name}_{get_time_str()}.log")
     logger = get_root_logger(logger_name="traiNNer", log_file=log_file)
     logger.info(get_env_info())
-    logger.debug(pretty_repr(opt))
+    logger.debug(opt.contents)
+    opt.contents = None
 
     if opt.deterministic:
         logger.info(
-            "Training in deterministic mode with manual seed=%d. Deterministic mode has reduced training speed.",
+            "Training in deterministic mode with manual_seed=%d. Deterministic mode has reduced training speed.",
             opt.manual_seed,
         )
     else:
         logger.info(
-            "Training with seed=%d.",
+            "Training with manual_seed=%d.",
             opt.manual_seed,
         )
 
@@ -499,7 +500,7 @@ def train_pipeline(root_path: str) -> None:
                 break
         # end of epoch
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
         interrupt_received = True
 
     # epoch was completed, increment it to set the correct epoch count when interrupted
@@ -519,6 +520,8 @@ def train_pipeline(root_path: str) -> None:
                 current_iter,
             )
             model.save(epoch, current_iter)
+        if model.opt.dist:
+            destroy_process_group()
         sys.exit(0)
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
@@ -533,6 +536,8 @@ def train_pipeline(root_path: str) -> None:
             model.validation(val_loader, current_iter, tb_logger, opt.val.save_img)
     if tb_logger:
         tb_logger.close()
+    if model.opt.dist:
+        destroy_process_group()
 
 
 if __name__ == "__main__":

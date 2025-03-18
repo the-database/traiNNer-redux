@@ -4,18 +4,12 @@ import torch
 from torch import SymInt, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
-from traiNNer.losses.basic_loss import CharbonnierLoss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 ####################################
 # Modified MSSIM Loss with cosine similarity from neosr
 # https://github.com/muslll/neosr/blob/master/neosr/losses/ssim_loss.py
 ####################################
-
-
-def smoothstep(x: Tensor, min: float = 0, max: float = 1) -> Tensor:
-    t = torch.clamp((x - min) / (max - min), 0.0, 1.0)
-    return t * t * (3 - 2 * t)
 
 
 class GaussianFilter2D(nn.Module):
@@ -86,6 +80,7 @@ class MSSIMLoss(nn.Module):
         padding: int | None = None,
         cosim: bool = True,
         cosim_lambda: int = 5,
+        grayscale: bool = False,
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -115,7 +110,7 @@ class MSSIMLoss(nn.Module):
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-        self.charbonnier = CharbonnierLoss(1)
+        self.grayscale = grayscale
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -125,7 +120,7 @@ class MSSIMLoss(nn.Module):
         )
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+    def forward(self, x: Tensor, y: Tensor) -> dict[str, Tensor]:
         """x, y (Tensor): tensors of shape (N,C,H,W)
         Returns: Tensor
         """
@@ -137,26 +132,31 @@ class MSSIMLoss(nn.Module):
         if y.type() != self.gaussian_filter.gaussian_window.type():
             y = y.type_as(self.gaussian_filter.gaussian_window)
 
-        charbonnier = 0
-        charbonnier_weight = torch.mean(torch.abs(x - x.clamp(1e-12, 1))).clamp(0, 1)
-        charbonnier_weight = smoothstep(charbonnier_weight, 0.1, 0.9)
-        if charbonnier_weight > 0:
-            charbonnier = self.charbonnier(x, y)
-            if charbonnier_weight >= 1:  # skip mssim
-                return charbonnier
-
-        loss = 1 - self.msssim(x, y)
-        if charbonnier_weight > 0:
-            loss = loss * (1 - charbonnier_weight) + charbonnier * charbonnier_weight
+        msssim = 1 - self.msssim(x, y)
+        loss = {"msssim": msssim * self.loss_weight}
 
         if self.cosim:
-            loss += self.cosim_penalty(x, y)
+            loss["cosim"] = (
+                torch.clamp(self.cosim_penalty(x, y), max=msssim) * self.loss_weight
+            )
 
-        return self.loss_weight * loss
+        return loss
 
     def msssim(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
+
+        if self.grayscale:
+            x = (
+                0.299 * x[:, 0:1, :, :]
+                + 0.587 * x[:, 1:2, :, :]
+                + 0.114 * x[:, 2:3, :, :]
+            )
+            y = (
+                0.299 * y[:, 0:1, :, :]
+                + 0.587 * y[:, 1:2, :, :]
+                + 0.114 * y[:, 2:3, :, :]
+            )
 
         msssim = torch.tensor(1.0, device=x.device)
 
@@ -176,10 +176,10 @@ class MSSIMLoss(nn.Module):
         return msssim
 
     def cosim_penalty(self, x: Tensor, y: Tensor) -> Tensor:
-        x = torch.where(torch.abs(x) < 1e-12, 1e-12, x)
-        y = torch.where(torch.abs(y) < 1e-12, 1e-12, y)
+        x = torch.clamp(x, 1e-12, 1)
+        y = torch.clamp(y, 1e-12, 1)
 
-        distance = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
+        distance = 1 - (self.similarity(x, y)).mean()
         return self.cosim_lambda * distance
 
     def _ssim(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:

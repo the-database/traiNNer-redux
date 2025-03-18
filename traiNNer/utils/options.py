@@ -40,7 +40,7 @@ def ordered_yaml() -> tuple[type[Loader], type[Dumper]]:
     return Loader, Dumper
 
 
-def yaml_load(file_path: str) -> ReduxOptions:
+def yaml_load(file_path: str) -> tuple[ReduxOptions, str]:
     """Load yaml file or string.
 
     Args:
@@ -54,7 +54,7 @@ def yaml_load(file_path: str) -> ReduxOptions:
 
     with open(file_path, encoding="utf-8") as f:
         contents = f.read()
-        return msgspec.yaml.decode(contents, type=ReduxOptions, strict=True)
+        return msgspec.yaml.decode(contents, type=ReduxOptions, strict=True), contents
 
 
 def struct2dict(obj: msgspec.Struct) -> dict[str, Any]:
@@ -137,7 +137,8 @@ def parse_options(
     args = parser.parse_args()
 
     # parse yml to dict
-    opt = yaml_load(args.opt)
+    opt, contents = yaml_load(args.opt)
+    opt.contents = contents
 
     # distributed settings
     if args.launcher == "none":
@@ -152,8 +153,6 @@ def parse_options(
     opt.rank, opt.world_size = get_dist_info()
 
     # random seed
-    if opt.deterministic is None:
-        opt.deterministic = opt.manual_seed is not None and opt.manual_seed > 0
     if not opt.manual_seed:
         opt.manual_seed = random.randint(1024, 10000)
 
@@ -205,7 +204,7 @@ def parse_options(
         opt.path.pretrain_network_d = osp.expanduser(opt.path.pretrain_network_d)
 
     if is_train:
-        assert opt.logger is not None, "logger section must be defined when training"
+        # assert opt.logger is not None, "logger section must be defined when training"  # TODO
         experiments_root = osp.join(root_path, "experiments", opt.name)
         opt.path.experiments_root = experiments_root
         opt.path.models = osp.join(experiments_root, "models")
