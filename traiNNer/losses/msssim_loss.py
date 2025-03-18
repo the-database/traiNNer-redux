@@ -447,8 +447,8 @@ def ms_ssim(
 
         mcs.append(cs)
         padding = (x.shape[2] % 2, x.shape[3] % 2)
-        F.avg_pool2d(x, kernel_size=2, padding=padding)
-        F.avg_pool2d(y, kernel_size=2, padding=padding)
+        x = F.avg_pool2d(x, kernel_size=2, padding=padding)
+        y = F.avg_pool2d(y, kernel_size=2, padding=padding)
 
     mcs = torch.stack(mcs, dim=0)
 
