@@ -23,7 +23,6 @@ from types import FrameType
 from typing import Any
 
 import torch
-from rich.pretty import pretty_repr
 from rich.traceback import install
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -287,7 +286,8 @@ def train_pipeline(root_path: str) -> None:
     log_file = osp.join(opt.path.log, f"train_{opt.name}_{get_time_str()}.log")
     logger = get_root_logger(logger_name="traiNNer", log_file=log_file)
     logger.info(get_env_info())
-    logger.debug(pretty_repr(opt))
+    logger.debug(opt.contents)
+    opt.contents = None
 
     if opt.deterministic:
         logger.info(

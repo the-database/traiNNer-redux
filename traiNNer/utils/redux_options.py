@@ -598,3 +598,4 @@ class ReduxOptions(StrictStruct):
     onnx: OnnxOptions | None = None
 
     find_unused_parameters: bool = False
+    contents: str | None = None
