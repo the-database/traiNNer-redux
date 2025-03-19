@@ -136,9 +136,7 @@ class MSSIMLoss(nn.Module):
         loss = {"msssim": msssim * self.loss_weight}
 
         if self.cosim:
-            loss["cosim"] = (
-                torch.clamp(self.cosim_penalty(x, y), max=msssim) * self.loss_weight
-            )
+            loss["cosim"] = self.cosim_penalty(x, y) * self.loss_weight
 
         return loss
 
@@ -197,6 +195,7 @@ class MSSIMLoss(nn.Module):
         # equ 12, 13 in ref1
         l = a1 / b1
         cs = a2 / b2
+        cs = F.relu(cs)
         ssim = l * cs
 
         return ssim, cs
