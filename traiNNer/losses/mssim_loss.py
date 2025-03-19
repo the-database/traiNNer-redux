@@ -81,6 +81,7 @@ class MSSIMLoss(nn.Module):
         cosim: bool = True,
         cosim_lambda: int = 5,
         grayscale: bool = False,
+        scale_weights: Sequence[float] = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333),
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -104,6 +105,7 @@ class MSSIMLoss(nn.Module):
         super().__init__()
 
         self.window_size = window_size
+        self.scale_weights = scale_weights
         self.C1 = (k1 * l) ** 2  # equ 7 in ref1
         self.C2 = (k2 * l) ** 2  # equ 7 in ref1
         self.cosim = cosim
@@ -158,12 +160,12 @@ class MSSIMLoss(nn.Module):
 
         msssim = torch.tensor(1.0, device=x.device)
 
-        for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
+        for i, w in enumerate(self.scale_weights):
             ssim, cs = self._ssim(x, y)
             ssim = ssim.mean()
             cs = cs.mean()
 
-            if i == 4:
+            if i == len(self.scale_weights) - 1:
                 msssim *= ssim**w
             else:
                 msssim *= cs**w
