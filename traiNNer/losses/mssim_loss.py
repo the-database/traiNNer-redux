@@ -174,8 +174,8 @@ class MSSIMLoss(nn.Module):
         return msssim
 
     def cosim_penalty(self, x: Tensor, y: Tensor) -> Tensor:
-        x = torch.clamp(x, min=1e-12)
-        y = torch.clamp(y, min=1e-12)
+        x = torch.clamp(x, 1e-12, 1)
+        y = torch.clamp(y, 1e-12, 1)
 
         distance = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
         return self.cosim_lambda * distance
