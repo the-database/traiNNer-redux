@@ -4,6 +4,7 @@ import torch
 from torch import SymInt, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
+from traiNNer.utils.color_util import linear_rgb_to_lab_norm, rgb_to_linear_rgb
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 ####################################
@@ -80,7 +81,6 @@ class MSSIMLoss(nn.Module):
         padding: int | None = None,
         cosim: bool = True,
         cosim_lambda: int = 5,
-        grayscale: bool = False,
         scale_weights: Sequence[float] = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333),
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
@@ -112,7 +112,6 @@ class MSSIMLoss(nn.Module):
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-        self.grayscale = grayscale
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -146,22 +145,13 @@ class MSSIMLoss(nn.Module):
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
 
-        if self.grayscale:
-            x = (
-                0.299 * x[:, 0:1, :, :]
-                + 0.587 * x[:, 1:2, :, :]
-                + 0.114 * x[:, 2:3, :, :]
-            )
-            y = (
-                0.299 * y[:, 0:1, :, :]
-                + 0.587 * y[:, 1:2, :, :]
-                + 0.114 * y[:, 2:3, :, :]
-            )
+        x = rgb_to_linear_rgb(x)
+        y = rgb_to_linear_rgb(y)
 
         msssim = torch.tensor(1.0, device=x.device)
 
         for i, w in enumerate(self.scale_weights):
-            ssim, cs = self._ssim(x, y)
+            ssim, cs = self._ssim(linear_rgb_to_lab_norm(x), linear_rgb_to_lab_norm(y))
             ssim = ssim.mean()
             cs = cs.mean()
 
