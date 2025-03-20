@@ -4,7 +4,6 @@ import torch
 from torch import SymInt, Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
-from traiNNer.utils.color_util import linear_rgb_to_lab_norm, rgb_to_linear_rgb
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 ####################################
@@ -145,13 +144,10 @@ class MSSIMLoss(nn.Module):
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
 
-        x = rgb_to_linear_rgb(x)
-        y = rgb_to_linear_rgb(y)
-
         msssim = torch.tensor(1.0, device=x.device)
 
         for i, w in enumerate(self.scale_weights):
-            ssim, cs = self._ssim(linear_rgb_to_lab_norm(x), linear_rgb_to_lab_norm(y))
+            ssim, cs = self._ssim(x, y)
             ssim = ssim.mean()
             cs = cs.mean()
 
@@ -159,9 +155,21 @@ class MSSIMLoss(nn.Module):
                 msssim *= ssim**w
             else:
                 msssim *= cs**w
-                padding = [s % 2 for s in x.shape[2:]]  # spatial padding
-                x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
-                y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
+                # padding = [s % 2 for s in x.shape[2:]]  # spatial padding
+                x = F.interpolate(
+                    x,
+                    scale_factor=0.5,
+                    mode="bicubic",
+                    antialias=True,
+                    align_corners=False,
+                ).clamp(1e-12, 1)
+                y = F.interpolate(
+                    y,
+                    scale_factor=0.5,
+                    mode="bicubic",
+                    antialias=True,
+                    align_corners=False,
+                ).clamp(1e-12, 1)
 
         return msssim
 
