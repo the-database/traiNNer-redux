@@ -64,7 +64,11 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 class FLIPLoss(nn.Module):
     """Class for computing LDR FLIP loss"""
 
-    def __init__(self, loss_weight: float = 1.0) -> None:
+    def __init__(
+        self,
+        loss_weight: float = 1.0,
+        pixels_per_degree: float = (0.7 * 3840 / 0.7) * np.pi / 180,
+    ) -> None:
         """Init"""
         super().__init__()
         self.qc = 0.7
@@ -72,6 +76,7 @@ class FLIPLoss(nn.Module):
         self.pc = 0.4
         self.pt = 0.95
         self.eps = 1e-15
+        self.pixels_per_degree = pixels_per_degree
         self.loss_weight = loss_weight
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
@@ -79,7 +84,6 @@ class FLIPLoss(nn.Module):
         self,
         test,
         reference,
-        pixels_per_degree=(0.7 * 3840 / 1.4) * np.pi / 180,
     ):
         """
         Computes the LDR-FLIP error map between two LDR images,
@@ -103,7 +107,7 @@ class FLIPLoss(nn.Module):
         deltaE = compute_ldrflip(
             test_opponent,
             reference_opponent,
-            pixels_per_degree,
+            self.pixels_per_degree,
             self.qc,
             self.qf,
             self.pc,
