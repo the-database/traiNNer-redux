@@ -53,13 +53,9 @@ class ArtCNN(nn.Module):
         n_block: int = 16,
         kernel_size: int = 3,
         act: type[nn.Module] = nn.ReLU,
-        learn_residual: bool = False,
     ) -> None:
         super().__init__()
 
-        self.learn_residual = learn_residual
-        if learn_residual:
-            self.short = nn.Upsample(scale_factor=scale, mode="bilinear")
         self.conv0 = nn.Conv2d(in_ch, filters, kernel_size, 1, padding="same")
         self.res_block = nn.Sequential(
             *[ResBlock(filters, kernel_size, act) for _ in range(n_block)]
@@ -68,12 +64,9 @@ class ArtCNN(nn.Module):
         self.depth_to_space = DepthToSpace(filters, in_ch, kernel_size, scale)
 
     def forward(self, x: Tensor) -> Tensor:
-        out = self.conv0(x)
-        out = self.res_block(out) + out
-        out = self.depth_to_space(out)
-        if self.learn_residual:
-            out += self.short(x)
-        return out
+        x = self.conv0(x)
+        x = self.res_block(x) + x
+        return self.depth_to_space(x)
 
 
 @ARCH_REGISTRY.register()
@@ -120,6 +113,25 @@ def artcnn_r8f48(
     scale: int = 4,
     filters: int = 48,
     n_block: int = 8,
+    kernel_size: int = 3,
+    act: type[nn.Module] = nn.ReLU,
+) -> ArtCNN:
+    return ArtCNN(
+        scale=scale,
+        in_ch=in_ch,
+        n_block=n_block,
+        filters=filters,
+        kernel_size=kernel_size,
+        act=act,
+    )
+
+
+@ARCH_REGISTRY.register()
+def artcnn_r5f48(
+    in_ch: int = 3,
+    scale: int = 4,
+    filters: int = 48,
+    n_block: int = 5,
     kernel_size: int = 3,
     act: type[nn.Module] = nn.ReLU,
 ) -> ArtCNN:
