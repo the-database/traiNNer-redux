@@ -11,21 +11,14 @@ from cv2.typing import MatLike
 from torch import Tensor
 from torchvision.utils import make_grid
 
-from traiNNer.utils.types import PixelFormat
-
 
 def img2batchedtensor(
     img: np.ndarray,
     device: torch.device,
-    pixel_format: PixelFormat = "rgb",
     float32: bool = True,
     from_bgr: bool = False,
 ) -> Tensor:
-    return (
-        img2tensor(img, pixel_format=pixel_format, float32=float32, from_bgr=from_bgr)
-        .to(device)
-        .unsqueeze(0)
-    )
+    return img2tensor(img, float32=float32, from_bgr=from_bgr).to(device).unsqueeze(0)
 
 
 # def img2tensor(
@@ -71,25 +64,12 @@ def img2batchedtensor(
 
 def img2tensor(
     img: np.ndarray,
-    pixel_format: PixelFormat = "rgb",
     float32: bool = True,
     from_bgr: bool = False,
 ) -> Tensor:
-    """
-    Convert a numpy image to a PyTorch tensor with the specified pixel format.
-
-    Supported pixel formats:
-      - "rgb": 3-channel image in RGB color space.
-      - "yuv444": 3-channel image in YUV (YCbCr) color space for video inference.
-      - "y": 1-channel luma (Y) extracted from YCbCr conversion for video inference.
-      - "uv": 2-channel chroma (CbCr) extracted from YCbCr conversion for video inference.
-      - "gray": 1-channel grayscale using standard grayscale conversion, suited for grayscale images.
-    """
-
     # standardize input to 3 channel RGB format
     if img.ndim == 2:
-        if pixel_format in {"rgb", "yuv444", "y", "uv"}:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     elif img.ndim == 3:
         # remove alpha channel if present
         if img.shape[2] == 4:
@@ -98,25 +78,7 @@ def img2tensor(
     if from_bgr:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    # convert BGR to target pixel format
-    if pixel_format == "rgb":
-        out = torch.from_numpy(img.transpose(2, 0, 1))
-    elif pixel_format == "yuv444":
-        img_yuv = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-        out = torch.from_numpy(img_yuv.transpose(2, 0, 1))
-    elif pixel_format == "y":
-        img_ycbcr = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-        y_channel = img_ycbcr[:, :, 0]
-        out = torch.from_numpy(y_channel[None, ...])
-    elif pixel_format == "uv":
-        img_yuv = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-        uv = img_yuv[:, :, 1:]
-        out = torch.from_numpy(uv.transpose(2, 0, 1))
-    elif pixel_format == "gray":
-        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) if img.ndim == 3 else img
-        out = torch.from_numpy(img_gray[None, ...])
-    else:
-        raise ValueError(f"Unsupported pixel format: {pixel_format}")
+    out = torch.from_numpy(img.transpose(2, 0, 1))
 
     # Convert to float32 if requested.
     if float32:
@@ -282,32 +244,10 @@ def img2float32(image: np.ndarray) -> np.ndarray:
 
 def tensor2img(
     tensor: Tensor,
-    pixel_format: PixelFormat = "rgb",
     to_bgr: bool = True,
     out_type: np.dtype = np.uint8,  # type: ignore
     min_max: tuple[int, int] = (0, 1),
 ) -> np.ndarray:
-    """Convert torch Tensors into image numpy arrays.
-
-    After clamping to [min, max], values will be normalized to [0, 1].
-
-    Args:
-        tensor (Tensor or list[Tensor]): Accept shapes:
-            1) 4D mini-batch Tensor of shape (B x 3/1 x H x W);
-            2) 3D Tensor of shape (3/1 x H x W);
-            3) 2D Tensor of shape (H x W).
-            Tensor channel should be in RGB order.
-        rgb2bgr (bool): Whether to change rgb to bgr.
-        out_type (numpy type): output types. If ``np.uint8``, transform outputs
-            to uint8 type with range [0, 255]; otherwise, float type with
-            range [0, 1]. Default: ``np.uint8``.
-        min_max (tuple[int]): min and max values for clamp.
-
-    Returns:
-        (Tensor or list): 3D ndarray of shape (H x W x C) OR 2D ndarray of
-        shape (H x W). The channel order is BGR.
-    """
-
     _tensor = tensor.squeeze(0).float().detach().cpu().clamp_(*min_max)
     _tensor = (_tensor - min_max[0]) / (min_max[1] - min_max[0])
 
@@ -317,35 +257,17 @@ def tensor2img(
             _tensor, nrow=int(math.sqrt(_tensor.size(0))), normalize=False
         ).numpy()
         img_np = img_np.transpose(1, 2, 0)
-        if pixel_format == "rgb":
-            pass
-        elif pixel_format == "gray":
-            img_np = cv2.cvtColor(img_np, cv2.COLOR_GRAY2RGB)
-        elif pixel_format == "yuv444":
-            img_np = cv2.cvtColor(img_np, cv2.COLOR_YCrCb2RGB)
-        else:
-            raise NotImplementedError(pixel_format)
     elif n_dim == 3:
         img_np = _tensor.numpy()
         img_np = img_np.transpose(1, 2, 0)
         if img_np.shape[2] == 1:  # gray image
             img_np = np.squeeze(img_np, axis=2)
-        elif pixel_format == "rgb":
-            pass
-        elif pixel_format == "gray":
-            img_np = cv2.cvtColor(img_np, cv2.COLOR_GRAY2RGB)
-        elif pixel_format == "yuv444":
-            img_np = cv2.cvtColor(img_np, cv2.COLOR_YCrCb2RGB)
-        else:
-            raise NotImplementedError(pixel_format)
     elif n_dim == 2:
         img_np = _tensor.numpy()
     else:
         raise TypeError(
             f"Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}"
         )
-
-    img_np = img_np.clip(*min_max)
 
     if to_bgr:
         img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
