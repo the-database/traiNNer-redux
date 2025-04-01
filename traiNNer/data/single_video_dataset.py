@@ -78,7 +78,6 @@ class SingleVideoDataset(BaseDataset):
             img_lq = img2rgb(vips_img_lq.numpy())
             img_lq = img2tensor(
                 img_lq,
-                pixel_format=self.input_pixel_format,
                 from_bgr=False,
                 float32=True,
             )

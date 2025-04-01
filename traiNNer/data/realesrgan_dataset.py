@@ -207,9 +207,7 @@ class RealESRGANDataset(BaseDataset):
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt = img2tensor(
-            img_gt, pixel_format=self.output_pixel_format, from_bgr=False, float32=True
-        )
+        img_gt = img2tensor(img_gt, from_bgr=False, float32=True)
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 

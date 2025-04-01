@@ -138,12 +138,8 @@ class PairedImageDataset(BaseDataset):
             img_gt = img_gt[0 : img_lq.shape[0] * scale, 0 : img_lq.shape[1] * scale, :]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt_tensor = img2tensor(
-            img_gt, pixel_format=self.output_pixel_format, float32=True, from_bgr=False
-        )
-        img_lq_tensor = img2tensor(
-            img_lq, pixel_format=self.output_pixel_format, float32=True, from_bgr=False
-        )
+        img_gt_tensor = img2tensor(img_gt, float32=True, from_bgr=False)
+        img_lq_tensor = img2tensor(img_lq, float32=True, from_bgr=False)
 
         # normalize
         if self.mean is not None and self.std is not None:

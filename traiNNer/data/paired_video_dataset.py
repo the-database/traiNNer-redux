@@ -150,13 +150,11 @@ class PairedVideoDataset(BaseDataset):
 
             img_gt = img2tensor(
                 img_gt,
-                pixel_format=self.output_pixel_format,
                 from_bgr=False,
                 float32=True,
             )
             img_lq = img2tensor(
                 img_lq,
-                pixel_format=self.input_pixel_format,
                 from_bgr=False,
                 float32=True,
             )

@@ -80,7 +80,6 @@ class SingleImageDataset(BaseDataset):
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_lq = img2tensor(
             img_lq,
-            input_pixel_format=self.input_pixel_format,
             from_bgr=False,
             float32=True,
         )
