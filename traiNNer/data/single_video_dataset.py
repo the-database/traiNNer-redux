@@ -29,6 +29,7 @@ class SingleVideoDataset(BaseDataset):
         self.dataroot_lq = opt.dataroot_lq
         self.clip_size = opt.clip_size
         self.frames: dict[str, list[str]] = {}
+        self.input_pixel_format = opt.input_pixel_format
 
         logger = get_root_logger()
 
@@ -75,7 +76,12 @@ class SingleVideoDataset(BaseDataset):
             lq_path = clips[i]
             vips_img_lq = vipsimfrompath(lq_path)
             img_lq = img2rgb(vips_img_lq.numpy())
-            img_lq = img2tensor(img_lq, color=True, bgr2rgb=False, float32=True)
+            img_lq = img2tensor(
+                img_lq,
+                pixel_format=self.input_pixel_format,
+                from_bgr=False,
+                float32=True,
+            )
             lr_clip.append(img_lq)
 
         return {

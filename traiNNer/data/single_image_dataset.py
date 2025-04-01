@@ -37,6 +37,7 @@ class SingleImageDataset(BaseDataset):
         self.mean = opt.mean
         self.std = opt.std
         self.lq_folder = opt.dataroot_lq
+        self.input_pixel_format = opt.input_pixel_format
 
         assert self.lq_folder is not None and isinstance(self.lq_folder, list), (
             f"dataroot_lq must be defined as a list of paths for dataset {opt.name}"
@@ -77,7 +78,12 @@ class SingleImageDataset(BaseDataset):
             img_lq = rgb2ycbcr(img_lq, y_only=True)[..., None]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_lq = img2tensor(img_lq, bgr2rgb=False, float32=True)
+        img_lq = img2tensor(
+            img_lq,
+            input_pixel_format=self.input_pixel_format,
+            from_bgr=False,
+            float32=True,
+        )
         assert isinstance(img_lq, Tensor)
         # normalize
         if self.mean is not None and self.std is not None:

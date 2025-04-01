@@ -46,6 +46,7 @@ class RealESRGANDataset(BaseDataset):
         self.file_client = None
         self.io_backend_opt = opt.io_backend
         self.gt_folders = opt.dataroot_gt
+        self.output_pixel_format = opt.output_pixel_format
 
         assert isinstance(self.gt_folders, list), (
             f"dataroot_gt must be a list of folders for dataset {opt.name}"
@@ -206,7 +207,9 @@ class RealESRGANDataset(BaseDataset):
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt = img2tensor(img_gt, bgr2rgb=False, float32=True)
+        img_gt = img2tensor(
+            img_gt, pixel_format=self.output_pixel_format, from_bgr=False, float32=True
+        )
         kernel = torch.FloatTensor(kernel)
         kernel2 = torch.FloatTensor(kernel2)
 

@@ -1,7 +1,6 @@
 import os
 
 from torch.distributed import destroy_process_group
-from traiNNer.data.old_paired_image_dataset import OldPairedImageDataset
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 from traiNNer.check.check_dependencies import check_dependencies
@@ -327,7 +326,7 @@ def train_pipeline(root_path: str) -> None:
         if not any(
             isinstance(
                 val_loader.dataset,
-                (PairedImageDataset | PairedVideoDataset | OldPairedImageDataset),
+                (PairedImageDataset | PairedVideoDataset),
             )
             for val_loader in val_loaders
         ):

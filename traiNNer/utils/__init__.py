@@ -11,10 +11,8 @@ from traiNNer.utils.img_util import (
     crop_border,
     imfrombytes,
     img2tensor,
-    imgs2tensors,
     imwrite,
     tensor2img,
-    tensors2imgs,
 )
 from traiNNer.utils.logger import (
     AvgTimer,
@@ -56,7 +54,6 @@ __all__ = [
     "imfrombytes",
     # img_util.py
     "img2tensor",
-    "imgs2tensors",
     "imwrite",
     "init_tb_logger",
     "init_wandb_logger",

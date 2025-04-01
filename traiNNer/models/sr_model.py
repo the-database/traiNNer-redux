@@ -635,10 +635,18 @@ class SRModel(BaseModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = tensor2img(visuals["result"], rgb2bgr=False)
+            sr_img = tensor2img(
+                visuals["result"],
+                pixel_format=dataloader.dataset.opt.output_pixel_format,
+                to_bgr=False,
+            )
             metric_data["img"] = sr_img
             if "gt" in visuals:
-                gt_img = tensor2img(visuals["gt"], rgb2bgr=False)
+                gt_img = tensor2img(
+                    visuals["gt"],
+                    pixel_format=dataloader.dataset.opt.output_pixel_format,
+                    to_bgr=False,
+                )
                 metric_data[gt_key] = gt_img
                 self.gt = None
             else:

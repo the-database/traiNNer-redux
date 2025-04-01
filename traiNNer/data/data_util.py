@@ -1,13 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
 from os import path as osp
 
-import cv2
 import numpy as np
-import torch
-from torch import Tensor
 
-from traiNNer.data.transforms import mod_crop
-from traiNNer.utils import get_root_logger, imgs2tensors, scandir
+from traiNNer.utils import get_root_logger, scandir
 
 
 def check_missing_paths(missing_from_paths: set[str], key: str, folder: str) -> None:
@@ -19,44 +15,6 @@ def check_missing_paths(missing_from_paths: set[str], key: str, folder: str) -> 
         f"{len(missing_from_paths)} files are missing from {key}_paths ({folder}). The first few missing files are:\n"
         + "\n".join(missing_subset)
     )
-
-
-def read_img_seq(
-    path: str | list[str],
-    require_mod_crop: bool = False,
-    scale: int = 1,
-    return_imgname: bool = False,
-) -> Tensor | tuple[Tensor, list[str]]:
-    """Read a sequence of images from a given folder path.
-
-    Args:
-        path (list[str] | str): List of image paths or image folder path.
-        require_mod_crop (bool): Require mod crop for each image.
-            Default: False.
-        scale (int): Scale factor for mod_crop. Default: 1.
-        return_imgname(bool): Whether return image names. Default False.
-
-    Returns:
-        Tensor: size (t, c, h, w), RGB, [0, 1].
-        list[str]: Returned image name list.
-    """
-    if isinstance(path, list):
-        img_paths = path
-    else:
-        img_paths = sorted(scandir(path, full_path=True))
-    imgs = [cv2.imread(v) for v in img_paths]
-
-    if require_mod_crop:
-        imgs = [mod_crop(img, scale) for img in imgs]
-    imgs = imgs2tensors(imgs, bgr2rgb=True, float32=True)
-    assert isinstance(imgs, list)
-    imgs = torch.stack(imgs, dim=0)
-
-    if return_imgname:
-        imgnames = [osp.splitext(osp.basename(path))[0] for path in img_paths]
-        return imgs, imgnames
-    else:
-        return imgs
 
 
 def generate_frame_indices(

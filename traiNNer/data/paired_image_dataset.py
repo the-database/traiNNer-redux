@@ -8,7 +8,7 @@ from traiNNer.data.data_util import (
     paired_paths_from_meta_info_file,
 )
 from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
-from traiNNer.utils import FileClient, imgs2tensors
+from traiNNer.utils import FileClient, img2tensor
 from traiNNer.utils.img_util import img2rgb, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
@@ -51,6 +51,8 @@ class PairedImageDataset(BaseDataset):
         self.mean = opt.mean
         self.std = opt.std
         self.color = opt.color != "y"
+        self.input_pixel_format = opt.input_pixel_format
+        self.output_pixel_format = opt.output_pixel_format
 
         assert isinstance(opt.dataroot_lq, list), (
             f"dataroot_lq must be defined for dataset {opt.name}"
@@ -136,18 +138,24 @@ class PairedImageDataset(BaseDataset):
             img_gt = img_gt[0 : img_lq.shape[0] * scale, 0 : img_lq.shape[1] * scale, :]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt, img_lq = imgs2tensors(
-            [img_gt, img_lq],
-            color=self.color,
-            bgr2rgb=False,
-            float32=True,
+        img_gt_tensor = img2tensor(
+            img_gt, pixel_format=self.output_pixel_format, float32=True, from_bgr=False
         )
+        img_lq_tensor = img2tensor(
+            img_lq, pixel_format=self.output_pixel_format, float32=True, from_bgr=False
+        )
+
         # normalize
         if self.mean is not None and self.std is not None:
-            normalize(img_lq, self.mean, self.std, inplace=True)
-            normalize(img_gt, self.mean, self.std, inplace=True)
+            normalize(img_lq_tensor, self.mean, self.std, inplace=True)
+            normalize(img_gt_tensor, self.mean, self.std, inplace=True)
 
-        return {"lq": img_lq, "gt": img_gt, "lq_path": lq_path, "gt_path": gt_path}
+        return {
+            "lq": img_lq_tensor,
+            "gt": img_gt_tensor,
+            "lq_path": lq_path,
+            "gt_path": gt_path,
+        }
 
     def __len__(self) -> int:
         return len(self.paths)
