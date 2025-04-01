@@ -24,6 +24,7 @@ from traiNNer.losses import build_loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
@@ -378,11 +379,22 @@ class SRModel(BaseModel):
         self.loss_samples += n_samples
         loss_dict: dict[str, Tensor | float] = OrderedDict()
 
+        lq = rgb2pixelformat_pt(
+            self.lq, self.opt.input_pixel_format
+        )  # lq: input_pixel_format
+        rgb2pixelformat_pt(
+            self.gt, self.opt.input_pixel_format
+        )  # gt: input_pixel_format
+
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
             if self.optimizer_g is not None:
-                self.output = self.net_g(self.lq)
+                output = self.net_g(lq)  # output: output_pixel_format
+                self.output = pixelformat2rgb_pt(
+                    output, self.gt, self.opt.output_pixel_format
+                )  # self.output: rgb
+
                 assert isinstance(self.output, Tensor)
                 l_g_total = torch.tensor(0.0, device=self.output.device)
 
@@ -413,7 +425,11 @@ class SRModel(BaseModel):
                             "ema_decay must be enabled for LDL loss"
                         )
                         with torch.inference_mode():
-                            output_ema = self.net_g_ema(self.lq)
+                            output_ema = pixelformat2rgb_pt(
+                                self.net_g_ema(lq),
+                                self.gt,
+                                self.opt.output_pixel_format,
+                            )
                         l_g_loss = loss(self.output, output_ema, self.gt)
                     else:
                         l_g_loss = loss(self.output, self.gt)
@@ -556,14 +572,24 @@ class SRModel(BaseModel):
                 assert self.optimizer_g is not None
                 self.optimizer_g.eval()  # pyright: ignore[reportAttributeAccessIssue]
 
+            assert self.lq is not None
+
+            lq = rgb2pixelformat_pt(
+                self.lq, self.opt.input_pixel_format
+            )  # lq: input_pixel_format
+
             if self.net_g_ema is not None:
                 self.net_g_ema.eval()
                 with torch.inference_mode():
-                    self.output = self.net_g_ema(self.lq)
+                    self.output = pixelformat2rgb_pt(
+                        self.net_g_ema(lq), self.gt, self.opt.output_pixel_format
+                    )
             else:
                 self.net_g.eval()
                 with torch.inference_mode():
-                    self.output = self.net_g(self.lq)
+                    self.output = pixelformat2rgb_pt(
+                        self.net_g(lq), self.gt, self.opt.output_pixel_format
+                    )
                 self.net_g.train()
 
             if self.optimizers_schedule_free and self.optimizers_schedule_free[0]:
@@ -637,14 +663,12 @@ class SRModel(BaseModel):
             visuals = self.get_current_visuals()
             sr_img = tensor2img(
                 visuals["result"],
-                pixel_format=dataloader.dataset.opt.output_pixel_format,
                 to_bgr=False,
             )
             metric_data["img"] = sr_img
             if "gt" in visuals:
                 gt_img = tensor2img(
                     visuals["gt"],
-                    pixel_format=dataloader.dataset.opt.output_pixel_format,
                     to_bgr=False,
                 )
                 metric_data[gt_key] = gt_img

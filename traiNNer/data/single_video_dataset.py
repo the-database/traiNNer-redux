@@ -29,7 +29,6 @@ class SingleVideoDataset(BaseDataset):
         self.dataroot_lq = opt.dataroot_lq
         self.clip_size = opt.clip_size
         self.frames: dict[str, list[str]] = {}
-        self.input_pixel_format = opt.input_pixel_format
 
         logger = get_root_logger()
 

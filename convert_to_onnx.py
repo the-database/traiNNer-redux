@@ -2,6 +2,7 @@ import os
 import time
 from logging import Logger
 from os import path as osp
+from pathlib import Path
 
 import numpy as np
 import onnx
@@ -15,7 +16,7 @@ from torch import Tensor
 from traiNNer.models import build_model
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils.config import Config
-from traiNNer.utils.logger import get_root_logger
+from traiNNer.utils.logger import clickable_file_path, get_root_logger
 from traiNNer.utils.redux_options import ReduxOptions
 
 
@@ -118,7 +119,12 @@ def convert_pipeline(root_path: str) -> None:
     )
 
     end_time = time.time()
-    logger.info("Saved to %s in %.2f seconds.", out_path_fp32, end_time - start_time)
+
+    logger.info(
+        "Saved to %s in %.2f seconds.",
+        clickable_file_path(Path(out_path_fp32).absolute().parent, out_path_fp32),
+        end_time - start_time,
+    )
 
     if opt.onnx.verify:
         verify_onnx(model, logger, torch_input, out_path_fp32)
@@ -147,7 +153,11 @@ def convert_pipeline(root_path: str) -> None:
         model_proto_fp16 = convert_float_to_float16(model_proto)
         onnx.save(model_proto_fp16, out_path)
         end_time = time.time()
-        logger.info("Saved to %s in %.2f seconds.", out_path, end_time - start_time)
+        logger.info(
+            "Saved to %s in %.2f seconds.",
+            clickable_file_path(Path(out_path).absolute().parent, out_path),
+            end_time - start_time,
+        )
 
 
 if __name__ == "__main__":

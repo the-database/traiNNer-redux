@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from torch import Tensor
 
+from traiNNer.utils.types import PixelFormat
+
 
 def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
     """Convert a RGB image to YCbCr image.
@@ -232,6 +234,44 @@ def _convert_output_type_range(img: np.ndarray, dst_type: np.dtype) -> np.ndarra
     return img.astype(dst_type)
 
 
+def rgb2pixelformat_pt(img: Tensor, pixel_format: PixelFormat) -> Tensor:
+    if pixel_format == "rgb":
+        return img
+    elif pixel_format == "gray":
+        raise NotImplementedError
+    elif pixel_format == "yuv444":
+        return rgb2ycbcr_pt(img)
+    elif pixel_format == "y":
+        return rgb2ycbcr_pt(img)[:, 0:1, :, :]
+    elif pixel_format == "uv":
+        raise NotImplementedError
+
+    raise NotImplementedError(pixel_format)
+
+
+def pixelformat2rgb_pt(
+    img: Tensor, img_ref_rgb: Tensor | None, pixel_format: PixelFormat
+) -> Tensor:
+    if pixel_format == "rgb":
+        return img
+    elif pixel_format == "gray":
+        raise NotImplementedError  # convert gray to rgb
+    elif pixel_format == "yuv444":
+        return ycbcr2rgb_pt(img)
+    elif pixel_format == "y":
+        assert img_ref_rgb is not None, "gt is required for luma pixel format"
+        img_yuv = rgb2ycbcr_pt(img_ref_rgb)
+        img_yuv[:, 0:1, :, :] = img  # replace luma
+        return ycbcr2rgb_pt(img_yuv)
+    elif pixel_format == "uv":
+        assert img_ref_rgb is not None, "gt is required for chroma pixel format"
+        img_yuv = rgb2ycbcr_pt(img_ref_rgb)
+        img_yuv[:, 1:, :, :] = img  # replace chroma
+        return ycbcr2rgb_pt(img_yuv)
+
+    raise NotImplementedError(pixel_format)
+
+
 def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
     """Convert RGB images to YCbCr images (PyTorch version).
 
@@ -265,6 +305,23 @@ def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
 
     out_img = out_img / 255.0
     return out_img
+
+
+def ycbcr2rgb_pt(img: Tensor) -> Tensor:
+    img_ycbcr = img * 255.0
+
+    y = img_ycbcr[:, 0:1, :, :]
+    cb = img_ycbcr[:, 1:2, :, :]
+    cr = img_ycbcr[:, 2:3, :, :]
+
+    r = 1.164 * (y - 16) + 1.596 * (cr - 128)
+    g = 1.164 * (y - 16) - 0.392 * (cb - 128) - 0.813 * (cr - 128)
+    b = 1.164 * (y - 16) + 2.017 * (cb - 128)
+
+    rgb = torch.cat((r, g, b), dim=1)
+    rgb = rgb / 255.0
+
+    return rgb
 
 
 def rgb_to_luma(img: Tensor) -> Tensor:

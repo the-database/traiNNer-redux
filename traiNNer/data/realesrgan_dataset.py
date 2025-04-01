@@ -46,7 +46,6 @@ class RealESRGANDataset(BaseDataset):
         self.file_client = None
         self.io_backend_opt = opt.io_backend
         self.gt_folders = opt.dataroot_gt
-        self.output_pixel_format = opt.output_pixel_format
 
         assert isinstance(self.gt_folders, list), (
             f"dataroot_gt must be a list of folders for dataset {opt.name}"

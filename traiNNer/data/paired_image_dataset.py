@@ -51,8 +51,6 @@ class PairedImageDataset(BaseDataset):
         self.mean = opt.mean
         self.std = opt.std
         self.color = opt.color != "y"
-        self.input_pixel_format = opt.input_pixel_format
-        self.output_pixel_format = opt.output_pixel_format
 
         assert isinstance(opt.dataroot_lq, list), (
             f"dataroot_lq must be defined for dataset {opt.name}"

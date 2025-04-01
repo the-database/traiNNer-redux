@@ -37,8 +37,6 @@ class PairedVideoDataset(BaseDataset):
         self.clip_size = opt.clip_size
         self.gt_size = opt.gt_size
         self.frames: dict[str, list[tuple[str, str]]] = {}
-        self.input_pixel_format = opt.input_pixel_format
-        self.output_pixel_format = opt.output_pixel_format
 
         logger = get_root_logger()
 

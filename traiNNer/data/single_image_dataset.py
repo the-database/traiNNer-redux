@@ -37,7 +37,6 @@ class SingleImageDataset(BaseDataset):
         self.mean = opt.mean
         self.std = opt.std
         self.lq_folder = opt.dataroot_lq
-        self.input_pixel_format = opt.input_pixel_format
 
         assert self.lq_folder is not None and isinstance(self.lq_folder, list), (
             f"dataroot_lq must be defined as a list of paths for dataset {opt.name}"

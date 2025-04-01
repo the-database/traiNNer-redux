@@ -49,12 +49,6 @@ class DatasetOptions(StrictStruct):
     use_rot: Annotated[bool, Meta(description="Randomly rotate the images.")] = True
     mean: list[float] | None = None
     std: list[float] | None = None
-    input_pixel_format: Annotated[
-        PixelFormat, Meta(description="Input pixel format.")
-    ] = "rgb"
-    output_pixel_format: Annotated[
-        PixelFormat, Meta(description="Output pixel format.")
-    ] = "rgb"
     gt_size: int | None = None
     lq_size: Annotated[
         int | None,
@@ -378,6 +372,13 @@ class ReduxOptions(StrictStruct):
         ),
     ]
     path: PathOptions
+
+    input_pixel_format: Annotated[
+        PixelFormat, Meta(description="Input pixel format.")
+    ] = "rgb"
+    output_pixel_format: Annotated[
+        PixelFormat, Meta(description="Output pixel format.")
+    ] = "rgb"
 
     network_g: Annotated[
         dict[str, Any] | None, Meta(description="The options for the generator model.")
