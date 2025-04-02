@@ -5,6 +5,7 @@ import torch
 from torch import Tensor, nn
 from torchvision import models
 
+from traiNNer.losses.basic_loss import charbonnier_loss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 
@@ -252,6 +253,8 @@ class PerceptualAnimeLoss(nn.Module):
 
         if criterion == "l1":
             self.criterion = torch.nn.L1Loss()
+        elif criterion == "charbonnier":
+            self.criterion1 = charbonnier_loss
         else:
             raise NotImplementedError(
                 "We don't support such criterion loss in perceptual loss"
