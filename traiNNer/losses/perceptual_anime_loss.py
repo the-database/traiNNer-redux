@@ -254,7 +254,7 @@ class PerceptualAnimeLoss(nn.Module):
         if criterion == "l1":
             self.criterion = torch.nn.L1Loss()
         elif criterion == "charbonnier":
-            self.criterion1 = charbonnier_loss
+            self.criterion = charbonnier_loss
         else:
             raise NotImplementedError(
                 "We don't support such criterion loss in perceptual loss"
