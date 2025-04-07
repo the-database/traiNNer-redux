@@ -33,6 +33,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[GRL](https://github.com/ofsoundof/GRL-Image-Restoration)| [MIT License](https://github.com/ofsoundof/GRL-Image-Restoration/blob/main/LICENSE)|
 |[HAT](https://github.com/XPixelGroup/HAT) | [Apache License 2.0](https://github.com/XPixelGroup/HAT/blob/main/LICENSE)|
 |[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|
+|[LineDistiller](https://github.com/hepesu/LineDistiller) | [MIT License](https://github.com/hepesu/LineDistiller/blob/master/LICENSE)|
 |[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
 |[LMLT](https://github.com/jwgdmkj/LMLT) | [MIT License](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)|
 |[LPIPS](https://github.com/richzhang/PerceptualSimilarity)| [BSD-2-Clause License](https://github.com/richzhang/PerceptualSimilarity/blob/master/LICENSE)|
