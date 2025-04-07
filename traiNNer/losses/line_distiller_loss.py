@@ -13,6 +13,7 @@ class LineDistillerLoss(nn.Module):
     def __init__(
         self, loss_weight: float, criterion: Literal["l1", "charbonnier"] = "l1"
     ) -> None:
+        super().__init__()
         self.model = LineDistiller().eval()
 
         weights_path = osp.join(
