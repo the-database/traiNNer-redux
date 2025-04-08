@@ -53,32 +53,35 @@ class LineDistillerLoss(nn.Module):
         gt_lines = self.model(gt.detach())
         i = 1
         if self.debug:
-            os.makedirs(OTF_DEBUG_PATH, exist_ok=True)
+            os.makedirs(os.path.join(OTF_DEBUG_PATH, "pred_base"), exist_ok=True)
+            os.makedirs(os.path.join(OTF_DEBUG_PATH, "pred_lines"), exist_ok=True)
+            os.makedirs(os.path.join(OTF_DEBUG_PATH, "gt_base"), exist_ok=True)
+            os.makedirs(os.path.join(OTF_DEBUG_PATH, "gt_lines"), exist_ok=True)
 
-            while os.path.exists(rf"{OTF_DEBUG_PATH}/{i:06d}_pred_base.png"):
+            while os.path.exists(rf"{OTF_DEBUG_PATH}/pred_base/{i:06d}.png"):
                 i += 1
 
             torchvision.utils.save_image(
                 x,
-                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_pred_base.png"),
+                os.path.join(OTF_DEBUG_PATH, f"pred_base/{i:06d}.png"),
                 padding=0,
             )
 
             torchvision.utils.save_image(
                 pred_lines,
-                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_pred_lines.png"),
+                os.path.join(OTF_DEBUG_PATH, f"pred_lines/{i:06d}.png"),
                 padding=0,
             )
 
             torchvision.utils.save_image(
                 gt,
-                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_gt_base.png"),
+                os.path.join(OTF_DEBUG_PATH, f"gt_base/{i:06d}.png"),
                 padding=0,
             )
 
             torchvision.utils.save_image(
                 gt_lines,
-                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_gt_lines.png"),
+                os.path.join(OTF_DEBUG_PATH, f"gt_lines/{i:06d}.png"),
                 padding=0,
             )
 
