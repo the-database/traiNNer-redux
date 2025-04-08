@@ -1,20 +1,33 @@
+import os
+import sys
 from os import path as osp
 from typing import Literal
 
 import torch
+import torchvision
 from torch import Tensor, nn
 
 from traiNNer.losses.basic_loss import charbonnier_loss
 from traiNNer.utils.registry import LOSS_REGISTRY
 
+OTF_DEBUG_PATH = osp.abspath(
+    osp.abspath(
+        osp.join(osp.join(sys.argv[0], osp.pardir), "./debug/linedistillerloss")
+    )
+)
+
 
 @LOSS_REGISTRY.register()
 class LineDistillerLoss(nn.Module):
     def __init__(
-        self, loss_weight: float, criterion: Literal["l1", "charbonnier"] = "l1"
+        self,
+        loss_weight: float,
+        criterion: Literal["l1", "charbonnier"] = "l1",
+        debug: bool = False,
     ) -> None:
         super().__init__()
         self.model = LineDistiller().eval()
+        self.debug = debug
 
         weights_path = osp.join(
             osp.dirname(osp.abspath(__file__)), r"line_distiller_weights.pth"
@@ -36,7 +49,40 @@ class LineDistillerLoss(nn.Module):
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
-        return self.criterion(self.model(x), self.model(gt.detach())) * self.loss_weight
+        pred_lines = self.model(x)
+        gt_lines = self.model(gt.detach())
+        i = 1
+        if self.debug:
+            os.makedirs(OTF_DEBUG_PATH, exist_ok=True)
+
+            while os.path.exists(rf"{OTF_DEBUG_PATH}/{i:06d}_pred_base.png"):
+                i += 1
+
+            torchvision.utils.save_image(
+                x,
+                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_pred_base.png"),
+                padding=0,
+            )
+
+            torchvision.utils.save_image(
+                pred_lines,
+                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_pred_lines.png"),
+                padding=0,
+            )
+
+            torchvision.utils.save_image(
+                gt,
+                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_gt_base.png"),
+                padding=0,
+            )
+
+            torchvision.utils.save_image(
+                gt_lines,
+                os.path.join(OTF_DEBUG_PATH, f"{i:06d}_gt_lines.png"),
+                padding=0,
+            )
+
+        return self.criterion(pred_lines, gt_lines) * self.loss_weight
 
 
 class ResidualBlockDown(nn.Module):
