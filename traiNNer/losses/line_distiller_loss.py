@@ -6,6 +6,7 @@ from typing import Literal
 import torch
 import torchvision
 from torch import Tensor, nn
+from torchvision.transforms import Normalize
 
 from traiNNer.losses.basic_loss import charbonnier_loss
 from traiNNer.utils.registry import LOSS_REGISTRY
@@ -27,6 +28,7 @@ class LineDistillerLoss(nn.Module):
     ) -> None:
         super().__init__()
         self.model = LineDistiller().eval()
+        self.norm = Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         self.debug = debug
 
         weights_path = osp.join(
@@ -49,8 +51,8 @@ class LineDistillerLoss(nn.Module):
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor:
-        pred_lines = self.model(x)
-        gt_lines = self.model(gt.detach())
+        pred_lines = self.model(self.norm(x))
+        gt_lines = self.model(self.norm(gt.detach()))
         i = 1
         if self.debug:
             os.makedirs(os.path.join(OTF_DEBUG_PATH, "pred_base"), exist_ok=True)
