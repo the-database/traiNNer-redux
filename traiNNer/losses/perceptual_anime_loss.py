@@ -16,7 +16,7 @@ class AdaptiveConcatPool2d(nn.Module):
     https://github.com/fastai/fastai/blob/master/fastai/layers.py#L176
     """
 
-    def __init__(self, sz=None) -> None:
+    def __init__(self, sz: int | None = None) -> None:
         "Output will be 2*sz or 2 if sz is None"
         super().__init__()
         self.output_size = sz or 1
