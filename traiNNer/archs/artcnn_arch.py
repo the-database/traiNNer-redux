@@ -172,7 +172,6 @@ def artcnn_r3f24(
     n_block: int = 3,
     kernel_size: int = 3,
     act: type[nn.Module] = nn.ReLU,
-    learn_residual: bool = False,
 ) -> ArtCNN:
     return ArtCNN(
         scale=scale,
@@ -181,5 +180,4 @@ def artcnn_r3f24(
         filters=filters,
         kernel_size=kernel_size,
         act=act,
-        learn_residual=learn_residual,
     )
