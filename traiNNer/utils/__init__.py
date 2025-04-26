@@ -66,7 +66,6 @@ __all__ = [
     "set_random_seed",
     "sizeof_fmt",
     "tensor2img",
-    "tensors2imgs",
     # img_process_util
     # options
     "yaml_load",
