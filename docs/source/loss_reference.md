@@ -82,6 +82,15 @@ log_matrix: false
 batch_matrix: false
 loss_weight: 1.0
 ```
+## fliploss
+
+
+```yaml
+type: fliploss
+loss_weight: 1.0
+pixels_per_degree: 67.02064327658226
+loss_weight: 1.0
+```
 ## ganloss
 
 
@@ -129,6 +138,15 @@ type: ldlloss
 criterion: l1
 loss_weight: 1.0
 ```
+## linedistillerloss
+
+
+```yaml
+type: linedistillerloss
+criterion: l1
+debug: false
+loss_weight: 1.0
+```
 ## lumaloss
 
 
@@ -159,6 +177,7 @@ l: 1
 padding: ~
 cosim: true
 cosim_lambda: 5
+scale_weights: [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]
 loss_weight: 1.0
 ```
 ## msssiml1loss
@@ -171,6 +190,18 @@ data_range: 1.0
 k: [0.01, 0.03]
 alpha: 0.1
 cuda_dev: 0
+loss_weight: 1.0
+```
+## msssimloss
+
+
+```yaml
+type: msssimloss
+channels: 3
+downsample: false
+test_y_channel: true
+is_prod: true
+color_space: yiq
 loss_weight: 1.0
 ```
 ## multiscaleganloss
@@ -196,6 +227,15 @@ loss_weight: 1.0
 type: psnrloss
 reduction: mean
 to_y: false
+loss_weight: 1.0
+```
+## perceptualanimeloss
+
+
+```yaml
+type: perceptualanimeloss
+layer_weights: ~
+criterion: l1
 loss_weight: 1.0
 ```
 ## perceptualfp16loss
@@ -226,5 +266,17 @@ num_proj_fd: 256
 phase_weight_fd: 1.0
 stride_fd: 1
 clip_min: 0
+loss_weight: 1.0
+```
+## ssimloss
+
+
+```yaml
+type: ssimloss
+channels: 3
+downsample: false
+test_y_channel: true
+color_space: yiq
+crop_border: 0.0
 loss_weight: 1.0
 ```
