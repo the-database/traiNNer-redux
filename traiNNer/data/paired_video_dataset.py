@@ -7,7 +7,7 @@ import torch
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
 from traiNNer.utils.file_client import FileClient
-from traiNNer.utils.img_util import img2rgb, imgs2tensors, vipsimfrompath
+from traiNNer.utils.img_util import img2rgb, img2tensor, vipsimfrompath
 from traiNNer.utils.logger import get_root_logger
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
@@ -146,8 +146,15 @@ class PairedVideoDataset(BaseDataset):
                 img_gt = img2rgb(vips_img_gt.numpy())
                 img_lq = img2rgb(vips_img_lq.numpy())
 
-            img_gt, img_lq = imgs2tensors(
-                [img_gt, img_lq], color=True, bgr2rgb=False, float32=True
+            img_gt = img2tensor(
+                img_gt,
+                from_bgr=False,
+                float32=True,
+            )
+            img_lq = img2tensor(
+                img_lq,
+                from_bgr=False,
+                float32=True,
             )
 
             lr_clip.append(img_lq)

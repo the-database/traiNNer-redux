@@ -146,7 +146,9 @@ class RealESRGANModel(SRModel):
             # ----------------------- The first degradation process ----------------------- #
             if self.opt.lq_usm:
                 usm_sharpener = USMSharp(
-                    RNG.get_rng().integers(*self.opt.lq_usm_radius_range, endpoint=True)
+                    RNG.get_rng().integers(
+                        *self.opt.lq_usm_radius_range, dtype=int, endpoint=True
+                    )
                 ).to(
                     self.device,
                     memory_format=self.memory_format,

@@ -190,8 +190,8 @@ def cutmix(
         cut_h = int(h * cut_rat)
 
         # uniform
-        cx = RNG.get_rng().integers(w)
-        cy = RNG.get_rng().integers(h)
+        cx = RNG.get_rng().integers(w, dtype=int)
+        cy = RNG.get_rng().integers(h, dtype=int)
 
         bbx1 = np.clip(cx - cut_w // 2, 0, w)
         bby1 = np.clip(cy - cut_h // 2, 0, h)
@@ -257,8 +257,8 @@ def resizemix(
         cut_h = int(h * tao)
 
         # uniform
-        cx = RNG.get_rng().integers(w)
-        cy = RNG.get_rng().integers(h)
+        cx = RNG.get_rng().integers(w, dtype=int)
+        cy = RNG.get_rng().integers(h, dtype=int)
 
         bbx1 = np.clip(cx - cut_w // 2, 0, w)
         bby1 = np.clip(cy - cut_h // 2, 0, h)
@@ -376,8 +376,8 @@ def cutblur(
         cut_h = int(h * lam)
 
         # uniform
-        cx = RNG.get_rng().integers(w)
-        cy = RNG.get_rng().integers(h)
+        cx = RNG.get_rng().integers(w, dtype=int)
+        cy = RNG.get_rng().integers(h, dtype=int)
 
         bbx1 = np.clip(cx - cut_w // 2, 0, w) * scale
         bby1 = np.clip(cy - cut_h // 2, 0, h) * scale
@@ -458,8 +458,8 @@ def up(
         pad_h = cut_h // 2
 
         # uniform
-        cx = RNG.get_rng().integers(pad_w, w - pad_w)
-        cy = RNG.get_rng().integers(pad_h, h - pad_w)
+        cx = RNG.get_rng().integers(pad_w, w - pad_w, dtype=int)
+        cy = RNG.get_rng().integers(pad_h, h - pad_w, dtype=int)
 
         bbx1 = (cx - pad_w) * scale
         bby1 = (cy - pad_h) * scale

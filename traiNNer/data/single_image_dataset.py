@@ -77,7 +77,11 @@ class SingleImageDataset(BaseDataset):
             img_lq = rgb2ycbcr(img_lq, y_only=True)[..., None]
 
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_lq = img2tensor(img_lq, bgr2rgb=False, float32=True)
+        img_lq = img2tensor(
+            img_lq,
+            from_bgr=False,
+            float32=True,
+        )
         assert isinstance(img_lq, Tensor)
         # normalize
         if self.mean is not None and self.std is not None:

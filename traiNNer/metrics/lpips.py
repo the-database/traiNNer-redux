@@ -25,7 +25,7 @@ def calculate_lpips(
 
     with torch.inference_mode():
         return loss(
-            img2batchedtensor(img, device, bgr2rgb=False),
-            img2batchedtensor(img2, device, bgr2rgb=False),
+            img2batchedtensor(img, device, from_bgr=False),
+            img2batchedtensor(img2, device, from_bgr=False),
             normalize=True,
         ).view(())

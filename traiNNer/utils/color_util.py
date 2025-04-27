@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from torch import Tensor
 
+from traiNNer.utils.types import PixelFormat
+
 
 def rgb2ycbcr(img: np.ndarray, y_only: bool = False) -> np.ndarray:
     """Convert a RGB image to YCbCr image.
@@ -232,6 +234,44 @@ def _convert_output_type_range(img: np.ndarray, dst_type: np.dtype) -> np.ndarra
     return img.astype(dst_type)
 
 
+def rgb2pixelformat_pt(img: Tensor, pixel_format: PixelFormat) -> Tensor:
+    if pixel_format == "rgb":
+        return img
+    elif pixel_format == "gray":
+        raise NotImplementedError
+    elif pixel_format == "yuv444":
+        return rgb2ycbcr_pt(img)
+    elif pixel_format == "y":
+        return rgb2ycbcr_pt(img)[:, 0:1, :, :]
+    elif pixel_format == "uv":
+        raise NotImplementedError
+
+    raise NotImplementedError(pixel_format)
+
+
+def pixelformat2rgb_pt(
+    img: Tensor, img_ref_rgb: Tensor | None, pixel_format: PixelFormat
+) -> Tensor:
+    if pixel_format == "rgb":
+        return img
+    elif pixel_format == "gray":
+        raise NotImplementedError  # convert gray to rgb
+    elif pixel_format == "yuv444":
+        return ycbcr2rgb_pt(img)
+    elif pixel_format == "y":
+        assert img_ref_rgb is not None, "gt is required for luma pixel format"
+        img_yuv = rgb2ycbcr_pt(img_ref_rgb)
+        img_yuv[:, 0:1, :, :] = img  # replace luma
+        return ycbcr2rgb_pt(img_yuv)
+    elif pixel_format == "uv":
+        assert img_ref_rgb is not None, "gt is required for chroma pixel format"
+        img_yuv = rgb2ycbcr_pt(img_ref_rgb)
+        img_yuv[:, 1:, :, :] = img  # replace chroma
+        return ycbcr2rgb_pt(img_yuv)
+
+    raise NotImplementedError(pixel_format)
+
+
 def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
     """Convert RGB images to YCbCr images (PyTorch version).
 
@@ -267,6 +307,23 @@ def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
     return out_img
 
 
+def ycbcr2rgb_pt(img: Tensor) -> Tensor:
+    img_ycbcr = img * 255.0
+
+    y = img_ycbcr[:, 0:1, :, :]
+    cb = img_ycbcr[:, 1:2, :, :]
+    cr = img_ycbcr[:, 2:3, :, :]
+
+    r = 1.164 * (y - 16) + 1.596 * (cr - 128)
+    g = 1.164 * (y - 16) - 0.392 * (cb - 128) - 0.813 * (cr - 128)
+    b = 1.164 * (y - 16) + 2.017 * (cb - 128)
+
+    rgb = torch.cat((r, g, b), dim=1)
+    rgb = rgb / 255.0
+
+    return rgb
+
+
 def rgb_to_luma(img: Tensor) -> Tensor:
     """RGB to CIELAB L*"""
 
@@ -290,3 +347,117 @@ def rgb_to_luma(img: Tensor) -> Tensor:
     out_img = torch.clamp((out_img / 100), 0, 1)
 
     return out_img
+
+
+def rgb_to_linear_rgb(image: Tensor) -> Tensor:
+    r"""Convert an sRGB image to linear RGB. Used in colorspace conversions.
+
+    .. image:: _static/img/rgb_to_linear_rgb.png
+
+    Args:
+        image: sRGB Image to be converted to linear RGB of shape :math:`(*,3,H,W)`.
+
+    Returns:
+        linear RGB version of the image with shape of :math:`(*,3,H,W)`.
+
+    Example:
+        >>> input = torch.rand(2, 3, 4, 5)
+        >>> output = rgb_to_linear_rgb(input) # 2x3x4x5
+
+    """
+
+    if len(image.shape) < 3 or image.shape[-3] != 3:
+        raise ValueError(
+            f"Input size must have a shape of (*, 3, H, W).Got {image.shape}"
+        )
+
+    return torch.where(
+        image > 0.04045, torch.pow(((image + 0.055) / 1.055), 2.4), image / 12.92
+    )
+
+
+def rgb_to_xyz(image: Tensor) -> Tensor:
+    r"""Convert a RGB image to XYZ.
+
+    .. image:: _static/img/rgb_to_xyz.png
+
+    Args:
+        image: RGB Image to be converted to XYZ with shape :math:`(*, 3, H, W)`.
+
+    Returns:
+         XYZ version of the image with shape :math:`(*, 3, H, W)`.
+
+    Example:
+        >>> input = torch.rand(2, 3, 4, 5)
+        >>> output = rgb_to_xyz(input)  # 2x3x4x5
+
+    """
+
+    if len(image.shape) < 3 or image.shape[-3] != 3:
+        raise ValueError(
+            f"Input size must have a shape of (*, 3, H, W). Got {image.shape}"
+        )
+
+    r = image[..., 0, :, :]
+    g = image[..., 1, :, :]
+    b = image[..., 2, :, :]
+
+    x = 0.412453 * r + 0.357580 * g + 0.180423 * b
+    y = 0.212671 * r + 0.715160 * g + 0.072169 * b
+    z = 0.019334 * r + 0.119193 * g + 0.950227 * b
+
+    out = torch.stack([x, y, z], -3)
+
+    return out
+
+
+def linear_rgb_to_lab_norm(lin_rgb: Tensor) -> Tensor:
+    r"""Convert a RGB image to Lab.
+
+    .. image:: _static/img/rgb_to_lab.png
+
+    The input RGB image is assumed to be in the range of :math:`[0, 1]`. Lab
+    color is computed using the D65 illuminant and Observer 2.
+
+    Args:
+        image: RGB Image to be converted to Lab with shape :math:`(*, 3, H, W)`.
+
+    Returns:
+        Lab version of the image with shape :math:`(*, 3, H, W)`.
+        The L channel values are in the range 0..100. a and b are in the range -128..127.
+
+    Example:
+        >>> input = torch.rand(2, 3, 4, 5)
+        >>> output = rgb_to_lab(input)  # 2x3x4x5
+
+    """
+
+    if len(lin_rgb.shape) < 3 or lin_rgb.shape[-3] != 3:
+        raise ValueError(
+            f"Input size must have a shape of (*, 3, H, W). Got {lin_rgb.shape}"
+        )
+
+    xyz_im: torch.Tensor = rgb_to_xyz(lin_rgb)
+
+    # normalize for D65 white point
+    xyz_ref_white = torch.tensor(
+        [0.95047, 1.0, 1.08883], device=xyz_im.device, dtype=xyz_im.dtype
+    )[..., :, None, None]
+    xyz_normalized = torch.div(xyz_im, xyz_ref_white)
+
+    threshold = 0.008856
+    power = torch.pow(xyz_normalized.clamp(min=threshold), 1 / 3.0)
+    scale = 7.787 * xyz_normalized + 4.0 / 29.0
+    xyz_int = torch.where(xyz_normalized > threshold, power, scale)
+
+    x = xyz_int[..., 0, :, :]
+    y = xyz_int[..., 1, :, :]
+    z = xyz_int[..., 2, :, :]
+
+    L = ((116.0 * y) - 16.0) / 100  # noqa: N806
+    a = ((500.0 * (x - y)) + 128) / 255
+    _b = (200.0 * (y - z) + 128) / 255
+
+    out = torch.stack([L, a, _b], dim=-3)
+
+    return out

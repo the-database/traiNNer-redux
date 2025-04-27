@@ -80,7 +80,7 @@ class MSSIMLoss(nn.Module):
         padding: int | None = None,
         cosim: bool = True,
         cosim_lambda: int = 5,
-        grayscale: bool = False,
+        scale_weights: Sequence[float] = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333),
     ) -> None:
         """Adapted from 'A better pytorch-based implementation for the mean structural
             similarity. Differentiable simpler SSIM and MS-SSIM.':
@@ -104,13 +104,13 @@ class MSSIMLoss(nn.Module):
         super().__init__()
 
         self.window_size = window_size
+        self.scale_weights = scale_weights
         self.C1 = (k1 * l) ** 2  # equ 7 in ref1
         self.C2 = (k2 * l) ** 2  # equ 7 in ref1
         self.cosim = cosim
         self.cosim_lambda = cosim_lambda
         self.loss_weight = loss_weight
         self.similarity = nn.CosineSimilarity(dim=1, eps=1e-20)
-        self.grayscale = grayscale
 
         self.gaussian_filter = GaussianFilter2D(
             window_size=window_size,
@@ -136,9 +136,7 @@ class MSSIMLoss(nn.Module):
         loss = {"msssim": msssim * self.loss_weight}
 
         if self.cosim:
-            loss["cosim"] = (
-                torch.clamp(self.cosim_penalty(x, y), max=msssim) * self.loss_weight
-            )
+            loss["cosim"] = self.cosim_penalty(x, y) * self.loss_weight
 
         return loss
 
@@ -146,32 +144,32 @@ class MSSIMLoss(nn.Module):
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
 
-        if self.grayscale:
-            x = (
-                0.299 * x[:, 0:1, :, :]
-                + 0.587 * x[:, 1:2, :, :]
-                + 0.114 * x[:, 2:3, :, :]
-            )
-            y = (
-                0.299 * y[:, 0:1, :, :]
-                + 0.587 * y[:, 1:2, :, :]
-                + 0.114 * y[:, 2:3, :, :]
-            )
-
         msssim = torch.tensor(1.0, device=x.device)
 
-        for i, w in enumerate((0.0448, 0.2856, 0.3001, 0.2363, 0.1333)):
+        for i, w in enumerate(self.scale_weights):
             ssim, cs = self._ssim(x, y)
             ssim = ssim.mean()
             cs = cs.mean()
 
-            if i == 4:
+            if i == len(self.scale_weights) - 1:
                 msssim *= ssim**w
             else:
                 msssim *= cs**w
-                padding = [s % 2 for s in x.shape[2:]]  # spatial padding
-                x = F.avg_pool2d(x, kernel_size=2, stride=2, padding=padding)
-                y = F.avg_pool2d(y, kernel_size=2, stride=2, padding=padding)
+                # padding = [s % 2 for s in x.shape[2:]]  # spatial padding
+                x = F.interpolate(
+                    x,
+                    scale_factor=0.5,
+                    mode="bicubic",
+                    antialias=True,
+                    align_corners=False,
+                ).clamp(1e-12, 1)
+                y = F.interpolate(
+                    y,
+                    scale_factor=0.5,
+                    mode="bicubic",
+                    antialias=True,
+                    align_corners=False,
+                ).clamp(1e-12, 1)
 
         return msssim
 
@@ -179,7 +177,7 @@ class MSSIMLoss(nn.Module):
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
 
-        distance = 1 - (self.similarity(x, y)).mean()
+        distance = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
         return self.cosim_lambda * distance
 
     def _ssim(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
@@ -197,6 +195,7 @@ class MSSIMLoss(nn.Module):
         # equ 12, 13 in ref1
         l = a1 / b1
         cs = a2 / b2
+        cs = F.relu(cs)
         ssim = l * cs
 
         return ssim, cs

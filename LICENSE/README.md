@@ -5,6 +5,7 @@ traiNNer-redux is released under Apache License 2.0.
 |Project|License|
 |-|-|
 |[Adan](https://github.com/sail-sg/Adan) | [Apache License 2.0](https://github.com/sail-sg/Adan/blob/main/LICENSE)|
+|[APISR](https://github.com/Kiteretsu77/APISR) (Anime Perceptual Loss)| [GPL 3.0 License](https://github.com/Kiteretsu77/APISR/blob/main/LICENSE)|
 |[ArtCNN](https://github.com/Artoriuz/ArtCNN) | [MIT License](https://github.com/Artoriuz/ArtCNN/blob/main/LICENSE)|
 |[ArtCNN-PyTorch](https://github.com/umzi2/ArtCNN-PyTorch) | [MIT License](https://github.com/umzi2/ArtCNN-PyTorch/blob/master/LICENSE)|
 |[ATD](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary) | [Apache License 2.0](https://github.com/LabShuHangGU/Adaptive-Token-Dictionary/blob/main/LICENSE.txt)|
@@ -27,10 +28,12 @@ traiNNer-redux is released under Apache License 2.0.
 |[EMT](https://github.com/Fried-Rice-Lab/EMT)| [MIT License](https://github.com/Fried-Rice-Lab/EMT/blob/main/LICENSE)|
 |[FDL](https://github.com/eezkni/FDL)| [MIT License](https://github.com/eezkni/FDL?tab=readme-ov-file#license)|
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
+|[flip](https://github.com/NVlabs/flip)| [BSD 3-Clause License](https://github.com/NVlabs/flip/blob/main/LICENSE)|
 |[Focal Frequency Loss](https://github.com/EndlessSora/focal-frequency-loss)| [MIT License](https://github.com/EndlessSora/focal-frequency-loss/blob/master/LICENSE.md)|
 |[GRL](https://github.com/ofsoundof/GRL-Image-Restoration)| [MIT License](https://github.com/ofsoundof/GRL-Image-Restoration/blob/main/LICENSE)|
 |[HAT](https://github.com/XPixelGroup/HAT) | [Apache License 2.0](https://github.com/XPixelGroup/HAT/blob/main/LICENSE)|
 |[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|
+|[LineDistiller](https://github.com/hepesu/LineDistiller) | [MIT License](https://github.com/hepesu/LineDistiller/blob/master/LICENSE)|
 |[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
 |[LMLT](https://github.com/jwgdmkj/LMLT) | [MIT License](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)|
 |[LPIPS](https://github.com/richzhang/PerceptualSimilarity)| [BSD-2-Clause License](https://github.com/richzhang/PerceptualSimilarity/blob/master/LICENSE)|

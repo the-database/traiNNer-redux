@@ -17,6 +17,16 @@
 
   Type: Literal, int
 
+### input_pixel_format
+
+  Input pixel format.
+
+  Options: rgb, y, uv, yuv444, gray
+### output_pixel_format
+
+  Output pixel format.
+
+  Options: rgb, y, uv, yuv444, gray
 ### network_g
 
   The options for the generator model.
@@ -207,6 +217,7 @@
   Queue size for OTF processing, must be a multiple of `batch_size_per_gpu`.
 
   Type: int
+
 
 
 
