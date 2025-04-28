@@ -20,6 +20,8 @@ class BCEWithLogitsDiceLoss(nn.Module):
         self.bce = nn.BCEWithLogitsLoss()
 
     def forward(self, logits: Tensor, target: Tensor) -> Tensor:
+        if target.shape[1] != logits.shape[1]:
+            target = target.mean(dim=1, keepdim=True)
         loss_bce = self.bce(logits, target)
 
         probs = torch.sigmoid(logits)
