@@ -6,6 +6,7 @@ from traiNNer.utils.registry import ARCH_REGISTRY
 
 @ARCH_REGISTRY.register()
 def unetsegmentation(
+    scale: int = 1,
     encoder_name: str = "resnet50",
     encoder_weights: str | None = "imagenet",
     in_ch: int = 3,
