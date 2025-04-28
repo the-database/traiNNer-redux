@@ -7,7 +7,11 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 @LOSS_REGISTRY.register()
 class BCEWithLogitsDiceLoss(nn.Module):
     def __init__(
-        self, weight_bce: float = 1.0, weight_dice: float = 1.0, eps: float = 1e-6
+        self,
+        loss_weight: float,
+        weight_bce: float = 1.0,
+        weight_dice: float = 1.0,
+        eps: float = 1e-6,
     ) -> None:
         super().__init__()
         self.bce_weight = weight_bce
@@ -23,4 +27,6 @@ class BCEWithLogitsDiceLoss(nn.Module):
         den = probs.sum(dim=[1, 2, 3]) + target.sum(dim=[1, 2, 3]) + self.eps
         loss_dice = 1 - (num / den).mean()
 
-        return self.bce_weight * loss_bce + self.dice_weight * loss_dice
+        return self.loss_weight * (
+            self.bce_weight * loss_bce + self.dice_weight * loss_dice
+        )
