@@ -14,6 +14,7 @@ class BCEWithLogitsDiceLoss(nn.Module):
         eps: float = 1e-6,
     ) -> None:
         super().__init__()
+        self.loss_weight = loss_weight
         self.bce_weight = weight_bce
         self.dice_weight = weight_dice
         self.eps = eps
