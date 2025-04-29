@@ -7,7 +7,7 @@ from traiNNer.utils.registry import ARCH_REGISTRY
 
 def _ensure_smp() -> ModuleType:
     try:
-        import segmentation_models_pytorch as smp
+        import segmentation_models_pytorch as smp  # pyright: ignore[reportMissingImports]
 
         return smp
     except ImportError as e:
