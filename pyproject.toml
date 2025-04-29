@@ -36,6 +36,7 @@ dev = ["ruff", "pyright", "pytest", "syrupy", "torchfix"]
 onnx = ["onnx", "onnxruntime", "onnxconverter-common", "onnxslim"]
 docs = ["sphinx", "sphinx-rtd-theme"]
 scripts = ["chainner_ext", "matplotlib", "pandas"]
+segmentation = ["segmentation_models_pytorch"]
 
 [project.urls]
 Repository = "https://github.com/the-database/traiNNer-redux.git"

@@ -1,7 +1,20 @@
-import segmentation_models_pytorch as smp
+from types import ModuleType
+
 from torch import nn
 
 from traiNNer.utils.registry import ARCH_REGISTRY
+
+
+def _ensure_smp() -> ModuleType:
+    try:
+        import segmentation_models_pytorch as smp
+
+        return smp
+    except ImportError as e:
+        raise ImportError(
+            "The `unetsegmentation` architecture requires segmentation-models-pytorch. "
+            "You can install it with:\n\n    pip install .[segmentation]"
+        ) from e
 
 
 @ARCH_REGISTRY.register()
@@ -21,6 +34,7 @@ def unetsegmentation(
     - classes: output channels (1 for binary, >1 for multi-class)
     - activation: e.g. "sigmoid" or "softmax2d", or None to get raw logits
     """
+    smp = _ensure_smp()
     return smp.Unet(
         encoder_name=encoder_name,
         encoder_weights=encoder_weights,
