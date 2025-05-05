@@ -243,7 +243,7 @@ class AEModel(BaseModel):
                 logger = get_root_logger()
                 logger.warning("Params %s will not be optimized.", k)
 
-        self.optimizer_ae = self.get_optimizer(optim_params, **train_opt.optim_ae)
+        self.optimizer_ae = self.get_optimizer(optim_params, train_opt.optim_ae)
         self.optimizers.append(self.optimizer_ae)
         self.optimizers_skipped.append(False)
         self.optimizers_schedule_free.append(
