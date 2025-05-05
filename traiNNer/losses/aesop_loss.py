@@ -27,7 +27,7 @@ class AESOPLoss(nn.Module):
         if criterion == "l1":
             self.criterion = L1Loss(1.0)
         elif criterion == "charbonnier":
-            self.criterion = charbonnier_loss(1.0)
+            self.criterion = charbonnier_loss
         else:
             self.criterion = MSSSIML1Loss(1.0)
 
