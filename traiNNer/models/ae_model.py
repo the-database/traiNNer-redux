@@ -49,9 +49,7 @@ class AEModel(BaseModel):
 
         # define network
         assert opt.network_ae is not None
-        self.net_ae: AutoEncoder = build_network(
-            {**opt.network_ae, "scale": opt.scale, "freeze": False}
-        )  # pyright: ignore[reportAttributeAccessIssue]
+        self.net_ae: AutoEncoder = build_network({**opt.network_ae, "scale": opt.scale})  # pyright: ignore[reportAttributeAccessIssue]
 
         # load pretrained models
         if self.opt.path.pretrain_network_ae is not None:
@@ -153,7 +151,7 @@ class AEModel(BaseModel):
             # load pretrained model
             if self.opt.path.pretrain_network_ae_ema is not None:
                 init_net_ae_ema = build_network(
-                    {**self.opt.network_ae, "scale": self.opt.scale, "freeze": False}
+                    {**self.opt.network_ae, "scale": self.opt.scale}
                 )  # pyright: ignore[reportAssignmentType]
                 assert init_net_ae_ema is not None
                 self.load_network(
