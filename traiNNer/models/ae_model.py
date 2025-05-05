@@ -279,14 +279,15 @@ class AEModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
-            self.output_lq = self.net_ae.encode(self.gt)
-            self.output_gt = self.net_ae.decode(self.output_lq)
+            self.output_lq = self.get_bare_model(self.net_ae).encode(self.gt)
+            self.output_gt = self.get_bare_model(self.net_ae).decode(self.output_lq)
             assert isinstance(self.output_gt, Tensor)
             l_ae_total = torch.tensor(0.0, device=self.output_gt.device)
             loss_dict = OrderedDict()
 
             for label, loss in self.losses.items():
-                for output_type in ["gt", "lq"]:
+                # for output_type in ["gt", "lq"]:
+                for output_type in ["gt"]:  # TODO refactor
                     l_ae_loss = loss(
                         getattr(self, f"output_{output_type}"),
                         getattr(self, output_type),
