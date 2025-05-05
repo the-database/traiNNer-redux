@@ -165,12 +165,13 @@ class AEModel(BaseModel):
             # net_ae_ema is used only for testing on one GPU and saving
             # There is no need to wrap with DistributedDataParallel
             self.net_ae_ema = EMA(
-                self.net_ae,
-                ema_model=init_net_ae_ema,  # TODO ???
+                self.get_bare_model(self.net_ae),
+                ema_model=init_net_ae_ema,
                 beta=self.ema_decay,
                 allow_different_devices=True,
-                update_after_step=100,
+                update_after_step=train_opt.ema_update_after_step,
                 update_every=1,
+                power=train_opt.ema_update_after_step,
                 update_model_with_ema_every=self.ema_switch_iter,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
