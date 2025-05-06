@@ -31,4 +31,7 @@ class MSFLIPLoss(nn.Module):
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, test: Tensor, reference: Tensor) -> dict[str, Tensor]:
-        return {str(i): flip(test, reference) for i, flip in enumerate(self.flips)}
+        return {
+            str(i): self.loss_weight * flip(test, reference)
+            for i, flip in enumerate(self.flips)
+        }
