@@ -321,6 +321,7 @@ def ssim(
     get_weight: bool = False,
     downsample: bool = False,
     data_range: float = 1.0,
+    include_luminance: bool = True,
 ) -> Tensor | tuple[Tensor, Tensor]:
     if win is None:
         win = fspecial(11, 1.5, x.shape[1]).to(x)
@@ -348,7 +349,11 @@ def ssim(
     cs_map = F.relu(
         cs_map
     )  # force the ssim response to be nonnegative to avoid negative results.
-    ssim_map = ((2 * mu1_mu2 + c1) / (mu1_sq + mu2_sq + c1)) * cs_map
+    if include_luminance:
+        l = (2 * mu1_mu2 + c1) / (mu1_sq + mu2_sq + c1)
+    else:
+        l = torch.full_like(cs_map, 1.0)
+    ssim_map = l * cs_map
     ssim_val = ssim_map.mean([1, 2, 3])
 
     if get_weight:
@@ -415,6 +420,7 @@ def ms_ssim(
     test_y_channel: bool = True,
     is_prod: bool = True,
     color_space: str = "yiq",
+    include_luminance: bool = True,
 ) -> Tensor:
     r"""Compute Multiscale structural similarity for a batch of images.
     Args:
@@ -443,6 +449,7 @@ def ms_ssim(
             get_cs=True,
             downsample=downsample,
             data_range=data_range,
+            include_luminance=include_luminance,
         )
 
         mcs.append(cs)
@@ -488,6 +495,7 @@ class MSSSIMLoss(torch.nn.Module):
         test_y_channel: bool = True,
         is_prod: bool = True,
         color_space: str = "yiq",
+        include_luminance: bool = True,
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
@@ -496,6 +504,7 @@ class MSSSIMLoss(torch.nn.Module):
         self.color_space = color_space
         self.is_prod = is_prod
         self.data_range = 1
+        self.include_luminance = include_luminance
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
@@ -520,5 +529,6 @@ class MSSSIMLoss(torch.nn.Module):
             data_range=self.data_range,
             downsample=self.downsample,
             is_prod=self.is_prod,
+            include_luminance=self.include_luminance,
         )
-        return self.loss_weight * (1 - score.mean())
+        return self.loss_weight * (1 - score.mean().clamp(0, 1))
