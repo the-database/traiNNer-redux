@@ -9,7 +9,7 @@ class CosimLoss(nn.Module):
     def __init__(
         self,
         loss_weight: float,
-        cosim_lambda: float = 10,
+        cosim_lambda: float = 5,
     ) -> None:
         super().__init__()
 
