@@ -53,6 +53,36 @@ filters: 96
 n_block: 16
 kernel_size: 3
 ```
+#### artcnn_r3f24
+
+
+```yaml
+type: artcnn_r3f24
+in_ch: 3
+filters: 24
+n_block: 3
+kernel_size: 3
+```
+#### artcnn_r5f48
+
+
+```yaml
+type: artcnn_r5f48
+in_ch: 3
+filters: 48
+n_block: 5
+kernel_size: 3
+```
+#### artcnn_r8f24
+
+
+```yaml
+type: artcnn_r8f24
+in_ch: 3
+filters: 24
+n_block: 8
+kernel_size: 3
+```
 #### artcnn_r8f48
 
 
@@ -72,6 +102,14 @@ in_ch: 3
 filters: 64
 n_block: 8
 kernel_size: 3
+```
+### AutoEncoder
+#### autoencoder
+
+
+```yaml
+type: autoencoder
+nf: 64
 ```
 ### CRAFT
 #### craft
@@ -1476,6 +1514,18 @@ input_resolution: 256
 residual: true
 sigma: false
 state: ~
+```
+### Unet
+#### unetsegmentation
+
+
+```yaml
+type: unetsegmentation
+encoder_name: resnet50
+encoder_weights: imagenet
+in_ch: 3
+classes: 1
+activation: ~
 ```
 ### UpCunet4x
 #### realcugan
