@@ -241,18 +241,16 @@ class TestLosses:
         print(cosim_fn(pred, gt))
 
     def test_msssimlum(self) -> None:
-        white = torch.ones(1, 3, 256, 256)
+        # white = torch.ones(1, 3, 256, 256)
         black = torch.zeros(1, 3, 256, 256)
-        gray128 = torch.full_like(black, 128 / 255)
-        gray130 = torch.full_like(black, 130 / 255)
-        white253 = torch.full_like(black, 253 / 255)
-        black2 = torch.full_like(black, 2 / 255)
-        white222 = torch.full_like(black, 222 / 255)
+        # gray128 = torch.full_like(black, 128 / 255)
+        # gray130 = torch.full_like(black, 130 / 255)
+        # white253 = torch.full_like(black, 253 / 255)
+        # black2 = torch.full_like(black, 2 / 255)
+        # white222 = torch.full_like(black, 222 / 255)
         black26 = torch.full_like(black, 26 / 255)
         pred = black26
         gt = black
-        # pred = torch.rand(1, 3, 256, 256)
-        # gt = torch.rand(1, 3, 256, 256)
 
         mssimlum_fn = MSSIMLoss(1.0, include_luminance=True)
         mssimnolum_fn = MSSIMLoss(1.0, include_luminance=False)

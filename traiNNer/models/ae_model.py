@@ -279,8 +279,8 @@ class AEModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
-            self.output_lq = self.get_bare_model(self.net_ae).encode(self.gt)
-            self.output_gt = self.get_bare_model(self.net_ae).decode(self.output_lq)
+            self.output_lq = self.get_bare_model(self.net_ae).encode(self.gt)  # pyright: ignore[reportCallIssue]
+            self.output_gt = self.get_bare_model(self.net_ae).decode(self.output_lq)  # pyright: ignore[reportCallIssue]
             assert isinstance(self.output_gt, Tensor)
             l_ae_total = torch.tensor(0.0, device=self.output_gt.device)
             loss_dict = OrderedDict()
