@@ -9,12 +9,30 @@ window_size: 21
 resize_input: false
 loss_weight: 1.0
 ```
+## aesoploss
+
+
+```yaml
+type: aesoploss
+criterion: charbonnier
+loss_weight: 1.0
+```
 ## averageloss
 
 
 ```yaml
 type: averageloss
 criterion: l1
+loss_weight: 1.0
+```
+## bcewithlogitsdiceloss
+
+
+```yaml
+type: bcewithlogitsdiceloss
+weight_bce: 1.0
+weight_dice: 1.0
+eps: 1e-06
 loss_weight: 1.0
 ```
 ## bicubicloss
@@ -57,6 +75,14 @@ use_vgg: true
 net: vgg19
 calc_type: regular
 z_norm: false
+loss_weight: 1.0
+```
+## cosimloss
+
+
+```yaml
+type: cosimloss
+cosim_lambda: 5
 loss_weight: 1.0
 ```
 ## distsloss
@@ -168,16 +194,12 @@ loss_weight: 1.0
 
 ```yaml
 type: mssimloss
-window_size: 11
-in_channels: 3
-sigma: 1.5
-k1: 0.01
-k2: 0.03
-l: 1
-padding: ~
-cosim: true
-cosim_lambda: 5
-scale_weights: [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]
+channels: 3
+downsample: false
+test_y_channel: true
+is_prod: true
+color_space: yiq
+include_luminance: false
 loss_weight: 1.0
 ```
 ## msssiml1loss
@@ -190,18 +212,6 @@ data_range: 1.0
 k: [0.01, 0.03]
 alpha: 0.1
 cuda_dev: 0
-loss_weight: 1.0
-```
-## msssimloss
-
-
-```yaml
-type: msssimloss
-channels: 3
-downsample: false
-test_y_channel: true
-is_prod: true
-color_space: yiq
 loss_weight: 1.0
 ```
 ## multiscaleganloss

@@ -476,13 +476,6 @@ class SRModel(BaseModel):
                     scale_after = self.scaler_g.get_scale()
                     loss_dict["scale_g"] = scale_after
                     self.optimizers_skipped[0] = scale_after < scale_before
-                    if self.optimizers_skipped[0]:
-                        logger = get_root_logger()
-                        logger.info(
-                            "AMP: iter %d: optimizer_g update step skipped due to NaN/Inf in gradients. Current gradscaler_g scale: %.1f",
-                            current_iter,
-                            scale_after,
-                        )
                     self.optimizer_g.zero_grad()
             else:
                 with torch.inference_mode():
@@ -541,13 +534,6 @@ class SRModel(BaseModel):
                 scale_after = self.scaler_d.get_scale()
                 loss_dict["scale_d"] = scale_after
                 self.optimizers_skipped[-1] = scale_after < scale_before
-                if self.optimizers_skipped[-1]:
-                    logger = get_root_logger()
-                    logger.info(
-                        "AMP: iter %d: optimizer_d update step skipped due to NaN/Inf in gradients. Current gradscaler_d scale: %.1f",
-                        current_iter,
-                        scale_after,
-                    )
                 self.optimizer_d.zero_grad()
 
         for key, value in loss_dict.items():

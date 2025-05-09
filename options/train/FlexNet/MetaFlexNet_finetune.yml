@@ -112,8 +112,7 @@ train:
   losses:
     # MS-SSIM loss
     - type: mssimloss
-      cosim: true
-      loss_weight: 1.0
+      loss_weight: 0.5
     # Perceptual loss
     - type: perceptualloss
       criterion: charbonnier  # charbonnier, l1, pd+l1, fd+l1, pd, fd
@@ -121,6 +120,8 @@ train:
     # HSLuv loss (hue, saturation, lightness)
     - type: hsluvloss
       criterion: charbonnier
+      loss_weight: 1.0
+    - type: cosimloss
       loss_weight: 1.0
     # GAN loss
     - type: ganloss
