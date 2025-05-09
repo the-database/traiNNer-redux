@@ -11,7 +11,7 @@ Note that an architecture not being listed on this page does not mean it's not r
 - Light-weight
    - `SPAN_S`
 - Medium-weight
-   - `RealPLKSR`
+   - `RealPLKSR`, `ESRGAN`
 - Medium heavy-weight
    - `SwinIR M`
 - Heavy-weight

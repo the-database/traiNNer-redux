@@ -16,7 +16,7 @@ from traiNNer.losses.basic_loss import (
 from traiNNer.losses.cosim_loss import CosimLoss
 from traiNNer.losses.dists_loss import DISTSLoss
 from traiNNer.losses.ldl_loss import LDLLoss
-from traiNNer.losses.mssim_loss import MSSIMLoss
+from traiNNer.losses.mssim_loss import MSSIMLoss, SSIMLoss
 from traiNNer.losses.perceptual_fp16_loss import (
     VGG19_CONV_LAYER_WEIGHTS,
     VGG19_RELU_LAYER_WEIGHTS,
@@ -205,7 +205,7 @@ class TestLosses:
         else:
             assert torch.allclose(loss_value, loss_value2, atol=1e-6)
 
-    def test_ssim(self) -> None:
+    def test_msssim(self) -> None:
         white = torch.ones(1, 3, 256, 256)
         black = torch.zeros(1, 3, 256, 256)
         gray128 = torch.full_like(black, 128 / 255)
@@ -231,14 +231,23 @@ class TestLosses:
         print(hsluv_fn(black, black26))
 
     def test_cosim(self) -> None:
-        pred = torch.rand(1, 3, 16, 16)
-        gt = torch.rand(1, 3, 16, 16)
+        pred = torch.rand(1, 3, 64, 64)
+        gt = torch.rand(1, 3, 64, 64)
 
         mssim_fn = MSSIMLoss(1.0)
         cosim_fn = CosimLoss(1.0, cosim_lambda=10)
 
         print(mssim_fn(pred, gt))
         print(cosim_fn(pred, gt))
+
+    def test_ssim(self) -> None:
+        torch.manual_seed(1024)
+        dim = 16
+        pred = torch.rand(1, 3, dim, dim)
+        gt = torch.rand(1, 3, dim, dim)
+
+        ssim_fn = SSIMLoss(1.0)
+        print("ssim", ssim_fn(pred, gt))
 
     def test_msssimlum(self) -> None:
         # white = torch.ones(1, 3, 256, 256)

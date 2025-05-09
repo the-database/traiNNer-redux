@@ -278,7 +278,13 @@ def filter2(input: Tensor, weight: Tensor, shape: str = "same") -> Tensor:
     if shape == "same":
         return imfilter(input, weight, groups=input.shape[1])
     elif shape == "valid":
-        return F.conv2d(input, weight, stride=1, padding=0, groups=input.shape[1])
+        return F.conv2d(
+            input,
+            weight,
+            stride=1,
+            padding=0,
+            groups=input.shape[1],
+        )
     else:
         raise NotImplementedError(f"Shape type {shape} is not implemented.")
 
@@ -326,6 +332,10 @@ def ssim(
     if win is None:
         win = fspecial(11, 1.5, x.shape[1]).to(x)
 
+    filter_shape = "valid"
+    if x.shape[-1] < win.shape[-1]:
+        filter_shape = "same"
+
     c1 = (0.01 * data_range) ** 2
     c2 = (0.03 * data_range) ** 2
 
@@ -336,14 +346,14 @@ def ssim(
         x = F.avg_pool2d(x, kernel_size=f)
         y = F.avg_pool2d(y, kernel_size=f)
 
-    mu1 = filter2(x, win, "valid")
-    mu2 = filter2(y, win, "valid")
+    mu1 = filter2(x, win, filter_shape)
+    mu2 = filter2(y, win, filter_shape)
     mu1_sq = mu1.pow(2)
     mu2_sq = mu2.pow(2)
     mu1_mu2 = mu1 * mu2
-    sigma1_sq = filter2(x * x, win, "valid") - mu1_sq
-    sigma2_sq = filter2(y * y, win, "valid") - mu2_sq
-    sigma12 = filter2(x * y, win, "valid") - mu1_mu2
+    sigma1_sq = filter2(x * x, win, filter_shape) - mu1_sq
+    sigma2_sq = filter2(y * y, win, filter_shape) - mu2_sq
+    sigma12 = filter2(x * y, win, filter_shape) - mu1_mu2
 
     cs_map = (2 * sigma12 + c2) / (sigma1_sq + sigma2_sq + c2)
     cs_map = F.relu(
@@ -379,6 +389,7 @@ class SSIMLoss(torch.nn.Module):
 
     def __init__(
         self,
+        loss_weight: float = 1.0,
         channels: int = 3,
         downsample: bool = False,
         test_y_channel: bool = True,
@@ -390,7 +401,8 @@ class SSIMLoss(torch.nn.Module):
         self.test_y_channel = test_y_channel
         self.color_space = color_space
         self.crop_border = crop_border
-        self.data_range = 255
+        self.data_range = 1.0
+        self.loss_weight = loss_weight
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
@@ -408,7 +420,7 @@ class SSIMLoss(torch.nn.Module):
 
         score = ssim(x, y, data_range=self.data_range, downsample=self.downsample)
         assert isinstance(score, Tensor)
-        return score
+        return self.loss_weight * score
 
 
 def ms_ssim(
