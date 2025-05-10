@@ -60,8 +60,8 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     assert isinstance(model.log_dict, dict)
     # check returned keys
     expected_keys = [
-        "l_g_mssim_msssim",
-        "l_g_mssim_cosim",
+        "l_g_mssim",
+        "l_g_cosim",
         "l_g_perceptual_conv3_4",
         "l_g_perceptual_conv4_4",
         "l_g_perceptual_conv5_4",
