@@ -88,7 +88,7 @@ def verify_onnx(
     try:
         np.testing.assert_allclose(  # pyright: ignore # TODO onnx 1.18
             torch_output_np,
-            onnx_output[0],
+            onnx_output[0],  # pyright: ignore # TODO onnx 1.18
             rtol=1e-02,
             atol=1e-03,  # pyright: ignore # TODO onnx 1.18
         )
