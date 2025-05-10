@@ -86,8 +86,11 @@ def verify_onnx(
     onnx_output = ort_session.run(None, ort_inputs)
 
     try:
-        np.testing.assert_allclose(
-            torch_output_np, onnx_output[0], rtol=1e-02, atol=1e-03
+        np.testing.assert_allclose(  # pyright: ignore # TODO onnx 1.18
+            torch_output_np,
+            onnx_output[0],
+            rtol=1e-02,
+            atol=1e-03,  # pyright: ignore # TODO onnx 1.18
         )
         logger.info("ONNX output verified against PyTorch output successfully.")
     except AssertionError as e:
