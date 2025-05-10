@@ -5,6 +5,7 @@ traiNNer-redux is released under Apache License 2.0.
 |Project|License|
 |-|-|
 |[Adan](https://github.com/sail-sg/Adan) | [Apache License 2.0](https://github.com/sail-sg/Adan/blob/main/LICENSE)|
+|[AESOP](https://github.com/2minkyulee/AESOP-Auto-Encoded-Supervision-for-Perceptual-Image-Super-Resolution) | [Apache License 2.0](https://github.com/2minkyulee/AESOP-Auto-Encoded-Supervision-for-Perceptual-Image-Super-Resolution?tab=readme-ov-file#license)|
 |[APISR](https://github.com/Kiteretsu77/APISR) (Anime Perceptual Loss)| [GPL 3.0 License](https://github.com/Kiteretsu77/APISR/blob/main/LICENSE)|
 |[ArtCNN](https://github.com/Artoriuz/ArtCNN) | [MIT License](https://github.com/Artoriuz/ArtCNN/blob/main/LICENSE)|
 |[ArtCNN-PyTorch](https://github.com/umzi2/ArtCNN-PyTorch) | [MIT License](https://github.com/umzi2/ArtCNN-PyTorch/blob/master/LICENSE)|

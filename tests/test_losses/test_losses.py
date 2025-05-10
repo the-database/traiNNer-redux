@@ -13,9 +13,10 @@ from traiNNer.losses.basic_loss import (
     LumaLoss,
     MSELoss,
 )
+from traiNNer.losses.cosim_loss import CosimLoss
 from traiNNer.losses.dists_loss import DISTSLoss
 from traiNNer.losses.ldl_loss import LDLLoss
-from traiNNer.losses.mssim_loss import MSSIMLoss
+from traiNNer.losses.mssim_loss import MSSIMLoss, SSIMLoss
 from traiNNer.losses.perceptual_fp16_loss import (
     VGG19_CONV_LAYER_WEIGHTS,
     VGG19_RELU_LAYER_WEIGHTS,
@@ -32,8 +33,7 @@ LOSS_FUNCTIONS = [
     MSELoss(
         1.0,
     ),
-    MSSIMLoss(1.0, cosim=False),
-    MSSIMLoss(1.0, cosim=True),
+    MSSIMLoss(1.0),
     HSLuvLoss(1.0, criterion="charbonnier"),
     ColorLoss(1.0, criterion="charbonnier"),
     LumaLoss(1.0, criterion="charbonnier"),
@@ -204,3 +204,65 @@ class TestLosses:
                 assert torch.allclose(val, loss_value2[key], atol=1e-6)
         else:
             assert torch.allclose(loss_value, loss_value2, atol=1e-6)
+
+    def test_msssim(self) -> None:
+        white = torch.ones(1, 3, 256, 256)
+        black = torch.zeros(1, 3, 256, 256)
+        gray128 = torch.full_like(black, 128 / 255)
+        gray130 = torch.full_like(black, 130 / 255)
+        white253 = torch.full_like(black, 253 / 255)
+        black2 = torch.full_like(black, 2 / 255)
+        white222 = torch.full_like(black, 222 / 255)
+        black26 = torch.full_like(black, 26 / 255)
+
+        loss_fn = MSSIMLoss(1.0, include_luminance=False)
+        hsluv_fn = HSLuvLoss(1.0)
+
+        print(loss_fn(white253, white))  # should be near 0
+        print(loss_fn(gray128, gray130))  # should be near 0
+        print(loss_fn(black, black2))  # should be near 0 but mssim fails
+        print(loss_fn(white222, white))  # shouldn't be near 0 but mssim fails
+        print(loss_fn(black, black26))  # should be near 0 but mssim fails
+
+        print(hsluv_fn(white253, white))
+        print(hsluv_fn(gray128, gray130))
+        print(hsluv_fn(black, black2))
+        print(hsluv_fn(white222, white))
+        print(hsluv_fn(black, black26))
+
+    def test_cosim(self) -> None:
+        pred = torch.rand(1, 3, 64, 64)
+        gt = torch.rand(1, 3, 64, 64)
+
+        mssim_fn = MSSIMLoss(1.0)
+        cosim_fn = CosimLoss(1.0, cosim_lambda=10)
+
+        print(mssim_fn(pred, gt))
+        print(cosim_fn(pred, gt))
+
+    def test_ssim(self) -> None:
+        torch.manual_seed(1024)
+        dim = 16
+        pred = torch.rand(1, 3, dim, dim)
+        gt = torch.rand(1, 3, dim, dim)
+
+        ssim_fn = SSIMLoss(1.0)
+        print("ssim", ssim_fn(pred, gt))
+
+    def test_msssimlum(self) -> None:
+        # white = torch.ones(1, 3, 256, 256)
+        black = torch.zeros(1, 3, 256, 256)
+        # gray128 = torch.full_like(black, 128 / 255)
+        # gray130 = torch.full_like(black, 130 / 255)
+        # white253 = torch.full_like(black, 253 / 255)
+        # black2 = torch.full_like(black, 2 / 255)
+        # white222 = torch.full_like(black, 222 / 255)
+        black26 = torch.full_like(black, 26 / 255)
+        pred = black26
+        gt = black
+
+        mssimlum_fn = MSSIMLoss(1.0, include_luminance=True)
+        mssimnolum_fn = MSSIMLoss(1.0, include_luminance=False)
+
+        print(mssimlum_fn(pred, gt))
+        print(mssimnolum_fn(pred, gt))

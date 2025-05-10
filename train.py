@@ -392,6 +392,7 @@ def train_pipeline(root_path: str) -> None:
     signal.signal(signal.SIGINT, handle_keyboard_interrupt)
     epoch = start_epoch
     apply_gradient = False
+    crashed = False
     train_data = None
     assert model.opt.path.models is not None
 
@@ -500,6 +501,7 @@ def train_pipeline(root_path: str) -> None:
         # end of epoch
     except Exception as e:
         logger.exception(e)
+        crashed = True
         interrupt_received = True
 
     # epoch was completed, increment it to set the correct epoch count when interrupted
@@ -508,7 +510,7 @@ def train_pipeline(root_path: str) -> None:
 
     if interrupt_received:
         # discard partially accumulated iters
-        if not apply_gradient:
+        if not apply_gradient or crashed:
             current_iter -= 1
 
         if current_iter > 0:

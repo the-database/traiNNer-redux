@@ -192,7 +192,7 @@ class PerceptualFP16Loss(nn.Module):
         s_amplitude = self.forward_once_fd(x_mag, y_mag, i)
         s_phase = self.forward_once_fd(x_phase, y_phase, i)
 
-        return s_amplitude + s_phase * self.phase_weight_fd
+        return (s_amplitude + s_phase * self.phase_weight_fd).mean()
 
     def pd(self, x_vgg: Tensor, y_vgg: Tensor, _: int = -1) -> Tensor:
         x_vgg = x_vgg / (torch.sum(x_vgg, dim=(2, 3), keepdim=True) + 1e-14)

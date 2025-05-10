@@ -22,6 +22,7 @@ EXCLUDE_ARCHS = {
     "swin2sr",
     "swinir",
     "unetdiscriminatorsn",
+    "unetsegmentation",
     "vggfeatureextractor",
     "vggstylediscriminator",
 }

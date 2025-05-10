@@ -12,9 +12,10 @@ traiNNer-redux is a deep learning training framework for image super resolution 
    :maxdepth: 2
    :caption: Guides
 
-   /index
+   /introduction
    /getting_started
    /training_guidelines
+   /architectures
 
 .. toctree::
    :maxdepth: 2
