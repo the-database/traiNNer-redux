@@ -1,70 +1,83 @@
 from collections.abc import Sequence
 
 import torch
-from timm.layers.drop import DropPath
 from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
+from torch.nn.utils import spectral_norm
 
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
-class Attention(nn.Module):
-    """
-    Vanilla self-attention from Transformer: https://arxiv.org/abs/1706.03762.
-    Modified from timm.
-    """
+def sconv(
+    in_channels: int,
+    out_channels: int,
+    kernel_size: int | tuple[int, int],
+    stride: int | tuple[int, int] = 1,
+    padding: str | int | tuple[int, int] = 0,
+    dilation: int | tuple[int, int] = 1,
+    groups: int = 1,
+    bias: bool = True,
+    padding_mode: str = "zeros",
+) -> nn.Module:
+    return spectral_norm(
+        nn.Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride,
+            padding,
+            dilation,
+            groups,
+            bias,
+            padding_mode,
+        )
+    )
+
+
+class InceptionDWConv2d(nn.Module):
+    """Inception depthweise convolution"""
 
     def __init__(
         self,
-        dim: int,
-        head_dim: int = 32,
-        num_heads: int | None = None,
-        qkv_bias: bool = False,
-        attn_drop: float = 0.0,
-        proj_drop: float = 0.0,
-        proj_bias: bool = False,
-        **kwargs,
+        in_channels: int,
+        square_kernel_size: int = 3,
+        band_kernel_size: int = 11,
+        branch_ratio: float = 0.125,
     ) -> None:
         super().__init__()
 
-        self.head_dim = head_dim
-        self.scale = head_dim**-0.5
-
-        self.num_heads = num_heads if num_heads else dim // head_dim
-        if self.num_heads == 0:
-            self.num_heads = 1
-
-        self.attention_dim = self.num_heads * self.head_dim
-
-        self.qkv = nn.Linear(dim, self.attention_dim * 3, bias=qkv_bias)
-        self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(self.attention_dim, dim, bias=proj_bias)
-        self.proj_drop = nn.Dropout(proj_drop)
+        gc = int(in_channels * branch_ratio)  # channel numbers of a convolution branch
+        self.dwconv_hw = nn.Conv2d(
+            gc, gc, square_kernel_size, padding=square_kernel_size // 2, groups=gc
+        )
+        self.dwconv_w = nn.Conv2d(
+            gc,
+            gc,
+            kernel_size=(1, band_kernel_size),
+            padding=(0, band_kernel_size // 2),
+            groups=gc,
+        )
+        self.dwconv_h = nn.Conv2d(
+            gc,
+            gc,
+            kernel_size=(band_kernel_size, 1),
+            padding=(band_kernel_size // 2, 0),
+            groups=gc,
+        )
+        self.split_indexes = [in_channels - 3 * gc, gc, gc, gc]
 
     def forward(self, x: Tensor) -> Tensor:
-        B, H, W, _ = x.shape  # noqa: N806
-        N = H * W  # noqa: N806
-        qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, self.head_dim)
-            .permute(2, 0, 3, 1, 4)
+        x_id, x_hw, x_w, x_h = torch.split(x, self.split_indexes, dim=1)
+        return torch.cat(
+            (x_id, self.dwconv_hw(x_hw), self.dwconv_w(x_w), self.dwconv_h(x_h)),
+            dim=1,
         )
-        q, k, v = qkv.unbind(0)  # make torchscript happy (cannot use tensor as tuple)
-
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-        attn = attn.softmax(dim=-1)
-        attn = self.attn_drop(attn)
-
-        x = (attn @ v).transpose(1, 2).reshape(B, H, W, self.attention_dim)
-        x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
 
 
 class DConv(nn.Module):
     def __init__(self, dim: int) -> None:
         super().__init__()
-        self.conv = nn.Conv2d(dim, dim, kernel_size=7, padding=7 // 2, groups=dim)
+        self.conv = InceptionDWConv2d(dim)
 
     def forward(self, x: Tensor) -> Tensor:
         return self.conv(x.permute(0, 3, 1, 2)).permute(0, 2, 3, 1)
@@ -80,25 +93,18 @@ class GatedCNNBlock(nn.Module):
     """
 
     def __init__(
-        self,
-        dim: int,
-        expansion_ratio: float = 8 / 3,
-        conv_ratio: float = 1.0,
-        drop_path: float = 0.0,
-        att: bool = False,
+        self, dim: int, expansion_ratio: float = 8 / 3, conv_ratio: float = 1.0
     ) -> None:
         super().__init__()
-        if att:
-            expansion_ratio = 1.5
         self.norm = nn.RMSNorm(dim, eps=1e-6)
         hidden = int(expansion_ratio * dim)
-        self.fc1 = nn.Linear(dim, hidden * 2)
-        self.act = nn.Mish()
+        self.fc1 = spectral_norm(nn.Linear(dim, hidden * 2))
+        self.act = nn.SiLU()
         conv_channels = int(conv_ratio * dim)
         self.split_indices = [hidden, hidden - conv_channels, conv_channels]
-        self.conv = Attention(conv_channels) if att else DConv(conv_channels)
-        self.fc2 = nn.Linear(hidden, dim)
-        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
+        self.conv = DConv(conv_channels)
+        self.fc2 = spectral_norm(nn.Linear(hidden, dim))
+        self.gamma = nn.Parameter(torch.ones(dim) * 1e-6)
         self.apply(self._init_weights)
 
     @staticmethod
@@ -113,44 +119,66 @@ class GatedCNNBlock(nn.Module):
         x = self.norm(x)
         g, i, c = torch.split(self.fc1(x), self.split_indices, dim=-1)
         c = self.conv(c)
-        x = self.fc2(self.act(g) * torch.cat((i, c), dim=-1))
-        x = self.drop_path(x)
+        x = self.fc2(self.act(g) * torch.cat((i, c), dim=-1)) * self.gamma
         return x + shortcut
 
 
-class Down(nn.Sequential):
-    def __init__(self, dim: int = 48, out_dim: int = 48) -> None:
-        super().__init__(nn.Conv2d(dim, out_dim, 3, 2, 1), nn.GroupNorm(4, out_dim))
+class Stem(nn.Module):
+    r"""Code modified from InternImage:
+    https://github.com/OpenGVLab/InternImage
+    """
+
+    def __init__(
+        self,
+        in_chs: int = 3,
+        out_chs: int = 96,
+    ) -> None:
+        super().__init__()
+        self.conv1 = sconv(in_chs, out_chs // 2, kernel_size=3, stride=2, padding=1)
+        self.act = nn.SiLU()
+        self.conv2 = sconv(out_chs // 2, out_chs, kernel_size=3, stride=2, padding=1)
+        self.norm2 = nn.RMSNorm(out_chs, eps=1e-6)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.conv1(x)
+        x = self.act(x)
+        x = self.conv2(x)
+        x = x.permute(0, 2, 3, 1)
+        x = self.norm2(x)
+        return x
+
+
+class DownsampleNormFirst(nn.Module):
+    def __init__(
+        self,
+        in_chs: int = 96,
+        out_chs: int = 198,
+    ) -> None:
+        super().__init__()
+        self.norm = nn.RMSNorm(in_chs)
+        self.conv = sconv(in_chs, out_chs, kernel_size=3, stride=2, padding=1)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.norm(x)
+        x = x.permute(0, 3, 1, 2)
+        x = self.conv(x)
+        x = x.permute(0, 2, 3, 1)
+        return x
 
 
 class Blocks(nn.Module):
-    def __init__(
-        self,
-        in_dim: int,
-        out_dim: int,
-        blocks: int,
-        scale: int,
-        att: bool,
-        drop: Sequence[float],
-    ) -> None:
+    def __init__(self, in_dim: int, out_dim: int, blocks: int, scale: int) -> None:
         super().__init__()
         self.down = (
-            Down(in_dim, out_dim)
+            DownsampleNormFirst(in_dim, out_dim)
             if scale == 2
-            else nn.Sequential(
-                Down(in_dim, out_dim // 2), nn.Mish(True), Down(out_dim // 2, out_dim)
-            )
+            else Stem(in_dim, out_dim)
         )
-        self.blocks = nn.Sequential(
-            *[
-                GatedCNNBlock(out_dim, att=att, drop_path=drop[index])
-                for index in range(blocks)
-            ]
-        )
+        self.blocks = nn.Sequential(*[GatedCNNBlock(out_dim) for _ in range(blocks)])
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.down(x).permute(0, 2, 3, 1)
-        x = self.blocks(x).permute(0, 3, 1, 2)
+        x = self.down(x)
+        x = self.blocks(x)
         return x
 
 
@@ -160,17 +188,12 @@ class MetaGan2(nn.Module):
         self,
         in_ch: int = 3,
         n_class: int = 1,
-        dims: Sequence[int] = (48, 96, 192, 288),
-        blocks: Sequence[int] = (3, 3, 9, 3),
-        downs: Sequence[int] = (4, 4, 2, 2),
-        drop_path: float = 0.0,
-        end_drop: float = 0.0,
+        dims: Sequence[int] = (32, 64, 128, 192),
+        blocks: Sequence[int] = (3, 3, 15, 3),
+        downs: Sequence[int] = (4, 2, 2, 2),
     ) -> None:
         super().__init__()
         dims = [in_ch, *list(dims)]
-        dp_rates = [
-            x.tolist() for x in torch.linspace(0, drop_path, sum(blocks)).split(blocks)
-        ]
         self.stages = nn.Sequential(
             *[
                 Blocks(
@@ -178,18 +201,26 @@ class MetaGan2(nn.Module):
                     dims[index + 1],
                     blocks[index],
                     downs[index],
-                    index > 1,
-                    dp_rates[index],
                 )
                 for index in range(len(blocks))
             ]
-            + [
-                nn.Conv2d(dims[-1], 100, 1, 1, 0),
+        )
+        self.head = nn.Sequential(
+            *[
+                spectral_norm(nn.Linear(dims[-1], dims[-1] * 4)),
                 nn.Mish(True),
-                nn.Dropout(end_drop),
-                nn.Conv2d(100, n_class, 1, 1, 0),
+                nn.Linear(dims[-1] * 4, dims[-1]),
             ]
         )
 
+    def perceptual(self, x: Tensor) -> list[Tensor]:
+        list_dict = []
+        for layer in self.stages:
+            x = layer(x)
+            list_dict.append(x)
+        list_dict.append(self.head(x))
+        return list_dict
+
     def forward(self, x: Tensor) -> Tensor:
-        return self.stages(x)
+        x = self.stages(x)
+        return self.head(x)
