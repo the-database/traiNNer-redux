@@ -308,7 +308,7 @@ for arch in archs:
                 osp.pardir,
                 osp.pardir,
                 osp.pardir,
-                "./options/train",
+                "./options/_templates/train",
                 folder_name,
             )
         )
@@ -318,11 +318,42 @@ for arch in archs:
                 osp.pardir,
                 osp.pardir,
                 osp.pardir,
-                "./options/test",
+                "./options/_templates/test",
                 folder_name,
             )
         )
         onnx_folder_path = osp.normpath(
+            osp.join(
+                __file__,
+                osp.pardir,
+                osp.pardir,
+                osp.pardir,
+                "./options/_templates/onnx",
+                folder_name,
+            )
+        )
+
+        train_folder_path2 = osp.normpath(
+            osp.join(
+                __file__,
+                osp.pardir,
+                osp.pardir,
+                osp.pardir,
+                "./options/train",
+                folder_name,
+            )
+        )
+        test_folder_path2 = osp.normpath(
+            osp.join(
+                __file__,
+                osp.pardir,
+                osp.pardir,
+                osp.pardir,
+                "./options/test",
+                folder_name,
+            )
+        )
+        onnx_folder_path2 = osp.normpath(
             osp.join(
                 __file__,
                 osp.pardir,
@@ -336,6 +367,9 @@ for arch in archs:
         os.makedirs(train_folder_path, exist_ok=True)
         os.makedirs(test_folder_path, exist_ok=True)
         os.makedirs(onnx_folder_path, exist_ok=True)
+        os.makedirs(train_folder_path2, exist_ok=True)
+        os.makedirs(test_folder_path2, exist_ok=True)
+        os.makedirs(onnx_folder_path2, exist_ok=True)
 
         template_path_paired_fromscratch = osp.normpath(
             osp.join(
@@ -446,26 +480,6 @@ for arch in archs:
                     )
                 )
 
-            # with open(
-            #     osp.join(
-            #         train_folder_path,
-            #         f"{variant}_OTF_bicubic_ms_ssim_l1_fromscratch.yml",
-            #     ),
-            #     mode="w",
-            # ) as fw:
-            #     fw.write(
-            #         final_template(
-            #             template_paired_fromscratch,
-            #             arch,
-            #             variant,
-            #             OFFICIAL_SETTINGS_FROMSCRATCH,
-            #             template_otfbicubic1,
-            #             template_otfbicubic2,
-            #             "OTF_bicubic_ms_ssim_l1",
-            #             True,
-            #         )
-            #     )
-
             with open(osp.join(test_folder_path, f"{variant}.yml"), mode="w") as fw:
                 fw.write(final_template(template_test_single, arch, variant))
 
@@ -475,3 +489,36 @@ for arch in archs:
                         template_onnx, arch, variant, None, template_otf1, template_otf2
                     )
                 )
+
+            gitignore_contents = """# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+"""
+
+            with open(
+                osp.join(
+                    train_folder_path2,
+                    ".gitignore",
+                ),
+                mode="w",
+            ) as fw:
+                fw.write(gitignore_contents)
+
+            with open(
+                osp.join(
+                    test_folder_path2,
+                    ".gitignore",
+                ),
+                mode="w",
+            ) as fw:
+                fw.write(gitignore_contents)
+
+            with open(
+                osp.join(
+                    onnx_folder_path2,
+                    ".gitignore",
+                ),
+                mode="w",
+            ) as fw:
+                fw.write(gitignore_contents)

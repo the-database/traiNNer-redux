@@ -1,8 +1,12 @@
 import argparse
 import os
+import platform
 import random
+import shlex
+import sys
 from collections import OrderedDict
 from os import path as osp
+from pathlib import Path
 from typing import Any
 
 import msgspec
@@ -18,6 +22,39 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Dumper, Loader
+
+
+def assert_not_using_template(opt_path: str) -> None:
+    abs_path = Path(opt_path).resolve()
+    template_root = Path("options/_templates").resolve()
+
+    if template_root in abs_path.parents:
+        rel_path = abs_path.relative_to(template_root)
+        # Prepend 'custom_' to the filename
+        custom_filename = "custom_" + rel_path.name
+        suggested_path = Path("options") / rel_path.parent / custom_filename
+
+        # Build copy command
+        if platform.system() == "Windows":
+            copy_cmd = f'copy "{abs_path}" "{suggested_path}"'
+        else:
+            copy_cmd = f'cp "{abs_path}" "{suggested_path}"'
+
+        # Rebuild the current command with the new opt path
+        original_args = sys.argv
+        new_args = [
+            str(suggested_path) if Path(arg).resolve() == abs_path else arg
+            for arg in original_args
+        ]
+        new_cmd = " ".join(shlex.quote(arg) for arg in new_args)
+
+        raise RuntimeError(
+            f"You are attempting to use a template config.\n\n"
+            f"Instead of modifying the template directly, please copy it to another folder first, "
+            f"such as:\n  {Path(suggested_path).parent}\n\n"
+            f"Then give your copy a unique filename. You can copy the template with the following command (change the custom filename of {custom_filename} to whatever you prefer):\n  {copy_cmd}\n\n"
+            f"Then set up your options in your copied config file and re-run the command like this, for example:\n  python {new_cmd}"
+        )
 
 
 def ordered_yaml() -> tuple[type[Loader], type[Dumper]]:
@@ -137,6 +174,7 @@ def parse_options(
     args = parser.parse_args()
 
     # parse yml to dict
+    assert_not_using_template(args.opt)
     opt, contents = yaml_load(args.opt)
     opt.contents = contents
 
