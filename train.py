@@ -45,7 +45,7 @@ from traiNNer.utils import (
     scandir,
 )
 from traiNNer.utils.config import Config
-from traiNNer.utils.logger import clickable_file_path
+from traiNNer.utils.logger import clickable_file_path, log_git_status
 from traiNNer.utils.misc import free_space_gb_str, set_random_seed
 from traiNNer.utils.options import copy_opt_file
 from traiNNer.utils.redux_options import ReduxOptions
@@ -285,6 +285,7 @@ def train_pipeline(root_path: str) -> None:
     log_file = osp.join(opt.path.log, f"train_{opt.name}_{get_time_str()}.log")
     logger = get_root_logger(logger_name="traiNNer", log_file=log_file)
     logger.info(get_env_info())
+    log_git_status()
     logger.debug(opt.contents)
     opt.contents = None
 

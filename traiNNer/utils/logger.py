@@ -1,5 +1,7 @@
 import datetime
 import logging
+import shutil
+import subprocess
 import time
 from logging import Logger
 from pathlib import Path
@@ -269,8 +271,79 @@ def get_env_info() -> str:
     return msg
 
 
+def log_git_status() -> None:
+    logger = get_root_logger()
+    if shutil.which("git") is None:
+        logger.warning(
+            "Git is not installed or not available in PATH. "
+            "You may have downloaded this repo as a ZIP, which is not recommended. "
+            "Please clone using `git clone` to ensure easier updates. Please see the %s for more info.",
+            clickable_url(
+                "https://trainner-redux.readthedocs.io/en/latest/getting_started.html#initial-setup",
+                "documentation",
+            ),
+        )
+        return
+
+    try:
+        # Get commit hash and date
+        commit_hash = (
+            subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        commit_date = (
+            subprocess.check_output(
+                ["git", "show", "-s", "--format=%cd", "--date=iso", commit_hash],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        # Check if working directory is clean
+        status_output = (
+            subprocess.check_output(
+                ["git", "status", "--porcelain"], stderr=subprocess.DEVNULL
+            )
+            .decode("utf-8")
+            .strip()
+        )
+        dirty_flag = " (dirty)" if status_output else ""
+
+        # Check if local is behind remote
+        try:
+            subprocess.check_output(
+                ["git", "remote", "update"], stderr=subprocess.DEVNULL
+            )
+            behind_output = subprocess.check_output(
+                ["git", "status", "-uno"], stderr=subprocess.DEVNULL
+            ).decode("utf-8")
+
+            behind_flag = ""
+            if "Your branch is behind" in behind_output:
+                behind_flag = " (behind remote)"
+        except Exception:
+            behind_flag = ""
+
+        logger.info("Git commit: %s%s%s", commit_hash, dirty_flag, behind_flag)
+        logger.info("Commit date: %s", commit_date)
+
+    except Exception as e:
+        logger.warning("Failed to get git information: %s", e)
+
+
 def clickable_file_path(file_path: str | Path, display_text: str) -> str:
     file_path = str(file_path).replace(" ", "%20")
     out = f"[link=file:///{file_path}]{escape(display_text)}[/link]"
     # print(out)
+    return out
+
+
+def clickable_url(url: str, display_text: str) -> str:
+    url = str(url).replace(" ", "%20")
+    out = f"[link={url}]{escape(display_text)}[/link]"
     return out
