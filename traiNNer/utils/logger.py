@@ -265,13 +265,14 @@ def get_env_info() -> str:
         f"\n\tStorage:"
         f"\n\t\tFree Space: {free_space_gb_str()}"
         "\nVersion Information: "
+        f"\n\ttraiNNer-redux: {log_git_status()}"
         f"\n\tPyTorch: {torch.__version__}"
         f"\n\tTorchVision: {torchvision.__version__}"
     )
     return msg
 
 
-def log_git_status() -> None:
+def log_git_status() -> str | None:
     logger = get_root_logger()
     if shutil.which("git") is None:
         logger.warning(
@@ -301,6 +302,8 @@ def log_git_status() -> None:
             ),
         )
         return
+
+    msg = ""
 
     try:
         # Get commit hash and date
@@ -346,8 +349,9 @@ def log_git_status() -> None:
         except Exception:
             behind_flag = ""
 
-        logger.info("Git commit: %s%s%s", commit_hash, dirty_flag, behind_flag)
-        logger.info("Commit date: %s", commit_date)
+        msg += f"\n\t\tGit commit: {commit_hash}{dirty_flag}{behind_flag}"
+        msg += f"\n\t\tCommit date: {commit_date}"
+        return msg
 
     except Exception as e:
         logger.warning("Failed to get git information: %s", e)
