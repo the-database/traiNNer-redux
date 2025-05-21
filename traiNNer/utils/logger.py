@@ -277,7 +277,24 @@ def log_git_status() -> None:
         logger.warning(
             "Git is not installed or not available in PATH. "
             "You may have downloaded this repo as a ZIP, which is not recommended. "
-            "Please clone using `git clone` to ensure easier updates. Please see the %s for more info.",
+            "Please install git, then clone the repo using `git clone` to ensure easier updates. Please see the %s for more info.",
+            clickable_url(
+                "https://trainner-redux.readthedocs.io/en/latest/getting_started.html#initial-setup",
+                "documentation",
+            ),
+        )
+        return
+
+    # Check if we're inside a Git repo
+    try:
+        subprocess.check_output(
+            ["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL
+        )
+    except subprocess.CalledProcessError:
+        logger.warning(
+            "This directory is not a Git repository. "
+            "You may have downloaded this repo as a ZIP file, which is not recommended. "
+            "Please clone the repo using `git clone` to ensure easier updates. Please see the %s for more info.",
             clickable_url(
                 "https://trainner-redux.readthedocs.io/en/latest/getting_started.html#initial-setup",
                 "documentation",
