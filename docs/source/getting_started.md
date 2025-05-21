@@ -17,7 +17,8 @@ The repository comes with several configs that are ready to use out of the box, 
 
 ```
 venv\Scripts\activate
-python train.py --auto_resume -opt ./options/train/SPAN/SPAN_fromscratch.yml
+copy "options/_templates/train/SPAN/SPAN_S_fromscratch.yml" "options/train/SPAN/custom_SPAN_S_fromscratch.yml"
+python train.py --auto_resume -opt ./options/train/SPAN/custom_SPAN_S_fromscratch.yml
 ```
 
 You should see the following output within a few minutes, depending on your GPU speed:
