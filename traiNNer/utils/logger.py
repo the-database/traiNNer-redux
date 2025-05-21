@@ -276,9 +276,9 @@ def log_git_status() -> str | None:
     logger = get_root_logger()
     if shutil.which("git") is None:
         logger.warning(
-            "Git is not installed or not available in PATH. "
+            "[yellow]Git is not installed or not available in PATH. "
             "You may have downloaded this repo as a ZIP, which is not recommended. "
-            "Please install git, then clone the repo using `git clone` to ensure easier updates. Please see the %s for more info.",
+            "Please install git, then clone the repo using [bold]git clone[/bold] to ensure easier updates. Please see the %s for more info.[/yellow]",
             clickable_url(
                 "https://trainner-redux.readthedocs.io/en/latest/getting_started.html#initial-setup",
                 "documentation",
@@ -293,9 +293,9 @@ def log_git_status() -> str | None:
         )
     except subprocess.CalledProcessError:
         logger.warning(
-            "This directory is not a Git repository. "
+            "[yellow]This directory is not a Git repository. "
             "You may have downloaded this repo as a ZIP file, which is not recommended. "
-            "Please clone the repo using `git clone` to ensure easier updates. Please see the %s for more info.",
+            "Please clone the repo using [bold]git clone[/bold] to ensure easier updates. Please see the %s for more info.[/yellow]",
             clickable_url(
                 "https://trainner-redux.readthedocs.io/en/latest/getting_started.html#initial-setup",
                 "documentation",
@@ -345,7 +345,7 @@ def log_git_status() -> str | None:
 
             behind_flag = ""
             if "Your branch is behind" in behind_output:
-                behind_flag = " (behind remote)"
+                behind_flag = " ([yellow]updates available - please use [bold]git pull[/bold] to update[/yellow])"
         except Exception:
             behind_flag = ""
 
