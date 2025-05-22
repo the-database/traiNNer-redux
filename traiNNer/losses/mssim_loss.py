@@ -432,7 +432,7 @@ def ms_ssim(
     test_y_channel: bool = True,
     is_prod: bool = True,
     color_space: str = "yiq",
-    include_luminance: bool = True,
+    include_luminance: bool = False,
 ) -> Tensor:
     r"""Compute Multiscale structural similarity for a batch of images.
     Args:

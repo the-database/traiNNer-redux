@@ -1,5 +1,7 @@
 import datetime
 import logging
+import shutil
+import subprocess
 import time
 from logging import Logger
 from pathlib import Path
@@ -263,14 +265,106 @@ def get_env_info() -> str:
         f"\n\tStorage:"
         f"\n\t\tFree Space: {free_space_gb_str()}"
         "\nVersion Information: "
+        f"\n\ttraiNNer-redux: {log_git_status()}"
         f"\n\tPyTorch: {torch.__version__}"
         f"\n\tTorchVision: {torchvision.__version__}"
     )
     return msg
 
 
+def log_git_status() -> str | None:
+    logger = get_root_logger()
+    if shutil.which("git") is None:
+        logger.warning(
+            "[yellow]Git is not installed or not available in PATH. "
+            "You may have downloaded this repo as a ZIP, which is not recommended. "
+            "Please install git, then clone the repo using [bold]git clone[/bold] to ensure easier updates. Please see the %s for more info.[/yellow]",
+            clickable_url(
+                "https://trainner-redux.readthedocs.io/en/latest/getting_started.html#initial-setup",
+                "documentation",
+            ),
+        )
+        return
+
+    # Check if we're inside a Git repo
+    try:
+        subprocess.check_output(
+            ["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL
+        )
+    except subprocess.CalledProcessError:
+        logger.warning(
+            "[yellow]This directory is not a Git repository. "
+            "You may have downloaded this repo as a ZIP file, which is not recommended. "
+            "Please clone the repo using [bold]git clone[/bold] to ensure easier updates. Please see the %s for more info.[/yellow]",
+            clickable_url(
+                "https://trainner-redux.readthedocs.io/en/latest/getting_started.html#initial-setup",
+                "documentation",
+            ),
+        )
+        return
+
+    msg = ""
+
+    try:
+        # Get commit hash and date
+        commit_hash = (
+            subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        commit_date = (
+            subprocess.check_output(
+                ["git", "show", "-s", "--format=%cd", "--date=iso", commit_hash],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        # Check if working directory is clean
+        status_output = (
+            subprocess.check_output(
+                ["git", "status", "--porcelain"], stderr=subprocess.DEVNULL
+            )
+            .decode("utf-8")
+            .strip()
+        )
+        dirty_flag = " (dirty)" if status_output else ""
+
+        # Check if local is behind remote
+        try:
+            subprocess.check_output(
+                ["git", "remote", "update"], stderr=subprocess.DEVNULL
+            )
+            behind_output = subprocess.check_output(
+                ["git", "status", "-uno"], stderr=subprocess.DEVNULL
+            ).decode("utf-8")
+
+            behind_flag = " ([green]Up to date[/green])"
+            if "Your branch is behind" in behind_output:
+                behind_flag = " ([yellow]updates available - please use [bold]git pull[/bold] to update[/yellow])"
+        except Exception:
+            behind_flag = ""
+
+        msg += f"\n\t\tGit commit: {commit_hash}{dirty_flag}{behind_flag}"
+        msg += f"\n\t\tCommit date: {commit_date}"
+        return msg
+
+    except Exception as e:
+        logger.warning("Failed to get git information: %s", e)
+
+
 def clickable_file_path(file_path: str | Path, display_text: str) -> str:
     file_path = str(file_path).replace(" ", "%20")
     out = f"[link=file:///{file_path}]{escape(display_text)}[/link]"
     # print(out)
+    return out
+
+
+def clickable_url(url: str, display_text: str) -> str:
+    url = str(url).replace(" ", "%20")
+    out = f"[link={url}]{escape(display_text)}[/link]"
     return out

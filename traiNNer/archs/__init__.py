@@ -6,7 +6,7 @@ from typing import Any
 
 from torch import nn
 
-from traiNNer.utils import get_root_logger, scandir
+from traiNNer.utils.misc import scandir
 from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
 
 __all__ = ["build_network"]
@@ -27,6 +27,8 @@ _arch_modules = [
 
 
 def build_network(opt: dict[str, Any]) -> nn.Module:
+    from traiNNer.utils.logger import get_root_logger
+
     opt = deepcopy(opt)
     network_type = opt.pop("type")
     logger = get_root_logger()

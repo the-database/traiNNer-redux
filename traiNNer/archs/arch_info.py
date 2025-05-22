@@ -1,5 +1,5 @@
 # TODO refactor
-from typing import Any, Literal
+from typing import Any, Literal, NotRequired, TypedDict
 
 ARCHS_WITHOUT_FP16 = {
     "atd_light",
@@ -1080,3 +1080,150 @@ def initialize_official_settings(settings: dict[str, dict[str, Any]]) -> None:
 
 initialize_official_settings(OFFICIAL_SETTINGS_FROMSCRATCH)
 initialize_official_settings(OFFICIAL_SETTINGS_FINETUNE)
+
+
+class ArchInfo(TypedDict):
+    names: list[str]
+    scales: list[int]
+    extras: NotRequired[dict[str, str]]
+    folder_name_override: NotRequired[str]
+    video_override: NotRequired[bool]
+    pth_override: NotRequired[bool]
+    overrides: NotRequired[dict[str, str]]
+
+
+ALL_SCALES = [1, 2, 3, 4, 8]
+ALL_ARCHS: list[ArchInfo] = [
+    {
+        "names": ["ESRGAN", "ESRGAN_lite"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "use_pixel_unshuffle": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality."
+        },
+    },
+    {"names": ["ATD"], "scales": ALL_SCALES},
+    {"names": ["DAT", "DAT_2", "DAT_S", "DAT_light"], "scales": ALL_SCALES},
+    {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
+    {"names": ["OmniSR"], "scales": ALL_SCALES},
+    {
+        "names": ["PLKSR", "PLKSR_Tiny"],
+        "scales": ALL_SCALES,
+        "overrides": {
+            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
+        },
+    },
+    {
+        "names": ["RealPLKSR", "RealPLKSR_Tiny"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffle  # pixelshuffle, dysample (better quality on even number scales, but does not support dynamic ONNX)",
+            "layer_norm": "true  # better quality, not compatible with older models",
+        },
+        "overrides": {
+            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
+        },
+    },
+    {
+        "names": ["RealCUGAN"],
+        "scales": [2, 3, 4],
+        "extras": {"pro": "true", "fast": "false"},
+    },
+    {
+        "names": ["SPAN", "SPAN_S"],
+        "scales": ALL_SCALES,
+        "extras": {"norm": "false  # some pretrains require norm: true"},
+    },
+    {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
+    {
+        "names": ["Compact", "UltraCompact", "SuperUltraCompact"],
+        "scales": ALL_SCALES,
+    },
+    {"names": ["SwinIR_L", "SwinIR_M", "SwinIR_S"], "scales": ALL_SCALES},
+    {"names": ["RGT", "RGT_S"], "scales": ALL_SCALES},
+    {"names": ["DRCT", "DRCT_L", "DRCT_XL"], "scales": ALL_SCALES},
+    {
+        "names": ["SPANPlus", "SPANPlus_STS", "SPANPlus_S", "SPANPlus_ST"],
+        "scales": ALL_SCALES,
+        "pth_override": True,
+    },
+    {
+        "names": ["HiT_SRF", "HiT_SNG", "HiT_SIR"],
+        "folder_name_override": "HiT-SR",
+        "scales": ALL_SCALES,
+    },
+    {
+        "names": ["TSCUNet"],
+        "scales": [1, 2, 4, 8],
+        "pth_override": True,
+        "video_override": True,
+    },
+    {
+        "names": ["SCUNet_aaf6aa"],
+        "scales": [1, 2, 4, 8],
+        "pth_override": True,
+        "folder_name_override": "SCUNet_aaf6aa",
+    },
+    {
+        "names": ["ArtCNN_R16F96", "ArtCNN_R8F64"],
+        "scales": ALL_SCALES,
+    },
+    {
+        "names": ["MoSR", "MoSR_T"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "geoensemblepixelshuffle  # geoensemblepixelshuffle, dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle",
+            "drop_path": "0  # 0.05",
+        },
+    },
+    {"names": ["LMLT_Base", "LMLT_Large", "LMLT_Tiny"], "scales": ALL_SCALES},
+    {
+        "names": ["EIMN_L", "EIMN_A"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "EIMN",
+    },
+    {"names": ["MAN", "MAN_tiny", "MAN_light"], "scales": ALL_SCALES},
+    {
+        "names": ["FlexNet", "MetaFlexNet"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)"
+        },
+    },
+    {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
+    {
+        "names": ["MoESR2"],
+        "folder_name_override": "MoESR",
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
+        },
+    },
+    {
+        "names": ["RCAN", "RCAN_unshuffle"],
+        "scales": ALL_SCALES,
+    },
+    {"names": ["RTMoSR", "RTMoSR_L", "RTMoSR_UL"], "scales": ALL_SCALES},
+    {
+        "names": ["GRL_B", "GRL_S", "GRL_T"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "GRL",
+    },
+    {"names": ["ELAN", "ELAN_light"], "scales": ALL_SCALES},
+    {"names": ["DCTLSA"], "scales": ALL_SCALES},
+    {"names": ["DITN_Real"], "scales": ALL_SCALES, "folder_name_override": "DITN"},
+    {"names": ["DWT", "DWT_S"], "scales": ALL_SCALES},
+    {"names": ["EMT"], "scales": ALL_SCALES},
+    {"names": ["SAFMN", "SAFMN_L"], "scales": ALL_SCALES},
+    {"names": ["Sebica"], "scales": ALL_SCALES},
+    {"names": ["SeemoRe_T"], "scales": ALL_SCALES, "folder_name_override": "SeemoRe"},
+    {"names": ["CRAFT"], "scales": ALL_SCALES},
+    {"names": ["CascadedGaze"], "scales": [1]},
+    {
+        "names": ["MoSRV2"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
+            "unshuffle_mod": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality.",
+        },
+    },
+]

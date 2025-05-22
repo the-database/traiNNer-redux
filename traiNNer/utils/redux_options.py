@@ -337,6 +337,18 @@ class ValOptions(StrictStruct):
             description="Whether to save the validation images during validation, in the experiments/<name>/visualization folder."
         ),
     ]
+    tile_size: Annotated[
+        int,
+        Meta(
+            description="Tile size of input to use during validation, reduce VRAM usage but slower inference. 0 to disable."
+        ),
+    ] = 0
+    tile_overlap: Annotated[
+        int,
+        Meta(
+            description="Tile overlap to use during validation, larger is slower but reduces tile seams."
+        ),
+    ] = 0
     val_freq: Annotated[
         int | None, Meta(description="How often to run validations, in iterations.")
     ] = None

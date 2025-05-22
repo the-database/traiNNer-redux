@@ -46,8 +46,11 @@ from traiNNer.utils import (
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.logger import clickable_file_path
-from traiNNer.utils.misc import free_space_gb_str, set_random_seed
-from traiNNer.utils.options import copy_opt_file
+from traiNNer.utils.misc import (
+    free_space_gb_str,
+    set_random_seed,
+)
+from traiNNer.utils.options import copy_opt_file, diff_user_vs_template
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import TrainingState
 
@@ -257,6 +260,8 @@ def train_pipeline(root_path: str) -> None:
     assert opt.path.experiments_root is not None
     assert opt.path.log is not None
 
+    torch.cuda.set_per_process_memory_fraction(fraction=1.0)
+
     if opt.detect_anomaly:
         torch.autograd.set_detect_anomaly(True)
 
@@ -287,6 +292,9 @@ def train_pipeline(root_path: str) -> None:
     logger.info(get_env_info())
     logger.debug(opt.contents)
     opt.contents = None
+    diff, template_name = diff_user_vs_template(args.opt)
+    logger.info("Diff with default config (%s):\n%s", template_name, diff)
+    # logger.info()  # diff
 
     if opt.deterministic:
         logger.info(

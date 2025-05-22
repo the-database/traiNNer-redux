@@ -31,6 +31,7 @@ def test_pipeline(root_path: str) -> None:
         "save_img and metrics_enabled are both disabled, please enable at least one of them."
     )
 
+    torch.cuda.set_per_process_memory_fraction(fraction=1.0)
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 

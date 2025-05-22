@@ -488,6 +488,16 @@
   Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
 
   Type: bool
+### tile_size
+
+  Tile size of input to use during validation, reduce VRAM usage but slower inference. 0 to disable.
+
+  Type: int
+### tile_overlap
+
+  Tile overlap to use during validation, larger is slower but reduces tile seams.
+
+  Type: int
 ### val_freq
 
   How often to run validations, in iterations.

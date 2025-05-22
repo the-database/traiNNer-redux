@@ -1556,11 +1556,9 @@ num_feat: 64
 type: metagan2
 in_ch: 3
 n_class: 1
-dims: [48, 96, 192, 288]
-blocks: [3, 3, 9, 3]
-downs: [4, 4, 2, 2]
-drop_path: 0.0
-end_drop: 0.0
+dims: [32, 64, 128, 192]
+blocks: [3, 3, 15, 3]
+downs: [4, 2, 2, 2]
 ```
 ### UNetDiscriminatorSN
 #### unetdiscriminatorsn

@@ -1,8 +1,12 @@
 import argparse
 import os
+import platform
 import random
+import shlex
+import sys
 from collections import OrderedDict
 from os import path as osp
+from pathlib import Path
 from typing import Any
 
 import msgspec
@@ -18,6 +22,36 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Dumper, Loader
+
+
+def assert_not_using_template(opt_path: str) -> None:
+    abs_path = Path(opt_path).resolve()
+    template_root = Path("options/_templates").resolve()
+
+    if template_root in abs_path.parents:
+        rel_path = abs_path.relative_to(template_root)
+        custom_filename = "custom_" + rel_path.name
+        suggested_path = Path("options") / rel_path.parent / custom_filename
+
+        if platform.system() == "Windows":
+            copy_cmd = f'copy "{abs_path}" "{suggested_path}"'
+        else:
+            copy_cmd = f'cp "{abs_path}" "{suggested_path}"'
+
+        original_args = sys.argv
+        new_args = [
+            str(suggested_path) if Path(arg).resolve() == abs_path else arg
+            for arg in original_args
+        ]
+        new_cmd = " ".join(shlex.quote(arg) for arg in new_args)
+
+        raise RuntimeError(
+            f"You are attempting to use a template config.\n\n"
+            f"Instead of modifying the template directly, please copy it to another folder first, "
+            f"such as:\n  {Path(suggested_path).parent}\n\n"
+            f"Then give your copy a unique filename. You can copy the template with the following command (change the custom filename of {custom_filename} to whatever you prefer):\n  {copy_cmd}\n\n"
+            f"Then set up your options in your copied config file and re-run the command like this, for example:\n  python {new_cmd}"
+        )
 
 
 def ordered_yaml() -> tuple[type[Loader], type[Dumper]]:
@@ -137,6 +171,7 @@ def parse_options(
     args = parser.parse_args()
 
     # parse yml to dict
+    assert_not_using_template(args.opt)
     opt, contents = yaml_load(args.opt)
     opt.contents = contents
 
@@ -238,3 +273,180 @@ def copy_opt_file(opt_file: str, experiments_root: str) -> None:
         lines.insert(0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
         f.seek(0)
         f.writelines(lines)
+
+
+def find_arch_entry(variant: str) -> Any:
+    from traiNNer.archs.arch_info import ALL_ARCHS
+
+    for arch in ALL_ARCHS:
+        if variant in arch["names"]:
+            return arch
+    raise ValueError(f"Unknown variant: {variant}")
+
+
+def infer_template_tag(cfg: ReduxOptions) -> str:
+    # Use simple heuristics
+    if cfg.onnx is not None:
+        return "onnx"
+    elif cfg.train is None and cfg.val is not None:
+        return "test"
+
+    is_otf = cfg.high_order_degradation
+    is_finetune = cfg.path.pretrain_network_g  # TODO resume?
+
+    tag = "OTF_" if is_otf else ""
+    tag += "finetune" if is_finetune else "fromscratch"
+    return tag
+
+
+def regenerate_template_from_cfg(cfg: ReduxOptions) -> tuple[str, str]:
+    from scripts.options.generate_default_options import (
+        final_template,
+        template_filename,
+        template_onnx,
+        template_otf1,
+        template_otf2,
+        template_paired_finetune,
+        template_paired_fromscratch,
+        template_test_single,
+    )
+
+    from traiNNer.archs.arch_info import (
+        OFFICIAL_SETTINGS_FINETUNE,
+        OFFICIAL_SETTINGS_FROMSCRATCH,
+    )
+
+    if cfg.network_g is not None:
+        variant = cfg.network_g["type"].lower()
+        arch = find_arch_entry(variant.upper())
+
+        tag = infer_template_tag(cfg)
+
+        if tag == "onnx":
+            template_base = template_onnx
+            settings = None
+            otf1 = template_otf1
+            otf2 = template_otf2
+            name_suffix = ""
+        elif tag == "test":
+            template_base = template_test_single
+            settings = None
+            otf1 = ""
+            otf2 = ""
+            name_suffix = ""
+        else:
+            finetune = tag.endswith("finetune")
+            template_base = (
+                template_paired_finetune if finetune else template_paired_fromscratch
+            )
+            settings = (
+                OFFICIAL_SETTINGS_FINETUNE
+                if finetune
+                else OFFICIAL_SETTINGS_FROMSCRATCH
+            )
+            otf = tag.startswith("OTF_")
+            otf1 = template_otf1 if otf else ""
+            otf2 = template_otf2 if otf else ""
+            name_suffix = tag if otf else ""
+
+            return final_template(
+                template_base,
+                arch,
+                variant.upper(),
+                training_settings=settings,
+                template_otf1=otf1,
+                template_otf2=otf2,
+                name_suffix=name_suffix,
+            ), template_filename(variant, otf=otf, fromscratch=not finetune)
+
+    return "", ""
+
+
+def recursive_diff(
+    user: Any, template: Any, path: list[str] | None = None
+) -> list[tuple[str, Any]]:
+    path = path or []
+    diffs = []
+
+    if type(user) is not type(template):
+        diffs.append((".".join(path), user))
+        return diffs
+
+    if isinstance(user, dict):
+        for key in user:
+            new_path = [*path, key]
+            u_val = user[key]
+            t_val = template.get(key)
+            if u_val != t_val:
+                diffs.extend(recursive_diff(u_val, t_val, new_path))
+        for key in template:
+            if key not in user:
+                diffs.append((".".join([*path, key]), None))
+
+    elif isinstance(user, list):
+        if all(isinstance(x, dict) and "type" in x for x in user + template):
+            user_by_type = {x["type"]: x for x in user if "type" in x}
+            template_by_type = {x["type"]: x for x in template if "type" in x}
+            all_types = [x["type"] for x in user if "type" in x]
+
+            diff_list = []
+            for t in all_types:
+                u_item = user_by_type.get(t)
+                t_item = template_by_type.get(t)
+                if t_item is None:
+                    diff_list.append(u_item)
+                else:
+                    subdiffs = recursive_diff(u_item, t_item, [])
+                    if subdiffs:
+                        merged = {"type": t}
+                        for subkey, subval in subdiffs:
+                            merged[subkey] = subval
+                        diff_list.append(merged)
+
+            if diff_list:
+                diffs.append((".".join(path), diff_list))
+        else:
+            max_len = max(len(user), len(template))
+            for i in range(max_len):
+                u_val = user[i] if i < len(user) else None
+                t_val = template[i] if i < len(template) else None
+                if u_val != t_val:
+                    diffs.append((".".join([*path, str(i)]), u_val))
+
+    elif user != template:
+        diffs.append((".".join(path), user))
+
+    return diffs
+
+
+def insert_nested(tree: dict, keys: list[str], value: Any) -> None:
+    """Insert value into nested dict following keys path."""
+    for key in keys[:-1]:
+        tree = tree.setdefault(key, {})
+    tree[keys[-1]] = value
+
+
+def build_diff_tree_from_paths(diffs: list[tuple[str, Any]]) -> dict:
+    """Convert list of dot-path diffs into nested dict."""
+    result = {}
+    for path, value in diffs:
+        keys = path.split(".")
+        insert_nested(result, keys, value)
+    return result
+
+
+def diff_user_vs_template(user_yaml_path: Path) -> tuple[str, str]:
+    user_cfg_obj, _ = yaml_load(str(user_yaml_path))
+    template_str, template_filename = regenerate_template_from_cfg(user_cfg_obj)
+    template_cfg = yaml.safe_load(template_str)
+
+    with open(user_yaml_path) as f:
+        user_cfg = yaml.safe_load(f)
+
+    diffs = recursive_diff(user_cfg, template_cfg)
+    diff_tree = build_diff_tree_from_paths(diffs)
+    if not diff_tree:
+        return "", ""
+
+    diff_yaml = yaml.dump(diff_tree, sort_keys=False, allow_unicode=True)
+    return diff_yaml, template_filename

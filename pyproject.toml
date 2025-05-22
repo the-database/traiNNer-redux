@@ -112,7 +112,8 @@ ignore = [
     "ISC001",  # Implicit string concatenation, conflicts with formatter
 ]
 unfixable = [
-    "F841"
+    "F841",
+    "F401"
 ]
 [tool.ruff.format]
 # Like Black, use double quotes for strings.

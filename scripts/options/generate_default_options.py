@@ -1,27 +1,20 @@
 import os
 import re
 from os import path as osp
-from typing import Any, NotRequired, TypedDict
+from typing import Any
 
 from traiNNer.archs.arch_info import (
+    ALL_ARCHS,
     ARCHS_WITHOUT_CHANNELS_LAST,
     ARCHS_WITHOUT_FP16,
     OFFICIAL_SETTINGS_FINETUNE,
     OFFICIAL_SETTINGS_FROMSCRATCH,
+    ArchInfo,
 )
 
 
-class ArchInfo(TypedDict):
-    names: list[str]
-    scales: list[int]
-    extras: NotRequired[dict[str, str]]
-    folder_name_override: NotRequired[str]
-    video_override: NotRequired[bool]
-    pth_override: NotRequired[bool]
-    overrides: NotRequired[dict[str, str]]
-
-
-ALL_SCALES = [1, 2, 3, 4, 8]
+def template_filename(variant: str, otf: bool, fromscratch: bool) -> str:
+    return f"{variant}{'_OTF' if otf else ''}_{'fromscratch' if fromscratch else 'finetune'}.yml"
 
 
 def final_template(
@@ -87,10 +80,10 @@ def final_template(
 
     arch_key = variant.lower()
 
-    print(
-        arch_key,
-        arch_key in ARCHS_WITHOUT_CHANNELS_LAST,
-    )
+    # print(
+    #     arch_key,
+    #     arch_key in ARCHS_WITHOUT_CHANNELS_LAST,
+    # )
 
     if arch_key in ARCHS_WITHOUT_CHANNELS_LAST:
         template = template.replace(
@@ -160,240 +153,133 @@ def final_template(
     return template
 
 
-archs: list[ArchInfo] = [
-    {
-        "names": ["ESRGAN", "ESRGAN_lite"],
-        "scales": ALL_SCALES,
-        "extras": {
-            "use_pixel_unshuffle": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality."
-        },
-    },
-    {"names": ["ATD"], "scales": ALL_SCALES},
-    {"names": ["DAT", "DAT_2", "DAT_S", "DAT_light"], "scales": ALL_SCALES},
-    {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
-    {"names": ["OmniSR"], "scales": ALL_SCALES},
-    {
-        "names": ["PLKSR", "PLKSR_Tiny"],
-        "scales": ALL_SCALES,
-        "overrides": {
-            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
-        },
-    },
-    {
-        "names": ["RealPLKSR", "RealPLKSR_Tiny"],
-        "scales": ALL_SCALES,
-        "extras": {
-            "upsampler": "pixelshuffle  # pixelshuffle, dysample (better quality on even number scales, but does not support dynamic ONNX)",
-            "layer_norm": "true  # better quality, not compatible with older models",
-        },
-        "overrides": {
-            "lq_size": "96  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
-        },
-    },
-    {
-        "names": ["RealCUGAN"],
-        "scales": [2, 3, 4],
-        "extras": {"pro": "true", "fast": "false"},
-    },
-    {
-        "names": ["SPAN", "SPAN_S"],
-        "scales": ALL_SCALES,
-        "extras": {"norm": "false  # some pretrains require norm: true"},
-    },
-    {"names": ["SRFormer", "SRFormer_light"], "scales": ALL_SCALES},
-    {
-        "names": ["Compact", "UltraCompact", "SuperUltraCompact"],
-        "scales": ALL_SCALES,
-    },
-    {"names": ["SwinIR_L", "SwinIR_M", "SwinIR_S"], "scales": ALL_SCALES},
-    {"names": ["RGT", "RGT_S"], "scales": ALL_SCALES},
-    {"names": ["DRCT", "DRCT_L", "DRCT_XL"], "scales": ALL_SCALES},
-    {
-        "names": ["SPANPlus", "SPANPlus_STS", "SPANPlus_S", "SPANPlus_ST"],
-        "scales": ALL_SCALES,
-        "pth_override": True,
-    },
-    {
-        "names": ["HiT_SRF", "HiT_SNG", "HiT_SIR"],
-        "folder_name_override": "HiT-SR",
-        "scales": ALL_SCALES,
-    },
-    {
-        "names": ["TSCUNet"],
-        "scales": [1, 2, 4, 8],
-        "pth_override": True,
-        "video_override": True,
-    },
-    {
-        "names": ["SCUNet_aaf6aa"],
-        "scales": [1, 2, 4, 8],
-        "pth_override": True,
-        "folder_name_override": "SCUNet_aaf6aa",
-    },
-    {
-        "names": ["ArtCNN_R16F96", "ArtCNN_R8F64"],
-        "scales": ALL_SCALES,
-    },
-    {
-        "names": ["MoSR", "MoSR_T"],
-        "scales": ALL_SCALES,
-        "extras": {
-            "upsampler": "geoensemblepixelshuffle  # geoensemblepixelshuffle, dysample (best on even number scales, does not support dynamic ONNX), pixelshuffle",
-            "drop_path": "0  # 0.05",
-        },
-    },
-    {"names": ["LMLT_Base", "LMLT_Large", "LMLT_Tiny"], "scales": ALL_SCALES},
-    {
-        "names": ["EIMN_L", "EIMN_A"],
-        "scales": ALL_SCALES,
-        "folder_name_override": "EIMN",
-    },
-    {"names": ["MAN", "MAN_tiny", "MAN_light"], "scales": ALL_SCALES},
-    {
-        "names": ["FlexNet", "MetaFlexNet"],
-        "scales": ALL_SCALES,
-        "extras": {
-            "upsampler": "pixelshuffle  # pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)"
-        },
-    },
-    {"names": ["Swin2SR_L", "Swin2SR_M", "Swin2SR_S"], "scales": ALL_SCALES},
-    {
-        "names": ["MoESR2"],
-        "folder_name_override": "MoESR",
-        "scales": ALL_SCALES,
-        "extras": {
-            "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
-        },
-    },
-    {
-        "names": ["RCAN", "RCAN_unshuffle"],
-        "scales": ALL_SCALES,
-    },
-    {"names": ["RTMoSR", "RTMoSR_L", "RTMoSR_UL"], "scales": ALL_SCALES},
-    {
-        "names": ["GRL_B", "GRL_S", "GRL_T"],
-        "scales": ALL_SCALES,
-        "folder_name_override": "GRL",
-    },
-    {"names": ["ELAN", "ELAN_light"], "scales": ALL_SCALES},
-    {"names": ["DCTLSA"], "scales": ALL_SCALES},
-    {"names": ["DITN_Real"], "scales": ALL_SCALES, "folder_name_override": "DITN"},
-    {"names": ["DWT", "DWT_S"], "scales": ALL_SCALES},
-    {"names": ["EMT"], "scales": ALL_SCALES},
-    {"names": ["SAFMN", "SAFMN_L"], "scales": ALL_SCALES},
-    {"names": ["Sebica"], "scales": ALL_SCALES},
-    {"names": ["SeemoRe_T"], "scales": ALL_SCALES, "folder_name_override": "SeemoRe"},
-    {"names": ["CRAFT"], "scales": ALL_SCALES},
-    {"names": ["CascadedGaze"], "scales": [1]},
-    {
-        "names": ["MoSRV2"],
-        "scales": ALL_SCALES,
-        "extras": {
-            "upsampler": "pixelshuffledirect  # conv, pixelshuffledirect, pixelshuffle, nearest+conv, dysample (best on even number scales, does not support dynamic ONNX)",
-            "unshuffle_mod": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality.",
-        },
-    },
-]
+template_path_paired_fromscratch = osp.normpath(
+    osp.join(
+        __file__,
+        osp.pardir,
+        "./train_default_options_paired_fromscratch.yml",
+    )
+)
 
-for arch in archs:
-    for variant in arch["names"]:
-        folder_name = arch["names"][0].split("_")[0]
+template_path_paired_finetune = osp.normpath(
+    osp.join(__file__, osp.pardir, "./train_default_options_paired_finetune.yml")
+)
 
-        if "folder_name_override" in arch:
-            folder_name = arch["folder_name_override"]
+template_path_otf1 = osp.normpath(
+    osp.join(__file__, osp.pardir, "./train_default_options_otf1.yml")
+)
 
-        train_folder_path = osp.normpath(
-            osp.join(
-                __file__,
-                osp.pardir,
-                osp.pardir,
-                osp.pardir,
-                "./options/train",
-                folder_name,
+template_path_otf2 = osp.normpath(
+    osp.join(__file__, osp.pardir, "./train_default_options_otf2.yml")
+)
+
+template_path_single = osp.normpath(
+    osp.join(__file__, osp.pardir, "./test_default_options_single.yml")
+)
+
+template_path_onnx = osp.normpath(
+    osp.join(__file__, osp.pardir, "./onnx_default_options.yml")
+)
+
+with (
+    open(template_path_paired_fromscratch) as fps,
+    open(template_path_paired_finetune) as fpf,
+    open(template_path_otf1) as fo1,
+    open(template_path_otf2) as fo2,
+    open(template_path_single) as fts,
+    open(template_path_onnx) as fox,
+):
+    template_paired_fromscratch = fps.read()
+    template_paired_finetune = fpf.read()
+    template_otf1 = fo1.read()
+    template_otf2 = fo2.read()
+    template_test_single = fts.read()
+    template_onnx = fox.read()
+
+
+if __name__ == "__main__":
+    for arch in ALL_ARCHS:
+        for variant in arch["names"]:
+            folder_name = arch["names"][0].split("_")[0]
+
+            if "folder_name_override" in arch:
+                folder_name = arch["folder_name_override"]
+
+            train_folder_path = osp.normpath(
+                osp.join(
+                    __file__,
+                    osp.pardir,
+                    osp.pardir,
+                    osp.pardir,
+                    "./options/_templates/train",
+                    folder_name,
+                )
             )
-        )
-        test_folder_path = osp.normpath(
-            osp.join(
-                __file__,
-                osp.pardir,
-                osp.pardir,
-                osp.pardir,
-                "./options/test",
-                folder_name,
+            test_folder_path = osp.normpath(
+                osp.join(
+                    __file__,
+                    osp.pardir,
+                    osp.pardir,
+                    osp.pardir,
+                    "./options/_templates/test",
+                    folder_name,
+                )
             )
-        )
-        onnx_folder_path = osp.normpath(
-            osp.join(
-                __file__,
-                osp.pardir,
-                osp.pardir,
-                osp.pardir,
-                "./options/onnx",
-                folder_name,
+            onnx_folder_path = osp.normpath(
+                osp.join(
+                    __file__,
+                    osp.pardir,
+                    osp.pardir,
+                    osp.pardir,
+                    "./options/_templates/onnx",
+                    folder_name,
+                )
             )
-        )
 
-        os.makedirs(train_folder_path, exist_ok=True)
-        os.makedirs(test_folder_path, exist_ok=True)
-        os.makedirs(onnx_folder_path, exist_ok=True)
-
-        template_path_paired_fromscratch = osp.normpath(
-            osp.join(
-                __file__, osp.pardir, "./train_default_options_paired_fromscratch.yml"
+            train_folder_path2 = osp.normpath(
+                osp.join(
+                    __file__,
+                    osp.pardir,
+                    osp.pardir,
+                    osp.pardir,
+                    "./options/train",
+                    folder_name,
+                )
             )
-        )
-
-        template_path_paired_finetune = osp.normpath(
-            osp.join(
-                __file__, osp.pardir, "./train_default_options_paired_finetune.yml"
+            test_folder_path2 = osp.normpath(
+                osp.join(
+                    __file__,
+                    osp.pardir,
+                    osp.pardir,
+                    osp.pardir,
+                    "./options/test",
+                    folder_name,
+                )
             )
-        )
+            onnx_folder_path2 = osp.normpath(
+                osp.join(
+                    __file__,
+                    osp.pardir,
+                    osp.pardir,
+                    osp.pardir,
+                    "./options/onnx",
+                    folder_name,
+                )
+            )
 
-        template_path_otf1 = osp.normpath(
-            osp.join(__file__, osp.pardir, "./train_default_options_otf1.yml")
-        )
-
-        template_path_otf2 = osp.normpath(
-            osp.join(__file__, osp.pardir, "./train_default_options_otf2.yml")
-        )
-
-        template_path_otfbicubic1 = osp.normpath(
-            osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic1.yml")
-        )
-
-        template_path_otfbicubic2 = osp.normpath(
-            osp.join(__file__, osp.pardir, "./train_default_options_otfbicubic2.yml")
-        )
-
-        template_path_single = osp.normpath(
-            osp.join(__file__, osp.pardir, "./test_default_options_single.yml")
-        )
-
-        template_path_onnx = osp.normpath(
-            osp.join(__file__, osp.pardir, "./onnx_default_options.yml")
-        )
-
-        with (
-            open(template_path_paired_fromscratch) as fps,
-            open(template_path_paired_finetune) as fpf,
-            open(template_path_otf1) as fo1,
-            open(template_path_otf2) as fo2,
-            open(template_path_otfbicubic1) as fob1,
-            open(template_path_otfbicubic2) as fob2,
-            open(template_path_single) as fts,
-            open(template_path_onnx) as fox,
-        ):
-            template_paired_fromscratch = fps.read()
-            template_paired_finetune = fpf.read()
-            template_otf1 = fo1.read()
-            template_otf2 = fo2.read()
-            template_otfbicubic1 = fob1.read()
-            template_otfbicubic2 = fob2.read()
-            template_test_single = fts.read()
-            template_onnx = fox.read()
+            os.makedirs(train_folder_path, exist_ok=True)
+            os.makedirs(test_folder_path, exist_ok=True)
+            os.makedirs(onnx_folder_path, exist_ok=True)
+            os.makedirs(train_folder_path2, exist_ok=True)
+            os.makedirs(test_folder_path2, exist_ok=True)
+            os.makedirs(onnx_folder_path2, exist_ok=True)
 
             with open(
-                osp.join(train_folder_path, f"{variant}_fromscratch.yml"), mode="w"
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=False, fromscratch=True),
+                ),
+                mode="w",
             ) as fw:
                 fw.write(
                     final_template(
@@ -405,7 +291,11 @@ for arch in archs:
                 )
 
             with open(
-                osp.join(train_folder_path, f"{variant}_finetune.yml"), mode="w"
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=False, fromscratch=False),
+                ),
+                mode="w",
             ) as fw:
                 fw.write(
                     final_template(
@@ -417,7 +307,11 @@ for arch in archs:
                 )
 
             with open(
-                osp.join(train_folder_path, f"{variant}_OTF_fromscratch.yml"), mode="w"
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=True, fromscratch=True),
+                ),
+                mode="w",
             ) as fw:
                 fw.write(
                     final_template(
@@ -432,7 +326,11 @@ for arch in archs:
                 )
 
             with open(
-                osp.join(train_folder_path, f"{variant}_OTF_finetune.yml"), mode="w"
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=True, fromscratch=False),
+                ),
+                mode="w",
             ) as fw:
                 fw.write(
                     final_template(
@@ -446,32 +344,50 @@ for arch in archs:
                     )
                 )
 
-            # with open(
-            #     osp.join(
-            #         train_folder_path,
-            #         f"{variant}_OTF_bicubic_ms_ssim_l1_fromscratch.yml",
-            #     ),
-            #     mode="w",
-            # ) as fw:
-            #     fw.write(
-            #         final_template(
-            #             template_paired_fromscratch,
-            #             arch,
-            #             variant,
-            #             OFFICIAL_SETTINGS_FROMSCRATCH,
-            #             template_otfbicubic1,
-            #             template_otfbicubic2,
-            #             "OTF_bicubic_ms_ssim_l1",
-            #             True,
-            #         )
-            #     )
-
             with open(osp.join(test_folder_path, f"{variant}.yml"), mode="w") as fw:
                 fw.write(final_template(template_test_single, arch, variant))
 
             with open(osp.join(onnx_folder_path, f"{variant}.yml"), mode="w") as fw:
                 fw.write(
                     final_template(
-                        template_onnx, arch, variant, None, template_otf1, template_otf2
+                        template_onnx,
+                        arch,
+                        variant,
+                        None,
+                        template_otf1,
+                        template_otf2,
                     )
                 )
+
+            gitignore_contents = """# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+"""
+
+            with open(
+                osp.join(
+                    train_folder_path2,
+                    ".gitignore",
+                ),
+                mode="w",
+            ) as fw:
+                fw.write(gitignore_contents)
+
+            with open(
+                osp.join(
+                    test_folder_path2,
+                    ".gitignore",
+                ),
+                mode="w",
+            ) as fw:
+                fw.write(gitignore_contents)
+
+            with open(
+                osp.join(
+                    onnx_folder_path2,
+                    ".gitignore",
+                ),
+                mode="w",
+            ) as fw:
+                fw.write(gitignore_contents)

@@ -1,3 +1,5 @@
+import os
+import shutil
 import sys
 import tempfile
 from os import path as osp
@@ -18,7 +20,9 @@ from traiNNer.utils.types import DataFeed
 
 
 def test_srmodel(monkeypatch: MonkeyPatch) -> None:
-    args = ["", "-opt", "./options/train/ESRGAN/ESRGAN_finetune.yml"]
+    options_path = "./options/train/ESRGAN/test_ESRGAN_finetune.yml"
+    shutil.copy("./options/_templates/train/ESRGAN/ESRGAN_finetune.yml", options_path)
+    args = ["", "-opt", options_path]
     monkeypatch.setattr(sys, "argv", args)
 
     root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir, osp.pardir))
@@ -140,3 +144,5 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
         # check metric_results
         assert "psnr" in model.metric_results
         assert isinstance(model.metric_results["psnr"], float)
+
+    os.remove(options_path)
