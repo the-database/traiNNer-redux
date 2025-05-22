@@ -99,6 +99,7 @@ def verify_onnx(
 
 def convert_pipeline(root_path: str) -> None:
     install()
+    torch.cuda.set_per_process_memory_fraction(fraction=1.0)
     opt, _ = Config.load_config_from_file(root_path, is_train=False)
     model = build_model(opt)
     assert opt.onnx is not None

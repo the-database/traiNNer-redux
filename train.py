@@ -260,6 +260,8 @@ def train_pipeline(root_path: str) -> None:
     assert opt.path.experiments_root is not None
     assert opt.path.log is not None
 
+    torch.cuda.set_per_process_memory_fraction(fraction=1.0)
+
     if opt.detect_anomaly:
         torch.autograd.set_detect_anomaly(True)
 

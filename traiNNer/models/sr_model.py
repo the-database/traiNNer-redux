@@ -6,6 +6,7 @@ from os import path as osp
 from typing import Any
 
 import cv2
+import numpy as np
 import torch
 from ema_pytorch import EMA
 from torch import Tensor, nn
@@ -28,6 +29,7 @@ from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
+from traiNNer.utils.tiles import ImageSlicer, TileMerger
 from traiNNer.utils.types import DataFeed
 
 
@@ -550,6 +552,78 @@ class SRModel(BaseModel):
             if not (self.use_amp and self.optimizers_skipped[0]):
                 self.net_g_ema.update()
 
+    def infer_tiled(self, net: nn.Module, lq: torch.Tensor) -> torch.Tensor:
+        assert self.opt.val is not None
+        tile_size = self.opt.val.tile_size
+        tile_overlap = self.opt.val.tile_overlap
+        scale = self.opt.scale
+
+        b, c, h, w = lq.shape
+        assert b == 1, "Only batch size 1 is supported for tiled inference"
+
+        if h <= tile_size and w <= tile_size:
+            with torch.autocast(
+                device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
+            ):
+                return net(lq)
+
+        pad_h = (tile_size - (h % tile_size)) % tile_size if h > tile_size else 0
+        pad_w = (tile_size - (w % tile_size)) % tile_size if w > tile_size else 0
+
+        lq = torch.nn.functional.pad(lq, (0, pad_w, 0, pad_h), mode="reflect")
+        _, _, h_pad, w_pad = lq.shape
+
+        output = torch.zeros((1, c, h_pad * scale, w_pad * scale), device=lq.device)
+        weight_map = torch.zeros_like(output)
+
+        hr_tile = tile_size * scale
+        wy = torch.linspace(0, 1, hr_tile, device=lq.device)
+        wx = torch.linspace(0, 1, hr_tile, device=lq.device)
+        wy = 1 - torch.abs(wy - 0.5) * 2
+        wx = 1 - torch.abs(wx - 0.5) * 2
+        weight = torch.ger(wy, wx).unsqueeze(0).unsqueeze(0)
+
+        stride = tile_size - tile_overlap
+        tiles_y = max(1, (h_pad - tile_overlap + stride - 1) // stride)
+        tiles_x = max(1, (w_pad - tile_overlap + stride - 1) // stride)
+
+        for y in range(tiles_y):
+            for x in range(tiles_x):
+                in_y0 = y * stride
+                in_x0 = x * stride
+                in_y1 = min(in_y0 + tile_size, h_pad)
+                in_x1 = min(in_x0 + tile_size, w_pad)
+
+                lq_patch = lq[:, :, in_y0:in_y1, in_x0:in_x1]
+
+                ph, pw = lq_patch.shape[-2:]
+                pad_bottom = max(tile_size - ph, 0) if ph < tile_size else 0
+                pad_right = max(tile_size - pw, 0) if pw < tile_size else 0
+
+                if pad_bottom > 0 or pad_right > 0:
+                    pad_bottom = min(pad_bottom, ph - 1)
+                    pad_right = min(pad_right, pw - 1)
+                    lq_patch = torch.nn.functional.pad(
+                        lq_patch,
+                        (0, pad_right, 0, pad_bottom),
+                        mode="reflect",
+                    )
+
+                out_patch = net(lq_patch)
+                out_patch = out_patch[:, :, : ph * scale, : pw * scale]
+                w_patch = weight[:, :, : ph * scale, : pw * scale]
+
+                out_y0 = in_y0 * scale
+                out_x0 = in_x0 * scale
+                out_y1 = out_y0 + ph * scale
+                out_x1 = out_x0 + pw * scale
+
+                output[:, :, out_y0:out_y1, out_x0:out_x1] += out_patch * w_patch
+                weight_map[:, :, out_y0:out_y1, out_x0:out_x1] += w_patch
+
+        out_final = output / weight_map.clamp(min=1e-6)
+        return out_final[:, :, : h * scale, : w * scale]
+
     def test(self) -> None:
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
@@ -564,19 +638,21 @@ class SRModel(BaseModel):
                 self.lq, self.opt.input_pixel_format
             )  # lq: input_pixel_format
 
-            if self.net_g_ema is not None:
-                self.net_g_ema.eval()
-                with torch.inference_mode():
-                    self.output = pixelformat2rgb_pt(
-                        self.net_g_ema(lq), self.gt, self.opt.output_pixel_format
-                    )
-            else:
-                self.net_g.eval()
-                with torch.inference_mode():
-                    self.output = pixelformat2rgb_pt(
-                        self.net_g(lq), self.gt, self.opt.output_pixel_format
-                    )
-                self.net_g.train()
+            net = self.net_g_ema if self.net_g_ema is not None else self.net_g
+            net.eval()
+
+            assert self.opt.val is not None
+            with torch.inference_mode():
+                if self.opt.val.tile_size > 0:
+                    tmp_out = self.infer_tiled(net, lq)
+                else:
+                    tmp_out = net(lq)
+                self.output = pixelformat2rgb_pt(
+                    tmp_out, self.gt, self.opt.output_pixel_format
+                )
+
+            if self.net_g_ema is None:
+                net.train()
 
             if self.optimizers_schedule_free and self.optimizers_schedule_free[0]:
                 assert self.optimizer_g is not None

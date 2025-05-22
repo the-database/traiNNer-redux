@@ -133,6 +133,8 @@ def train_pipeline(root_path: str) -> None:
     assert opt.path.experiments_root is not None
     assert opt.path.log is not None
 
+    torch.cuda.set_per_process_memory_fraction(fraction=1.0)
+
     if opt.deterministic:
         torch.backends.cudnn.benchmark = False
         torch.use_deterministic_algorithms(True)
