@@ -1,5 +1,4 @@
 import argparse
-import difflib
 import os
 import platform
 import random
@@ -31,17 +30,14 @@ def assert_not_using_template(opt_path: str) -> None:
 
     if template_root in abs_path.parents:
         rel_path = abs_path.relative_to(template_root)
-        # Prepend 'custom_' to the filename
         custom_filename = "custom_" + rel_path.name
         suggested_path = Path("options") / rel_path.parent / custom_filename
 
-        # Build copy command
         if platform.system() == "Windows":
             copy_cmd = f'copy "{abs_path}" "{suggested_path}"'
         else:
             copy_cmd = f'cp "{abs_path}" "{suggested_path}"'
 
-        # Rebuild the current command with the new opt path
         original_args = sys.argv
         new_args = [
             str(suggested_path) if Path(arg).resolve() == abs_path else arg
@@ -303,9 +299,10 @@ def infer_template_tag(cfg: ReduxOptions) -> str:
     return tag
 
 
-def regenerate_template_from_cfg(cfg: ReduxOptions) -> str:
+def regenerate_template_from_cfg(cfg: ReduxOptions) -> tuple[str, str]:
     from scripts.options.generate_default_options import (
         final_template,
+        template_filename,
         template_onnx,
         template_otf1,
         template_otf2,
@@ -352,16 +349,17 @@ def regenerate_template_from_cfg(cfg: ReduxOptions) -> str:
             otf2 = template_otf2 if otf else ""
             name_suffix = tag if otf else ""
 
-        return final_template(
-            template_base,
-            arch,
-            variant.upper(),
-            training_settings=settings,
-            template_otf1=otf1,
-            template_otf2=otf2,
-            name_suffix=name_suffix,
-        )
-    return ""
+            return final_template(
+                template_base,
+                arch,
+                variant.upper(),
+                training_settings=settings,
+                template_otf1=otf1,
+                template_otf2=otf2,
+                name_suffix=name_suffix,
+            ), template_filename(variant, otf=otf, fromscratch=not finetune)
+
+    return "", ""
 
 
 def recursive_diff(
@@ -437,9 +435,10 @@ def build_diff_tree_from_paths(diffs: list[tuple[str, Any]]) -> dict:
     return result
 
 
-def diff_user_vs_template(user_yaml_path: Path) -> str:
+def diff_user_vs_template(user_yaml_path: Path) -> tuple[str, str]:
     user_cfg_obj, _ = yaml_load(str(user_yaml_path))
-    template_cfg = yaml.safe_load(regenerate_template_from_cfg(user_cfg_obj))
+    template_str, template_filename = regenerate_template_from_cfg(user_cfg_obj)
+    template_cfg = yaml.safe_load(template_str)
 
     with open(user_yaml_path) as f:
         user_cfg = yaml.safe_load(f)
@@ -447,7 +446,7 @@ def diff_user_vs_template(user_yaml_path: Path) -> str:
     diffs = recursive_diff(user_cfg, template_cfg)
     diff_tree = build_diff_tree_from_paths(diffs)
     if not diff_tree:
-        return ""
+        return "", ""
 
     diff_yaml = yaml.dump(diff_tree, sort_keys=False, allow_unicode=True)
-    return diff_yaml
+    return diff_yaml, template_filename

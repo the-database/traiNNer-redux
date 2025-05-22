@@ -13,6 +13,10 @@ from traiNNer.archs.arch_info import (
 )
 
 
+def template_filename(variant: str, otf: bool, fromscratch: bool) -> str:
+    return f"{variant}{'_OTF' if otf else ''}_{'fromscratch' if fromscratch else 'finetune'}.yml"
+
+
 def final_template(
     template: str,
     arch: ArchInfo,
@@ -271,7 +275,11 @@ if __name__ == "__main__":
             os.makedirs(onnx_folder_path2, exist_ok=True)
 
             with open(
-                osp.join(train_folder_path, f"{variant}_fromscratch.yml"), mode="w"
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=False, fromscratch=True),
+                ),
+                mode="w",
             ) as fw:
                 fw.write(
                     final_template(
@@ -283,7 +291,11 @@ if __name__ == "__main__":
                 )
 
             with open(
-                osp.join(train_folder_path, f"{variant}_finetune.yml"), mode="w"
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=False, fromscratch=False),
+                ),
+                mode="w",
             ) as fw:
                 fw.write(
                     final_template(
@@ -295,7 +307,10 @@ if __name__ == "__main__":
                 )
 
             with open(
-                osp.join(train_folder_path, f"{variant}_OTF_fromscratch.yml"),
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=True, fromscratch=True),
+                ),
                 mode="w",
             ) as fw:
                 fw.write(
@@ -311,7 +326,11 @@ if __name__ == "__main__":
                 )
 
             with open(
-                osp.join(train_folder_path, f"{variant}_OTF_finetune.yml"), mode="w"
+                osp.join(
+                    train_folder_path,
+                    template_filename(variant, otf=True, fromscratch=False),
+                ),
+                mode="w",
             ) as fw:
                 fw.write(
                     final_template(

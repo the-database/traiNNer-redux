@@ -290,7 +290,8 @@ def train_pipeline(root_path: str) -> None:
     logger.info(get_env_info())
     logger.debug(opt.contents)
     opt.contents = None
-    logger.info("Default config diff:\n%s", diff_user_vs_template(args.opt))
+    diff, template_name = diff_user_vs_template(args.opt)
+    logger.info("Diff with default config (%s):\n%s", template_name, diff)
     # logger.info()  # diff
 
     if opt.deterministic:
