@@ -445,7 +445,6 @@ def diff_user_vs_template(user_yaml_path: Path) -> str:
         user_cfg = yaml.safe_load(f)
 
     diffs = recursive_diff(user_cfg, template_cfg)
-    print("diffs", diffs)
     diff_tree = build_diff_tree_from_paths(diffs)
     if not diff_tree:
         return ""
