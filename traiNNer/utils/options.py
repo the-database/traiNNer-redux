@@ -371,21 +371,41 @@ def recursive_diff(
     diffs = []
 
     if isinstance(user, dict) and isinstance(template, dict):
-        # Walk user keys in order
         for key in user:
             new_path = [*path, str(key)]
             u_val = user.get(key, None)
             t_val = template.get(key, None)
             if u_val != t_val:
                 diffs.extend(recursive_diff(u_val, t_val, new_path))
-        # Optionally: add keys present in template but missing in user
         for key in template:
             if key not in user:
                 new_path = [*path, str(key)]
                 diffs.append((".".join(new_path), None))
     elif isinstance(user, list) and isinstance(template, list):
-        if user != template:
-            diffs.append((".".join(path), user))
+        if all(isinstance(x, dict) and "type" in x for x in user + template):
+            user_by_type = {x["type"]: x for x in user}
+            template_by_type = {x["type"]: x for x in template}
+            all_types = [x["type"] for x in user]
+
+            diff_list = []
+            for t in all_types:
+                u_item = user_by_type.get(t)
+                t_item = template_by_type.get(t)
+                subdiffs = recursive_diff(u_item, t_item, [])
+                if subdiffs:
+                    merged = {"type": t}
+                    for subkey, subval in subdiffs:
+                        merged[subkey] = subval
+                    diff_list.append(merged)
+
+            diffs.append((".".join(path), diff_list))
+        else:
+            max_len = max(len(user), len(template))
+            for i in range(max_len):
+                u_val = user[i] if i < len(user) else None
+                t_val = template[i] if i < len(template) else None
+                if u_val != t_val:
+                    diffs.append((".".join([*path, str(i)]), u_val))
     elif user != template:
         diffs.append((".".join(path), user))
 
