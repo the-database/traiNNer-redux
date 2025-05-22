@@ -343,7 +343,7 @@ def log_git_status() -> str | None:
                 ["git", "status", "-uno"], stderr=subprocess.DEVNULL
             ).decode("utf-8")
 
-            behind_flag = " (Up to date)"
+            behind_flag = " ([green]Up to date[/green])"
             if "Your branch is behind" in behind_output:
                 behind_flag = " ([yellow]updates available - please use [bold]git pull[/bold] to update[/yellow])"
         except Exception:
