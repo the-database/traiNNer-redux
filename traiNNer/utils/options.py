@@ -1,4 +1,5 @@
 import argparse
+import difflib
 import os
 import platform
 import random
@@ -276,3 +277,149 @@ def copy_opt_file(opt_file: str, experiments_root: str) -> None:
         lines.insert(0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
         f.seek(0)
         f.writelines(lines)
+
+
+def find_arch_entry(variant: str) -> Any:
+    from traiNNer.archs.arch_info import ALL_ARCHS
+
+    for arch in ALL_ARCHS:
+        if variant in arch["names"]:
+            return arch
+    raise ValueError(f"Unknown variant: {variant}")
+
+
+def infer_template_tag(cfg: ReduxOptions) -> str:
+    # Use simple heuristics
+    if cfg.onnx is not None:
+        return "onnx"
+    elif cfg.train is None and cfg.val is not None:
+        return "test"
+
+    is_otf = cfg.high_order_degradation
+    is_finetune = cfg.path.pretrain_network_g  # TODO resume?
+
+    tag = "OTF_" if is_otf else ""
+    tag += "finetune" if is_finetune else "fromscratch"
+    return tag
+
+
+def regenerate_template_from_cfg(cfg: ReduxOptions) -> str:
+    from scripts.options.generate_default_options import (
+        final_template,
+        template_onnx,
+        template_otf1,
+        template_otf2,
+        template_paired_finetune,
+        template_paired_fromscratch,
+        template_test_single,
+    )
+
+    from traiNNer.archs.arch_info import (
+        OFFICIAL_SETTINGS_FINETUNE,
+        OFFICIAL_SETTINGS_FROMSCRATCH,
+    )
+
+    if cfg.network_g is not None:
+        variant = cfg.network_g["type"].lower()
+        arch = find_arch_entry(variant.upper())
+
+        tag = infer_template_tag(cfg)
+
+        if tag == "onnx":
+            template_base = template_onnx
+            settings = None
+            otf1 = template_otf1
+            otf2 = template_otf2
+            name_suffix = ""
+        elif tag == "test":
+            template_base = template_test_single
+            settings = None
+            otf1 = ""
+            otf2 = ""
+            name_suffix = ""
+        else:
+            finetune = tag.endswith("finetune")
+            template_base = (
+                template_paired_finetune if finetune else template_paired_fromscratch
+            )
+            settings = (
+                OFFICIAL_SETTINGS_FINETUNE
+                if finetune
+                else OFFICIAL_SETTINGS_FROMSCRATCH
+            )
+            otf = tag.startswith("OTF_")
+            otf1 = template_otf1 if otf else ""
+            otf2 = template_otf2 if otf else ""
+            name_suffix = tag if otf else ""
+
+        return final_template(
+            template_base,
+            arch,
+            variant.upper(),
+            training_settings=settings,
+            template_otf1=otf1,
+            template_otf2=otf2,
+            name_suffix=name_suffix,
+        )
+    return ""
+
+
+def recursive_diff(
+    user: Any, template: Any, path: list[str] | None = None
+) -> list[tuple[str, Any]]:
+    path = path or []
+    diffs = []
+
+    if isinstance(user, dict) and isinstance(template, dict):
+        # Walk user keys in order
+        for key in user:
+            new_path = [*path, str(key)]
+            u_val = user.get(key, None)
+            t_val = template.get(key, None)
+            if u_val != t_val:
+                diffs.extend(recursive_diff(u_val, t_val, new_path))
+        # Optionally: add keys present in template but missing in user
+        for key in template:
+            if key not in user:
+                new_path = [*path, str(key)]
+                diffs.append((".".join(new_path), None))
+    elif isinstance(user, list) and isinstance(template, list):
+        if user != template:
+            diffs.append((".".join(path), user))
+    elif user != template:
+        diffs.append((".".join(path), user))
+
+    return diffs
+
+
+def insert_nested(tree: dict, keys: list[str], value: Any) -> None:
+    """Insert value into nested dict following keys path."""
+    for key in keys[:-1]:
+        tree = tree.setdefault(key, {})
+    tree[keys[-1]] = value
+
+
+def build_diff_tree_from_paths(diffs: list[tuple[str, Any]]) -> dict:
+    """Convert list of dot-path diffs into nested dict."""
+    result = {}
+    for path, value in diffs:
+        keys = path.split(".")
+        insert_nested(result, keys, value)
+    return result
+
+
+def diff_user_vs_template(user_yaml_path: Path) -> str:
+    user_cfg_obj, _ = yaml_load(str(user_yaml_path))
+    template_cfg = yaml.safe_load(regenerate_template_from_cfg(user_cfg_obj))
+
+    with open(user_yaml_path) as f:
+        user_cfg = yaml.safe_load(f)
+
+    diffs = recursive_diff(user_cfg, template_cfg)
+
+    diff_tree = build_diff_tree_from_paths(diffs)
+    if not diff_tree:
+        return ""
+
+    diff_yaml = yaml.dump(diff_tree, sort_keys=False, allow_unicode=True)
+    return diff_yaml

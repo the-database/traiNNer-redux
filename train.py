@@ -46,8 +46,11 @@ from traiNNer.utils import (
 )
 from traiNNer.utils.config import Config
 from traiNNer.utils.logger import clickable_file_path
-from traiNNer.utils.misc import free_space_gb_str, set_random_seed
-from traiNNer.utils.options import copy_opt_file
+from traiNNer.utils.misc import (
+    free_space_gb_str,
+    set_random_seed,
+)
+from traiNNer.utils.options import copy_opt_file, diff_user_vs_template
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import TrainingState
 
@@ -287,6 +290,8 @@ def train_pipeline(root_path: str) -> None:
     logger.info(get_env_info())
     logger.debug(opt.contents)
     opt.contents = None
+    logger.info("Default config diff:\n%s", diff_user_vs_template(args.opt))
+    # logger.info()  # diff
 
     if opt.deterministic:
         logger.info(
