@@ -6,7 +6,6 @@ from os import path as osp
 from typing import Any
 
 import cv2
-import numpy as np
 import torch
 from ema_pytorch import EMA
 from torch import Tensor, nn
@@ -29,7 +28,6 @@ from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
-from traiNNer.utils.tiles import ImageSlicer, TileMerger
 from traiNNer.utils.types import DataFeed
 
 
