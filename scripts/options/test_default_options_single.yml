@@ -44,9 +44,9 @@ path:
 val:
   val_enabled: true  # Whether to enable validations. If disabled, all validation settings below are ignored.
   save_img: true  # Whether to save the validation images during validation, in the results/<name>/visualization folder.
-  tile_size: 0  # Tile size of input, reduce VRAM usage but slower inference. 0 to disable
-  tile_overlap: 8  # Number of pixels to overlap tiles by, larger is slower but reduces tile seams
-  suffix: ~  # Add suffix to saved images, if None, use exp name
+  tile_size: 0  # Tile size of input, reduce VRAM usage but slower inference. 0 to disable.
+  tile_overlap: 8  # Number of pixels to overlap tiles by, larger is slower but reduces tile seams.
+  suffix: ~  # Add suffix to saved images, if None, use exp name.
 
   metrics_enabled: false  # Whether to run metrics calculations during validation.
   metrics:

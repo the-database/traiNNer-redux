@@ -209,6 +209,8 @@ val:
   val_enabled: false  # Whether to enable validations. If disabled, all validation settings below are ignored.
   val_freq: 1000  # How often to run validations, in iterations.
   save_img: true  # Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
+  tile_size: 0  # Tile size of input, reduce VRAM usage but slower inference. 0 to disable.
+  tile_overlap: 8  # Number of pixels to overlap tiles by, larger is slower but reduces tile seams.
 
   metrics_enabled: true  # Whether to run metrics calculations during validation.
   metrics:
