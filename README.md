@@ -16,6 +16,7 @@ Please see the [contributing](https://trainner-redux.readthedocs.io/en/latest/co
 - [WTP Dataset Destroyer](https://github.com/umzi2/wtp_dataset_destroyer): Tool to degrade high quality images, which can be used to prepare the low quality images for the training dataset.
 - [Video Destroyer](https://github.com/Kim2091/video-destroyer): A tool designed to create datasets from a single high quality input video for AI training purposes.
 - [helpful-scripts](https://github.com/Kim2091/helpful-scripts): Collection of scripts written to improve experience training AI models.
+- [Dataset_Preprocessing](https://github.com/umzi2/Dataset_Preprocessing): A small collection of scripts for initial dataset processing.
 - [Enhance Everything! Discord Server](https://discord.gg/cpAUpDK): Get help training a model, share upscaling results, submit your trained models, and more.
 - [vs_align](https://github.com/pifroggi/vs_align): Video Alignment and Synchonization for Vapoursynth, tool to align LR and HR datasets.
 - [ImgAlign](https://github.com/sonic41592/ImgAlign): Tool for auto aligning, cropping, and scaling HR and LR images for training image based neural networks.
