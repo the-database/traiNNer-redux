@@ -279,7 +279,7 @@ def find_arch_entry(variant: str) -> Any:
     from traiNNer.archs.arch_info import ALL_ARCHS
 
     for arch in ALL_ARCHS:
-        if variant in arch["names"]:
+        if variant in [name.upper() for name in arch["names"]]:
             return arch
     raise ValueError(f"Unknown variant: {variant}")
 
