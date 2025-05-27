@@ -280,6 +280,6 @@ class PerceptualAnimeLoss(nn.Module):
         for _idx, k in enumerate(gen_features.keys()):
             raw_comparison = self.criterion(gen_features[k], gt_features[k])
             layer_loss = raw_comparison * self.layer_weights[k]
-            losses[k] = layer_loss * self.loss_weight
+            losses[k] = layer_loss
 
         return losses

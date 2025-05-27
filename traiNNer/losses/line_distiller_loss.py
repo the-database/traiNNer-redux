@@ -87,7 +87,7 @@ class LineDistillerLoss(nn.Module):
                 padding=0,
             )
 
-        return self.criterion(pred_lines, gt_lines) * self.loss_weight
+        return self.criterion(pred_lines, gt_lines)
 
 
 class ResidualBlockDown(nn.Module):

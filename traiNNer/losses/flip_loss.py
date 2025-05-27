@@ -115,7 +115,7 @@ class FLIPLoss(nn.Module):
             self.eps,
         )
 
-        return self.loss_weight * torch.mean(deltaE)
+        return torch.mean(deltaE)
 
 
 def compute_ldrflip(test, reference, pixels_per_degree, qc, qf, pc, pt, eps):
