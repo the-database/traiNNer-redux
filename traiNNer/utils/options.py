@@ -318,46 +318,51 @@ def regenerate_template_from_cfg(cfg: ReduxOptions) -> tuple[str, str]:
 
     if cfg.network_g is not None:
         variant = cfg.network_g["type"].lower()
-        arch = find_arch_entry(variant.upper())
+        try:
+            arch = find_arch_entry(variant.upper())
 
-        tag = infer_template_tag(cfg)
+            tag = infer_template_tag(cfg)
 
-        if tag == "onnx":
-            template_base = template_onnx
-            settings = None
-            otf1 = template_otf1
-            otf2 = template_otf2
-            name_suffix = ""
-        elif tag == "test":
-            template_base = template_test_single
-            settings = None
-            otf1 = ""
-            otf2 = ""
-            name_suffix = ""
-        else:
-            finetune = tag.endswith("finetune")
-            template_base = (
-                template_paired_finetune if finetune else template_paired_fromscratch
-            )
-            settings = (
-                OFFICIAL_SETTINGS_FINETUNE
-                if finetune
-                else OFFICIAL_SETTINGS_FROMSCRATCH
-            )
-            otf = tag.startswith("OTF_")
-            otf1 = template_otf1 if otf else ""
-            otf2 = template_otf2 if otf else ""
-            name_suffix = tag if otf else ""
+            if tag == "onnx":
+                template_base = template_onnx
+                settings = None
+                otf1 = template_otf1
+                otf2 = template_otf2
+                name_suffix = ""
+            elif tag == "test":
+                template_base = template_test_single
+                settings = None
+                otf1 = ""
+                otf2 = ""
+                name_suffix = ""
+            else:
+                finetune = tag.endswith("finetune")
+                template_base = (
+                    template_paired_finetune
+                    if finetune
+                    else template_paired_fromscratch
+                )
+                settings = (
+                    OFFICIAL_SETTINGS_FINETUNE
+                    if finetune
+                    else OFFICIAL_SETTINGS_FROMSCRATCH
+                )
+                otf = tag.startswith("OTF_")
+                otf1 = template_otf1 if otf else ""
+                otf2 = template_otf2 if otf else ""
+                name_suffix = tag if otf else ""
 
-            return final_template(
-                template_base,
-                arch,
-                variant.upper(),
-                training_settings=settings,
-                template_otf1=otf1,
-                template_otf2=otf2,
-                name_suffix=name_suffix,
-            ), template_filename(variant, otf=otf, fromscratch=not finetune)
+                return final_template(
+                    template_base,
+                    arch,
+                    variant.upper(),
+                    training_settings=settings,
+                    template_otf1=otf1,
+                    template_otf2=otf2,
+                    name_suffix=name_suffix,
+                ), template_filename(variant, otf=otf, fromscratch=not finetune)
+        except ValueError:
+            pass
 
     return "", ""
 
@@ -438,15 +443,17 @@ def build_diff_tree_from_paths(diffs: list[tuple[str, Any]]) -> dict:
 def diff_user_vs_template(user_yaml_path: Path) -> tuple[str, str]:
     user_cfg_obj, _ = yaml_load(str(user_yaml_path))
     template_str, template_filename = regenerate_template_from_cfg(user_cfg_obj)
-    template_cfg = yaml.safe_load(template_str)
+    if template_str and template_filename:
+        template_cfg = yaml.safe_load(template_str)
 
-    with open(user_yaml_path) as f:
-        user_cfg = yaml.safe_load(f)
+        with open(user_yaml_path) as f:
+            user_cfg = yaml.safe_load(f)
 
-    diffs = recursive_diff(user_cfg, template_cfg)
-    diff_tree = build_diff_tree_from_paths(diffs)
-    if not diff_tree:
-        return "", ""
+        diffs = recursive_diff(user_cfg, template_cfg)
+        diff_tree = build_diff_tree_from_paths(diffs)
+        if not diff_tree:
+            return "", ""
 
-    diff_yaml = yaml.dump(diff_tree, sort_keys=False, allow_unicode=True)
-    return diff_yaml, template_filename
+        diff_yaml = yaml.dump(diff_tree, sort_keys=False, allow_unicode=True)
+        return diff_yaml, template_filename
+    return "", ""
