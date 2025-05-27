@@ -34,4 +34,4 @@ class AESOPLoss(nn.Module):
     def forward(self, sr: Tensor, hr: Tensor) -> Tensor:
         ae_sr = self.ae(sr)
         ae_hr = self.ae(hr.detach())
-        return self.loss_weight * self.criterion(ae_sr, ae_hr)
+        return self.criterion(ae_sr, ae_hr)

@@ -122,7 +122,7 @@ class GANLoss(nn.Module):
             loss = self.loss(input, target_label)
 
         # loss_weight is always 1.0 for discriminators
-        return loss if is_disc else loss * self.loss_weight
+        return loss
 
 
 @LOSS_REGISTRY.register()

@@ -184,10 +184,7 @@ class DISTSLoss(nn.Module):
             dist2 = dist2 + (beta[k] * s2).sum(1, keepdim=True)
 
         if self.as_loss:
-            out = (
-                torch.clamp(1 - (dist1 + dist2).mean(), self.clip_min)
-                * self.loss_weight
-            )
+            out = torch.clamp(1 - (dist1 + dist2).mean(), self.clip_min)
         else:
             out = 1 - (dist1 + dist2).squeeze()
 

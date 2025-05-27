@@ -310,7 +310,7 @@ class ContextualLoss(nn.Module):
             self.calculate_cx_loss(t_features, i_features)
             + self.calculate_cx_loss(i_features, t_features)
         ) / 2
-        return loss * self.loss_weight  # score
+        return loss
 
     def bilateral_cx_loss(
         self, i_features: Tensor, t_features: Tensor, weight_sp: float = 0.1
@@ -352,7 +352,7 @@ class ContextualLoss(nn.Module):
         k_max_nc, _ = torch.max(cx_combine, dim=2, keepdim=True)
         cx = k_max_nc.mean(dim=1)
         cx_loss = torch.mean(-torch.log(cx + 1e-5))
-        return cx_loss * self.loss_weight
+        return cx_loss
 
     def calculate_cx_loss(self, i_features: Tensor, t_features: Tensor) -> Tensor:
         device = i_features.device
@@ -418,4 +418,4 @@ class ContextualLoss(nn.Module):
         if torch.isnan(cx_loss):
             raise ValueError("NaN in computing CX_loss")
 
-        return cx_loss * self.loss_weight
+        return cx_loss
