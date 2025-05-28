@@ -406,17 +406,16 @@ class SRModel(BaseModel):
 
                     if loss.loss_weight < 0:
                         if lq_target is None:
-                            with torch.inference_mode():
-                                lq_target = torch.clamp(
-                                    F.interpolate(
-                                        self.lq,
-                                        scale_factor=self.opt.scale,
-                                        mode="bicubic",
-                                        antialias=True,
-                                    ),
-                                    0,
-                                    1,
-                                )
+                            lq_target = torch.clamp(
+                                F.interpolate(
+                                    self.lq,
+                                    scale_factor=self.opt.scale,
+                                    mode="bicubic",
+                                    antialias=True,
+                                ),
+                                0,
+                                1,
+                            )
                         target = lq_target
 
                     if label == "l_g_gan":
