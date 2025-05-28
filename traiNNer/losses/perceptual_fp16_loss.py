@@ -238,7 +238,7 @@ class PerceptualFP16Loss(nn.Module):
                 criterion2_i += 1
 
             layer_loss = layer_loss * self.layer_weights[k]
-            losses[k] = layer_loss
+            losses[k] = layer_loss * self.loss_weight
 
         return losses
 

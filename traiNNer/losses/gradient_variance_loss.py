@@ -92,4 +92,4 @@ class GradientVarianceLoss(nn.Module):
             var_target_y, var_output_y
         )
 
-        return gradvar_loss
+        return self.loss_weight * gradvar_loss

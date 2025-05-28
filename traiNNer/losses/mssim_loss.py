@@ -420,7 +420,7 @@ class SSIMLoss(torch.nn.Module):
 
         score = ssim(x, y, data_range=self.data_range, downsample=self.downsample)
         assert isinstance(score, Tensor)
-        return score
+        return self.loss_weight * score
 
 
 def ms_ssim(
@@ -543,4 +543,4 @@ class MSSIMLoss(torch.nn.Module):
             is_prod=self.is_prod,
             include_luminance=self.include_luminance,
         )
-        return 1 - score.mean().clamp(0, 1)
+        return self.loss_weight * (1 - score.mean().clamp(0, 1))

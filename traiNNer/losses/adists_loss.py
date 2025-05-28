@@ -290,4 +290,4 @@ class ADISTSLoss(torch.nn.Module):
             pt = 1 - ps
             d_map = (pt * t + ps * s) * weight_list[k].unsqueeze(3)
             d = d + d_map.mean([2, 3]).sum(1)
-        return 1 - d.mean()
+        return (1 - d.mean()) * self.loss_weight

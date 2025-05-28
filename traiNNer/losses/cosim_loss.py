@@ -19,7 +19,7 @@ class CosimLoss(nn.Module):
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
-        return self.cosim_penalty(x, y)
+        return self.cosim_penalty(x, y) * self.loss_weight
 
     def cosim_penalty(self, x: Tensor, y: Tensor) -> Tensor:
         x = torch.clamp(x, 1e-12, 1)
