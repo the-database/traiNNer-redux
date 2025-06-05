@@ -30,6 +30,4 @@ class BCEWithLogitsDiceLoss(nn.Module):
         den = probs.sum(dim=[1, 2, 3]) + target.sum(dim=[1, 2, 3]) + self.eps
         loss_dice = 1 - (num / den).mean()
 
-        return self.loss_weight * (
-            self.bce_weight * loss_bce + self.dice_weight * loss_dice
-        )
+        return self.bce_weight * loss_bce + self.dice_weight * loss_dice

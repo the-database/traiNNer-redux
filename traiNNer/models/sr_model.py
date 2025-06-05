@@ -1,3 +1,4 @@
+import math
 import os
 import shutil
 import warnings
@@ -10,6 +11,7 @@ import torch
 from ema_pytorch import EMA
 from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
+from torch.nn import functional as F  # noqa: N812
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
@@ -132,7 +134,7 @@ class SRModel(BaseModel):
                         gan_opt = gan_opts[0]
 
             if gan_opt:
-                if gan_opt.get("loss_weight", 0) > 0:
+                if gan_opt.get("loss_weight", 0) != 0:
                     self.has_gan = True
 
             self.net_d = None
@@ -266,7 +268,7 @@ class SRModel(BaseModel):
         for loss in train_opt.losses:
             assert "type" in loss, "all losses must define type"
             assert "loss_weight" in loss, f"{loss['type']} must define loss_weight"
-            if float(loss["loss_weight"]) > 0:
+            if float(loss["loss_weight"]) != 0:
                 label = loss_type_to_label(loss["type"])
                 if label == "l_g_gan":
                     self.has_gan = True
@@ -398,7 +400,25 @@ class SRModel(BaseModel):
                 assert isinstance(self.output, Tensor)
                 l_g_total = torch.tensor(0.0, device=self.output.device)
 
+                lq_target = None
+
                 for label, loss in self.losses.items():
+                    target = self.gt
+
+                    if loss.loss_weight < 0:
+                        if lq_target is None:
+                            lq_target = torch.clamp(
+                                F.interpolate(
+                                    self.lq,
+                                    scale_factor=self.opt.scale,
+                                    mode="bicubic",
+                                    antialias=True,
+                                ),
+                                0,
+                                1,
+                            )
+                        target = lq_target
+
                     if label == "l_g_gan":
                         assert self.net_d is not None
                         fake_g_pred = self.net_d(self.output)
@@ -430,18 +450,20 @@ class SRModel(BaseModel):
                                 self.gt,
                                 self.opt.output_pixel_format,
                             )
-                        l_g_loss = loss(self.output, output_ema, self.gt)
+                        l_g_loss = loss(self.output, output_ema, target)
                     else:
-                        l_g_loss = loss(self.output, self.gt)
+                        l_g_loss = loss(self.output, target)
 
                     if isinstance(l_g_loss, dict):
                         for sublabel, loss_val in l_g_loss.items():
                             if loss_val > 0:
-                                l_g_total += loss_val / self.accum_iters
-                                loss_dict[f"{label}_{sublabel}"] = loss_val
+                                weighted_loss_val = loss_val * abs(loss.loss_weight)
+                                l_g_total += weighted_loss_val * self.accum_iters
+                                loss_dict[f"{label}_{sublabel}"] = weighted_loss_val
                     else:
-                        l_g_total += l_g_loss / self.accum_iters
-                        loss_dict[label] = l_g_loss
+                        weighted_l_g_loss = l_g_loss * abs(loss.loss_weight)
+                        l_g_total += weighted_l_g_loss / self.accum_iters
+                        loss_dict[label] = weighted_l_g_loss
 
                 if not l_g_total.isfinite():
                     raise RuntimeError(
