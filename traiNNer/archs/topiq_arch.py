@@ -234,8 +234,6 @@ class CFANet(nn.Module):
         backbone_pretrain: bool = True,
         use_ref: bool = True,
         num_class: int = 1,
-        num_crop: int = 1,
-        crop_size: int = 256,
         inter_dim: int = 256,
         num_heads: int = 4,
         num_attn_layers: int = 1,
@@ -252,7 +250,6 @@ class CFANet(nn.Module):
         self.model_name = model_name
         self.semantic_model_name = semantic_model_name
         self.semantic_level = -1
-        self.crop_size = crop_size
         self.use_ref = use_ref
 
         self.num_class = num_class
@@ -378,7 +375,6 @@ class CFANet(nn.Module):
             )
 
         self.eps = 1e-8
-        self.crops = num_crop
 
     def _init_linear(self, m: nn.Module) -> None:
         for module in m.modules():
