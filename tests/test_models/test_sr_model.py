@@ -7,6 +7,7 @@ from os import path as osp
 import torch
 from pytest import MonkeyPatch
 from spandrel.architectures.ESRGAN import ESRGAN
+from torch import Tensor
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from traiNNer.data.paired_image_dataset import PairedImageDataset
@@ -117,8 +118,8 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
         )
         assert model.is_train is True
         # check metric_results
-        assert "psnr" in model.metric_results
-        assert isinstance(model.metric_results["psnr"], float)
+        assert "topiq" in model.metric_results
+        assert isinstance(model.metric_results["topiq"], float | Tensor)
 
     # in validation mode
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -131,8 +132,8 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
             dataloader, 1, None, save_img=True, multi_val_datasets=False
         )
         # check metric_results
-        assert "psnr" in model.metric_results
-        assert isinstance(model.metric_results["psnr"], float)
+        assert "topiq" in model.metric_results
+        assert isinstance(model.metric_results["topiq"], float | Tensor)
 
         # if opt['val']['suffix'] is None
         model.opt.val.suffix = None
@@ -142,7 +143,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
             dataloader, 1, None, save_img=True, multi_val_datasets=False
         )
         # check metric_results
-        assert "psnr" in model.metric_results
-        assert isinstance(model.metric_results["psnr"], float)
+        assert "topiq" in model.metric_results
+        assert isinstance(model.metric_results["topiq"], float | Tensor)
 
     os.remove(options_path)

@@ -58,6 +58,11 @@ val:
       type: calculate_ssim
       crop_border: 4  # Whether to crop border during validation.
       test_y_channel: true  # Whether to convert to Y(CbCr) for validation.
+    topiq:
+      type: calculate_topiq
+    lpips:
+      type: calculate_lpips
+      better: lower
     dists:
       type: calculate_dists
       better: lower
