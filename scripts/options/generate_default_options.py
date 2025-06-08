@@ -14,7 +14,9 @@ from traiNNer.archs.arch_info import (
 
 
 def template_filename(variant: str, otf: bool, fromscratch: bool) -> str:
-    return f"{variant}{'_OTF' if otf else ''}_{'fromscratch' if fromscratch else 'finetune'}.yml"
+    return (
+        f"{variant}{'_OTF' if otf else ''}_{'fidelity' if fromscratch else 'gan'}.yml"
+    )
 
 
 def final_template(
@@ -157,12 +159,12 @@ template_path_paired_fromscratch = osp.normpath(
     osp.join(
         __file__,
         osp.pardir,
-        "./train_default_options_paired_fromscratch.yml",
+        "./train_default_options_paired_fidelity.yml",
     )
 )
 
 template_path_paired_finetune = osp.normpath(
-    osp.join(__file__, osp.pardir, "./train_default_options_paired_finetune.yml")
+    osp.join(__file__, osp.pardir, "./train_default_options_paired_gan.yml")
 )
 
 template_path_otf1 = osp.normpath(

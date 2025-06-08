@@ -16,6 +16,7 @@ def calculate_dists(
     )
 
     loss = DISTSLoss(loss_weight=1.0, as_loss=False).to(device)
+    loss.eval()
     with torch.inference_mode():
         return loss(
             img2batchedtensor(img, device, from_bgr=False),
