@@ -20,8 +20,8 @@ from traiNNer.utils.types import DataFeed
 
 
 def test_srmodel(monkeypatch: MonkeyPatch) -> None:
-    options_path = "./options/train/ESRGAN/test_ESRGAN_finetune.yml"
-    shutil.copy("./options/_templates/train/ESRGAN/ESRGAN_finetune.yml", options_path)
+    options_path = "./options/train/ESRGAN/test_ESRGAN_gan.yml"
+    shutil.copy("./options/_templates/train/ESRGAN/ESRGAN_gan.yml", options_path)
     args = ["", "-opt", options_path]
     monkeypatch.setattr(sys, "argv", args)
 

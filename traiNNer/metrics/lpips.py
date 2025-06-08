@@ -22,6 +22,7 @@ def calculate_lpips(
     )
 
     loss = LPIPS(net=net).to(device)
+    loss.eval()
 
     with torch.inference_mode():
         return loss(
