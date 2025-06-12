@@ -31,6 +31,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
 |[flip](https://github.com/NVlabs/flip)| [BSD 3-Clause License](https://github.com/NVlabs/flip/blob/main/LICENSE)|
 |[Focal Frequency Loss](https://github.com/EndlessSora/focal-frequency-loss)| [MIT License](https://github.com/EndlessSora/focal-frequency-loss/blob/master/LICENSE.md)|
+|[GaterV3](https://github.com/umzi2/GaterV3)|[MIT License](https://github.com/umzi2/GaterV3/blob/master/LICENSE)|
 |[GRL](https://github.com/ofsoundof/GRL-Image-Restoration)| [MIT License](https://github.com/ofsoundof/GRL-Image-Restoration/blob/main/LICENSE)|
 |[HAT](https://github.com/XPixelGroup/HAT) | [Apache License 2.0](https://github.com/XPixelGroup/HAT/blob/main/LICENSE)|
 |[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|
