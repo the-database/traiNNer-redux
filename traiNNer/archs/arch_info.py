@@ -257,6 +257,9 @@ OFFICIAL_METRICS: dict[
         3: {"div2k_psnr": 28.93, "div2k_ssim": 0.8673},
         4: {"div2k_psnr": 26.71, "div2k_ssim": 0.8045},
     },
+    "lhan_medium": {
+        2: {"df2k_psnr": 33.13, "df2k_ssim": 0.9369},
+    },
     "lmlt_base": {
         2: {"df2k_psnr": 32.52, "df2k_ssim": 0.9316},
         3: {"df2k_psnr": 28.48, "df2k_ssim": 0.8581},
