@@ -582,6 +582,36 @@ fairscale_checkpoint: false
 offload_to_cpu: false
 euclidean_dist: false
 ```
+### GateRV3
+#### gaterv3
+
+
+```yaml
+type: gaterv3
+in_ch: 3
+dim: 32
+enc_blocks: [2, 2, 4, 6]
+dec_blocks: [2, 2, 2, 2]
+num_latent: 8
+upsample: pixelshuffle
+upsample_mid_dim: 48
+end_gamma_init: 1
+attention: false
+sisr_blocks: 4
+flash: true
+```
+#### gaterv3_r
+
+
+```yaml
+type: gaterv3_r
+```
+#### gaterv3_s
+
+
+```yaml
+type: gaterv3_s
+```
 ### HAT
 #### hat_l
 
