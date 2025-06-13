@@ -42,9 +42,6 @@ ARCHS_WITHOUT_FP16 = {
     "swinir_m",
     "swinir_s",
     "tscunet",
-    "lhan_medium",
-    "lhan_light",
-    "lhan_tiny",
 }
 
 # These archs perform slower when using channels last
