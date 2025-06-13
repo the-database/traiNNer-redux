@@ -31,6 +31,7 @@ from traiNNer.utils import (
     scandir,
 )
 from traiNNer.utils.config import Config
+from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import set_random_seed
 from traiNNer.utils.options import copy_opt_file
 from traiNNer.utils.redux_options import ReduxOptions
@@ -206,7 +207,10 @@ def train_pipeline(root_path: str) -> None:
         )
 
     if opt.watch:
-        logger.info("Watching directory: %s", pretrain_net_path)
+        logger.info(
+            "Watching directory: %s",
+            clickable_file_path(pretrain_net_path, pretrain_net_path),
+        )
 
     validate = True
 
