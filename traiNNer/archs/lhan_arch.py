@@ -1,5 +1,5 @@
 # --- START OF FILE lhan_arch.py (FINAL - NEOSR PATTERN) ---
-
+# ruff: noqa
 # type: ignore
 import math
 
