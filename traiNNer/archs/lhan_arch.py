@@ -1,4 +1,4 @@
-# --- START OF FILE lhan_arch.py (FINAL - NEOSR PATTERN) ---
+# https://github.com/stinkybread/LHAN/blob/main/lhan.py
 # ruff: noqa
 # type: ignore
 import math
@@ -292,21 +292,20 @@ class SimplifiedResidualGroup(nn.Module):
 class lhan(nn.Module):
     def __init__(
         self,
-        num_in_ch=3,
-        num_out_ch=3,
-        scale=4,
-        embed_dim=120,
-        num_groups=4,
-        depth_per_group=3,
-        num_heads=4,
-        window_size=8,
-        ffn_expansion_ratio=2.0,
-        aim_reduction_ratio=8,
-        group_block_pattern=None,
-        drop_path_rate=0.1,
-        upsampler_type="pixelshuffle",
-        img_range=1.0,
-        **kwargs,
+        num_in_ch: int = 3,
+        num_out_ch: int = 3,
+        scale: int = 4,
+        embed_dim: int = 120,
+        num_groups: int = 4,
+        depth_per_group: int = 3,
+        num_heads: int = 4,
+        window_size: int = 8,
+        ffn_expansion_ratio: float = 2.0,
+        aim_reduction_ratio: int = 8,
+        group_block_pattern: list[str] | None = None,
+        drop_path_rate: float = 0.1,
+        upsampler_type: str = "transpose_conv",
+        img_range: float = 1.0,
     ) -> None:
         if group_block_pattern is None:
             group_block_pattern = ["spatial", "channel"]
@@ -370,45 +369,105 @@ class lhan(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def lhan_tiny(**kwargs):
+def lhan_tiny(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    scale: int = 4,
+    embed_dim: int = 96,
+    num_groups: int = 2,
+    depth_per_group: int = 2,
+    num_heads: int = 3,
+    window_size: int = 8,
+    ffn_expansion_ratio: float = 1.5,
+    aim_reduction_ratio: int = 8,
+    group_block_pattern: list[str] | None = None,
+    drop_path_rate: float = 0.05,
+    upsampler_type: str = "pixelshuffle",
+    img_range: float = 1.0,
+):
     return lhan(
-        embed_dim=96,
-        num_groups=2,
-        depth_per_group=2,
-        num_heads=3,
-        ffn_expansion_ratio=1.5,
-        drop_path_rate=0.05,
-        upsampler_type="pixelshuffle",
-        **kwargs,
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        scale=scale,
+        embed_dim=embed_dim,
+        num_groups=num_groups,
+        depth_per_group=depth_per_group,
+        num_heads=num_heads,
+        window_size=window_size,
+        ffn_expansion_ratio=ffn_expansion_ratio,
+        aim_reduction_ratio=aim_reduction_ratio,
+        group_block_pattern=group_block_pattern,
+        drop_path_rate=drop_path_rate,
+        upsampler_type=upsampler_type,
+        img_range=img_range,
     )
 
 
 @ARCH_REGISTRY.register()
-def lhan_light(**kwargs):
+def lhan_light(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    scale: int = 4,
+    embed_dim: int = 108,
+    num_groups: int = 3,
+    depth_per_group: int = 2,
+    num_heads: int = 4,
+    window_size: int = 8,
+    ffn_expansion_ratio: float = 2.0,
+    aim_reduction_ratio: int = 8,
+    group_block_pattern: list[str] | None = None,
+    drop_path_rate: float = 0.08,
+    upsampler_type: str = "pixelshuffle",
+    img_range: float = 1.0,
+):
     return lhan(
-        embed_dim=108,
-        num_groups=3,
-        depth_per_group=2,
-        num_heads=4,
-        ffn_expansion_ratio=2.0,
-        drop_path_rate=0.08,
-        upsampler_type="nearest_conv",
-        **kwargs,
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        scale=scale,
+        embed_dim=embed_dim,
+        num_groups=num_groups,
+        depth_per_group=depth_per_group,
+        num_heads=num_heads,
+        window_size=window_size,
+        ffn_expansion_ratio=ffn_expansion_ratio,
+        aim_reduction_ratio=aim_reduction_ratio,
+        group_block_pattern=group_block_pattern,
+        drop_path_rate=drop_path_rate,
+        upsampler_type=upsampler_type,
+        img_range=img_range,
     )
 
 
 @ARCH_REGISTRY.register()
-def lhan_medium(**kwargs):
+def lhan_medium(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    scale: int = 4,
+    embed_dim: int = 120,
+    num_groups: int = 4,
+    depth_per_group: int = 3,
+    num_heads: int = 4,
+    window_size: int = 8,
+    ffn_expansion_ratio: float = 2.0,
+    aim_reduction_ratio: int = 8,
+    group_block_pattern: list[str] | None = None,
+    drop_path_rate: float = 0.1,
+    upsampler_type: str = "transpose_conv",
+    img_range: float = 1.0,
+):
     return lhan(
-        embed_dim=120,
-        num_groups=4,
-        depth_per_group=3,
-        num_heads=4,
-        ffn_expansion_ratio=2.0,
-        drop_path_rate=0.1,
-        upsampler_type="transpose_conv",
-        **kwargs,
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        scale=scale,
+        embed_dim=embed_dim,
+        num_groups=num_groups,
+        depth_per_group=depth_per_group,
+        num_heads=num_heads,
+        window_size=window_size,
+        ffn_expansion_ratio=ffn_expansion_ratio,
+        aim_reduction_ratio=aim_reduction_ratio,
+        group_block_pattern=group_block_pattern,
+        drop_path_rate=drop_path_rate,
+        upsampler_type=upsampler_type,
+        img_range=img_range,
     )
-
-
-# --- END OF FILE lhan_arch.py (FINAL - NEOSR PATTERN) ---
