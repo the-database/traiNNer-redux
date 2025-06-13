@@ -42,6 +42,9 @@ ARCHS_WITHOUT_FP16 = {
     "swinir_m",
     "swinir_s",
     "tscunet",
+    "lhan_medium",
+    "lhan_light",
+    "lhan_tiny",
 }
 
 # These archs perform slower when using channels last
@@ -842,7 +845,7 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
     },
     "plksr": {
         "milestones": [100000],
-        "total_iter": 50000,
+        "total_iter": 250000,
         "warmup_iter": -1,
         "lr": "!!float 1e-4",
         "lq_size": 96,
@@ -1226,4 +1229,5 @@ ALL_ARCHS: list[ArchInfo] = [
             "unshuffle_mod": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality.",
         },
     },
+    {"names": ["LHAN_medium", "LHAN_light", "LHAN_tiny"], "scales": ALL_SCALES},
 ]

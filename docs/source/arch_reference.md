@@ -1568,6 +1568,83 @@ fast: false
 in_channels: 3
 out_channels: 3
 ```
+### lhan
+#### lhan
+
+
+```yaml
+type: lhan
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 120
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose_conv
+img_range: 1.0
+```
+#### lhan_light
+
+
+```yaml
+type: lhan_light
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 108
+num_groups: 3
+depth_per_group: 2
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.08
+upsampler_type: pixelshuffle
+img_range: 1.0
+```
+#### lhan_medium
+
+
+```yaml
+type: lhan_medium
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 120
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose_conv
+img_range: 1.0
+```
+#### lhan_tiny
+
+
+```yaml
+type: lhan_tiny
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 96
+num_groups: 2
+depth_per_group: 2
+num_heads: 3
+window_size: 8
+ffn_expansion_ratio: 1.5
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.05
+upsampler_type: pixelshuffle
+img_range: 1.0
+```
 ## Discriminator architectures (`network_d`)
 ### DUnet
 #### dunet
