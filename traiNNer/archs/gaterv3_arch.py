@@ -450,12 +450,12 @@ class GateRV3(nn.Module):
             self.dim_to_in = nn.Conv2d(dim, in_ch, 3, 1, 1)
             self.short_to_dim = nn.Identity()
 
-    # def load_state_dict(self, state_dict, *args, **kwargs):
-    #     if "dim_to_in.MetaUpsample" in state_dict:
-    #         state_dict["dim_to_in.MetaUpsample"] = self.dim_to_in.MetaUpsample
-    #     if "gamma" not in state_dict:
-    #         state_dict["gamma"] = self.gamma
-    #     return super().load_state_dict(state_dict, *args, **kwargs)
+    def load_state_dict(self, state_dict, *args, **kwargs):
+        if "dim_to_in.MetaUpsample" in state_dict:
+            state_dict["dim_to_in.MetaUpsample"] = self.dim_to_in.MetaUpsample
+        if "gamma" not in state_dict:
+            state_dict["gamma"] = self.gamma
+        return super().load_state_dict(state_dict, *args, **kwargs)
 
     def check_img_size(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
         scaled_size = self.pad
