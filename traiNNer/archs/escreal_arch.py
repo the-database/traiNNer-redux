@@ -707,14 +707,14 @@ class ESCRealM(nn.Module):
 
     def __init__(
         self,
-        dim: int,
-        pdim: int,
-        kernel_size: int,
-        n_blocks: int,
-        conv_blocks: int,
-        window_size: int,
-        num_heads: int,
-        upscaling_factor: int,
+        dim: int = 64,
+        pdim: int = 16,
+        kernel_size: int = 13,
+        n_blocks: int = 10,
+        conv_blocks: int = 5,
+        window_size: int = 32,
+        num_heads: int = 4,
+        scale: int = 4,
         exp_ratio: int = 2,
         attn_type: ATTN_TYPE = "Flex",
         mid_dim: int = 48,
@@ -722,7 +722,7 @@ class ESCRealM(nn.Module):
         unshuffle_mod: bool = True,
     ) -> None:
         super().__init__()
-        self.upscaling_factor = upscaling_factor
+        self.upscaling_factor = scale
 
         if attn_type == "Naive":
             attn_func = attention
@@ -738,11 +738,11 @@ class ESCRealM(nn.Module):
         self.plk_filter = nn.Parameter(
             torch.randn(pdim, pdim, kernel_size, kernel_size)
         )
-        torch.nn.init.orthogonal(self.plk_filter)
+        torch.nn.init.orthogonal_(self.plk_filter)
 
-        if unshuffle_mod and upscaling_factor < 3:
-            unshuffle_factor = 4 // upscaling_factor
-            upscaling_factor = 4
+        if unshuffle_mod and scale < 3:
+            unshuffle_factor = 4 // scale
+            scale = 4
             self.proj = nn.Sequential(
                 nn.PixelUnshuffle(unshuffle_factor),
                 nn.Conv2d(3 * unshuffle_factor**2, dim, 3, 1, 1),
@@ -785,7 +785,7 @@ class ESCRealM(nn.Module):
         )
         self.last = nn.Conv2d(dim, dim, 3, 1, 1)
 
-        self.to_img = UniUpsample(upsampler, upscaling_factor, dim, 3, mid_dim, 4)
+        self.to_img = UniUpsample(upsampler, scale, dim, 3, mid_dim, 4)
 
     def load_state_dict(self, state_dict, *args, **kwargs):
         state_dict["to_img.MetaUpsample"] = self.to_img.MetaUpsample
