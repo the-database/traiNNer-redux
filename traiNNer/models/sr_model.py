@@ -829,9 +829,9 @@ class SRModel(BaseModel):
                 # calculate metrics
                 assert self.opt.val.metrics is not None
                 for name, opt_ in self.opt.val.metrics.items():
-                    self.metric_results[name] += calculate_metric(
-                        metric_data, opt_, self.device
-                    )
+                    result = calculate_metric(metric_data, opt_, self.device)
+                    # logger.info("%d %s/%s: %f", current_iter, name, img_name, result)
+                    self.metric_results[name] += result
             if pbar is not None:
                 pbar.update(1)
                 pbar.set_description(f"Test {img_name}")

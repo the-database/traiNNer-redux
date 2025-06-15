@@ -27,6 +27,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[EIMN](https://github.com/liux520/EIMN)|[MIT License](https://github.com/liux520/EIMN/blob/main/LICENSE)|
 |[ELAN](https://github.com/xindongzhang/ELAN)| [Apache License 2.0](https://github.com/xindongzhang/ELAN/blob/main/LICENSE)|
 |[EMT](https://github.com/Fried-Rice-Lab/EMT)| [MIT License](https://github.com/Fried-Rice-Lab/EMT/blob/main/LICENSE)|
+|[ESC](https://github.com/dslisleedh/ESC)|[MIT License](https://github.com/dslisleedh/ESC/blob/main/LICENSE)|
 |[FDL](https://github.com/eezkni/FDL)| [MIT License](https://github.com/eezkni/FDL?tab=readme-ov-file#license)|
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
 |[flip](https://github.com/NVlabs/flip)| [BSD 3-Clause License](https://github.com/NVlabs/flip/blob/main/LICENSE)|
