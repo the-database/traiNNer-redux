@@ -140,11 +140,11 @@ def create_train_val_dataloader(
             assert dataset_opt.gt_size is not None, "gt_size is required for train set"
             logger.info(
                 "Training statistics for [b]%s[/b]:\n"
-                "\t%-40s %10s\t%-40s %10s\n"
-                "\t%-40s %10s\t%-40s %10s\n"
-                "\t%-40s %10s\t%-40s %10s\n"
-                "\t%-40s %10s\t%-40s %10s\n"
-                "\t%-40s %10s\t%-40s %10s",
+                "\t%-30s %9s\t%-30s %9s\n"
+                "\t%-30s %9s\t%-30s %9s\n"
+                "\t%-30s %9s\t%-30s %9s\n"
+                "\t%-30s %9s\t%-30s %9s\n"
+                "\t%-30s %9s\t%-30s %9s",
                 opt.name,
                 f"Number of train {train_set.label}:",
                 f"{len(train_set):,}",
