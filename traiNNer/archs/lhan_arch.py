@@ -252,7 +252,7 @@ class lhan(nn.Module):
         self.upsampler = UniUpsampleV3(
             upsampler_type, scale, embed_dim, num_out_ch, mid_dim, 4
         )
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
     def _init_weights(self, m) -> None:
         if isinstance(m, nn.Linear):
