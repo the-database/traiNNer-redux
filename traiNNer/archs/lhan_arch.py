@@ -10,21 +10,7 @@ from torch import nn
 from traiNNer.utils.registry import ARCH_REGISTRY
 from traiNNer.archs.arch_util import UniUpsampleV2, SampleMods
 from torch.nn.init import trunc_normal_
-
-
-# --- Core Components ---
-class DropPath(nn.Module):
-    def __init__(self, drop_prob=None) -> None:
-        super().__init__()
-        self.drop_prob = drop_prob
-
-    def forward(self, x):
-        if self.drop_prob == 0.0 or not self.training:
-            return x
-        keep_prob = 1 - self.drop_prob
-        shape = (x.shape[0],) + (1,) * (x.ndim - 1)
-        random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
-        return x.div(keep_prob) * random_tensor.floor_()
+from spandrel.util.timm import DropPath
 
 
 # --- LHAN Components ---
