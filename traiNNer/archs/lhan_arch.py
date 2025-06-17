@@ -8,23 +8,8 @@ import torch.nn.functional as F  # noqa: N812
 from torch import nn
 
 from traiNNer.utils.registry import ARCH_REGISTRY
-
-
-# --- Helper Functions ---
-def _no_grad_trunc_normal_(tensor, mean, std, a, b):
-    def norm_cdf(x):
-        return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
-
-    with torch.no_grad():
-        low, up = norm_cdf((a - mean) / std), norm_cdf((b - mean) / std)
-        tensor.uniform_(2 * low - 1, 2 * up - 1).erfinv_().mul_(
-            std * math.sqrt(2.0)
-        ).add_(mean).clamp_(min=a, max=b)
-        return tensor
-
-
-def trunc_normal_(tensor, mean=0.0, std=1.0, a=-2.0, b=2.0):
-    return _no_grad_trunc_normal_(tensor, mean, std, a, b)
+from traiNNer.archs.arch_util import UniUpsampleV2, SampleMods
+from torch.nn.init import trunc_normal_
 
 
 # --- Core Components ---
@@ -40,63 +25,6 @@ class DropPath(nn.Module):
         shape = (x.shape[0],) + (1,) * (x.ndim - 1)
         random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
         return x.div(keep_prob) * random_tensor.floor_()
-
-
-class SimpleLayerNorm(nn.Module):
-    def __init__(self, dim: int, eps: float = 1e-6) -> None:
-        super().__init__()
-        self.weight, self.bias, self.eps = (
-            nn.Parameter(torch.ones(dim)),
-            nn.Parameter(torch.zeros(dim)),
-            eps,
-        )
-
-    def forward(self, x):
-        return F.layer_norm(x, (x.size(-1),), self.weight, self.bias, self.eps)
-
-
-# --- Upsamplers ---
-class PixelShuffleUpsampler(nn.Module):
-    def __init__(self, c_in, c_out, sf) -> None:
-        super().__init__()
-        self.conv_pre = nn.Conv2d(c_in, c_out * (sf**2), 3, 1, 1)
-        self.ps, self.conv_post = nn.PixelShuffle(sf), nn.Conv2d(c_out, c_out, 3, 1, 1)
-
-    def forward(self, x):
-        return self.conv_post(self.ps(self.conv_pre(x)))
-
-
-class NearestConvUpsampler(nn.Module):
-    def __init__(self, c_in, c_out, sf) -> None:
-        super().__init__()
-        self.up = nn.Upsample(scale_factor=sf, mode="nearest")
-        self.conv = nn.Sequential(
-            nn.Conv2d(c_in, c_in, 3, 1, 1), nn.GELU(), nn.Conv2d(c_in, c_out, 3, 1, 1)
-        )
-
-    def forward(self, x):
-        return self.conv(self.up(x))
-
-
-class TransposeConvUpsampler(nn.Module):
-    def __init__(self, c_in, c_out, sf) -> None:
-        super().__init__()
-        if sf == 2:
-            self.up = nn.ConvTranspose2d(c_in, c_out, 4, 2, 1)
-        elif sf == 3:
-            self.up = nn.ConvTranspose2d(c_in, c_out, 3, 3, 0)
-        elif sf == 4:
-            self.up = nn.Sequential(
-                nn.ConvTranspose2d(c_in, c_in, 4, 2, 1),
-                nn.GELU(),
-                nn.ConvTranspose2d(c_in, c_out, 4, 2, 1),
-            )
-        else:
-            raise ValueError(f"Unsupported scale factor: {sf}")
-        self.refine = nn.Conv2d(c_out, c_out, 3, 1, 1)
-
-    def forward(self, x):
-        return self.refine(self.up(x))
 
 
 # --- LHAN Components ---
@@ -235,7 +163,7 @@ class SimplifiedDATBlock(nn.Module):
     def __init__(self, dim, nh, ws, ffn_exp, aim_re, btype, dp, qkv_b=False) -> None:
         super().__init__()
         self.btype = btype
-        self.n1, self.n2 = SimpleLayerNorm(dim), SimpleLayerNorm(dim)
+        self.n1, self.n2 = nn.LayerNorm(dim), nn.LayerNorm(dim)
         self.attn = (
             FastSpatialWindowAttention(dim, ws, nh, qkv_b)
             if btype == "spatial"
@@ -280,8 +208,8 @@ class SimplifiedResidualGroup(nn.Module):
         )
         self.conv = nn.Conv2d(dim, dim, 3, 1, 1, bias=False)
 
-    def forward(self, x, H, W):
-        B, C, _, _ = x.shape
+    def forward(self, x):
+        B, C, H, W = x.shape
         x_seq = x.view(B, C, H * W).transpose(1, 2).contiguous()
         for block in self.blocks:
             x_seq = block(x_seq, H, W)
@@ -304,7 +232,8 @@ class lhan(nn.Module):
         aim_reduction_ratio: int = 8,
         group_block_pattern: list[str] | None = None,
         drop_path_rate: float = 0.1,
-        upsampler_type: str = "transpose_conv",
+        mid_dim: int = 64,
+        upsampler_type: SampleMods = "pixelshuffle",
         img_range: float = 1.0,
     ) -> None:
         if group_block_pattern is None:
@@ -316,8 +245,9 @@ class lhan(nn.Module):
         ad = depth_per_group * len(group_block_pattern)
         td = num_groups * ad
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, td)]
-        self.groups = nn.ModuleList(
-            [
+
+        self.groups = nn.Sequential(
+            *[
                 SimplifiedResidualGroup(
                     embed_dim,
                     ad,
@@ -331,13 +261,11 @@ class lhan(nn.Module):
                 for i in range(num_groups)
             ]
         )
+
         self.conv_after = nn.Conv2d(embed_dim, embed_dim, 3, 1, 1, bias=False)
-        upsampler_map = {
-            "pixelshuffle": PixelShuffleUpsampler,
-            "nearest_conv": NearestConvUpsampler,
-            "transpose_conv": TransposeConvUpsampler,
-        }
-        self.upsampler = upsampler_map[upsampler_type](embed_dim, num_out_ch, scale)
+        self.upsampler = UniUpsampleV2(
+            upsampler_type, scale, embed_dim, num_out_ch, mid_dim, 4
+        )
         self.apply(self._init_weights)
 
     def _init_weights(self, m) -> None:
@@ -349,23 +277,18 @@ class lhan(nn.Module):
             trunc_normal_(m.weight, std=0.02)
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
-        elif isinstance(m, SimpleLayerNorm | nn.LayerNorm | nn.GroupNorm):
+        elif isinstance(m, nn.LayerNorm | nn.GroupNorm):
             if hasattr(m, "bias") and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
             if hasattr(m, "weight") and m.weight is not None:
                 nn.init.constant_(m.weight, 1.0)
 
     def forward(self, x):
-        B, C, H, W = x.shape
-        self.mean = self.mean.type_as(x)
-        x_norm = (x - self.mean) * self.img_range
-        x_shallow = self.conv_first(x_norm)
-        x_deep = x_shallow
-        for group in self.groups:
-            x_deep = group(x_deep, H, W)
+        x_shallow = self.conv_first(x)
+        x_deep = self.groups(x_shallow)
         x_deep = self.conv_after(x_deep)
         x_out = self.upsampler(x_deep + x_shallow)
-        return x_out / self.img_range + self.mean
+        return x_out
 
 
 @ARCH_REGISTRY.register()
@@ -452,7 +375,7 @@ def lhan_medium(
     aim_reduction_ratio: int = 8,
     group_block_pattern: list[str] | None = None,
     drop_path_rate: float = 0.1,
-    upsampler_type: str = "transpose_conv",
+    upsampler_type: str = "pixelshuffle",
     img_range: float = 1.0,
 ):
     return lhan(
