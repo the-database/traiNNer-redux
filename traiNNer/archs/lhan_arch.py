@@ -5,12 +5,12 @@ import math
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from torch import nn
-
-from traiNNer.utils.registry import ARCH_REGISTRY
-from traiNNer.archs.arch_util import UniUpsampleV2, SampleMods
-from torch.nn.init import trunc_normal_
 from spandrel.util.timm import DropPath
+from torch import nn
+from torch.nn.init import trunc_normal_
+
+from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
+from traiNNer.utils.registry import ARCH_REGISTRY
 
 
 # --- LHAN Components ---
@@ -219,7 +219,7 @@ class lhan(nn.Module):
         group_block_pattern: list[str] | None = None,
         drop_path_rate: float = 0.1,
         mid_dim: int = 64,
-        upsampler_type: SampleMods = "pixelshuffle",
+        upsampler_type: SampleMods3 = "pixelshuffle",
         img_range: float = 1.0,
     ) -> None:
         if group_block_pattern is None:
@@ -249,10 +249,10 @@ class lhan(nn.Module):
         )
 
         self.conv_after = nn.Conv2d(embed_dim, embed_dim, 3, 1, 1, bias=False)
-        self.upsampler = UniUpsampleV2(
+        self.upsampler = UniUpsampleV3(
             upsampler_type, scale, embed_dim, num_out_ch, mid_dim, 4
         )
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
 
     def _init_weights(self, m) -> None:
         if isinstance(m, nn.Linear):
@@ -291,7 +291,7 @@ def lhan_tiny(
     aim_reduction_ratio: int = 8,
     group_block_pattern: list[str] | None = None,
     drop_path_rate: float = 0.05,
-    upsampler_type: str = "pixelshuffle",
+    upsampler_type: SampleMods3 = "pixelshuffle",
     img_range: float = 1.0,
 ):
     return lhan(
@@ -326,7 +326,7 @@ def lhan_light(
     aim_reduction_ratio: int = 8,
     group_block_pattern: list[str] | None = None,
     drop_path_rate: float = 0.08,
-    upsampler_type: str = "pixelshuffle",
+    upsampler_type: SampleMods3 = "pixelshuffle",
     img_range: float = 1.0,
 ):
     return lhan(
@@ -361,7 +361,7 @@ def lhan_medium(
     aim_reduction_ratio: int = 8,
     group_block_pattern: list[str] | None = None,
     drop_path_rate: float = 0.1,
-    upsampler_type: str = "pixelshuffle",
+    upsampler_type: SampleMods3 = "transpose+conv",
     img_range: float = 1.0,
 ):
     return lhan(
