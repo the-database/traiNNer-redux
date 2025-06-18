@@ -409,192 +409,6 @@ def _geo_ensemble(k):
     return k
 
 
-class DySample(nn.Module):
-    """Adapted from 'Learning to Upsample by Learning to Sample':
-    https://arxiv.org/abs/2308.15085
-    https://github.com/tiny-smart/dysample
-
-    https://github.com/neosr-project/neosr/blob/7001598ffa753ce72344abee0695b6f22695258a/neosr/archs/arch_util.py#L30
-    """
-
-    def __init__(
-        self,
-        in_channels: int,
-        out_ch: int,
-        scale: int = 2,
-        groups: int = 4,
-        end_convolution: bool = True,
-    ) -> None:
-        super().__init__()
-
-        try:
-            assert in_channels >= groups
-            assert in_channels % groups == 0
-        except:
-            msg = "Incorrect in_channels and groups values."
-            raise ValueError(msg)
-
-        out_channels = 2 * groups * scale**2
-        self.scale = scale
-        self.groups = groups
-        self.end_convolution = end_convolution
-        if end_convolution:
-            self.end_conv = nn.Conv2d(in_channels, out_ch, kernel_size=1)
-
-        self.offset = nn.Conv2d(in_channels, out_channels, 1)
-        self.scope = nn.Conv2d(in_channels, out_channels, 1, bias=False)
-        if self.training:
-            nn.init.trunc_normal_(self.offset.weight, std=0.02)
-            nn.init.constant_(self.scope.weight, val=0)
-
-        self.register_buffer("init_pos", self._init_pos())
-
-    def _init_pos(self) -> torch.Tensor:
-        h = torch.arange((-self.scale + 1) / 2, (self.scale - 1) / 2 + 1) / self.scale
-        return (
-            torch.stack(torch.meshgrid([h, h], indexing="ij"))
-            .transpose(1, 2)
-            .repeat(1, self.groups, 1)
-            .reshape(1, -1, 1, 1)
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        offset = self.offset(x) * self.scope(x).sigmoid() * 0.5 + self.init_pos
-        B, _, H, W = offset.shape
-        offset = offset.view(B, 2, -1, H, W)
-        coords_h = torch.arange(H) + 0.5
-        coords_w = torch.arange(W) + 0.5
-
-        coords = (
-            torch.stack(torch.meshgrid([coords_w, coords_h], indexing="ij"))
-            .transpose(1, 2)
-            .unsqueeze(1)
-            .unsqueeze(0)
-            .type(x.dtype)
-            .to(x.device, non_blocking=True)
-        )
-        normalizer = torch.tensor(
-            [W, H], dtype=x.dtype, device=x.device, pin_memory=True
-        ).view(1, 2, 1, 1, 1)
-        coords = 2 * (coords + offset) / normalizer - 1
-
-        coords = (
-            F.pixel_shuffle(coords.reshape(B, -1, H, W), self.scale)
-            .view(B, 2, -1, self.scale * H, self.scale * W)
-            .permute(0, 2, 3, 4, 1)
-            .contiguous()
-            .flatten(0, 1)
-        )
-        output = F.grid_sample(
-            x.reshape(B * self.groups, -1, H, W),
-            coords,
-            mode="bilinear",
-            align_corners=False,
-            padding_mode="border",
-        ).view(B, -1, self.scale * H, self.scale * W)
-
-        if self.end_convolution:
-            output = self.end_conv(output)
-
-        return output
-
-
-@ARCH_REGISTRY.register()
-class ESCReal(nn.Module):
-    def __init__(
-        self,
-        dim: int = 64,
-        pdim: int = 16,
-        kernel_size: int = 13,
-        n_blocks: int = 10,
-        conv_blocks: int = 5,
-        window_size: int = 32,
-        num_heads: int = 4,
-        scale: int = 4,
-        exp_ratio: int = 2,
-        attn_type: ATTN_TYPE = "Flex",
-        use_dysample: bool = False,
-    ) -> None:
-        super().__init__()
-        if attn_type == "Naive":
-            attn_func = attention
-        elif attn_type == "SDPA":
-            attn_func = F.scaled_dot_product_attention
-        elif attn_type == "Flex":
-            attn_func = torch.compile(flex_attention, dynamic=True)
-        else:
-            raise NotImplementedError(f"Attention type {attn_type} is not supported.")
-
-        self.plk_func = _geo_ensemble
-
-        self.plk_filter = nn.Parameter(
-            torch.randn(pdim, pdim, kernel_size, kernel_size)
-        )
-        torch.nn.init.orthogonal_(self.plk_filter)
-
-        self.proj = nn.Conv2d(3, dim, 3, 1, 1)
-        self.blocks = nn.ModuleList(
-            [
-                Block(
-                    dim,
-                    pdim,
-                    conv_blocks,
-                    window_size,
-                    num_heads,
-                    exp_ratio,
-                    attn_func,
-                    attn_type,
-                )
-                for _ in range(n_blocks)
-            ]
-        )
-        self.last = nn.Conv2d(dim, dim, 3, 1, 1)
-
-        # Interestingly, the highest memory usage occurs in the final NN+Conv layer of the model, not self-attention.
-        # So, using dysample+Conv for upsampling effectively reduces memory usage which is most crucial for deployment scope.
-        # However, this approach comes at the cost of performance.
-        if use_dysample:
-            self.to_img = DySample(
-                dim,  # Cin
-                3,  # Cout
-                scale,
-                groups=4,  # DySample groups. diversify coordinates estimation
-                end_convolution=True,
-            )
-        else:
-            # Same as RealESRGAN and SwinIR-Real
-            self.to_img = nn.Sequential(
-                nn.UpsamplingNearest2d(scale_factor=2),
-                nn.Conv2d(dim, dim, 3, 1, 1),
-                nn.LeakyReLU(0.2, inplace=True),
-                nn.UpsamplingNearest2d(scale_factor=2),
-                nn.Conv2d(dim, dim, 3, 1, 1),
-                nn.LeakyReLU(0.2, inplace=True),
-                nn.Conv2d(dim, dim, 3, 1, 1),
-                nn.LeakyReLU(0.2, inplace=True),
-                nn.Conv2d(dim, 3, 3, 1, 1),
-            )
-        self.scale = scale
-        self.skip = nn.Sequential(
-            nn.Conv2d(3, dim * 2, 1, 1, 0),
-            nn.Conv2d(
-                dim * 2, dim * 2, 7, 1, 3, groups=dim * 2, padding_mode="reflect"
-            ),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(dim * 2, dim, 1, 1, 0),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        feat = self.proj(x)
-        skip = feat
-        plk_filter = self.plk_func(self.plk_filter)
-        for block in self.blocks:
-            feat = block(feat, plk_filter)
-        feat = self.last(feat) + skip + self.skip(x)
-        x = self.to_img(feat)
-        return x
-
-
 @ARCH_REGISTRY.register()
 class ESCRealM(nn.Module):
     """
@@ -616,7 +430,7 @@ class ESCRealM(nn.Module):
         attn_type: ATTN_TYPE = "Flex",
         mid_dim: int = 64,
         upsampler: SampleMods3 = "transpose+conv",
-        unshuffle_mod: bool = True,
+        unshuffle_mod: bool = False,
     ) -> None:
         super().__init__()
         self.upscaling_factor = scale
@@ -710,3 +524,36 @@ class ESCRealM(nn.Module):
         feat = self.last(feat) + skip + self.skip(x)
         x = self.to_img(feat)
         return x[:, :, : h * self.upscaling_factor, : w * self.upscaling_factor]
+
+
+@ARCH_REGISTRY.register()
+def escrealm_xl(
+    dim: int = 128,
+    pdim: int = 32,
+    kernel_size: int = 13,
+    n_blocks: int = 16,
+    conv_blocks: int = 5,
+    window_size: int = 32,
+    num_heads: int = 8,
+    scale: int = 4,
+    exp_ratio: float = 2.0,
+    attn_type: ATTN_TYPE = "Flex",
+    mid_dim: int = 64,
+    upsampler: SampleMods3 = "pixelshuffle",
+    unshuffle_mod: bool = False,
+) -> ESCRealM:
+    return ESCRealM(
+        dim=dim,
+        pdim=pdim,
+        kernel_size=kernel_size,
+        n_blocks=n_blocks,
+        conv_blocks=conv_blocks,
+        window_size=window_size,
+        num_heads=num_heads,
+        scale=scale,
+        exp_ratio=exp_ratio,
+        attn_type=attn_type,
+        mid_dim=mid_dim,
+        upsampler=upsampler,
+        unshuffle_mod=unshuffle_mod,
+    )
