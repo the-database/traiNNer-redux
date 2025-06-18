@@ -1,14 +1,16 @@
-import math
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Literal
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from einops import rearrange
+from spandrel import StateDict
 from torch import nn
 from torch.nn.attention import SDPBackend, sdpa_kernel
 from torch.nn.attention.flex_attention import flex_attention
+from torch.nn.modules.module import _IncompatibleKeys
 
+from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 ATTN_TYPE = Literal["Naive", "SDPA", "Flex"]
@@ -28,11 +30,6 @@ SDPA with memory efficient kernel:
     - Choose this for train/test if you are using Windows OS
     - Training ESC with SDPA: 33.43dB @Urban100x2
 """
-
-
-SampleMods = Literal[
-    "conv", "pixelshuffledirect", "pixelshuffle", "nearest+conv", "dysample"
-]
 
 
 def attention(
@@ -354,7 +351,7 @@ class Block(nn.Module):
         conv_blocks: int,
         window_size: int,
         num_heads: int,
-        exp_ratio: int,
+        exp_ratio: float,
         attn_func=None,
         attn_type: ATTN_TYPE = "Flex",
     ) -> None:
@@ -598,106 +595,6 @@ class ESCReal(nn.Module):
         return x
 
 
-class UniUpsample(nn.Sequential):
-    """
-    Unified Upsampling module for various upscaling methods and multiple upscaling factors.
-    Codes from: https://github.com/umzi2/MoSRV2/blob/dbad51610ac7fcb569b7d7ed25732f1bb959fa14/mosrv2.py#L100
-    """
-
-    def __init__(
-        self,
-        upsample: SampleMods,
-        scale: int = 2,
-        in_dim: int = 64,
-        out_dim: int = 3,
-        mid_dim: int = 64,  # Only pixelshuffle and DySample
-        group: int = 4,  # Only DySample
-    ) -> None:
-        m = []
-
-        if scale == 1 or upsample == "conv":
-            m.append(nn.Conv2d(in_dim, out_dim, 3, 1, 1))
-        elif upsample == "pixelshuffledirect":
-            m.extend(
-                [nn.Conv2d(in_dim, out_dim * scale**2, 3, 1, 1), nn.PixelShuffle(scale)]
-            )
-        elif upsample == "pixelshuffle":
-            m.extend([nn.Conv2d(in_dim, mid_dim, 3, 1, 1), nn.LeakyReLU(inplace=True)])
-            if (scale & (scale - 1)) == 0:  # scale = 2^n
-                for _ in range(int(math.log2(scale))):
-                    m.extend(
-                        [nn.Conv2d(mid_dim, 4 * mid_dim, 3, 1, 1), nn.PixelShuffle(2)]
-                    )
-            elif scale == 3:
-                m.extend([nn.Conv2d(mid_dim, 9 * mid_dim, 3, 1, 1), nn.PixelShuffle(3)])
-            else:
-                raise ValueError(
-                    f"scale {scale} is not supported. Supported scales: 2^n and 3."
-                )
-            m.append(nn.Conv2d(mid_dim, out_dim, 3, 1, 1))
-        elif upsample == "nearest+conv":
-            if (scale & (scale - 1)) == 0:
-                for _ in range(int(math.log2(scale))):
-                    m.extend(
-                        (
-                            nn.Conv2d(in_dim, in_dim, 3, 1, 1),
-                            nn.Upsample(scale_factor=2),
-                            nn.LeakyReLU(negative_slope=0.2, inplace=True),
-                        )
-                    )
-                m.extend(
-                    (
-                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
-                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
-                    )
-                )
-            elif scale == 3:
-                m.extend(
-                    (
-                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
-                        nn.Upsample(scale_factor=scale),
-                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
-                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
-                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
-                    )
-                )
-            else:
-                raise ValueError(
-                    f"scale {scale} is not supported. Supported scales: 2^n and 3."
-                )
-            m.append(nn.Conv2d(in_dim, out_dim, 3, 1, 1))
-        elif upsample == "dysample":
-            if mid_dim != in_dim:
-                m.extend(
-                    [nn.Conv2d(in_dim, mid_dim, 3, 1, 1), nn.LeakyReLU(inplace=True)]
-                )
-                dys_dim = mid_dim
-            else:
-                dys_dim = in_dim
-            m.append(DySample(dys_dim, out_dim, scale, group))
-        else:
-            raise ValueError(
-                f"An invalid Upsample was selected. Please choose one of {SampleMods}"
-            )
-        super().__init__(*m)
-
-        self.register_buffer(
-            "MetaUpsample",
-            torch.tensor(
-                [
-                    2,  # Block version, if you change something, please number from the end so that you can distinguish between authorized changes and third parties
-                    list(SampleMods.__args__).index(upsample),  # UpSample method index
-                    scale,
-                    in_dim,
-                    out_dim,
-                    mid_dim,
-                    group,
-                ],
-                dtype=torch.uint8,
-            ),
-        )
-
-
 @ARCH_REGISTRY.register()
 class ESCRealM(nn.Module):
     """
@@ -715,10 +612,10 @@ class ESCRealM(nn.Module):
         window_size: int = 32,
         num_heads: int = 4,
         scale: int = 4,
-        exp_ratio: int = 2,
+        exp_ratio: float = 2.0,
         attn_type: ATTN_TYPE = "Flex",
-        mid_dim: int = 48,
-        upsampler: SampleMods = "nearest+conv",
+        mid_dim: int = 64,
+        upsampler: SampleMods3 = "transpose+conv",
         unshuffle_mod: bool = True,
     ) -> None:
         super().__init__()
@@ -785,9 +682,14 @@ class ESCRealM(nn.Module):
         )
         self.last = nn.Conv2d(dim, dim, 3, 1, 1)
 
-        self.to_img = UniUpsample(upsampler, scale, dim, 3, mid_dim, 4)
+        self.to_img = UniUpsampleV3(upsampler, scale, dim, 3, mid_dim, 4)
 
-    def load_state_dict(self, state_dict, *args, **kwargs):
+    def load_state_dict(
+        self,
+        state_dict: StateDict,
+        *args,  # noqa: ANN002
+        **kwargs,
+    ) -> _IncompatibleKeys:
         state_dict["to_img.MetaUpsample"] = self.to_img.MetaUpsample
         return super().load_state_dict(state_dict, *args, **kwargs)
 
