@@ -1,19 +1,17 @@
-# https://github.com/stinkybread/LHAN/blob/main/lhan.py
+# https://github.com/stinkybread/fdat/blob/main/fdat.py
 # ruff: noqa
 # type: ignore
-import math
-
 import torch
 import torch.nn.functional as F  # noqa: N812
 from spandrel.util.timm import DropPath
-from torch import nn
+from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
 
 from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
-# --- LHAN Components ---
+# --- fdat Components ---
 class FastSpatialWindowAttention(nn.Module):
     def __init__(self, dim, window_size=8, num_heads=4, qkv_bias=False) -> None:
         super().__init__()
@@ -194,7 +192,7 @@ class SimplifiedResidualGroup(nn.Module):
         )
         self.conv = nn.Conv2d(dim, dim, 3, 1, 1, bias=False)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         B, C, H, W = x.shape
         x_seq = x.view(B, C, H * W).transpose(1, 2).contiguous()
         for block in self.blocks:
@@ -203,7 +201,7 @@ class SimplifiedResidualGroup(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-class lhan(nn.Module):
+class FDAT(nn.Module):
     def __init__(
         self,
         num_in_ch: int = 3,
@@ -254,7 +252,7 @@ class lhan(nn.Module):
         )
         self.apply(self._init_weights)
 
-    def _init_weights(self, m) -> None:
+    def _init_weights(self, m: nn.Module) -> None:
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             if m.bias is not None:
@@ -269,7 +267,7 @@ class lhan(nn.Module):
             if hasattr(m, "weight") and m.weight is not None:
                 nn.init.constant_(m.weight, 1.0)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x_shallow = self.conv_first(x)
         x_deep = self.groups(x_shallow)
         x_deep = self.conv_after(x_deep)
@@ -278,7 +276,7 @@ class lhan(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def lhan_tiny(
+def fdat_tiny(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
     scale: int = 4,
@@ -293,8 +291,8 @@ def lhan_tiny(
     drop_path_rate: float = 0.05,
     upsampler_type: SampleMods3 = "pixelshuffle",
     img_range: float = 1.0,
-):
-    return lhan(
+) -> FDAT:
+    return FDAT(
         num_in_ch=num_in_ch,
         num_out_ch=num_out_ch,
         scale=scale,
@@ -313,7 +311,7 @@ def lhan_tiny(
 
 
 @ARCH_REGISTRY.register()
-def lhan_light(
+def fdat_light(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
     scale: int = 4,
@@ -328,8 +326,8 @@ def lhan_light(
     drop_path_rate: float = 0.08,
     upsampler_type: SampleMods3 = "pixelshuffle",
     img_range: float = 1.0,
-):
-    return lhan(
+) -> FDAT:
+    return FDAT(
         num_in_ch=num_in_ch,
         num_out_ch=num_out_ch,
         scale=scale,
@@ -348,7 +346,7 @@ def lhan_light(
 
 
 @ARCH_REGISTRY.register()
-def lhan_medium(
+def fdat_medium(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
     scale: int = 4,
@@ -363,8 +361,78 @@ def lhan_medium(
     drop_path_rate: float = 0.1,
     upsampler_type: SampleMods3 = "transpose+conv",
     img_range: float = 1.0,
-):
-    return lhan(
+) -> FDAT:
+    return FDAT(
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        scale=scale,
+        embed_dim=embed_dim,
+        num_groups=num_groups,
+        depth_per_group=depth_per_group,
+        num_heads=num_heads,
+        window_size=window_size,
+        ffn_expansion_ratio=ffn_expansion_ratio,
+        aim_reduction_ratio=aim_reduction_ratio,
+        group_block_pattern=group_block_pattern,
+        drop_path_rate=drop_path_rate,
+        upsampler_type=upsampler_type,
+        img_range=img_range,
+    )
+
+
+@ARCH_REGISTRY.register()
+def fdat_large(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    scale: int = 4,
+    embed_dim: int = 180,
+    num_groups: int = 4,
+    depth_per_group: int = 4,
+    num_heads: int = 6,
+    window_size: int = 8,
+    ffn_expansion_ratio: float = 2.0,
+    aim_reduction_ratio: int = 8,
+    group_block_pattern: list[str] | None = None,
+    drop_path_rate: float = 0.1,
+    upsampler_type: SampleMods3 = "transpose+conv",
+    img_range: float = 1.0,
+) -> FDAT:
+    return FDAT(
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        scale=scale,
+        embed_dim=embed_dim,
+        num_groups=num_groups,
+        depth_per_group=depth_per_group,
+        num_heads=num_heads,
+        window_size=window_size,
+        ffn_expansion_ratio=ffn_expansion_ratio,
+        aim_reduction_ratio=aim_reduction_ratio,
+        group_block_pattern=group_block_pattern,
+        drop_path_rate=drop_path_rate,
+        upsampler_type=upsampler_type,
+        img_range=img_range,
+    )
+
+
+@ARCH_REGISTRY.register()
+def fdat_xl(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    scale: int = 4,
+    embed_dim: int = 180,
+    num_groups: int = 6,
+    depth_per_group: int = 6,
+    num_heads: int = 6,
+    window_size: int = 8,
+    ffn_expansion_ratio: float = 2.0,
+    aim_reduction_ratio: int = 8,
+    group_block_pattern: list[str] | None = None,
+    drop_path_rate: float = 0.1,
+    upsampler_type: SampleMods3 = "transpose+conv",
+    img_range: float = 1.0,
+) -> FDAT:
+    return FDAT(
         num_in_ch=num_in_ch,
         num_out_ch=num_out_ch,
         scale=scale,
