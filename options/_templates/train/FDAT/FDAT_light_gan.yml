@@ -3,7 +3,7 @@
 # General Settings
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
 #########################################################################################
-name: 4x_LHAN_tiny
+name: 4x_FDAT_light
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
 amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
@@ -62,7 +62,7 @@ datasets:
 #####################################################################
 # Generator model settings
 network_g:
-  type: lhan_tiny
+  type: fdat_light
 
 # Discriminator model settings
 network_d:

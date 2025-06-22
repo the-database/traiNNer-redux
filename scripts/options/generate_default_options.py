@@ -77,7 +77,7 @@ def final_template(
         arch_type_str.lower(),
     )
 
-    if arch["names"][0].lower() in ARCHS_WITHOUT_FP16:
+    if variant.lower() in ARCHS_WITHOUT_FP16:
         template = template.replace("amp_bf16: false", "amp_bf16: true")
 
     arch_key = variant.lower()

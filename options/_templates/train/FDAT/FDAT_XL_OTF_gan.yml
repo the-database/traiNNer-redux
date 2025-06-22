@@ -3,10 +3,10 @@
 # General Settings
 # https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
 #########################################################################################
-name: 4x_LHAN_light_OTF_finetune
+name: 4x_FDAT_XL_OTF_finetune
 scale: 4  # 1, 2, 3, 4, 8
 use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
-amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
+amp_bf16: true  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
 use_channels_last: true  # Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.
 fast_matmul: false  # Trade precision for performance.
 num_gpu: auto
@@ -117,7 +117,7 @@ datasets:
 #####################################################################
 # Generator model settings
 network_g:
-  type: lhan_light
+  type: fdat_xl
 
 # Discriminator model settings
 network_d:

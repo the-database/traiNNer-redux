@@ -94,8 +94,10 @@ EXCLUDE_ARCH_SCALES = {
         {"scale": 3, "extra_arch_params": {}},
         {"scale": 4, "extra_arch_params": {}},
     ],
-    "lhan_medium": [{"scale": 1, "extra_arch_params": {}}],
-    "lhan": [{"scale": 1, "extra_arch_params": {}}],
+    "fdat_medium": [{"scale": 1, "extra_arch_params": {}}],
+    "fdat_large": [{"scale": 1, "extra_arch_params": {}}],
+    "fdat_xl": [{"scale": 1, "extra_arch_params": {}}],
+    "fdat": [{"scale": 1, "extra_arch_params": {}}],
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.

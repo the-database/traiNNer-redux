@@ -17,6 +17,8 @@ ARCHS_WITHOUT_FP16 = {
     "elan_light",
     "elan",
     "emt",
+    "fdat_large",
+    "fdat_xl",
     "grl_b",
     "grl_s",
     "grl_t",
@@ -257,7 +259,7 @@ OFFICIAL_METRICS: dict[
         3: {"div2k_psnr": 28.93, "div2k_ssim": 0.8673},
         4: {"div2k_psnr": 26.71, "div2k_ssim": 0.8045},
     },
-    "lhan_medium": {
+    "fdat_medium": {
         2: {"df2k_psnr": 33.13, "df2k_ssim": 0.9369},
     },
     "lmlt_base": {
@@ -1229,5 +1231,8 @@ ALL_ARCHS: list[ArchInfo] = [
             "unshuffle_mod": "true  # Has no effect on scales larger than 2. For scales 1 and 2, setting to true speeds up the model and reduces VRAM usage significantly, but reduces quality.",
         },
     },
-    {"names": ["LHAN_medium", "LHAN_light", "LHAN_tiny"], "scales": ALL_SCALES},
+    {
+        "names": ["FDAT_medium", "FDAT_light", "FDAT_tiny", "FDAT_large", "FDAT_XL"],
+        "scales": ALL_SCALES,
+    },
 ]
