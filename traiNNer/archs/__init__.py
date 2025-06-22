@@ -7,7 +7,7 @@ from typing import Any
 from torch import nn
 
 from traiNNer.utils.misc import scandir
-from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
+from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY, TESTARCH_REGISTRY
 
 __all__ = ["build_network"]
 spandrel_name = "spandrel"
@@ -44,10 +44,18 @@ def build_network(opt: dict[str, Any]) -> nn.Module:
             version(spandrel_name),
             extra={"markup": True},
         )
-    else:
+    elif network_type in ARCH_REGISTRY:
         net = ARCH_REGISTRY.get(network_type)(**opt)
         logger.info(
             "Network [bold]%s[/bold](%s) is created from [bold]traiNNer-redux[/bold].",
+            net.__class__.__name__,
+            opt,
+            extra={"markup": True},
+        )
+    else:
+        net = TESTARCH_REGISTRY.get(network_type)(**opt)
+        logger.info(
+            "Network [bold]%s[/bold](%s) is created from [bold]traiNNer-redux-test[/bold].",
             net.__class__.__name__,
             opt,
             extra={"markup": True},

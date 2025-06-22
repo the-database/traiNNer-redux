@@ -435,6 +435,159 @@ n_GTLs: 2
 window_list: [[32, 8], [8, 32]]
 shift_list: [[16, 4], [4, 16]]
 ```
+### ESCRealM
+#### escrealm
+
+
+```yaml
+type: escrealm
+dim: 64
+pdim: 16
+kernel_size: 13
+n_blocks: 10
+conv_blocks: 5
+window_size: 32
+num_heads: 4
+exp_ratio: 2.0
+attn_type: Flex
+mid_dim: 64
+upsampler: transpose+conv
+unshuffle_mod: false
+```
+#### escrealm_xl
+
+
+```yaml
+type: escrealm_xl
+dim: 128
+pdim: 32
+kernel_size: 13
+n_blocks: 16
+conv_blocks: 5
+window_size: 32
+num_heads: 8
+exp_ratio: 2.0
+attn_type: Flex
+mid_dim: 64
+upsampler: pixelshuffle
+unshuffle_mod: false
+```
+### FDAT
+#### fdat
+
+
+```yaml
+type: fdat
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 120
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+mid_dim: 64
+upsampler_type: pixelshuffle
+img_range: 1.0
+```
+#### fdat_large
+
+
+```yaml
+type: fdat_large
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 180
+num_groups: 4
+depth_per_group: 4
+num_heads: 6
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose+conv
+img_range: 1.0
+```
+#### fdat_light
+
+
+```yaml
+type: fdat_light
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 108
+num_groups: 3
+depth_per_group: 2
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.08
+upsampler_type: pixelshuffle
+img_range: 1.0
+```
+#### fdat_medium
+
+
+```yaml
+type: fdat_medium
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 120
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose+conv
+img_range: 1.0
+```
+#### fdat_tiny
+
+
+```yaml
+type: fdat_tiny
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 96
+num_groups: 2
+depth_per_group: 2
+num_heads: 3
+window_size: 8
+ffn_expansion_ratio: 1.5
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.05
+upsampler_type: pixelshuffle
+img_range: 1.0
+```
+#### fdat_xl
+
+
+```yaml
+type: fdat_xl
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 180
+num_groups: 6
+depth_per_group: 6
+num_heads: 6
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose+conv
+img_range: 1.0
+```
 ### FlexNet
 #### flexnet
 
@@ -1567,83 +1720,6 @@ pro: false
 fast: false
 in_channels: 3
 out_channels: 3
-```
-### lhan
-#### lhan
-
-
-```yaml
-type: lhan
-num_in_ch: 3
-num_out_ch: 3
-embed_dim: 120
-num_groups: 4
-depth_per_group: 3
-num_heads: 4
-window_size: 8
-ffn_expansion_ratio: 2.0
-aim_reduction_ratio: 8
-group_block_pattern: ~
-drop_path_rate: 0.1
-upsampler_type: transpose_conv
-img_range: 1.0
-```
-#### lhan_light
-
-
-```yaml
-type: lhan_light
-num_in_ch: 3
-num_out_ch: 3
-embed_dim: 108
-num_groups: 3
-depth_per_group: 2
-num_heads: 4
-window_size: 8
-ffn_expansion_ratio: 2.0
-aim_reduction_ratio: 8
-group_block_pattern: ~
-drop_path_rate: 0.08
-upsampler_type: pixelshuffle
-img_range: 1.0
-```
-#### lhan_medium
-
-
-```yaml
-type: lhan_medium
-num_in_ch: 3
-num_out_ch: 3
-embed_dim: 120
-num_groups: 4
-depth_per_group: 3
-num_heads: 4
-window_size: 8
-ffn_expansion_ratio: 2.0
-aim_reduction_ratio: 8
-group_block_pattern: ~
-drop_path_rate: 0.1
-upsampler_type: transpose_conv
-img_range: 1.0
-```
-#### lhan_tiny
-
-
-```yaml
-type: lhan_tiny
-num_in_ch: 3
-num_out_ch: 3
-embed_dim: 96
-num_groups: 2
-depth_per_group: 2
-num_heads: 3
-window_size: 8
-ffn_expansion_ratio: 1.5
-aim_reduction_ratio: 8
-group_block_pattern: ~
-drop_path_rate: 0.05
-upsampler_type: pixelshuffle
-img_range: 1.0
 ```
 ## Discriminator architectures (`network_d`)
 ### DUnet

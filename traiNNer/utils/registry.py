@@ -100,6 +100,7 @@ class Registry:
 DATASET_REGISTRY = Registry("dataset")
 ARCH_REGISTRY = Registry("arch")
 SPANDREL_REGISTRY = Registry("spandrel")
+TESTARCH_REGISTRY = Registry("testarch")  # test archs, undocumented
 MODEL_REGISTRY = Registry("model")
 LOSS_REGISTRY = Registry("loss")
 METRIC_REGISTRY = Registry("metric")
