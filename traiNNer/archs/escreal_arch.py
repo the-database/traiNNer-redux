@@ -1,11 +1,11 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Literal
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from einops import rearrange
 from spandrel import StateDict
-from torch import nn
+from torch import Tensor, nn
 from torch.nn.attention import SDPBackend, sdpa_kernel
 from torch.nn.attention.flex_attention import flex_attention
 from torch.nn.modules.module import _IncompatibleKeys
@@ -32,9 +32,7 @@ SDPA with memory efficient kernel:
 """
 
 
-def attention(
-    q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, bias: torch.Tensor
-) -> torch.Tensor:
+def attention(q: Tensor, k: Tensor, v: Tensor, bias: Tensor) -> Tensor:
     score = q @ k.transpose(-2, -1) / q.shape[-1] ** 0.5
     score = score + bias
     score = F.softmax(score, dim=-1)
@@ -42,8 +40,10 @@ def attention(
     return out
 
 
-def apply_rpe(table: torch.Tensor, window_size: int):
-    def bias_mod(score: torch.Tensor, b: int, h: int, q_idx: int, kv_idx: int):
+def apply_rpe(
+    table: Tensor, window_size: int
+) -> Callable[[Tensor, int, int, int, int], Tensor]:
+    def bias_mod(score: Tensor, b: int, h: int, q_idx: int, kv_idx: int) -> Tensor:
         q_h = q_idx // window_size
         q_w = q_idx % window_size
         k_h = kv_idx // window_size
@@ -56,7 +56,7 @@ def apply_rpe(table: torch.Tensor, window_size: int):
     return bias_mod
 
 
-def feat_to_win(x: torch.Tensor, window_size: Sequence[int], heads: int):
+def feat_to_win(x: Tensor, window_size: Sequence[int], heads: int) -> Tensor:
     return rearrange(
         x,
         "b (qkv heads c) (h wh) (w ww) -> qkv (b h w) heads (wh ww) c",
@@ -67,7 +67,9 @@ def feat_to_win(x: torch.Tensor, window_size: Sequence[int], heads: int):
     )
 
 
-def win_to_feat(x, window_size: Sequence[int], h_div: int, w_div: int):
+def win_to_feat(
+    x: Tensor, window_size: Sequence[int], h_div: int, w_div: int
+) -> Tensor:
     return rearrange(
         x,
         "(b h w) heads (wh ww) c -> b (heads c) (h wh) (w ww)",
@@ -80,7 +82,10 @@ def win_to_feat(x, window_size: Sequence[int], h_div: int, w_div: int):
 
 class LayerNorm(nn.Module):
     def __init__(
-        self, normalized_shape, eps=1e-6, data_format="channels_first"
+        self,
+        normalized_shape: int,
+        eps: float = 1e-6,
+        data_format: Literal["channels_first", "channels_last"] = "channels_first",
     ) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones(normalized_shape))
@@ -91,7 +96,7 @@ class LayerNorm(nn.Module):
             raise NotImplementedError
         self.normalized_shape = (normalized_shape,)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         if self.data_format == "channels_last":
             return F.layer_norm(
                 x, self.normalized_shape, self.weight, self.bias, self.eps
@@ -117,6 +122,8 @@ class LayerNorm(nn.Module):
                     self.bias,
                     self.eps,
                 ).permute(0, 3, 1, 2)
+        else:
+            raise NotImplementedError
 
 
 class ConvolutionalAttention(nn.Module):
@@ -130,10 +137,10 @@ class ConvolutionalAttention(nn.Module):
             nn.GELU(),
             nn.Conv2d(pdim // 2, pdim * self.sk_size * self.sk_size, 1, 1, 0),
         )
-        nn.init.zeros_(self.dwc_proj[-1].weight)
-        nn.init.zeros_(self.dwc_proj[-1].bias)
+        nn.init.zeros_(self.dwc_proj[-1].weight)  # pyright: ignore[reportArgumentType]
+        nn.init.zeros_(self.dwc_proj[-1].bias)  # pyright: ignore[reportArgumentType]
 
-    def forward(self, x: torch.Tensor, lk_filter: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, lk_filter: Tensor) -> Tensor:
         if self.training:
             x1, x2 = torch.split(x, [self.pdim, x.shape[1] - self.pdim], dim=1)
 
@@ -191,14 +198,14 @@ class ConvAttnWrapper(nn.Module):
         self.plk = ConvolutionalAttention(pdim)
         self.aggr = nn.Conv2d(dim, dim, 1, 1, 0)
 
-    def forward(self, x: torch.Tensor, lk_filter: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, lk_filter: Tensor) -> Tensor:
         x = self.plk(x, lk_filter)
         x = self.aggr(x)
         return x
 
 
 class ConvFFN(nn.Module):
-    def __init__(self, dim: int, kernel_size: int, exp_ratio: int) -> None:
+    def __init__(self, dim: int, kernel_size: int, exp_ratio: float) -> None:
         super().__init__()
         self.proj = nn.Conv2d(dim, int(dim * exp_ratio), 1, 1, 0)
         self.dwc = nn.Conv2d(
@@ -211,7 +218,7 @@ class ConvFFN(nn.Module):
         )
         self.aggr = nn.Conv2d(int(dim * exp_ratio), dim, 1, 1, 0)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x = F.gelu(self.proj(x))
         x = F.gelu(self.dwc(x)) + x
         x = self.aggr(x)
@@ -222,9 +229,9 @@ class WindowAttention(nn.Module):
     def __init__(
         self,
         dim: int,
-        window_size: int,
+        window_size: int | tuple[int, int],
         num_heads: int,
-        attn_func=None,
+        attn_func: Callable,
         attn_type: ATTN_TYPE = "Flex",
     ) -> None:
         super().__init__()
@@ -252,7 +259,7 @@ class WindowAttention(nn.Module):
         self.is_mobile = False
 
     @staticmethod
-    def create_table_idxs(window_size: int, heads: int):
+    def create_table_idxs(window_size: int, heads: int) -> Tensor:
         # Transposed idxs of original Swin Transformer
         # But much easier to implement and the same relative position distance anyway
         idxs_window = []
@@ -270,7 +277,7 @@ class WindowAttention(nn.Module):
         idxs = torch.tensor(idxs_window, dtype=torch.long, requires_grad=False)
         return idxs
 
-    def pad_to_win(self, x: torch.Tensor, h: int, w: int) -> torch.Tensor:
+    def pad_to_win(self, x: Tensor, h: int, w: int) -> Tensor:
         pad_h = (self.window_size[0] - h % self.window_size[0]) % self.window_size[0]
         pad_w = (self.window_size[1] - w % self.window_size[1]) % self.window_size[1]
         x = F.pad(x, (0, pad_w, 0, pad_h), mode="reflect")
@@ -278,7 +285,7 @@ class WindowAttention(nn.Module):
 
     def to_mobile(self) -> None:
         bias = self.relative_position_bias[self.rpe_idxs[:, 0], self.rpe_idxs[:, 1]]
-        self.rpe_bias = nn.Parameter(
+        self.rpe_bias = nn.Parameter(  # pyright: ignore[reportUninitializedInstanceVariable]
             bias.reshape(
                 1,
                 self.num_heads,
@@ -292,7 +299,7 @@ class WindowAttention(nn.Module):
 
         self.is_mobile = True
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """
         Args:
             x: input features with shape of (B, C, H, W)
@@ -352,7 +359,7 @@ class Block(nn.Module):
         window_size: int,
         num_heads: int,
         exp_ratio: float,
-        attn_func=None,
+        attn_func: Callable,
         attn_type: ATTN_TYPE = "Flex",
     ) -> None:
         super().__init__()
@@ -373,7 +380,7 @@ class Block(nn.Module):
         self.ln_out = LayerNorm(dim)
         self.conv_out = nn.Conv2d(dim, dim, 3, 1, 1)
 
-    def forward(self, x: torch.Tensor, plk_filter: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor, plk_filter: Tensor) -> Tensor:
         skip = x
         x = self.ln_proj(x)
         x = self.proj(x)
@@ -388,7 +395,7 @@ class Block(nn.Module):
 
 # To enhance LK's structural inductive bias, we use Feature-level Geometric Re-parameterization
 #  as proposed in https://github.com/dslisleedh/IGConv
-def _geo_ensemble(k):
+def _geo_ensemble(k: Tensor) -> Tensor:
     k_hflip = k.flip([3])
     k_vflip = k.flip([2])
     k_hvflip = k.flip([2, 3])
@@ -507,13 +514,13 @@ class ESCRealM(nn.Module):
         state_dict["to_img.MetaUpsample"] = self.to_img.MetaUpsample
         return super().load_state_dict(state_dict, *args, **kwargs)
 
-    def check_img_size(self, x: torch.Tensor, h: int, w: int) -> torch.Tensor:
+    def check_img_size(self, x: Tensor, h: int, w: int) -> Tensor:
         mod_pad_h = (self.padding - h % self.padding) % self.padding
         mod_pad_w = (self.padding - w % self.padding) % self.padding
         return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        b, c, h, w = x.shape
+    def forward(self, x: Tensor) -> Tensor:
+        _b, _c, h, w = x.shape
         if self.padding:
             x = self.check_img_size(x, h, w)
         feat = self.proj(x)
