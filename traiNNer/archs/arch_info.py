@@ -260,7 +260,7 @@ OFFICIAL_METRICS: dict[
         4: {"div2k_psnr": 26.71, "div2k_ssim": 0.8045},
     },
     "fdat_medium": {
-        2: {"df2k_psnr": 33.13, "df2k_ssim": 0.9369},
+        2: {"df2k_psnr": 33.20, "df2k_ssim": 0.9376},
     },
     "lmlt_base": {
         2: {"df2k_psnr": 32.52, "df2k_ssim": 0.9316},

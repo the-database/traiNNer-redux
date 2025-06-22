@@ -111,7 +111,8 @@ REQUIRE_32_HW = {
     "emt",
     "hit_srf",
     "realcugan",
-    "escreal",
+    "escrealm",
+    "escrealm_xl",
 }
 REQUIRE_64_HW = {
     "cascadedgaze",
