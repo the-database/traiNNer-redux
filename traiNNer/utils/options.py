@@ -160,6 +160,7 @@ def parse_options(
     parser.add_argument("--auto_resume", action="store_true")
     parser.add_argument("--resume", type=int, default=0)
     parser.add_argument("--watch", action="store_true")
+    parser.add_argument("--start-iter", type=int, default=0)
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--local_rank", type=int, default=0)
     parser.add_argument(
@@ -208,6 +209,7 @@ def parse_options(
     opt.auto_resume = args.auto_resume
     # opt.resume = args.resume
     opt.watch = args.watch
+    opt.start_iter = args.start_iter
     opt.is_train = is_train
 
     if opt.num_gpu == "auto":

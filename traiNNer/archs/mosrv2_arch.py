@@ -1,20 +1,14 @@
-import math
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Any
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
 from torch.nn.modules.module import _IncompatibleKeys
 
-from traiNNer.archs.arch_util import UniUpsampleV2
+from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
 from traiNNer.utils.registry import ARCH_REGISTRY
-
-SampleMods = Literal[
-    "conv", "pixelshuffledirect", "pixelshuffle", "nearest+conv", "dysample"
-]
 
 
 class InceptionDWConv2d(nn.Module):
@@ -140,7 +134,7 @@ class MoSRv2(nn.Module):
         scale: int = 4,
         n_block: int = 24,
         dim: int = 64,
-        upsampler: SampleMods = "pixelshuffledirect",
+        upsampler: SampleMods3 = "pixelshuffledirect",
         expansion_ratio: float = 1.5,
         mid_dim: int = 32,
         unshuffle_mod: bool = True,
@@ -177,7 +171,7 @@ class MoSRv2(nn.Module):
                 nn.Conv2d(dim, dim, 1, 1),
             ]
         )
-        self.to_img = UniUpsampleV2(upsampler, scale, dim, in_ch, mid_dim)
+        self.to_img = UniUpsampleV3(upsampler, scale, dim, in_ch, mid_dim)
 
     def load_state_dict(
         self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False
