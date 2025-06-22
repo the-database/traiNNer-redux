@@ -441,6 +441,7 @@ class ReduxOptions(StrictStruct):
     world_size: int | None = None
     auto_resume: bool | None = None
     watch: bool = False
+    start_iter: int = 0
     is_train: bool | None = None
     root_path: str | None = None
     switch_iter_per_epoch: int = 1

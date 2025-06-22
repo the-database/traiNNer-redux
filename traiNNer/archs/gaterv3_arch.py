@@ -1,9 +1,10 @@
 from collections.abc import Sequence
-from typing import Self
+from typing import Any, Self
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
+from torch.nn.modules.module import _IncompatibleKeys
 
 from traiNNer.archs.arch_util import SampleMods, UniUpsample
 from traiNNer.utils.registry import ARCH_REGISTRY
@@ -450,12 +451,14 @@ class GateRV3(nn.Module):
             self.dim_to_in = nn.Conv2d(dim, in_ch, 3, 1, 1)
             self.short_to_dim = nn.Identity()
 
-    # def load_state_dict(self, state_dict, *args, **kwargs):
-    #     if "dim_to_in.MetaUpsample" in state_dict:
-    #         state_dict["dim_to_in.MetaUpsample"] = self.dim_to_in.MetaUpsample
-    #     if "gamma" not in state_dict:
-    #         state_dict["gamma"] = self.gamma
-    #     return super().load_state_dict(state_dict, *args, **kwargs)
+    def load_state_dict(
+        self, state_dict: dict[str, Any], *args: Any, **kwargs
+    ) -> _IncompatibleKeys:
+        if "dim_to_in.MetaUpsample" in state_dict:
+            state_dict["dim_to_in.MetaUpsample"] = self.dim_to_in.MetaUpsample
+        if "gamma" not in state_dict:
+            state_dict["gamma"] = self.gamma
+        return super().load_state_dict(state_dict, *args, **kwargs)
 
     def check_img_size(self, x: Tensor, resolution: tuple[int, int]) -> Tensor:
         scaled_size = self.pad

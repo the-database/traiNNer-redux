@@ -220,8 +220,14 @@ def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs) -> None:
 
 
 SampleMods = Literal[
-    "conv", "pixelshuffledirect", "pixelshuffle", "nearest+conv", "dysample"
+    "conv",
+    "pixelshuffledirect",
+    "pixelshuffle",
+    "nearest+conv",
+    "dysample",
 ]
+
+SampleMods3 = Literal[SampleMods, "transpose+conv"]
 
 
 class UniUpsample(nn.Sequential):
@@ -301,6 +307,119 @@ class UniUpsample(nn.Sequential):
                 [
                     1,  # Block version, if you change something, please number from the end so that you can distinguish between authorized changes and third parties
                     list(SampleMods.__args__).index(upsample),  # UpSample method index
+                    scale,
+                    in_dim,
+                    out_dim,
+                    mid_dim,
+                    group,
+                ],
+                dtype=torch.uint8,
+            ),
+        )
+
+
+class UniUpsampleV3(nn.Sequential):
+    def __init__(
+        self,
+        upsample: SampleMods3,
+        scale: int = 2,
+        in_dim: int = 64,
+        out_dim: int = 3,
+        mid_dim: int = 64,  # Only pixelshuffle and DySample
+        group: int = 4,  # Only DySample
+    ) -> None:
+        m = []
+
+        if scale == 1 or upsample == "conv":
+            m.append(nn.Conv2d(in_dim, out_dim, 3, 1, 1))
+        elif upsample == "pixelshuffledirect":
+            m.extend(
+                [nn.Conv2d(in_dim, out_dim * scale**2, 3, 1, 1), nn.PixelShuffle(scale)]
+            )
+        elif upsample == "pixelshuffle":
+            m.extend([nn.Conv2d(in_dim, mid_dim, 3, 1, 1), nn.LeakyReLU(inplace=True)])
+            if (scale & (scale - 1)) == 0:  # scale = 2^n
+                for _ in range(int(math.log2(scale))):
+                    m.extend(
+                        [nn.Conv2d(mid_dim, 4 * mid_dim, 3, 1, 1), nn.PixelShuffle(2)]
+                    )
+            elif scale == 3:
+                m.extend([nn.Conv2d(mid_dim, 9 * mid_dim, 3, 1, 1), nn.PixelShuffle(3)])
+            else:
+                raise ValueError(
+                    f"scale {scale} is not supported. Supported scales: 2^n and 3."
+                )
+            m.append(nn.Conv2d(mid_dim, out_dim, 3, 1, 1))
+        elif upsample == "nearest+conv":
+            if (scale & (scale - 1)) == 0:
+                for _ in range(int(math.log2(scale))):
+                    m.extend(
+                        (
+                            nn.Conv2d(in_dim, in_dim, 3, 1, 1),
+                            nn.Upsample(scale_factor=2),
+                            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                        )
+                    )
+                m.extend(
+                    (
+                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
+                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                    )
+                )
+            elif scale == 3:
+                m.extend(
+                    (
+                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
+                        nn.Upsample(scale_factor=scale),
+                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                        nn.Conv2d(in_dim, in_dim, 3, 1, 1),
+                        nn.LeakyReLU(negative_slope=0.2, inplace=True),
+                    )
+                )
+            else:
+                raise ValueError(
+                    f"scale {scale} is not supported. Supported scales: 2^n and 3."
+                )
+            m.append(nn.Conv2d(in_dim, out_dim, 3, 1, 1))
+        elif upsample == "dysample":
+            if mid_dim != in_dim:
+                m.extend(
+                    [nn.Conv2d(in_dim, mid_dim, 3, 1, 1), nn.LeakyReLU(inplace=True)]
+                )
+                dys_dim = mid_dim
+            else:
+                dys_dim = in_dim
+            m.append(DySample(dys_dim, out_dim, scale, group))
+        elif upsample == "transpose+conv":
+            if scale == 2:
+                m.append(nn.ConvTranspose2d(in_dim, out_dim, 4, 2, 1))
+            elif scale == 3:
+                m.append(nn.ConvTranspose2d(in_dim, out_dim, 3, 3, 0))
+            elif scale == 4:
+                m.extend(
+                    [
+                        nn.ConvTranspose2d(in_dim, in_dim, 4, 2, 1),
+                        nn.GELU(),
+                        nn.ConvTranspose2d(in_dim, out_dim, 4, 2, 1),
+                    ]
+                )
+            else:
+                raise ValueError(
+                    f"scale {scale} is not supported. Supported scales: 2, 3, 4"
+                )
+            m.append(nn.Conv2d(out_dim, out_dim, 3, 1, 1))
+        else:
+            raise ValueError(
+                f"An invalid Upsample was selected. Please choose one of {SampleMods}"
+            )
+        super().__init__(*m)
+
+        self.register_buffer(
+            "MetaUpsample",
+            torch.tensor(
+                [
+                    3,  # Block version, if you change something, please number from the end so that you can distinguish between authorized changes and third parties
+                    list(SampleMods3.__args__).index(upsample),  # UpSample method index
                     scale,
                     in_dim,
                     out_dim,

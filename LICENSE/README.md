@@ -27,6 +27,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[EIMN](https://github.com/liux520/EIMN)|[MIT License](https://github.com/liux520/EIMN/blob/main/LICENSE)|
 |[ELAN](https://github.com/xindongzhang/ELAN)| [Apache License 2.0](https://github.com/xindongzhang/ELAN/blob/main/LICENSE)|
 |[EMT](https://github.com/Fried-Rice-Lab/EMT)| [MIT License](https://github.com/Fried-Rice-Lab/EMT/blob/main/LICENSE)|
+|[ESC](https://github.com/dslisleedh/ESC)|[MIT License](https://github.com/dslisleedh/ESC/blob/main/LICENSE)|
 |[FDL](https://github.com/eezkni/FDL)| [MIT License](https://github.com/eezkni/FDL?tab=readme-ov-file#license)|
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
 |[flip](https://github.com/NVlabs/flip)| [BSD 3-Clause License](https://github.com/NVlabs/flip/blob/main/LICENSE)|
@@ -37,7 +38,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|
 |[LineDistiller](https://github.com/hepesu/LineDistiller) | [MIT License](https://github.com/hepesu/LineDistiller/blob/master/LICENSE)|
 |[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
-|[LHAN](https://github.com/stinkybread/LHAN)| [MIT License](https://github.com/stinkybread/LHAN/blob/main/LICENSE)|
+|[FDAT](https://github.com/stinkybread/FDAT)| [MIT License](https://github.com/stinkybread/FDAT/blob/main/LICENSE)|
 |[LMLT](https://github.com/jwgdmkj/LMLT) | [MIT License](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)|
 |[LPIPS](https://github.com/richzhang/PerceptualSimilarity)| [BSD-2-Clause License](https://github.com/richzhang/PerceptualSimilarity/blob/master/LICENSE)|
 |[MAN](https://github.com/icandle/MAN)| [Apache License 2.0](https://github.com/icandle/MAN/blob/main/LICENSE)|

@@ -33,7 +33,7 @@ keywords = ["machine learning", "deep learning", "neural network", "pytorch", "s
 
 [project.optional-dependencies]
 dev = ["ruff", "pyright", "pytest", "syrupy", "torchfix"]
-onnx = ["onnx", "onnxruntime", "onnxconverter-common", "onnxslim"]
+onnx = ["onnx>=1.18.0", "onnxruntime>=1.22.0", "onnxconverter-common", "onnxslim>=0.1.53", "onnxscript>=0.2.7"]
 docs = ["sphinx", "sphinx-rtd-theme"]
 scripts = ["chainner_ext", "matplotlib", "pandas"]
 segmentation = ["segmentation_models_pytorch"]
@@ -110,6 +110,7 @@ ignore = [
     "N999",    # Invalid module name (which triggers for chaiNNer)
     "N818",    # Exception name should end in Error
     "ISC001",  # Implicit string concatenation, conflicts with formatter
+    "PLC0415"
 ]
 unfixable = [
     "F841",

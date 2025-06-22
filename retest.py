@@ -31,6 +31,7 @@ from traiNNer.utils import (
     scandir,
 )
 from traiNNer.utils.config import Config
+from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import set_random_seed
 from traiNNer.utils.options import copy_opt_file
 from traiNNer.utils.redux_options import ReduxOptions
@@ -148,7 +149,9 @@ def train_pipeline(root_path: str) -> None:
     # initialize wandb and tb loggers
     tb_logger = init_tb_loggers(opt)
     assert tb_logger is not None, "tb_logger must be enabled"
-    start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
+    start_iter = args.start_iter
+    if start_iter == 0:
+        start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
 
     # load resume states if necessary
     make_exp_dirs(opt, start_iter > 0)
@@ -206,7 +209,10 @@ def train_pipeline(root_path: str) -> None:
         )
 
     if opt.watch:
-        logger.info("Watching directory: %s", pretrain_net_path)
+        logger.info(
+            "Watching directory: %s",
+            clickable_file_path(pretrain_net_path, pretrain_net_path),
+        )
 
     validate = True
 
