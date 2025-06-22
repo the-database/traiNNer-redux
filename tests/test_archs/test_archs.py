@@ -43,8 +43,6 @@ EXTRA_ARCH_PARAMS["realplksr"] = [
     {"upsampler": "pixelshuffle"},
 ]
 
-# TODO remove after finalizing
-EXTRA_ARCH_PARAMS["realplksrmod"] = EXTRA_ARCH_PARAMS["realplksr"]
 
 EXTRA_ARCH_PARAMS["mosr"] = [
     {"upsampler": "dysample"},
@@ -62,6 +60,11 @@ EXTRA_ARCH_PARAMS["rcan"] = [
     {"unshuffle_mod": True},
     {"unshuffle_mod": False},
 ]
+
+EXTRA_ARCH_PARAMS["escrealm"] = [
+    {"attn_type": "Naive"},
+]
+EXTRA_ARCH_PARAMS["escrealm_xl"] = EXTRA_ARCH_PARAMS["escrealm"]
 
 # A list of tuples in the format of (name, arch, scale, extra_params).
 FILTERED_REGISTRIES_SCALES_PARAMS = [
