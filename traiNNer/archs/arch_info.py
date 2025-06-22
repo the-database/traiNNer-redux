@@ -551,6 +551,26 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": "8  # paper: 64",
         "accum_iter": 1,
     },
+    "escrealm": {
+        "milestones": [250000, 400000, 450000, 475000, 490000],
+        "total_iter": 500000,
+        "warmup_iter": 20000,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "8",
+        "accum_iter": "1",
+        "betas": [0.9, 0.9],
+    },
+    "escrealm_xl": {
+        "milestones": [250000, 400000, 450000, 475000, 490000],
+        "total_iter": 500000,
+        "warmup_iter": 20000,
+        "lr": "!!float 5e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "8",
+        "accum_iter": "1",
+        "betas": [0.9, 0.9],
+    },
     "rgt": {
         "milestones": [250000, 400000, 450000, 475000],
         "total_iter": 500000,
@@ -835,6 +855,24 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
         "lq_size": 64,
         "batch_size_per_gpu": 8,
         "accum_iter": 1,
+    },
+    "escrealm": {
+        "milestones": [250000],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "8  # paper: 16",
+        "accum_iter": "1  # paper: 4",
+    },
+    "escrealm_xl": {
+        "milestones": [250000],
+        "total_iter": 250000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 64,
+        "batch_size_per_gpu": "8  # paper: 16",
+        "accum_iter": "1  # paper: 4",
     },
     "rgt": {
         "milestones": [125000, 200000, 225000, 237500],
@@ -1234,5 +1272,14 @@ ALL_ARCHS: list[ArchInfo] = [
     {
         "names": ["FDAT_medium", "FDAT_light", "FDAT_tiny", "FDAT_large", "FDAT_XL"],
         "scales": ALL_SCALES,
+    },
+    {
+        "names": ["ESCRealM", "ESCRealM_XL"],
+        "scales": ALL_SCALES,
+    },
+    {
+        "names": ["GaterV3_S", "GaterV3_R"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "GaterV3",
     },
 ]
