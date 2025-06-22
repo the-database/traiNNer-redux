@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable, Sequence
 from typing import Literal
 
@@ -447,6 +448,16 @@ class ESCRealM(nn.Module):
         elif attn_type == "SDPA":
             attn_func = F.scaled_dot_product_attention
         elif attn_type == "Flex":
+            try:
+                import triton  # type: ignore # noqa: F401
+            except ImportError as e:
+                if sys.platform == "win32":
+                    raise ImportError(
+                        "The `ESCRealM` architecture requires triton when using Flex attention. "
+                        "You can install it with:\n\n    pip install triton-windows"
+                    ) from e
+                else:
+                    raise ImportError("Error importing triton.") from e
             attn_func = torch.compile(flex_attention, dynamic=True)
         else:
             raise NotImplementedError(f"Attention type {attn_type} is not supported.")
