@@ -454,14 +454,18 @@ class SRModel(BaseModel):
                     else:
                         l_g_loss = loss(self.output, target)
 
+                    current_loss_weight = self.get_current_loss_weight(
+                        loss.loss_weight, current_iter, loss.warmup_iter
+                    )
+
                     if isinstance(l_g_loss, dict):
                         for sublabel, loss_val in l_g_loss.items():
                             if loss_val > 0:
-                                weighted_loss_val = loss_val * abs(loss.loss_weight)
+                                weighted_loss_val = loss_val * abs(current_loss_weight)
                                 l_g_total += weighted_loss_val * self.accum_iters
                                 loss_dict[f"{label}_{sublabel}"] = weighted_loss_val
                     else:
-                        weighted_l_g_loss = l_g_loss * abs(loss.loss_weight)
+                        weighted_l_g_loss = l_g_loss * abs(current_loss_weight)
                         l_g_total += weighted_l_g_loss / self.accum_iters
                         loss_dict[label] = weighted_l_g_loss
 

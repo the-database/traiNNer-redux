@@ -50,6 +50,7 @@ class ContextualLoss(nn.Module):
         net: str = "vgg19",
         calc_type: str = "regular",
         z_norm: bool = False,
+        warmup_iter: int = -1,
     ) -> None:
         if layer_weights is None:
             layer_weights = {"conv3_2": 1.0, "conv4_2": 1.0}
@@ -67,6 +68,7 @@ class ContextualLoss(nn.Module):
             self.layer_weights = {}
 
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
         self.crop_quarter = crop_quarter
         self.distanceType = distance_type
         self.max_1d_size = max_1d_size

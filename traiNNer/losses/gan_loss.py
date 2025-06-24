@@ -28,10 +28,12 @@ class GANLoss(nn.Module):
         gan_type: str = "vanilla",
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
+        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
 
@@ -137,8 +139,11 @@ class MultiScaleGANLoss(GANLoss):
         gan_type: str,
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
+        warmup_iter: int = -1,
     ) -> None:
-        super().__init__(loss_weight, gan_type, real_label_val, fake_label_val)
+        super().__init__(
+            loss_weight, gan_type, real_label_val, fake_label_val, warmup_iter
+        )
 
     def forward(
         self, input: Tensor | list[Tensor], target_is_real: bool, is_disc: bool = False

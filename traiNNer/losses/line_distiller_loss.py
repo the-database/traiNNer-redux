@@ -25,6 +25,7 @@ class LineDistillerLoss(nn.Module):
         loss_weight: float,
         criterion: Literal["l1", "charbonnier"] = "l1",
         debug: bool = False,
+        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         self.model = LineDistiller().eval()
@@ -38,6 +39,7 @@ class LineDistillerLoss(nn.Module):
         weights = torch.load(weights_path, map_location="cpu", weights_only=True)
         self.model.load_state_dict(weights)
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
 
         for param in self.model.parameters():
             param.requires_grad = False

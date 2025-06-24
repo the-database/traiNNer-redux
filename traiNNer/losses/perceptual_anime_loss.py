@@ -233,6 +233,7 @@ class PerceptualAnimeLoss(nn.Module):
         loss_weight: float,
         layer_weights: dict[str, float] | None = None,
         criterion: str = "l1",
+        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
 
@@ -247,6 +248,7 @@ class PerceptualAnimeLoss(nn.Module):
 
         model = resnet50()
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
         self.layer_weights = layer_weights
         self.layer_labels = layer_weights.keys()
         self.resnet50 = ResNet50Extractor(model, list(self.layer_labels)).cuda()

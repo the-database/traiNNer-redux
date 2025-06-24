@@ -361,6 +361,13 @@ class BaseModel:
     def get_current_learning_rate(self) -> list[float]:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
+    def get_current_loss_weight(
+        self, loss_weight: float, curr_iter: int, warmup_iter: int = -1
+    ) -> float:
+        if warmup_iter <= 0 or curr_iter >= warmup_iter:
+            return loss_weight
+        return curr_iter / warmup_iter * loss_weight
+
     @master_only
     def save_network(
         self,

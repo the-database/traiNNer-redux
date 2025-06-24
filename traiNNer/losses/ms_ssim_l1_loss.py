@@ -16,6 +16,7 @@ class MSSSIML1Loss(nn.Module):
         k: tuple[float, float] = (0.01, 0.03),
         alpha: float = 0.1,
         cuda_dev: int = 0,
+        warmup_iter: int = -1,
     ) -> None:
         if gaussian_sigmas is None:
             gaussian_sigmas = [0.5, 1.0, 2.0, 4.0, 8.0]
@@ -37,6 +38,7 @@ class MSSSIML1Loss(nn.Module):
             # "cpu"
         )
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
 
     def _fspecial_gauss_1d(self, size: int, sigma: float) -> Tensor:
         """Create 1-D gauss kernel

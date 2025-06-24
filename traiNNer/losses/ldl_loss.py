@@ -65,12 +65,11 @@ def get_refined_artifact_map(
 @LOSS_REGISTRY.register()
 class LDLLoss(nn.Module):
     def __init__(
-        self,
-        loss_weight: float,
-        criterion: str = "l1",
+        self, loss_weight: float, criterion: str = "l1", warmup_iter: int = -1
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
 
         self.criterion_type = criterion
         if self.criterion_type == "l1":

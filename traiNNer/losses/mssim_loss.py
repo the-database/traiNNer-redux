@@ -508,9 +508,11 @@ class MSSIMLoss(torch.nn.Module):
         is_prod: bool = True,
         color_space: str = "yiq",
         include_luminance: bool = False,
+        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
         self.downsample = downsample
         self.test_y_channel = test_y_channel
         self.color_space = color_space

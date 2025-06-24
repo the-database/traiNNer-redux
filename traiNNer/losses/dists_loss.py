@@ -22,6 +22,7 @@ class L2pooling(nn.Module):
         stride: int = 2,
         as_loss: bool = True,
         pad_off: int = 0,
+        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         self.padding = (filter_size - 2) // 2
@@ -71,6 +72,7 @@ class DISTSLoss(nn.Module):
         super().__init__()
         self.as_loss = as_loss
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
         self.use_input_norm = use_input_norm
         self.clip_min = clip_min
 

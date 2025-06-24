@@ -48,11 +48,13 @@ class ADISTSLoss(torch.nn.Module):
         loss_weight: float,
         window_size: int = 21,
         resize_input: bool = False,
+        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         assert window_size % 3 == 0
         self.resize_input = resize_input
         self.loss_weight = loss_weight
+        self.warmup_iter = warmup_iter
         vgg_pretrained_features = models.vgg16(pretrained=True).features
         assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
         self.stage1 = torch.nn.Sequential()
