@@ -163,12 +163,9 @@ def parse_options(
     parser.add_argument("--start-iter", type=int, default=0)
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--local_rank", type=int, default=0)
-    parser.add_argument(
-        "--force_yml",
-        nargs="+",
-        default=None,
-        help="Force to update yml files. Examples: train:ema_decay=0.999",
-    )
+    parser.add_argument("--manual_seed", type=int, default=None)
+    parser.add_argument("--name", type=str, default=None)
+
     args = parser.parse_args()
 
     # parse yml to dict
@@ -188,23 +185,16 @@ def parse_options(
             init_dist(args.launcher)
     opt.rank, opt.world_size = get_dist_info()
 
+    # name override
+    if args.name:
+        opt.name = args.name
+
     # random seed
+    # manual seed override
+    if args.manual_seed:
+        opt.manual_seed = args.manual_seed
     if not opt.manual_seed:
         opt.manual_seed = random.randint(1024, 10000)
-
-    # force to update yml options
-    if args.force_yml is not None:
-        for entry in args.force_yml:
-            # now do not support creating new keys
-            keys, value = entry.split("=")
-            keys, value = keys.strip(), value.strip()
-            value = _postprocess_yml_value(value)
-            eval_str = "opt"
-            for key in keys.split(":"):
-                eval_str += f'["{key}"]'
-            eval_str += "=value"
-            # using exec function
-            exec(eval_str)
 
     opt.auto_resume = args.auto_resume
     # opt.resume = args.resume
