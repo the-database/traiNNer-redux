@@ -336,15 +336,15 @@ class BaseModel:
         return init_lr_groups_l
 
     def update_learning_rate(
-        self, current_iter: int, warmup_iters: list[int] | None = None
+        self, current_iter: int, warmup_iter: list[int] | None = None
     ) -> None:
         """Update learning rate.
 
         Args:
             current_iter (int): Current iteration.
-            warmup_iters (list[int] or None): Per-optimizer warm-up iters.
+            warmup_iter (list[int] or None): Per-optimizer warm-up iters.
                 If None, no warm-up. If provided, len must == len(self.optimizers),
-                and warmup_iters[i] is the warm-up length for optimizer i.
+                and warmup_iter[i] is the warm-up length for optimizer i.
         """
         # step all schedulers
         for i, scheduler in enumerate(self.schedulers):
@@ -352,14 +352,14 @@ class BaseModel:
                 scheduler.step()
 
         # apply per-optimizer warm-up
-        if warmup_iters is not None:
-            assert len(warmup_iters) == len(self.optimizers), (
-                "warmup_iters must have one entry per optimizer"
+        if warmup_iter is not None:
+            assert len(warmup_iter) == len(self.optimizers), (
+                "warmup_iter must have one entry per optimizer"
             )
             init_lr_groups = self._get_init_lr()
             warmup_lr_groups: list[list[float]] = []
             for opt_idx, init_lrs in enumerate(init_lr_groups):
-                wi = warmup_iters[opt_idx]
+                wi = warmup_iter[opt_idx]
                 if current_iter < wi and wi > 0:
                     scaled = [lr * (current_iter / wi) for lr in init_lrs]
                 else:
