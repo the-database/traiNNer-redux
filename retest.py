@@ -102,7 +102,9 @@ def create_train_val_dataloader(
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
-def get_start_iter(tb_logger: SummaryWriter, save_checkpoint_freq: int) -> int:
+def get_start_iter(
+    tb_logger: SummaryWriter, save_checkpoint_freq: int, start_iter_override: int = 0
+) -> int:
     log_dir = tb_logger.log_dir
     ea = event_accumulator.EventAccumulator(log_dir)
     ea.Reload()
@@ -110,7 +112,7 @@ def get_start_iter(tb_logger: SummaryWriter, save_checkpoint_freq: int) -> int:
     if not ea.scalars.Keys():
         return 0
 
-    logged_iters = set()
+    logged_iters = {start_iter_override}
     for tag in ea.scalars.Keys():
         logged_iters.update([int(e.step) for e in ea.Scalars(tag)])
 
