@@ -110,14 +110,14 @@ def get_start_iter(
     ea.Reload()
 
     if not ea.scalars.Keys():
-        return 0
+        return start_iter_override
 
     logged_iters = {start_iter_override}
     for tag in ea.scalars.Keys():
         logged_iters.update([int(e.step) for e in ea.Scalars(tag)])
 
     if not logged_iters:
-        return 0
+        return start_iter_override
 
     max_logged_iter = max(logged_iters)
     start_iter = ((max_logged_iter // save_checkpoint_freq) + 1) * save_checkpoint_freq
