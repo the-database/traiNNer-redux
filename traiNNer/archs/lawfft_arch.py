@@ -1,6 +1,8 @@
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
+from spandrel import StateDict
 from torch import Tensor, nn
+from torch.nn.modules.module import _IncompatibleKeys
 
 from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
 from traiNNer.utils.registry import TESTARCH_REGISTRY
@@ -28,7 +30,7 @@ class FeedForward(nn.Module):
 
         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.project_in(x)
 
         x1, x2 = self.dwconv(x).chunk(2, dim=1)
@@ -46,7 +48,7 @@ class LayerNorm(nn.Module):
         self.eps = eps
         self.dim = (dim,)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         if x.is_contiguous(memory_format=torch.channels_last):
             return F.layer_norm(
                 x.permute(0, 2, 3, 1), self.dim, self.weight, self.bias, self.eps
@@ -69,8 +71,8 @@ class DynamicLocal(nn.Module):
         self.kernel_size = kernel_size
         self.padding = kernel_size // 2
 
-    def forward(self, x):
-        B, C, H, W = x.shape
+    def forward(self, x: Tensor) -> Tensor:
+        B, C, H, W = x.shape  # noqa: N806
         # генерируем веса для каждого примера
         kernels = self.kernel_gen(x)  # [B, C*k*k, 1, 1]
         kernels = kernels.reshape(B * C, 1, self.kernel_size, self.kernel_size)
@@ -105,12 +107,12 @@ class FSAS(nn.Module):
 
         self.patch_size = window_size
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         hidden = self.to_hidden(x)
 
         q, k, v = self.to_hidden_dw(hidden).chunk(3, dim=1)
         if self.patch:
-            B, C, H, W = q.shape
+            B, C, H, W = q.shape  # noqa: N806
 
             q_patch = q.view(
                 B,
@@ -167,7 +169,7 @@ class SFSAS(nn.Module):
         self.last = nn.Conv2d(dim, dim, 1)
         self.split = [local, global_dim]
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x1, x2 = x.split(self.split, dim=1)
         x1 = self.local(x1)
         x2 = self.att(x2)
@@ -190,7 +192,7 @@ class MetaBlock(nn.Module):
         )
         self.channel_mix1 = nn.Sequential(LayerNorm(dim), FeedForward(dim, mlp, True))
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.token_mix(x) + x
         x = self.channel_mix1(x) + x
         return x
@@ -217,13 +219,13 @@ class ResidualMeta(nn.Module):
         self.apply(self._init_weights)
 
     @staticmethod
-    def _init_weights(m) -> None:
+    def _init_weights(m: nn.Module) -> None:
         if isinstance(m, nn.Conv2d | nn.Linear):
             nn.init.trunc_normal_(m.weight, std=0.02)
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.residual(x) + x
 
 
@@ -275,7 +277,12 @@ class LAWFFT(nn.Module):
 
         self.scale = scale
 
-    def load_state_dict(self, state_dict, *args, **kwargs):
+    def load_state_dict(
+        self,
+        state_dict: StateDict,
+        *args,  # noqa: ANN002
+        **kwargs,
+    ) -> _IncompatibleKeys:
         state_dict["upscale.MetaUpsample"] = self.upscale.MetaUpsample
         return super().load_state_dict(state_dict, *args, **kwargs)
 
@@ -285,8 +292,8 @@ class LAWFFT(nn.Module):
         mod_pad_w = (scaled_size - resolution[1] % scaled_size) % scaled_size
         return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
-    def forward(self, inp):
-        b, c, h, w = inp.shape
+    def forward(self, inp: Tensor) -> Tensor:
+        _b, _c, h, w = inp.shape
         x = self.check_img_size(inp, (h, w))
         x = self.in_to_dim(x)
         x = self.body(x) + x
