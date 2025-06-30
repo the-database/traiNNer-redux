@@ -219,9 +219,7 @@ def train_pipeline(root_path: str) -> None:
     validate = True
 
     while validate:
-        start_iter = get_start_iter(
-            tb_logger, opt.logger.save_checkpoint_freq, start_iter
-        )
+        start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
         if osp.isdir(pretrain_net_path):
             nets = list(
                 scandir(
