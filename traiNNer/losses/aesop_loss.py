@@ -17,11 +17,9 @@ class AESOPLoss(nn.Module):
         scale: int,
         pretrain_network_ae: str,
         criterion: Literal["l1", "charbonnier", "msssiml1"] = "charbonnier",
-        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.ae = AutoEncoder(freeze_encoder=True, freeze_decoder=True, scale=scale)
         self.ae.load_state_dict(
             load_file(pretrain_network_ae)

@@ -86,7 +86,6 @@ class PerceptualFP16Loss(nn.Module):
         phase_weight_fd: float = 1.0,
         stride_fd: int = 1,
         clip_min: int = 0,
-        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
 
@@ -120,7 +119,6 @@ class PerceptualFP16Loss(nn.Module):
                     alpha.append(1.0)
 
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.w_lambda = w_lambda
         self.layer_weights = layer_weights
         self.alpha = alpha

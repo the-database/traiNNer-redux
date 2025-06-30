@@ -21,12 +21,10 @@ class GradientVarianceLoss(nn.Module):
         loss_weight: float,
         patch_size: int = 16,
         criterion: Literal["charbonnier", "l1", "l2"] = "charbonnier",
-        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
 
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
 
         if criterion == "l1":
             self.criterion = nn.L1Loss()

@@ -68,7 +68,6 @@ class FLIPLoss(nn.Module):
         self,
         loss_weight: float = 1.0,
         pixels_per_degree: float = (0.7 * 3840 / 0.7) * np.pi / 180,
-        warmup_iter: int = -1,
     ) -> None:
         """Init"""
         super().__init__()
@@ -79,7 +78,6 @@ class FLIPLoss(nn.Module):
         self.eps = 1e-15
         self.pixels_per_degree = pixels_per_degree
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(

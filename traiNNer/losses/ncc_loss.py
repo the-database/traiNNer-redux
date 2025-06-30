@@ -6,10 +6,9 @@ from traiNNer.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class NCCLoss(nn.Module):
-    def __init__(self, loss_weight: float, warmup_iter: int = -1) -> None:
+    def __init__(self, loss_weight: float) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
 
     def forward(self, sr: Tensor, hr: Tensor) -> Tensor:
         cc_value = _cc_single_torch(sr, hr)

@@ -38,9 +38,7 @@ class L1Loss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(
-        self, loss_weight: float, reduction: str = "mean", warmup_iter: int = -1
-    ) -> None:
+    def __init__(self, loss_weight: float, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -49,7 +47,6 @@ class L1Loss(nn.Module):
 
         self.loss_weight = loss_weight
         self.reduction = reduction
-        self.warmup_iter = warmup_iter
 
     def forward(
         self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
@@ -73,9 +70,7 @@ class MSELoss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(
-        self, loss_weight: float, reduction: str = "mean", warmup_iter: int = -1
-    ) -> None:
+    def __init__(self, loss_weight: float, reduction: str = "mean") -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
             raise ValueError(
@@ -84,7 +79,6 @@ class MSELoss(nn.Module):
 
         self.loss_weight = loss_weight
         self.reduction = reduction
-        self.warmup_iter = warmup_iter
 
     def forward(
         self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
@@ -114,11 +108,7 @@ class CharbonnierLoss(nn.Module):
     """
 
     def __init__(
-        self,
-        loss_weight: float,
-        reduction: str = "mean",
-        eps: float = 1e-12,
-        warmup_iter: int = -1,
+        self, loss_weight: float, reduction: str = "mean", eps: float = 1e-12
     ) -> None:
         super().__init__()
         if reduction not in ["none", "mean", "sum"]:
@@ -129,7 +119,6 @@ class CharbonnierLoss(nn.Module):
         self.loss_weight = loss_weight
         self.reduction = reduction
         self.eps = eps
-        self.warmup_iter = warmup_iter
 
     def forward(
         self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
@@ -148,11 +137,7 @@ class CharbonnierLoss(nn.Module):
 @LOSS_REGISTRY.register()
 class PSNRLoss(nn.Module):
     def __init__(
-        self,
-        loss_weight: float,
-        reduction: str = "mean",
-        to_y: bool = False,
-        warmup_iter: int = -1,
+        self, loss_weight: float, reduction: str = "mean", to_y: bool = False
     ) -> None:
         super().__init__()
         assert reduction == "mean"
@@ -161,7 +146,6 @@ class PSNRLoss(nn.Module):
         self.toY = to_y
         self.coef = torch.tensor([65.481, 128.553, 24.966]).reshape(1, 3, 1, 1)
         self.first = True
-        self.warmup_iter = warmup_iter
 
     def forward(self, pred: Tensor, target: Tensor) -> Tensor:
         assert len(pred.size()) == 4
@@ -188,15 +172,10 @@ class ColorLoss(nn.Module):
     """Color loss"""
 
     def __init__(
-        self,
-        loss_weight: float,
-        criterion: str = "l1",
-        scale: int = 4,
-        warmup_iter: int = -1,
+        self, loss_weight: float, criterion: str = "l1", scale: int = 4
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.criterion_type = criterion
         self.scale = scale
         if self.criterion_type == "l1":
@@ -224,16 +203,11 @@ class AverageLoss(nn.Module):
     """Averaging Downscale loss"""
 
     def __init__(
-        self,
-        loss_weight: float,
-        criterion: str = "l1",
-        scale: int = 4,
-        warmup_iter: int = -1,
+        self, loss_weight: float, criterion: str = "l1", scale: int = 4
     ) -> None:
         super().__init__()
         self.ds_f = torch.nn.AvgPool2d(kernel_size=int(scale))
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.criterion_type = criterion
         if self.criterion_type == "l1":
             self.criterion = torch.nn.L1Loss()
@@ -251,11 +225,7 @@ class BicubicLoss(nn.Module):
     """Bicubic Downscale loss"""
 
     def __init__(
-        self,
-        loss_weight: float,
-        criterion: str = "l1",
-        scale: int = 4,
-        warmup_iter: int = -1,
+        self, loss_weight: float, criterion: str = "l1", scale: int = 4
     ) -> None:
         super().__init__()
         self.scale = scale
@@ -267,7 +237,6 @@ class BicubicLoss(nn.Module):
             v2.GaussianBlur([5, 5], [0.5, 0.5]),
         )(x)
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.criterion_type = criterion
         if self.criterion_type == "l1":
             self.criterion = torch.nn.L1Loss()
@@ -284,12 +253,9 @@ class BicubicLoss(nn.Module):
 
 @LOSS_REGISTRY.register()
 class LumaLoss(nn.Module):
-    def __init__(
-        self, loss_weight: float, criterion: str = "l1", warmup_iter: int = -1
-    ) -> None:
+    def __init__(self, loss_weight: float, criterion: str = "l1") -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.criterion_type = criterion
 
         if self.criterion_type == "l1":
@@ -318,12 +284,10 @@ class HSLuvLoss(nn.Module):
         lightness_weight: float = 1 / 3,
         criterion: str = "l1",
         downscale_factor: int = 1,
-        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         self.downscale_factor = downscale_factor
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.hue_weight = hue_weight
         self.lightness_weight = lightness_weight
         self.saturation_weight = saturation_weight

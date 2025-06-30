@@ -31,11 +31,9 @@ class FFLoss(nn.Module):
         ave_spectrum: bool = True,
         log_matrix: bool = False,
         batch_matrix: bool = False,
-        warmup_iter: int = -1,
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.warmup_iter = warmup_iter
         self.alpha = alpha
         self.patch_factor = patch_factor
         self.ave_spectrum = ave_spectrum
