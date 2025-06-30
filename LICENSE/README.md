@@ -51,6 +51,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[Corpsecreate/neosr](https://github.com/Corpsecreate/neosr) | [Apache License 2.0](https://github.com/Corpsecreate/neosr/blob/master/license.txt)|
 |[neosr](https://github.com/muslll/neosr) | [Apache License 2.0](https://github.com/muslll/neosr/blob/master/license.txt)|
 |[OmniSR](https://github.com/Francis0625/Omni-SR) | [Apache License 2.0](https://github.com/Francis0625/Omni-SR#license)|
+|[pix2pixHD](https://github.com/NVIDIA/pix2pixHD)| [BSD License](https://github.com/NVIDIA/pix2pixHD/blob/master/LICENSE.txt)|
 |[projected-distribution-loss](https://github.com/saurabh-kataria/projected-distribution-loss)| [MIT License](https://github.com/saurabh-kataria/projected-distribution-loss/blob/main/LICENSE)|
 |[PLKSR](https://github.com/dslisleedh/PLKSR) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
 |[RCAN-it](https://github.com/zudi-lin/rcan-it)| [MIT License](https://github.com/zudi-lin/rcan-it/blob/main/LICENSE)|
