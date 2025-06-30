@@ -261,7 +261,7 @@ class CFANet(nn.Module):
         self.semantic_model = create_model(
             semantic_model_name, pretrained=backbone_pretrain, features_only=True
         )
-        feature_dim_list = self.semantic_model.feature_info.channels()
+        feature_dim_list = self.semantic_model.feature_info.channels()  # pyright: ignore[reportCallIssue,reportAttributeAccessIssue]
         _feature_dim = feature_dim_list[self.semantic_level]
         _all_feature_dim = sum(feature_dim_list)
         self.fix_bn(self.semantic_model)

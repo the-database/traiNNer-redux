@@ -120,30 +120,6 @@ def dict2str(opt: dict[str, Any], indent_level: int = 1) -> str:
     return msg
 
 
-def _postprocess_yml_value(value: str) -> None | bool | float | int | list[Any] | str:
-    # None
-    if value == "~" or value.lower() == "none":
-        return None
-    # bool
-    if value.lower() == "true":
-        return True
-    elif value.lower() == "false":
-        return False
-    # !!float number
-    if value.startswith("!!float"):
-        return float(value.replace("!!float", ""))
-    # number
-    if value.isdigit():
-        return int(value)
-    elif value.replace(".", "", 1).isdigit() and value.count(".") < 2:
-        return float(value)
-    # list
-    if value.startswith("["):
-        return eval(value)
-    # str
-    return value
-
-
 def parse_options(
     root_path: str, is_train: bool = True
 ) -> tuple[ReduxOptions, argparse.Namespace]:
