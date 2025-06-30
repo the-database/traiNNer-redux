@@ -1743,6 +1743,29 @@ dims: [32, 64, 128, 192]
 blocks: [3, 3, 15, 3]
 downs: [4, 2, 2, 2]
 ```
+### MultiscalePatchGANDiscriminatorSN
+#### multiscalepatchgandiscriminatorsn
+
+
+```yaml
+type: multiscalepatchgandiscriminatorsn
+input_nc: 3
+ndf: 64
+n_layers: 3
+use_sigmoid: false
+num_d: 3
+```
+### PatchGANDiscriminatorSN
+#### patchgandiscriminatorsn
+
+
+```yaml
+type: patchgandiscriminatorsn
+input_nc: 3
+ndf: 64
+n_layers: 3
+use_sigmoid: false
+```
 ### UNetDiscriminatorSN
 #### unetdiscriminatorsn
 

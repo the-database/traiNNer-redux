@@ -87,7 +87,14 @@ def callable_to_markdown(callable: Callable | type, header: str) -> str:
 
 documented_archs = set()
 
-discriminators = {"vggstylediscriminator", "unetdiscriminatorsn", "dunet", "metagan2"}
+discriminators = {
+    "dunet",
+    "metagan2",
+    "multiscalepatchgandiscriminatorsn",
+    "patchgandiscriminatorsn",
+    "unetdiscriminatorsn",
+    "vggstylediscriminator",
+}
 
 g_docs = {}
 d_docs = {}

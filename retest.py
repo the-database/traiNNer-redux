@@ -102,20 +102,22 @@ def create_train_val_dataloader(
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
-def get_start_iter(tb_logger: SummaryWriter, save_checkpoint_freq: int) -> int:
+def get_start_iter(
+    tb_logger: SummaryWriter, save_checkpoint_freq: int, start_iter_override: int = 0
+) -> int:
     log_dir = tb_logger.log_dir
     ea = event_accumulator.EventAccumulator(log_dir)
     ea.Reload()
 
     if not ea.scalars.Keys():
-        return 0
+        return start_iter_override
 
-    logged_iters = set()
+    logged_iters = {start_iter_override}
     for tag in ea.scalars.Keys():
         logged_iters.update([int(e.step) for e in ea.Scalars(tag)])
 
     if not logged_iters:
-        return 0
+        return start_iter_override
 
     max_logged_iter = max(logged_iters)
     start_iter = ((max_logged_iter // save_checkpoint_freq) + 1) * save_checkpoint_freq
@@ -217,7 +219,9 @@ def train_pipeline(root_path: str) -> None:
     validate = True
 
     while validate:
-        start_iter = get_start_iter(tb_logger, opt.logger.save_checkpoint_freq)
+        start_iter = get_start_iter(
+            tb_logger, opt.logger.save_checkpoint_freq, start_iter
+        )
         if osp.isdir(pretrain_net_path):
             nets = list(
                 scandir(
