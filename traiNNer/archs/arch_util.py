@@ -9,7 +9,7 @@ from typing import Literal
 import numpy as np
 import torch
 from spandrel.architectures.__arch_helpers.dysample import DySample as DySampleV1
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F  # noqa: N812
 from torch.nn import init
 from torch.nn.modules.batchnorm import _BatchNorm
