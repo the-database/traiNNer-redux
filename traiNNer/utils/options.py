@@ -120,30 +120,6 @@ def dict2str(opt: dict[str, Any], indent_level: int = 1) -> str:
     return msg
 
 
-def _postprocess_yml_value(value: str) -> None | bool | float | int | list[Any] | str:
-    # None
-    if value == "~" or value.lower() == "none":
-        return None
-    # bool
-    if value.lower() == "true":
-        return True
-    elif value.lower() == "false":
-        return False
-    # !!float number
-    if value.startswith("!!float"):
-        return float(value.replace("!!float", ""))
-    # number
-    if value.isdigit():
-        return int(value)
-    elif value.replace(".", "", 1).isdigit() and value.count(".") < 2:
-        return float(value)
-    # list
-    if value.startswith("["):
-        return eval(value)
-    # str
-    return value
-
-
 def parse_options(
     root_path: str, is_train: bool = True
 ) -> tuple[ReduxOptions, argparse.Namespace]:
@@ -163,12 +139,9 @@ def parse_options(
     parser.add_argument("--start-iter", type=int, default=0)
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--local_rank", type=int, default=0)
-    parser.add_argument(
-        "--force_yml",
-        nargs="+",
-        default=None,
-        help="Force to update yml files. Examples: train:ema_decay=0.999",
-    )
+    parser.add_argument("--manual_seed", type=int, default=None)
+    parser.add_argument("--name", type=str, default=None)
+
     args = parser.parse_args()
 
     # parse yml to dict
@@ -188,23 +161,16 @@ def parse_options(
             init_dist(args.launcher)
     opt.rank, opt.world_size = get_dist_info()
 
+    # name override
+    if args.name:
+        opt.name = args.name
+
     # random seed
+    # manual seed override
+    if args.manual_seed:
+        opt.manual_seed = args.manual_seed
     if not opt.manual_seed:
         opt.manual_seed = random.randint(1024, 10000)
-
-    # force to update yml options
-    if args.force_yml is not None:
-        for entry in args.force_yml:
-            # now do not support creating new keys
-            keys, value = entry.split("=")
-            keys, value = keys.strip(), value.strip()
-            value = _postprocess_yml_value(value)
-            eval_str = "opt"
-            for key in keys.split(":"):
-                eval_str += f'["{key}"]'
-            eval_str += "=value"
-            # using exec function
-            exec(eval_str)
 
     opt.auto_resume = args.auto_resume
     # opt.resume = args.resume

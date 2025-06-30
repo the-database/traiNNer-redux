@@ -251,6 +251,18 @@ class TrainOptions(StrictStruct):
             description="Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable."
         ),
     ] = -1
+    warmup_iter_g: Annotated[
+        int,
+        Meta(
+            description="Gradually ramp up generator learning rate until this iteration, to stabilize early training. Use -1 to disable."
+        ),
+    ] = -1
+    warmup_iter_d: Annotated[
+        int,
+        Meta(
+            description="Gradually ramp up discriminator learning rate until this iteration, to stabilize early training. Use -1 to disable."
+        ),
+    ] = -1
     scheduler: Annotated[
         dict[str, Any] | None,
         Meta(

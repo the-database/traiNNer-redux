@@ -19,6 +19,8 @@ EXCLUDE_ARCHS = {
     "hat",
     "lmlt",
     "metagan2",
+    "multiscalepatchgandiscriminatorsn",
+    "patchgandiscriminatorsn",
     "swin2sr",
     "swinir",
     "unetdiscriminatorsn",

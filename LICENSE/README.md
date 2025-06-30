@@ -28,6 +28,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[ELAN](https://github.com/xindongzhang/ELAN)| [Apache License 2.0](https://github.com/xindongzhang/ELAN/blob/main/LICENSE)|
 |[EMT](https://github.com/Fried-Rice-Lab/EMT)| [MIT License](https://github.com/Fried-Rice-Lab/EMT/blob/main/LICENSE)|
 |[ESC](https://github.com/dslisleedh/ESC)|[MIT License](https://github.com/dslisleedh/ESC/blob/main/LICENSE)|
+|[FDAT](https://github.com/stinkybread/FDAT)| [MIT License](https://github.com/stinkybread/FDAT/blob/main/LICENSE)|
 |[FDL](https://github.com/eezkni/FDL)| [MIT License](https://github.com/eezkni/FDL?tab=readme-ov-file#license)|
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
 |[flip](https://github.com/NVlabs/flip)| [BSD 3-Clause License](https://github.com/NVlabs/flip/blob/main/LICENSE)|
@@ -36,9 +37,9 @@ traiNNer-redux is released under Apache License 2.0.
 |[GRL](https://github.com/ofsoundof/GRL-Image-Restoration)| [MIT License](https://github.com/ofsoundof/GRL-Image-Restoration/blob/main/LICENSE)|
 |[HAT](https://github.com/XPixelGroup/HAT) | [Apache License 2.0](https://github.com/XPixelGroup/HAT/blob/main/LICENSE)|
 |[HiT-SR](https://github.com/XiangZ-0/HiT-SR) | [Apache License 2.0](https://github.com/XiangZ-0/HiT-SR/blob/main/LICENSE)|
+|[LAWFFT](https://github.com/rewaifu/LAWFFT)| [MIT License](https://github.com/rewaifu/LAWFFT/blob/main/LICENSE)|
 |[LineDistiller](https://github.com/hepesu/LineDistiller) | [MIT License](https://github.com/hepesu/LineDistiller/blob/master/LICENSE)|
 |[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
-|[FDAT](https://github.com/stinkybread/FDAT)| [MIT License](https://github.com/stinkybread/FDAT/blob/main/LICENSE)|
 |[LMLT](https://github.com/jwgdmkj/LMLT) | [MIT License](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)|
 |[LPIPS](https://github.com/richzhang/PerceptualSimilarity)| [BSD-2-Clause License](https://github.com/richzhang/PerceptualSimilarity/blob/master/LICENSE)|
 |[MAN](https://github.com/icandle/MAN)| [Apache License 2.0](https://github.com/icandle/MAN/blob/main/LICENSE)|
@@ -50,6 +51,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[Corpsecreate/neosr](https://github.com/Corpsecreate/neosr) | [Apache License 2.0](https://github.com/Corpsecreate/neosr/blob/master/license.txt)|
 |[neosr](https://github.com/muslll/neosr) | [Apache License 2.0](https://github.com/muslll/neosr/blob/master/license.txt)|
 |[OmniSR](https://github.com/Francis0625/Omni-SR) | [Apache License 2.0](https://github.com/Francis0625/Omni-SR#license)|
+|[pix2pixHD](https://github.com/NVIDIA/pix2pixHD)| [BSD License](https://github.com/NVIDIA/pix2pixHD/blob/master/LICENSE.txt)|
 |[projected-distribution-loss](https://github.com/saurabh-kataria/projected-distribution-loss)| [MIT License](https://github.com/saurabh-kataria/projected-distribution-loss/blob/main/LICENSE)|
 |[PLKSR](https://github.com/dslisleedh/PLKSR) | [MIT License](https://github.com/dslisleedh/PLKSR/blob/main/LICENSE)|
 |[RCAN-it](https://github.com/zudi-lin/rcan-it)| [MIT License](https://github.com/zudi-lin/rcan-it/blob/main/LICENSE)|
