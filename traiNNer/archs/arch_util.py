@@ -8,8 +8,9 @@ from typing import Literal
 
 import numpy as np
 import torch
+from einops import rearrange
 from spandrel.architectures.__arch_helpers.dysample import DySample as DySampleV1
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torch.nn import init
 from torch.nn.modules.batchnorm import _BatchNorm
@@ -437,8 +438,8 @@ class LDA_AQU(nn.Module):
         n_groups=2,
         range_factor=11,
         rpb=True,
-    ):
-        super(LDA_AQU, self).__init__()
+    ) -> None:
+        super().__init__()
         self.k_u = k_u
         self.num_head = nh
         self.scale_factor = scale_factor
@@ -492,7 +493,7 @@ class LDA_AQU(nn.Module):
             )
             nn.init.trunc_normal_(self.relative_position_bias_table, std=0.02)
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.xavier_uniform(m)
@@ -524,7 +525,11 @@ class LDA_AQU(nn.Module):
 
     def extract_feats(self, x, offset, ks=3):
         out = nn.functional.grid_sample(
-            x, offset, mode="bilinear", padding_mode="zeros", align_corners=True
+            x,
+            offset,
+            mode="bilinear",
+            padding_mode="zeros",
+            align_corners=True,
         )
         out = rearrange(out, "b c (ksh h) (ksw w) -> b (ksh ksw) c h w", ksh=ks, ksw=ks)
         return out
@@ -571,8 +576,8 @@ class LDA_AQU(nn.Module):
 
 
 class PA(nn.Module):
-    def __init__(self, dim):
-        super(PA, self).__init__()
+    def __init__(self, dim) -> None:
+        super().__init__()
         self.conv = nn.Sequential(nn.Conv2d(dim, dim, 1), nn.Sigmoid())
 
     def forward(self, x):
