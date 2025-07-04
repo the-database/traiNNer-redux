@@ -187,14 +187,15 @@ def train_pipeline(root_path: str) -> None:
 
     # create model
     model = build_model(opt)
-    if model.with_metrics:
-        if not any(
-            isinstance(val_loader.dataset, (PairedImageDataset | PairedVideoDataset))
-            for val_loader in val_loaders
-        ):
-            raise ValueError(
-                "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
-            )
+    # TODO
+    # if model.with_metrics:
+    #     if not any(
+    #         isinstance(val_loader.dataset, (PairedImageDataset | PairedVideoDataset))
+    #         for val_loader in val_loaders
+    #     ):
+    #         raise ValueError(
+    #             "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
+    #         )
 
     logger.info("Start testing from iter: %d.", start_iter)
 
