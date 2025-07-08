@@ -755,8 +755,8 @@ class SRModel(BaseModel):
                 )
                 metric_data[gt_key] = gt_img
                 self.gt = None
-            else:
-                run_metrics = False
+            # else:
+            #     run_metrics = False
 
             # tentative for out of GPU memory
             self.lq = None

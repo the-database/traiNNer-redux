@@ -109,6 +109,7 @@ def make_lmdb_from_imgs(
     if map_size is None:
         # obtain data size for one image
         img = cv2.imread(osp.join(data_path, img_path_list[0]), cv2.IMREAD_UNCHANGED)
+        assert img is not None
         _, img_byte = cv2.imencode(
             ".png", img, [cv2.IMWRITE_PNG_COMPRESSION, compress_level]
         )
@@ -167,6 +168,7 @@ def read_img_worker(
     """
 
     img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    assert img is not None
     if img.ndim == 2:
         h, w = img.shape
         c = 1

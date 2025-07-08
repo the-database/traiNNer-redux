@@ -21,15 +21,16 @@ def main(args: argparse.Namespace) -> None:
 
     for i, img_path in enumerate(img_list_gt):
         basename, ext = osp.splitext(osp.basename(img_path))
-        img_gt = cv2.imread(img_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.0
+        img_gt = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+        assert img_gt is not None
+        img_gt = img_gt.astype(np.float32) / 255.0
         if args.suffix == "":
             img_path_restored = img_list_restored[i]
         else:
             img_path_restored = osp.join(args.restored, basename + args.suffix + ext)
-        img_restored = (
-            cv2.imread(img_path_restored, cv2.IMREAD_UNCHANGED).astype(np.float32)
-            / 255.0
-        )
+        img_restored = cv2.imread(img_path_restored, cv2.IMREAD_UNCHANGED)
+        assert img_restored is not None
+        img_restored = img_restored.astype(np.float32) / 255.0
 
         if args.correct_mean_var:
             mean_l = []

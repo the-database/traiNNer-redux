@@ -18,8 +18,6 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.data.data_sampler import EnlargedSampler
-from traiNNer.data.paired_image_dataset import PairedImageDataset
-from traiNNer.data.paired_video_dataset import PairedVideoDataset
 from traiNNer.models import build_model
 from traiNNer.utils import (
     get_env_info,
@@ -187,14 +185,15 @@ def train_pipeline(root_path: str) -> None:
 
     # create model
     model = build_model(opt)
-    if model.with_metrics:
-        if not any(
-            isinstance(val_loader.dataset, (PairedImageDataset | PairedVideoDataset))
-            for val_loader in val_loaders
-        ):
-            raise ValueError(
-                "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
-            )
+    # TODO
+    # if model.with_metrics:
+    #     if not any(
+    #         isinstance(val_loader.dataset, (PairedImageDataset | PairedVideoDataset))
+    #         for val_loader in val_loaders
+    #     ):
+    #         raise ValueError(
+    #             "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
+    #         )
 
     logger.info("Start testing from iter: %d.", start_iter)
 

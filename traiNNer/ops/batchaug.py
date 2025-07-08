@@ -214,7 +214,7 @@ def cutmix(
     # random box
     gt_bbox = rand_bbox(img_gt.size(), scale, lam)
     gt_bbx1, gt_bby1, gt_bbx2, gt_bby2 = gt_bbox
-    lq_bbox = tuple(bbi // 4 for bbi in gt_bbox)
+    lq_bbox = tuple(bbi // scale for bbi in gt_bbox)
     lq_bbx1, lq_bby1, lq_bbx2, lq_bby2 = lq_bbox
 
     img_gt[:, :, gt_bbx1:gt_bbx2, gt_bby1:gt_bby2] = img_gt_[
@@ -284,7 +284,7 @@ def resizemix(
 
     gt_bbox = rand_bbox_tao(img_gt.size(), scale, tao)
     gt_bbx1, gt_bby1, gt_bbx2, gt_bby2 = gt_bbox
-    lq_bbox = tuple(bbi // 4 for bbi in gt_bbox)
+    lq_bbox = tuple(bbi // scale for bbi in gt_bbox)
     lq_bbx1, lq_bby1, lq_bbx2, lq_bby2 = lq_bbox
 
     # resize
@@ -476,7 +476,7 @@ def up(
     # random box
     gt_bbox = rand_bbox(img_gt.size(), scale, lam)
     gt_bbx1, gt_bby1, gt_bbx2, gt_bby2 = gt_bbox
-    lq_bbox = tuple(bbi // 4 for bbi in gt_bbox)
+    lq_bbox = tuple(bbi // scale for bbi in gt_bbox)
     lq_bbx1, lq_bby1, lq_bbx2, lq_bby2 = lq_bbox
 
     # crop to random box

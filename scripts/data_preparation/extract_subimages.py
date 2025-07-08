@@ -133,6 +133,7 @@ def worker(path: str, opt: dict[str, Any]) -> str:
     )
 
     img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    assert img is not None
 
     h, w = img.shape[0:2]
     h_space = np.arange(0, h - crop_size + 1, step)
