@@ -5,6 +5,7 @@ from traiNNer.metrics.psnr_ssim import calculate_ssim
 
 def open_image(file_path: str) -> MatLike:
     img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
+    assert img is not None
     if len(img.shape) == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     else:

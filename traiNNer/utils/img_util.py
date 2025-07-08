@@ -320,6 +320,7 @@ def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> M
     }
 
     img = cv2.imdecode(img_np, imread_flags[flag])
+    assert img is not None
 
     if float32:
         img = img.astype(np.float32) / 255.0
