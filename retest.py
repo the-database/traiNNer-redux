@@ -18,8 +18,6 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 from traiNNer.data import build_dataloader, build_dataset
 from traiNNer.data.data_sampler import EnlargedSampler
-from traiNNer.data.paired_image_dataset import PairedImageDataset
-from traiNNer.data.paired_video_dataset import PairedVideoDataset
 from traiNNer.models import build_model
 from traiNNer.utils import (
     get_env_info,
