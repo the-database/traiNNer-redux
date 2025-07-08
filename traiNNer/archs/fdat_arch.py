@@ -289,7 +289,7 @@ def fdat_tiny(
     aim_reduction_ratio: int = 8,
     group_block_pattern: list[str] | None = None,
     drop_path_rate: float = 0.05,
-    upsampler_type: SampleMods3 = "pixelshuffle",
+    upsampler_type: SampleMods3 = "transpose+conv",
     img_range: float = 1.0,
 ) -> FDAT:
     return FDAT(
@@ -324,7 +324,7 @@ def fdat_light(
     aim_reduction_ratio: int = 8,
     group_block_pattern: list[str] | None = None,
     drop_path_rate: float = 0.08,
-    upsampler_type: SampleMods3 = "pixelshuffle",
+    upsampler_type: SampleMods3 = "transpose+conv",
     img_range: float = 1.0,
 ) -> FDAT:
     return FDAT(
