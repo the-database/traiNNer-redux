@@ -305,6 +305,13 @@ class SPAN(nn.Module):
             feature_channels, self.out_channels, upscale_factor=upscale
         )
 
+        if learn_residual:
+            for m in self.upsampler.modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.zeros_(m.weight)
+                    if m.bias is not None:
+                        nn.init.zeros_(m.bias)
+
     @property
     def is_norm(self) -> bool:
         return self.no_norm is None
@@ -333,8 +340,8 @@ class SPAN(nn.Module):
         output = self.upsampler(out)
 
         if self.is_learn_residual:
-            # add the nearest upsampled image, so that the network learns the residual
-            base = F.interpolate(x, scale_factor=self.scale, mode="nearest")
+            # add the bilinear upsampled image, so that the network learns the residual
+            base = F.interpolate(x, scale_factor=self.scale, mode="bilinear")
             output += base
         return output
 
