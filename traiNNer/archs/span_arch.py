@@ -308,7 +308,8 @@ class SPAN(nn.Module):
         if learn_residual:
             for m in self.upsampler.modules():
                 if isinstance(m, nn.Conv2d):
-                    nn.init.zeros_(m.weight)
+                    nn.init.kaiming_normal_(m.weight, a=0, mode="fan_in")
+                    m.weight.data.mul_(1e-3)
                     if m.bias is not None:
                         nn.init.zeros_(m.bias)
 
