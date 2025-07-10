@@ -282,7 +282,7 @@ class SPAN(nn.Module):
         else:
             self.no_norm = None
 
-        self.learn_residual = torch.Tensor | None
+        self.learn_residual: torch.Tensor | None
         if learn_residual:
             self.register_buffer("learn_residual", torch.zeros(1))
         else:
