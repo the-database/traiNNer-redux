@@ -403,18 +403,6 @@ def train_pipeline(root_path: str) -> None:
     crashed = False
     train_data = None
     assert model.opt.path.models is not None
-    warmup_iters: list[int] = []
-    warmup_iters.append(
-        opt.train.warmup_iter_g
-        if opt.train.warmup_iter_g != 1
-        else opt.train.warmup_iter
-    )
-    if len(model.optimizers) > 1:
-        warmup_iters.append(
-            opt.train.warmup_iter_d
-            if opt.train.warmup_iter_d != 1
-            else opt.train.warmup_iter
-        )
 
     try:
         for epoch in range(start_epoch, total_epochs + 1):
@@ -454,7 +442,9 @@ def train_pipeline(root_path: str) -> None:
                         raise
                 # update learning rate
                 if apply_gradient:
-                    model.update_learning_rate(current_iter, warmup_iter=warmup_iters)
+                    model.update_learning_rate(
+                        current_iter, warmup_iter=opt.train.warmup_iter
+                    )
                 iter_timer.record()
                 if current_iter == msg_logger.start_iter + 1:
                     # reset start time in msg_logger for more accurate eta_time

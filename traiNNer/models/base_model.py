@@ -335,39 +335,28 @@ class BaseModel:
             init_lr_groups_l.append([v["initial_lr"] for v in optimizer.param_groups])
         return init_lr_groups_l
 
-    def update_learning_rate(
-        self, current_iter: int, warmup_iter: list[int] | None = None
-    ) -> None:
+    def update_learning_rate(self, current_iter: int, warmup_iter: int = -1) -> None:
         """Update learning rate.
 
         Args:
             current_iter (int): Current iteration.
-            warmup_iter (list[int] or None): Per-optimizer warm-up iters.
-                If None, no warm-up. If provided, len must == len(self.optimizers),
-                and warmup_iter[i] is the warm-up length for optimizer i.
+            warmup_iter (int): Warm-up iter numbers. -1 for no warm-up.
+                Default: -1.
         """
-        # step all schedulers
         for i, scheduler in enumerate(self.schedulers):
             if not self.optimizers_skipped[i]:
                 scheduler.step()
-
-        # apply per-optimizer warm-up
-        if warmup_iter is not None:
-            assert len(warmup_iter) == len(self.optimizers), (
-                "warmup_iter must have one entry per optimizer"
-            )
-            init_lr_groups = self._get_init_lr()
-            warmup_lr_groups: list[list[float]] = []
-            for opt_idx, init_lrs in enumerate(init_lr_groups):
-                wi = warmup_iter[opt_idx]
-                if current_iter < wi and wi > 0:
-                    scaled = [lr * (current_iter / wi) for lr in init_lrs]
-                else:
-                    scaled = init_lrs
-                warmup_lr_groups.append(scaled)
-
-            # push the new lrs back into each optimizer
-            self._set_lr(warmup_lr_groups)
+        # set up warm-up learning rate
+        if current_iter < warmup_iter:
+            # get initial lr for each group
+            init_lr_g_l = self._get_init_lr()
+            # modify warming-up learning rates
+            # currently only support linearly warm up
+            warm_up_lr_l = []
+            for init_lr_g in init_lr_g_l:
+                warm_up_lr_l.append([v / warmup_iter * current_iter for v in init_lr_g])
+            # set learning rate
+            self._set_lr(warm_up_lr_l)
 
     def get_current_learning_rate(self) -> list[float]:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
