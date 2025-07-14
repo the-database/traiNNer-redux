@@ -10,7 +10,7 @@ import torch.nn.functional as F  # noqa: N812
 from spandrel.util import store_hyperparameters
 from torch import Tensor, nn
 
-from traiNNer.utils.registry import ARCH_REGISTRY
+from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
 
 
 def _make_pair(value: Any) -> Any:
@@ -266,7 +266,6 @@ class SPAN(nn.Module):
         norm: bool = True,
         img_range: float = 255.0,
         rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
-        learn_residual: bool = False,
     ) -> None:
         super().__init__()
 
@@ -274,19 +273,12 @@ class SPAN(nn.Module):
         self.out_channels = num_out_ch
         self.img_range = img_range
         self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
-        self.scale = upscale
 
         self.no_norm: torch.Tensor | None
         if not norm:
             self.register_buffer("no_norm", torch.zeros(1))
         else:
             self.no_norm = None
-
-        self.learn_residual: torch.Tensor | None
-        if learn_residual:
-            self.register_buffer("learn_residual", torch.zeros(1))
-        else:
-            self.learn_residual = None
 
         self.conv_1 = Conv3XC(self.in_channels, feature_channels, gain1=2, s=1)
         self.block_1 = SPAB(feature_channels, bias=bias)
@@ -305,21 +297,9 @@ class SPAN(nn.Module):
             feature_channels, self.out_channels, upscale_factor=upscale
         )
 
-        if learn_residual:
-            for m in self.upsampler.modules():
-                if isinstance(m, nn.Conv2d):
-                    nn.init.kaiming_normal_(m.weight, a=0, mode="fan_in")
-                    m.weight.data.mul_(1e-3)
-                    if m.bias is not None:
-                        nn.init.zeros_(m.bias)
-
     @property
     def is_norm(self) -> bool:
         return self.no_norm is None
-
-    @property
-    def is_learn_residual(self) -> bool:
-        return self.learn_residual is not None
 
     def forward(self, x: Tensor) -> Tensor:
         if self.is_norm:
@@ -340,14 +320,10 @@ class SPAN(nn.Module):
         out = self.conv_cat(torch.cat([out_feature, out_b6, out_b1, out_b5_2], 1))
         output = self.upsampler(out)
 
-        if self.is_learn_residual:
-            # add the bilinear upsampled image, so that the network learns the residual
-            base = F.interpolate(x, scale_factor=self.scale, mode="bilinear")
-            output += base
         return output
 
 
-@ARCH_REGISTRY.register()
+@SPANDREL_REGISTRY.register()
 def span(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
@@ -357,7 +333,6 @@ def span(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
-    learn_residual: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -368,11 +343,10 @@ def span(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
-        learn_residual=learn_residual,
     )
 
 
-@ARCH_REGISTRY.register()
+@SPANDREL_REGISTRY.register()
 def span_s(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
@@ -382,7 +356,6 @@ def span_s(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
-    learn_residual: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -393,7 +366,6 @@ def span_s(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
-        learn_residual=learn_residual,
     )
 
 
@@ -407,7 +379,6 @@ def span_f32(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
-    learn_residual: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -418,5 +389,4 @@ def span_f32(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
-        learn_residual=learn_residual,
     )
