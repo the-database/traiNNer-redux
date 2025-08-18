@@ -252,6 +252,15 @@ class FDAT(nn.Module):
         )
         self.apply(self._init_weights)
 
+    def load_state_dict(
+        self,
+        state_dict: StateDict,
+        *args,  # noqa: ANN002
+        **kwargs,
+    ) -> _IncompatibleKeys:
+        state_dict["upsampler.MetaUpsample"] = self.upsampler.MetaUpsample
+        return super().load_state_dict(state_dict, *args, **kwargs)
+
     def _init_weights(self, m: nn.Module) -> None:
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
