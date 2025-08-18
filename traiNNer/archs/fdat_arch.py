@@ -3,9 +3,11 @@
 # type: ignore
 import torch
 import torch.nn.functional as F  # noqa: N812
+from spandrel.__helpers.model_descriptor import StateDict
 from spandrel.util.timm import DropPath
 from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
+from torch.nn.modules.module import _IncompatibleKeys  # type: ignore
 
 from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
 from traiNNer.utils.registry import ARCH_REGISTRY
@@ -251,6 +253,15 @@ class FDAT(nn.Module):
             upsampler_type, scale, embed_dim, num_out_ch, mid_dim, 4
         )
         self.apply(self._init_weights)
+
+    def load_state_dict(
+        self,
+        state_dict: StateDict,
+        *args,  # noqa: ANN002
+        **kwargs,
+    ) -> _IncompatibleKeys:
+        state_dict["upsampler.MetaUpsample"] = self.upsampler.MetaUpsample
+        return super().load_state_dict(state_dict, *args, **kwargs)
 
     def _init_weights(self, m: nn.Module) -> None:
         if isinstance(m, nn.Linear):
