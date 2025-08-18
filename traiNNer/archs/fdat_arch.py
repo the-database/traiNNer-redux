@@ -3,9 +3,11 @@
 # type: ignore
 import torch
 import torch.nn.functional as F  # noqa: N812
+from spandrel.__helpers.model_descriptor import StateDict
 from spandrel.util.timm import DropPath
 from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
+from torch.nn.modules.module import _IncompatibleKeys  # type: ignore
 
 from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
 from traiNNer.utils.registry import ARCH_REGISTRY
