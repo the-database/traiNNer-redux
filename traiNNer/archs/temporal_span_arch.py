@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from collections.abc import Callable
 from typing import Any, Literal
 
 import torch
@@ -9,7 +10,7 @@ import torch.nn.functional as F  # noqa: N812
 from spandrel.util import store_hyperparameters
 from torch import Tensor, nn
 
-from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
+from traiNNer.utils.registry import ARCH_REGISTRY
 
 
 def _make_pair(value: Any) -> Any:
@@ -28,6 +29,7 @@ def conv_layer(
     padding = (int((kernel_size_t[0] - 1) / 2), int((kernel_size_t[1] - 1) / 2))
     return nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, bias=bias)
 
+
 def sequential(*args: nn.Module) -> nn.Module:
     """
     Modules will be added to the a Sequential Container in the order they
@@ -42,7 +44,7 @@ def sequential(*args: nn.Module) -> nn.Module:
         if isinstance(module, nn.Sequential):
             for submodule in module.children():
                 modules.append(submodule)
-        elif isinstance(module, nn.Module):
+        else:
             modules.append(module)
     return nn.Sequential(*modules)
 
@@ -54,18 +56,22 @@ def pixelshuffle_block(
     Upsample features according to `upscale_factor`.
     """
     conv = conv_layer(in_channels, out_channels * (upscale_factor**2), kernel_size)
-    
+
     # Apply ICNR initialization to prevent checkerboard artifacts
     icnr_init(conv, upscale_factor)
-    
+
     pixel_shuffle = nn.PixelShuffle(upscale_factor)
     return sequential(conv, pixel_shuffle)
 
 
-def icnr_init(conv: nn.Conv2d, upscale_factor: int, init_fn=nn.init.kaiming_normal_) -> None:
+def icnr_init(
+    conv: nn.Conv2d,
+    upscale_factor: int,
+    init_fn: Callable[[Tensor], Tensor] = nn.init.kaiming_normal_,
+) -> None:
     """
     ICNR initialization for PixelShuffle layers to prevent checkerboard artifacts.
-    
+
     Args:
         conv: The convolution layer before PixelShuffle
         upscale_factor: The upscale factor used in PixelShuffle
@@ -73,22 +79,27 @@ def icnr_init(conv: nn.Conv2d, upscale_factor: int, init_fn=nn.init.kaiming_norm
     """
     # Get output channels and calculate sub-kernel size
     out_channels = conv.out_channels
-    sub_kernel_channels = out_channels // (upscale_factor ** 2)
-    
+    sub_kernel_channels = out_channels // (upscale_factor**2)
+
     # Create a temporary smaller kernel
     sub_kernel = torch.zeros(
-        [sub_kernel_channels, conv.in_channels, conv.kernel_size[0], conv.kernel_size[1]]
+        [
+            sub_kernel_channels,
+            conv.in_channels,
+            conv.kernel_size[0],
+            conv.kernel_size[1],
+        ]
     )
-    
+
     # Initialize the sub-kernel
     init_fn(sub_kernel)
-    
+
     # Replicate the sub-kernel for each sub-pixel
-    kernel = sub_kernel.repeat_interleave(upscale_factor ** 2, dim=0)
-    
+    kernel = sub_kernel.repeat_interleave(upscale_factor**2, dim=0)
+
     # Set the conv weights
     conv.weight.data.copy_(kernel)
-    
+
     # Initialize bias to zero if it exists
     if conv.bias is not None:
         conv.bias.data.zero_()
@@ -153,7 +164,8 @@ class Conv3XC(nn.Module):
         )
 
         self.eval_conv.weight.requires_grad = False
-        self.eval_conv.bias.requires_grad = False
+        if self.eval_conv.bias is not None:
+            self.eval_conv.bias.requires_grad = False
         self.update_params()
 
     def update_params(self) -> None:
@@ -193,12 +205,14 @@ class Conv3XC(nn.Module):
 
         self.eval_conv.weight.data = self.weight_concat.contiguous()
         self.eval_conv.bias.data = self.bias_concat.contiguous()
-    def train(self, mode: bool = True):
+
+    def train(self, mode: bool = True) -> Conv3XC:
         super().train(mode)
         # If inference, update params
         if not mode:
             self.update_params()
         return self
+
     def forward(self, x: Tensor) -> Tensor:
         if self.training:
             pad = 1
@@ -226,12 +240,12 @@ class SPAB(nn.Module):
         self.c1_r = Conv3XC(in_channels, mid_channels, gain1=2, s=1)
         self.c2_r = Conv3XC(mid_channels, mid_channels, gain1=2, s=1)
         self.c3_r = Conv3XC(mid_channels, out_channels, gain1=2, s=1)
-        
+
         # Add layer normalization
         self.norm1 = nn.GroupNorm(num_groups=8, num_channels=mid_channels)
         self.norm2 = nn.GroupNorm(num_groups=8, num_channels=mid_channels)
         self.norm3 = nn.GroupNorm(num_groups=8, num_channels=out_channels)
-        
+
         self.act1 = torch.nn.SiLU(inplace=True)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
@@ -282,20 +296,22 @@ class TemporalSPAN(nn.Module):
         self.in_channels = num_in_ch
         self.out_channels = num_out_ch
         self.history_channels = history_channels
-        
+
         # Calculate center frame index
         self.center_idx = num_frames // 2
-        
+
         # Separate feature extraction for center frame (full dimension)
         self.center_conv = Conv3XC(self.in_channels, feature_channels, gain1=2, s=1)
-        
+
         # Feature extraction for history frames (reduced dimension)
         # Each history frame gets its own conv to extract features independently
-        self.history_convs = nn.ModuleList([
-            Conv3XC(self.in_channels, history_channels, gain1=2, s=1)
-            for _ in range(num_frames - 1)
-        ])
-        
+        self.history_convs = nn.ModuleList(
+            [
+                Conv3XC(self.in_channels, history_channels, gain1=2, s=1)
+                for _ in range(num_frames - 1)
+            ]
+        )
+
         # Fusion layer to merge all features
         # Total channels: feature_channels (center) + history_channels * (num_frames - 1)
         total_channels = feature_channels + history_channels * (num_frames - 1)
@@ -330,7 +346,7 @@ class TemporalSPAN(nn.Module):
             Output tensor with shape (B, C, H_out, W_out)
         """
         # Get input dimensions
-        b, t, c, h, w = x.shape
+        _b, t, _c, _h, _w = x.shape
 
         # Verify that the number of frames in the input tensor matches the model's configuration
         if t != self.num_frames:
@@ -341,7 +357,7 @@ class TemporalSPAN(nn.Module):
         # Extract features separately for each frame
         features = []
         history_idx = 0
-        
+
         for i in range(t):
             if i == self.center_idx:
                 # Center frame: extract full feature dimension
@@ -352,10 +368,10 @@ class TemporalSPAN(nn.Module):
                 feat = self.history_convs[history_idx](x[:, i])
                 features.append(feat)
                 history_idx += 1
-        
+
         # Concatenate all features along channel dimension
         x_fused = torch.cat(features, dim=1)
-        
+
         # Fuse features with multiple convolutions
         out_feature = self.fusion_conv(x_fused)
 
@@ -376,7 +392,7 @@ class TemporalSPAN(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def temporal_span_s(
+def temporal_span(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
     num_frames: int = 5,
@@ -385,7 +401,7 @@ def temporal_span_s(
     bias: bool = True,
     history_channels: int = 12,
 ) -> TemporalSPAN:
-    """Temporal SPAN-S model."""
+    """Temporal SPAN model."""
     return TemporalSPAN(
         upscale=scale,
         num_in_ch=num_in_ch,
