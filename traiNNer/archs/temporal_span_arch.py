@@ -410,4 +410,3 @@ def temporalspan(
         bias=bias,
         history_channels=history_channels,
     )
-

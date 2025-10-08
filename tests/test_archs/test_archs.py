@@ -108,7 +108,7 @@ EXCLUDE_ARCH_SCALES = {
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
 REQUIRE_BATCH_2 = {"dat_2", "dat", "dat_light", "dat_s"}
-ADD_VSR_DIM = {"tscunet"," temporalspan"}
+ADD_VSR_DIM = {"tscunet", " temporalspan"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
