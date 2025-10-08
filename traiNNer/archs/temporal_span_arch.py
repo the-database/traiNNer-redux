@@ -1,4 +1,3 @@
-# Umzi Suggestion
 from __future__ import annotations
 
 from collections import OrderedDict
@@ -392,7 +391,7 @@ class TemporalSPAN(nn.Module):
 
 
 @ARCH_REGISTRY.register()
-def temporal_span(
+def temporalspan(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
     num_frames: int = 5,
@@ -411,3 +410,4 @@ def temporal_span(
         bias=bias,
         history_channels=history_channels,
     )
+
