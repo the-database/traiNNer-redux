@@ -86,6 +86,7 @@ EXCLUDE_ARCH_SCALES = {
     ],
     "realcugan": [{"scale": 1, "extra_arch_params": {}}],
     "tscunet": [{"scale": 3, "extra_arch_params": {}}],
+    "temporalspan": [{"scale": 3, "extra_arch_params": {}}],
     "scunet_aaf6aa": [{"scale": 3, "extra_arch_params": {}}],
     "rtmosr_l": [{"scale": 3, "extra_arch_params": {}}],
     "rtmosr_ul": [{"scale": 3, "extra_arch_params": {}}],
@@ -107,7 +108,7 @@ EXCLUDE_ARCH_SCALES = {
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
 REQUIRE_BATCH_2 = {"dat_2", "dat", "dat_light", "dat_s"}
-ADD_VSR_DIM = {"tscunet"}
+ADD_VSR_DIM = {"tscunet", " temporalspan"}
 
 # A set of arch names whose arch requires a minimum
 # image size of 32x32 to do training or inference with.
@@ -130,6 +131,7 @@ REQUIRE_64_HW = {
     "metaflexnet",
     "scunet_aaf6aa",
     "tscunet",
+    "temporalspan",
     "swin2sr_l",
     "swin2sr_m",
     "swin2sr_s",

@@ -80,6 +80,7 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "spanplus_s",
     "spanplus",
     "tscunet",  # rank 5 tensors don't support channels last
+    "temporalspan",
 }
 
 # Urban100
@@ -1197,6 +1198,12 @@ ALL_ARCHS: list[ArchInfo] = [
     {
         "names": ["TSCUNet"],
         "scales": [1, 2, 4, 8],
+        "pth_override": True,
+        "video_override": True,
+    },
+    {
+        "names": ["TemporalSPAN"],
+        "scales": [1, 2, 4],
         "pth_override": True,
         "video_override": True,
     },
