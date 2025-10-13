@@ -528,7 +528,7 @@ ffn_expansion_ratio: 2.0
 aim_reduction_ratio: 8
 group_block_pattern: ~
 drop_path_rate: 0.08
-upsampler_type: pixelshuffle
+upsampler_type: transpose+conv
 img_range: 1.0
 ```
 #### fdat_medium
@@ -566,7 +566,7 @@ ffn_expansion_ratio: 1.5
 aim_reduction_ratio: 8
 group_block_pattern: ~
 drop_path_rate: 0.05
-upsampler_type: pixelshuffle
+upsampler_type: transpose+conv
 img_range: 1.0
 ```
 #### fdat_xl
@@ -978,6 +978,16 @@ n_resgroups: 1
 n_colors: 3
 n_feats: 48
 ```
+### MetaGAN3
+#### metagan3
+
+
+```yaml
+type: metagan3
+in_ch: 3
+dims: [64, 128, 192, 256]
+blocks: [2, 3, 5, 2]
+```
 ### MoESR2
 #### moesr2
 
@@ -1347,6 +1357,19 @@ norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
 ```
+#### span_f32
+
+
+```yaml
+type: span_f32
+num_in_ch: 3
+num_out_ch: 3
+feature_channels: 32
+bias: true
+norm: false
+img_range: 255.0
+rgb_mean: [0.4488, 0.4371, 0.404]
+```
 #### span_s
 
 
@@ -1697,6 +1720,19 @@ input_resolution: 256
 residual: true
 sigma: false
 state: ~
+```
+### TemporalSPAN
+#### temporal_span
+
+
+```yaml
+type: temporal_span
+num_in_ch: 3
+num_out_ch: 3
+num_frames: 5
+feature_channels: 48
+bias: true
+history_channels: 12
 ```
 ### Unet
 #### unetsegmentation
