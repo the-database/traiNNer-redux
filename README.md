@@ -32,5 +32,6 @@ traiNNer-redux is released under the [Apache License 2.0](LICENSE.txt). See [LIC
 - The [ArtCNN](https://github.com/Artoriuz/ArtCNN) architecture is originally developed by [Artoriuz](https://github.com/Artoriuz).
 - The TSCUNet architecture is from [aaf6aa/SCUNet](https://github.com/aaf6aa/SCUNet) which is a modification of [SCUNet](https://github.com/cszn/SCUNet), and parts of the training code for TSCUNet are adapted from [TSCUNet_Trainer](https://github.com/Demetter/TSCUNet_Trainer).
 - The [FDAT](https://github.com/stinkybread/FDAT) architecture is created by [stinkybread (sharekhan)](https://github.com/stinkybread).
+- The [TSPAN](https://github.com/Kim2091/TSPAN) architecture is a temporally consistent variant of SPAN created by [Kim2091](https://github.com/Kim2091). Use the [TSPAN](https://github.com/Kim2091/TSPAN) GUI to upscale videos with TSPAN models.
 - Several enhancements reference implementations from [Corpsecreate/neosr](https://github.com/Corpsecreate/neosr) and its original repo [neosr](https://github.com/muslll/neosr).
 - Members of the Enhance Everything Discord server: [Corpsecreate](https://github.com/Corpsecreate), [joeyballentine](https://github.com/joeyballentine), [Kim2091](https://github.com/Kim2091).
