@@ -625,11 +625,16 @@ class AttenBlocks(nn.Module):
                     x_size,
                     params["rpi_sa"],
                     params["attn_mask"],
-                    use_reentrant=False,
                 )
 
         if use_chk:
-            x = checkpoint.checkpoint(self.overlap_attn, x, x_size, params["rpi_oca"])
+            x = checkpoint.checkpoint(
+                self.overlap_attn,
+                x,
+                x_size,
+                params["rpi_oca"],
+                use_reentrant=False,
+            )
         else:
             x = self.overlap_attn(x, x_size, params["rpi_oca"])
 
