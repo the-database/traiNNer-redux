@@ -1721,12 +1721,28 @@ residual: true
 sigma: false
 state: ~
 ```
-### TemporalSPAN
-#### temporal_span
+### TSPANv2
+#### temporalspanv2
 
 
 ```yaml
-type: temporal_span
+type: temporalspanv2
+num_in_ch: 3
+num_out_ch: 3
+num_frames: 5
+feature_channels: 48
+bias: false
+num_blocks: 6
+residual: true
+img_range: 255.0
+use_checkpoint: false
+```
+### TemporalSPAN
+#### temporalspan
+
+
+```yaml
+type: temporalspan
 num_in_ch: 3
 num_out_ch: 3
 num_frames: 5
