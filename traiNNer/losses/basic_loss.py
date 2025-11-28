@@ -135,6 +135,23 @@ class CharbonnierLoss(nn.Module):
 
 
 @LOSS_REGISTRY.register()
+class FFTLoss(nn.Module):
+    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
+        super().__init__()
+        self.loss_weight = loss_weight
+        self.criterion = torch.nn.L1Loss(reduction=reduction)
+
+    def forward(self, pred: Tensor, target: Tensor) -> Tensor:
+        pred_fft = torch.fft.rfft2(pred)
+        target_fft = torch.fft.rfft2(target)
+
+        pred_fft = torch.stack([pred_fft.real, pred_fft.imag], dim=-1)
+        target_fft = torch.stack([target_fft.real, target_fft.imag], dim=-1)
+
+        return self.criterion(pred_fft, target_fft)
+
+
+@LOSS_REGISTRY.register()
 class PSNRLoss(nn.Module):
     def __init__(
         self, loss_weight: float, reduction: str = "mean", to_y: bool = False
