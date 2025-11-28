@@ -231,6 +231,140 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 ```
+### DATFlex
+#### datflex_2
+
+
+```yaml
+type: datflex_2
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 32]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
+#### datflex_s
+
+
+```yaml
+type: datflex_s
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 16]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
+### DATMod
+#### datmod
+
+
+```yaml
+type: datmod
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 32]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 4
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
+#### datmod_2
+
+
+```yaml
+type: datmod_2
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 32]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
+#### datmod_light
+
+
+```yaml
+type: datmod_light
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 32]
+depth: [18]
+embed_dim: 60
+num_heads: [6]
+expansion_factor: 2
+resi_connection: 3conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
+#### datmod_s
+
+
+```yaml
+type: datmod_s
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 16]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
 ### DCTLSA
 #### dctlsa
 
@@ -492,6 +626,7 @@ drop_path_rate: 0.1
 mid_dim: 64
 upsampler_type: pixelshuffle
 img_range: 1.0
+unshuffle_mod: false
 ```
 #### fdat_large
 
@@ -530,6 +665,7 @@ group_block_pattern: ~
 drop_path_rate: 0.08
 upsampler_type: transpose+conv
 img_range: 1.0
+unshuffle_mod: false
 ```
 #### fdat_medium
 
@@ -549,6 +685,7 @@ group_block_pattern: ~
 drop_path_rate: 0.1
 upsampler_type: transpose+conv
 img_range: 1.0
+unshuffle_mod: false
 ```
 #### fdat_tiny
 
@@ -568,6 +705,7 @@ group_block_pattern: ~
 drop_path_rate: 0.05
 upsampler_type: transpose+conv
 img_range: 1.0
+unshuffle_mod: false
 ```
 #### fdat_xl
 
@@ -910,6 +1048,43 @@ resi_connection: 1conv
 hier_win_ratios: [0.5, 1, 2, 4, 6, 8]
 upsampler: pixelshuffledirect
 ```
+### LKFMixer
+#### lkfmixer_b
+
+
+```yaml
+type: lkfmixer_b
+in_channels: 3
+channels: 48
+out_channels: 3
+num_block: 8
+large_kernel: 31
+split_factor: 0.25
+```
+#### lkfmixer_l
+
+
+```yaml
+type: lkfmixer_l
+in_channels: 3
+channels: 64
+out_channels: 3
+num_block: 12
+large_kernel: 31
+split_factor: 0.25
+```
+#### lkfmixer_t
+
+
+```yaml
+type: lkfmixer_t
+in_channels: 3
+channels: 40
+out_channels: 3
+num_block: 6
+large_kernel: 31
+split_factor: 0.25
+```
 ### LMLT
 #### lmlt_base
 
@@ -1050,6 +1225,29 @@ mid_dim: 32
 unshuffle_mod: true
 rms_norm: false
 ```
+### ModernDAT
+#### moderndat_2
+
+
+```yaml
+type: moderndat_2
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 32]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
 ### OmniSR
 #### omnisr
 
@@ -1064,6 +1262,27 @@ pe: true
 window_size: 8
 res_num: 5
 bias: true
+```
+### PD1Corrector
+#### pd1corrector
+
+
+```yaml
+type: pd1corrector
+c: 12
+blocks: 3
+use_sobel: true
+```
+### PD1CorrectorFiLM
+#### pd1correctorfilm
+
+
+```yaml
+type: pd1correctorfilm
+c: 16
+blocks: 3
+use_sobel: true
+film_hidden: 16
 ```
 ### PLKSR
 #### plksr
@@ -1722,11 +1941,11 @@ sigma: false
 state: ~
 ```
 ### TemporalSPAN
-#### temporal_span
+#### temporalspan
 
 
 ```yaml
-type: temporal_span
+type: temporalspan
 num_in_ch: 3
 num_out_ch: 3
 num_frames: 5
@@ -1756,6 +1975,71 @@ pro: false
 fast: false
 in_channels: 3
 out_channels: 3
+```
+### lhan
+#### lhan
+
+
+```yaml
+type: lhan
+num_in_ch: 3
+num_out_ch: 3
+upscaling_factor: 4
+embed_dim: 120
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: pixelshuffle
+img_range: 1.0
+```
+#### lhan_light
+
+
+```yaml
+type: lhan_light
+```
+#### lhan_medium
+
+
+```yaml
+type: lhan_medium
+```
+#### lhan_micro
+
+
+```yaml
+type: lhan_micro
+```
+#### lhan_tiny
+
+
+```yaml
+type: lhan_tiny
+```
+#### lhan_tinytc
+
+
+```yaml
+type: lhan_tinytc
+```
+### patchgan
+#### patchgan
+
+
+```yaml
+type: patchgan
+num_in_ch: 3
+num_feat: 64
+num_layers: 3
+max_nf_mult: 8
+norm_type: none
+use_sigmoid: false
+use_sn: true
 ```
 ## Discriminator architectures (`network_d`)
 ### DUnet

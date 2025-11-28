@@ -108,6 +108,15 @@ log_matrix: false
 batch_matrix: false
 loss_weight: 1.0
 ```
+## fftloss
+
+
+```yaml
+type: fftloss
+loss_weight: 1.0
+reduction: mean
+loss_weight: 1.0
+```
 ## fliploss
 
 
@@ -219,6 +228,7 @@ loss_weight: 1.0
 
 ```yaml
 type: multiscaleganloss
+gan_type: vanilla
 real_label_val: 1.0
 fake_label_val: 0.0
 loss_weight: 1.0
