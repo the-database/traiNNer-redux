@@ -130,7 +130,7 @@ class SFMB(nn.Module):
         x1 = self.PLKB(x)
 
         x2_1 = self.sigmoid(self.AdaptiveAvgPool(x))
-        x2_2 = F.adaptive_max_pool2d(x, (x.size(2) // 8, x.size(3) // 8))
+        x2_2 = F.max_pool2d(x, kernel_size=8, stride=8)
         x2_2 = self.act(self.conv1_1(self.DWConv_3(x2_2)))
         x2_2 = F.interpolate(
             x2_2, size=(x.size(2), x.size(3)), mode="bilinear", align_corners=False
@@ -169,19 +169,6 @@ class FSB(nn.Module):
         weight = self.sigmoid(x_fused)
         out = x1 * weight + x2 * (1 - weight)
         return out
-
-
-class PixelNorm(nn.Module):
-    def __init__(self, channels) -> None:
-        super().__init__()
-        self.pixel_norm = nn.LayerNorm(channels)
-        default_init_weights([self.pixel_norm], 0.1)
-
-    def forward(self, x):
-        x = x.permute(0, 2, 3, 1)  # (B, H, W, C)
-        x = self.pixel_norm(x)
-        x = x.permute(0, 3, 1, 2).contiguous()  # (B, C, H, W)
-        return x
 
 
 class FMB(nn.Module):
@@ -284,12 +271,21 @@ class LKFMixer(nn.Module):
             scale=upscale, num_feat=channels, num_out_ch=out_channels
         )
         self.act = nn.GELU()
+        self.scale = upscale
+
+    @staticmethod
+    def check_img_size(x, resolution: tuple[int, int]):
+        mod_pad_h = (8 - resolution[0] % 8) % 8
+        mod_pad_w = (8 - resolution[1] % 8) % 8
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
     def forward(self, input):
+        b, c, h, w = input.shape
+        input = self.check_img_size(input, (h, w))
         out_fea = self.conv_first(input)
         out = self.layers(out_fea)
         out = self.act(self.conv(out))
-        output = self.upsampler(out + out_fea)
+        output = self.upsampler(out + out_fea)[:, :, : h * self.scale, : w * self.scale]
         return output
 
 
