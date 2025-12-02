@@ -529,7 +529,7 @@ class ReduxOptions(StrictStruct):
         ),
     ] = field(default_factory=lambda: [0.2, 0.7, 0.1])
     resize_mode_list: Annotated[
-        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos", "area"]],
         Meta(description="List of possible resize modes to use for the first resize."),
     ] = field(
         default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
@@ -581,7 +581,7 @@ class ReduxOptions(StrictStruct):
         ),
     ] = field(default_factory=lambda: [0.3, 0.4, 0.3])
     resize_mode_list2: Annotated[
-        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos", "area"]],
         Meta(description="List of possible resize modes to use for the second resize."),
     ] = field(
         default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
@@ -621,7 +621,7 @@ class ReduxOptions(StrictStruct):
     ] = field(default_factory=lambda: [75, 95])
 
     resize_mode_list3: Annotated[
-        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos", "area"]],
         Meta(description="List of possible resize modes to use for the final resize."),
     ] = field(
         default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
