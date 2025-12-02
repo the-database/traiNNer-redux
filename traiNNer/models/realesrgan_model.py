@@ -52,6 +52,10 @@ class RealESRGANModel(SRModel):
         ).cuda()  # simulate JPEG compression artifacts
         self.queue_size = opt.queue_size
 
+        self.thicklines = None
+        if self.opt.thicklines_prob > 0:
+            self.thicklines = ThickLines().cuda()
+
         self.otf_debug = opt.high_order_degradations_debug
         self.otf_debug_limit = opt.high_order_degradations_debug_limit
 
@@ -161,8 +165,7 @@ class RealESRGANModel(SRModel):
 
             # thick lines
             if RNG.get_rng().uniform() < self.opt.thicklines_prob:
-                thick_lines = ThickLines().cuda()
-                out = thick_lines(out)
+                out = self.thicklines(out)
 
             # blur
             if RNG.get_rng().uniform() < self.opt.blur_prob:
