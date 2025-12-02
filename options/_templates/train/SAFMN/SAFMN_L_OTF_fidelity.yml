@@ -21,6 +21,7 @@ lq_usm: false  # Apply unsharp mask to LQ image before all other degradations.
 lq_usm_radius_range: [1, 25]  # Range of randomly selected unsharp mask radius to apply.
 
 # The first degradation process.
+thicklines_prob: 0.0
 blur_prob: 0.0
 resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
 resize_mode_list: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos

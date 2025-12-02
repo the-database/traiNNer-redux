@@ -516,6 +516,12 @@ class ReduxOptions(StrictStruct):
             description="Probability of applying the first blur to the LQ, between 0 and 1."
         ),
     ] = 0
+    thicklines_prob: Annotated[
+        float,
+        Meta(
+            description="Probability of applying custom ThickLines filter to the LQ, between 0 and 1."
+        ),
+    ] = 0
     resize_prob: Annotated[
         list[float],
         Meta(
