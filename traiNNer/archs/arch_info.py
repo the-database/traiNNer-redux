@@ -1314,4 +1314,8 @@ ALL_ARCHS: list[ArchInfo] = [
         "scales": ALL_SCALES,
         "folder_name_override": "GaterV3",
     },
+    {
+        "names": ["DIS_Balanced", "DIS_Fast"],
+        "scales": ALL_SCALES,
+    },
 ]

@@ -243,6 +243,29 @@ num_modules: 6
 out_nc: 3
 num_head: 5
 ```
+### DIS
+#### dis_balanced
+
+
+```yaml
+type: dis_balanced
+in_channels: 3
+out_channels: 3
+num_features: 32
+num_blocks: 12
+use_depthwise: false
+```
+#### dis_fast
+
+
+```yaml
+type: dis_fast
+in_channels: 3
+out_channels: 3
+num_features: 32
+num_blocks: 8
+use_depthwise: false
+```
 ### DITN_Real
 #### ditn_real
 
