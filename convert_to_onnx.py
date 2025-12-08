@@ -3,7 +3,6 @@ import time
 from logging import Logger
 from os import path as osp
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import onnx
@@ -15,7 +14,6 @@ from onnxslim import slim
 from rich.traceback import install
 from torch import Tensor
 from torch.export.dynamic_shapes import Dim
-from torch.onnx import ONNXProgram
 from traiNNer.models import build_model
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils.config import Config
@@ -53,8 +51,12 @@ def convert_and_save_onnx(
             opset = max(MIN_DYNAMO_OPSET, opt.onnx.opset)
 
             if opt.onnx.use_static_shapes:
+                input_names = None
+                output_names = None
                 dynamic_shapes = None
             else:
+                input_names = ["input"]
+                output_names = ["output"]
                 dynamic_shapes = ((Dim.AUTO, Dim.STATIC, Dim.AUTO, Dim.AUTO),)
 
             out_path = get_out_path(
@@ -74,6 +76,8 @@ def convert_and_save_onnx(
                 verbose=False,
                 optimize=False,
                 opset_version=opset,
+                input_names=input_names,
+                output_names=output_names,
                 dynamic_shapes=dynamic_shapes,
                 verify=opt.onnx.verify,
             )
