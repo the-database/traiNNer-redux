@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 from __future__ import annotations
 
 import math

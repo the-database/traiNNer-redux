@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 # HAT from https://github.com/XPixelGroup/HAT/blob/main/hat/archs/hat_arch.py
 from __future__ import annotations
 
