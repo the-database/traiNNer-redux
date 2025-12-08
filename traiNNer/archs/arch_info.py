@@ -64,6 +64,9 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "hit_sir",
     "hit_sng",
     "hit_srf",
+    "lkfmixer_t",
+    "lkfmixer_b",
+    "lkfmixer_l",
     "man_light",
     "man_tiny",
     "man",
@@ -263,6 +266,21 @@ OFFICIAL_METRICS: dict[
     },
     "fdat_medium": {
         2: {"df2k_psnr": 33.20, "df2k_ssim": 0.9376},
+    },
+    "lkfmixer_t": {
+        2: {"df2k_psnr": 32.30, "df2k_ssim": 0.9300},
+        3: {"df2k_psnr": 28.27, "df2k_ssim": 0.8541},
+        4: {"df2k_psnr": 26.23, "df2k_ssim": 0.7890},
+    },
+    "lkfmixer_b": {
+        2: {"df2k_psnr": 32.75, "df2k_ssim": 0.9337},
+        3: {"df2k_psnr": 28.58, "df2k_ssim": 0.8604},
+        4: {"df2k_psnr": 26.48, "df2k_ssim": 0.7962},
+    },
+    "lkfmixer_l": {
+        2: {"df2k_psnr": 33.13, "df2k_ssim": 0.9371},
+        3: {"df2k_psnr": 28.97, "df2k_ssim": 0.8677},
+        4: {"df2k_psnr": 26.85, "df2k_ssim": 0.8069},
     },
     "lmlt_base": {
         2: {"df2k_psnr": 32.52, "df2k_ssim": 0.9316},
@@ -768,6 +786,30 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "warmup_iter": -1,
         "lr": "!!float 2e-4",
         "lq_size": 64,
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "lkfmixer_t": {
+        "total_iter": 1000000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-3",
+        "lq_size": "64  # paper: 48",
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "lkfmixer_b": {
+        "total_iter": 1000000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-3",
+        "lq_size": "64  # paper: 48",
+        "batch_size_per_gpu": 16,
+        "accum_iter": "1  # paper: 4",
+    },
+    "lkfmixer_l": {
+        "total_iter": 1000000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-3",
+        "lq_size": "64  # paper: 48",
         "batch_size_per_gpu": 16,
         "accum_iter": "1  # paper: 4",
     },
@@ -1317,5 +1359,10 @@ ALL_ARCHS: list[ArchInfo] = [
     {
         "names": ["DIS_Balanced", "DIS_Fast"],
         "scales": ALL_SCALES,
+    },
+    {
+        "names": ["LKFMixer_T", "LKFMixer_B", "LKFMixer_L"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "LKFMixer",
     },
 ]

@@ -516,6 +516,12 @@ class ReduxOptions(StrictStruct):
             description="Probability of applying the first blur to the LQ, between 0 and 1."
         ),
     ] = 0
+    thicklines_prob: Annotated[
+        float,
+        Meta(
+            description="Probability of applying custom ThickLines filter to the LQ, between 0 and 1."
+        ),
+    ] = 0
     resize_prob: Annotated[
         list[float],
         Meta(
@@ -523,7 +529,7 @@ class ReduxOptions(StrictStruct):
         ),
     ] = field(default_factory=lambda: [0.2, 0.7, 0.1])
     resize_mode_list: Annotated[
-        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos", "area"]],
         Meta(description="List of possible resize modes to use for the first resize."),
     ] = field(
         default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
@@ -575,7 +581,7 @@ class ReduxOptions(StrictStruct):
         ),
     ] = field(default_factory=lambda: [0.3, 0.4, 0.3])
     resize_mode_list2: Annotated[
-        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos", "area"]],
         Meta(description="List of possible resize modes to use for the second resize."),
     ] = field(
         default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]
@@ -615,7 +621,7 @@ class ReduxOptions(StrictStruct):
     ] = field(default_factory=lambda: [75, 95])
 
     resize_mode_list3: Annotated[
-        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos"]],
+        list[Literal["bilinear", "bicubic", "nearest-exact", "lanczos", "area"]],
         Meta(description="List of possible resize modes to use for the final resize."),
     ] = field(
         default_factory=lambda: ["bilinear", "bicubic", "nearest-exact", "lanczos"]

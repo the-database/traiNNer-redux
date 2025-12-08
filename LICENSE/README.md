@@ -30,6 +30,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[ESC](https://github.com/dslisleedh/ESC)|[MIT License](https://github.com/dslisleedh/ESC/blob/main/LICENSE)|
 |[FDAT](https://github.com/stinkybread/FDAT)| [MIT License](https://github.com/stinkybread/FDAT/blob/main/LICENSE)|
 |[FDL](https://github.com/eezkni/FDL)| [MIT License](https://github.com/eezkni/FDL?tab=readme-ov-file#license)|
+|[FFTLoss](https://github.com/Supereeeee/LKFMixer)| [Apache License 2.0](https://github.com/Supereeeee/LKFMixer/blob/master/LICENSE.txt)|
 |[FlexNet](https://github.com/umzi2/FlexNet)|[MIT License](https://github.com/umzi2/FlexNet/blob/master/LICENSE)|
 |[flip](https://github.com/NVlabs/flip)| [BSD 3-Clause License](https://github.com/NVlabs/flip/blob/main/LICENSE)|
 |[Focal Frequency Loss](https://github.com/EndlessSora/focal-frequency-loss)| [MIT License](https://github.com/EndlessSora/focal-frequency-loss/blob/master/LICENSE.md)|
@@ -40,6 +41,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[LAWFFT](https://github.com/rewaifu/LAWFFT)| [MIT License](https://github.com/rewaifu/LAWFFT/blob/main/LICENSE)|
 |[LineDistiller](https://github.com/hepesu/LineDistiller) | [MIT License](https://github.com/hepesu/LineDistiller/blob/master/LICENSE)|
 |[LDL](https://github.com/csjliang/LDL) | [Apache License 2.0](https://github.com/csjliang/LDL/blob/master/LICENSE)|
+|[LKFMixer](https://github.com/Supereeeee/LKFMixer)| [Apache License 2.0](https://github.com/Supereeeee/LKFMixer/blob/master/LICENSE.txt)|
 |[LMLT](https://github.com/jwgdmkj/LMLT) | [MIT License](https://github.com/jwgdmkj/LMLT/blob/main/LICENSE)|
 |[LPIPS](https://github.com/richzhang/PerceptualSimilarity)| [BSD-2-Clause License](https://github.com/richzhang/PerceptualSimilarity/blob/master/LICENSE)|
 |[MAN](https://github.com/icandle/MAN)| [Apache License 2.0](https://github.com/icandle/MAN/blob/main/LICENSE)|

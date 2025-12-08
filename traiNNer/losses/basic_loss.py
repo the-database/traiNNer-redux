@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
-from torchvision.transforms import InterpolationMode, v2
+from torchvision.transforms import InterpolationMode, v2, GaussianBlur
 
 from traiNNer.losses.loss_util import weighted_loss
 from traiNNer.utils.color_util import rgb2ycbcr_pt, rgb_to_luma
@@ -135,6 +135,23 @@ class CharbonnierLoss(nn.Module):
 
 
 @LOSS_REGISTRY.register()
+class FFTLoss(nn.Module):
+    def __init__(self, loss_weight: float = 1.0, reduction: str = "mean") -> None:
+        super().__init__()
+        self.loss_weight = loss_weight
+        self.criterion = torch.nn.L1Loss(reduction=reduction)
+
+    def forward(self, pred: Tensor, target: Tensor) -> Tensor:
+        pred_fft = torch.fft.rfft2(pred)
+        target_fft = torch.fft.rfft2(target)
+
+        pred_fft = torch.stack([pred_fft.real, pred_fft.imag], dim=-1)
+        target_fft = torch.stack([target_fft.real, target_fft.imag], dim=-1)
+
+        return self.criterion(pred_fft, target_fft)
+
+
+@LOSS_REGISTRY.register()
 class PSNRLoss(nn.Module):
     def __init__(
         self, loss_weight: float, reduction: str = "mean", to_y: bool = False
@@ -161,8 +178,7 @@ class PSNRLoss(nn.Module):
         assert len(pred.size()) == 4
 
         return (
-            self.loss_weight
-            * self.scale
+            self.scale
             * torch.log(((pred - target) ** 2).mean(dim=(1, 2, 3)) + 1e-8).mean()
         )
 
@@ -284,6 +300,7 @@ class HSLuvLoss(nn.Module):
         lightness_weight: float = 1 / 3,
         criterion: str = "l1",
         downscale_factor: int = 1,
+        blur_strength: int = 0,
     ) -> None:
         super().__init__()
         self.downscale_factor = downscale_factor
@@ -292,6 +309,7 @@ class HSLuvLoss(nn.Module):
         self.lightness_weight = lightness_weight
         self.saturation_weight = saturation_weight
         self.criterion_type = criterion
+        self.blur_strength = blur_strength
 
         if self.criterion_type == "l1":
             self.criterion = nn.L1Loss(reduction="none")
@@ -301,6 +319,9 @@ class HSLuvLoss(nn.Module):
             self.criterion = CharbonnierLoss(loss_weight=1.0, reduction="none")
         else:
             raise NotImplementedError(f"{criterion} criterion has not been supported.")
+
+        if self.blur_strength:
+            self.blur = GaussianBlur(4 * self.blur_strength + 1, self.blur_strength)
 
     def forward_once(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         if self.downscale_factor > 1:
@@ -326,6 +347,10 @@ class HSLuvLoss(nn.Module):
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, y: Tensor) -> dict[str, Tensor]:
+        if self.blur_strength:
+            x = self.blur(x)
+            y = self.blur(y)
+
         x_hue, x_saturation, x_lightness = self.forward_once(x)
         y_hue, y_saturation, y_lightness = self.forward_once(y)
 

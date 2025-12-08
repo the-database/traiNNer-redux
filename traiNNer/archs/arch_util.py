@@ -148,7 +148,6 @@ def clean_state_dict(state_dict):
 def load_pretrained_network(net, model_path, strict=True, weight_keys=None) -> None:
     if model_path.startswith(("https://", "http://")):
         model_path = load_file_from_url(model_path)
-    # print(f"Loading pretrained model {net.__class__.__name__} from {model_path}")
     state_dict = torch.load(
         model_path, map_location=torch.device("cpu"), weights_only=False
     )
@@ -459,7 +458,6 @@ class LDA_AQU(nn.Module):
         )
 
         self.group_channel = in_channels // (reduction_factor * self.n_groups)
-        # print(self.group_channel)
         self.conv_offset = nn.Sequential(
             nn.Conv2d(
                 self.group_channel,
@@ -474,7 +472,6 @@ class LDA_AQU(nn.Module):
             nn.SiLU(),
             nn.Conv2d(self.group_channel, 2 * k_u**2, k_e, 1, k_e // 2),
         )
-        print(2 * k_u**2)
         self.layer_norm = LayerNorm(in_channels)
 
         self.pad = int((self.k_u - 1) / 2)

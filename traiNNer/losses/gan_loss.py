@@ -134,7 +134,7 @@ class MultiScaleGANLoss(GANLoss):
     def __init__(
         self,
         loss_weight: float,
-        gan_type: str,
+        gan_type: str = "vanilla",
         real_label_val: float = 1.0,
         fake_label_val: float = 0.0,
     ) -> None:

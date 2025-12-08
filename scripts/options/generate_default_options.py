@@ -53,6 +53,19 @@ def final_template(
     T_max: %t_max%
     eta_min: %eta_min%""",
         )
+    elif "folder_name_override" in arch and arch["folder_name_override"] == "LKFMixer":
+        # switch MultiStepLR to CosineAnnealingRestartLR
+        template = template.replace(
+            """scheduler:
+    type: MultiStepLR
+    milestones: %milestones%
+    gamma: 0.5""",
+            """scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [1000000]
+    restart_weights: [1]
+    eta_min: !!float 1e-6""",
+        )
 
     template = template.replace(
         "scale: %scale%",
