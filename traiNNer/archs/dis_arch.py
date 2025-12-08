@@ -1,22 +1,27 @@
 from __future__ import annotations
 
-import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from spandrel.util import store_hyperparameters
+from torch import nn
+from torch.nn import functional
 
 from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
+
 
 class DepthwiseSeparableConv(nn.Module):
     """Depthwise separable conv - much faster than regular conv"""
 
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 3):
+    def __init__(
+        self, in_channels: int, out_channels: int, kernel_size: int = 3
+    ) -> None:
         super().__init__()
         padding = kernel_size // 2
         self.depthwise = nn.Conv2d(
-            in_channels, in_channels, kernel_size,
-            padding=padding, groups=in_channels, bias=False
+            in_channels,
+            in_channels,
+            kernel_size,
+            padding=padding,
+            groups=in_channels,
+            bias=False,
         )
         self.pointwise = nn.Conv2d(in_channels, out_channels, 1, bias=False)
 
@@ -27,7 +32,7 @@ class DepthwiseSeparableConv(nn.Module):
 class FastResBlock(nn.Module):
     """Ultra-fast residual block with minimal operations"""
 
-    def __init__(self, channels: int):
+    def __init__(self, channels: int) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(channels, channels, 3, padding=1, bias=False)
         self.conv2 = nn.Conv2d(channels, channels, 3, padding=1, bias=False)
@@ -44,7 +49,7 @@ class FastResBlock(nn.Module):
 class LightBlock(nn.Module):
     """Lightweight block using depthwise separable convolutions"""
 
-    def __init__(self, channels: int):
+    def __init__(self, channels: int) -> None:
         super().__init__()
         self.dw_conv = DepthwiseSeparableConv(channels, channels, 3)
         self.act = nn.PReLU(channels)
@@ -56,9 +61,9 @@ class LightBlock(nn.Module):
 class PixelShuffleUpsampler(nn.Module):
     """Efficient upsampling using pixel shuffle (ESPCN style)"""
 
-    def __init__(self, in_channels: int, out_channels: int, scale: int):
+    def __init__(self, in_channels: int, out_channels: int, scale: int) -> None:
         super().__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels * (scale ** 2), 3, padding=1)
+        self.conv = nn.Conv2d(in_channels, out_channels * (scale**2), 3, padding=1)
         self.pixel_shuffle = nn.PixelShuffle(scale)
         self.act = nn.PReLU(out_channels)
 
@@ -101,8 +106,8 @@ class DIS(nn.Module):
         num_features: int = 32,
         num_blocks: int = 4,
         scale: int = 4,
-        use_depthwise: bool = False
-    ):
+        use_depthwise: bool = False,
+    ) -> None:
         super().__init__()
 
         self.scale = scale
@@ -115,9 +120,13 @@ class DIS(nn.Module):
 
         # Feature extraction body
         if use_depthwise:
-            self.body = nn.Sequential(*[LightBlock(num_features) for _ in range(num_blocks)])
+            self.body = nn.Sequential(
+                *[LightBlock(num_features) for _ in range(num_blocks)]
+            )
         else:
-            self.body = nn.Sequential(*[FastResBlock(num_features) for _ in range(num_blocks)])
+            self.body = nn.Sequential(
+                *[FastResBlock(num_features) for _ in range(num_blocks)]
+            )
 
         # Feature fusion
         self.fusion = nn.Conv2d(num_features, num_features, 3, padding=1)
@@ -146,7 +155,9 @@ class DIS(nn.Module):
         if self.scale == 1:
             base = x
         else:
-            base = F.interpolate(x, scale_factor=self.scale, mode='bilinear', align_corners=False)
+            base = functional.interpolate(
+                x, scale_factor=self.scale, mode="bilinear", align_corners=False
+            )
 
         # Feature extraction
         feat = self.head_act(self.head(x))
@@ -181,6 +192,7 @@ def dis_balanced(
         scale=scale,
         use_depthwise=use_depthwise,
     )
+
 
 @ARCH_REGISTRY.register()
 @SPANDREL_REGISTRY.register()
