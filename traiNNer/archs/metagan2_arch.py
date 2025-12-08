@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Literal
 
 import torch
 from torch import Tensor, nn
@@ -17,7 +18,7 @@ def sconv(
     dilation: int | tuple[int, int] = 1,
     groups: int = 1,
     bias: bool = True,
-    padding_mode: str = "zeros",
+    padding_mode: Literal["zeros", "reflect", "replicate", "circular"] = "zeros",
 ) -> nn.Module:
     return spectral_norm(
         nn.Conv2d(

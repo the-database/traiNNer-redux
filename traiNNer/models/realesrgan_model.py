@@ -165,6 +165,7 @@ class RealESRGANModel(SRModel):
 
             # thick lines
             if RNG.get_rng().uniform() < self.opt.thicklines_prob:
+                assert self.thicklines is not None
                 out = self.thicklines(out)
 
             # blur

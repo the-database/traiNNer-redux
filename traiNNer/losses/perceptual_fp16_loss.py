@@ -287,7 +287,10 @@ class VGG(nn.Module):
         )
 
     @staticmethod
-    def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
+    def _change_padding_mode(
+        conv: nn.Module,
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"],
+    ) -> nn.Conv2d:
         assert isinstance(conv.in_channels, int)
         assert isinstance(conv.out_channels, int)
         assert isinstance(conv.kernel_size, int | tuple)
