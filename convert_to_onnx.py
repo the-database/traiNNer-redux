@@ -3,6 +3,7 @@ import time
 from logging import Logger
 from os import path as osp
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import onnx
@@ -46,84 +47,63 @@ def convert_and_save_onnx(
     assert model.net_g is not None
     assert opt.onnx is not None
 
+    is_dynamo = opt.onnx.dynamo
+
+    if opt.onnx.use_static_shapes:
+        input_names: list[str] | None = None
+        output_names: list[str] | None = None
+        dynamic_shapes = None
+        dynamic_axes = None
+    else:
+        input_names = ["input"]
+        output_names = ["output"]
+
+        dynamic_shapes = ((Dim.AUTO, Dim.STATIC, Dim.AUTO, Dim.AUTO),)
+
+        dynamic_axes = {
+            "input": {2: "height", 3: "width"},
+            "output": {2: "height", 3: "width"},
+        }
+
+    if is_dynamo:
+        opset = max(MIN_DYNAMO_OPSET, opt.onnx.opset)
+        dynamic_axes = None
+    else:
+        opset = min(MAX_LEGACY_OPSET, opt.onnx.opset)
+        dynamic_shapes = None
+
+    out_path = get_out_path(
+        out_dir,
+        opt.name,
+        opset,
+        fp16=False,
+        optimized=False,
+        dynamo=is_dynamo,
+    )
+
     with torch.inference_mode():
-        if opt.onnx.dynamo:
-            opset = max(MIN_DYNAMO_OPSET, opt.onnx.opset)
+        f = None if is_dynamo else out_path
 
-            if opt.onnx.use_static_shapes:
-                input_names = None
-                output_names = None
-                dynamic_shapes = None
-            else:
-                input_names = ["input"]
-                output_names = ["output"]
-                dynamic_shapes = ((Dim.AUTO, Dim.STATIC, Dim.AUTO, Dim.AUTO),)
+        onnx_program = torch.onnx.export(
+            model.net_g,
+            (torch_input,),
+            f,
+            dynamo=is_dynamo,
+            verbose=False,
+            optimize=False,
+            opset_version=opset,
+            input_names=input_names,
+            output_names=output_names,
+            dynamic_shapes=dynamic_shapes,
+            dynamic_axes=dynamic_axes,
+            verify=opt.onnx.verify,
+        )
 
-            out_path = get_out_path(
-                out_dir,
-                opt.name,
-                opset,
-                fp16=False,
-                optimized=False,
-                dynamo=opt.onnx.dynamo,
-            )
-
-            onnx_program = torch.onnx.export(
-                model.net_g,
-                (torch_input,),
-                None,
-                dynamo=opt.onnx.dynamo,
-                verbose=False,
-                optimize=False,
-                opset_version=opset,
-                input_names=input_names,
-                output_names=output_names,
-                dynamic_shapes=dynamic_shapes,
-                verify=opt.onnx.verify,
-            )
-
+        if is_dynamo:
             assert onnx_program is not None
-            logger.info("Dynamo ONNX Conversion complete. Optimizing...")
+            logger.info("Dynamo ONNX conversion complete. Optimizing...")
             onnx_program.optimize()
-
             onnx_program.save(out_path)
-
-        else:
-            opset = min(MAX_LEGACY_OPSET, opt.onnx.opset)
-            if opt.onnx.use_static_shapes:
-                dynamic_axes = None
-                input_names = None
-                output_names = None
-            else:
-                input_names = ["input"]
-                output_names = ["output"]
-                dynamic_axes = {
-                    "input": {2: "height", 3: "width"},
-                    "output": {2: "height", 3: "width"},
-                }
-
-            out_path = get_out_path(
-                out_dir,
-                opt.name,
-                opset,
-                fp16=False,
-                optimized=False,
-                dynamo=opt.onnx.dynamo,
-            )
-
-            torch.onnx.export(
-                model.net_g,
-                (torch_input,),
-                out_path,
-                dynamo=opt.onnx.dynamo,
-                verbose=False,
-                optimize=False,
-                opset_version=opset,
-                input_names=input_names,
-                output_names=output_names,
-                verify=opt.onnx.verify,
-                dynamic_axes=dynamic_axes,
-            )
 
     model_proto = onnx.load(out_path)
     assert model_proto is not None
