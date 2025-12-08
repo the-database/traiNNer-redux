@@ -48,8 +48,8 @@ def convert_and_save_onnx(
     assert opt.onnx is not None
 
     is_dynamo = bool(opt.onnx.dynamo)
+    requested_opset = opt.onnx.opset
 
-    # ----- Names + dynamic config -----
     if opt.onnx.use_static_shapes:
         input_names: list[str] | None = None
         output_names: list[str] | None = None
@@ -59,21 +59,42 @@ def convert_and_save_onnx(
         input_names = ["input"]
         output_names = ["output"]
 
-        # Dynamo path
         dynamic_shapes = ((Dim.AUTO, Dim.STATIC, Dim.AUTO, Dim.AUTO),)
 
-        # Legacy path
         dynamic_axes = {
             "input": {2: "height", 3: "width"},
             "output": {2: "height", 3: "width"},
         }
 
-    # ----- Opset + which dynamic thing is actually used -----
     if is_dynamo:
-        opset = max(MIN_DYNAMO_OPSET, opt.onnx.opset)
+        if requested_opset < MIN_DYNAMO_OPSET:
+            logger.info(
+                (
+                    "Requested ONNX opset %d is below the minimum for dynamo export (%d). "
+                    "Using %d instead. If you really need opset %d, try disabling dynamo "
+                    "with dynamo: false in your config."
+                ),
+                requested_opset,
+                MIN_DYNAMO_OPSET,
+                MIN_DYNAMO_OPSET,
+                requested_opset,
+            )
+        opset = max(MIN_DYNAMO_OPSET, requested_opset)
         dynamic_axes = None
     else:
-        opset = min(MAX_LEGACY_OPSET, opt.onnx.opset)
+        if requested_opset > MAX_LEGACY_OPSET:
+            logger.info(
+                (
+                    "Requested ONNX opset %d is above the maximum for legacy export (%d). "
+                    "Using %d instead. If you really need opset %d, try enabling dynamo "
+                    "with dynamo: true in your config."
+                ),
+                requested_opset,
+                MAX_LEGACY_OPSET,
+                MAX_LEGACY_OPSET,
+                requested_opset,
+            )
+        opset = min(MAX_LEGACY_OPSET, requested_opset)
         dynamic_shapes = None
 
     out_path = get_out_path(

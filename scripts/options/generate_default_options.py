@@ -63,7 +63,7 @@ def final_template(
             """scheduler:
     type: CosineAnnealingRestartLR
     periods: [1000000]
-    estart_weights: [1]
+    restart_weights: [1]
     eta_min: !!float 1e-6""",
         )
 
