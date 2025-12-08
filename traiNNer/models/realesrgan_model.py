@@ -5,7 +5,8 @@ from os import path as osp
 
 import torch
 import torchvision
-from torch import Tensor
+from torch import Tensor, nn
+from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.data.degradations import (
     random_add_gaussian_noise_pt,
@@ -50,6 +51,10 @@ class RealESRGANModel(SRModel):
             differentiable=False
         ).cuda()  # simulate JPEG compression artifacts
         self.queue_size = opt.queue_size
+
+        self.thicklines = None
+        if self.opt.thicklines_prob > 0:
+            self.thicklines = ThickLines().cuda()
 
         self.otf_debug = opt.high_order_degradations_debug
         self.otf_debug_limit = opt.high_order_degradations_debug_limit
@@ -157,6 +162,12 @@ class RealESRGANModel(SRModel):
                 out = usm_sharpener(self.gt)
             else:
                 out = self.gt
+
+            # thick lines
+            if RNG.get_rng().uniform() < self.opt.thicklines_prob:
+                assert self.thicklines is not None
+                out = self.thicklines(out)
+
             # blur
             if RNG.get_rng().uniform() < self.opt.blur_prob:
                 out = filter2d(out, self.kernel1)
@@ -352,3 +363,23 @@ class RealESRGANModel(SRModel):
                     memory_format=self.memory_format,
                     non_blocking=True,
                 )
+
+
+class ThickLines(nn.Module):
+    def __init__(self, kernel_size: int = 3) -> None:
+        super().__init__()
+        self.kernel_size = kernel_size
+
+    def forward(self, original: Tensor) -> Tensor:
+        # Calculate the padding needed for the convolution
+        pad = self.kernel_size // 2
+
+        # Apply a max pooling operation with the same kernel size to both images
+        min_original = -F.max_pool2d(-original, self.kernel_size, padding=pad, stride=1)
+        avg_original = original * 3 / 4 + min_original * 1 / 4
+
+        return avg_original
+
+    def blend(self, original: Tensor, usm: Tensor) -> Tensor:
+        input = torch.cat((original, usm), dim=1)
+        return self.conv(input)  # pyright: ignore[reportCallIssue]

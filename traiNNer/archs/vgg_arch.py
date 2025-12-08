@@ -1,5 +1,6 @@
 import os
 from collections import OrderedDict
+from typing import Literal
 
 import numpy as np
 import torch
@@ -308,7 +309,10 @@ class VGGFeatureExtractor(nn.Module):
             self.register_buffer("std", torch.Tensor([0.5, 0.5, 0.5]).view(1, 3, 1, 1))
 
     @staticmethod
-    def _change_padding_mode(conv: nn.Module, padding_mode: str) -> nn.Conv2d:
+    def _change_padding_mode(
+        conv: nn.Module,
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"],
+    ) -> nn.Conv2d:
         assert isinstance(conv.in_channels, int)
         assert isinstance(conv.out_channels, int)
         assert isinstance(conv.kernel_size, int | tuple)
