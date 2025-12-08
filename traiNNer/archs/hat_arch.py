@@ -1151,8 +1151,8 @@ class HAT(nn.Module):
 
     def forward(self, x):
         H, W = x.shape[2:]
-        self.mean = self.mean.type_as(x)
-        x = (x - self.mean) * self.img_range
+        mean = self.mean.to(dtype=x.dtype, device=x.device)
+        x = (x - mean) * self.img_range
         x = self.check_image_size(x)
 
         if self.upsampler == "pixelshuffle":
@@ -1162,7 +1162,7 @@ class HAT(nn.Module):
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
 
-        x = x / self.img_range + self.mean
+        x = x / self.img_range + mean
 
         return x[:, :, : H * self.upscale, : W * self.upscale]
 
