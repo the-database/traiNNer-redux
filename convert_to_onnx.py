@@ -47,8 +47,9 @@ def convert_and_save_onnx(
     assert model.net_g is not None
     assert opt.onnx is not None
 
-    is_dynamo = opt.onnx.dynamo
+    is_dynamo = bool(opt.onnx.dynamo)
 
+    # ----- Names + dynamic config -----
     if opt.onnx.use_static_shapes:
         input_names: list[str] | None = None
         output_names: list[str] | None = None
@@ -58,13 +59,16 @@ def convert_and_save_onnx(
         input_names = ["input"]
         output_names = ["output"]
 
+        # Dynamo path
         dynamic_shapes = ((Dim.AUTO, Dim.STATIC, Dim.AUTO, Dim.AUTO),)
 
+        # Legacy path
         dynamic_axes = {
             "input": {2: "height", 3: "width"},
             "output": {2: "height", 3: "width"},
         }
 
+    # ----- Opset + which dynamic thing is actually used -----
     if is_dynamo:
         opset = max(MIN_DYNAMO_OPSET, opt.onnx.opset)
         dynamic_axes = None
@@ -82,12 +86,10 @@ def convert_and_save_onnx(
     )
 
     with torch.inference_mode():
-        f = None if is_dynamo else out_path
-
         onnx_program = torch.onnx.export(
             model.net_g,
             (torch_input,),
-            f,
+            None if is_dynamo else out_path,
             dynamo=is_dynamo,
             verbose=False,
             optimize=False,
