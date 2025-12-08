@@ -3,7 +3,6 @@ import time
 from logging import Logger
 from os import path as osp
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import onnx
