@@ -281,7 +281,10 @@ class SRModel(BaseModel):
                     logger.info(
                         "Compiling loss %s. This may take several minutes...", label
                     )
-                    self.losses[label] = torch.compile(self.losses[label])
+                    self.losses[-1] = (
+                        self.losses[-1][0],
+                        torch.compile(self.losses[-1][1], mode="max-autotune"),
+                    )
 
         assert self.losses, "At least one loss must be defined."
 
