@@ -79,6 +79,31 @@ def convert_and_save_onnx(
     requested_opset = opt.onnx.opset
 
     has_dynamic = any(dynamic_flags)
+    axis_names = ["batch_size", "channels", "height", "width"]
+
+    if not has_dynamic:
+        logger.info(
+            "Exporting ONNX with fully static input shape %s (N,C,H,W).",
+            opt.onnx.shape,
+        )
+    else:
+        dynamic_dims = [
+            name
+            for name, is_dyn in zip(axis_names, dynamic_flags, strict=False)
+            if is_dyn
+        ]
+        static_dims = [
+            name
+            for name, is_dyn in zip(axis_names, dynamic_flags, strict=False)
+            if not is_dyn
+        ]
+        logger.info(
+            "Exporting ONNX with mixed static/dynamic input shape %s (N,C,H,W). "
+            "Dynamic dims: %s. Static dims: %s.",
+            opt.onnx.shape,
+            ", ".join(dynamic_dims),
+            ", ".join(static_dims),
+        )
 
     if not has_dynamic:
         input_names: list[str] | None = None
@@ -92,7 +117,6 @@ def convert_and_save_onnx(
         dim_specs = [Dim.AUTO if is_dyn else Dim.STATIC for is_dyn in dynamic_flags]
         dynamic_shapes = (tuple(dim_specs),)
 
-        axis_names = ["batch_size", "channels", "height", "width"]
         dynamic_axes = {"input": {}, "output": {}}
         for axis, is_dyn in enumerate(dynamic_flags):
             if not is_dyn:
