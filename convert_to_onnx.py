@@ -14,6 +14,7 @@ from onnxslim import slim
 from rich.traceback import install
 from torch import Tensor
 from torch.export.dynamic_shapes import Dim
+from traiNNer.archs.arch_info import REQUIRE_32_HW, REQUIRE_64_HW
 from traiNNer.models import build_model
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils.config import Config
@@ -31,9 +32,62 @@ def get_out_path(
     fp16: bool,
     optimized: bool,
     dynamo: bool,
+    shape: tuple[int, int, int, int],
+    dynamic_flags: tuple[bool, bool, bool, bool],
 ) -> str:
-    filename = f"{name}_fp{'16' if fp16 else '32'}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
+    axis_labels = ["N", "C", "H", "W"]
+    shape_parts = []
+    dynamic_dims = []
+
+    for i, (dim_val, is_dyn) in enumerate(zip(shape, dynamic_flags, strict=False)):
+        if is_dyn:
+            shape_parts.append(axis_labels[i])
+            dynamic_dims.append(axis_labels[i])
+        else:
+            shape_parts.append(str(dim_val))
+
+    shape_str = "x".join(shape_parts)
+    if dynamic_dims:
+        shape_str += f"_dyn-{''.join(dynamic_dims)}"
+    else:
+        shape_str += "_static"
+
+    filename = f"{name}_{shape_str}_fp{'16' if fp16 else '32'}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
     return osp.normpath(osp.join(out_dir, filename))
+
+
+def parse_input_shape(
+    shape_str: str,
+    net_g_type: str,
+) -> tuple[tuple[int, int, int, int], tuple[bool, bool, bool, bool]]:
+    parts = [p.strip() for p in shape_str.lower().split("x")]
+    if len(parts) != 4:
+        raise ValueError(f"Invalid onnx.shape (expected NxCxHxW): {shape_str!r}")
+
+    default_hw = 16
+    if net_g_type in REQUIRE_32_HW:
+        default_hw = 32
+    elif net_g_type in REQUIRE_64_HW:
+        default_hw = 64
+    defaults = [1, 3, default_hw, default_hw]
+
+    dims: list[int] = []
+    dynamic_flags: list[bool] = []
+
+    for i, p in enumerate(parts):
+        if p.isdigit():
+            dims.append(int(p))
+            dynamic_flags.append(False)
+        else:
+            dims.append(defaults[i])
+            dynamic_flags.append(True)
+
+    return tuple(dims), (  # pyright: ignore[reportReturnType]
+        dynamic_flags[0],
+        dynamic_flags[1],
+        dynamic_flags[2],
+        dynamic_flags[3],
+    )
 
 
 def convert_and_save_onnx(
@@ -41,7 +95,9 @@ def convert_and_save_onnx(
     logger: Logger,
     opt: ReduxOptions,
     torch_input: Tensor,
+    dynamic_flags: tuple[bool, bool, bool, bool],
     out_dir: str,
+    example_shape: tuple[int, int, int, int],
 ) -> tuple[ModelProto, int, str]:
     assert model.net_g is not None
     assert opt.onnx is not None
@@ -49,7 +105,35 @@ def convert_and_save_onnx(
     is_dynamo = bool(opt.onnx.dynamo)
     requested_opset = opt.onnx.opset
 
-    if opt.onnx.use_static_shapes:
+    has_dynamic = any(dynamic_flags)
+    axis_names = ["batch_size", "channels", "height", "width"]
+
+    if not has_dynamic:
+        logger.info(
+            "Exporting ONNX with fully static input shape %s (N,C,H,W).",
+            opt.onnx.shape,
+        )
+    else:
+        dynamic_dims = [
+            name
+            for name, is_dyn in zip(axis_names, dynamic_flags, strict=False)
+            if is_dyn
+        ]
+        static_dims = [
+            name
+            for name, is_dyn in zip(axis_names, dynamic_flags, strict=False)
+            if not is_dyn
+        ]
+        logger.info(
+            "Exporting ONNX with mixed static/dynamic input shape %s (N,C,H,W). "
+            "Example shape: %s. Dynamic dims: %s. Static dims: %s.",
+            opt.onnx.shape,
+            "x".join(str(d) for d in example_shape),
+            ", ".join(dynamic_dims),
+            ", ".join(static_dims),
+        )
+
+    if not has_dynamic:
         input_names: list[str] | None = None
         output_names: list[str] | None = None
         dynamic_shapes = None
@@ -58,12 +142,16 @@ def convert_and_save_onnx(
         input_names = ["input"]
         output_names = ["output"]
 
-        dynamic_shapes = ((Dim.AUTO, Dim.STATIC, Dim.AUTO, Dim.AUTO),)
+        dim_specs = [Dim.AUTO if is_dyn else Dim.STATIC for is_dyn in dynamic_flags]
+        dynamic_shapes = (tuple(dim_specs),)
 
-        dynamic_axes = {
-            "input": {2: "height", 3: "width"},
-            "output": {2: "height", 3: "width"},
-        }
+        dynamic_axes = {"input": {}, "output": {}}
+        for axis, is_dyn in enumerate(dynamic_flags):
+            if not is_dyn:
+                continue
+            name = axis_names[axis]
+            dynamic_axes["input"][axis] = name
+            dynamic_axes["output"][axis] = name
 
     if is_dynamo:
         if requested_opset < MIN_DYNAMO_OPSET:
@@ -79,6 +167,7 @@ def convert_and_save_onnx(
                 requested_opset,
             )
         opset = max(MIN_DYNAMO_OPSET, requested_opset)
+
         dynamic_axes = None
     else:
         if requested_opset > MAX_LEGACY_OPSET:
@@ -94,6 +183,7 @@ def convert_and_save_onnx(
                 requested_opset,
             )
         opset = min(MAX_LEGACY_OPSET, requested_opset)
+
         dynamic_shapes = None
 
     out_path = get_out_path(
@@ -103,6 +193,8 @@ def convert_and_save_onnx(
         fp16=False,
         optimized=False,
         dynamo=is_dynamo,
+        shape=example_shape,
+        dynamic_flags=dynamic_flags,
     )
 
     with torch.inference_mode():
@@ -166,12 +258,13 @@ def convert_pipeline(root_path: str) -> None:
     opt, _ = Config.load_config_from_file(root_path, is_train=False)
     model = build_model(opt)
     assert opt.onnx is not None
+    assert opt.network_g is not None
 
-    if opt.onnx.use_static_shapes:
-        dims = tuple(map(int, opt.onnx.shape.split("x")))
-        torch_input = torch.randn(*dims, device="cuda")
-    else:
-        torch_input = torch.randn(1, 3, 32, 32, device="cuda")
+    example_shape, dynamic_flags = parse_input_shape(
+        opt.onnx.shape, opt.network_g["type"]
+    )
+    torch_input = torch.randn(*example_shape, device="cuda")
+
     start_time = time.time()
 
     assert model.net_g is not None
@@ -182,7 +275,7 @@ def convert_pipeline(root_path: str) -> None:
     os.makedirs(out_dir, exist_ok=True)
 
     model_proto, opset, out_path_fp32 = convert_and_save_onnx(
-        model, logger, opt, torch_input, out_dir
+        model, logger, opt, torch_input, dynamic_flags, out_dir, example_shape
     )
 
     end_time = time.time()
@@ -210,7 +303,14 @@ def convert_pipeline(root_path: str) -> None:
             ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         )
         session_opt.optimized_model_filepath = get_out_path(
-            out_dir, opt.name, opset, fp16=False, optimized=True, dynamo=opt.onnx.dynamo
+            out_dir,
+            opt.name,
+            opset,
+            fp16=False,
+            optimized=True,
+            dynamo=opt.onnx.dynamo,
+            shape=example_shape,
+            dynamic_flags=dynamic_flags,
         )
         ort.InferenceSession(out_path_fp32, session_opt)
         verify_onnx(model, logger, torch_input, session_opt.optimized_model_filepath)
@@ -219,7 +319,14 @@ def convert_pipeline(root_path: str) -> None:
     if opt.onnx.fp16:
         start_time = time.time()
         out_path = get_out_path(
-            out_dir, opt.name, opset, True, opt.onnx.optimize, opt.onnx.dynamo
+            out_dir,
+            opt.name,
+            opset,
+            True,
+            opt.onnx.optimize,
+            opt.onnx.dynamo,
+            shape=example_shape,
+            dynamic_flags=dynamic_flags,
         )
         model_proto_fp16 = convert_float_to_float16(model_proto)
         onnx.save(model_proto_fp16, out_path)

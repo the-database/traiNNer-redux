@@ -87,6 +87,33 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "temporalspanv2",
 }
 
+# A set of arch names whose arch requires a minimum
+# image size of 32x32 to do training or inference with.
+REQUIRE_32_HW = {
+    "dwt",
+    "emt",
+    "hit_srf",
+    "realcugan",
+    "escrealm",
+    "escrealm_xl",
+}
+REQUIRE_64_HW = {
+    "cascadedgaze",
+    "hit_lmlt",
+    "hit_sir",
+    "hit_sng",
+    "lmlt_base",
+    "lmlt_large",
+    "lmlt_tiny",
+    "metaflexnet",
+    "scunet_aaf6aa",
+    "tscunet",
+    "temporalspan",
+    "swin2sr_l",
+    "swin2sr_m",
+    "swin2sr_s",
+}
+
 # Urban100
 OFFICIAL_METRICS: dict[
     str,
