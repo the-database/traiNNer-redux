@@ -13,7 +13,7 @@ from onnxconverter_common.float16 import convert_float_to_float16
 from onnxslim import slim
 from rich.traceback import install
 from torch import Tensor
-from torch.export.dynamic_shapes import Dim, _DimHint
+from torch.export.dynamic_shapes import Dim
 from traiNNer.archs.arch_info import REQUIRE_32_HW, REQUIRE_64_HW
 from traiNNer.models import build_model
 from traiNNer.models.base_model import BaseModel
