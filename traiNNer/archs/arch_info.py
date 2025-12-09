@@ -84,6 +84,7 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "spanplus",
     "tscunet",  # rank 5 tensors don't support channels last
     "temporalspan",
+    "temporalspanv2",
 }
 
 # Urban100
@@ -626,6 +627,15 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": "16  # paper: 64",
         "accum_iter": "1",
     },
+    "temporalspanv2": {
+        "milestones": [200000, 400000, 600000, 800000],
+        "total_iter": 1000000,
+        "warmup_iter": -1,
+        "lr": "!!float 5e-4",
+        "lq_size": 128,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1",
+    },
     "esrgan": {
         "milestones": [200000, 400000, 600000, 800000],
         "total_iter": 1000000,
@@ -953,6 +963,15 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": "16  # paper: 64",
         "accum_iter": "1",
     },
+    "temporalspanv2": {
+        "milestones": [100000, 200000, 300000, 400000],
+        "total_iter": 500000,
+        "warmup_iter": -1,
+        "lr": "!!float 1e-4",
+        "lq_size": 128,
+        "batch_size_per_gpu": 4,
+        "accum_iter": "1",
+    },
     "esrgan": {
         "milestones": [100000, 200000, 300000, 400000],
         "total_iter": 500000,
@@ -1250,6 +1269,12 @@ ALL_ARCHS: list[ArchInfo] = [
         "video_override": True,
     },
     {
+        "names": ["TemporalSPANv2"],
+        "scales": [1, 2, 4],
+        "pth_override": True,
+        "video_override": True,
+    },
+    {
         "names": ["SCUNet_aaf6aa"],
         "scales": [1, 2, 4, 8],
         "pth_override": True,
@@ -1330,6 +1355,10 @@ ALL_ARCHS: list[ArchInfo] = [
         "names": ["GaterV3_S", "GaterV3_R"],
         "scales": ALL_SCALES,
         "folder_name_override": "GaterV3",
+    },
+    {
+        "names": ["DIS_Balanced", "DIS_Fast"],
+        "scales": ALL_SCALES,
     },
     {
         "names": ["LKFMixer_T", "LKFMixer_B", "LKFMixer_L"],

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
-from torchvision.transforms import InterpolationMode, v2, GaussianBlur
+from torchvision.transforms import GaussianBlur, InterpolationMode, v2
 
 from traiNNer.losses.loss_util import weighted_loss
 from traiNNer.utils.color_util import rgb2ycbcr_pt, rgb_to_luma
