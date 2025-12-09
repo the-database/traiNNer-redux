@@ -24,6 +24,9 @@ from traiNNer.utils.redux_options import ReduxOptions
 MAX_LEGACY_OPSET = 20
 MIN_DYNAMO_OPSET = 18
 
+INPUT_NAME = "input"
+OUTPUT_NAME = "output"
+
 
 def get_out_path(
     out_dir: str,
@@ -134,24 +137,19 @@ def convert_and_save_onnx(
         )
 
     if not has_dynamic:
-        input_names: list[str] | None = None
-        output_names: list[str] | None = None
         dynamic_shapes = None
         dynamic_axes = None
     else:
-        input_names = ["input"]
-        output_names = ["output"]
-
         dim_specs = [Dim.AUTO if is_dyn else Dim.STATIC for is_dyn in dynamic_flags]
         dynamic_shapes = (tuple(dim_specs),)
 
-        dynamic_axes = {"input": {}, "output": {}}
+        dynamic_axes = {INPUT_NAME: {}, OUTPUT_NAME: {}}
         for axis, is_dyn in enumerate(dynamic_flags):
             if not is_dyn:
                 continue
             name = axis_names[axis]
-            dynamic_axes["input"][axis] = name
-            dynamic_axes["output"][axis] = name
+            dynamic_axes[INPUT_NAME][axis] = name
+            dynamic_axes[OUTPUT_NAME][axis] = name
 
     if is_dynamo:
         if requested_opset < MIN_DYNAMO_OPSET:
@@ -206,8 +204,8 @@ def convert_and_save_onnx(
             verbose=False,
             optimize=False,
             opset_version=opset,
-            input_names=input_names,
-            output_names=output_names,
+            input_names=[INPUT_NAME],
+            output_names=[OUTPUT_NAME],
             dynamic_shapes=dynamic_shapes,
             dynamic_axes=dynamic_axes,
             verify=opt.onnx.verify,
