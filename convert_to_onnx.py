@@ -215,8 +215,8 @@ def convert_and_save_onnx(
 
         if is_dynamo:
             assert onnx_program is not None
-            # logger.info("Dynamo ONNX conversion complete. Optimizing...")
-            # onnx_program.optimize()#TODO
+            logger.info("Dynamo ONNX conversion complete. Optimizing...")
+            onnx_program.optimize()
             onnx_program.save(out_path)
 
     model_proto = onnx.load(out_path)
