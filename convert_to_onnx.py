@@ -31,8 +31,27 @@ def get_out_path(
     fp16: bool,
     optimized: bool,
     dynamo: bool,
+    shape: tuple[int, int, int, int],
+    dynamic_flags: tuple[bool, bool, bool, bool],
 ) -> str:
-    filename = f"{name}_fp{'16' if fp16 else '32'}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
+    axis_labels = ["N", "C", "H", "W"]
+    shape_parts = []
+    dynamic_dims = []
+
+    for i, (dim_val, is_dyn) in enumerate(zip(shape, dynamic_flags, strict=False)):
+        if is_dyn:
+            shape_parts.append(axis_labels[i])
+            dynamic_dims.append(axis_labels[i])
+        else:
+            shape_parts.append(str(dim_val))
+
+    shape_str = "x".join(shape_parts)
+    if dynamic_dims:
+        shape_str += f"_dyn-{''.join(dynamic_dims)}"
+    else:
+        shape_str += "_static"
+
+    filename = f"{name}_{shape_str}_fp{'16' if fp16 else '32'}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
     return osp.normpath(osp.join(out_dir, filename))
 
 
@@ -71,6 +90,7 @@ def convert_and_save_onnx(
     torch_input: Tensor,
     dynamic_flags: tuple[bool, bool, bool, bool],
     out_dir: str,
+    example_shape: tuple[int, int, int, int],
 ) -> tuple[ModelProto, int, str]:
     assert model.net_g is not None
     assert opt.onnx is not None
@@ -165,6 +185,8 @@ def convert_and_save_onnx(
         fp16=False,
         optimized=False,
         dynamo=is_dynamo,
+        shape=example_shape,
+        dynamic_flags=dynamic_flags,
     )
 
     with torch.inference_mode():
@@ -185,8 +207,8 @@ def convert_and_save_onnx(
 
         if is_dynamo:
             assert onnx_program is not None
-            logger.info("Dynamo ONNX conversion complete. Optimizing...")
-            onnx_program.optimize()
+            # logger.info("Dynamo ONNX conversion complete. Optimizing...")
+            # onnx_program.optimize()#TODO
             onnx_program.save(out_path)
 
     model_proto = onnx.load(out_path)
@@ -242,7 +264,7 @@ def convert_pipeline(root_path: str) -> None:
     os.makedirs(out_dir, exist_ok=True)
 
     model_proto, opset, out_path_fp32 = convert_and_save_onnx(
-        model, logger, opt, torch_input, dynamic_flags, out_dir
+        model, logger, opt, torch_input, dynamic_flags, out_dir, example_shape
     )
 
     end_time = time.time()
@@ -270,7 +292,14 @@ def convert_pipeline(root_path: str) -> None:
             ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         )
         session_opt.optimized_model_filepath = get_out_path(
-            out_dir, opt.name, opset, fp16=False, optimized=True, dynamo=opt.onnx.dynamo
+            out_dir,
+            opt.name,
+            opset,
+            fp16=False,
+            optimized=True,
+            dynamo=opt.onnx.dynamo,
+            shape=example_shape,
+            dynamic_flags=dynamic_flags,
         )
         ort.InferenceSession(out_path_fp32, session_opt)
         verify_onnx(model, logger, torch_input, session_opt.optimized_model_filepath)
@@ -279,7 +308,14 @@ def convert_pipeline(root_path: str) -> None:
     if opt.onnx.fp16:
         start_time = time.time()
         out_path = get_out_path(
-            out_dir, opt.name, opset, True, opt.onnx.optimize, opt.onnx.dynamo
+            out_dir,
+            opt.name,
+            opset,
+            True,
+            opt.onnx.optimize,
+            opt.onnx.dynamo,
+            shape=example_shape,
+            dynamic_flags=dynamic_flags,
         )
         model_proto_fp16 = convert_float_to_float16(model_proto)
         onnx.save(model_proto_fp16, out_path)
