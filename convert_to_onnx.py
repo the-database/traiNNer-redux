@@ -13,7 +13,7 @@ from onnxconverter_common.float16 import convert_float_to_float16
 from onnxslim import slim
 from rich.traceback import install
 from torch import Tensor
-from torch.export.dynamic_shapes import Dim
+from torch.export.dynamic_shapes import Dim, _DimHint
 from traiNNer.models import build_model
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils.config import Config
@@ -36,11 +36,40 @@ def get_out_path(
     return osp.normpath(osp.join(out_dir, filename))
 
 
+def parse_input_shape(
+    shape_str: str,
+) -> tuple[tuple[int, int, int, int], tuple[bool, bool, bool, bool]]:
+    parts = [p.strip() for p in shape_str.lower().split("x")]
+    if len(parts) != 4:
+        raise ValueError(f"Invalid onnx.shape (expected NxCxHxW): {shape_str!r}")
+
+    defaults = [1, 3, 16, 16]  # TODO
+
+    dims: list[int] = []
+    dynamic_flags: list[bool] = []
+
+    for i, p in enumerate(parts):
+        if p.isdigit():
+            dims.append(int(p))
+            dynamic_flags.append(False)
+        else:
+            dims.append(defaults[i])
+            dynamic_flags.append(True)
+
+    return tuple(dims), (  # pyright: ignore[reportReturnType]
+        dynamic_flags[0],
+        dynamic_flags[1],
+        dynamic_flags[2],
+        dynamic_flags[3],
+    )
+
+
 def convert_and_save_onnx(
     model: BaseModel,
     logger: Logger,
     opt: ReduxOptions,
     torch_input: Tensor,
+    dynamic_flags: tuple[bool, bool, bool, bool],
     out_dir: str,
 ) -> tuple[ModelProto, int, str]:
     assert model.net_g is not None
@@ -49,7 +78,9 @@ def convert_and_save_onnx(
     is_dynamo = bool(opt.onnx.dynamo)
     requested_opset = opt.onnx.opset
 
-    if opt.onnx.use_static_shapes:
+    has_dynamic = any(dynamic_flags)
+
+    if not has_dynamic:
         input_names: list[str] | None = None
         output_names: list[str] | None = None
         dynamic_shapes = None
@@ -58,12 +89,17 @@ def convert_and_save_onnx(
         input_names = ["input"]
         output_names = ["output"]
 
-        dynamic_shapes = ((Dim.AUTO, Dim.STATIC, Dim.AUTO, Dim.AUTO),)
+        dim_specs = [Dim.AUTO if is_dyn else Dim.STATIC for is_dyn in dynamic_flags]
+        dynamic_shapes = (tuple(dim_specs),)
 
-        dynamic_axes = {
-            "input": {2: "height", 3: "width"},
-            "output": {2: "height", 3: "width"},
-        }
+        axis_names = ["batch_size", "channels", "height", "width"]
+        dynamic_axes = {"input": {}, "output": {}}
+        for axis, is_dyn in enumerate(dynamic_flags):
+            if not is_dyn:
+                continue
+            name = axis_names[axis]
+            dynamic_axes["input"][axis] = name
+            dynamic_axes["output"][axis] = name
 
     if is_dynamo:
         if requested_opset < MIN_DYNAMO_OPSET:
@@ -79,6 +115,7 @@ def convert_and_save_onnx(
                 requested_opset,
             )
         opset = max(MIN_DYNAMO_OPSET, requested_opset)
+
         dynamic_axes = None
     else:
         if requested_opset > MAX_LEGACY_OPSET:
@@ -94,6 +131,7 @@ def convert_and_save_onnx(
                 requested_opset,
             )
         opset = min(MAX_LEGACY_OPSET, requested_opset)
+
         dynamic_shapes = None
 
     out_path = get_out_path(
@@ -167,11 +205,9 @@ def convert_pipeline(root_path: str) -> None:
     model = build_model(opt)
     assert opt.onnx is not None
 
-    if opt.onnx.use_static_shapes:
-        dims = tuple(map(int, opt.onnx.shape.split("x")))
-        torch_input = torch.randn(*dims, device="cuda")
-    else:
-        torch_input = torch.randn(1, 3, 32, 32, device="cuda")
+    example_shape, dynamic_flags = parse_input_shape(opt.onnx.shape)
+    torch_input = torch.randn(*example_shape, device="cuda")
+
     start_time = time.time()
 
     assert model.net_g is not None
@@ -182,7 +218,7 @@ def convert_pipeline(root_path: str) -> None:
     os.makedirs(out_dir, exist_ok=True)
 
     model_proto, opset, out_path_fp32 = convert_and_save_onnx(
-        model, logger, opt, torch_input, out_dir
+        model, logger, opt, torch_input, dynamic_flags, out_dir
     )
 
     end_time = time.time()
