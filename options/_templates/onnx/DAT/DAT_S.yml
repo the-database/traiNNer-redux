@@ -27,7 +27,6 @@ onnx:
   dynamo: false  # Whether to use the new ONNX exporter. Currently not supported on many architectures.
   fp16: false  # Whether to also export to reduced fp16 precision. Not recommend if using with TensorRT.
   opset: 20  # ONNX opset version, higher is newer. Supports up to 20 with dynamo: false and up to 23 with dynamo: true. With TensorRT higher opset is not necessarily faster.
-  use_static_shapes: false  # Whether to convert with static shapes or dynamic shapes. Dynamic shapes are more convenient for supporting a range of input resolutions, but not all architectures support dynamic shapes.
-  shape: 1x3x256x256  # The static shape to use in NxCxHxW format, only used if use_static_shapes is true.
+  shape: 1x3xHxW  # Input shape in NxCxHxW. Use numbers for fixed dimensions and letters for dynamic ones (e.g. 1x3xHxW = batch=1, channels=3, dynamic height/width; 1x3x256x256 = fully static).
   verify: true  # Verify the accuracy of the ONNX model after exporting it.
   optimize: false  # Runs OnnxSlim on the model to potentially slim the model and improve inference speed. Can cause issues with TensorRT.
