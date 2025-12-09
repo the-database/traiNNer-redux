@@ -212,7 +212,7 @@ class BaseModel:
             logger.info(
                 "Compiling network %s. This may take several minutes...", net_name
             )
-            net = torch.compile(net)  # pyright: ignore[reportAssignmentType]
+            net = torch.compile(net, mode="max-autotune")  # pyright: ignore[reportAssignmentType]
 
         return net
 
