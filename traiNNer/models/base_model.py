@@ -200,7 +200,8 @@ class BaseModel:
         if self.opt.use_compile:
             logger = get_root_logger()
             logger.info(
-                "Compiling network %s. This may take several minutes...", net_name
+                "Network %s will be compiled. The first iteration may take several minutes...",
+                net_name,
             )
             net = torch.compile(net, mode="max-autotune")  # pyright: ignore[reportAssignmentType]
 
