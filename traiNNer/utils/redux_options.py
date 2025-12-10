@@ -469,6 +469,14 @@ class ReduxOptions(StrictStruct):
             description="Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it."
         ),
     ] = False
+    compile_mode: Annotated[
+        Literal[
+            "default", "reduce-overhead", "max-autotune", "max-autotune-no-cudagraphs"
+        ],
+        Meta(
+            description="Mode to use with torch.compile. See https://docs.pytorch.org/docs/stable/generated/torch.compile.html for more info."
+        ),
+    ] = "max-autotune"
     detect_anomaly: Annotated[
         bool,
         Meta(

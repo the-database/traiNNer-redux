@@ -181,7 +181,7 @@ class BaseModel:
         self.log_dict = {}
         self.loss_samples = 0
 
-    def model_to_device(self, net: nn.Module) -> nn.Module:
+    def model_to_device(self, net: nn.Module, compile: bool = False) -> nn.Module:
         """Model to device. It also warps models with DistributedDataParallel
         or DataParallel.
 
@@ -197,13 +197,14 @@ class BaseModel:
 
         net_name = net.__class__.__name__
 
-        if self.opt.use_compile:
+        if compile:
             logger = get_root_logger()
             logger.info(
-                "Network %s will be compiled. The first iteration may take several minutes...",
+                "Network %s will be compiled with mode %s. The first iteration may take several minutes...",
                 net_name,
+                self.opt.compile_mode,
             )
-            net = torch.compile(net, mode="max-autotune")  # pyright: ignore[reportAssignmentType]
+            net = torch.compile(net, mode=self.opt.compile_mode)  # pyright: ignore[reportAssignmentType]
 
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters

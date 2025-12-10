@@ -64,7 +64,7 @@ class SRModel(BaseModel):
                 self.opt.path.param_key_g,
             )
 
-        self.net_g = self.model_to_device(self.net_g)
+        self.net_g = self.model_to_device(self.net_g, compile=self.opt.use_compile)
 
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
@@ -277,12 +277,12 @@ class SRModel(BaseModel):
                     non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
-                if self.use_compile:
-                    logger.info(
-                        "Loss %s will be compiled. The first iteration may take several minutes...",
-                        label,
-                    )
-                    self.losses[label] = torch.compile(self.losses[label])
+                # if self.use_compile:
+                #     logger.info(
+                #         "Loss %s will be compiled. The first iteration may take several minutes...",
+                #         label,
+                #     )
+                #     self.losses[label] = torch.compile(self.losses[label])
 
         assert self.losses, "At least one loss must be defined."
 
