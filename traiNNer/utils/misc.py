@@ -2,6 +2,7 @@ import os
 import random
 import re
 import shutil
+import sys
 import time
 from collections.abc import Generator, Sequence
 from os import path as osp
@@ -285,3 +286,15 @@ def is_json_compatible(value: Any) -> bool:
             isinstance(k, str) and is_json_compatible(v) for k, v in value.items()
         )
     return False
+
+
+def require_triton(message: str) -> None:
+    try:
+        import triton  # type: ignore # noqa: F401
+    except ImportError as e:
+        if sys.platform == "win32":
+            raise ImportError(
+                f"{message} \nYou can install it with:\n\n    pip install triton-windows"
+            ) from e
+        else:
+            raise ImportError("Error importing triton.") from e
