@@ -1215,8 +1215,20 @@ ALL_ARCHS: list[ArchInfo] = [
         },
     },
     {"names": ["ATD"], "scales": ALL_SCALES},
-    {"names": ["DAT", "DAT_2", "DAT_S", "DAT_light"], "scales": ALL_SCALES},
-    {"names": ["HAT_L", "HAT_M", "HAT_S"], "scales": ALL_SCALES},
+    {
+        "names": ["DAT", "DAT_2", "DAT_S", "DAT_light"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "use_chk": "true  # Use checkpointing to significantly reduce VRAM usage, slightly reduces training speed."
+        },
+    },
+    {
+        "names": ["HAT_L", "HAT_M", "HAT_S"],
+        "scales": ALL_SCALES,
+        "extras": {
+            "use_checkpoint": "true  # Use checkpointing to significantly reduce VRAM usage, slightly reduces training speed."
+        },
+    },
     {"names": ["OmniSR"], "scales": ALL_SCALES},
     {
         "names": ["PLKSR", "PLKSR_Tiny"],
