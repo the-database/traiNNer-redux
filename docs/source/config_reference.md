@@ -61,6 +61,7 @@
 
 
 
+
 ### use_amp
 
   Speed up training and reduce VRAM usage. NVIDIA only.
@@ -86,6 +87,11 @@
   Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it.
 
   Type: bool
+### compile_mode
+
+  Mode to use with torch.compile. See https://docs.pytorch.org/docs/stable/generated/torch.compile.html for more info.
+
+  Options: default, reduce-overhead, max-autotune, max-autotune-no-cudagraphs
 ### detect_anomaly
 
   Whether or not to enable anomaly detection, which can be useful for debugging NaNs that occur during training. Has a significant performance hit and should be disabled when not debugging.
@@ -124,6 +130,11 @@
 ### blur_prob
 
   Probability of applying the first blur to the LQ, between 0 and 1.
+
+  Type: float
+### thicklines_prob
+
+  Probability of applying custom ThickLines filter to the LQ, between 0 and 1.
 
   Type: float
 ### resize_prob
