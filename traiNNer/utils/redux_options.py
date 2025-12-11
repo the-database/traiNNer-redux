@@ -476,7 +476,7 @@ class ReduxOptions(StrictStruct):
         Meta(
             description="Mode to use with torch.compile. See https://docs.pytorch.org/docs/stable/generated/torch.compile.html for more info."
         ),
-    ] = "max-autotune"
+    ] = "max-autotune-no-cudagraphs"
     detect_anomaly: Annotated[
         bool,
         Meta(
