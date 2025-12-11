@@ -12,6 +12,7 @@ num_gpu: auto
 # Generator model settings
 network_g:
   type: hat_m
+  use_checkpoint: true  # use checkpointing to significantly reduce vram usage, slightly reduces training speed.
 
 ############################
 # Pretrain and Resume Paths

@@ -30,6 +30,7 @@ datasets:
 # Generator model settings
 network_g:
   type: dat_light
+  use_chk: true  # use checkpointing to significantly reduce vram usage, slightly reduces training speed.
 
 ############################
 # Pretrain and Resume Paths

@@ -30,7 +30,7 @@ from traiNNer.schedulers.kneelr_scheduler import KneeLR
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.logger import clickable_file_path
-from traiNNer.utils.misc import is_json_compatible
+from traiNNer.utils.misc import is_json_compatible, require_triton
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
@@ -181,7 +181,7 @@ class BaseModel:
         self.log_dict = {}
         self.loss_samples = 0
 
-    def model_to_device(self, net: nn.Module) -> nn.Module:
+    def model_to_device(self, net: nn.Module, compile: bool = False) -> nn.Module:
         """Model to device. It also warps models with DistributedDataParallel
         or DataParallel.
 
@@ -197,6 +197,16 @@ class BaseModel:
 
         net_name = net.__class__.__name__
 
+        if compile:
+            require_triton("torch.compile requires triton.")
+            logger = get_root_logger()
+            logger.info(
+                "Network %s will be compiled with mode %s. The first iteration may take several minutes...",
+                net_name,
+                self.opt.compile_mode,
+            )
+            net = torch.compile(net, mode=self.opt.compile_mode)  # pyright: ignore[reportAssignmentType]
+
         if self.opt.dist:
             find_unused_parameters = self.opt.find_unused_parameters
             net = DistributedDataParallel(
@@ -206,13 +216,6 @@ class BaseModel:
             )
         elif self.opt.num_gpu > 1:
             net = DataParallel(net)
-
-        if self.opt.use_compile:
-            logger = get_root_logger()
-            logger.info(
-                "Compiling network %s. This may take several minutes...", net_name
-            )
-            net = torch.compile(net, mode="max-autotune")  # pyright: ignore[reportAssignmentType]
 
         return net
 

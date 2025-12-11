@@ -325,8 +325,8 @@ def train_pipeline(root_path: str) -> None:
         )
 
     if opt.fast_matmul:
-        torch.set_float32_matmul_precision("medium")
-        torch.backends.cudnn.allow_tf32 = True
+        torch.set_float32_matmul_precision("high")
+        torch.backends.cuda.matmul.fp32_precision = "tf32"
 
     # create model
     model = build_model(opt)
