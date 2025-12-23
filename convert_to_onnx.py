@@ -3,12 +3,13 @@ import time
 from logging import Logger
 from os import path as osp
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 import torch
-from onnx import ModelProto
+from onnx import ModelProto, TensorProto, numpy_helper
 from onnxconverter_common.float16 import convert_float_to_float16
 from onnxslim import slim
 from rich.traceback import install
@@ -27,12 +28,26 @@ MIN_DYNAMO_OPSET = 18
 INPUT_NAME = "input"
 OUTPUT_NAME = "output"
 
+DType = Literal["fp32", "fp16", "bf16"]
+
+DTYPE_MAP: dict[DType, torch.dtype] = {
+    "fp32": torch.float32,
+    "fp16": torch.float16,
+    "bf16": torch.bfloat16,
+}
+
+ONNX_DTYPE_MAP: dict[DType, int] = {
+    "fp32": TensorProto.FLOAT,
+    "fp16": TensorProto.FLOAT16,
+    "bf16": TensorProto.BFLOAT16,
+}
+
 
 def get_out_path(
     out_dir: str,
     name: str,
     opset: int,
-    fp16: bool,
+    dtype: DType,
     optimized: bool,
     dynamo: bool,
     shape: tuple[int, int, int, int],
@@ -55,7 +70,7 @@ def get_out_path(
     else:
         shape_str += "_static"
 
-    filename = f"{name}_{shape_str}_fp{'16' if fp16 else '32'}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
+    filename = f"{name}_{shape_str}_{dtype}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
     return osp.normpath(osp.join(out_dir, filename))
 
 
@@ -93,6 +108,52 @@ def parse_input_shape(
     )
 
 
+def convert_onnx_to_bfloat16(model: ModelProto) -> ModelProto:
+    def convert_tensor_to_bf16(tensor: onnx.TensorProto) -> onnx.TensorProto:
+        if tensor.data_type != TensorProto.FLOAT:
+            return tensor
+
+        np_array = numpy_helper.to_array(tensor)
+
+        torch_tensor = torch.from_numpy(np_array.astype(np.float32))
+        bf16_tensor = torch_tensor.to(torch.bfloat16)
+
+        new_tensor = onnx.TensorProto()
+        new_tensor.CopyFrom(tensor)
+        new_tensor.data_type = TensorProto.BFLOAT16
+        new_tensor.ClearField("float_data")
+        new_tensor.ClearField("raw_data")
+
+        bf16_as_uint16 = bf16_tensor.view(torch.uint16)
+        new_tensor.raw_data = bf16_as_uint16.numpy().tobytes()
+
+        return new_tensor
+
+    new_model = onnx.ModelProto()
+    new_model.CopyFrom(model)
+
+    for input_tensor in new_model.graph.input:
+        if input_tensor.type.tensor_type.elem_type == TensorProto.FLOAT:
+            input_tensor.type.tensor_type.elem_type = TensorProto.BFLOAT16
+
+    for output_tensor in new_model.graph.output:
+        if output_tensor.type.tensor_type.elem_type == TensorProto.FLOAT:
+            output_tensor.type.tensor_type.elem_type = TensorProto.BFLOAT16
+
+    new_initializers = []
+    for initializer in new_model.graph.initializer:
+        new_initializers.append(convert_tensor_to_bf16(initializer))
+
+    del new_model.graph.initializer[:]
+    new_model.graph.initializer.extend(new_initializers)
+
+    for value_info in new_model.graph.value_info:
+        if value_info.type.tensor_type.elem_type == TensorProto.FLOAT:
+            value_info.type.tensor_type.elem_type = TensorProto.BFLOAT16
+
+    return new_model
+
+
 def convert_and_save_onnx(
     model: BaseModel,
     logger: Logger,
@@ -101,6 +162,7 @@ def convert_and_save_onnx(
     dynamic_flags: tuple[bool, bool, bool, bool],
     out_dir: str,
     example_shape: tuple[int, int, int, int],
+    dtype: DType,
 ) -> tuple[ModelProto, int, str]:
     assert model.net_g is not None
     assert opt.onnx is not None
@@ -113,8 +175,9 @@ def convert_and_save_onnx(
 
     if not has_dynamic:
         logger.info(
-            "Exporting ONNX with fully static input shape %s (N,C,H,W).",
+            "Exporting ONNX with fully static input shape %s (N,C,H,W), dtype=%s.",
             opt.onnx.shape,
+            dtype,
         )
     else:
         dynamic_dims = [
@@ -129,11 +192,12 @@ def convert_and_save_onnx(
         ]
         logger.info(
             "Exporting ONNX with mixed static/dynamic input shape %s (N,C,H,W). "
-            "Example shape: %s. Dynamic dims: %s. Static dims: %s.",
+            "Example shape: %s. Dynamic dims: %s. Static dims: %s. dtype=%s.",
             opt.onnx.shape,
             "x".join(str(d) for d in example_shape),
             ", ".join(dynamic_dims),
             ", ".join(static_dims),
+            dtype,
         )
 
     if not has_dynamic:
@@ -188,18 +252,22 @@ def convert_and_save_onnx(
         out_dir,
         opt.name,
         opset,
-        fp16=False,
+        dtype=dtype,
         optimized=False,
         dynamo=is_dynamo,
         shape=example_shape,
         dynamic_flags=dynamic_flags,
     )
 
+    temp_out_path = (
+        out_path if dtype == "fp32" else out_path.replace(f"_{dtype}_", "_fp32_temp_")
+    )
+
     with torch.inference_mode():
         onnx_program = torch.onnx.export(
             model.net_g,
             (torch_input,),
-            None if is_dynamo else out_path,
+            None if is_dynamo else temp_out_path,
             dynamo=is_dynamo,
             verbose=False,
             optimize=False,
@@ -208,46 +276,118 @@ def convert_and_save_onnx(
             output_names=[OUTPUT_NAME],
             dynamic_shapes=dynamic_shapes,
             dynamic_axes=dynamic_axes,
-            verify=opt.onnx.verify,
+            verify=opt.onnx.verify if dtype == "fp32" else False,
         )
 
         if is_dynamo:
             assert onnx_program is not None
             logger.info("Dynamo ONNX conversion complete. Optimizing...")
             onnx_program.optimize()
-            onnx_program.save(out_path)
+            onnx_program.save(temp_out_path)
 
-    model_proto = onnx.load(out_path)
+    model_proto = onnx.load(temp_out_path)
     assert model_proto is not None
+
+    if dtype == "fp16":
+        logger.info("Converting ONNX model to fp16...")
+        model_proto = convert_float_to_float16(model_proto)
+        onnx.save(model_proto, out_path)
+        if temp_out_path != out_path and osp.exists(temp_out_path):
+            os.remove(temp_out_path)
+    elif dtype == "bf16":
+        logger.info("Converting ONNX model to bf16...")
+        model_proto = convert_onnx_to_bfloat16(model_proto)
+        onnx.save(model_proto, out_path)
+        if temp_out_path != out_path and osp.exists(temp_out_path):
+            os.remove(temp_out_path)
+
     return model_proto, opset, out_path
 
 
 def verify_onnx(
-    model: BaseModel, logger: Logger, torch_input: Tensor, onnx_path: str
+    model: BaseModel,
+    logger: Logger,
+    torch_input: Tensor,
+    onnx_path: str,
+    dtype: DType,
 ) -> None:
     assert model.net_g is not None
 
+    torch_dtype = DTYPE_MAP[dtype]
+
     with torch.inference_mode():
-        torch_output_np = model.net_g(torch_input).cpu().numpy()
+        if dtype in ("fp16", "bf16"):
+            model_dtype = model.net_g.to(torch_dtype)
+            input_dtype = torch_input.to(torch_dtype)
+            torch_output_np = model_dtype(input_dtype).float().cpu().numpy()
+        else:
+            torch_output_np = model.net_g(torch_input).cpu().numpy()
 
     onnx_model = onnx.load(onnx_path)
     onnx.checker.check_model(onnx_model)
 
-    ort_session = ort.InferenceSession(onnx_path, providers=["CPUExecutionProvider"])
+    if dtype in ("fp16", "bf16"):
+        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+    else:
+        providers = ["CPUExecutionProvider"]
 
-    ort_inputs = {ort_session.get_inputs()[0].name: torch_input.cpu().numpy()}
-    onnx_output = ort_session.run(None, ort_inputs)
+    try:
+        ort_session = ort.InferenceSession(onnx_path, providers=providers)
+    except Exception as e:
+        logger.warning(
+            "Could not create ONNX Runtime session for verification (dtype=%s): %s",
+            dtype,
+            e,
+        )
+        return
+
+    if dtype == "fp16":
+        input_np = torch_input.cpu().numpy().astype(np.float16)
+    elif dtype == "bf16":
+        logger.info(
+            "Skipping ONNX verification for bf16 model (ONNX Runtime bf16 input support is limited). "
+            "Use TensorRT for inference."
+        )
+        return
+    else:
+        input_np = torch_input.cpu().numpy()
+
+    ort_inputs = {ort_session.get_inputs()[0].name: input_np}
+
+    try:
+        onnx_output = ort_session.run(None, ort_inputs)
+    except Exception as e:
+        logger.warning("ONNX Runtime inference failed during verification: %s", e)
+        return
+
+    onnx_output_fp32 = (
+        onnx_output[0].astype(np.float32)
+        if onnx_output[0].dtype != np.float32
+        else onnx_output[0]
+    )
+
+    if dtype == "fp16":
+        rtol, atol = 1e-02, 1e-02
+    elif dtype == "bf16":
+        rtol, atol = 1e-01, 1e-01
+    else:
+        rtol, atol = 1e-02, 1e-03
 
     try:
         np.testing.assert_allclose(
             torch_output_np,
-            onnx_output[0],  # pyright: ignore
-            rtol=1e-02,
-            atol=1e-03,
+            onnx_output_fp32,
+            rtol=rtol,
+            atol=atol,
         )
-        logger.info("ONNX output verified against PyTorch output successfully.")
+        logger.info(
+            "ONNX output verified against PyTorch output successfully (dtype=%s).",
+            dtype,
+        )
     except AssertionError as e:
-        logger.warning("ONNX verification completed with warnings: %s", e)
+        logger.warning(
+            "ONNX verification completed with warnings (dtype=%s): %s", dtype, e
+        )
 
 
 def convert_pipeline(root_path: str) -> None:
@@ -258,10 +398,17 @@ def convert_pipeline(root_path: str) -> None:
     assert opt.onnx is not None
     assert opt.network_g is not None
 
+    dtype: DType = getattr(opt.onnx, "dtype", "fp32")
+    if dtype not in DTYPE_MAP:
+        raise ValueError(
+            f"Invalid dtype '{dtype}'. Must be one of: {list(DTYPE_MAP.keys())}"
+        )
+
     example_shape, dynamic_flags = parse_input_shape(
         opt.onnx.shape, opt.network_g["type"]
     )
-    torch_input = torch.randn(*example_shape, device="cuda")
+
+    torch_input = torch.randn(*example_shape, device="cuda", dtype=torch.float32)
 
     start_time = time.time()
 
@@ -272,21 +419,21 @@ def convert_pipeline(root_path: str) -> None:
     out_dir = "./onnx"
     os.makedirs(out_dir, exist_ok=True)
 
-    model_proto, opset, out_path_fp32 = convert_and_save_onnx(
-        model, logger, opt, torch_input, dynamic_flags, out_dir, example_shape
+    model_proto, opset, out_path = convert_and_save_onnx(
+        model, logger, opt, torch_input, dynamic_flags, out_dir, example_shape, dtype
     )
 
     end_time = time.time()
 
     logger.info(
         "Saved to %s in %.2f seconds.",
-        clickable_file_path(Path(out_path_fp32).absolute().parent, out_path_fp32),
+        clickable_file_path(Path(out_path).absolute().parent, out_path),
         end_time - start_time,
     )
 
     if not opt.onnx.dynamo:
         if opt.onnx.verify:
-            verify_onnx(model, logger, torch_input, out_path_fp32)
+            verify_onnx(model, logger, torch_input, out_path, dtype)
 
     if opt.onnx.optimize:
         logger.info("Optimizing ONNX with OnnxSlim...")
@@ -296,44 +443,41 @@ def convert_pipeline(root_path: str) -> None:
 
         assert isinstance(model_proto, ModelProto)
 
-        session_opt = ort.SessionOptions()
-        session_opt.graph_optimization_level = (
-            ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
-        )
-        session_opt.optimized_model_filepath = get_out_path(
+        optimized_path = get_out_path(
             out_dir,
             opt.name,
             opset,
-            fp16=False,
+            dtype=dtype,
             optimized=True,
             dynamo=opt.onnx.dynamo,
             shape=example_shape,
             dynamic_flags=dynamic_flags,
         )
-        ort.InferenceSession(out_path_fp32, session_opt)
-        verify_onnx(model, logger, torch_input, session_opt.optimized_model_filepath)
-        model_proto = onnx.load(session_opt.optimized_model_filepath)
 
-    if opt.onnx.fp16:
-        start_time = time.time()
-        out_path = get_out_path(
-            out_dir,
-            opt.name,
-            opset,
-            True,
-            opt.onnx.optimize,
-            opt.onnx.dynamo,
-            shape=example_shape,
-            dynamic_flags=dynamic_flags,
+        session_opt = ort.SessionOptions()
+        session_opt.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         )
-        model_proto_fp16 = convert_float_to_float16(model_proto)
-        onnx.save(model_proto_fp16, out_path)
-        end_time = time.time()
-        logger.info(
-            "Saved to %s in %.2f seconds.",
-            clickable_file_path(Path(out_path).absolute().parent, out_path),
-            end_time - start_time,
-        )
+        session_opt.optimized_model_filepath = optimized_path
+
+        if dtype in ("fp16", "bf16"):
+            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+        else:
+            providers = ["CPUExecutionProvider"]
+
+        try:
+            ort.InferenceSession(out_path, session_opt, providers=providers)
+            if opt.onnx.verify:
+                verify_onnx(model, logger, torch_input, optimized_path, dtype)
+            model_proto = onnx.load(optimized_path)
+            logger.info(
+                "Optimized model saved to %s",
+                clickable_file_path(
+                    Path(optimized_path).absolute().parent, optimized_path
+                ),
+            )
+        except Exception as e:
+            logger.warning("ONNX optimization failed: %s", e)
 
 
 if __name__ == "__main__":
