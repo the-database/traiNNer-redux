@@ -204,7 +204,7 @@ class OnnxOptions(StrictStruct):
     opset: int = 20
     shape: str = "1x3xHxW"
     verify: bool = True
-    fp16: bool = False
+    dtype: Literal["fp32", "fp16", "bf16"] = "fp16"
     optimize: bool = True
 
 

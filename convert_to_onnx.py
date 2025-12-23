@@ -9,8 +9,8 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 import torch
-from onnx import ModelProto, TensorProto, numpy_helper
-from onnxconverter_common.float16 import convert_float_to_float16
+from modelopt.onnx.autocast import convert_to_mixed_precision
+from onnx import ModelProto, TensorProto
 from onnxslim import slim
 from rich.traceback import install
 from torch import Tensor
@@ -40,6 +40,11 @@ ONNX_DTYPE_MAP: dict[DType, int] = {
     "fp32": TensorProto.FLOAT,
     "fp16": TensorProto.FLOAT16,
     "bf16": TensorProto.BFLOAT16,
+}
+
+MODELOPT_PRECISION_MAP: dict[DType, str] = {
+    "fp16": "fp16",
+    "bf16": "bf16",
 }
 
 
@@ -108,50 +113,36 @@ def parse_input_shape(
     )
 
 
-def convert_onnx_to_bfloat16(model: ModelProto) -> ModelProto:
-    def convert_tensor_to_bf16(tensor: onnx.TensorProto) -> onnx.TensorProto:
-        if tensor.data_type != TensorProto.FLOAT:
-            return tensor
+def convert_onnx_to_low_precision(onnx_path: str, dtype: DType) -> ModelProto:
+    """
+    Convert an ONNX model from float32 to fp16 or bf16 using NVIDIA Model Optimizer.
 
-        np_array = numpy_helper.to_array(tensor)
+    This is the recommended approach for TensorRT strong typing.
+    See: https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/advanced.html#strongly-typed-networks
 
-        torch_tensor = torch.from_numpy(np_array.astype(np.float32))
-        bf16_tensor = torch_tensor.to(torch.bfloat16)
+    Args:
+        onnx_path: Path to the ONNX file to convert
+        dtype: Target dtype ("fp16" or "bf16")
 
-        new_tensor = onnx.TensorProto()
-        new_tensor.CopyFrom(tensor)
-        new_tensor.data_type = TensorProto.BFLOAT16
-        new_tensor.ClearField("float_data")
-        new_tensor.ClearField("raw_data")
+    Returns:
+        The converted ONNX model
+    """
+    if dtype == "fp32":
+        return onnx.load(onnx_path)
+    elif dtype == "fp16":
+        torch_dtype = DTYPE_MAP[dtype]
+        max_val = torch.finfo(torch_dtype).max
+    else:
+        max_val = np.inf
 
-        bf16_as_uint16 = bf16_tensor.view(torch.uint16)
-        new_tensor.raw_data = bf16_as_uint16.numpy().tobytes()
-
-        return new_tensor
-
-    new_model = onnx.ModelProto()
-    new_model.CopyFrom(model)
-
-    for input_tensor in new_model.graph.input:
-        if input_tensor.type.tensor_type.elem_type == TensorProto.FLOAT:
-            input_tensor.type.tensor_type.elem_type = TensorProto.BFLOAT16
-
-    for output_tensor in new_model.graph.output:
-        if output_tensor.type.tensor_type.elem_type == TensorProto.FLOAT:
-            output_tensor.type.tensor_type.elem_type = TensorProto.BFLOAT16
-
-    new_initializers = []
-    for initializer in new_model.graph.initializer:
-        new_initializers.append(convert_tensor_to_bf16(initializer))
-
-    del new_model.graph.initializer[:]
-    new_model.graph.initializer.extend(new_initializers)
-
-    for value_info in new_model.graph.value_info:
-        if value_info.type.tensor_type.elem_type == TensorProto.FLOAT:
-            value_info.type.tensor_type.elem_type = TensorProto.BFLOAT16
-
-    return new_model
+    return convert_to_mixed_precision(
+        onnx_path=onnx_path,
+        low_precision_type=MODELOPT_PRECISION_MAP[dtype],
+        keep_io_types=False,
+        data_max=max_val,
+        init_max=max_val,
+        providers=["CUDAExecutionProvider"],
+    )
 
 
 def convert_and_save_onnx(
@@ -282,25 +273,31 @@ def convert_and_save_onnx(
         if is_dynamo:
             assert onnx_program is not None
             logger.info("Dynamo ONNX conversion complete. Optimizing...")
+            # print("len onnx pre optimize", onnx_program.model.graph.node)
             onnx_program.optimize()
+            # print("len onnx post optimize", onnx_program.model.graph.node)
             onnx_program.save(temp_out_path)
+        else:
+            # TODO REPLACE THIS BLOCK AND OPTIMIZE NON DYNAMO ONNX HERE
+            thing = onnx.load(temp_out_path)
+            print("len onnx", len(thing.graph.node))
+            import sys
 
-    model_proto = onnx.load(temp_out_path)
+            sys.exit(1)
+
+    if dtype != "fp32":
+        logger.info(
+            "Converting ONNX model to %s using NVIDIA Model Optimizer...", dtype
+        )
+        model_proto = convert_onnx_to_low_precision(temp_out_path, dtype)
+        onnx.save(model_proto, out_path)
+
+        if osp.exists(temp_out_path):
+            os.remove(temp_out_path)
+    else:
+        model_proto = onnx.load(temp_out_path)
+
     assert model_proto is not None
-
-    if dtype == "fp16":
-        logger.info("Converting ONNX model to fp16...")
-        model_proto = convert_float_to_float16(model_proto)
-        onnx.save(model_proto, out_path)
-        if temp_out_path != out_path and osp.exists(temp_out_path):
-            os.remove(temp_out_path)
-    elif dtype == "bf16":
-        logger.info("Converting ONNX model to bf16...")
-        model_proto = convert_onnx_to_bfloat16(model_proto)
-        onnx.save(model_proto, out_path)
-        if temp_out_path != out_path and osp.exists(temp_out_path):
-            os.remove(temp_out_path)
-
     return model_proto, opset, out_path
 
 
@@ -326,16 +323,14 @@ def verify_onnx(
     onnx_model = onnx.load(onnx_path)
     onnx.checker.check_model(onnx_model)
 
-    if dtype in ("fp16", "bf16"):
-        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-    else:
-        providers = ["CPUExecutionProvider"]
+    providers = ["CUDAExecutionProvider"]
 
     try:
         ort_session = ort.InferenceSession(onnx_path, providers=providers)
     except Exception as e:
         logger.warning(
-            "Could not create ONNX Runtime session for verification (dtype=%s): %s",
+            "Could not create ONNX Runtime session for verification (dtype=%s): %s. "
+            "This is expected for bf16 models - use TensorRT with --stronglyTyped for inference.",
             dtype,
             e,
         )
@@ -345,8 +340,8 @@ def verify_onnx(
         input_np = torch_input.cpu().numpy().astype(np.float16)
     elif dtype == "bf16":
         logger.info(
-            "Skipping ONNX verification for bf16 model (ONNX Runtime bf16 input support is limited). "
-            "Use TensorRT for inference."
+            "Skipping ONNX Runtime verification for bf16 model. "
+            "Use TensorRT with --stronglyTyped for inference."
         )
         return
     else:

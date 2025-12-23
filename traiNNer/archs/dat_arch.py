@@ -50,7 +50,7 @@ class SpatialGate(nn.Module):
         dim (int): Half of input channels.
     """
 
-    def __init__(self, dim) -> None:
+    def __init__(self, dim):
         super().__init__()
         self.norm = nn.LayerNorm(dim)
         self.conv = nn.Conv2d(
@@ -88,7 +88,7 @@ class SGFN(nn.Module):
         out_features=None,
         act_layer=nn.GELU,
         drop=0.0,
-    ) -> None:
+    ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -124,7 +124,7 @@ class DynamicPosBias(nn.Module):
         residual (bool):  If True, use residual strage to connect conv.
     """
 
-    def __init__(self, dim, num_heads, residual) -> None:
+    def __init__(self, dim, num_heads, residual):
         super().__init__()
         self.residual = residual
         self.num_heads = num_heads
@@ -176,16 +176,14 @@ class Spatial_Attention(nn.Module):
         self,
         dim,
         idx,
-        split_size=None,
+        split_size=[8, 8],
         dim_out=None,
         num_heads=6,
         attn_drop=0.0,
         proj_drop=0.0,
         qk_scale=None,
         position_bias=True,
-    ) -> None:
-        if split_size is None:
-            split_size = [8, 8]
+    ):
         super().__init__()
         self.dim = dim
         self.dim_out = dim_out or dim
@@ -316,19 +314,15 @@ class Adaptive_Spatial_Attention(nn.Module):
         dim,
         num_heads,
         reso=64,
-        split_size=None,
-        shift_size=None,
+        split_size=[8, 8],
+        shift_size=[1, 2],
         qkv_bias=False,
         qk_scale=None,
         drop=0.0,
         attn_drop=0.0,
         rg_idx=0,
         b_idx=0,
-    ) -> None:
-        if shift_size is None:
-            shift_size = [1, 2]
-        if split_size is None:
-            split_size = [8, 8]
+    ):
         super().__init__()
         self.dim = dim
         self.num_heads = num_heads
@@ -400,11 +394,11 @@ class Adaptive_Spatial_Attention(nn.Module):
             nn.Conv2d(dim // 16, 1, kernel_size=1),
         )
 
-    def calculate_mask(self, H, W):
+    def calculate_mask(self, H, W, dtype=None):
         # The implementation builds on Swin Transformer code https://github.com/microsoft/Swin-Transformer/blob/main/models/swin_transformer.py
         # calculate attention mask for shift window
-        img_mask_0 = torch.zeros((1, H, W, 1))  # 1 H W 1 idx=0
-        img_mask_1 = torch.zeros((1, H, W, 1))  # 1 H W 1 idx=1
+        img_mask_0 = torch.zeros((1, H, W, 1), dtype=dtype)  # 1 H W 1 idx=0
+        img_mask_1 = torch.zeros((1, H, W, 1), dtype=dtype)  # 1 H W 1 idx=1
         h_slices_0 = (
             slice(0, -self.split_size[0]),
             slice(-self.split_size[0], -self.shift_size[0]),
@@ -527,7 +521,7 @@ class Adaptive_Spatial_Attention(nn.Module):
             qkv_1 = qkv_1.view(3, B, _L, C // 2)
 
             if self.patches_resolution != _H or self.patches_resolution != _W:
-                mask_tmp = self.calculate_mask(_H, _W)
+                mask_tmp = self.calculate_mask(_H, _W, dtype=x.dtype)
                 x1_shift = self.attns[0](qkv_0, _H, _W, mask=mask_tmp[0].to(x.device))
                 x2_shift = self.attns[1](qkv_1, _H, _W, mask=mask_tmp[1].to(x.device))
             else:
@@ -604,7 +598,7 @@ class Adaptive_Channel_Attention(nn.Module):
         qk_scale=None,
         attn_drop=0.0,
         proj_drop=0.0,
-    ) -> None:
+    ):
         super().__init__()
         self.num_heads = num_heads
         self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
@@ -694,8 +688,8 @@ class DATB(nn.Module):
         dim,
         num_heads,
         reso=64,
-        split_size=None,
-        shift_size=None,
+        split_size=[2, 4],
+        shift_size=[1, 2],
         expansion_factor=4.0,
         qkv_bias=False,
         qk_scale=None,
@@ -706,11 +700,7 @@ class DATB(nn.Module):
         norm_layer=nn.LayerNorm,
         rg_idx=0,
         b_idx=0,
-    ) -> None:
-        if shift_size is None:
-            shift_size = [1, 2]
-        if split_size is None:
-            split_size = [2, 4]
+    ):
         super().__init__()
 
         self.norm1 = norm_layer(dim)
@@ -788,7 +778,7 @@ class ResidualGroup(nn.Module):
         dim,
         reso,
         num_heads,
-        split_size=None,
+        split_size=[2, 4],
         expansion_factor=4.0,
         qkv_bias=False,
         qk_scale=None,
@@ -801,9 +791,7 @@ class ResidualGroup(nn.Module):
         use_chk=False,
         resi_connection="1conv",
         rg_idx=0,
-    ) -> None:
-        if split_size is None:
-            split_size = [2, 4]
+    ):
         super().__init__()
         self.use_chk = use_chk
         self.reso = reso
@@ -869,7 +857,7 @@ class Upsample(nn.Sequential):
         num_feat (int): Channel number of intermediate features.
     """
 
-    def __init__(self, scale, num_feat) -> None:
+    def __init__(self, scale, num_feat):
         m = []
         if (scale & (scale - 1)) == 0:  # scale = 2^n
             for _ in range(int(math.log(scale, 2))):
@@ -895,7 +883,7 @@ class UpsampleOneStep(nn.Sequential):
 
     """
 
-    def __init__(self, scale, num_feat, num_out_ch, input_resolution) -> None:
+    def __init__(self, scale, num_feat, num_out_ch, input_resolution):
         self.num_feat = num_feat
         self.input_resolution = input_resolution
         m = []
@@ -941,9 +929,9 @@ class DAT(nn.Module):
         img_size=64,
         in_chans=3,
         embed_dim=180,
-        split_size=None,
-        depth=None,
-        num_heads=None,
+        split_size=[2, 4],
+        depth=[2, 2, 2, 2],
+        num_heads=[2, 2, 2, 2],
         expansion_factor=4.0,
         qkv_bias=True,
         qk_scale: float | None = None,
@@ -957,13 +945,7 @@ class DAT(nn.Module):
         img_range=1.0,
         resi_connection="1conv",
         upsampler="pixelshuffle",
-    ) -> None:
-        if num_heads is None:
-            num_heads = [2, 2, 2, 2]
-        if depth is None:
-            depth = [2, 2, 2, 2]
-        if split_size is None:
-            split_size = [2, 4]
+    ):
         super().__init__()
 
         num_in_ch = in_chans
@@ -1050,7 +1032,7 @@ class DAT(nn.Module):
 
         self.apply(self._init_weights)
 
-    def _init_weights(self, m) -> None:
+    def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:  # type: ignore
