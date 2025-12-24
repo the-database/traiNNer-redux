@@ -20,6 +20,7 @@ from traiNNer.models import build_model
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils.config import Config
 from traiNNer.utils.logger import clickable_file_path, get_root_logger
+from traiNNer.utils.misc import format_duration_min_sec
 from traiNNer.utils.redux_options import ReduxOptions
 
 MAX_LEGACY_OPSET = 20
@@ -273,17 +274,49 @@ def convert_and_save_onnx(
         if is_dynamo:
             assert onnx_program is not None
             logger.info("Dynamo ONNX conversion complete. Optimizing...")
-            # print("len onnx pre optimize", onnx_program.model.graph.node)
-            onnx_program.optimize()
-            # print("len onnx post optimize", onnx_program.model.graph.node)
-            onnx_program.save(temp_out_path)
-        else:
-            # TODO REPLACE THIS BLOCK AND OPTIMIZE NON DYNAMO ONNX HERE
-            thing = onnx.load(temp_out_path)
-            print("len onnx", len(thing.graph.node))
-            import sys
 
-            sys.exit(1)
+            pre_nodes = len(onnx_program.model.graph)
+            logger.info("Dynamo export nodes before optimize(): %d", pre_nodes)
+
+            onnx_program.optimize()
+            onnx_program.save(temp_out_path)
+
+            post_nodes = len(onnx_program.model.graph)
+            logger.info("Dynamo export nodes after optimize(): %d", post_nodes)
+
+        else:
+            model_proto_pre = onnx.load(temp_out_path)
+            pre_nodes = len(model_proto_pre.graph.node)
+            logger.info(
+                "Legacy ONNX conversion complete. Nodes before ORT optimize: %d",
+                pre_nodes,
+            )
+
+            ort_optimized_path = temp_out_path.replace(".onnx", ".ortopt.onnx")
+            so = ort.SessionOptions()
+            so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
+            so.optimized_model_filepath = ort_optimized_path
+
+            logger.info(
+                "Optimizing legacy ONNX with ONNX Runtime (ORT_ENABLE_BASIC)..."
+            )
+            ort.InferenceSession(
+                temp_out_path, sess_options=so, providers=["CUDAExecutionProvider"]
+            )
+
+            model_proto_post = onnx.load(ort_optimized_path)
+            post_nodes = len(model_proto_post.graph.node)
+            logger.info(
+                "ORT optimization complete. Nodes after ORT optimize: %d", post_nodes
+            )
+
+            onnx.save(model_proto_post, temp_out_path)
+
+            try:
+                if osp.exists(ort_optimized_path):
+                    os.remove(ort_optimized_path)
+            except OSError:
+                pass
 
     if dtype != "fp32":
         logger.info(
@@ -291,7 +324,6 @@ def convert_and_save_onnx(
         )
         model_proto = convert_onnx_to_low_precision(temp_out_path, dtype)
         onnx.save(model_proto, out_path)
-
         if osp.exists(temp_out_path):
             os.remove(temp_out_path)
     else:
@@ -421,9 +453,9 @@ def convert_pipeline(root_path: str) -> None:
     end_time = time.time()
 
     logger.info(
-        "Saved to %s in %.2f seconds.",
+        "Saved to %s in %s.",
         clickable_file_path(Path(out_path).absolute().parent, out_path),
-        end_time - start_time,
+        format_duration_min_sec(end_time - start_time),
     )
 
     if not opt.onnx.dynamo:
@@ -455,10 +487,7 @@ def convert_pipeline(root_path: str) -> None:
         )
         session_opt.optimized_model_filepath = optimized_path
 
-        if dtype in ("fp16", "bf16"):
-            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-        else:
-            providers = ["CPUExecutionProvider"]
+        providers = ["CUDAExecutionProvider"]
 
         try:
             ort.InferenceSession(out_path, session_opt, providers=providers)
