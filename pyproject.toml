@@ -41,6 +41,7 @@ onnx = [
     "onnxruntime-gpu==1.23.2",
     "onnxscript",
     "onnxslim",
+    "polygraphy",
     "nvidia-modelopt",
 ]
 docs = ["sphinx", "sphinx-rtd-theme"]

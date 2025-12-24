@@ -142,7 +142,6 @@ def convert_onnx_to_low_precision(
         keep_io_types=True,
         data_max=max_val,
         init_max=max_val,
-        providers=["CUDAExecutionProvider"],
         custom_rule=custom_rule,
     )
 
