@@ -34,7 +34,14 @@ keywords = ["machine learning", "deep learning", "neural network", "pytorch", "s
 [project.optional-dependencies]
 dev = ["ruff", "pyright", "pytest", "syrupy", "torchfix"]
 onnx = [
-    "nvidia-modelopt[onnx]",
+    "ml_dtypes",
+    "onnx-graphsurgeon",
+    "onnx~=1.19.0",
+    "onnxconverter-common~=1.16.0",
+    "onnxruntime-gpu==1.23.2",
+    "onnxscript",
+    "onnxslim",
+    "nvidia-modelopt",
 ]
 docs = ["sphinx", "sphinx-rtd-theme"]
 scripts = ["chainner_ext", "matplotlib", "pandas"]
