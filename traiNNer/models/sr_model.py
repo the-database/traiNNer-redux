@@ -279,7 +279,7 @@ class SRModel(BaseModel):
 
                 # if self.use_compile:
                 #     logger.info(
-                #         "Loss %s will be compiled. The first iteration may take several minutes...",
+                #         "Loss %s will be compiled. The first iteration may take several minutes.",
                 #         label,
                 #     )
                 #     self.losses[label] = torch.compile(self.losses[label])

@@ -3,13 +3,15 @@ import time
 from logging import Logger
 from os import path as osp
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 import torch
-from onnx import ModelProto
-from onnxconverter_common.float16 import convert_float_to_float16
+from modelopt.onnx.autocast import convert_to_mixed_precision
+from modelopt.onnx.autocast.nodeclassifier import NodeRuleBase
+from onnx import ModelProto, TensorProto
 from onnxslim import slim
 from rich.traceback import install
 from torch import Tensor
@@ -19,6 +21,7 @@ from traiNNer.models import build_model
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils.config import Config
 from traiNNer.utils.logger import clickable_file_path, get_root_logger
+from traiNNer.utils.misc import format_duration_min_sec
 from traiNNer.utils.redux_options import ReduxOptions
 
 MAX_LEGACY_OPSET = 20
@@ -27,12 +30,31 @@ MIN_DYNAMO_OPSET = 18
 INPUT_NAME = "input"
 OUTPUT_NAME = "output"
 
+DType = Literal["fp32", "fp16", "bf16"]
+
+DTYPE_MAP: dict[DType, torch.dtype] = {
+    "fp32": torch.float32,
+    "fp16": torch.float16,
+    "bf16": torch.bfloat16,
+}
+
+ONNX_DTYPE_MAP: dict[DType, int] = {
+    "fp32": TensorProto.FLOAT,
+    "fp16": TensorProto.FLOAT16,
+    "bf16": TensorProto.BFLOAT16,
+}
+
+MODELOPT_PRECISION_MAP: dict[DType, str] = {
+    "fp16": "fp16",
+    "bf16": "bf16",
+}
+
 
 def get_out_path(
     out_dir: str,
     name: str,
     opset: int,
-    fp16: bool,
+    dtype: DType,
     optimized: bool,
     dynamo: bool,
     shape: tuple[int, int, int, int],
@@ -55,7 +77,11 @@ def get_out_path(
     else:
         shape_str += "_static"
 
-    filename = f"{name}_{shape_str}_fp{'16' if fp16 else '32'}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
+    dtype_str = str(dtype)
+    if dtype != "fp32":
+        dtype_str = f"strong_{dtype}"
+
+    filename = f"{name}_{shape_str}_{dtype_str}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
     return osp.normpath(osp.join(out_dir, filename))
 
 
@@ -93,6 +119,33 @@ def parse_input_shape(
     )
 
 
+def convert_onnx_to_low_precision(
+    onnx_path: str, bf16_exclude_depthwise: bool, dtype: DType
+) -> ModelProto:
+    if dtype == "fp32":
+        return onnx.load(onnx_path)
+    elif dtype == "fp16":
+        torch_dtype = DTYPE_MAP[dtype]
+        max_val = torch.finfo(torch_dtype).max
+    else:
+        max_val = np.inf
+
+    custom_rule = None
+    if dtype == "bf16" and bf16_exclude_depthwise:
+        fp32_model = onnx.load(onnx_path)
+        init_map = {t.name: t for t in fp32_model.graph.initializer}
+        custom_rule = SkipDepthwiseConvRule(init_map)
+
+    return convert_to_mixed_precision(
+        onnx_path=onnx_path,
+        low_precision_type=MODELOPT_PRECISION_MAP[dtype],
+        keep_io_types=True,
+        data_max=max_val,
+        init_max=max_val,
+        custom_rule=custom_rule,
+    )
+
+
 def convert_and_save_onnx(
     model: BaseModel,
     logger: Logger,
@@ -101,7 +154,8 @@ def convert_and_save_onnx(
     dynamic_flags: tuple[bool, bool, bool, bool],
     out_dir: str,
     example_shape: tuple[int, int, int, int],
-) -> tuple[ModelProto, int, str]:
+    dtype: DType,
+) -> tuple[ModelProto, int, str, str | None]:
     assert model.net_g is not None
     assert opt.onnx is not None
 
@@ -113,8 +167,9 @@ def convert_and_save_onnx(
 
     if not has_dynamic:
         logger.info(
-            "Exporting ONNX with fully static input shape %s (N,C,H,W).",
+            "Exporting ONNX with fully static input shape %s (N,C,H,W), dtype=%s.",
             opt.onnx.shape,
+            dtype,
         )
     else:
         dynamic_dims = [
@@ -129,11 +184,12 @@ def convert_and_save_onnx(
         ]
         logger.info(
             "Exporting ONNX with mixed static/dynamic input shape %s (N,C,H,W). "
-            "Example shape: %s. Dynamic dims: %s. Static dims: %s.",
+            "Example shape: %s. Dynamic dims: %s. Static dims: %s. dtype=%s.",
             opt.onnx.shape,
             "x".join(str(d) for d in example_shape),
             ", ".join(dynamic_dims),
             ", ".join(static_dims),
+            dtype,
         )
 
     if not has_dynamic:
@@ -184,11 +240,27 @@ def convert_and_save_onnx(
 
         dynamic_shapes = None
 
+    fp32_out_path = get_out_path(
+        out_dir,
+        opt.name,
+        opset,
+        dtype="fp32",
+        optimized=False,
+        dynamo=is_dynamo,
+        shape=example_shape,
+        dynamic_flags=dynamic_flags,
+    )
+
+    if dtype == "fp32":
+        temp_out_path = fp32_out_path
+    else:
+        temp_out_path = fp32_out_path + ".export_temp"
+
     out_path = get_out_path(
         out_dir,
         opt.name,
         opset,
-        fp16=False,
+        dtype=dtype,
         optimized=False,
         dynamo=is_dynamo,
         shape=example_shape,
@@ -199,7 +271,7 @@ def convert_and_save_onnx(
         onnx_program = torch.onnx.export(
             model.net_g,
             (torch_input,),
-            None if is_dynamo else out_path,
+            None if is_dynamo else temp_out_path,
             dynamo=is_dynamo,
             verbose=False,
             optimize=False,
@@ -208,46 +280,164 @@ def convert_and_save_onnx(
             output_names=[OUTPUT_NAME],
             dynamic_shapes=dynamic_shapes,
             dynamic_axes=dynamic_axes,
-            verify=opt.onnx.verify,
+            verify=opt.onnx.verify if dtype == "fp32" else False,
         )
 
         if is_dynamo:
             assert onnx_program is not None
             logger.info("Dynamo ONNX conversion complete. Optimizing...")
-            onnx_program.optimize()
-            onnx_program.save(out_path)
 
-    model_proto = onnx.load(out_path)
+            pre_nodes = len(onnx_program.model.graph)
+            logger.info("Dynamo export nodes before optimize(): %d", pre_nodes)
+
+            onnx_program.optimize()
+            onnx_program.save(temp_out_path)
+
+            post_nodes = len(onnx_program.model.graph)
+            logger.info("Dynamo export nodes after optimize(): %d", post_nodes)
+
+        else:
+            model_proto_pre = onnx.load(temp_out_path)
+            pre_nodes = len(model_proto_pre.graph.node)
+            logger.info(
+                "Legacy ONNX conversion complete. Nodes before ORT optimize: %d",
+                pre_nodes,
+            )
+
+            ort_optimized_path = temp_out_path + ".ortopt"
+            so = ort.SessionOptions()
+            so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
+            so.optimized_model_filepath = ort_optimized_path
+
+            logger.info(
+                "Optimizing legacy ONNX with ONNX Runtime (ORT_ENABLE_BASIC)..."
+            )
+            ort.InferenceSession(
+                temp_out_path,
+                sess_options=so,
+                providers=["CPUExecutionProvider"],
+            )
+
+            model_proto_post = onnx.load(ort_optimized_path)
+            post_nodes = len(model_proto_post.graph.node)
+            logger.info(
+                "ORT optimization complete. Nodes after ORT optimize: %d", post_nodes
+            )
+
+            onnx.save(model_proto_post, temp_out_path)
+
+            try:
+                if osp.exists(ort_optimized_path):
+                    os.remove(ort_optimized_path)
+            except OSError:
+                pass
+
+    fp32_saved_path: str | None = None
+
+    if dtype != "fp32":
+        logger.info("Saving FP32 ONNX model to %s", fp32_out_path)
+        fp32_model_proto = onnx.load(temp_out_path)
+        onnx.save(fp32_model_proto, fp32_out_path)
+        fp32_saved_path = fp32_out_path
+
+        logger.info(
+            "Converting ONNX model to %s using NVIDIA Model Optimizer...", dtype
+        )
+        model_proto = convert_onnx_to_low_precision(
+            temp_out_path, opt.onnx.bf16_exclude_depthwise, dtype
+        )
+        onnx.save(model_proto, out_path)
+
+        if osp.exists(temp_out_path):
+            os.remove(temp_out_path)
+    else:
+        model_proto = onnx.load(temp_out_path)
+
     assert model_proto is not None
-    return model_proto, opset, out_path
+    return model_proto, opset, out_path, fp32_saved_path
 
 
 def verify_onnx(
-    model: BaseModel, logger: Logger, torch_input: Tensor, onnx_path: str
+    model: BaseModel,
+    logger: Logger,
+    torch_input: Tensor,
+    onnx_path: str,
+    dtype: DType,
 ) -> None:
     assert model.net_g is not None
-
-    with torch.inference_mode():
-        torch_output_np = model.net_g(torch_input).cpu().numpy()
 
     onnx_model = onnx.load(onnx_path)
     onnx.checker.check_model(onnx_model)
 
-    ort_session = ort.InferenceSession(onnx_path, providers=["CPUExecutionProvider"])
+    if dtype == "bf16":
+        logger.info(
+            "Skipping ONNX Runtime verification for bf16 model (ORT CUDA bf16 unsupported/limited). "
+            "Use TensorRT with --stronglyTyped for inference."
+        )
+        return
 
-    ort_inputs = {ort_session.get_inputs()[0].name: torch_input.cpu().numpy()}
-    onnx_output = ort_session.run(None, ort_inputs)
+    torch_dtype = DTYPE_MAP[dtype]
+
+    with torch.inference_mode():
+        if dtype == "fp16":
+            model_dtype = model.net_g.to(torch_dtype)
+            input_dtype = torch_input.to(torch_dtype)
+            torch_output_np = model_dtype(input_dtype).float().cpu().numpy()
+        else:
+            torch_output_np = model.net_g(torch_input).cpu().numpy()
+
+    providers = ["CUDAExecutionProvider"]
+
+    try:
+        ort_session = ort.InferenceSession(onnx_path, providers=providers)
+    except Exception as e:
+        logger.warning(
+            "Could not create ONNX Runtime session for verification (dtype=%s): %s",
+            dtype,
+            e,
+        )
+        return
+
+    input_np = (
+        torch_input.cpu().numpy().astype(np.float16)
+        if dtype == "fp16"
+        else torch_input.cpu().numpy()
+    )
+
+    ort_inputs = {ort_session.get_inputs()[0].name: input_np}
+
+    try:
+        onnx_output = ort_session.run(None, ort_inputs)
+    except Exception as e:
+        logger.warning("ONNX Runtime inference failed during verification: %s", e)
+        return
+
+    onnx_output_fp32 = (
+        onnx_output[0].astype(np.float32)
+        if onnx_output[0].dtype != np.float32
+        else onnx_output[0]
+    )
+
+    if dtype == "fp16":
+        rtol, atol = 1e-02, 1e-02
+    else:
+        rtol, atol = 1e-02, 1e-03
 
     try:
         np.testing.assert_allclose(
             torch_output_np,
-            onnx_output[0],  # pyright: ignore
-            rtol=1e-02,
-            atol=1e-03,
+            onnx_output_fp32,
+            rtol=rtol,
+            atol=atol,
         )
-        logger.info("ONNX output verified against PyTorch output successfully.")
+        logger.info(
+            "ONNX output verified against PyTorch output successfully (dtype=%s).",
+            dtype,
+        )
     except AssertionError as e:
-        logger.warning("ONNX verification completed with warnings: %s", e)
+        logger.warning(
+            "ONNX verification completed with warnings (dtype=%s): %s", dtype, e
+        )
 
 
 def convert_pipeline(root_path: str) -> None:
@@ -258,10 +448,17 @@ def convert_pipeline(root_path: str) -> None:
     assert opt.onnx is not None
     assert opt.network_g is not None
 
+    dtype: DType = getattr(opt.onnx, "dtype", "fp32")
+    if dtype not in DTYPE_MAP:
+        raise ValueError(
+            f"Invalid dtype '{dtype}'. Must be one of: {list(DTYPE_MAP.keys())}"
+        )
+
     example_shape, dynamic_flags = parse_input_shape(
         opt.onnx.shape, opt.network_g["type"]
     )
-    torch_input = torch.randn(*example_shape, device="cuda")
+
+    torch_input = torch.randn(*example_shape, device="cuda", dtype=torch.float32)
 
     start_time = time.time()
 
@@ -272,21 +469,29 @@ def convert_pipeline(root_path: str) -> None:
     out_dir = "./onnx"
     os.makedirs(out_dir, exist_ok=True)
 
-    model_proto, opset, out_path_fp32 = convert_and_save_onnx(
-        model, logger, opt, torch_input, dynamic_flags, out_dir, example_shape
+    model_proto, opset, out_path, fp32_path = convert_and_save_onnx(
+        model, logger, opt, torch_input, dynamic_flags, out_dir, example_shape, dtype
     )
 
     end_time = time.time()
 
     logger.info(
-        "Saved to %s in %.2f seconds.",
-        clickable_file_path(Path(out_path_fp32).absolute().parent, out_path_fp32),
-        end_time - start_time,
+        "Saved to %s in %s.",
+        clickable_file_path(Path(out_path).absolute().parent, out_path),
+        format_duration_min_sec(end_time - start_time),
     )
+
+    if fp32_path is not None:
+        logger.info(
+            "Also saved FP32 model to %s",
+            clickable_file_path(Path(fp32_path).absolute().parent, fp32_path),
+        )
 
     if not opt.onnx.dynamo:
         if opt.onnx.verify:
-            verify_onnx(model, logger, torch_input, out_path_fp32)
+            verify_onnx(model, logger, torch_input, out_path, dtype)
+            if fp32_path is not None:
+                verify_onnx(model, logger, torch_input, fp32_path, "fp32")
 
     if opt.onnx.optimize:
         logger.info("Optimizing ONNX with OnnxSlim...")
@@ -296,44 +501,78 @@ def convert_pipeline(root_path: str) -> None:
 
         assert isinstance(model_proto, ModelProto)
 
-        session_opt = ort.SessionOptions()
-        session_opt.graph_optimization_level = (
-            ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
-        )
-        session_opt.optimized_model_filepath = get_out_path(
+        optimized_path = get_out_path(
             out_dir,
             opt.name,
             opset,
-            fp16=False,
+            dtype=dtype,
             optimized=True,
             dynamo=opt.onnx.dynamo,
             shape=example_shape,
             dynamic_flags=dynamic_flags,
         )
-        ort.InferenceSession(out_path_fp32, session_opt)
-        verify_onnx(model, logger, torch_input, session_opt.optimized_model_filepath)
-        model_proto = onnx.load(session_opt.optimized_model_filepath)
 
-    if opt.onnx.fp16:
-        start_time = time.time()
-        out_path = get_out_path(
-            out_dir,
-            opt.name,
-            opset,
-            True,
-            opt.onnx.optimize,
-            opt.onnx.dynamo,
-            shape=example_shape,
-            dynamic_flags=dynamic_flags,
+        session_opt = ort.SessionOptions()
+        session_opt.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         )
-        model_proto_fp16 = convert_float_to_float16(model_proto)
-        onnx.save(model_proto_fp16, out_path)
-        end_time = time.time()
-        logger.info(
-            "Saved to %s in %.2f seconds.",
-            clickable_file_path(Path(out_path).absolute().parent, out_path),
-            end_time - start_time,
-        )
+        session_opt.optimized_model_filepath = optimized_path
+
+        providers = ["CUDAExecutionProvider"]
+
+        try:
+            ort.InferenceSession(out_path, session_opt, providers=providers)
+            if opt.onnx.verify:
+                verify_onnx(model, logger, torch_input, optimized_path, dtype)
+            model_proto = onnx.load(optimized_path)
+            logger.info(
+                "Optimized model saved to %s",
+                clickable_file_path(
+                    Path(optimized_path).absolute().parent, optimized_path
+                ),
+            )
+        except Exception as e:
+            logger.warning("ONNX optimization failed: %s", e)
+
+
+class SkipDepthwiseConvRule(NodeRuleBase):
+    def __init__(
+        self,
+        initializer_map: dict[str, onnx.TensorProto],
+    ) -> None:
+        self.inits = initializer_map
+        self.logger = get_root_logger()
+
+    def _check_inner(self, node: onnx.NodeProto) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
+        if node.op_type != "Conv":
+            return False
+
+        group = 1
+        for a in node.attribute:
+            if a.name == "group":
+                group = int(onnx.helper.get_attribute_value(a))
+                break
+        if group <= 1:
+            return False
+
+        if len(node.input) < 2:
+            return False
+        w_name = node.input[1]
+        w_init = self.inits.get(w_name)
+        if w_init is None:
+            return False
+
+        w = onnx.numpy_helper.to_array(w_init)
+        if w.ndim < 3:
+            return False
+
+        cout = int(w.shape[0])
+        cin_per_group = int(w.shape[1])
+
+        return (cin_per_group == 1) and (group == cout)
+
+    def _log_skipped(self, node: onnx.NodeProto, **kwargs) -> None:
+        self.logger.info("Skipping depthwise Conv node %s (kept FP32)", node.name)
 
 
 if __name__ == "__main__":

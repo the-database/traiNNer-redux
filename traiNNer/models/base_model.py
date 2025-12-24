@@ -201,7 +201,7 @@ class BaseModel:
             require_triton("torch.compile requires triton.")
             logger = get_root_logger()
             logger.info(
-                "Network %s will be compiled with mode %s. The first iteration may take several minutes...",
+                "Network %s will be compiled with mode %s. The first iteration may take several minutes.",
                 net_name,
                 self.opt.compile_mode,
             )

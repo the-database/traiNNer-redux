@@ -298,3 +298,10 @@ def require_triton(message: str) -> None:
             ) from e
         else:
             raise ImportError("Error importing triton.") from e
+
+
+def format_duration_min_sec(elapsed: float) -> str:
+    minutes, seconds = divmod(elapsed, 60.0)
+    minutes_i = int(minutes)
+    prefix = f"{minutes_i:d} min " if minutes_i else ""
+    return f"{prefix}{seconds:.2f} sec"
