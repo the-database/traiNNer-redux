@@ -10,6 +10,7 @@ import onnx
 import onnxruntime as ort
 import torch
 from modelopt.onnx.autocast import convert_to_mixed_precision
+from modelopt.onnx.autocast.nodeclassifier import NodeRuleBase
 from onnx import ModelProto, TensorProto
 from onnxslim import slim
 from rich.traceback import install
@@ -123,13 +124,20 @@ def convert_onnx_to_low_precision(onnx_path: str, dtype: DType) -> ModelProto:
     else:
         max_val = np.inf
 
+    custom_rule = None
+    if dtype == "bf16":
+        fp32_model = onnx.load(onnx_path)
+        init_map = {t.name: t for t in fp32_model.graph.initializer}
+        custom_rule = SkipDepthwiseConvRule(init_map)
+
     return convert_to_mixed_precision(
         onnx_path=onnx_path,
         low_precision_type=MODELOPT_PRECISION_MAP[dtype],
-        keep_io_types=False,
+        keep_io_types=True,
         data_max=max_val,
         init_max=max_val,
         providers=["CUDAExecutionProvider"],
+        custom_rule=custom_rule,
     )
 
 
@@ -490,6 +498,46 @@ def convert_pipeline(root_path: str) -> None:
             )
         except Exception as e:
             logger.warning("ONNX optimization failed: %s", e)
+
+
+class SkipDepthwiseConvRule(NodeRuleBase):
+    def __init__(
+        self,
+        initializer_map: dict[str, onnx.TensorProto],
+    ) -> None:
+        self.inits = initializer_map
+        self.logger = get_root_logger()
+
+    def _check_inner(self, node: onnx.NodeProto) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
+        if node.op_type != "Conv":
+            return False
+
+        group = 1
+        for a in node.attribute:
+            if a.name == "group":
+                group = int(onnx.helper.get_attribute_value(a))
+                break
+        if group <= 1:
+            return False
+
+        if len(node.input) < 2:
+            return False
+        w_name = node.input[1]
+        w_init = self.inits.get(w_name)
+        if w_init is None:
+            return False
+
+        w = onnx.numpy_helper.to_array(w_init)
+        if w.ndim < 3:
+            return False
+
+        cout = int(w.shape[0])
+        cin_per_group = int(w.shape[1])
+
+        return (cin_per_group == 1) and (group == cout)
+
+    def _log_skipped(self, node: onnx.NodeProto, **kwargs) -> None:
+        self.logger.info("Skipping depthwise Conv node %s (kept FP32)", node.name)
 
 
 if __name__ == "__main__":
