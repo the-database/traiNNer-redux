@@ -156,7 +156,7 @@ def convert_and_save_onnx(
     out_dir: str,
     example_shape: tuple[int, int, int, int],
     dtype: DType,
-) -> tuple[ModelProto, int, str]:
+) -> tuple[ModelProto, int, str, str | None]:
     assert model.net_g is not None
     assert opt.onnx is not None
 
@@ -241,6 +241,22 @@ def convert_and_save_onnx(
 
         dynamic_shapes = None
 
+    fp32_out_path = get_out_path(
+        out_dir,
+        opt.name,
+        opset,
+        dtype="fp32",
+        optimized=False,
+        dynamo=is_dynamo,
+        shape=example_shape,
+        dynamic_flags=dynamic_flags,
+    )
+
+    if dtype == "fp32":
+        temp_out_path = fp32_out_path
+    else:
+        temp_out_path = fp32_out_path + ".export_temp"
+
     out_path = get_out_path(
         out_dir,
         opt.name,
@@ -250,10 +266,6 @@ def convert_and_save_onnx(
         dynamo=is_dynamo,
         shape=example_shape,
         dynamic_flags=dynamic_flags,
-    )
-
-    temp_out_path = (
-        out_path if dtype == "fp32" else out_path.replace(f"_{dtype}_", "_fp32_temp_")
     )
 
     with torch.inference_mode():
@@ -293,7 +305,7 @@ def convert_and_save_onnx(
                 pre_nodes,
             )
 
-            ort_optimized_path = temp_out_path.replace(".onnx", ".ortopt.onnx")
+            ort_optimized_path = temp_out_path + ".ortopt"
             so = ort.SessionOptions()
             so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
             so.optimized_model_filepath = ort_optimized_path
@@ -321,7 +333,14 @@ def convert_and_save_onnx(
             except OSError:
                 pass
 
+    fp32_saved_path: str | None = None
+
     if dtype != "fp32":
+        logger.info("Saving FP32 ONNX model to %s", fp32_out_path)
+        fp32_model_proto = onnx.load(temp_out_path)
+        onnx.save(fp32_model_proto, fp32_out_path)
+        fp32_saved_path = fp32_out_path
+
         logger.info(
             "Converting ONNX model to %s using NVIDIA Model Optimizer...", dtype
         )
@@ -329,13 +348,14 @@ def convert_and_save_onnx(
             temp_out_path, opt.onnx.bf16_exclude_depthwise, dtype
         )
         onnx.save(model_proto, out_path)
+
         if osp.exists(temp_out_path):
             os.remove(temp_out_path)
     else:
         model_proto = onnx.load(temp_out_path)
 
     assert model_proto is not None
-    return model_proto, opset, out_path
+    return model_proto, opset, out_path, fp32_saved_path
 
 
 def verify_onnx(
@@ -450,7 +470,7 @@ def convert_pipeline(root_path: str) -> None:
     out_dir = "./onnx"
     os.makedirs(out_dir, exist_ok=True)
 
-    model_proto, opset, out_path = convert_and_save_onnx(
+    model_proto, opset, out_path, fp32_path = convert_and_save_onnx(
         model, logger, opt, torch_input, dynamic_flags, out_dir, example_shape, dtype
     )
 
@@ -462,9 +482,17 @@ def convert_pipeline(root_path: str) -> None:
         format_duration_min_sec(end_time - start_time),
     )
 
+    if fp32_path is not None:
+        logger.info(
+            "Also saved FP32 model to %s",
+            clickable_file_path(Path(fp32_path).absolute().parent, fp32_path),
+        )
+
     if not opt.onnx.dynamo:
         if opt.onnx.verify:
             verify_onnx(model, logger, torch_input, out_path, dtype)
+            if fp32_path is not None:
+                verify_onnx(model, logger, torch_input, fp32_path, "fp32")
 
     if opt.onnx.optimize:
         logger.info("Optimizing ONNX with OnnxSlim...")
