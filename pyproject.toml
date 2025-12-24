@@ -33,7 +33,9 @@ keywords = ["machine learning", "deep learning", "neural network", "pytorch", "s
 
 [project.optional-dependencies]
 dev = ["ruff", "pyright", "pytest", "syrupy", "torchfix"]
-onnx = ["onnx>=1.20.0", "onnxruntime>=1.23.2", "onnxconverter-common>=1.15.0", "onnxslim>=0.1.78", "onnxscript>=0.5.6"]
+onnx = [
+    "nvidia-modelopt[onnx]",
+]
 docs = ["sphinx", "sphinx-rtd-theme"]
 scripts = ["chainner_ext", "matplotlib", "pandas"]
 segmentation = ["segmentation_models_pytorch"]

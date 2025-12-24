@@ -205,6 +205,7 @@ class OnnxOptions(StrictStruct):
     shape: str = "1x3xHxW"
     verify: bool = True
     dtype: Literal["fp32", "fp16", "bf16"] = "fp16"
+    bf16_exclude_depthwise: bool = True
     optimize: bool = True
 
 

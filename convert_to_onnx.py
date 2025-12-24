@@ -77,7 +77,11 @@ def get_out_path(
     else:
         shape_str += "_static"
 
-    filename = f"{name}_{shape_str}_{dtype}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
+    dtype_str = str(dtype)
+    if dtype != "fp32":
+        dtype_str = f"strong_{dtype}"
+
+    filename = f"{name}_{shape_str}_{dtype_str}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
     return osp.normpath(osp.join(out_dir, filename))
 
 
@@ -115,7 +119,9 @@ def parse_input_shape(
     )
 
 
-def convert_onnx_to_low_precision(onnx_path: str, dtype: DType) -> ModelProto:
+def convert_onnx_to_low_precision(
+    onnx_path: str, bf16_exclude_depthwise: bool, dtype: DType
+) -> ModelProto:
     if dtype == "fp32":
         return onnx.load(onnx_path)
     elif dtype == "fp16":
@@ -125,7 +131,7 @@ def convert_onnx_to_low_precision(onnx_path: str, dtype: DType) -> ModelProto:
         max_val = np.inf
 
     custom_rule = None
-    if dtype == "bf16":
+    if dtype == "bf16" and bf16_exclude_depthwise:
         fp32_model = onnx.load(onnx_path)
         init_map = {t.name: t for t in fp32_model.graph.initializer}
         custom_rule = SkipDepthwiseConvRule(init_map)
@@ -319,7 +325,9 @@ def convert_and_save_onnx(
         logger.info(
             "Converting ONNX model to %s using NVIDIA Model Optimizer...", dtype
         )
-        model_proto = convert_onnx_to_low_precision(temp_out_path, dtype)
+        model_proto = convert_onnx_to_low_precision(
+            temp_out_path, opt.onnx.bf16_exclude_depthwise, dtype
+        )
         onnx.save(model_proto, out_path)
         if osp.exists(temp_out_path):
             os.remove(temp_out_path)

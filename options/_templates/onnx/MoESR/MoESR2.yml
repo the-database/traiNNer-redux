@@ -26,7 +26,8 @@ path:
 #########################
 onnx:
   dynamo: false  # Whether to use the new ONNX exporter. Currently not supported on many architectures.
-  fp16: false  # Whether to also export to reduced fp16 precision. Not recommend if using with TensorRT.
+  dtype: bf16  # fp32, fp16, or bf16. fp32 is full precision and fp16 and bf16 are reduced precision options which work with the stronglyTyped flag in TensorRT.
+  bf16_exclude_depthwise: true  # When converting to bf16, keep depthwise convs in fp32. Should be better for TensorRT performance.
   opset: 20  # ONNX opset version, higher is newer. Supports up to 20 with dynamo: false and up to 23 with dynamo: true. With TensorRT higher opset is not necessarily faster.
   shape: 1x3xHxW  # Input shape in NxCxHxW. Use numbers for fixed dimensions and letters for dynamic ones (e.g. 1x3xHxW = batch=1, channels=3, dynamic height/width; 1x3x256x256 = fully static).
   verify: true  # Verify the accuracy of the ONNX model after exporting it.
