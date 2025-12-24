@@ -115,19 +115,6 @@ def parse_input_shape(
 
 
 def convert_onnx_to_low_precision(onnx_path: str, dtype: DType) -> ModelProto:
-    """
-    Convert an ONNX model from float32 to fp16 or bf16 using NVIDIA Model Optimizer.
-
-    This is the recommended approach for TensorRT strong typing.
-    See: https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/advanced.html#strongly-typed-networks
-
-    Args:
-        onnx_path: Path to the ONNX file to convert
-        dtype: Target dtype ("fp16" or "bf16")
-
-    Returns:
-        The converted ONNX model
-    """
     if dtype == "fp32":
         return onnx.load(onnx_path)
     elif dtype == "fp16":
@@ -301,7 +288,9 @@ def convert_and_save_onnx(
                 "Optimizing legacy ONNX with ONNX Runtime (ORT_ENABLE_BASIC)..."
             )
             ort.InferenceSession(
-                temp_out_path, sess_options=so, providers=["CUDAExecutionProvider"]
+                temp_out_path,
+                sess_options=so,
+                providers=["CPUExecutionProvider"],
             )
 
             model_proto_post = onnx.load(ort_optimized_path)
@@ -342,18 +331,25 @@ def verify_onnx(
 ) -> None:
     assert model.net_g is not None
 
+    onnx_model = onnx.load(onnx_path)
+    onnx.checker.check_model(onnx_model)
+
+    if dtype == "bf16":
+        logger.info(
+            "Skipping ONNX Runtime verification for bf16 model (ORT CUDA bf16 unsupported/limited). "
+            "Use TensorRT with --stronglyTyped for inference."
+        )
+        return
+
     torch_dtype = DTYPE_MAP[dtype]
 
     with torch.inference_mode():
-        if dtype in ("fp16", "bf16"):
+        if dtype == "fp16":
             model_dtype = model.net_g.to(torch_dtype)
             input_dtype = torch_input.to(torch_dtype)
             torch_output_np = model_dtype(input_dtype).float().cpu().numpy()
         else:
             torch_output_np = model.net_g(torch_input).cpu().numpy()
-
-    onnx_model = onnx.load(onnx_path)
-    onnx.checker.check_model(onnx_model)
 
     providers = ["CUDAExecutionProvider"]
 
@@ -361,23 +357,17 @@ def verify_onnx(
         ort_session = ort.InferenceSession(onnx_path, providers=providers)
     except Exception as e:
         logger.warning(
-            "Could not create ONNX Runtime session for verification (dtype=%s): %s. "
-            "This is expected for bf16 models - use TensorRT with --stronglyTyped for inference.",
+            "Could not create ONNX Runtime session for verification (dtype=%s): %s",
             dtype,
             e,
         )
         return
 
-    if dtype == "fp16":
-        input_np = torch_input.cpu().numpy().astype(np.float16)
-    elif dtype == "bf16":
-        logger.info(
-            "Skipping ONNX Runtime verification for bf16 model. "
-            "Use TensorRT with --stronglyTyped for inference."
-        )
-        return
-    else:
-        input_np = torch_input.cpu().numpy()
+    input_np = (
+        torch_input.cpu().numpy().astype(np.float16)
+        if dtype == "fp16"
+        else torch_input.cpu().numpy()
+    )
 
     ort_inputs = {ort_session.get_inputs()[0].name: input_np}
 
@@ -395,8 +385,6 @@ def verify_onnx(
 
     if dtype == "fp16":
         rtol, atol = 1e-02, 1e-02
-    elif dtype == "bf16":
-        rtol, atol = 1e-01, 1e-01
     else:
         rtol, atol = 1e-02, 1e-03
 
