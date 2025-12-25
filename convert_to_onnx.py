@@ -143,6 +143,7 @@ def convert_onnx_to_low_precision(
         data_max=max_val,
         init_max=max_val,
         custom_rule=custom_rule,
+        op_types_to_exclude=["ConvTranspose"],
     )
 
 
