@@ -120,7 +120,7 @@ def parse_input_shape(
 
 
 def convert_onnx_to_low_precision(
-    onnx_path: str, bf16_exclude_depthwise: bool, dtype: DType
+    onnx_path: str, bf16_exclude_depthwise: bool, dtype: DType, opset: int
 ) -> ModelProto:
     if dtype == "fp32":
         return onnx.load(onnx_path)
@@ -143,6 +143,7 @@ def convert_onnx_to_low_precision(
         data_max=max_val,
         init_max=max_val,
         custom_rule=custom_rule,
+        opset=opset,  # Now uses the user's config opset
         op_types_to_exclude=["ConvTranspose"],
     )
 
@@ -347,7 +348,7 @@ def convert_and_save_onnx(
             "Converting ONNX model to %s using NVIDIA Model Optimizer...", dtype
         )
         model_proto = convert_onnx_to_low_precision(
-            temp_out_path, opt.onnx.bf16_exclude_depthwise, dtype
+            temp_out_path, opt.onnx.bf16_exclude_depthwise, dtype, opset
         )
         onnx.save(model_proto, out_path)
 
