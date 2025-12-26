@@ -139,12 +139,15 @@ def convert_onnx_to_low_precision(
     return convert_to_mixed_precision(
         onnx_path=onnx_path,
         low_precision_type=MODELOPT_PRECISION_MAP[dtype],
-        keep_io_types=True,
+        keep_io_types=dtype == "bf16",
         data_max=max_val,
         init_max=max_val,
         custom_rule=custom_rule,
         opset=opset,  # Now uses the user's config opset
+        op_types_to_exclude=["ConvTranspose"],
     )
+
+    # TODO for bf16 model convert io to fp16
 
 
 def convert_and_save_onnx(
