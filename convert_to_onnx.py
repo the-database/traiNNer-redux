@@ -143,7 +143,7 @@ def convert_onnx_to_low_precision(
         data_max=max_val,
         init_max=max_val,
         custom_rule=custom_rule,
-        opset=opset,  # Now uses the user's config opset
+        opset=opset,
         op_types_to_exclude=["ConvTranspose"],
     )
 
@@ -263,7 +263,7 @@ def convert_and_save_onnx(
     out_path = get_out_path(
         out_dir,
         opt.name,
-        opset,
+        requested_opset,
         dtype=dtype,
         optimized=False,
         dynamo=is_dynamo,
@@ -339,16 +339,22 @@ def convert_and_save_onnx(
     fp32_saved_path: str | None = None
 
     if dtype != "fp32":
-        logger.info("Saving FP32 ONNX model to %s", fp32_out_path)
         fp32_model_proto = onnx.load(temp_out_path)
         onnx.save(fp32_model_proto, fp32_out_path)
+        logger.info(
+            "Saved FP32 model to %s",
+            clickable_file_path(Path(fp32_out_path).absolute().parent, fp32_out_path),
+        )
         fp32_saved_path = fp32_out_path
 
         logger.info(
             "Converting ONNX model to %s using NVIDIA Model Optimizer...", dtype
         )
         model_proto = convert_onnx_to_low_precision(
-            temp_out_path, opt.onnx.bf16_exclude_depthwise, dtype, opset
+            temp_out_path,
+            opt.onnx.bf16_exclude_depthwise,
+            dtype,
+            requested_opset,
         )
         onnx.save(model_proto, out_path)
 
@@ -484,12 +490,6 @@ def convert_pipeline(root_path: str) -> None:
         clickable_file_path(Path(out_path).absolute().parent, out_path),
         format_duration_min_sec(end_time - start_time),
     )
-
-    if fp32_path is not None:
-        logger.info(
-            "Also saved FP32 model to %s",
-            clickable_file_path(Path(fp32_path).absolute().parent, fp32_path),
-        )
 
     if not opt.onnx.dynamo:
         if opt.onnx.verify:
