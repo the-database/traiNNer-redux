@@ -42,6 +42,8 @@ The last line shows the progress of training after 100 iterations. If you get th
 
 #### Run command to start training
 
+##### Single GPU
+
 Run the following command to start training. Change `./options/train/arch/config.yml` to point to the config file you set up in the previous step.
 ```
 venv\Scripts\activate
@@ -55,6 +57,15 @@ python train.py --auto_resume -opt ./options/train/SPAN/SPAN_fidelity.yml
 ```
 
 To pause training, press `ctrl+C` or close the command window. To resume training, run the same command that was used to start training. The `--auto_resume` flag will resume training from when it was paused.
+
+##### Multi GPU
+
+Run the following command to start training with multiple GPUs. Change `--nproc-per-node 4` to the number of GPUs you want to use for training.
+
+```
+venv\Scripts\activate
+torchrun --nproc-per-node 4 train.py --launcher pytorch --auto_resume -opt ./options/train/arch/config.yml
+```
 
 #### Test models
 
