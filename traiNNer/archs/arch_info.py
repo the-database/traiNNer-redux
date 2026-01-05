@@ -17,6 +17,8 @@ ARCHS_WITHOUT_FP16 = {
     "elan_light",
     "elan",
     "emt",
+    "fdat_light",
+    "fdat_medium",
     "fdat_large",
     "fdat_xl",
     "grl_b",
@@ -1403,5 +1405,10 @@ ALL_ARCHS: list[ArchInfo] = [
         "names": ["LKFMixer_T", "LKFMixer_B", "LKFMixer_L"],
         "scales": ALL_SCALES,
         "folder_name_override": "LKFMixer",
+    },
+    {
+        "names": ["NAFNet_w32", "NAFNet_w64"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "NAFNet",
     },
 ]
