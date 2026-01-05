@@ -6,6 +6,7 @@ from spandrel.architectures.__arch_helpers.padding import pad_to_multiple
 from spandrel.util import store_hyperparameters
 from spandrel.util.timm import DropPath, to_2tuple, trunc_normal_
 from torch import nn
+from torch.utils.checkpoint import checkpoint
 
 # from spandrel.architectures.DRCT import DRCT
 from traiNNer.utils.registry import ARCH_REGISTRY
@@ -242,8 +243,10 @@ class RDG(nn.Module):
         gc,
         patch_size,
         img_size,
+        use_checkpoint=False,
     ) -> None:
         super().__init__()
+        self.use_checkpoint = use_checkpoint
 
         self.swin1 = SwinTransformerBlock(
             dim=dim,
@@ -343,32 +346,68 @@ class RDG(nn.Module):
             norm_layer=None,
         )
 
+    def _swin_block(self, swin, adjust, x, xsize):
+        return self.pe(self.lrelu(adjust(self.pue(swin(x, xsize), xsize))))
+
+    def _swin_block_no_lrelu(self, swin, adjust, x, xsize):
+        return self.pe(adjust(self.pue(swin(x, xsize), xsize)))
+
     def forward(self, x, xsize):
-        x1 = self.pe(self.lrelu(self.adjust1(self.pue(self.swin1(x, xsize), xsize))))
-        x2 = self.pe(
-            self.lrelu(
-                self.adjust2(self.pue(self.swin2(torch.cat((x, x1), -1), xsize), xsize))
+        if self.use_checkpoint and self.training:
+            x1 = checkpoint(
+                self._swin_block,
+                self.swin1,
+                self.adjust1,
+                x,
+                xsize,
+                use_reentrant=False,
             )
-        )
-        x3 = self.pe(
-            self.lrelu(
-                self.adjust3(
-                    self.pue(self.swin3(torch.cat((x, x1, x2), -1), xsize), xsize)
-                )
+            x2 = checkpoint(
+                self._swin_block,
+                self.swin2,
+                self.adjust2,
+                torch.cat((x, x1), -1),
+                xsize,
+                use_reentrant=False,
             )
-        )
-        x4 = self.pe(
-            self.lrelu(
-                self.adjust4(
-                    self.pue(self.swin4(torch.cat((x, x1, x2, x3), -1), xsize), xsize)
-                )
+            x3 = checkpoint(
+                self._swin_block,
+                self.swin3,
+                self.adjust3,
+                torch.cat((x, x1, x2), -1),
+                xsize,
+                use_reentrant=False,
             )
-        )
-        x5 = self.pe(
-            self.adjust5(
-                self.pue(self.swin5(torch.cat((x, x1, x2, x3, x4), -1), xsize), xsize)
+            x4 = checkpoint(
+                self._swin_block,
+                self.swin4,
+                self.adjust4,
+                torch.cat((x, x1, x2, x3), -1),
+                xsize,
+                use_reentrant=False,
             )
-        )
+            x5 = checkpoint(
+                self._swin_block_no_lrelu,
+                self.swin5,
+                self.adjust5,
+                torch.cat((x, x1, x2, x3, x4), -1),
+                xsize,
+                use_reentrant=False,
+            )
+        else:
+            x1 = self._swin_block(self.swin1, self.adjust1, x, xsize)
+            x2 = self._swin_block(
+                self.swin2, self.adjust2, torch.cat((x, x1), -1), xsize
+            )
+            x3 = self._swin_block(
+                self.swin3, self.adjust3, torch.cat((x, x1, x2), -1), xsize
+            )
+            x4 = self._swin_block(
+                self.swin4, self.adjust4, torch.cat((x, x1, x2, x3), -1), xsize
+            )
+            x5 = self._swin_block_no_lrelu(
+                self.swin5, self.adjust5, torch.cat((x, x1, x2, x3, x4), -1), xsize
+            )
 
         return x5 * 0.2 + x
 
@@ -714,11 +753,13 @@ class DRCT(nn.Module):
         upsampler="",
         resi_connection="1conv",
         gc=32,
+        use_checkpoint=False,
     ) -> None:
         super().__init__()
 
         self.window_size = window_size
         self.shift_size = window_size // 2
+        self.use_checkpoint = use_checkpoint
 
         num_in_ch = in_chans
         num_out_ch = in_chans
@@ -796,6 +837,7 @@ class DRCT(nn.Module):
                 gc=gc,
                 img_size=img_size,
                 patch_size=patch_size,
+                use_checkpoint=use_checkpoint,
             )
 
             self.layers.append(layer)
@@ -885,6 +927,7 @@ def drct(
     mlp_ratio: float = 2.0,
     upsampler: str = "pixelshuffle",
     resi_connection: str = "1conv",
+    use_checkpoint: bool = False,
 ) -> DRCT:
     return DRCT(
         upscale=scale,
@@ -898,6 +941,7 @@ def drct(
         mlp_ratio=mlp_ratio,
         upsampler=upsampler,
         resi_connection=resi_connection,
+        use_checkpoint=use_checkpoint,
     )
 
 
@@ -914,6 +958,7 @@ def drct_l(
     mlp_ratio: float = 2.0,
     upsampler: str = "pixelshuffle",
     resi_connection: str = "1conv",
+    use_checkpoint: bool = False,
 ) -> DRCT:
     return DRCT(
         upscale=scale,
@@ -927,6 +972,7 @@ def drct_l(
         mlp_ratio=mlp_ratio,
         upsampler=upsampler,
         resi_connection=resi_connection,
+        use_checkpoint=use_checkpoint,
     )
 
 
@@ -943,6 +989,7 @@ def drct_xl(
     mlp_ratio: float = 2.0,
     upsampler: str = "pixelshuffle",
     resi_connection: str = "1conv",
+    use_checkpoint: bool = False,
 ) -> DRCT:
     return DRCT(
         upscale=scale,
@@ -956,4 +1003,5 @@ def drct_xl(
         mlp_ratio=mlp_ratio,
         upsampler=upsampler,
         resi_connection=resi_connection,
+        use_checkpoint=use_checkpoint,
     )
