@@ -187,6 +187,28 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 ```
+#### dat_2_aligned
+
+
+```yaml
+type: dat_2_aligned
+in_chans: 3
+img_size: 64
+img_range: 1.0
+split_size: [8, 32]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 192
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+```
 #### dat_light
 
 
@@ -298,6 +320,7 @@ num_heads: [6, 6, 6, 6, 6, 6]
 mlp_ratio: 2.0
 upsampler: pixelshuffle
 resi_connection: 1conv
+use_checkpoint: false
 ```
 #### drct_l
 
@@ -314,6 +337,7 @@ num_heads: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 mlp_ratio: 2.0
 upsampler: pixelshuffle
 resi_connection: 1conv
+use_checkpoint: false
 ```
 #### drct_xl
 
@@ -330,6 +354,7 @@ num_heads: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 mlp_ratio: 2.0
 upsampler: pixelshuffle
 resi_connection: 1conv
+use_checkpoint: false
 ```
 ### DWT
 #### dwt
@@ -576,6 +601,26 @@ upsampler_type: transpose+conv
 img_range: 1.0
 unshuffle_mod: false
 ```
+#### fdat_medium_aligned
+
+
+```yaml
+type: fdat_medium_aligned
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 128
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose+conv
+img_range: 1.0
+unshuffle_mod: false
+```
 #### fdat_tiny
 
 
@@ -802,6 +847,36 @@ img_size: 64
 patch_size: 1
 in_chans: 3
 embed_dim: 180
+depths: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+window_size: 16
+compress_ratio: 3
+squeeze_factor: 30
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+img_range: 1.0
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
+#### hat_l_aligned
+
+
+```yaml
+type: hat_l_aligned
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 192
 depths: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 num_heads: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 window_size: 16
@@ -1473,6 +1548,17 @@ norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
 ```
+### SPANF
+#### spanf
+
+
+```yaml
+type: spanf
+num_in_ch: 3
+num_out_ch: 3
+feature_channels: 32
+bias: true
+```
 ### SRFormer
 #### srformer
 
@@ -1523,6 +1609,25 @@ use_checkpoint: false
 img_range: 1.0
 upsampler: pixelshuffledirect
 resi_connection: 1conv
+```
+### SRFormerv2
+#### srformerv2
+
+
+```yaml
+type: srformerv2
+in_chans: 3
+img_size: 64
+window_size: 36
+squeeze_dim: 60
+img_range: 1
+depths: [4, 4, 4, 4, 4, 4]
+embed_dim: 240
+num_heads: [8, 8, 8, 8, 8, 8]
+mlp_ratio: 2
+upsampler: pixelshuffle
+resi_connection: 1conv
+use_checkpoint: false
 ```
 ### SRVGGNetCompact
 #### compact
