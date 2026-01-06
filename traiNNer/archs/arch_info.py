@@ -5,6 +5,7 @@ ARCHS_WITHOUT_FP16 = {
     "atd_light",
     "atd",
     "dat_2",
+    "dat_2_aligned",
     "dat_light",
     "dat_s",
     "dat",
@@ -17,12 +18,16 @@ ARCHS_WITHOUT_FP16 = {
     "elan_light",
     "elan",
     "emt",
+    "fdat_light",
+    "fdat_medium",
+    "fdat_medium_aligned",
     "fdat_large",
     "fdat_xl",
     "grl_b",
     "grl_s",
     "grl_t",
     "hat_l",
+    "hat_l_aligned",
     "hat_m",
     "hat_s",
     "hit_sir",
@@ -96,6 +101,7 @@ REQUIRE_32_HW = {
     "realcugan",
     "escrealm",
     "escrealm_xl",
+    "srformerv2",
 }
 REQUIRE_64_HW = {
     "cascadedgaze",
@@ -1403,5 +1409,10 @@ ALL_ARCHS: list[ArchInfo] = [
         "names": ["LKFMixer_T", "LKFMixer_B", "LKFMixer_L"],
         "scales": ALL_SCALES,
         "folder_name_override": "LKFMixer",
+    },
+    {
+        "names": ["NAFNet_w32", "NAFNet_w64"],
+        "scales": ALL_SCALES,
+        "folder_name_override": "NAFNet",
     },
 ]

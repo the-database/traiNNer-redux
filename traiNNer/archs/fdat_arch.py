@@ -418,6 +418,43 @@ def fdat_medium(
 
 
 @ARCH_REGISTRY.register()
+def fdat_medium_aligned(
+    num_in_ch: int = 3,
+    num_out_ch: int = 3,
+    scale: int = 4,
+    embed_dim: int = 128,
+    num_groups: int = 4,
+    depth_per_group: int = 3,
+    num_heads: int = 4,
+    window_size: int = 8,
+    ffn_expansion_ratio: float = 2.0,
+    aim_reduction_ratio: int = 8,
+    group_block_pattern: list[str] | None = None,
+    drop_path_rate: float = 0.1,
+    upsampler_type: SampleMods3 = "transpose+conv",
+    img_range: float = 1.0,
+    unshuffle_mod: bool = False,
+) -> FDAT:
+    return FDAT(
+        num_in_ch=num_in_ch,
+        num_out_ch=num_out_ch,
+        scale=scale,
+        embed_dim=embed_dim,
+        num_groups=num_groups,
+        depth_per_group=depth_per_group,
+        num_heads=num_heads,
+        window_size=window_size,
+        ffn_expansion_ratio=ffn_expansion_ratio,
+        aim_reduction_ratio=aim_reduction_ratio,
+        group_block_pattern=group_block_pattern,
+        drop_path_rate=drop_path_rate,
+        upsampler_type=upsampler_type,
+        img_range=img_range,
+        unshuffle_mod=unshuffle_mod,
+    )
+
+
+@ARCH_REGISTRY.register()
 def fdat_large(
     num_in_ch: int = 3,
     num_out_ch: int = 3,
