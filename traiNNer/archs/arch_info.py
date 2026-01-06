@@ -98,6 +98,7 @@ REQUIRE_32_HW = {
     "realcugan",
     "escrealm",
     "escrealm_xl",
+    "srformerv2",
 }
 REQUIRE_64_HW = {
     "cascadedgaze",
