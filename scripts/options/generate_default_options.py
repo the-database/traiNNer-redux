@@ -9,6 +9,7 @@ from traiNNer.archs.arch_info import (
     ARCHS_WITHOUT_FP16,
     OFFICIAL_SETTINGS_FINETUNE,
     OFFICIAL_SETTINGS_FROMSCRATCH,
+    TEMPORAL_ARCHS,
     ArchInfo,
 )
 
@@ -95,6 +96,12 @@ def final_template(
         template = template.replace("dtype: fp16", "dtype: bf16")
 
     arch_key = variant.lower()
+
+    if arch_key in TEMPORAL_ARCHS:
+        template = template.replace(
+            "shape: 1x3xHxW  # Input shape in NxCxHxW. Use numbers for fixed dimensions and letters for dynamic ones (e.g. 1x3xHxW = batch=1, channels=3, dynamic height/width; 1x3x256x256 = fully static).",
+            "shape: 1x5x3xHxW  # Input shape in NxTxCxHxW. Use numbers for fixed dimensions and letters for dynamic ones (e.g. 1x5x3xHxW = batch=1, temporal frames=5, channels=3, dynamic height/width; 1x5x3x256x256 = fully static).",
+        )
 
     # print(
     #     arch_key,

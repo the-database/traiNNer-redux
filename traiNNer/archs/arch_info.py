@@ -102,6 +102,7 @@ REQUIRE_32_HW = {
     "escrealm",
     "escrealm_xl",
     "srformerv2",
+    "temporalspanv2",
 }
 REQUIRE_64_HW = {
     "cascadedgaze",
@@ -118,6 +119,11 @@ REQUIRE_64_HW = {
     "swin2sr_l",
     "swin2sr_m",
     "swin2sr_s",
+}
+TEMPORAL_ARCHS = {
+    "tscunet",
+    "temporalspan",
+    "temporalspanv2",
 }
 
 # Urban100

@@ -1,5 +1,6 @@
 import os
 import time
+from collections.abc import Sequence
 from logging import Logger
 from os import path as osp
 from pathlib import Path
@@ -61,6 +62,8 @@ def get_out_path(
     dynamic_flags: tuple[bool, bool, bool, bool],
 ) -> str:
     axis_labels = ["N", "C", "H", "W"]
+    if len(shape) == 5:
+        axis_labels.insert(1, "T")
     shape_parts = []
     dynamic_dims = []
 
@@ -88,21 +91,28 @@ def get_out_path(
 def parse_input_shape(
     shape_str: str,
     net_g_type: str,
-) -> tuple[tuple[int, int, int, int], tuple[bool, bool, bool, bool]]:
+) -> tuple[tuple[int, ...], tuple[bool, ...]]:
     parts = [p.strip() for p in shape_str.lower().split("x")]
-    if len(parts) != 4:
-        raise ValueError(f"Invalid onnx.shape (expected NxCxHxW): {shape_str!r}")
+    if len(parts) not in (4, 5):
+        raise ValueError(
+            f"Invalid onnx.shape (expected NxCxHxW or NxTxCxHxW): {shape_str!r}"
+        )
 
     default_hw = 16
     if net_g_type in REQUIRE_32_HW:
         default_hw = 32
     elif net_g_type in REQUIRE_64_HW:
         default_hw = 64
-    defaults = [1, 3, default_hw, default_hw]
+
+    if len(parts) == 4:
+        # NCHW
+        defaults = [1, 3, default_hw, default_hw]
+    else:
+        # TNCHW
+        defaults = [1, 1, 3, default_hw, default_hw]
 
     dims: list[int] = []
     dynamic_flags: list[bool] = []
-
     for i, p in enumerate(parts):
         if p.isdigit():
             dims.append(int(p))
@@ -111,12 +121,7 @@ def parse_input_shape(
             dims.append(defaults[i])
             dynamic_flags.append(True)
 
-    return tuple(dims), (  # pyright: ignore[reportReturnType]
-        dynamic_flags[0],
-        dynamic_flags[1],
-        dynamic_flags[2],
-        dynamic_flags[3],
-    )
+    return tuple(dims), tuple(dynamic_flags)
 
 
 def convert_onnx_to_low_precision(
@@ -155,9 +160,9 @@ def convert_and_save_onnx(
     logger: Logger,
     opt: ReduxOptions,
     torch_input: Tensor,
-    dynamic_flags: tuple[bool, bool, bool, bool],
+    dynamic_flags: Sequence[bool],
     out_dir: str,
-    example_shape: tuple[int, int, int, int],
+    example_shape: Sequence[int],
     dtype: DType,
 ) -> tuple[ModelProto, int, str, str | None]:
     assert model.net_g is not None
@@ -168,6 +173,8 @@ def convert_and_save_onnx(
 
     has_dynamic = any(dynamic_flags)
     axis_names = ["batch_size", "channels", "height", "width"]
+    if len(example_shape) == 5:
+        axis_names.insert(1, "temporal")
 
     if not has_dynamic:
         logger.info(
@@ -386,13 +393,10 @@ def verify_onnx(
         )
         return
 
-    torch_dtype = DTYPE_MAP[dtype]
-
     with torch.inference_mode():
         if dtype == "fp16":
-            model_dtype = model.net_g.to(torch_dtype)
-            input_dtype = torch_input.to(torch_dtype)
-            torch_output_np = model_dtype(input_dtype).float().cpu().numpy()
+            with torch.autocast(device_type="cuda", dtype=torch.float16):
+                torch_output_np = model.net_g(torch_input).float().cpu().numpy()
         else:
             torch_output_np = model.net_g(torch_input).cpu().numpy()
 
