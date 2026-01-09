@@ -66,6 +66,24 @@ class SRModel(BaseModel):
 
         self.net_g = self.model_to_device(self.net_g, compile=self.opt.use_compile)
 
+        # define teacher network
+        if opt.network_g_teacher is not None:
+            self.net_g_teacher = build_network(
+                {**opt.network_g_teacher, "scale": opt.scale}
+            )
+
+            assert self.opt.path.pretrain_network_g_teacher is not None, (
+                "pretrain_network_g_teacher must be defined when using network_g_teacher"
+            )
+
+            self.load_network(
+                self.net_g_teacher, self.opt.path.pretrain_network_g_teacher, True, None
+            )
+
+            self.net_g_teacher = self.model_to_device(
+                self.net_g_teacher, compile=self.opt.use_compile
+            )
+
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
         self.output: Tensor | None = None
@@ -349,7 +367,12 @@ class SRModel(BaseModel):
             memory_format=self.memory_format,
             non_blocking=True,
         )
-        if "gt" in data:
+        if self.net_g_teacher is not None:
+            with torch.inference_mode():
+                self.gt = self.net_g_teacher(self.lq).to(
+                    memory_format=self.memory_format
+                )
+        elif "gt" in data:
             self.gt = data["gt"].to(
                 self.device,
                 memory_format=self.memory_format,
