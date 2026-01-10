@@ -969,14 +969,12 @@ class DAT(nn.Module):
             upscale = 4
             self.conv_first = nn.Sequential(
                 nn.PixelUnshuffle(unshuffle),
-                nn.Conv2d(num_in_ch * unshuffle**2, embed_dim, 3, 1, 1, bias=True),
+                nn.Conv2d(num_in_ch * unshuffle**2, embed_dim, 3, 1, 1),
             )
             self.pad = unshuffle
         else:
-            self.conv_first = nn.Conv2d(num_in_ch, embed_dim, 3, 1, 1, bias=True)
-
-        # ------------------------- 1, Shallow Feature Extraction ------------------------- #
-        self.conv_first = nn.Conv2d(num_in_ch, embed_dim, 3, 1, 1)
+            # ------------------------- 1, Shallow Feature Extraction ------------------------- #
+            self.conv_first = nn.Conv2d(num_in_ch, embed_dim, 3, 1, 1)
 
         # ------------------------- 2, Deep Feature Extraction ------------------------- #
         self.num_layers = len(depth)
