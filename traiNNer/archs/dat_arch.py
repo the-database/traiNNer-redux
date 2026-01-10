@@ -841,7 +841,7 @@ class ResidualGroup(nn.Module):
         res = x
         for blk in self.blocks:
             if self.use_chk:
-                x = checkpoint.checkpoint(blk, x, x_size)
+                x = checkpoint.checkpoint(blk, x, x_size, use_reentrant=False)
             else:
                 x = blk(x, x_size)
         x = rearrange(x, "b (h w) c -> b c h w", h=H, w=W)
