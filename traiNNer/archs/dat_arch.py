@@ -947,6 +947,7 @@ class DAT(nn.Module):
         img_range=1.0,
         resi_connection="1conv",
         upsampler="pixelshuffle",
+        unshuffle_mod=False,
     ):
         super().__init__()
 
@@ -959,8 +960,20 @@ class DAT(nn.Module):
             self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
         else:
             self.mean = torch.zeros(1, 1, 1, 1)
+        self.pad = 0
         self.upscale = upscale
         self.upsampler = upsampler
+
+        if unshuffle_mod and upscale < 3:
+            unshuffle = 4 // upscale
+            upscale = 4
+            self.conv_first = nn.Sequential(
+                nn.PixelUnshuffle(unshuffle),
+                nn.Conv2d(num_in_ch * unshuffle**2, embed_dim, 3, 1, 1, bias=True),
+            )
+            self.pad = unshuffle
+        else:
+            self.conv_first = nn.Conv2d(num_in_ch, embed_dim, 3, 1, 1, bias=True)
 
         # ------------------------- 1, Shallow Feature Extraction ------------------------- #
         self.conv_first = nn.Conv2d(num_in_ch, embed_dim, 3, 1, 1)
@@ -1056,10 +1069,19 @@ class DAT(nn.Module):
 
         return x
 
+    def check_img_size(self, x: Tensor, h: int, w: int) -> Tensor:
+        if self.pad == 0:
+            return x
+        mod_pad_h = (self.pad - h % self.pad) % self.pad
+        mod_pad_w = (self.pad - w % self.pad) % self.pad
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+
     def forward(self, x):
         """
         Input: x: (B, C, H, W)
         """
+        _b, _c, h, w = x.shape
+        x = self.check_img_size(x, h, w)
         mean = self.mean.to(dtype=x.dtype, device=x.device)
         x = (x - mean) * self.img_range
 
@@ -1076,7 +1098,7 @@ class DAT(nn.Module):
             x = self.upsample(x)
 
         x = x / self.img_range + mean
-        return x
+        return x[:, :, : h * self.upscale, : w * self.upscale]
 
 
 @SPANDREL_REGISTRY.register()
@@ -1098,6 +1120,7 @@ def dat(
     drop_path_rate: float = 0.1,
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
+    unshuffle_mod: bool = False,
 ) -> DAT:
     return DAT(
         upscale=scale,
@@ -1117,6 +1140,7 @@ def dat(
         drop_path_rate=drop_path_rate,
         use_chk=use_chk,
         upsampler=upsampler,
+        unshuffle_mod=unshuffle_mod,
     )
 
 
@@ -1139,6 +1163,7 @@ def dat_s(
     drop_path_rate: float = 0.1,
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
+    unshuffle_mod: bool = False,
 ) -> DAT:
     return DAT(
         upscale=scale,
@@ -1158,6 +1183,7 @@ def dat_s(
         drop_path_rate=drop_path_rate,
         use_chk=use_chk,
         upsampler=upsampler,
+        unshuffle_mod=unshuffle_mod,
     )
 
 
@@ -1180,6 +1206,7 @@ def dat_2(
     drop_path_rate: float = 0.1,
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
+    unshuffle_mod: bool = False,
 ) -> DAT:
     return DAT(
         upscale=scale,
@@ -1199,6 +1226,7 @@ def dat_2(
         drop_path_rate=drop_path_rate,
         use_chk=use_chk,
         upsampler=upsampler,
+        unshuffle_mod=unshuffle_mod,
     )
 
 
@@ -1221,6 +1249,7 @@ def dat_light(
     drop_path_rate: float = 0.1,
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
+    unshuffle_mod: bool = False,
 ) -> DAT:
     return DAT(
         upscale=scale,
@@ -1240,6 +1269,7 @@ def dat_light(
         drop_path_rate=drop_path_rate,
         use_chk=use_chk,
         upsampler=upsampler,
+        unshuffle_mod=unshuffle_mod,
     )
 
 
@@ -1262,6 +1292,7 @@ def dat_2_aligned(
     drop_path_rate: float = 0.1,
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
+    unshuffle_mod: bool = False,
 ) -> DAT:
     return DAT(
         upscale=scale,
@@ -1281,45 +1312,5 @@ def dat_2_aligned(
         drop_path_rate=drop_path_rate,
         use_chk=use_chk,
         upsampler=upsampler,
-    )
-
-
-@SPANDREL_REGISTRY.register()
-def dat_2_aligned_down(
-    scale: int = 4,
-    in_chans: int = 3,
-    img_size: int = 64,
-    img_range: float = 1.0,
-    split_size: Sequence[int] = (8, 32),
-    depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
-    embed_dim: int = 160,
-    num_heads: Sequence[int] = (5, 5, 5, 5, 5, 5),
-    expansion_factor: int = 2,
-    resi_connection: str = "1conv",
-    qkv_bias: bool = True,
-    qk_scale: float | None = None,
-    drop_rate: float = 0.0,
-    attn_drop_rate: float = 0.0,
-    drop_path_rate: float = 0.1,
-    use_chk: bool = False,
-    upsampler: str = "pixelshuffle",
-) -> DAT:
-    return DAT(
-        upscale=scale,
-        in_chans=in_chans,
-        img_size=img_size,
-        img_range=img_range,
-        split_size=split_size,
-        depth=depth,
-        embed_dim=embed_dim,
-        num_heads=num_heads,
-        expansion_factor=expansion_factor,
-        resi_connection=resi_connection,
-        qkv_bias=qkv_bias,
-        qk_scale=qk_scale,
-        drop_rate=drop_rate,
-        attn_drop_rate=attn_drop_rate,
-        drop_path_rate=drop_path_rate,
-        use_chk=use_chk,
-        upsampler=upsampler,
+        unshuffle_mod=unshuffle_mod,
     )
