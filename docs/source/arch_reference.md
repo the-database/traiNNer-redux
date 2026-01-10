@@ -164,6 +164,7 @@ attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
+unshuffle_mod: false
 ```
 #### dat_2
 
@@ -186,6 +187,7 @@ attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
+unshuffle_mod: false
 ```
 #### dat_2_aligned
 
@@ -208,6 +210,7 @@ attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
+unshuffle_mod: false
 ```
 #### dat_light
 
@@ -230,6 +233,7 @@ attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
+unshuffle_mod: false
 ```
 #### dat_s
 
@@ -252,6 +256,7 @@ attn_drop_rate: 0.0
 drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
+unshuffle_mod: false
 ```
 ### DCTLSA
 #### dctlsa
