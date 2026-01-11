@@ -157,6 +157,12 @@ class PathOptions(StrictStruct):
             description="Path to the pretrain model for the generator. `pth` and `safetensors` formats are supported."
         ),
     ] = None
+    pretrain_network_g_teacher: Annotated[
+        str | None,
+        Meta(
+            description="Path to the pretrain model for the teacher of the generator. `pth` and `safetensors` formats are supported."
+        ),
+    ] = None
     pretrain_network_g_path: str | None = None
     pretrain_network_ae_path: str | None = None
     param_key_g: str | None = None
@@ -413,6 +419,10 @@ class ReduxOptions(StrictStruct):
 
     network_g: Annotated[
         dict[str, Any] | None, Meta(description="The options for the generator model.")
+    ] = None
+    network_g_teacher: Annotated[
+        dict[str, Any] | None,
+        Meta(description="The options for the teacher generator model."),
     ] = None
     network_d: Annotated[
         dict[str, Any] | None,

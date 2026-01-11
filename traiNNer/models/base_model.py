@@ -65,6 +65,7 @@ class BaseModel:
         self.first_val_completed = False
         self.model_loader = ModelLoader()
         self.net_g = None
+        self.net_g_teacher: nn.Module | None = None
         self.net_g_ema: EMA | None = None
         self.net_d = None
         self.net_ae = None
