@@ -339,17 +339,22 @@ class SRModel(BaseModel):
                 p = torch.softmax(x_avg, dim=0)
                 self._feature_entropy = -(p * torch.log(p + 1e-8)).sum().item()
 
+        # Register on last transformer block
         for name, module in self.net_g.named_modules():
-            # DAT
-            if "layers.5.blocks.5" in name and name.endswith("blocks.5"):
+            # Match the actual HAT structure with any prefix
+            if name.endswith("layers.5.residual_group.blocks.5"):
                 module.register_forward_hook(entropy_hook)
-                print(f"Registered entropy hook on: {name}")
+                print(f"Entropy hook registered on: {name}")
                 return
-            # HAT
-            if "layers.5.blocks.5" in name or name == "layers.5":
+
+        # Fallback - try to find any deep block
+        for name, module in self.net_g.named_modules():
+            if "residual_group.blocks.5" in name and name.endswith("blocks.5"):
                 module.register_forward_hook(entropy_hook)
-                print(f"Registered entropy hook on: {name}")
+                print(f"Entropy hook registered on: {name}")
                 return
+
+        print("WARNING: Could not find layer to register entropy hook")
 
     def setup_optimizers(self) -> None:
         train_opt = self.opt.train
