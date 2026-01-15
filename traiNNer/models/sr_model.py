@@ -323,6 +323,34 @@ class SRModel(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
+        # logging features
+        self._setup_feature_hooks()
+
+    def _setup_feature_hooks(self) -> None:
+        self._feature_entropy = None
+
+        def entropy_hook(module, input, output) -> None:
+            with torch.no_grad():
+                x = output
+                if x.dim() == 3:  # (B, L, C)
+                    x_avg = x.abs().mean(dim=(0, 1))
+                else:  # (B, C, H, W)
+                    x_avg = x.abs().mean(dim=(0, 2, 3))
+                p = torch.softmax(x_avg, dim=0)
+                self._feature_entropy = -(p * torch.log(p + 1e-8)).sum().item()
+
+        for name, module in self.net_g.named_modules():
+            # DAT
+            if "layers.5.blocks.5" in name and name.endswith("blocks.5"):
+                module.register_forward_hook(entropy_hook)
+                print(f"Registered entropy hook on: {name}")
+                return
+            # HAT
+            if "layers.5.blocks.5" in name or name == "layers.5":
+                module.register_forward_hook(entropy_hook)
+                print(f"Registered entropy hook on: {name}")
+                return
+
     def setup_optimizers(self) -> None:
         train_opt = self.opt.train
         assert train_opt is not None
@@ -424,6 +452,13 @@ class SRModel(BaseModel):
                 l_g_total = torch.tensor(0.0, device=self.output.device)
 
                 lq_target = None
+
+                # Log entropy if hook captured it
+                if (
+                    hasattr(self, "_feature_entropy")
+                    and self._feature_entropy is not None
+                ):
+                    loss_dict["entropy"] = self._feature_entropy
 
                 for label, loss in self.losses.items():
                     target = self.gt

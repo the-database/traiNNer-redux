@@ -143,6 +143,8 @@ class MessageLogger:
                     label = f"grad_norms/{label}"
                 elif label.startswith("scale_"):
                     label = f"scales/{label}"
+                elif label == "entropy":
+                    label = "feature_stats/entropy"
 
                 if isinstance(v, float):
                     value = v
