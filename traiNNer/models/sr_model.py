@@ -463,7 +463,9 @@ class SRModel(BaseModel):
                     hasattr(self, "_feature_entropy")
                     and self._feature_entropy is not None
                 ):
-                    loss_dict["entropy"] = self._feature_entropy
+                    loss_dict["entropy"] = torch.tensor(
+                        self._feature_entropy, device=self.device
+                    )
 
                 for label, loss in self.losses.items():
                     target = self.gt
