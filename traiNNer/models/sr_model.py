@@ -324,7 +324,7 @@ class SRModel(BaseModel):
         self.setup_schedulers()
 
         # logging features
-        self._setup_feature_hooks()
+        # self._setup_feature_hooks()
 
     def _setup_feature_hooks(self) -> None:
         self._feature_entropy = None
