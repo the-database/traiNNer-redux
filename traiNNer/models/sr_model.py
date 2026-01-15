@@ -339,17 +339,11 @@ class SRModel(BaseModel):
                 p = torch.softmax(x_avg, dim=0)
                 self._feature_entropy = -(p * torch.log(p + 1e-8)).sum().item()
 
-        # Register on last transformer block
+        # Find any module ending with blocks.5 or blocks.4 in layers.5
         for name, module in self.net_g.named_modules():
-            # Match the actual HAT structure with any prefix
-            if name.endswith("layers.5.residual_group.blocks.5"):
-                module.register_forward_hook(entropy_hook)
-                print(f"Entropy hook registered on: {name}")
-                return
-
-        # Fallback - try to find any deep block
-        for name, module in self.net_g.named_modules():
-            if "residual_group.blocks.5" in name and name.endswith("blocks.5"):
+            if "layers.5" in name and name.endswith(
+                ("blocks.5", "blocks.4", "blocks.3")
+            ):
                 module.register_forward_hook(entropy_hook)
                 print(f"Entropy hook registered on: {name}")
                 return
