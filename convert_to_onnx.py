@@ -13,6 +13,7 @@ import torch
 from modelopt.onnx.autocast import convert_to_mixed_precision
 from modelopt.onnx.autocast.nodeclassifier import NodeRuleBase
 from onnx import ModelProto, TensorProto
+from onnxconverter_common.float16 import convert_float_to_float16
 from onnxslim import slim
 from rich.traceback import install
 from torch import Tensor
@@ -140,19 +141,29 @@ def convert_onnx_to_low_precision(
         fp32_model = onnx.load(onnx_path)
         init_map = {t.name: t for t in fp32_model.graph.initializer}
         custom_rule = SkipDepthwiseConvRule(init_map)
+    model = None
 
-    return convert_to_mixed_precision(
-        onnx_path=onnx_path,
-        low_precision_type=MODELOPT_PRECISION_MAP[dtype],
-        keep_io_types=dtype == "bf16",
-        data_max=max_val,
-        init_max=max_val,
-        custom_rule=custom_rule,
-        opset=opset,
-        op_types_to_exclude=["ConvTranspose"],
-    )
+    try:
+        model = convert_to_mixed_precision(
+            onnx_path=onnx_path,
+            low_precision_type=MODELOPT_PRECISION_MAP[dtype],
+            keep_io_types=dtype == "bf16",
+            data_max=max_val,
+            init_max=max_val,
+            custom_rule=custom_rule,
+            opset=opset,
+            op_types_to_exclude=["ConvTranspose"],
+        )
+    except:  # noqa: E722
+        if dtype == "fp16":
+            logger = get_root_logger()
+            logger.warning(
+                "Failed to convert to fp16 with NVIDIA Model Optimizer, falling back to legacy fp16 conversion."
+            )
+            model = onnx.load(onnx_path)
+            model = convert_float_to_float16(model)
 
-    # TODO for bf16 model convert io to fp16
+    return model  # pyright: ignore[reportReturnType]
 
 
 def convert_and_save_onnx(
