@@ -83,6 +83,7 @@ class SRModel(BaseModel):
             self.net_g_teacher = self.model_to_device(
                 self.net_g_teacher, compile=self.opt.use_compile
             )
+            self.net_g_teacher.eval()
 
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
@@ -434,9 +435,6 @@ class SRModel(BaseModel):
         lq = rgb2pixelformat_pt(
             self.lq, self.opt.input_pixel_format
         )  # lq: input_pixel_format
-        rgb2pixelformat_pt(
-            self.gt, self.opt.input_pixel_format
-        )  # gt: input_pixel_format
 
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
@@ -518,7 +516,7 @@ class SRModel(BaseModel):
                         for sublabel, loss_val in l_g_loss.items():
                             if loss_val > 0:
                                 weighted_loss_val = loss_val * abs(loss.loss_weight)
-                                l_g_total += weighted_loss_val * self.accum_iters
+                                l_g_total += weighted_loss_val / self.accum_iters
                                 loss_dict[f"{label}_{sublabel}"] = weighted_loss_val
                     else:
                         weighted_l_g_loss = l_g_loss * abs(loss.loss_weight)
