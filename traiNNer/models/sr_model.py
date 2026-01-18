@@ -524,9 +524,18 @@ class SRModel(BaseModel):
                         loss_dict[label] = weighted_l_g_loss
 
                 if not l_g_total.isfinite():
-                    raise RuntimeError(
-                        "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
+                    self.nan_count += 1
+                    if self.nan_count > 10:
+                        raise RuntimeError(
+                            "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
+                        )
+                    logger = get_root_logger()
+                    logger.warning(
+                        "NaN/Inf in loss (count: %d), skipping update", self.nan_count
                     )
+                    return  # skip this iteration
+                else:
+                    self.nan_count = 0
 
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total
