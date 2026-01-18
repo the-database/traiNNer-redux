@@ -371,7 +371,7 @@ class HSLuvLoss(nn.Module):
         # hue diff between black or white is 0
         hue_diff = torch.where((x_lightness < eps) & (y_lightness < eps), 0, hue_diff)
         hue_diff = torch.where(
-            (x_lightness > 1 - eps) & (y_lightness > eps - 1), 0, hue_diff
+            (x_lightness > 1 - eps) & (y_lightness > 1 - eps), 0, hue_diff
         )
 
         hue_loss = torch.mean(hue_diff) * self.hue_weight
