@@ -757,7 +757,6 @@ class HAT_iLN(nn.Module):
         patch_norm=True,
         use_checkpoint=False,
         upscale=1,
-        img_range=1.0,
         upsampler: Literal["pixelshuffle"] = "pixelshuffle",
         resi_connection="1conv",
         num_feat=64,
@@ -770,12 +769,6 @@ class HAT_iLN(nn.Module):
 
         num_in_ch = in_chans
         num_out_ch = in_chans
-        self.img_range = img_range
-        if in_chans == 3:
-            rgb_mean = (0.4488, 0.4371, 0.4040)
-            self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
-        else:
-            self.mean = torch.zeros(1, 1, 1, 1)
         self.upscale = upscale
         self.upsampler = upsampler
 
@@ -971,8 +964,6 @@ class HAT_iLN(nn.Module):
 
     def forward(self, x):
         H, W = x.shape[2:]
-        mean = self.mean.to(dtype=x.dtype, device=x.device)
-        x = (x - mean) * self.img_range
         x = self.check_image_size(x)
 
         if self.upsampler == "pixelshuffle":
@@ -980,8 +971,6 @@ class HAT_iLN(nn.Module):
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
-
-        x = x / self.img_range + mean
 
         return x[:, :, : H * self.upscale, : W * self.upscale]
 
@@ -1009,7 +998,6 @@ def hat_iln_l(
     ape: bool = False,
     patch_norm: bool = True,
     use_checkpoint: bool = False,
-    img_range: float = 1.0,
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
@@ -1036,7 +1024,6 @@ def hat_iln_l(
         ape=ape,
         patch_norm=patch_norm,
         use_checkpoint=use_checkpoint,
-        img_range=img_range,
         upsampler=upsampler,
         resi_connection=resi_connection,
         num_feat=num_feat,
@@ -1066,7 +1053,6 @@ def hat_iln_m(
     ape: bool = False,
     patch_norm: bool = True,
     use_checkpoint: bool = False,
-    img_range: float = 1.0,
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
@@ -1093,7 +1079,6 @@ def hat_iln_m(
         ape=ape,
         patch_norm=patch_norm,
         use_checkpoint=use_checkpoint,
-        img_range=img_range,
         upsampler=upsampler,
         resi_connection=resi_connection,
         num_feat=num_feat,
@@ -1123,7 +1108,6 @@ def hat_iln_s(
     ape: bool = False,
     patch_norm: bool = True,
     use_checkpoint: bool = False,
-    img_range: float = 1.0,
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
@@ -1150,7 +1134,6 @@ def hat_iln_s(
         ape=ape,
         patch_norm=patch_norm,
         use_checkpoint=use_checkpoint,
-        img_range=img_range,
         upsampler=upsampler,
         resi_connection=resi_connection,
         num_feat=num_feat,
