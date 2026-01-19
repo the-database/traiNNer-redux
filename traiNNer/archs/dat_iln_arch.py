@@ -986,7 +986,6 @@ class DAT_iLN(nn.Module):
         norm_layer (nn.Module): Normalization layer. Default: iLN
         use_chk (bool): Whether to use checkpointing to save memory.
         upscale: Upscale factor. 2/3/4 for image SR
-        img_range: Image range. 1. or 255.
         resi_connection: The convolutional block before residual connection. '1conv'/'3conv'
     """
 
@@ -1011,7 +1010,6 @@ class DAT_iLN(nn.Module):
         norm_layer=iLN,
         use_chk=False,
         upscale=2,
-        img_range=1.0,
         resi_connection="1conv",
         upsampler="pixelshuffle",
         unshuffle_mod=False,
@@ -1021,12 +1019,6 @@ class DAT_iLN(nn.Module):
         num_in_ch = in_chans
         num_out_ch = in_chans
         num_feat = 64
-        self.img_range = img_range
-        if in_chans == 3:
-            rgb_mean = (0.4488, 0.4371, 0.4040)
-            self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
-        else:
-            self.mean = torch.zeros(1, 1, 1, 1)
         self.pad = 0
         self.upscale = upscale
         self.upsampler = upsampler
@@ -1155,8 +1147,6 @@ class DAT_iLN(nn.Module):
         """
         _b, _c, h, w = x.shape
         x = self.check_img_size(x, h, w)
-        mean = self.mean.to(dtype=x.dtype, device=x.device)
-        x = (x - mean) * self.img_range
 
         if self.upsampler == "pixelshuffle":
             # for image SR
@@ -1170,7 +1160,6 @@ class DAT_iLN(nn.Module):
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.upsample(x)
 
-        x = x / self.img_range + mean
         return x[:, :, : h * self.upscale, : w * self.upscale]
 
 
@@ -1179,7 +1168,6 @@ def dat_iln(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 32),
     depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
@@ -1199,7 +1187,6 @@ def dat_iln(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,
@@ -1222,7 +1209,6 @@ def dat_iln_s(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 16),
     depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
@@ -1242,7 +1228,6 @@ def dat_iln_s(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,
@@ -1265,7 +1250,6 @@ def dat_iln_2(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 32),
     depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
@@ -1285,7 +1269,6 @@ def dat_iln_2(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,
@@ -1308,7 +1291,6 @@ def dat_iln_light(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 32),
     depth: Sequence[int] = (18,),
     embed_dim: int = 60,
@@ -1328,7 +1310,6 @@ def dat_iln_light(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,
