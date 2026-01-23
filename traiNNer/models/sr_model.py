@@ -328,11 +328,16 @@ class SRModel(BaseModel):
         # self._setup_feature_hooks()
 
     def _setup_feature_hooks(self) -> None:
-        self._feature_entropy = None
+        self._feature_entropy = None  # pyright: ignore[reportUninitializedInstanceVariable]
 
-        def entropy_hook(module, input, output) -> None:
+        def entropy_hook(module: nn.Module, input: Tensor, output: Tensor) -> None:
             with torch.no_grad():
-                x = output
+                # Handle SPAB output which is a tuple (out, out1, sim_att)
+                if isinstance(output, tuple):
+                    x = output[0]
+                else:
+                    x = output
+
                 if x.dim() == 3:  # (B, L, C)
                     x_avg = x.abs().mean(dim=(0, 1))
                 else:  # (B, C, H, W)
@@ -340,13 +345,43 @@ class SRModel(BaseModel):
                 p = torch.softmax(x_avg, dim=0)
                 self._feature_entropy = -(p * torch.log(p + 1e-8)).sum().item()
 
-        # Find any module ending with blocks.5 or blocks.4 in layers.5
+        # Try HAT/DAT style first
         for name, module in self.net_g.named_modules():
             if "layers.5" in name and name.endswith(
                 ("blocks.5", "blocks.4", "blocks.3")
             ):
-                module.register_forward_hook(entropy_hook)
+                module.register_forward_hook(entropy_hook)  # pyright: ignore[reportArgumentType]
                 print(f"Entropy hook registered on: {name}")
+                return
+
+        # Try SPAN style (block_6, block_5, etc.)
+        for block_name in ("block_6", "block_5", "block_4"):
+            if hasattr(self.net_g, block_name):
+                module = getattr(self.net_g, block_name)
+                module.register_forward_hook(entropy_hook)
+                print(f"Entropy hook registered on: {block_name}")
+                return
+
+        # Try RealPLKSR style - feats is a Sequential with PLKBlocks
+        if hasattr(self.net_g, "feats") and isinstance(self.net_g.feats, nn.Sequential):
+            for i in range(len(self.net_g.feats) - 1, -1, -1):
+                if self.net_g.feats[i].__class__.__name__ == "PLKBlock":
+                    self.net_g.feats[i].register_forward_hook(entropy_hook)  # pyright: ignore[reportArgumentType, reportAttributeAccessIssue]
+                    print(f"Entropy hook registered on: feats[{i}] (PLKBlock)")
+                    return
+
+        # Try FDAT style - groups is a Sequential of SimplifiedResidualGroup
+        if hasattr(self.net_g, "groups") and isinstance(
+            self.net_g.groups, nn.Sequential
+        ):
+            # Get the last group's last block
+            last_group = self.net_g.groups[-1]
+            if hasattr(last_group, "blocks") and len(last_group.blocks) > 0:  # pyright: ignore[reportArgumentType]
+                last_block = last_group.blocks[-1]  # pyright: ignore[reportIndexIssue]
+                last_block.register_forward_hook(entropy_hook)  # pyright: ignore[reportAttributeAccessIssue]
+                print(
+                    "Entropy hook registered on: groups[-1].blocks[-1] (SimplifiedDATBlock)"
+                )
                 return
 
         print("WARNING: Could not find layer to register entropy hook")
