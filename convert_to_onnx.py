@@ -162,6 +162,8 @@ def convert_onnx_to_low_precision(
             )
             model = onnx.load(onnx_path)
             model = convert_float_to_float16(model)
+        else:
+            raise
 
     return model  # pyright: ignore[reportReturnType]
 
