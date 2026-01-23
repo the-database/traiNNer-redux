@@ -1,5 +1,6 @@
 # ruff: noqa
 # type: ignore
+# DAT with i-LN from https://arxiv.org/abs/2504.06629
 from __future__ import annotations
 
 import math
@@ -15,8 +16,51 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils import checkpoint
 
-# from spandrel.architectures.DAT import DAT
-from traiNNer.utils.registry import SPANDREL_REGISTRY
+from traiNNer.utils.registry import ARCH_REGISTRY
+
+
+class iLN(nn.Module):
+    """Image Restoration Transformer Tailored Layer Normalization (i-LN).
+
+    Normalizes across both spatial and channel dimensions instead of per-token,
+    preserving spatial correlations between tokens.
+    """
+
+    def __init__(self, normalized_shape: int, eps: float = 1e-6) -> None:
+        super().__init__()
+        self.eps = eps
+        self.weight = nn.Parameter(torch.ones(normalized_shape))
+        self.bias = nn.Parameter(torch.zeros(normalized_shape))
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        # x shape: (B, L, C) where L = H*W
+        b = x.shape[0]
+
+        # Flatten spatial and channel for stats
+        x_flat = x.reshape(b, -1)  # (B, L*C)
+        mean = x_flat.mean(dim=1, keepdim=True).reshape(b, 1, 1)  # (B, 1, 1)
+        var = x_flat.var(dim=1, keepdim=True, unbiased=False).reshape(
+            b, 1, 1
+        )  # (B, 1, 1)
+        std = torch.sqrt(var + self.eps)
+
+        x_norm = (x - mean) / std
+
+        return self.weight * x_norm + self.bias, std
+
+
+class AffineTransform(nn.Module):
+    """Simple affine transformation (gamma * x + beta) without normalization.
+    Used for final norm layer in i-LN networks.
+    """
+
+    def __init__(self, normalized_shape: int) -> None:
+        super().__init__()
+        self.weight = nn.Parameter(torch.ones(normalized_shape))
+        self.bias = nn.Parameter(torch.zeros(normalized_shape))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.weight * x + self.bias
 
 
 def img2windows(img, H_sp, W_sp):
@@ -52,6 +96,7 @@ class SpatialGate(nn.Module):
 
     def __init__(self, dim):
         super().__init__()
+        # Keep as regular LayerNorm - this is internal to the gate mechanism
         self.norm = nn.LayerNorm(dim)
         self.conv = nn.Conv2d(
             dim, dim, kernel_size=3, stride=1, padding=1, groups=dim
@@ -684,7 +729,9 @@ class Adaptive_Channel_Attention(nn.Module):
         return x
 
 
-class DATB(nn.Module):
+class DATB_iLN(nn.Module):
+    """DAT Block with i-LN."""
+
     def __init__(
         self,
         dim,
@@ -699,7 +746,7 @@ class DATB(nn.Module):
         attn_drop=0.0,
         drop_path=0.0,
         act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
+        norm_layer=iLN,
         rg_idx=0,
         b_idx=0,
     ):
@@ -749,14 +796,20 @@ class DATB(nn.Module):
         Output: x: (B, H*W, C)
         """
         H, W = x_size
-        x = x + self.drop_path(self.attn(self.norm1(x), H, W))
-        x = x + self.drop_path(self.ffn(self.norm2(x), H, W))
+
+        # Attention with i-LN rescaling
+        x_norm, std1 = self.norm1(x)
+        x = x + self.drop_path(std1 * self.attn(x_norm, H, W))
+
+        # FFN with i-LN rescaling
+        x_norm, std2 = self.norm2(x)
+        x = x + self.drop_path(std2 * self.ffn(x_norm, H, W))
 
         return x
 
 
-class ResidualGroup(nn.Module):
-    """ResidualGroup
+class ResidualGroup_iLN(nn.Module):
+    """ResidualGroup with i-LN
     Args:
         dim (int): Number of input channels.
         reso (int): Input resolution.
@@ -769,7 +822,7 @@ class ResidualGroup(nn.Module):
         attn_drop(float): Attention dropout rate. Default: 0
         drop_paths (float | None): Stochastic depth rate.
         act_layer (nn.Module): Activation layer. Default: nn.GELU
-        norm_layer (nn.Module): Normalization layer. Default: nn.LayerNorm
+        norm_layer (nn.Module): Normalization layer. Default: iLN
         depth (int): Number of dual aggregation Transformer blocks in residual group.
         use_chk (bool): Whether to use checkpointing to save memory.
         resi_connection: The convolutional block before residual connection. '1conv'/'3conv'
@@ -788,7 +841,7 @@ class ResidualGroup(nn.Module):
         attn_drop=0.0,
         drop_paths=None,
         act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
+        norm_layer=iLN,
         depth=2,
         use_chk=False,
         resi_connection="1conv",
@@ -800,7 +853,7 @@ class ResidualGroup(nn.Module):
 
         self.blocks = nn.ModuleList(
             [
-                DATB(
+                DATB_iLN(
                     dim=dim,
                     num_heads=num_heads,
                     reso=reso,
@@ -899,9 +952,23 @@ class UpsampleOneStep(nn.Sequential):
         return flops
 
 
+class BeforeRG_iLN(nn.Module):
+    """Before ResidualGroup module with i-LN (returns only normalized tensor, discards std)."""
+
+    def __init__(self, embed_dim):
+        super().__init__()
+        self.rearrange = Rearrange("b c h w -> b (h w) c")
+        self.norm = iLN(embed_dim)
+
+    def forward(self, x):
+        x = self.rearrange(x)
+        x, _ = self.norm(x)  # Discard std - this is input normalization
+        return x
+
+
 @store_hyperparameters()
-class DAT(nn.Module):
-    """Dual Aggregation Transformer
+class DAT_iLN(nn.Module):
+    """Dual Aggregation Transformer with i-LN
     Args:
         img_size (int): Input image size. Default: 64
         in_chans (int): Number of input image channels. Default: 3
@@ -916,10 +983,9 @@ class DAT(nn.Module):
         attn_drop_rate (float): Attention dropout rate. Default: 0
         drop_path_rate (float): Stochastic depth rate. Default: 0.1
         act_layer (nn.Module): Activation layer. Default: nn.GELU
-        norm_layer (nn.Module): Normalization layer. Default: nn.LayerNorm
+        norm_layer (nn.Module): Normalization layer. Default: iLN
         use_chk (bool): Whether to use checkpointing to save memory.
         upscale: Upscale factor. 2/3/4 for image SR
-        img_range: Image range. 1. or 255.
         resi_connection: The convolutional block before residual connection. '1conv'/'3conv'
     """
 
@@ -941,10 +1007,9 @@ class DAT(nn.Module):
         attn_drop_rate=0.0,
         drop_path_rate=0.1,
         act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
+        norm_layer=iLN,
         use_chk=False,
         upscale=2,
-        img_range=1.0,
         resi_connection="1conv",
         upsampler="pixelshuffle",
         unshuffle_mod=False,
@@ -954,12 +1019,6 @@ class DAT(nn.Module):
         num_in_ch = in_chans
         num_out_ch = in_chans
         num_feat = 64
-        self.img_range = img_range
-        if in_chans == 3:
-            rgb_mean = (0.4488, 0.4371, 0.4040)
-            self.mean = torch.Tensor(rgb_mean).view(1, 3, 1, 1)
-        else:
-            self.mean = torch.zeros(1, 1, 1, 1)
         self.pad = 0
         self.upscale = upscale
         self.upsampler = upsampler
@@ -984,9 +1043,7 @@ class DAT(nn.Module):
         )
         heads = num_heads
 
-        self.before_RG = nn.Sequential(
-            Rearrange("b c h w -> b (h w) c"), nn.LayerNorm(embed_dim)
-        )
+        self.before_RG = BeforeRG_iLN(embed_dim)
 
         curr_dim = embed_dim
         dpr = [
@@ -995,7 +1052,7 @@ class DAT(nn.Module):
 
         self.layers = nn.ModuleList()
         for i in range(self.num_layers):
-            layer = ResidualGroup(
+            layer = ResidualGroup_iLN(
                 dim=embed_dim,
                 num_heads=heads[i],
                 reso=img_size,
@@ -1015,7 +1072,9 @@ class DAT(nn.Module):
             )
             self.layers.append(layer)
 
-        self.norm = norm_layer(curr_dim)
+        # Final norm - use AffineTransform (no normalization, just gamma/beta)
+        self.norm = AffineTransform(curr_dim)
+
         # build the last conv layer in deep feature extraction
         if resi_connection == "1conv":
             self.conv_after_body = nn.Conv2d(embed_dim, embed_dim, 3, 1, 1)
@@ -1051,7 +1110,15 @@ class DAT(nn.Module):
             if isinstance(m, nn.Linear) and m.bias is not None:  # type: ignore
                 nn.init.constant_(m.bias, 0)
         elif isinstance(
-            m, (nn.LayerNorm, nn.BatchNorm2d, nn.GroupNorm, nn.InstanceNorm2d)
+            m,
+            (
+                nn.LayerNorm,
+                nn.BatchNorm2d,
+                nn.GroupNorm,
+                nn.InstanceNorm2d,
+                iLN,
+                AffineTransform,
+            ),
         ):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
@@ -1067,7 +1134,7 @@ class DAT(nn.Module):
 
         return x
 
-    def check_img_size(self, x: Tensor, h: int, w: int) -> Tensor:
+    def check_img_size(self, x, h: int, w: int):
         if self.pad == 0:
             return x
         mod_pad_h = (self.pad - h % self.pad) % self.pad
@@ -1080,8 +1147,6 @@ class DAT(nn.Module):
         """
         _b, _c, h, w = x.shape
         x = self.check_img_size(x, h, w)
-        mean = self.mean.to(dtype=x.dtype, device=x.device)
-        x = (x - mean) * self.img_range
 
         if self.upsampler == "pixelshuffle":
             # for image SR
@@ -1095,16 +1160,14 @@ class DAT(nn.Module):
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.upsample(x)
 
-        x = x / self.img_range + mean
         return x[:, :, : h * self.upscale, : w * self.upscale]
 
 
-@SPANDREL_REGISTRY.register()
-def dat(
+@ARCH_REGISTRY.register()
+def dat_iln(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 32),
     depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
@@ -1119,12 +1182,11 @@ def dat(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
-) -> DAT:
-    return DAT(
+) -> DAT_iLN:
+    return DAT_iLN(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,
@@ -1142,12 +1204,11 @@ def dat(
     )
 
 
-@SPANDREL_REGISTRY.register()
-def dat_s(
+@ARCH_REGISTRY.register()
+def dat_iln_s(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 16),
     depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
@@ -1162,12 +1223,11 @@ def dat_s(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
-) -> DAT:
-    return DAT(
+) -> DAT_iLN:
+    return DAT_iLN(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,
@@ -1185,12 +1245,11 @@ def dat_s(
     )
 
 
-@SPANDREL_REGISTRY.register()
-def dat_2(
+@ARCH_REGISTRY.register()
+def dat_iln_2(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 32),
     depth: Sequence[int] = (6, 6, 6, 6, 6, 6),
     embed_dim: int = 180,
@@ -1205,12 +1264,11 @@ def dat_2(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
-) -> DAT:
-    return DAT(
+) -> DAT_iLN:
+    return DAT_iLN(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,
@@ -1228,55 +1286,11 @@ def dat_2(
     )
 
 
-@SPANDREL_REGISTRY.register()
-def dat_2_l(
+@ARCH_REGISTRY.register()
+def dat_iln_light(
     scale: int = 4,
     in_chans: int = 3,
     img_size: int = 64,
-    img_range: float = 1.0,
-    split_size: Sequence[int] = (8, 32),
-    depth: Sequence[int] = (6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6),
-    embed_dim: int = 180,
-    num_heads: Sequence[int] = (6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6),
-    expansion_factor: int = 2,
-    resi_connection: str = "1conv",
-    qkv_bias: bool = True,
-    qk_scale: float | None = None,
-    drop_rate: float = 0.0,
-    attn_drop_rate: float = 0.0,
-    drop_path_rate: float = 0.1,
-    use_chk: bool = False,
-    upsampler: str = "pixelshuffle",
-    unshuffle_mod: bool = False,
-) -> DAT:
-    return DAT(
-        upscale=scale,
-        in_chans=in_chans,
-        img_size=img_size,
-        img_range=img_range,
-        split_size=split_size,
-        depth=depth,
-        embed_dim=embed_dim,
-        num_heads=num_heads,
-        expansion_factor=expansion_factor,
-        resi_connection=resi_connection,
-        qkv_bias=qkv_bias,
-        qk_scale=qk_scale,
-        drop_rate=drop_rate,
-        attn_drop_rate=attn_drop_rate,
-        drop_path_rate=drop_path_rate,
-        use_chk=use_chk,
-        upsampler=upsampler,
-        unshuffle_mod=unshuffle_mod,
-    )
-
-
-@SPANDREL_REGISTRY.register()
-def dat_light(
-    scale: int = 4,
-    in_chans: int = 3,
-    img_size: int = 64,
-    img_range: float = 1.0,
     split_size: Sequence[int] = (8, 32),
     depth: Sequence[int] = (18,),
     embed_dim: int = 60,
@@ -1291,12 +1305,11 @@ def dat_light(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
-) -> DAT:
-    return DAT(
+) -> DAT_iLN:
+    return DAT_iLN(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
-        img_range=img_range,
         split_size=split_size,
         depth=depth,
         embed_dim=embed_dim,

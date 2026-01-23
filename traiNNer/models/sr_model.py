@@ -83,6 +83,7 @@ class SRModel(BaseModel):
             self.net_g_teacher = self.model_to_device(
                 self.net_g_teacher, compile=self.opt.use_compile
             )
+            self.net_g_teacher.eval()
 
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
@@ -323,6 +324,68 @@ class SRModel(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
+        # logging features
+        # self._setup_feature_hooks()
+
+    def _setup_feature_hooks(self) -> None:
+        self._feature_entropy = None  # pyright: ignore[reportUninitializedInstanceVariable]
+
+        def entropy_hook(module: nn.Module, input: Tensor, output: Tensor) -> None:
+            with torch.no_grad():
+                # Handle SPAB output which is a tuple (out, out1, sim_att)
+                if isinstance(output, tuple):
+                    x = output[0]
+                else:
+                    x = output
+
+                if x.dim() == 3:  # (B, L, C)
+                    x_avg = x.abs().mean(dim=(0, 1))
+                else:  # (B, C, H, W)
+                    x_avg = x.abs().mean(dim=(0, 2, 3))
+                p = torch.softmax(x_avg, dim=0)
+                self._feature_entropy = -(p * torch.log(p + 1e-8)).sum().item()
+
+        # Try HAT/DAT style first
+        for name, module in self.net_g.named_modules():
+            if "layers.5" in name and name.endswith(
+                ("blocks.5", "blocks.4", "blocks.3")
+            ):
+                module.register_forward_hook(entropy_hook)  # pyright: ignore[reportArgumentType]
+                print(f"Entropy hook registered on: {name}")
+                return
+
+        # Try SPAN style (block_6, block_5, etc.)
+        for block_name in ("block_6", "block_5", "block_4"):
+            if hasattr(self.net_g, block_name):
+                module = getattr(self.net_g, block_name)
+                module.register_forward_hook(entropy_hook)
+                print(f"Entropy hook registered on: {block_name}")
+                return
+
+        # Try RealPLKSR style - feats is a Sequential with PLKBlocks
+        if hasattr(self.net_g, "feats") and isinstance(self.net_g.feats, nn.Sequential):
+            for i in range(len(self.net_g.feats) - 1, -1, -1):
+                if self.net_g.feats[i].__class__.__name__ == "PLKBlock":
+                    self.net_g.feats[i].register_forward_hook(entropy_hook)  # pyright: ignore[reportArgumentType, reportAttributeAccessIssue]
+                    print(f"Entropy hook registered on: feats[{i}] (PLKBlock)")
+                    return
+
+        # Try FDAT style - groups is a Sequential of SimplifiedResidualGroup
+        if hasattr(self.net_g, "groups") and isinstance(
+            self.net_g.groups, nn.Sequential
+        ):
+            # Get the last group's last block
+            last_group = self.net_g.groups[-1]
+            if hasattr(last_group, "blocks") and len(last_group.blocks) > 0:  # pyright: ignore[reportArgumentType]
+                last_block = last_group.blocks[-1]  # pyright: ignore[reportIndexIssue]
+                last_block.register_forward_hook(entropy_hook)  # pyright: ignore[reportAttributeAccessIssue]
+                print(
+                    "Entropy hook registered on: groups[-1].blocks[-1] (SimplifiedDATBlock)"
+                )
+                return
+
+        print("WARNING: Could not find layer to register entropy hook")
+
     def setup_optimizers(self) -> None:
         train_opt = self.opt.train
         assert train_opt is not None
@@ -407,9 +470,6 @@ class SRModel(BaseModel):
         lq = rgb2pixelformat_pt(
             self.lq, self.opt.input_pixel_format
         )  # lq: input_pixel_format
-        rgb2pixelformat_pt(
-            self.gt, self.opt.input_pixel_format
-        )  # gt: input_pixel_format
 
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
@@ -424,6 +484,15 @@ class SRModel(BaseModel):
                 l_g_total = torch.tensor(0.0, device=self.output.device)
 
                 lq_target = None
+
+                # Log entropy if hook captured it
+                if (
+                    hasattr(self, "_feature_entropy")
+                    and self._feature_entropy is not None
+                ):
+                    loss_dict["entropy"] = torch.tensor(
+                        self._feature_entropy, device=self.device
+                    )
 
                 for label, loss in self.losses.items():
                     target = self.gt
@@ -482,7 +551,7 @@ class SRModel(BaseModel):
                         for sublabel, loss_val in l_g_loss.items():
                             if loss_val > 0:
                                 weighted_loss_val = loss_val * abs(loss.loss_weight)
-                                l_g_total += weighted_loss_val * self.accum_iters
+                                l_g_total += weighted_loss_val / self.accum_iters
                                 loss_dict[f"{label}_{sublabel}"] = weighted_loss_val
                     else:
                         weighted_l_g_loss = l_g_loss * abs(loss.loss_weight)
@@ -490,9 +559,18 @@ class SRModel(BaseModel):
                         loss_dict[label] = weighted_l_g_loss
 
                 if not l_g_total.isfinite():
-                    raise RuntimeError(
-                        "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
+                    self.nan_count += 1
+                    if self.nan_count > 10:
+                        raise RuntimeError(
+                            "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
+                        )
+                    logger = get_root_logger()
+                    logger.warning(
+                        "NaN/Inf in loss (count: %d), skipping update", self.nan_count
                     )
+                    return  # skip this iteration
+                else:
+                    self.nan_count = 0
 
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total

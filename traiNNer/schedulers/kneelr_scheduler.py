@@ -1,3 +1,4 @@
+from torch import Tensor
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
@@ -27,7 +28,7 @@ class KneeLR(_LRScheduler):
 
         super().__init__(optimizer, last_epoch)
 
-    def get_lr(self) -> list[float]:
+    def get_lr(self) -> list[float | Tensor]:
         current_step = self.last_epoch + 1
 
         if current_step <= self.explore_steps:

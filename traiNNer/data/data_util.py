@@ -252,40 +252,56 @@ def paired_paths_from_folder(
                 gt_folder,
             )
 
-        gt_paths = [(f"{gt_key}_path", osp.join(gt_folder, f)) for f in gt_names]
-        input_set = set(input_names)
-        gt_set = set(gt_names)
+        gt_stem_to_name: dict[str, str] = {osp.splitext(f)[0]: f for f in gt_names}
+        input_stem_to_name: dict[str, str] = {
+            osp.splitext(f)[0]: f for f in input_names
+        }
 
-        assert len(input_names) == len(gt_names), (
-            f"{input_key} and {gt_key} datasets have different number of images: "
-            f"{len(input_names)}, {len(gt_names)}."
-        )
-
-        missing_from_gt_paths = input_set - gt_set
-        missing_from_input_paths = gt_set - input_set
+        gt_stems = set(gt_stem_to_name.keys())
+        input_stems = set(input_stem_to_name.keys())
 
         if filename_tmpl == "{}":
-            check_missing_paths(missing_from_gt_paths, gt_key, gt_folder)
-            check_missing_paths(missing_from_input_paths, input_key, input_folder)
+            missing_from_gt = input_stems - gt_stems
+            missing_from_input = gt_stems - input_stems
 
-            input_paths = [
-                (f"{input_key}_path", osp.join(input_folder, f)) for f in gt_names
-            ]
-        else:
-            gt_basename_ext = [
-                osp.splitext(osp.basename(gt_name)) for gt_name in gt_names
-            ]
-            input_paths = [
-                (
-                    f"{input_key}_path",
-                    osp.join(input_folder, f"{filename_tmpl.format(basename)}{ext}"),
+            check_missing_paths(missing_from_gt, gt_key, gt_folder)
+            check_missing_paths(missing_from_input, input_key, input_folder)
+
+            assert len(input_stems) == len(gt_stems), (
+                f"{input_key} and {gt_key} datasets have different number of images: "
+                f"{len(input_stems)}, {len(gt_stems)}."
+            )
+
+            for stem in sorted(gt_stems):
+                paired_paths.append(
+                    {
+                        f"{input_key}_path": osp.join(
+                            input_folder, input_stem_to_name[stem]
+                        ),
+                        f"{gt_key}_path": osp.join(gt_folder, gt_stem_to_name[stem]),
+                    }
                 )
-                for basename, ext in gt_basename_ext
-            ]
+        else:
+            for gt_name in sorted(gt_names):
+                gt_dir = osp.dirname(gt_name)
+                gt_basename = osp.splitext(osp.basename(gt_name))[0]
 
-        paired_paths.extend(
-            [dict([a, b]) for a, b in zip(input_paths, gt_paths, strict=False)]
-        )
+                templated_basename = filename_tmpl.format(gt_basename)
+                input_stem = (
+                    osp.join(gt_dir, templated_basename)
+                    if gt_dir
+                    else templated_basename
+                )
+
+                if input_stem in input_stem_to_name:
+                    paired_paths.append(
+                        {
+                            f"{input_key}_path": osp.join(
+                                input_folder, input_stem_to_name[input_stem]
+                            ),
+                            f"{gt_key}_path": osp.join(gt_folder, gt_name),
+                        }
+                    )
 
     return paired_paths
 
