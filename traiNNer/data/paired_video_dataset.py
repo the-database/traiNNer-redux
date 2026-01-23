@@ -130,6 +130,7 @@ class PairedVideoDataset(BaseDataset):
     def __getitem__(self, idx: int) -> DataFeed:
         scale = self.opt.scale
         assert scale is not None
+        assert self.clip_size > 0
 
         if self.file_client is None:
             self.file_client = FileClient(
@@ -194,6 +195,10 @@ class PairedVideoDataset(BaseDataset):
                         force_y,
                     )
                 else:
+                    assert force_hflip is not None
+                    assert force_vflip is not None
+                    assert force_rot90 is not None
+                    assert force_y is not None
                     # For non-middle frames, only augment LR
                     vips_img_lq = augment_vips(
                         vips_img_lq,
@@ -220,7 +225,7 @@ class PairedVideoDataset(BaseDataset):
 
         # Process GT tensor
         img_gt = img2tensor(
-            img_gt,
+            img_gt,  # pyright: ignore[reportPossiblyUnboundVariable]
             from_bgr=False,
             float32=True,
         )

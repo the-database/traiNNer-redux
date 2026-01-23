@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 from collections import OrderedDict
 
 import torch

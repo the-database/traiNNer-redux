@@ -253,8 +253,8 @@ def paired_random_crop_vips(
     x: int | None = None,
     y: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    h_lq: int = img_lq.height
-    w_lq: int = img_lq.width
+    h_lq: int = img_lq.height  # pyright: ignore[reportAssignmentType]
+    w_lq: int = img_lq.width  # pyright: ignore[reportAssignmentType]
     h_gt, w_gt = img_gt.height, img_gt.width
     lq_patch_size = gt_patch_size // scale
 
