@@ -59,8 +59,8 @@ def get_out_path(
     dtype: DType,
     optimized: bool,
     dynamo: bool,
-    shape: tuple[int, int, int, int],
-    dynamic_flags: tuple[bool, bool, bool, bool],
+    shape: Sequence[int],
+    dynamic_flags: Sequence[bool],
 ) -> str:
     axis_labels = ["N", "C", "H", "W"]
     if len(shape) == 5:
