@@ -124,6 +124,7 @@ TEMPORAL_ARCHS = {
     "tscunet",
     "temporalspan",
     "temporalspanv2",
+    "tfdat"
 }
 
 # Urban100
@@ -1321,6 +1322,12 @@ ALL_ARCHS: list[ArchInfo] = [
     },
     {
         "names": ["TemporalSPANv2"],
+        "scales": [1, 2, 4],
+        "pth_override": True,
+        "video_override": True,
+    },
+    {
+        "names": ["TFDAT"],
         "scales": [1, 2, 4],
         "pth_override": True,
         "video_override": True,

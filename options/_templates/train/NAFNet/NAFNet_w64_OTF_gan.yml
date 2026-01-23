@@ -1,0 +1,245 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/the-database/traiNNer-redux/refs/heads/master/schemas/redux-config.schema.json
+#########################################################################################
+# General Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
+#########################################################################################
+name: 4x_NAFNet_w64_OTF_finetune
+scale: 4  # 1, 2, 3, 4, 8
+use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
+amp_bf16: false  # Use bf16 instead of fp16 for AMP, RTX 3000 series or newer only. Only recommended if fp16 doesn't work.
+use_channels_last: true  # Enable channels last memory format while using AMP. Reduces VRAM and speeds up training for most architectures, but some architectures are slower with channels last.
+fast_matmul: false  # Trade precision for performance.
+use_compile: false  # Enable torch.compile for generator. Takes time on startup to compile the model, but can speed up training after the model is compiled.
+compile_mode: default  # Mode to use with torch.compile. See https://docs.pytorch.org/docs/stable/generated/torch.compile.html for more info.
+num_gpu: auto
+# manual_seed: 1024  # Random seed for training, useful for removing randomness when testing the effect of different settings.
+
+high_order_degradation: true  # Enable on-the-fly (OTF) degradations, which generates LR tiles from HRs during training.
+high_order_degradations_debug: false  # Save the LR and HR tiles to debug/otf folder inside the root of the training directory.
+high_order_degradations_debug_limit: 100  # The max number of iterations to save LR and HR tiles for.
+
+# USM degradation options.
+lq_usm: false  # Apply unsharp mask to LQ image before all other degradations.
+lq_usm_radius_range: [1, 25]  # Range of randomly selected unsharp mask radius to apply.
+
+# The first degradation process.
+thicklines_prob: 0.0
+blur_prob: 0.0
+resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
+resize_mode_list: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
+resize_range: [0.4, 1.5]
+gaussian_noise_prob: 0.0
+noise_range: [0, 0]
+poisson_scale_range: [0, 0]
+gray_noise_prob: 0.0
+jpeg_prob: 1.0
+jpeg_range: [75, 95]
+
+# The second degradation process.
+blur_prob2: 0.0
+resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
+resize_mode_list2: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob2: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
+resize_range2: [0.6, 1.2]
+gaussian_noise_prob2: 0
+noise_range2: [0, 0]
+poisson_scale_range2: [0, 0]
+gray_noise_prob2: 0.0
+jpeg_prob2: 1.0
+jpeg_range2: [75, 95]
+
+# The final resize to the target resolution.
+resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']  # bilinear, bicubic, nearest-exact, lanczos
+resize_mode_prob3: [0.25, 0.25, 0.25, 0.25]  # Probability each resize mode is selected.
+
+queue_size: 120
+
+########################################################################################################################
+# Dataset and Dataloader Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#dataset-options-datasets-train-and-datasets-val
+########################################################################################################################
+datasets:
+  # Settings for the training dataset.
+  train:
+    name: Train Dataset
+    type: realesrgandataset
+    # Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.
+    dataroot_gt: [
+      datasets/train/dataset1/hr,
+      datasets/train/dataset1/hr2
+    ]
+    # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
+    # meta_info: data/meta_info/dataset1.txt
+
+    blur_kernel_size: 12
+    kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    kernel_range: [5, 17]  # kernel range inclusive, must be odd numbers
+    sinc_prob: 0.0
+    blur_sigma: [0.2, 2]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 12
+    kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    kernel_range2: [5, 17]  # kernel range inclusive, must be odd numbers
+    sinc_prob2: 0.0
+    blur_sigma2: [0.2, 1]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_sinc_prob: 0.0
+    final_kernel_range: [5, 17]  # kernel range inclusive, must be odd numbers
+
+    lq_size: 64  # During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
+    use_hflip: true  # Randomly flip the images horizontally.
+    use_rot: true  # Randomly rotate the images.
+
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 8  # Increasing stabilizes training but with diminishing returns. Use multiple of 8 for best performance with AMP.
+    accum_iter: 1  # Using values larger than 1 simulates higher batch size by trading performance for reduced VRAM usage. If accum_iter = 4 and batch_size_per_gpu = 6 then effective batch size = 4 * 6 = 24 but performance may be as much as 4 times as slow.
+  # Settings for your validation dataset (optional). These settings will
+  # be ignored if val_enabled is false in the Validation section below.
+  val:
+    name: Val Dataset
+    type: pairedimagedataset
+    dataroot_gt: [
+      datasets/val/dataset1/hr,
+      datasets/val/dataset1/hr2,
+    ]
+    dataroot_lq: [
+      datasets/val/dataset1/lr,
+      datasets/val/dataset1/lr2
+    ]
+
+#####################################################################
+# Network Settings
+# https://trainner-redux.readthedocs.io/en/latest/arch_reference.html
+#####################################################################
+# Generator model settings
+network_g:
+  type: nafnet_w64
+
+# Discriminator model settings
+network_d:
+  type: dunet  # dunet, metagan2, unetdiscriminatorsn
+
+#########################################################################################
+# Pretrain and Resume Paths
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#path-options-path
+#########################################################################################
+path:
+  pretrain_network_g: experiments/pretrained_models/pretrain.pth
+  param_key_g: ~
+  strict_load_g: true    # Disable strict loading to partially load a pretrain model with a different scale
+  resume_state: ~
+
+###########################################################################################
+# Training Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#train-options-train
+###########################################################################################
+train:
+  ema_decay: 0.999
+  grad_clip: false  # Gradient clipping allows more stable training when using higher learning rates.
+  # Optimizer for generator model
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  # Optimizer for discriminator model
+  optim_d:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [125000, 200000, 225000, 237500]
+    gamma: 0.5
+
+  total_iter: 250000  # Total number of iterations.
+  warmup_iter: -1  # Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
+
+  # Losses - for any loss set the loss_weight to 0 to disable it.
+  # https://trainner-redux.readthedocs.io/en/latest/loss_reference.html
+  losses:
+    # MS-SSIM loss
+    - type: mssimloss
+      loss_weight: 0.5
+    # Perceptual loss
+    - type: perceptualloss
+      criterion: charbonnier  # charbonnier, l1, pd+l1, fd+l1, pd, fd
+      loss_weight: 0.01
+    # HSLuv loss (hue, saturation, lightness)
+    - type: hsluvloss
+      criterion: charbonnier
+      loss_weight: 1.0
+    - type: cosimloss
+      loss_weight: 1.0
+    # GAN loss
+    - type: ganloss
+      gan_type: vanilla
+      loss_weight: 0.1
+    # Additional losses - disabled by default.
+    # To enable, change the loss_weight from 0 to the recommended loss_weight which appears as a comment next to the loss weight.
+    # For example to enable DISTS loss, change the loss weight from 0 to 0.25; to enable color loss change loss weight from 0 to 1.
+    # DISTS perceptual loss
+    - type: distsloss
+      loss_weight: 0  # 0.3
+    # LDL loss
+    - type: ldlloss
+      loss_weight: 0  # 1.0
+    # FF loss
+    - type: ffloss
+      loss_weight: 0  # 0.2
+
+  # Mix of Augmentations (MoA)
+  use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
+  moa_augs: ['none', 'mixup', 'cutmix', 'resizemix', 'cutblur']  # The list of augmentations to choose from, only one is selected per iteration.
+  moa_probs: [0.4, 0.084, 0.084, 0.084, 0.348]  # The probability each augmentation in moa_augs will be applied. Total should add up to 1.
+  moa_debug: false  # Save images before and after augment to debug/moa folder inside of the root training directory.
+  moa_debug_limit: 100  # The max number of iterations to save augmentation images for.
+
+##############################################################################################
+# Validation
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#validation-options-val
+##############################################################################################
+val:
+  val_enabled: false  # Whether to enable validations. If disabled, all validation settings below are ignored.
+  val_freq: 1000  # How often to run validations, in iterations.
+  save_img: true  # Whether to save the validation images during validation, in the experiments/<name>/visualization folder.
+  tile_size: 0  # Tile size of input, reduce VRAM usage but slower inference. 0 to disable.
+  tile_overlap: 8  # Number of pixels to overlap tiles by, larger is slower but reduces tile seams.
+
+  metrics_enabled: true  # Whether to run metrics calculations during validation.
+  metrics:
+    topiq:
+      type: calculate_topiq
+    #psnr:
+      #type: calculate_psnr
+      #crop_border: 4
+      #test_y_channel: false
+    #ssim:
+      #type: calculate_ssim
+      #crop_border: 4  # Whether to crop border during validation.
+      #test_y_channel: false  # Whether to convert to Y(CbCr) for validation.
+    #lpips:
+      #type: calculate_lpips
+      #better: lower
+    #dists:
+      #type: calculate_dists
+      #better: lower
+
+##############################################################################################
+# Logging
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#logging-options-logger
+##############################################################################################
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  save_checkpoint_format: safetensors
+  use_tb_logger: true

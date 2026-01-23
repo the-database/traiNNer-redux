@@ -903,6 +903,36 @@ upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
 ```
+#### hat_l_aligned_down
+
+
+```yaml
+type: hat_l_aligned_down
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 160
+depths: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+num_heads: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+window_size: 16
+compress_ratio: 3
+squeeze_factor: 30
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+img_range: 1.0
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
 #### hat_m
 
 
@@ -1903,6 +1933,26 @@ img_range: 1.0
 upsampler: pixelshuffledirect
 resi_connection: 1conv
 start_unshuffle: 1
+```
+### TFDAT
+#### tfdat
+
+
+```yaml
+type: tfdat
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 120
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose+conv
+flow_base_ch: 32
 ```
 ### TSCUNet
 #### tscunet

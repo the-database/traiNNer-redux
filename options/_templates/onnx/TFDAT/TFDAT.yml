@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/the-database/traiNNer-redux/refs/heads/master/schemas/redux-config.schema.json
+####################
+# General Settings
+####################
+name: 4x_TFDAT
+scale: 4  # 1, 2, 4
+num_gpu: auto
+
+#####################
+# Network Settings
+#####################
+# Generator model settings
+network_g:
+  type: tfdat
+
+############################
+# Pretrain and Resume Paths
+############################
+path:
+  # Path of the model to convert to ONNX.
+  pretrain_network_g: experiments/4x_TFDAT/models/net_g_ema_1000.safetensors
+
+#########################
+# ONNX conversion options
+#########################
+onnx:
+  dynamo: false  # Whether to use the new ONNX exporter. Currently not supported on many architectures.
+  dtype: fp16  # fp32, fp16, or bf16. fp32 is full precision and fp16 and bf16 are reduced precision options which work with the stronglyTyped flag in TensorRT.
+  bf16_exclude_depthwise: true  # When converting to bf16, keep depthwise convs in fp32. Should be better for TensorRT performance.
+  opset: 20  # ONNX opset version, higher is newer. Supports up to 20 with dynamo: false and up to 23 with dynamo: true. With TensorRT higher opset is not necessarily faster.
+  shape: 1x5x3xHxW  # Input shape in NxTxCxHxW. Use numbers for fixed dimensions and letters for dynamic ones (e.g. 1x5x3xHxW = batch=1, temporal frames=5, channels=3, dynamic height/width; 1x5x3x256x256 = fully static).
+  verify: true  # Verify the accuracy of the ONNX model after exporting it.
+  optimize: false  # Runs OnnxSlim on the model to potentially slim the model and improve inference speed. Can cause issues with TensorRT.
