@@ -211,9 +211,6 @@ def paired_paths_from_folder(
 ) -> list[dict[str, str]]:
     """Generate paired paths from multiple folders.
 
-    Matches files by stem (filename without extension), allowing mixed extensions
-    like hr/1.jpg paired with lr/1.png.
-
     Args:
         folders (tuple[list[str], list[str]]): Two lists of folder paths.
             The first list is for input folders, and the second is for GT folders.
@@ -255,7 +252,6 @@ def paired_paths_from_folder(
                 gt_folder,
             )
 
-        # Build stem -> full relative path mappings (stem = path without extension)
         gt_stem_to_name: dict[str, str] = {osp.splitext(f)[0]: f for f in gt_names}
         input_stem_to_name: dict[str, str] = {
             osp.splitext(f)[0]: f for f in input_names
@@ -286,12 +282,10 @@ def paired_paths_from_folder(
                     }
                 )
         else:
-            # Template case: input filename stem is derived from gt basename via template
             for gt_name in sorted(gt_names):
                 gt_dir = osp.dirname(gt_name)
                 gt_basename = osp.splitext(osp.basename(gt_name))[0]
 
-                # Build expected input stem using template
                 templated_basename = filename_tmpl.format(gt_basename)
                 input_stem = (
                     osp.join(gt_dir, templated_basename)
