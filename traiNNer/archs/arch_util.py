@@ -31,22 +31,17 @@ class iLN(nn.Module):
         self.weight = nn.Parameter(torch.ones(normalized_shape))
         self.bias = nn.Parameter(torch.zeros(normalized_shape))
 
-    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        # x shape: (B, L, C) where L = H*W
-        b = x.shape[0]
-
-        # Flatten spatial and channel for stats
-        x_flat = x.reshape(b, -1)  # (B, L*C)
-        mean = x_flat.mean(dim=1, keepdim=True).reshape(b, 1, 1)  # (B, 1, 1)
-        var = x_flat.var(dim=1, keepdim=True, unbiased=False).reshape(
-            b, 1, 1
-        )  # (B, 1, 1)
+        b, l, c = x.shape
+        x_flat = x.float().reshape(b, -1)
+        mean = x_flat.mean(dim=1, keepdim=True).reshape(b, 1, 1)
+        var = x_flat.var(dim=1, keepdim=True, unbiased=False).reshape(b, 1, 1)
         std = torch.sqrt(var + self.eps)
-
+        mean = mean.to(x.dtype)
+        std = std.to(x.dtype)
         x_norm = (x - mean) / std
-
-        return self.weight * x_norm + self.bias, std
+        std_expanded = std.expand(b, 1, c)
+        return self.weight * x_norm + self.bias, std_expanded
 
 
 # --------------------------------------------
