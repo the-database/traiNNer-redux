@@ -17,36 +17,7 @@ from torch.nn import functional as F
 from torch.utils import checkpoint
 
 from traiNNer.utils.registry import ARCH_REGISTRY
-
-
-class iLN(nn.Module):
-    """Image Restoration Transformer Tailored Layer Normalization (i-LN).
-
-    Normalizes across both spatial and channel dimensions instead of per-token,
-    preserving spatial correlations between tokens.
-    """
-
-    def __init__(self, normalized_shape: int, eps: float = 1e-6) -> None:
-        super().__init__()
-        self.eps = eps
-        self.weight = nn.Parameter(torch.ones(normalized_shape))
-        self.bias = nn.Parameter(torch.zeros(normalized_shape))
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        # x shape: (B, L, C) where L = H*W
-        b = x.shape[0]
-
-        # Flatten spatial and channel for stats
-        x_flat = x.reshape(b, -1)  # (B, L*C)
-        mean = x_flat.mean(dim=1, keepdim=True).reshape(b, 1, 1)  # (B, 1, 1)
-        var = x_flat.var(dim=1, keepdim=True, unbiased=False).reshape(
-            b, 1, 1
-        )  # (B, 1, 1)
-        std = torch.sqrt(var + self.eps)
-
-        x_norm = (x - mean) / std
-
-        return self.weight * x_norm + self.bias, std
+from traiNNer.archs.arch_util import iLN
 
 
 class AffineTransform(nn.Module):
