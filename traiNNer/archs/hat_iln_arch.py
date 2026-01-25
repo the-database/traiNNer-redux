@@ -16,7 +16,7 @@ from torch import nn
 from torch.utils import checkpoint
 
 from traiNNer.utils.registry import ARCH_REGISTRY
-from traiNNer.archs.arch_util import ilN
+from traiNNer.archs.arch_util import iLN
 
 
 class AffineTransform(nn.Module):
