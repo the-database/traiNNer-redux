@@ -19,29 +19,34 @@ from traiNNer.utils.download_util import load_file_from_url
 
 
 class iLN(nn.Module):
+    """Image Restoration Transformer Tailored Layer Normalization (i-LN).
+
+    Normalizes across both spatial and channel dimensions instead of per-token,
+    preserving spatial correlations between tokens.
+    """
+
     def __init__(self, normalized_shape: int, eps: float = 1e-6) -> None:
         super().__init__()
         self.eps = eps
         self.weight = nn.Parameter(torch.ones(normalized_shape))
         self.bias = nn.Parameter(torch.zeros(normalized_shape))
 
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        b, l, c = x.shape
+        # x shape: (B, L, C) where L = H*W
+        b = x.shape[0]
 
-        # Compute stats in fp32
-        x_flat = x.reshape(b, -1).float()
-        mean = x_flat.mean(dim=1, keepdim=True)
-        var = x_flat.var(dim=1, keepdim=True, unbiased=False)
+        # Flatten spatial and channel for stats
+        x_flat = x.reshape(b, -1)  # (B, L*C)
+        mean = x_flat.mean(dim=1, keepdim=True).reshape(b, 1, 1)  # (B, 1, 1)
+        var = x_flat.var(dim=1, keepdim=True, unbiased=False).reshape(
+            b, 1, 1
+        )  # (B, 1, 1)
         std = torch.sqrt(var + self.eps)
 
-        # Back to original dtype for the actual ops
-        mean = mean.reshape(b, 1, 1).to(x.dtype)
-        std = std.reshape(b, 1, 1).to(x.dtype)
-
         x_norm = (x - mean) / std
-        std_expanded = std.expand(b, 1, c)
 
-        return self.weight * x_norm + self.bias, std_expanded
+        return self.weight * x_norm + self.bias, std
 
 
 # --------------------------------------------
