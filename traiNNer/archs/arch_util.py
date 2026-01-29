@@ -17,6 +17,33 @@ from torch.nn.modules.batchnorm import _BatchNorm
 
 from traiNNer.utils.download_util import load_file_from_url
 
+
+class iLN(nn.Module):
+    """Image Restoration Transformer Tailored Layer Normalization (i-LN).
+
+    Normalizes across both spatial and channel dimensions instead of per-token,
+    preserving spatial correlations between tokens.
+    """
+
+    def __init__(self, normalized_shape: int, eps: float = 1e-6) -> None:
+        super().__init__()
+        self.eps = eps
+        self.weight = nn.Parameter(torch.ones(normalized_shape))
+        self.bias = nn.Parameter(torch.zeros(normalized_shape))
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        b, l, c = x.shape
+        x_flat = x.float().reshape(b, -1)
+        mean = x_flat.mean(dim=1, keepdim=True).reshape(b, 1, 1)
+        var = x_flat.var(dim=1, keepdim=True, unbiased=False).reshape(b, 1, 1)
+        std = torch.sqrt(var + self.eps)
+        mean = mean.to(x.dtype)
+        std = std.to(x.dtype)
+        x_norm = (x - mean) / std
+        std_expanded = std.expand(b, 1, c)
+        return self.weight * x_norm + self.bias, std_expanded
+
+
 # --------------------------------------------
 # IQA utils
 # --------------------------------------------

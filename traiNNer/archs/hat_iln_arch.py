@@ -16,6 +16,7 @@ from torch import nn
 from torch.utils import checkpoint
 
 from traiNNer.utils.registry import ARCH_REGISTRY
+from traiNNer.archs.arch_util import iLN
 
 
 class AffineTransform(nn.Module):
@@ -50,33 +51,6 @@ class DropPath(nn.Module):
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
-
-
-class iLN(nn.Module):
-    def __init__(self, normalized_shape: int, eps: float = 1e-6) -> None:
-        super().__init__()
-        self.eps = eps
-        self.weight = nn.Parameter(torch.ones(normalized_shape))
-        self.bias = nn.Parameter(torch.zeros(normalized_shape))
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        # x shape: (B, L, C)
-        b, l, c = x.shape
-
-        # Flatten spatial and channel for stats
-        x_flat = x.reshape(b, -1)  # (B, L*C)
-        mean = x_flat.mean(dim=1, keepdim=True).reshape(b, 1, 1)  # (B, 1, 1)
-        var = x_flat.var(dim=1, keepdim=True, unbiased=False).reshape(
-            b, 1, 1
-        )  # (B, 1, 1)
-        std = torch.sqrt(var + self.eps)
-
-        x_norm = (x - mean) / std
-
-        # Expand std to (B, 1, C) for cleaner ONNX broadcast
-        std_expanded = std.expand(b, 1, c)
-
-        return self.weight * x_norm + self.bias, std_expanded
 
 
 class ChannelAttention(nn.Module):
