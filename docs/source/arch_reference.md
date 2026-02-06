@@ -189,18 +189,18 @@ use_chk: false
 upsampler: pixelshuffle
 unshuffle_mod: false
 ```
-#### dat_2_aligned
+#### dat_2_l
 
 
 ```yaml
-type: dat_2_aligned
+type: dat_2_l
 in_chans: 3
 img_size: 64
 img_range: 1.0
 split_size: [8, 32]
-depth: [6, 6, 6, 6, 6, 6]
-embed_dim: 192
-num_heads: [6, 6, 6, 6, 6, 6]
+depth: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 expansion_factor: 2
 resi_connection: 1conv
 qkv_bias: true
@@ -243,6 +243,95 @@ type: dat_s
 in_chans: 3
 img_size: 64
 img_range: 1.0
+split_size: [8, 16]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+unshuffle_mod: false
+```
+### DAT_iLN
+#### dat_iln
+
+
+```yaml
+type: dat_iln
+in_chans: 3
+img_size: 64
+split_size: [8, 32]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 4
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+unshuffle_mod: false
+```
+#### dat_iln_2
+
+
+```yaml
+type: dat_iln_2
+in_chans: 3
+img_size: 64
+split_size: [8, 32]
+depth: [6, 6, 6, 6, 6, 6]
+embed_dim: 180
+num_heads: [6, 6, 6, 6, 6, 6]
+expansion_factor: 2
+resi_connection: 1conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+unshuffle_mod: false
+```
+#### dat_iln_light
+
+
+```yaml
+type: dat_iln_light
+in_chans: 3
+img_size: 64
+split_size: [8, 32]
+depth: [18]
+embed_dim: 60
+num_heads: [6]
+expansion_factor: 2
+resi_connection: 3conv
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+use_chk: false
+upsampler: pixelshuffle
+unshuffle_mod: false
+```
+#### dat_iln_s
+
+
+```yaml
+type: dat_iln_s
+in_chans: 3
+img_size: 64
 split_size: [8, 16]
 depth: [6, 6, 6, 6, 6, 6]
 embed_dim: 180
@@ -413,6 +502,55 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 layer_kinds: [[0, -1, 0, -1, 0, -1], [0, -1, 0, -1, 0, -1], [0, 2, 0, 2, 0, 2], [0, 2, 0, 2, 0, 2], [0, 1, 0, 1, 0, 1], [0, 1, 0, 1, 0, 1]]
+```
+### DocRes
+#### docres
+
+
+```yaml
+type: docres
+inp_channels: 3
+out_channels: 3
+dim: 48
+num_blocks: [2, 3, 3, 4]
+num_refinement_blocks: 4
+heads: [1, 2, 4, 8]
+ffn_expansion_factor: 2.66
+bias: false
+LayerNorm_type: WithBias
+dual_pixel_task: true
+```
+#### docres_base
+
+
+```yaml
+type: docres_base
+inp_channels: 3
+out_channels: 3
+dim: 48
+num_blocks: [2, 3, 3, 4]
+num_refinement_blocks: 4
+heads: [1, 2, 4, 8]
+ffn_expansion_factor: 2.66
+bias: false
+LayerNorm_type: WithBias
+dual_pixel_task: true
+```
+#### docres_large
+
+
+```yaml
+type: docres_large
+inp_channels: 3
+out_channels: 3
+dim: 64
+num_blocks: [3, 4, 4, 6]
+num_refinement_blocks: 6
+heads: [2, 4, 8, 16]
+ffn_expansion_factor: 2.66
+bias: false
+LayerNorm_type: WithBias
+dual_pixel_task: true
 ```
 ### EIMN
 #### eimn_a
@@ -903,6 +1041,36 @@ upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
 ```
+#### hat_l_aligned_down
+
+
+```yaml
+type: hat_l_aligned_down
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 160
+depths: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+num_heads: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+window_size: 16
+compress_ratio: 3
+squeeze_factor: 30
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+img_range: 1.0
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
 #### hat_m
 
 
@@ -959,6 +1127,152 @@ ape: false
 patch_norm: true
 use_checkpoint: false
 img_range: 1.0
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
+### HAT_iLN
+#### hat_iln_l
+
+
+```yaml
+type: hat_iln_l
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 180
+depths: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+window_size: 16
+compress_ratio: 3
+squeeze_factor: 30
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
+#### hat_iln_l_aligned
+
+
+```yaml
+type: hat_iln_l_aligned
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 192
+depths: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+window_size: 16
+compress_ratio: 3
+squeeze_factor: 30
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
+#### hat_iln_m
+
+
+```yaml
+type: hat_iln_m
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 180
+depths: [6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6]
+window_size: 16
+compress_ratio: 3
+squeeze_factor: 30
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
+#### hat_iln_m_aligned
+
+
+```yaml
+type: hat_iln_m_aligned
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 192
+depths: [6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6]
+window_size: 16
+compress_ratio: 3
+squeeze_factor: 30
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
+upsampler: pixelshuffle
+resi_connection: 1conv
+num_feat: 64
+```
+#### hat_iln_s
+
+
+```yaml
+type: hat_iln_s
+img_size: 64
+patch_size: 1
+in_chans: 3
+embed_dim: 144
+depths: [6, 6, 6, 6, 6, 6]
+num_heads: [6, 6, 6, 6, 6, 6]
+window_size: 16
+compress_ratio: 24
+squeeze_factor: 24
+conv_scale: 0.01
+overlap_ratio: 0.5
+mlp_ratio: 2.0
+qkv_bias: true
+qk_scale: ~
+drop_rate: 0.0
+attn_drop_rate: 0.0
+drop_path_rate: 0.1
+ape: false
+patch_norm: true
+use_checkpoint: false
 upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
