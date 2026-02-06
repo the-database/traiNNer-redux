@@ -770,11 +770,11 @@ class DATB_iLN(nn.Module):
 
         # Attention with i-LN rescaling
         x_norm, std1 = self.norm1(x)
-        x = x + self.drop_path(std1 * self.attn(x_norm, H, W))
+        x = x + std1 * self.drop_path(self.attn(x_norm, H, W))
 
         # FFN with i-LN rescaling
         x_norm, std2 = self.norm2(x)
-        x = x + self.drop_path(std2 * self.ffn(x_norm, H, W))
+        x = x + std2 * self.drop_path(self.ffn(x_norm, H, W))
 
         return x
 

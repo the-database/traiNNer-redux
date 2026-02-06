@@ -307,11 +307,11 @@ class HAB(nn.Module):
         attn_x = attn_x.view(b, h * w, c)
 
         # i-LN: rescale by std from norm1
-        x = shortcut + self.drop_path(std1 * attn_x) + conv_x * self.conv_scale
+        x = shortcut + std1 * self.drop_path(attn_x) + conv_x * self.conv_scale
 
         # FFN with i-LN rescaling
         x_normed, std2 = self.norm2(x)
-        x = x + self.drop_path(std2 * self.mlp(x_normed))
+        x = x + std2 * self.drop_path(self.mlp(x_normed))
 
         return x
 
