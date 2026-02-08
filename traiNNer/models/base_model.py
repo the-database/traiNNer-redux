@@ -26,6 +26,9 @@ from traiNNer.optimizers import build_optimizer
 from traiNNer.schedulers.cosineannealingrestartlr_scheduler import (
     CosineAnnealingRestartLR,
 )
+from traiNNer.schedulers.cosineannealingwarmuplr_scheduler import (
+    CosineAnnealingWarmupLR,
+)
 from traiNNer.schedulers.kneelr_scheduler import KneeLR
 from traiNNer.utils import get_root_logger
 from traiNNer.utils.dist_util import master_only
@@ -258,6 +261,7 @@ class BaseModel:
                 "POLYNOMIALLR": torch.optim.lr_scheduler.PolynomialLR,
                 "COSINEANNEALINGWARMRESTARTS": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
                 "COSINEANNEALINGLR": torch.optim.lr_scheduler.CosineAnnealingLR,
+                "COSINEANNEALINGWARMUPLR": CosineAnnealingWarmupLR,
                 "COSINEANNEALINGRESTARTLR": CosineAnnealingRestartLR,
                 "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
                 "KNEELR": functools.partial(
