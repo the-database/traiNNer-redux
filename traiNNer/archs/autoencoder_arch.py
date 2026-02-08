@@ -2,6 +2,7 @@ from spandrel.architectures.__arch_helpers.block import RRDB
 from spandrel.architectures.ESRGAN import ESRGAN
 from torch import Tensor, nn
 
+from traiNNer.archs.arch_util import default_init_weights
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
@@ -12,22 +13,27 @@ class AutoEncoder(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.encoder = nn.Sequential(
-            # fromRGB
+        # encoder
+        self.conv_first = nn.Sequential(
             nn.Conv2d(3, nf // scale**2, kernel_size=3, stride=1, padding=1),
             nn.Conv2d(
                 nf // scale**2, nf // scale**2, kernel_size=3, stride=1, padding=1
             ),
-            # downscale
-            nn.PixelUnshuffle(scale),
-            RRDB(nf=nf),
-            RRDB(nf=nf),
-            # toRGB
+        )
+        self.down = nn.PixelUnshuffle(scale)
+        self.body = nn.Sequential(RRDB(nf=nf), RRDB(nf=nf))
+        self.conv_last = nn.Sequential(
             nn.Conv2d(nf, nf, kernel_size=3, stride=1, padding=1),
             nn.Conv2d(nf, 3, kernel_size=3, stride=1, padding=1),
         )
 
+        self.encoder = nn.Sequential(
+            self.conv_first, self.down, self.body, self.conv_last
+        )
+
         self.decoder = ESRGAN(scale=scale, num_filters=nf)
+
+        default_init_weights([self.conv_first, self.conv_last], 0.1)
 
         if freeze_encoder:
             self.freeze_encoder()

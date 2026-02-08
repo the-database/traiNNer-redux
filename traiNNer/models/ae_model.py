@@ -63,7 +63,7 @@ class AEModel(BaseModel):
                 self.opt.path.pretrain_network_ae_decoder,
             )
 
-        self.net_ae = self.model_to_device(self.net_ae)  # pyright: ignore[reportAttributeAccessIssue]
+        self.net_ae = self.model_to_device(self.net_ae, compile=self.use_compile)  # pyright: ignore[reportAttributeAccessIssue]
 
         self.gt: Tensor | None = None
         self.lq: Tensor | None = None
@@ -288,9 +288,12 @@ class AEModel(BaseModel):
             for label, loss in self.losses.items():
                 # for output_type in ["gt", "lq"]:
                 for output_type in ["gt"]:  # TODO refactor
-                    l_ae_loss = loss(
-                        getattr(self, f"output_{output_type}"),
-                        getattr(self, output_type),
+                    l_ae_loss = (
+                        loss(
+                            getattr(self, f"output_{output_type}"),
+                            getattr(self, output_type),
+                        )
+                        * loss.loss_weight
                     )
                     l_ae_total += l_ae_loss / self.accum_iters
                     loss_dict[f"{label}_{output_type}"] = l_ae_loss
