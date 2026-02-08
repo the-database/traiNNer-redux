@@ -10,6 +10,7 @@ from typing import Any
 
 import torch
 from ema_pytorch import EMA
+from pytorch_optimizer import get_wsd_schedule
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN import ESRGAN
@@ -271,6 +272,7 @@ class BaseModel:
                     if self.opt.train.optim_g
                     else 0.001,
                 ),
+                "WARMUPSTABLEDECAYLR": get_wsd_schedule,
             }
             logger = get_root_logger()
             if sch_typ_upper in sch_map:
