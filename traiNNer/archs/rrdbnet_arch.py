@@ -15,6 +15,7 @@ def esrgan(
     out_nc: int = 3,
     num_filters: int = 64,
     num_blocks: int = 23,
+    upsampler: str = "upconv",
 ) -> ESRGAN:
     if use_pixel_unshuffle:
         if scale in pixel_unshuffle_scales:
@@ -26,6 +27,7 @@ def esrgan(
                 shuffle_factor=shuffle_factor,
                 num_blocks=num_blocks,
                 num_filters=num_filters,
+                upsampler=upsampler,
             )
 
     return ESRGAN(
@@ -34,6 +36,7 @@ def esrgan(
         out_nc=out_nc,
         num_blocks=num_blocks,
         num_filters=num_filters,
+        upsampler=upsampler,
     )
 
 
@@ -45,6 +48,7 @@ def esrgan_lite(
     out_nc: int = 3,
     num_filters: int = 32,
     num_blocks: int = 12,
+    upsampler: str = "upconv",
 ) -> ESRGAN:
     return esrgan(
         scale=scale,
@@ -53,4 +57,5 @@ def esrgan_lite(
         out_nc=out_nc,
         num_filters=num_filters,
         num_blocks=num_blocks,
+        upsampler=upsampler,
     )

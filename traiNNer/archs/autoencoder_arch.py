@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Self
 
 from spandrel.architectures.__arch_helpers.block import RRDB
 from torch import Tensor, nn
@@ -75,7 +75,7 @@ class AutoEncoder(nn.Module):
         self.decoder.eval()
         self.decoder_is_frozen = True
 
-    def train(self, mode: bool = True) -> AutoEncoder:
+    def train(self, mode: bool = True) -> Self:
         super().train(mode)
         if self.decoder_is_frozen:
             self.decoder.eval()

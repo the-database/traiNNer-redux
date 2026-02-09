@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import torch
 from safetensors.torch import load_file
@@ -14,13 +14,19 @@ class AESOPLoss(nn.Module):
     def __init__(
         self,
         loss_weight: float,
+        decoder_opt: dict[str, Any],
         scale: int,
         pretrain_network_ae: str,
         criterion: Literal["l1", "charbonnier"] = "charbonnier",
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.ae = AutoEncoder(freeze_encoder=True, freeze_decoder=True, scale=scale)
+        self.ae = AutoEncoder(
+            decoder_opt=decoder_opt,
+            freeze_encoder=True,
+            freeze_decoder=True,
+            scale=scale,
+        )
         self.ae.load_state_dict(
             load_file(pretrain_network_ae)
         )  # TODO wrapper function to support pth/safetensors
