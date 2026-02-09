@@ -1,5 +1,6 @@
+from typing import Any
+
 from spandrel.architectures.__arch_helpers.block import RRDB
-from spandrel.architectures.ESRGAN import ESRGAN
 from torch import Tensor, nn
 
 from traiNNer.archs.arch_util import default_init_weights
@@ -9,7 +10,12 @@ from traiNNer.utils.registry import ARCH_REGISTRY
 @ARCH_REGISTRY.register()
 class AutoEncoder(nn.Module):
     def __init__(
-        self, freeze_decoder: bool, freeze_encoder: bool, scale: int = 4, nf: int = 64
+        self,
+        decoder_opt: dict[str, Any],
+        freeze_decoder: bool,
+        freeze_encoder: bool,
+        scale: int = 4,
+        nf: int = 64,
     ) -> None:
         super().__init__()
 
@@ -31,7 +37,9 @@ class AutoEncoder(nn.Module):
             self.conv_first, self.down, self.body, self.conv_last
         )
 
-        self.decoder = ESRGAN(scale=scale, num_filters=nf)
+        from traiNNer.models.sr_model import build_network
+
+        self.decoder = build_network({**decoder_opt, "scale": scale})
 
         default_init_weights([self.conv_first, self.conv_last], 0.1)
 
