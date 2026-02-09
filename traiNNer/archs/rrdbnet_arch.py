@@ -1,4 +1,5 @@
 import math
+from typing import Literal
 
 from spandrel.architectures.ESRGAN import ESRGAN
 
@@ -15,7 +16,7 @@ def esrgan(
     out_nc: int = 3,
     num_filters: int = 64,
     num_blocks: int = 23,
-    upsampler: str = "upconv",
+    upsampler: Literal["upconv", "pixel_shuffle"] = "upconv",
 ) -> ESRGAN:
     if use_pixel_unshuffle:
         if scale in pixel_unshuffle_scales:
@@ -48,7 +49,7 @@ def esrgan_lite(
     out_nc: int = 3,
     num_filters: int = 32,
     num_blocks: int = 12,
-    upsampler: str = "upconv",
+    upsampler: Literal["upconv", "pixel_shuffle"] = "upconv",
 ) -> ESRGAN:
     return esrgan(
         scale=scale,
