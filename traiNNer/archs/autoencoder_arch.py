@@ -43,6 +43,9 @@ class AutoEncoder(nn.Module):
 
         default_init_weights([self.conv_first, self.conv_last], 0.1)
 
+        self.encoder_is_frozen = False
+        self.decoder_is_frozen = False
+
         if freeze_encoder:
             self.freeze_encoder()
 
@@ -64,7 +67,16 @@ class AutoEncoder(nn.Module):
     def freeze_encoder(self) -> None:
         for param in self.encoder.parameters():
             param.requires_grad = False
+        self.encoder_is_frozen = True
 
     def freeze_decoder(self) -> None:
         for param in self.decoder.parameters():
             param.requires_grad = False
+        self.decoder.eval()
+        self.decoder_is_frozen = True
+
+    def train(self, mode: bool = True) -> AutoEncoder:
+        super().train(mode)
+        if self.decoder_is_frozen:
+            self.decoder.eval()
+        return self
