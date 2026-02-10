@@ -18,7 +18,6 @@ Refer to:
 """
 
 import math
-from collections.abc import Sequence
 
 import numpy as np
 import torch
@@ -427,7 +426,6 @@ class SSIMLoss(torch.nn.Module):
 def ms_ssim(
     x: Tensor,
     y: Tensor,
-    weights_list: Sequence[float],
     win: Tensor | None = None,
     data_range: float = 1.0,
     downsample: bool = False,
@@ -450,22 +448,12 @@ def ms_ssim(
     if not x.shape == y.shape:
         raise ValueError("Input images must have the same dimensions.")
 
-    weights = torch.FloatTensor(weights_list).to(x)
+    weights = torch.FloatTensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).to(x)
+
     levels = weights.shape[0]
-
-    first_nonzero = 0
-    for i, w in enumerate(weights_list):
-        if w != 0:
-            first_nonzero = i
-            break
-
-    for _ in range(first_nonzero):
-        padding = (x.shape[2] % 2, x.shape[3] % 2)
-        x = F.avg_pool2d(x, kernel_size=2, padding=padding)
-        y = F.avg_pool2d(y, kernel_size=2, padding=padding)
-
     mcs = []
-    for i in range(first_nonzero, levels):
+
+    for _ in range(levels):
         ssim_val, cs = ssim(
             x,
             y,
@@ -477,23 +465,20 @@ def ms_ssim(
         )
 
         mcs.append(cs)
-        if i < levels - 1:
-            padding = (x.shape[2] % 2, x.shape[3] % 2)
-            x = F.avg_pool2d(x, kernel_size=2, padding=padding)
-            y = F.avg_pool2d(y, kernel_size=2, padding=padding)
+        padding = (x.shape[2] % 2, x.shape[3] % 2)
+        x = F.avg_pool2d(x, kernel_size=2, padding=padding)
+        y = F.avg_pool2d(y, kernel_size=2, padding=padding)
 
     mcs = torch.stack(mcs, dim=0)
 
-    active_weights = weights[first_nonzero:]
-
     if is_prod:
-        msssim_val = torch.prod(
-            (mcs[:-1] ** active_weights[:-1].unsqueeze(1)), dim=0
-        ) * (ssim_val ** active_weights[-1])
+        msssim_val = torch.prod((mcs[:-1] ** weights[:-1].unsqueeze(1)), dim=0) * (
+            ssim_val ** weights[-1]  # pyright: ignore[reportPossiblyUnboundVariable]
+        )
     else:
-        active_weights = active_weights / torch.sum(active_weights)
-        msssim_val = torch.sum((mcs[:-1] * active_weights[:-1].unsqueeze(1)), dim=0) + (
-            ssim_val * active_weights[-1]
+        weights = weights / torch.sum(weights)
+        msssim_val = torch.sum((mcs[:-1] * weights[:-1].unsqueeze(1)), dim=0) + (
+            ssim_val * weights[-1]  # pyright: ignore[reportPossiblyUnboundVariable]
         )
 
     return msssim_val
@@ -523,11 +508,9 @@ class MSSIMLoss(torch.nn.Module):
         is_prod: bool = True,
         color_space: str = "yiq",
         include_luminance: bool = False,
-        weights: Sequence[float] = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333),
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.weights = weights
         self.downsample = downsample
         self.test_y_channel = test_y_channel
         self.color_space = color_space
@@ -555,7 +538,6 @@ class MSSIMLoss(torch.nn.Module):
         score = ms_ssim(
             x,
             y,
-            weights_list=self.weights,
             data_range=self.data_range,
             downsample=self.downsample,
             is_prod=self.is_prod,
