@@ -77,6 +77,8 @@ class AutoEncoder(nn.Module):
 
     def train(self, mode: bool = True) -> Self:
         super().train(mode)
+        if self.encoder_is_frozen:
+            self.encoder.eval()
         if self.decoder_is_frozen:
             self.decoder.eval()
         return self

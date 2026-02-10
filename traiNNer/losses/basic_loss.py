@@ -1,8 +1,10 @@
+import functools
+
 import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
-from torchvision.transforms import GaussianBlur, InterpolationMode, v2
+from torchvision.transforms import GaussianBlur
 
 from traiNNer.losses.loss_util import weighted_loss
 from traiNNer.utils.color_util import rgb2ycbcr_pt, rgb_to_luma
@@ -245,13 +247,12 @@ class BicubicLoss(nn.Module):
     ) -> None:
         super().__init__()
         self.scale = scale
-        self.ds_f = lambda x: torch.nn.Sequential(
-            v2.Resize(
-                [x.shape[2] // self.scale, x.shape[3] // self.scale],
-                InterpolationMode.BICUBIC,
-            ),
-            v2.GaussianBlur([5, 5], [0.5, 0.5]),
-        )(x)
+        self.ds_f = functools.partial(
+            F.interpolate,
+            scale_factor=1 / scale,
+            mode="bicubic",
+            antialias=True,
+        )
         self.loss_weight = loss_weight
         self.criterion_type = criterion
         if self.criterion_type == "l1":
