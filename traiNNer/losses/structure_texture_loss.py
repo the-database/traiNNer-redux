@@ -1,3 +1,5 @@
+import math
+
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
@@ -137,8 +139,8 @@ class StructureTextureLoss(nn.Module):
         # structure: high at edges (high mag)
         w_s = torch.sigmoid(self.structure_k * (mag - self.structure_t))
 
-        # floor is the natural min of the sigmoid
-        floor = torch.sigmoid(-self.structure_k * self.structure_t)
+        # floor is the natural min of the sigmoid (computed as scalar)
+        floor = 1 / (1 + math.exp(self.structure_k * self.structure_t))
 
         # texture: symmetric inverse - when w_s=1 → w_t=floor, when w_s=floor → w_t=1
         w_t = 1 - w_s + floor
