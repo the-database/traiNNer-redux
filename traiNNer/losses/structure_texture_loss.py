@@ -44,13 +44,11 @@ def weighted_ms_ssim(
 
         cs_map = F.relu((2 * sigma12 + c2) / (sigma1_sq + sigma2_sq + c2))
 
-        # downsample weight map to match feature map size
         w_down = F.interpolate(
             w, size=cs_map.shape[-2:], mode="bilinear", align_corners=False
         )
 
         if i == levels - 1:
-            # last level: include luminance only if requested
             if include_luminance:
                 l_map = (2 * mu1_mu2 + c1) / (mu1_sq + mu2_sq + c1)
                 final_map = l_map * cs_map
@@ -60,14 +58,12 @@ def weighted_ms_ssim(
                 w_down.sum(dim=[1, 2, 3]) + 1e-8
             )
         else:
-            # intermediate levels: just CS
             val = (w_down * cs_map).sum(dim=[1, 2, 3]) / (
                 w_down.sum(dim=[1, 2, 3]) + 1e-8
             )
 
         mcs_list.append(val)
 
-        # downsample images and weight for next scale
         pad = (x.shape[2] % 2, x.shape[3] % 2)
         x = F.avg_pool2d(x, kernel_size=2, padding=pad)
         y = F.avg_pool2d(y, kernel_size=2, padding=pad)
@@ -85,7 +81,10 @@ class StructureTextureLoss(nn.Module):
         pixel_weight: float = 1.0,
         perceptual_weight: float = 1.0,
         layer_weights: dict[str, float] | None = None,
-        floor: float = 0.1,
+        structure_k: float = 10.0,
+        structure_t: float = 0.1,
+        texture_k: float = 10.0,
+        texture_t: float = 0.1,
         test_y_channel: bool = True,
         color_space: str = "yiq",
         include_luminance: bool = False,
@@ -94,7 +93,10 @@ class StructureTextureLoss(nn.Module):
         self.loss_weight = loss_weight
         self.pixel_weight = pixel_weight
         self.perceptual_weight = perceptual_weight
-        self.floor = floor
+        self.structure_k = structure_k
+        self.structure_t = structure_t
+        self.texture_k = texture_k
+        self.texture_t = texture_t
         self.test_y_channel = test_y_channel
         self.color_space = color_space
         self.include_luminance = include_luminance
@@ -126,23 +128,29 @@ class StructureTextureLoss(nn.Module):
             / 4.0,
         )
 
-    def compute_structure_weight(self, gt: Tensor) -> Tensor:
+    def compute_weights(self, gt: Tensor) -> tuple[Tensor, Tensor]:
         luma = 0.299 * gt[:, 0:1] + 0.587 * gt[:, 1:2] + 0.114 * gt[:, 2:3]
         gx = F.conv2d(luma, self.sobel_x, padding=1)
         gy = F.conv2d(luma, self.sobel_y, padding=1)
         mag = torch.sqrt(gx**2 + gy**2 + 1e-8)
-        mag_norm = mag / (mag.amax(dim=(2, 3), keepdim=True) + 1e-8)
-        return self.floor + (1 - self.floor) * mag_norm
+
+        # structure: high at edges (high mag)
+        w_s = torch.sigmoid(self.structure_k * (mag - self.structure_t))
+
+        # floor is the natural min of the sigmoid
+        floor = torch.sigmoid(-self.structure_k * self.structure_t)
+
+        # texture: symmetric inverse - when w_s=1 → w_t=floor, when w_s=floor → w_t=1
+        w_t = 1 - w_s + floor
+
+        return w_s, w_t
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def forward(self, pred: Tensor, gt: Tensor) -> dict[str, Tensor]:
         gt = gt.detach()
 
-        # compute structure weight on RGB before any conversion
-        w_s = self.compute_structure_weight(gt)
-        w_t = 1 - w_s
+        w_s, w_t = self.compute_weights(gt)
 
-        # preprocess to Y channel for MS-SSIM (matches MSSIMLoss behavior)
         pred_y = preprocess_rgb(
             pred, self.test_y_channel, self.data_range, self.color_space
         )
@@ -150,7 +158,6 @@ class StructureTextureLoss(nn.Module):
             gt, self.test_y_channel, self.data_range, self.color_space
         )
 
-        # structure loss: weighted MS-SSIM on Y channel
         msssim_val = weighted_ms_ssim(
             pred_y,
             gt_y,
@@ -160,7 +167,6 @@ class StructureTextureLoss(nn.Module):
         )
         structure_loss = 1 - msssim_val.mean()
 
-        # texture loss: weighted VGG perceptual on RGB
         pred_feats = self.vgg(pred)
         gt_feats = self.vgg(gt)
         percep_loss = gt.new_tensor(0.0)
