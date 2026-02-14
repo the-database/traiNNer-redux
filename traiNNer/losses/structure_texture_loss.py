@@ -82,7 +82,7 @@ class StructureTextureLoss(nn.Module):
     def __init__(
         self,
         loss_weight: float,
-        structure_weight: float = 1.0,
+        pixel_weight: float = 1.0,
         perceptual_weight: float = 1.0,
         layer_weights: dict[str, float] | None = None,
         floor: float = 0.1,
@@ -92,7 +92,7 @@ class StructureTextureLoss(nn.Module):
     ) -> None:
         super().__init__()
         self.loss_weight = loss_weight
-        self.structure_weight = structure_weight
+        self.pixel_weight = pixel_weight
         self.perceptual_weight = perceptual_weight
         self.floor = floor
         self.test_y_channel = test_y_channel
@@ -172,6 +172,6 @@ class StructureTextureLoss(nn.Module):
             percep_loss = percep_loss + weight * (w_t_down * diff).mean()
 
         return {
-            "structure": self.structure_weight * structure_loss,
+            "structure": self.pixel_weight * structure_loss,
             "texture": self.perceptual_weight * percep_loss,
         }
