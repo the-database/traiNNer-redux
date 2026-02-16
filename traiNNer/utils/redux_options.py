@@ -210,7 +210,11 @@ class OnnxOptions(StrictStruct):
     opset: int = 20
     shape: str = "1x3xHxW"
     verify: bool = True
-    dtype: Literal["fp32", "fp16", "bf16"] = "fp16"
+    dtype: Literal["fp32", "fp16", "bf16", "fp8", "int8", "auto"] = "fp16"
+    calibration_data: str = ""
+    calibration_samples: int = 32
+    int8_calibration_method: str = "entropy"
+    auto_effective_bits: float = 11.0
     bf16_exclude_depthwise: bool = True
     optimize: bool = True
 
@@ -257,6 +261,12 @@ class TrainOptions(StrictStruct):
             description="Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable."
         ),
     ] = -1
+    restart_scheduler: Annotated[
+        bool,
+        Meta(
+            description="When resuming, if restart_scheduler is true then the scheduler is recreated using the schedule in the training config. If restart_scheduler is false then scheduler is read from saved state and training config schedule is ignored."
+        ),
+    ] = False
     scheduler: Annotated[
         dict[str, Any] | None,
         Meta(

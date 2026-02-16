@@ -774,7 +774,7 @@ class BaseModel:
         Args:
             resume_state (dict): Resume state.
         """
-
+        assert self.opt.train is not None
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
 
@@ -789,8 +789,18 @@ class BaseModel:
             self.optimizers[i].load_state_dict(o)
             if hasattr(self.optimizers[i], "train"):
                 self.optimizers[i].train()  # pyright: ignore[reportAttributeAccessIssue]
-        for i, s in enumerate(resume_schedulers):
-            self.schedulers[i].load_state_dict(s)
+
+        current_iter = resume_state["iter"]
+        if self.opt.train.restart_scheduler:
+            for scheduler in self.schedulers:
+                scheduler.last_epoch = current_iter - 1
+                if hasattr(scheduler, "_step_count"):
+                    scheduler._step_count = current_iter
+            logger = get_root_logger()
+            logger.info("Restarted scheduler(s) at iter %d", current_iter)
+        else:
+            for i, s in enumerate(resume_schedulers):
+                self.schedulers[i].load_state_dict(s)
 
         if "scaler_g" in resume_state:
             assert self.scaler_g is not None
