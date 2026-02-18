@@ -250,8 +250,12 @@ class SRModel(BaseModel):
             self.net_g_ema.step = self.net_g_ema.step.to(device=torch.device("cpu"))
 
         self.grad_clip = train_opt.grad_clip
+        self.grad_clip_max_norm = train_opt.grad_clip_max_norm
         if self.grad_clip:
-            logger.info("Gradient clipping is enabled.")
+            logger.info(
+                "Gradient clipping is enabled with max norm=%f.",
+                self.grad_clip_max_norm,
+            )
 
         # define losses
 
@@ -592,7 +596,9 @@ class SRModel(BaseModel):
                     loss_dict["grad_norm_g"] = grad_norm_g
 
                     if self.grad_clip:
-                        clip_grad_norm_(self.net_g.parameters(), 1.0)
+                        clip_grad_norm_(
+                            self.net_g.parameters(), self.grad_clip_max_norm
+                        )
 
                     scale_before = self.scaler_g.get_scale()
                     self.scaler_g.step(self.optimizer_g)
@@ -651,7 +657,7 @@ class SRModel(BaseModel):
                 loss_dict["grad_norm_d"] = grad_norm_d
 
                 if self.grad_clip:
-                    clip_grad_norm_(self.net_d.parameters(), 1.0)
+                    clip_grad_norm_(self.net_d.parameters(), self.grad_clip_max_norm)
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()

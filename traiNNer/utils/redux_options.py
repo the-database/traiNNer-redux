@@ -252,9 +252,12 @@ class TrainOptions(StrictStruct):
     grad_clip: Annotated[
         bool,
         Meta(
-            description="Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations."
+            description="Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues if the grad clip max norm is too small."
         ),
     ] = False
+    grad_clip_max_norm: Annotated[
+        float, Meta(description="Max norm of gradients for gradient clipping.")
+    ] = 100.0
     warmup_iter: Annotated[
         int,
         Meta(

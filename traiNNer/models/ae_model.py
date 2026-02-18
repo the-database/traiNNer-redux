@@ -179,8 +179,12 @@ class AEModel(BaseModel):
             self.net_ae_ema.step = self.net_ae_ema.step.to(device=torch.device("cpu"))
 
         self.grad_clip = train_opt.grad_clip
+        self.grad_clip_max_norm = train_opt.grad_clip_max_norm
         if self.grad_clip:
-            logger.info("Gradient clipping is enabled.")
+            logger.info(
+                "Gradient clipping is enabled with max norm=%f.",
+                self.grad_clip_max_norm,
+            )
 
         # define losses
 
@@ -304,7 +308,7 @@ class AEModel(BaseModel):
         if apply_gradient:
             if self.grad_clip:
                 self.scaler_ae.unscale_(self.optimizer_ae)
-                clip_grad_norm_(self.net_ae.parameters(), 1.0)
+                clip_grad_norm_(self.net_ae.parameters(), self.grad_clip_max_norm)
 
             scale_before = self.scaler_ae.get_scale()
             self.scaler_ae.step(self.optimizer_ae)

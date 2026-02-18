@@ -83,6 +83,7 @@ class BaseModel:
         self.scaler_ae: GradScaler | None = None
         self.accum_iters: int = 1
         self.grad_clip: bool = False
+        self.grad_clip_max_norm: float = 100.0
         self.nan_count = 0
 
     @abstractmethod
