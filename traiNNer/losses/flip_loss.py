@@ -75,7 +75,7 @@ class FLIPLoss(nn.Module):
         self.qf = 0.5
         self.pc = 0.4
         self.pt = 0.95
-        self.eps = 1e-15
+        self.eps = 1e-4
         self.pixels_per_degree = pixels_per_degree
         self.loss_weight = loss_weight
 
@@ -317,18 +317,14 @@ def hunt_adjustment(img):
 
 
 def hyab(reference, test, eps):
-    """
-    Computes the HyAB distance between reference and test images
-
-    :param reference: reference image tensor (with NxCxHxW layout in the standard or Hunt-adjusted L*A*B* color space)
-    :param test: test image tensor (with NxCxHxW layout in the standard or Hunt-adjusted L*a*b* color space)
-    :param eps: float containing a small value used to improve training stability
-    :return: image tensor (with Nx1xHxW layout) containing the per-pixel HyAB distances between reference and test images
-    """
     delta = reference - test
-    root = torch.sqrt(torch.clamp(torch.pow(delta[:, 0:1, :, :], 2), min=eps))
-    delta_norm = torch.norm(delta[:, 1:3, :, :], dim=1, keepdim=True)
-    return root + delta_norm  # alternative abs to stabilize training
+    # Clamp the VALUE not the squared value, cleaner gradient
+    L_diff = torch.abs(delta[:, 0:1, :, :])
+    # Protect norm computation
+    ab_delta = delta[:, 1:3, :, :]
+    ab_norm_sq = (ab_delta**2).sum(dim=1, keepdim=True)
+    ab_norm = torch.sqrt(ab_norm_sq + eps)  # eps inside sqrt, not clamp outside
+    return L_diff + ab_norm
 
 
 def redistribute_errors(power_deltaE_hyab, cmax, pc, pt):

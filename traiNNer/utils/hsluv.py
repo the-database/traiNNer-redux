@@ -40,10 +40,11 @@ def hsluv_to_lch(h: Tensor, s: Tensor, l: Tensor) -> Tensor:
 
 
 def lch_to_hsluv(l: Tensor, c: Tensor, h: Tensor) -> Tensor:
-    _hx_max = torch.clamp(_max_chroma_for_lh(l, h), 1e-12)
-    s = c / _hx_max * 100
+    max_chroma = _max_chroma_for_lh(l, h)
+    safe_max_chroma = torch.clamp(max_chroma, min=1e-2)
+    s = c / safe_max_chroma * 100
 
-    s = torch.where((l > 100 - 1e-5) | (l < 1e-8), 0, s)  # was: l > 100 - 1e-7
+    s = torch.where((l > 99.99) | (l < 0.01), 0.0, s)
     l = torch.clamp(l, 0, 100)
 
     return torch.stack([h, torch.clamp(s, 0, 100), l], dim=-1)
@@ -51,15 +52,16 @@ def lch_to_hsluv(l: Tensor, c: Tensor, h: Tensor) -> Tensor:
 
 def _length_of_ray_until_intersect(theta: Tensor, line: Mapping[str, Tensor]) -> Tensor:
     denominator = torch.sin(theta) - line["slope"] * torch.cos(theta)
-    clamped_denominator = torch.where(torch.abs(denominator) < 1e-5, 1e-12, denominator)
-    return line["intercept"] / clamped_denominator
+    safe_denom = torch.sign(denominator) * torch.clamp(torch.abs(denominator), min=1e-3)
+    safe_denom = torch.where(denominator == 0, 1e-3, safe_denom)
+    return line["intercept"] / safe_denom
 
 
 def _get_bounds(l: Tensor) -> list[Mapping[str, Tensor]]:
-    result = []  # TODO vectorize
+    result = []
     sub1 = ((l + 16) ** 3) / 1560896
     sub2 = torch.where(sub1 > _epsilon, sub1, l / _kappa)
-    mt = torch.tensor(_m).to(l)
+    mt = torch.tensor(_m, device=l.device, dtype=l.dtype)
     for c in range(3):
         m1, m2, m3 = mt[c]
         for t in range(2):
@@ -68,8 +70,10 @@ def _get_bounds(l: Tensor) -> list[Mapping[str, Tensor]]:
                 769860 * t
             ) * l
             bottom = (632260 * m3 - 126452 * m2) * sub2 + 126452 * t
-            slope = top1 / bottom
-            intercept = top2 / bottom
+            safe_bottom = torch.sign(bottom) * torch.clamp(torch.abs(bottom), min=1e-3)
+            safe_bottom = torch.where(bottom == 0, 1e-3, safe_bottom)
+            slope = top1 / safe_bottom
+            intercept = top2 / safe_bottom
             result.append({"slope": slope, "intercept": intercept})
     return result
 
@@ -104,14 +108,16 @@ def xyz_to_luv(xyz: Tensor) -> Tensor:
 
     divider = x + 15 * y + 3 * z
 
-    var_u = 4 * x / divider
-    var_v = 9 * y / divider
+    safe_divider = torch.clamp(divider, min=1e-6)
+
+    var_u = 4 * x / safe_divider
+    var_v = 9 * y / safe_divider
 
     u = 13 * l * (var_u - _ref_u)
     v = 13 * l * (var_v - _ref_v)
 
-    u = torch.where(l == 0, 0, u)
-    v = torch.where(l == 0, 0, v)
+    u = torch.where(l < 1e-4, 0.0, u)
+    v = torch.where(l < 1e-4, 0.0, v)
 
     return torch.stack([l, u, v], dim=-1)
 
