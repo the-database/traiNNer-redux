@@ -32,6 +32,11 @@
   The options for the generator model.
 
   Type: dict
+### network_g_teacher
+
+  The options for the teacher generator model.
+
+  Type: dict
 ### network_d
 
   The options for the discriminator model.
@@ -347,6 +352,11 @@
 ### pretrain_network_g
 
   Path to the pretrain model for the generator. `pth` and `safetensors` formats are supported.
+
+  Type: str
+### pretrain_network_g_teacher
+
+  Path to the pretrain model for the teacher of the generator. `pth` and `safetensors` formats are supported.
 
   Type: str
 

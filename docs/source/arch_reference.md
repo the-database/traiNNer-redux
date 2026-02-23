@@ -1904,6 +1904,26 @@ upsampler: pixelshuffledirect
 resi_connection: 1conv
 start_unshuffle: 1
 ```
+### TFDAT
+#### tfdat
+
+
+```yaml
+type: tfdat
+num_in_ch: 3
+num_out_ch: 3
+embed_dim: 120
+num_groups: 4
+depth_per_group: 3
+num_heads: 4
+window_size: 8
+ffn_expansion_ratio: 2.0
+aim_reduction_ratio: 8
+group_block_pattern: ~
+drop_path_rate: 0.1
+upsampler_type: transpose+conv
+flow_base_ch: 32
+```
 ### TSCUNet
 #### tscunet
 
