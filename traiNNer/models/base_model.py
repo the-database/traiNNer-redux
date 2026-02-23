@@ -79,6 +79,7 @@ class BaseModel:
         self.scaler_ae: GradScaler | None = None
         self.accum_iters: int = 1
         self.grad_clip: bool = False
+        self.nan_count = 0
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:

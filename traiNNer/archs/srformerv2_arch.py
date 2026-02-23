@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 # model: SRFormer
 # SRFormer: Permuted Self-Attention for Single Image Super-Resolution
 

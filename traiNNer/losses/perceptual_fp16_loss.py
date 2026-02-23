@@ -1,5 +1,6 @@
 from typing import Literal
 
+import antialiased_cnns
 import torch
 import torchvision
 from torch import Tensor, nn
@@ -49,6 +50,51 @@ VGG19_LAYERS = [
     "pool5",
 ]
 
+VGG19_AA_LAYERS = [
+    "conv1_1",
+    "relu1_1",
+    "conv1_2",
+    "relu1_2",
+    "pool1",
+    "blur1",
+    "conv2_1",
+    "relu2_1",
+    "conv2_2",
+    "relu2_2",
+    "pool2",
+    "blur2",
+    "conv3_1",
+    "relu3_1",
+    "conv3_2",
+    "relu3_2",
+    "conv3_3",
+    "relu3_3",
+    "conv3_4",
+    "relu3_4",
+    "pool3",
+    "blur3",
+    "conv4_1",
+    "relu4_1",
+    "conv4_2",
+    "relu4_2",
+    "conv4_3",
+    "relu4_3",
+    "conv4_4",
+    "relu4_4",
+    "pool4",
+    "blur4",
+    "conv5_1",
+    "relu5_1",
+    "conv5_2",
+    "relu5_2",
+    "conv5_3",
+    "relu5_3",
+    "conv5_4",
+    "relu5_4",
+    "pool5",
+    "blur5",
+]
+
 VGG19_CONV_LAYER_WEIGHTS = {
     "conv1_2": 0.1,
     "conv2_2": 0.1,
@@ -86,6 +132,7 @@ class PerceptualFP16Loss(nn.Module):
         phase_weight_fd: float = 1.0,
         stride_fd: int = 1,
         clip_min: int = 0,
+        antialiased: bool = False,
     ) -> None:
         super().__init__()
 
@@ -108,7 +155,9 @@ class PerceptualFP16Loss(nn.Module):
             if criterion in VGG19_RELU_CRITERION:
                 layer_weights |= VGG19_RELU_LAYER_WEIGHTS
 
-        self.vgg = VGG(list(layer_weights.keys())).to(memory_format=torch.channels_last)  # pyright: ignore[reportCallIssue]
+        self.vgg = VGG(list(layer_weights.keys()), antialiased=antialiased).to(
+            memory_format=torch.channels_last
+        )  # pyright: ignore[reportCallIssue]
 
         if alpha is None:
             alpha = []
@@ -244,14 +293,21 @@ class PerceptualFP16Loss(nn.Module):
 
 
 class VGG(nn.Module):
-    def __init__(self, layer_name_list: list[str]) -> None:
+    def __init__(self, layer_name_list: list[str], antialiased: bool = False) -> None:
         super().__init__()
 
-        model = torchvision.models.vgg19(weights=VGG19_Weights.DEFAULT).to(
-            memory_format=torch.channels_last
-        )  # pyright: ignore[reportCallIssue]
+        self.antialiased = antialiased
 
-        vgg_pretrained_features = model.features
+        if antialiased:
+            vgg_pretrained_features = self._build_antialiased_vgg19()
+            layer_list = VGG19_AA_LAYERS
+        else:
+            model = torchvision.models.vgg19(weights=VGG19_Weights.DEFAULT).to(
+                memory_format=torch.channels_last
+            )  # pyright: ignore[reportCallIssue]
+            vgg_pretrained_features = model.features
+            layer_list = VGG19_LAYERS
+
         assert isinstance(vgg_pretrained_features, torch.nn.Sequential)
 
         self._disable_inplace_relu(vgg_pretrained_features)
@@ -260,7 +316,7 @@ class VGG(nn.Module):
         stage_breakpoints = {}
 
         for v in layer_name_list:
-            stage_breakpoints[v] = VGG19_LAYERS.index(v) + 1
+            stage_breakpoints[v] = layer_list.index(v) + 1
 
         prev_breakpoint = 0
         for layer_name, idx in sorted(stage_breakpoints.items(), key=lambda x: x[1]):
@@ -285,6 +341,13 @@ class VGG(nn.Module):
         self.register_buffer(
             "std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
         )
+
+    def _build_antialiased_vgg19(self) -> nn.Sequential:
+        model = antialiased_cnns.vgg19(pretrained=True, filter_size=4)
+        features = model.features
+        assert isinstance(features, nn.Sequential)
+
+        return features
 
     @staticmethod
     def _change_padding_mode(

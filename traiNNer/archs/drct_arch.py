@@ -1,3 +1,5 @@
+# ruff: noqa
+# type: ignore
 import math
 from collections.abc import Sequence
 

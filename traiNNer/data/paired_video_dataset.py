@@ -5,7 +5,12 @@ import random
 import torch
 
 from traiNNer.data.base_dataset import BaseDataset
-from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
+from traiNNer.data.transforms import (
+    augment_vips,
+    augment_vips_pair,
+    paired_random_crop_vips,
+    single_crop_vips,
+)
 from traiNNer.utils.file_client import FileClient
 from traiNNer.utils.img_util import img2rgb, img2tensor, vipsimfrompath
 from traiNNer.utils.logger import get_root_logger
@@ -36,60 +41,106 @@ class PairedVideoDataset(BaseDataset):
         self.dataroot_gt = opt.dataroot_gt
         self.clip_size = opt.clip_size
         self.gt_size = opt.gt_size
-        self.frames: dict[str, list[tuple[str, str]]] = {}
+        self.clips: list[tuple[list[str], str]] = []  # (lr_paths, hr_middle_path)
+        self.frames: dict[str, list[tuple[str, str | None]]] = {}
+        self.index_mapping: list[tuple[str, int]] = []
 
         logger = get_root_logger()
 
-        for i, lq_path in enumerate(self.dataroot_lq):
-            for f in sorted(os.listdir(lq_path)):
-                if f.lower().endswith((".png", ".jpg", ".jpeg")):
-                    scene_prefix = f"{lq_path}_{f.split('_')[0]}"
-                    lr_path = os.path.join(lq_path, f)
-                    hr_path = os.path.join(self.dataroot_gt[i], f)
+        total_clips = 0
+        total_scenes = 0
 
-                    if os.path.exists(hr_path):
-                        if scene_prefix not in self.frames:
-                            self.frames[scene_prefix] = []
-                        self.frames[scene_prefix].append((lr_path, hr_path))
-                    else:
-                        logger.warning("No matching HR file for %s", f)
+        for i, lq_path in enumerate(self.dataroot_lq):
+            gt_path = self.dataroot_gt[i]
+
+            lr_files = sorted(
+                f
+                for f in os.listdir(lq_path)
+                if f.lower().endswith((".png", ".jpg", ".jpeg"))
+            )
+
+            if not lr_files:
+                continue
+
+            hr_files = {
+                f
+                for f in os.listdir(gt_path)
+                if f.lower().endswith((".png", ".jpg", ".jpeg"))
+            }
+
+            scenes: dict[str, list[str]] = {}
+            for f in lr_files:
+                scene_prefix = f.split("_")[0]
+                if scene_prefix not in scenes:
+                    scenes[scene_prefix] = []
+                scenes[scene_prefix].append(f)
+
+            for scene_prefix, scene_files in scenes.items():
+                full_scene_key = f"{lq_path}_{scene_prefix}"
+
+                if full_scene_key not in self.frames:
+                    self.frames[full_scene_key] = [
+                        (
+                            os.path.join(lq_path, f),
+                            os.path.join(gt_path, f) if f in hr_files else None,
+                        )
+                        for f in scene_files
+                    ]
+
+                n_frames = len(scene_files)
+                n_clips = n_frames - self.clip_size + 1
+                scene_clips = 0
+
+                for start_idx in range(max(n_clips, 0)):
+                    middle_idx = start_idx + self.clip_size // 2
+                    middle_filename = scene_files[middle_idx]
+
+                    if middle_filename in hr_files:
+                        lr_paths = [
+                            os.path.join(lq_path, scene_files[start_idx + j])
+                            for j in range(self.clip_size)
+                        ]
+                        hr_path = os.path.join(gt_path, middle_filename)
+                        self.clips.append((lr_paths, hr_path))
+
+                        self.index_mapping.append((full_scene_key, start_idx))
+
+                        scene_clips += 1
+
+                if scene_clips > 0:
+                    total_scenes += 1
+                    total_clips += scene_clips
 
         logger.info(
             "Found %d valid file pairs across %d scenes.",
-            sum(len(v) for v in self.frames.values()),
-            len(self.frames),
+            total_clips,
+            total_scenes,
         )
 
         if opt.phase == "train":
-            if len(self.frames) < 100:
+            if total_scenes < 100:
                 logger.warning(
                     "Number of scene pairs is low: %d, training quality may be impacted. Please use more scene pairs for best training results.",
-                    len(self.frames),
+                    total_scenes,
                 )
 
-        self.index_mapping = []
-        for scene_prefix, clips in self.frames.items():
-            n_clips = len(clips) - self.clip_size + 1
-            for start_idx in range(max(n_clips, 0)):
-                self.index_mapping.append((scene_prefix, start_idx))
-
     def __len__(self) -> int:
-        return sum(max(0, len(v) - self.clip_size + 1) for v in self.frames.values())
+        return len(self.clips)
 
     def __getitem__(self, idx: int) -> DataFeed:
         scale = self.opt.scale
         assert scale is not None
+        assert self.clip_size > 0
 
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop("type"), **self.io_backend_opt
             )
 
-        scene, start_idx = self.index_mapping[idx]
-        clips = self.frames[scene][start_idx : start_idx + self.clip_size]
+        lr_paths, hr_path = self.clips[idx]
+        middle_idx = self.clip_size // 2
 
         lr_clip = []
-        hr_clip = []
 
         force_x = None
         force_y = None
@@ -102,14 +153,16 @@ class PairedVideoDataset(BaseDataset):
             assert self.gt_size is not None
             lq_size = self.gt_size // scale
 
-        for i in range(self.clip_size):
-            lq_path, gt_path = clips[i]
+        # middle frame only
+        vips_img_gt = vipsimfrompath(hr_path)
 
-            vips_img_gt = vipsimfrompath(gt_path)
+        for i in range(self.clip_size):
+            lq_path = lr_paths[i]
             vips_img_lq = vipsimfrompath(lq_path)
 
             if self.opt.phase == "train":
                 assert self.gt_size is not None
+
                 if force_x is None:
                     force_rot90 = random.random() < 0.5
                     force_hflip = random.random() < 0.5
@@ -121,50 +174,67 @@ class PairedVideoDataset(BaseDataset):
                     force_y = random.randint(0, h_lq - lq_size)
                     force_x = random.randint(0, w_lq - lq_size)
 
-                # flip, rotation
-                vips_img_gt, vips_img_lq = augment_vips_pair(
-                    (vips_img_gt, vips_img_lq),
-                    self.opt.use_hflip,
-                    self.opt.use_rot,
-                    self.opt.use_rot,
-                    force_hflip,
-                    force_vflip,
-                    force_rot90,
-                )
-
-                img_gt, img_lq = paired_random_crop_vips(
-                    vips_img_gt,
-                    vips_img_lq,
-                    self.gt_size,
-                    scale,
-                    lq_path,
-                    gt_path,
-                    force_x,
-                    force_y,
-                )
+                if i == middle_idx:
+                    vips_img_gt_aug, vips_img_lq = augment_vips_pair(
+                        (vips_img_gt, vips_img_lq),
+                        self.opt.use_hflip,
+                        self.opt.use_rot,
+                        self.opt.use_rot,
+                        force_hflip,
+                        force_vflip,
+                        force_rot90,
+                    )
+                    img_gt, img_lq = paired_random_crop_vips(
+                        vips_img_gt_aug,
+                        vips_img_lq,
+                        self.gt_size,
+                        scale,
+                        lq_path,
+                        hr_path,
+                        force_x,
+                        force_y,
+                    )
+                else:
+                    assert force_hflip is not None
+                    assert force_vflip is not None
+                    assert force_rot90 is not None
+                    assert force_y is not None
+                    # For non-middle frames, only augment LR
+                    vips_img_lq = augment_vips(
+                        vips_img_lq,
+                        force_hflip,
+                        force_vflip,
+                        force_rot90,
+                        randomize=False,
+                    )
+                    # Crop LR only
+                    img_lq = single_crop_vips(
+                        vips_img_lq, lq_size, force_x, force_y, lq_path
+                    )
             else:
-                img_gt = img2rgb(vips_img_gt.numpy())
                 img_lq = img2rgb(vips_img_lq.numpy())
+                if i == middle_idx:
+                    img_gt = img2rgb(vips_img_gt.numpy())
 
-            img_gt = img2tensor(
-                img_gt,
-                from_bgr=False,
-                float32=True,
-            )
             img_lq = img2tensor(
                 img_lq,
                 from_bgr=False,
                 float32=True,
             )
-
             lr_clip.append(img_lq)
-            hr_clip.append(img_gt)
+
+        # Process GT tensor
+        img_gt = img2tensor(
+            img_gt,  # pyright: ignore[reportPossiblyUnboundVariable]
+            from_bgr=False,
+            float32=True,
+        )
 
         return {
             "lq": torch.stack(lr_clip),
-            "gt": hr_clip[self.clip_size // 2],
-            "gt_path": clips[self.clip_size // 2][1],
-            "lq_path": clips[self.clip_size // 2][0],
+            "gt": img_gt,
+            "gt_path": hr_path,
+            "lq_path": lr_paths[middle_idx],
         }
 
     @property

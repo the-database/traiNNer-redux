@@ -5,6 +5,8 @@ ARCHS_WITHOUT_FP16 = {
     "atd_light",
     "atd",
     "dat_2",
+    "dat_2_l",
+    "dat_2_l_aligned",
     "dat_2_aligned",
     "dat_light",
     "dat_s",

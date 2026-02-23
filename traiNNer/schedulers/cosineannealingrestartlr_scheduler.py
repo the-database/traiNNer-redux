@@ -1,6 +1,7 @@
 import math
 from collections.abc import Sequence
 
+from torch import Tensor
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
@@ -44,7 +45,7 @@ class CosineAnnealingRestartLR(_LRScheduler):
         ]
         super().__init__(optimizer, last_epoch)
 
-    def get_lr(self) -> list[float]:
+    def get_lr(self) -> list[float | Tensor]:
         idx = get_position_from_periods(self.last_epoch, self.cumulative_period)
         current_weight = self.restart_weights[idx]
         nearest_restart = 0 if idx == 0 else self.cumulative_period[idx - 1]
