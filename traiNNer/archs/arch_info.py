@@ -1418,9 +1418,9 @@ ALL_ARCHS: list[ArchInfo] = [
         "scales": ALL_SCALES,
         "folder_name_override": "LKFMixer",
     },
-    {
-        "names": ["NAFNet_w32", "NAFNet_w64"],
-        "scales": ALL_SCALES,
-        "folder_name_override": "NAFNet",
-    },
+    # {
+    #     "names": ["NAFNet_w32", "NAFNet_w64"],
+    #     "scales": ALL_SCALES,
+    #     "folder_name_override": "NAFNet",
+    # },
 ]

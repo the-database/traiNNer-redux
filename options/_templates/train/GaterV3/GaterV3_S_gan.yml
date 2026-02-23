@@ -122,8 +122,6 @@ train:
     - type: hsluvloss
       criterion: charbonnier
       loss_weight: 1.0
-    - type: cosimloss
-      loss_weight: 1.0
     # GAN loss
     - type: ganloss
       gan_type: vanilla
@@ -140,6 +138,15 @@ train:
     # FF loss
     - type: ffloss
       loss_weight: 0  # 0.2
+    # RGB Cosine Similarity loss
+    - type: cosimloss
+      loss_weight: 0  # 1.0
+    # NVIDIA FLIP loss
+    - type: fliploss
+      loss_weight: 0  # 1.0
+    # Sobel edge loss
+    - type: sobeledgeloss
+      loss_weight: 0  # 1.0
 
   # Mix of Augmentations (MoA)
   use_moa: false  # Whether to enable mixture of augmentations, which augments the dataset on the fly to create more variety and help the model generalize.
