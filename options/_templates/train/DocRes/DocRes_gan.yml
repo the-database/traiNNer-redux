@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/the-database/traiNNer-redux/refs/heads/master/schemas/redux-config.schema.json
+#########################################################################################
+# General Settings
+#########################################################################################
+name: 1x_docres_gan
+scale: 1
+use_amp: true
+amp_bf16: true
+use_channels_last: true
+fast_matmul: false
+use_compile: false
+compile_mode: default
+num_gpu: auto
+deterministic: true
+detect_anomaly: false
+
+########################################################################################################################
+# Dataset and Dataloader Settings
+########################################################################################################################
+datasets:
+  train:
+    name: Train Dataset
+    type: pairedimagedataset
+    # Path to the HR (high res) images in your training dataset. Specify one or multiple folders, separated by commas.
+    dataroot_gt: [
+      datasets/train/dataset1/hr,
+      datasets/train/dataset1/hr2
+    ]
+    # Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas.
+    dataroot_lq: [
+      datasets/train/dataset1/lr,
+      datasets/train/dataset1/lr2
+    ]
+    # meta_info: data/meta_info/dataset1.txt
+    lq_size: 96
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 4
+    accum_iter: 1
+  val:
+    name: Val Dataset
+    type: pairedimagedataset
+    dataroot_gt: [
+      datasets/val/dataset1/hr,
+      datasets/val/dataset1/hr2
+    ]
+    dataroot_lq: [
+      datasets/val/dataset1/lr,
+      datasets/val/dataset1/lr2
+    ]
+
+#####################################################################
+# Network Settings
+#####################################################################
+network_g:
+  type: docres_base
+  inp_channels: 3
+  out_channels: 3
+  dim: 48
+  num_blocks: [2,3,3,4]
+  num_refinement_blocks: 4
+  heads: [1,2,4,8]
+  ffn_expansion_factor: 2.66
+  bias: false
+  LayerNorm_type: WithBias
+  dual_pixel_task: true
+
+network_d:
+  type: docres_discriminator
+  inp_channels: 3
+  out_channels: 1
+  dim: 64
+  num_blocks: 4
+  norm_type: spectral
+
+#########################################################################################
+# Pretrain and Resume Paths
+#########################################################################################
+path:
+  pretrain_network_g: ~
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+###########################################################################################
+# Training Settings
+###########################################################################################
+train:
+  ema_decay: 0.999
+  grad_clip: false
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: MultiStepLR
+    milestones: [125000, 200000, 225000, 237500]
+    gamma: 0.5
+  total_iter: 500000
+  warmup_iter: -1
+  losses:
+    - type: charbonnierloss
+      loss_weight: 0.5
+    - type: ganloss
+      loss_weight: 0.05
+
+##############################################################################################
+# Validation
+##############################################################################################
+val:
+  val_enabled: false
+  val_freq: 1000
+  save_img: true
+  tile_size: 0
+  tile_overlap: 8
+  metrics_enabled: false
+  metrics:
+    topiq:
+      type: calculate_topiq
+
+##############################################################################################
+# Logging
+##############################################################################################
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  save_checkpoint_format: safetensors
+  use_tb_logger: true
