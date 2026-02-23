@@ -25,5 +25,5 @@ class CosimLoss(nn.Module):
         x = torch.clamp(x, 1e-12, 1)
         y = torch.clamp(y, 1e-12, 1)
 
-        distance = 1 - torch.round(self.similarity(x, y), decimals=20).mean()
+        distance = 1 - self.similarity(x, y).mean()
         return self.cosim_lambda * distance

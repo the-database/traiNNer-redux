@@ -41,6 +41,12 @@ ALL_SCALES = [1, 2, 3, 4]
 EXTRA_ARCH_PARAMS: dict[str, list[dict[str, Any]]] = {
     k: [] for k, _ in FILTERED_REGISTRY
 }
+
+EXTRA_ARCH_PARAMS["dat_2"] = [
+    {"unshuffle_mod": True},
+    {"unshuffle_mod": False},
+]
+
 EXTRA_ARCH_PARAMS["realplksr"] = [
     {"upsampler": "dysample"},
     {"upsampler": "pixelshuffle"},

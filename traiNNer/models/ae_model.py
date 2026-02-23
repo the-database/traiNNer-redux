@@ -63,7 +63,7 @@ class AEModel(BaseModel):
                 self.opt.path.pretrain_network_ae_decoder,
             )
 
-        self.net_ae = self.model_to_device(self.net_ae)  # pyright: ignore[reportAttributeAccessIssue]
+        self.net_ae = self.model_to_device(self.net_ae, compile=self.use_compile)  # pyright: ignore[reportAttributeAccessIssue]
 
         self.gt: Tensor | None = None
         self.lq: Tensor | None = None
@@ -179,8 +179,12 @@ class AEModel(BaseModel):
             self.net_ae_ema.step = self.net_ae_ema.step.to(device=torch.device("cpu"))
 
         self.grad_clip = train_opt.grad_clip
+        self.grad_clip_max_norm = train_opt.grad_clip_max_norm
         if self.grad_clip:
-            logger.info("Gradient clipping is enabled.")
+            logger.info(
+                "Gradient clipping is enabled with max norm=%f.",
+                self.grad_clip_max_norm,
+            )
 
         # define losses
 
@@ -279,8 +283,7 @@ class AEModel(BaseModel):
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
         ):
-            self.output_lq = self.get_bare_model(self.net_ae).encode(self.gt)  # pyright: ignore[reportCallIssue]
-            self.output_gt = self.get_bare_model(self.net_ae).decode(self.output_lq)  # pyright: ignore[reportCallIssue]
+            self.output_gt = self.net_ae(self.gt)
             assert isinstance(self.output_gt, Tensor)
             l_ae_total = torch.tensor(0.0, device=self.output_gt.device)
             loss_dict = OrderedDict()
@@ -288,9 +291,12 @@ class AEModel(BaseModel):
             for label, loss in self.losses.items():
                 # for output_type in ["gt", "lq"]:
                 for output_type in ["gt"]:  # TODO refactor
-                    l_ae_loss = loss(
-                        getattr(self, f"output_{output_type}"),
-                        getattr(self, output_type),
+                    l_ae_loss = (
+                        loss(
+                            getattr(self, f"output_{output_type}"),
+                            getattr(self, output_type),
+                        )
+                        * loss.loss_weight
                     )
                     l_ae_total += l_ae_loss / self.accum_iters
                     loss_dict[f"{label}_{output_type}"] = l_ae_loss
@@ -302,7 +308,7 @@ class AEModel(BaseModel):
         if apply_gradient:
             if self.grad_clip:
                 self.scaler_ae.unscale_(self.optimizer_ae)
-                clip_grad_norm_(self.net_ae.parameters(), 1.0)
+                clip_grad_norm_(self.net_ae.parameters(), self.grad_clip_max_norm)
 
             scale_before = self.scaler_ae.get_scale()
             self.scaler_ae.step(self.optimizer_ae)

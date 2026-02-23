@@ -10,6 +10,7 @@ from typing import Any
 
 import torch
 from ema_pytorch import EMA
+from pytorch_optimizer import get_wsd_schedule
 from safetensors.torch import load_file, save_file
 from spandrel import ModelLoader, StateDict
 from spandrel.architectures.ESRGAN import ESRGAN
@@ -25,6 +26,9 @@ from traiNNer.ops.batchaug import MOA_DEBUG_PATH, BatchAugment
 from traiNNer.optimizers import build_optimizer
 from traiNNer.schedulers.cosineannealingrestartlr_scheduler import (
     CosineAnnealingRestartLR,
+)
+from traiNNer.schedulers.cosineannealingwarmuplr_scheduler import (
+    CosineAnnealingWarmupLR,
 )
 from traiNNer.schedulers.kneelr_scheduler import KneeLR
 from traiNNer.utils import get_root_logger
@@ -79,6 +83,7 @@ class BaseModel:
         self.scaler_ae: GradScaler | None = None
         self.accum_iters: int = 1
         self.grad_clip: bool = False
+        self.grad_clip_max_norm: float = 100.0
         self.nan_count = 0
 
     @abstractmethod
@@ -258,6 +263,7 @@ class BaseModel:
                 "POLYNOMIALLR": torch.optim.lr_scheduler.PolynomialLR,
                 "COSINEANNEALINGWARMRESTARTS": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
                 "COSINEANNEALINGLR": torch.optim.lr_scheduler.CosineAnnealingLR,
+                "COSINEANNEALINGWARMUPLR": CosineAnnealingWarmupLR,
                 "COSINEANNEALINGRESTARTLR": CosineAnnealingRestartLR,
                 "REDUCELRONPLATEAU": torch.optim.lr_scheduler.ReduceLROnPlateau,
                 "KNEELR": functools.partial(
@@ -267,6 +273,7 @@ class BaseModel:
                     if self.opt.train.optim_g
                     else 0.001,
                 ),
+                "WARMUPSTABLEDECAYLR": get_wsd_schedule,
             }
             logger = get_root_logger()
             if sch_typ_upper in sch_map:
@@ -768,7 +775,7 @@ class BaseModel:
         Args:
             resume_state (dict): Resume state.
         """
-
+        assert self.opt.train is not None
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
 
@@ -783,8 +790,18 @@ class BaseModel:
             self.optimizers[i].load_state_dict(o)
             if hasattr(self.optimizers[i], "train"):
                 self.optimizers[i].train()  # pyright: ignore[reportAttributeAccessIssue]
-        for i, s in enumerate(resume_schedulers):
-            self.schedulers[i].load_state_dict(s)
+
+        current_iter = resume_state["iter"]
+        if self.opt.train.restart_scheduler:
+            for scheduler in self.schedulers:
+                scheduler.last_epoch = current_iter - 1
+                if hasattr(scheduler, "_step_count"):
+                    scheduler._step_count = current_iter
+            logger = get_root_logger()
+            logger.info("Restarted scheduler(s) at iter %d", current_iter)
+        else:
+            for i, s in enumerate(resume_schedulers):
+                self.schedulers[i].load_state_dict(s)
 
         if "scaler_g" in resume_state:
             assert self.scaler_g is not None

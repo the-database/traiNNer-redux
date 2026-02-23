@@ -10,51 +10,47 @@ from cv2.typing import MatLike
 from PIL import Image
 from tqdm import tqdm
 
-DRY_RUN = False  # Set this to False when you want to actually copy the files
+DRY_RUN = False  # Set this to False to write output files
+
+
+def pad_image_for_chroma(image: MatLike, scale: int) -> tuple[MatLike, int, int]:
+    """Pad high-res image bottom/right to multiple of (scale * 2) so that low-res dims will be even."""
+    h, w = image.shape[:2]
+    align = scale * 2
+    pad_bottom = (-h) % align
+    pad_right = (-w) % align
+    if pad_bottom or pad_right:
+        image = cv2.copyMakeBorder(
+            image, 0, pad_bottom, 0, pad_right, borderType=cv2.BORDER_REFLECT
+        )
+    return image, pad_bottom, pad_right
 
 
 def chroma_subsampling_420(image: MatLike, interpolation: int) -> MatLike:
     """Perform chroma subsampling 4:2:0 using bicubic interpolation."""
-    # Convert the image to YUV color space
     yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-
-    # Get the Y, U, and V channels
     y = yuv[:, :, 0]
     u = yuv[:, :, 1]
     v = yuv[:, :, 2]
 
-    # downsample u and v channels to half resolution
-    u_downsampled = cv2.resize(
+    # downsample u/v to half resolution
+    u_down = cv2.resize(
         u, (u.shape[1] // 2, u.shape[0] // 2), interpolation=interpolation
     )
-    v_downsampled = cv2.resize(
+    v_down = cv2.resize(
         v, (v.shape[1] // 2, v.shape[0] // 2), interpolation=interpolation
     )
 
-    # create a new yuv420 image
     h, w = y.shape
     yuv420 = np.zeros((h, w, 3), dtype=np.uint8)
-    yuv420[:, :, 0] = y  # Y channel
+    yuv420[:, :, 0] = y
+    yuv420[0:h:2, 0:w:2, 1] = u_down
+    yuv420[0:h:2, 0:w:2, 2] = v_down
+    # upsample back
+    yuv420[:, :, 1] = cv2.resize(u_down, (w, h), interpolation=interpolation)
+    yuv420[:, :, 2] = cv2.resize(v_down, (w, h), interpolation=interpolation)
 
-    # Place the downsampled U and V channels in the proper locations
-    yuv420[0:h:2, 0:w:2, 1] = u_downsampled  # u channel (downsampled)
-    yuv420[0:h:2, 0:w:2, 2] = v_downsampled  # v channel (downsampled)
-
-    # upsample u and v channels back to the original size (for visualization)
-    yuv420[:, :, 1] = cv2.resize(u_downsampled, (w, h), interpolation=interpolation)
-    yuv420[:, :, 2] = cv2.resize(v_downsampled, (w, h), interpolation=interpolation)
-
-    # Convert back to RGB
     return cv2.cvtColor(yuv420, cv2.COLOR_YCrCb2BGR)
-
-
-def split_file_path(path: Path | str) -> tuple[Path, str, str]:
-    """
-    Returns the base directory, file name, and extension of the given file path.
-    """
-    base, ext = os.path.splitext(path)
-    dirname, basename = os.path.split(base)
-    return Path(dirname), basename, ext
 
 
 def _read_cv_from_path(path: str) -> MatLike:
@@ -63,101 +59,74 @@ def _read_cv_from_path(path: str) -> MatLike:
         img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
     except Exception:
         pass
-
     if img is None:
-        try:
-            img = cv2.imread(str(path), cv2.IMREAD_COLOR)
-        except Exception as e:
-            raise RuntimeError(
-                f'Error reading image image from path "{path}". Image may be corrupt.'
-            ) from e
-
-    if img is None:  # type: ignore
-        raise RuntimeError(
-            f'Error reading image image from path "{path}". Image may be corrupt.'
-        )
-
+        img = cv2.imread(str(path), cv2.IMREAD_COLOR)
+        if img is None:
+            raise RuntimeError(f'Error reading image from "{path}".')
     return img
 
 
 def custom_resize(image: MatLike, size_ratio: float) -> np.ndarray:
-    h, w = image.shape[:2]
-    pil_image = Image.fromarray(image)
-    # print(w, h, new_size)
-
-    new_image = np.array(pil_image)
-    new_image = new_image.astype(np.float32) / 255.0
-    new_image = resize(
-        new_image,
-        (round(w * size_ratio), round(h * size_ratio)),
-        ResizeFilter.CubicCatrom,
-        False,
-    )
-    new_image = (new_image * 255).astype(np.uint8)
-
-    pil_image = Image.fromarray(new_image)
-    return np.array(pil_image)
+    pil_img = Image.fromarray(image)
+    arr = np.array(pil_img).astype(np.float32) / 255.0
+    new_w = round(image.shape[1] * size_ratio)
+    new_h = round(image.shape[0] * size_ratio)
+    resized = resize(arr, (new_w, new_h), ResizeFilter.CubicCatrom, False)
+    return (resized * 255).astype(np.uint8)
 
 
 def downscale_image(args: tuple[str, str, float]) -> None:
     input_path, output_path, size_ratio = args
-    if not DRY_RUN:
-        image = _read_cv_from_path(input_path)
-        image = custom_resize(image, size_ratio)
-
-        if random.random() < 0.5:
-            if random.random() < 0.5:
-                image = chroma_subsampling_420(
-                    image, interpolation=cv2.INTER_NEAREST_EXACT
-                )
-            else:
-                image = chroma_subsampling_420(
-                    image, interpolation=cv2.INTER_LINEAR_EXACT
-                )
-        else:
-            pass
-
-        cv2.imwrite(output_path, image)
-    else:
+    if DRY_RUN:
         print(output_path)
+        return
+
+    image = _read_cv_from_path(input_path)
+    h_orig, w_orig = image.shape[:2]
+    scale = round(1 / size_ratio)
+
+    # 1) Pad high-res image for chroma subsampling
+    image_padded, _pad_hr_b, _pad_hr_r = pad_image_for_chroma(image, scale)
+
+    # 2) Resize to low-res
+    lr_padded = custom_resize(image_padded, size_ratio)
+
+    # 3) Chroma subsampling
+    lr_sub = chroma_subsampling_420(lr_padded, interpolation=cv2.INTER_LINEAR_EXACT)
+
+    # 4) Crop back to original low-res dimensions
+    orig_lr_h = round(h_orig * size_ratio)
+    orig_lr_w = round(w_orig * size_ratio)
+    lr_h, lr_w = lr_sub.shape[:2]
+    crop_h = min(orig_lr_h, lr_h)
+    crop_w = min(orig_lr_w, lr_w)
+    lr_final = lr_sub[:crop_h, :crop_w]
+
+    # 5) Write output
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    cv2.imwrite(output_path, lr_final)
 
 
 def process_images(
     input_directory: str, output_directory: str, size_ratio: float
 ) -> None:
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-
-    image_paths = []
-
+    os.makedirs(output_directory, exist_ok=True)
+    tasks = []
     for root, _, files in os.walk(input_directory):
-        image_files = []
         for file in files:
-            image_files.append(file)
+            in_p = os.path.join(root, file)
+            rel = os.path.relpath(root, input_directory)
+            out_sub = os.path.join(output_directory, rel)
+            out_p = os.path.join(out_sub, file)
+            tasks.append((in_p, out_p, size_ratio))
 
-        selected_files = image_files
-
-        for file in selected_files:
-            input_image_path = os.path.join(root, file)
-            output_subdirectory = os.path.relpath(root, input_directory)
-            output_subdirectory_path = os.path.join(
-                output_directory, output_subdirectory
-            )
-            output_image_path = os.path.join(output_subdirectory_path, file)
-
-            if not DRY_RUN and not os.path.exists(output_subdirectory_path):
-                os.makedirs(output_subdirectory_path)
-
-            image_paths.append((input_image_path, output_image_path, size_ratio))
-
-    with Pool(processes=8) as pool, tqdm(total=len(image_paths)) as pbar:
-        for _ in pool.imap_unordered(downscale_image, image_paths):
+    with Pool(processes=8) as pool, tqdm(total=len(tasks)) as pbar:
+        for _ in pool.imap_unordered(downscale_image, tasks):
             pbar.update(1)
 
 
 if __name__ == "__main__":
     scale = 4
-    scale_str = f"x{scale}"
     size_ratio = 1 / scale
 
     input_directory = r"C:\path\to\input\dir"

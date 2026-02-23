@@ -249,15 +249,24 @@ class TrainOptions(StrictStruct):
     grad_clip: Annotated[
         bool,
         Meta(
-            description="Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations."
+            description="Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues if the grad clip max norm is too small."
         ),
     ] = False
+    grad_clip_max_norm: Annotated[
+        float, Meta(description="Max norm of gradients for gradient clipping.")
+    ] = 100.0
     warmup_iter: Annotated[
         int,
         Meta(
             description="Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable."
         ),
     ] = -1
+    restart_scheduler: Annotated[
+        bool,
+        Meta(
+            description="When resuming, if restart_scheduler is true then the scheduler is recreated using the schedule in the training config. If restart_scheduler is false then scheduler is read from saved state and training config schedule is ignored."
+        ),
+    ] = False
     scheduler: Annotated[
         dict[str, Any] | None,
         Meta(

@@ -205,7 +205,9 @@ to_ntuple = _ntuple
 
 
 @torch.no_grad()
-def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs) -> None:
+def default_init_weights(
+    module_list, scale: float = 1, bias_fill: float = 0, **kwargs
+) -> None:
     """
     Initializes the weights of the given module(s) using Kaiming Normal initialization.
 
