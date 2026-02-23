@@ -210,11 +210,7 @@ class OnnxOptions(StrictStruct):
     opset: int = 20
     shape: str = "1x3xHxW"
     verify: bool = True
-    dtype: Literal["fp32", "fp16", "bf16", "fp8", "int8", "auto"] = "fp16"
-    calibration_data: str = ""
-    calibration_samples: int = 32
-    int8_calibration_method: str = "entropy"
-    auto_effective_bits: float = 11.0
+    dtype: Literal["fp32", "fp16", "bf16"] = "fp16"
     bf16_exclude_depthwise: bool = True
     optimize: bool = True
 

@@ -35,6 +35,7 @@ keywords = ["machine learning", "deep learning", "neural network", "pytorch", "s
 [project.optional-dependencies]
 dev = ["ruff", "pyright", "pytest", "syrupy", "torchfix"]
 onnx = [
+    "lief",
     "ml_dtypes",
     "onnx-graphsurgeon",
     "onnx~=1.19.0",
