@@ -52,6 +52,35 @@ MODELOPT_PRECISION_MAP: dict[DType, str] = {
 }
 
 
+class VideoModelExportWrapper(torch.nn.Module):
+    """
+    Wrapper for video models to handle input shape transformation for ONNX export.
+
+    VapourSynth ORT plugin only supports 4D tensors, so this wrapper takes
+    4D input (B, T*C, H, W) and reshapes it to 5D (B, T, C, H, W) for the model.
+    """
+
+    def __init__(
+        self, model: torch.nn.Module, num_frames: int, channels: int = 3
+    ) -> None:
+        super().__init__()
+        self.model = model
+        self.num_frames = num_frames
+        self.channels = channels
+
+    def forward(self, x: Tensor) -> Tensor:
+        """
+        Args:
+            x: Input tensor (B, T*C, H, W) where T*C = num_frames * channels
+        Returns:
+            Output from the model
+        """
+        b, _, h, w = x.shape
+        # Reshape from (B, T*C, H, W) to (B, T, C, H, W)
+        x = x.view(b, self.num_frames, self.channels, h, w)
+        return self.model(x)
+
+
 def get_out_path(
     out_dir: str,
     name: str,
@@ -109,7 +138,7 @@ def parse_input_shape(
         # NCHW
         defaults = [1, 3, default_hw, default_hw]
     else:
-        # TNCHW
+        # NTCHW
         defaults = [1, 1, 3, default_hw, default_hw]
 
     dims: list[int] = []
@@ -184,10 +213,43 @@ def convert_and_save_onnx(
     is_dynamo = bool(opt.onnx.dynamo)
     requested_opset = opt.onnx.opset
 
-    has_dynamic = any(dynamic_flags)
-    axis_names = ["batch_size", "channels", "height", "width"]
-    if len(example_shape) == 5:
-        axis_names.insert(1, "temporal")
+    # Check if we should wrap 5D input to 4D for vsmlrt compatibility
+    wrap_5d = opt.onnx.wrap_5d_to_4d and len(example_shape) == 5
+
+    if wrap_5d:
+        n, t, c, h, w = example_shape
+        # Create 4D shape: (N, T*C, H, W)
+        export_shape: Sequence[int] = (n, t * c, h, w)
+        # Create 4D input tensor
+        export_input = torch_input.view(n, t * c, h, w)
+        # Wrap the model
+        export_model: torch.nn.Module = VideoModelExportWrapper(
+            model.net_g, num_frames=t, channels=c
+        )
+        # Convert 5D dynamic flags to 4D: (N, T, C, H, W) -> (N, T*C, H, W)
+        # T*C channel dim is static (T and C must both be static for the reshape to work)
+        export_dynamic_flags: Sequence[bool] = (
+            dynamic_flags[0],  # N
+            False,  # T*C (merged, must be static)
+            dynamic_flags[3],  # H
+            dynamic_flags[4],  # W
+        )
+        axis_names = ["batch_size", "channels", "height", "width"]
+        logger.info(
+            "Wrapping 5D VSR model for 4D export (vsmlrt compatibility): %s -> %s",
+            "x".join(str(d) for d in example_shape),
+            "x".join(str(d) for d in export_shape),
+        )
+    else:
+        export_shape = example_shape
+        export_input = torch_input
+        export_model = model.net_g
+        export_dynamic_flags = dynamic_flags
+        axis_names = ["batch_size", "channels", "height", "width"]
+        if len(example_shape) == 5:
+            axis_names.insert(1, "temporal")
+
+    has_dynamic = any(export_dynamic_flags)
 
     if not has_dynamic:
         logger.info(
@@ -198,19 +260,19 @@ def convert_and_save_onnx(
     else:
         dynamic_dims = [
             name
-            for name, is_dyn in zip(axis_names, dynamic_flags, strict=False)
+            for name, is_dyn in zip(axis_names, export_dynamic_flags, strict=False)
             if is_dyn
         ]
         static_dims = [
             name
-            for name, is_dyn in zip(axis_names, dynamic_flags, strict=False)
+            for name, is_dyn in zip(axis_names, export_dynamic_flags, strict=False)
             if not is_dyn
         ]
         logger.info(
             "Exporting ONNX with mixed static/dynamic input shape %s (N,C,H,W). "
             "Example shape: %s. Dynamic dims: %s. Static dims: %s. dtype=%s.",
             opt.onnx.shape,
-            "x".join(str(d) for d in example_shape),
+            "x".join(str(d) for d in export_shape),
             ", ".join(dynamic_dims),
             ", ".join(static_dims),
             dtype,
@@ -220,11 +282,13 @@ def convert_and_save_onnx(
         dynamic_shapes = None
         dynamic_axes = None
     else:
-        dim_specs = [Dim.AUTO if is_dyn else Dim.STATIC for is_dyn in dynamic_flags]
+        dim_specs = [
+            Dim.AUTO if is_dyn else Dim.STATIC for is_dyn in export_dynamic_flags
+        ]
         dynamic_shapes = (tuple(dim_specs),)
 
         dynamic_axes = {INPUT_NAME: {}, OUTPUT_NAME: {}}
-        for axis, is_dyn in enumerate(dynamic_flags):
+        for axis, is_dyn in enumerate(export_dynamic_flags):
             if not is_dyn:
                 continue
             name = axis_names[axis]
@@ -271,8 +335,8 @@ def convert_and_save_onnx(
         dtype="fp32",
         optimized=False,
         dynamo=is_dynamo,
-        shape=example_shape,
-        dynamic_flags=dynamic_flags,
+        shape=export_shape,
+        dynamic_flags=export_dynamic_flags,
     )
 
     if dtype == "fp32":
@@ -287,14 +351,14 @@ def convert_and_save_onnx(
         dtype=dtype,
         optimized=False,
         dynamo=is_dynamo,
-        shape=example_shape,
-        dynamic_flags=dynamic_flags,
+        shape=export_shape,
+        dynamic_flags=export_dynamic_flags,
     )
 
     with torch.inference_mode():
         onnx_program = torch.onnx.export(
-            model.net_g,
-            (torch_input,),
+            export_model,
+            (export_input,),
             None if is_dynamo else temp_out_path,
             dynamo=is_dynamo,
             verbose=False,
@@ -393,6 +457,7 @@ def verify_onnx(
     torch_input: Tensor,
     onnx_path: str,
     dtype: DType,
+    wrap_5d: bool = False,
 ) -> None:
     assert model.net_g is not None
 
@@ -406,12 +471,23 @@ def verify_onnx(
         )
         return
 
+    # Handle wrapped 5D -> 4D models
+    if wrap_5d and torch_input.dim() == 5:
+        n, t, c, h, w = torch_input.shape
+        verify_model: torch.nn.Module = VideoModelExportWrapper(
+            model.net_g, num_frames=t, channels=c
+        )
+        verify_input = torch_input.view(n, t * c, h, w)
+    else:
+        verify_model = model.net_g
+        verify_input = torch_input
+
     with torch.inference_mode():
         if dtype == "fp16":
             with torch.autocast(device_type="cuda", dtype=torch.float16):
-                torch_output_np = model.net_g(torch_input).float().cpu().numpy()
+                torch_output_np = verify_model(verify_input).float().cpu().numpy()
         else:
-            torch_output_np = model.net_g(torch_input).cpu().numpy()
+            torch_output_np = verify_model(verify_input).cpu().numpy()
 
     providers = ["CUDAExecutionProvider"]
 
@@ -426,9 +502,9 @@ def verify_onnx(
         return
 
     input_np = (
-        torch_input.cpu().numpy().astype(np.float16)
+        verify_input.cpu().numpy().astype(np.float16)
         if dtype == "fp16"
-        else torch_input.cpu().numpy()
+        else verify_input.cpu().numpy()
     )
 
     ort_inputs = {ort_session.get_inputs()[0].name: input_np}
@@ -485,6 +561,8 @@ def convert_pipeline(root_path: str) -> None:
         opt.onnx.shape, opt.network_g["type"]
     )
 
+    wrap_5d = opt.onnx.wrap_5d_to_4d and len(example_shape) == 5
+
     torch_input = torch.randn(*example_shape, device="cuda", dtype=torch.float32)
 
     start_time = time.time()
@@ -510,9 +588,9 @@ def convert_pipeline(root_path: str) -> None:
 
     if not opt.onnx.dynamo:
         if opt.onnx.verify:
-            verify_onnx(model, logger, torch_input, out_path, dtype)
+            verify_onnx(model, logger, torch_input, out_path, dtype, wrap_5d)
             if fp32_path is not None:
-                verify_onnx(model, logger, torch_input, fp32_path, "fp32")
+                verify_onnx(model, logger, torch_input, fp32_path, "fp32", wrap_5d)
 
     if opt.onnx.optimize:
         logger.info("Optimizing ONNX with OnnxSlim...")
@@ -522,6 +600,20 @@ def convert_pipeline(root_path: str) -> None:
 
         assert isinstance(model_proto, ModelProto)
 
+        # Use export_shape for optimized path (4D if wrapped, original otherwise)
+        if wrap_5d:
+            n, t, c, h, w = example_shape
+            opt_shape: Sequence[int] = (n, t * c, h, w)
+            opt_dynamic_flags: Sequence[bool] = (
+                dynamic_flags[0],
+                False,
+                dynamic_flags[3],
+                dynamic_flags[4],
+            )
+        else:
+            opt_shape = example_shape
+            opt_dynamic_flags = dynamic_flags
+
         optimized_path = get_out_path(
             out_dir,
             opt.name,
@@ -529,8 +621,8 @@ def convert_pipeline(root_path: str) -> None:
             dtype=dtype,
             optimized=True,
             dynamo=opt.onnx.dynamo,
-            shape=example_shape,
-            dynamic_flags=dynamic_flags,
+            shape=opt_shape,
+            dynamic_flags=opt_dynamic_flags,
         )
 
         session_opt = ort.SessionOptions()
@@ -544,7 +636,7 @@ def convert_pipeline(root_path: str) -> None:
         try:
             ort.InferenceSession(out_path, session_opt, providers=providers)
             if opt.onnx.verify:
-                verify_onnx(model, logger, torch_input, optimized_path, dtype)
+                verify_onnx(model, logger, torch_input, optimized_path, dtype, wrap_5d)
             model_proto = onnx.load(optimized_path)
             logger.info(
                 "Optimized model saved to %s",

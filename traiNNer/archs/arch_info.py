@@ -92,6 +92,7 @@ ARCHS_WITHOUT_CHANNELS_LAST = {
     "tscunet",  # rank 5 tensors don't support channels last
     "temporalspan",
     "temporalspanv2",
+    "tfdat",
 }
 
 # A set of arch names whose arch requires a minimum
@@ -122,11 +123,7 @@ REQUIRE_64_HW = {
     "swin2sr_m",
     "swin2sr_s",
 }
-TEMPORAL_ARCHS = {
-    "tscunet",
-    "temporalspan",
-    "temporalspanv2",
-}
+TEMPORAL_ARCHS = {"tscunet", "temporalspan", "temporalspanv2", "tfdat"}
 
 # Urban100
 OFFICIAL_METRICS: dict[
@@ -1323,6 +1320,12 @@ ALL_ARCHS: list[ArchInfo] = [
     },
     {
         "names": ["TemporalSPANv2"],
+        "scales": [1, 2, 4],
+        "pth_override": True,
+        "video_override": True,
+    },
+    {
+        "names": ["TFDAT"],
         "scales": [1, 2, 4],
         "pth_override": True,
         "video_override": True,

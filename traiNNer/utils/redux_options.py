@@ -213,6 +213,7 @@ class OnnxOptions(StrictStruct):
     dtype: Literal["fp32", "fp16", "bf16"] = "fp16"
     bf16_exclude_depthwise: bool = True
     optimize: bool = True
+    wrap_5d_to_4d: bool = True
 
 
 class TrainOptions(StrictStruct):
