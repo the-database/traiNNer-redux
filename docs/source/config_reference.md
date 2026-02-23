@@ -32,6 +32,11 @@
   The options for the generator model.
 
   Type: dict
+### network_g_teacher
+
+  The options for the teacher generator model.
+
+  Type: dict
 ### network_d
 
   The options for the discriminator model.
@@ -349,6 +354,11 @@
   Path to the pretrain model for the generator. `pth` and `safetensors` formats are supported.
 
   Type: str
+### pretrain_network_g_teacher
+
+  Path to the pretrain model for the teacher of the generator. `pth` and `safetensors` formats are supported.
+
+  Type: str
 
 
 
@@ -416,14 +426,24 @@
 
 ### grad_clip
 
-  Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues in some situations.
+  Whether or not to enable gradient clipping, which can improve stability when using higher learning rates, but can also cause issues if the grad clip max norm is too small.
 
   Type: bool
+### grad_clip_max_norm
+
+  Max norm of gradients for gradient clipping.
+
+  Type: float
 ### warmup_iter
 
   Gradually ramp up learning rates until this iteration, to stabilize early training. Use -1 to disable.
 
   Type: int
+### restart_scheduler
+
+  When resuming, if restart_scheduler is true then the scheduler is recreated using the schedule in the training config. If restart_scheduler is false then scheduler is read from saved state and training config schedule is ignored.
+
+  Type: bool
 ### scheduler
 
   Options for the optimizer scheduler. If there are multiple optimizers, both will use the same scheduler options.
