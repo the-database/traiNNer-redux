@@ -451,7 +451,11 @@ class SRModel(BaseModel):
             self.gt, self.lq = self.batch_augment(self.gt, self.lq)
 
     def optimize_parameters(
-        self, current_iter: int, current_accum_iter: int, apply_gradient: bool
+        self,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+        fidelity_only: bool,
     ) -> None:
         # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
         # assert self.optimizer_g is not None
@@ -499,6 +503,9 @@ class SRModel(BaseModel):
                     )
 
                 for label, loss in self.losses.items():
+                    if fidelity_only and self._is_perceptual_or_gan_loss(label):
+                        continue
+
                     target = self.gt
 
                     if loss.loss_weight < 0:
@@ -619,6 +626,7 @@ class SRModel(BaseModel):
             and cri_gan is not None
             and self.optimizer_d is not None
             and not skip_d_update
+            and not fidelity_only
         ):
             # optimize net_d
             for p in self.net_d.parameters():
@@ -1024,3 +1032,7 @@ class SRModel(BaseModel):
             )
 
         self.save_training_state(epoch, current_iter)
+
+    def _is_perceptual_or_gan_loss(self, label: str) -> bool:
+        unsafe_patterns = ("gan", "percep", "vgg", "lpips", "dists", "style", "ldl")
+        return any(p in label.lower() for p in unsafe_patterns)

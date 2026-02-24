@@ -92,7 +92,11 @@ class BaseModel:
 
     @abstractmethod
     def optimize_parameters(
-        self, current_iter: int, current_accum_iter: int, apply_gradient: bool
+        self,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+        fidelity_only: bool,
     ) -> None:
         pass
 

@@ -140,6 +140,12 @@ class DatasetOptions(StrictStruct):
 
     final_sinc_prob: float = 0
     final_kernel_range: tuple[int, int] = (5, 17)
+    ratio: Annotated[
+        float,
+        Meta(
+            description="Ratio that the fidelity train dataset will be used instead of the primary train dataset. Only has any effect under train_fidelity dataset."
+        ),
+    ] = 0.15
 
 
 class PathOptions(StrictStruct):
