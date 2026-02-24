@@ -204,38 +204,40 @@ def create_train_val_dataloader(
                 )
         elif phase == "train_fidelity":
             # Build fidelity dataset/loader same way as train
-            fidelity_ratio = dataset_opt.ratio or 0.15
+            fidelity_ratio = dataset_opt.ratio
+            assert dataset_opt.batch_size_per_gpu is not None
 
-            if dataset_opt.gt_size is None and dataset_opt.lq_size is not None:
-                dataset_opt.gt_size = dataset_opt.lq_size * opt.scale
-            elif dataset_opt.lq_size is None and dataset_opt.gt_size is not None:
-                dataset_opt.lq_size = dataset_opt.gt_size // opt.scale
+            if fidelity_ratio > 0:
+                if dataset_opt.gt_size is None and dataset_opt.lq_size is not None:
+                    dataset_opt.gt_size = dataset_opt.lq_size * opt.scale
+                elif dataset_opt.lq_size is None and dataset_opt.gt_size is not None:
+                    dataset_opt.lq_size = dataset_opt.gt_size // opt.scale
 
-            fidelity_set = build_dataset(dataset_opt)
-            dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
-            if dataset_enlarge_ratio == "auto":
-                dataset_enlarge_ratio = max(
-                    2000 * dataset_opt.batch_size_per_gpu // len(train_set), 1
+                fidelity_set = build_dataset(dataset_opt)
+                dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
+                if dataset_enlarge_ratio == "auto":
+                    dataset_enlarge_ratio = max(
+                        2000 * dataset_opt.batch_size_per_gpu // len(fidelity_set), 1
+                    )
+                fidelity_sampler = EnlargedSampler(
+                    fidelity_set,
+                    opt.world_size,
+                    opt.rank,
+                    dataset_enlarge_ratio,
                 )
-            fidelity_sampler = EnlargedSampler(
-                fidelity_set,
-                opt.world_size,
-                opt.rank,
-                dataset_enlarge_ratio,
-            )
-            fidelity_loader = build_dataloader(
-                fidelity_set,
-                dataset_opt,
-                num_gpu=opt.num_gpu,
-                dist=opt.dist,
-                sampler=fidelity_sampler,
-                seed=opt.manual_seed,
-            )
-            logger.info(
-                "Fidelity dataset: %d images, ratio: %.2f",
-                len(fidelity_set),
-                fidelity_ratio,
-            )
+                fidelity_loader = build_dataloader(
+                    fidelity_set,
+                    dataset_opt,
+                    num_gpu=opt.num_gpu,
+                    dist=opt.dist,
+                    sampler=fidelity_sampler,
+                    seed=opt.manual_seed,
+                )
+                logger.info(
+                    "Fidelity dataset: %d images, ratio: %.2f",
+                    len(fidelity_set),
+                    fidelity_ratio,
+                )
         elif phase.split("_")[0] == "val":
             if val_enabled:
                 val_set = build_dataset(dataset_opt)
