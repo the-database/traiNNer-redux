@@ -270,7 +270,11 @@ class AEModel(BaseModel):
             )
 
     def optimize_parameters(
-        self, current_iter: int, current_accum_iter: int, apply_gradient: bool
+        self,
+        current_iter: int,
+        current_accum_iter: int,
+        apply_gradient: bool,
+        fidelity_only: bool = False,
     ) -> None:
         assert self.optimizer_ae is not None
         assert self.gt is not None
