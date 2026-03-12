@@ -1,5 +1,4 @@
 import os
-import random
 
 from torch.distributed import destroy_process_group
 
@@ -56,15 +55,6 @@ from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import TrainingState
 
 
-def infinite_prefetch(prefetcher):
-    while True:
-        prefetcher.reset()
-        data = prefetcher.next()
-        while data is not None:
-            yield data
-            data = prefetcher.next()
-
-
 def init_tb_loggers(opt: ReduxOptions) -> SummaryWriter | None:
     # initialize wandb logger before tensorboard logger to allow proper sync
     assert opt.logger is not None
@@ -86,33 +76,15 @@ def create_train_val_dataloader(
     args: argparse.Namespace,
     val_enabled: bool,
     logger: logging.Logger,
-) -> tuple[
-    DataLoader | None,
-    EnlargedSampler | None,
-    DataLoader | None,
-    float,
-    list[DataLoader],
-    int,
-    int,
-]:
+) -> tuple[DataLoader | None, EnlargedSampler | None, list[DataLoader], int, int]:
     assert isinstance(opt.num_gpu, int)
     assert opt.world_size is not None
     assert opt.dist is not None
 
     # create train and val dataloaders
-    (
-        train_loader,
-        train_sampler,
-        fidelity_loader,
-        fidelity_ratio,
-        val_loaders,
-        total_epochs,
-        total_iters,
-    ) = (
+    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
         None,
         None,
-        None,
-        0.0,
         [],
         0,
         0,
@@ -202,42 +174,6 @@ def create_train_val_dataloader(
                     len(train_set),
                     train_set.label,
                 )
-        elif phase == "train_fidelity":
-            # Build fidelity dataset/loader same way as train
-            fidelity_ratio = dataset_opt.ratio
-            assert dataset_opt.batch_size_per_gpu is not None
-
-            if fidelity_ratio > 0:
-                if dataset_opt.gt_size is None and dataset_opt.lq_size is not None:
-                    dataset_opt.gt_size = dataset_opt.lq_size * opt.scale
-                elif dataset_opt.lq_size is None and dataset_opt.gt_size is not None:
-                    dataset_opt.lq_size = dataset_opt.gt_size // opt.scale
-
-                fidelity_set = build_dataset(dataset_opt)
-                dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
-                if dataset_enlarge_ratio == "auto":
-                    dataset_enlarge_ratio = max(
-                        2000 * dataset_opt.batch_size_per_gpu // len(fidelity_set), 1
-                    )
-                fidelity_sampler = EnlargedSampler(
-                    fidelity_set,
-                    opt.world_size,
-                    opt.rank,
-                    dataset_enlarge_ratio,
-                )
-                fidelity_loader = build_dataloader(
-                    fidelity_set,
-                    dataset_opt,
-                    num_gpu=opt.num_gpu,
-                    dist=opt.dist,
-                    sampler=fidelity_sampler,
-                    seed=opt.manual_seed,
-                )
-                logger.info(
-                    "Fidelity dataset: %d images, ratio: %.2f",
-                    len(fidelity_set),
-                    fidelity_ratio,
-                )
         elif phase.split("_")[0] == "val":
             if val_enabled:
                 val_set = build_dataset(dataset_opt)
@@ -263,15 +199,7 @@ def create_train_val_dataloader(
         else:
             raise ValueError(f"Dataset phase {phase} is not recognized.")
 
-    return (
-        train_loader,
-        train_sampler,
-        fidelity_loader,
-        fidelity_ratio,
-        val_loaders,
-        total_epochs,
-        total_iters,
-    )
+    return train_loader, train_sampler, val_loaders, total_epochs, total_iters
 
 
 def load_resume_state(opt: ReduxOptions) -> Any | None:
@@ -387,15 +315,9 @@ def train_pipeline(root_path: str) -> None:
     if opt.val:
         val_enabled = opt.val.val_enabled
 
-    (
-        train_loader,
-        train_sampler,
-        fidelity_loader,
-        fidelity_ratio,
-        val_loaders,
-        total_epochs,
-        total_iters,
-    ) = create_train_val_dataloader(opt, args, val_enabled, logger)
+    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
+        create_train_val_dataloader(opt, args, val_enabled, logger)
+    )
 
     if train_loader is None or train_sampler is None:
         raise ValueError(
@@ -446,18 +368,11 @@ def train_pipeline(root_path: str) -> None:
     msg_logger = MessageLogger(opt, current_iter, tb_logger)
 
     # dataloader prefetcher
-    fidelity_prefetcher = None
     prefetch_mode = opt.datasets["train"].prefetch_mode
     if prefetch_mode is None or prefetch_mode == "cpu":
         prefetcher = CPUPrefetcher(train_loader)
-        if fidelity_loader is not None:
-            fidelity_prefetcher = infinite_prefetch(CPUPrefetcher(fidelity_loader))
     elif prefetch_mode == "cuda":
         prefetcher = CUDAPrefetcher(train_loader, opt)
-        if fidelity_loader is not None:
-            fidelity_prefetcher = infinite_prefetch(
-                CUDAPrefetcher(fidelity_loader, opt)
-            )
         logger.info("Use %s prefetch dataloader", prefetch_mode)
         if not opt.datasets["train"].pin_memory:
             raise ValueError("Please set pin_memory=True for CUDAPrefetcher.")
@@ -486,7 +401,6 @@ def train_pipeline(root_path: str) -> None:
     epoch = start_epoch
     apply_gradient = False
     crashed = False
-    fidelity_only = False
     train_data = None
     assert model.opt.path.models is not None
 
@@ -514,7 +428,7 @@ def train_pipeline(root_path: str) -> None:
                 model.feed_data(train_data)
                 try:
                     model.optimize_parameters(
-                        current_iter, current_accum_iter, apply_gradient, fidelity_only
+                        current_iter, current_accum_iter, apply_gradient
                     )
                 except RuntimeError as e:
                     # Check to see if its actually the CUDA out of memory error
@@ -584,12 +498,7 @@ def train_pipeline(root_path: str) -> None:
 
                 data_timer.start()
                 iter_timer.start()
-
                 train_data = prefetcher.next()
-                fidelity_only = False
-                if fidelity_prefetcher is not None and random.random() < fidelity_ratio:
-                    train_data = next(fidelity_prefetcher)
-                    fidelity_only = True
 
                 if interrupt_received:
                     break
