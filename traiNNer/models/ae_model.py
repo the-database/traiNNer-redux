@@ -274,7 +274,6 @@ class AEModel(BaseModel):
         current_iter: int,
         current_accum_iter: int,
         apply_gradient: bool,
-        fidelity_only: bool = False,
     ) -> None:
         assert self.optimizer_ae is not None
         assert self.gt is not None
