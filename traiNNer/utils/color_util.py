@@ -237,14 +237,12 @@ def _convert_output_type_range(img: np.ndarray, dst_type: np.dtype) -> np.ndarra
 def rgb2pixelformat_pt(img: Tensor, pixel_format: PixelFormat) -> Tensor:
     if pixel_format == "rgb":
         return img
-    elif pixel_format == "gray":
-        raise NotImplementedError
     elif pixel_format == "yuv444":
         return rgb2ycbcr_pt(img)
     elif pixel_format == "y":
-        return rgb2ycbcr_pt(img)[:, 0:1, :, :]
+        return rgb2ycbcr_pt(img, y_only=True)
     elif pixel_format == "uv":
-        raise NotImplementedError
+        return rgb2ycbcr_pt(img)[:, 1:, :, :]
 
     raise NotImplementedError(pixel_format)
 
@@ -254,8 +252,6 @@ def pixelformat2rgb_pt(
 ) -> Tensor:
     if pixel_format == "rgb":
         return img
-    elif pixel_format == "gray":
-        raise NotImplementedError  # convert gray to rgb
     elif pixel_format == "yuv444":
         return ycbcr2rgb_pt(img)
     elif pixel_format == "y":
