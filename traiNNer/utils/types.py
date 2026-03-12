@@ -45,4 +45,4 @@ class DataLoaderArgs(TypedDict):
     pin_memory_device: NotRequired[str]
 
 
-PixelFormat = Literal["rgb", "y", "uv", "yuv444", "gray"]
+PixelFormat = Literal["rgb", "y", "uv", "yuv444"]

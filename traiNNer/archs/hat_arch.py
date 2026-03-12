@@ -1398,14 +1398,14 @@ def hat_l_aligned(
 
 
 @ARCH_REGISTRY.register()
-def hat_l_aligned_down(
+def hat_m_aligned(
     scale: int = 4,
     img_size: int = 64,
     patch_size: int = 1,
     in_chans: int = 3,
-    embed_dim: int = 160,
-    depths: Sequence[int] = (6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6),
-    num_heads: Sequence[int] = (5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5),
+    embed_dim: int = 192,
+    depths: Sequence[int] = (6, 6, 6, 6, 6, 6),
+    num_heads: Sequence[int] = (6, 6, 6, 6, 6, 6),
     window_size: int = 16,
     compress_ratio: float = 3,
     squeeze_factor: float = 30,
