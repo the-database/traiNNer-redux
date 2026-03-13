@@ -237,14 +237,24 @@ def _convert_output_type_range(img: np.ndarray, dst_type: np.dtype) -> np.ndarra
 def rgb2pixelformat_pt(img: Tensor, pixel_format: PixelFormat) -> Tensor:
     if pixel_format == "rgb":
         return img
-    elif pixel_format == "yuv444":
-        return rgb2ycbcr_pt(img)
-    elif pixel_format == "y":
-        return rgb2ycbcr_pt(img, y_only=True)
-    elif pixel_format == "uv":
-        return rgb2ycbcr_pt(img)[:, 1:, :, :]
 
-    raise NotImplementedError(pixel_format)
+    is_video = img.ndim == 5
+    if is_video:
+        b, t, c, h, w = img.shape
+        img = img.view(b * t, c, h, w)
+
+    if pixel_format == "yuv444":
+        out = rgb2ycbcr_pt(img)
+    elif pixel_format == "y":
+        out = rgb2ycbcr_pt(img, y_only=True)
+    elif pixel_format == "uv":
+        out = rgb2ycbcr_pt(img)[:, 1:, :, :]
+    else:
+        raise NotImplementedError(pixel_format)
+
+    if is_video:
+        out = out.view(b, t, -1, h, w)  # pyright: ignore[reportPossiblyUnboundVariable]
+    return out
 
 
 def pixelformat2rgb_pt(
@@ -252,20 +262,32 @@ def pixelformat2rgb_pt(
 ) -> Tensor:
     if pixel_format == "rgb":
         return img
-    elif pixel_format == "yuv444":
-        return ycbcr2rgb_pt(img)
+
+    is_video = img.ndim == 5
+    if is_video:
+        b, t, c, h, w = img.shape
+        img = img.view(b * t, c, h, w)
+        if img_ref_rgb is not None:
+            img_ref_rgb = img_ref_rgb.view(b * t, -1, h, w)
+
+    if pixel_format == "yuv444":
+        out = ycbcr2rgb_pt(img)
     elif pixel_format == "y":
         assert img_ref_rgb is not None, "gt is required for luma pixel format"
         img_yuv = rgb2ycbcr_pt(img_ref_rgb)
-        img_yuv[:, 0:1, :, :] = img  # replace luma
-        return ycbcr2rgb_pt(img_yuv)
+        img_yuv[:, 0:1, :, :] = img
+        out = ycbcr2rgb_pt(img_yuv)
     elif pixel_format == "uv":
         assert img_ref_rgb is not None, "gt is required for chroma pixel format"
         img_yuv = rgb2ycbcr_pt(img_ref_rgb)
-        img_yuv[:, 1:, :, :] = img  # replace chroma
-        return ycbcr2rgb_pt(img_yuv)
+        img_yuv[:, 1:, :, :] = img
+        out = ycbcr2rgb_pt(img_yuv)
+    else:
+        raise NotImplementedError(pixel_format)
 
-    raise NotImplementedError(pixel_format)
+    if is_video:
+        out = out.view(b, t, -1, h, w)  # pyright: ignore[reportPossiblyUnboundVariable]
+    return out
 
 
 def rgb2ycbcr_pt(img: Tensor, y_only: bool = False) -> Tensor:
