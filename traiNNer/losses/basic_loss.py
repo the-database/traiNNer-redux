@@ -30,6 +30,42 @@ def charbonnier_loss(pred: Tensor, target: Tensor, eps: float = 1e-12) -> Tensor
     return torch.sqrt((pred - target) ** 2 + eps)
 
 
+# Based on Rec. 601 (full range), for RGB images in [0, 255]
+_RGB_TO_YUV_MATRIX = torch.tensor(
+    [
+        [0.299000, 0.587000, 0.114000],
+        [-0.168736, -0.331264, 0.500000],
+        [0.500000, -0.418688, -0.081312],
+    ],
+    dtype=torch.float64,
+)
+_YUV_TO_RGB_MATRIX = torch.linalg.inv(_RGB_TO_YUV_MATRIX)
+
+
+def _apply_color_matrix(x: Tensor, matrix: Tensor) -> Tensor:
+    matrix = matrix.to(device=x.device, dtype=x.dtype)
+    return torch.einsum("ij,bjhw->bihw", matrix, x)
+
+
+def _weighted_yuv_residual(
+    pred: Tensor,
+    target: Tensor,
+    y_weight: float = 1.0,
+    u_weight: float = 1.0,
+    v_weight: float = 1.0,
+    chroma_weight: float = 1.0,
+) -> Tensor:
+    diff_rgb = pred - target
+    diff_yuv = _apply_color_matrix(diff_rgb, _RGB_TO_YUV_MATRIX)
+
+    effective_u_weight = float(u_weight) * float(chroma_weight)
+    effective_v_weight = float(v_weight) * float(chroma_weight)
+
+    channel_weights = diff_yuv.new_tensor([float(y_weight), effective_u_weight, effective_v_weight]).view(1, 3, 1, 1)
+    weighted_diff_yuv = diff_yuv * channel_weights
+    return _apply_color_matrix(weighted_diff_yuv, _YUV_TO_RGB_MATRIX)
+
+
 @LOSS_REGISTRY.register()
 class L1Loss(nn.Module):
     """L1 (mean absolute error, MAE) loss.
@@ -134,6 +170,89 @@ class CharbonnierLoss(nn.Module):
         return charbonnier_loss(
             pred, target, weight, eps=self.eps, reduction=self.reduction
         )
+
+
+@LOSS_REGISTRY.register()
+class WeightedYUVLoss(nn.Module):
+    """RGB loss with Y/U/V-weighted residuals.
+
+    The RGB residual is converted to YUV, Y/U/V are scaled separately, then the
+    weighted residual is converted back to RGB before applying the selected base loss.
+    With y_weight=u_weight=v_weight=1.0 and chroma_weight=1.0, this reduces to
+    the corresponding vanilla RGB loss up to normal floating-point precision.
+
+    chroma_weight is a convenience multiplier applied to both u_weight and v_weight, so:
+        chroma_weight=0.0
+    is equivalent to:
+        u_weight=0.0, v_weight=0.0
+    assuming u_weight and v_weight are both at their defaults of 1.0.
+    """
+
+    def __init__(
+        self,
+        loss_weight: float,
+        reduction: str = "mean",
+        criterion: str = "charbonnier",
+        eps: float = 1e-12,
+        y_weight: float = 1.0,
+        u_weight: float = 1.0,
+        v_weight: float = 1.0,
+        chroma_weight: float = 1.0,
+    ) -> None:
+        super().__init__()
+        if reduction not in ["none", "mean", "sum"]:
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. Supported ones are: {_reduction_modes}"
+            )
+
+        criterion = str(criterion).lower()
+        if criterion not in ["l1", "l2", "charbonnier"]:
+            raise ValueError(
+                f"Unsupported criterion: {criterion}. Supported ones are: ['l1', 'l2', 'charbonnier']"
+            )
+
+        self.loss_weight = float(loss_weight)
+        self.reduction = reduction
+        self.criterion = criterion
+        self.eps = float(eps)
+        self.y_weight = float(y_weight)
+        self.u_weight = float(u_weight)
+        self.v_weight = float(v_weight)
+        self.chroma_weight = float(chroma_weight)
+
+    def forward(
+        self, pred: Tensor, target: Tensor, weight: Tensor | None = None, **kwargs
+    ) -> Tensor:
+        """
+        Args:
+            pred (Tensor): of shape (N, C, H, W). Predicted tensor.
+            target (Tensor): of shape (N, C, H, W). Ground truth tensor.
+            weight (Tensor, optional): of shape (N, C, H, W). Element-wise weights. Default: None.
+        """
+        weighted_diff_rgb = _weighted_yuv_residual(
+            pred,
+            target,
+            y_weight=self.y_weight,
+            u_weight=self.u_weight,
+            v_weight=self.v_weight,
+            chroma_weight=self.chroma_weight,
+        )
+        weighted_pred = target + weighted_diff_rgb
+
+        if self.criterion == "l1":
+            base_loss = l1_loss(weighted_pred, target, weight, reduction=self.reduction)
+        elif self.criterion == "l2":
+            base_loss = mse_loss(weighted_pred, target, weight, reduction=self.reduction)
+        else:
+            base_loss = charbonnier_loss(
+                weighted_pred,
+                target,
+                weight,
+                eps=self.eps,
+                reduction=self.reduction,
+            )
+
+        return self.loss_weight * base_loss
 
 
 @LOSS_REGISTRY.register()
