@@ -240,19 +240,11 @@ class WeightedYUVLoss(nn.Module):
         weighted_pred = target + weighted_diff_rgb
 
         if self.criterion == "l1":
-            base_loss = l1_loss(weighted_pred, target, weight, reduction=self.reduction)
+            return l1_loss(weighted_pred, target, weight, reduction=self.reduction)
         elif self.criterion == "l2":
-            base_loss = mse_loss(weighted_pred, target, weight, reduction=self.reduction)
+            return mse_loss(weighted_pred, target, weight, reduction=self.reduction)
         else:
-            base_loss = charbonnier_loss(
-                weighted_pred,
-                target,
-                weight,
-                eps=self.eps,
-                reduction=self.reduction,
-            )
-
-        return self.loss_weight * base_loss
+            return charbonnier_loss(weighted_pred, target, weight, eps=self.eps, reduction=self.reduction)
 
 
 @LOSS_REGISTRY.register()
