@@ -9,6 +9,15 @@ from torch import Tensor
 from traiNNer.utils.img_util import img2rgb
 
 
+def _to_patch_wh(patch_size: int | tuple[int, int]) -> tuple[int, int]:
+    """Convert patch size to height and width.
+    If a single int is given it will be used for both height and width. Tuples are returned as-is.
+    """
+    if isinstance(patch_size, int):
+        return patch_size, patch_size
+    return patch_size
+
+
 def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     """Mod crop images, used during testing.
 
@@ -50,7 +59,7 @@ def single_random_crop_vips(img: pyvips.Image, patch_size: int) -> np.ndarray:
 def paired_random_crop(
     img_gt: np.ndarray,
     img_lq: np.ndarray,
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     gt_path: str | None = None,
 ) -> tuple[np.ndarray, np.ndarray]: ...
@@ -60,7 +69,7 @@ def paired_random_crop(
 def paired_random_crop(
     img_gt: Tensor,
     img_lq: Tensor,
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     gt_path: str | None = None,
 ) -> tuple[Tensor, Tensor]: ...
@@ -69,7 +78,7 @@ def paired_random_crop(
 def paired_random_crop(
     img_gt: np.ndarray | Tensor,
     img_lq: np.ndarray | Tensor,
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     gt_path: str | None = None,
 ) -> tuple[np.ndarray, np.ndarray] | tuple[Tensor, Tensor]:
@@ -84,7 +93,7 @@ def paired_random_crop(
         img_lqs (list[ndarray] | ndarray): LQ images. Note that all images
             should have the same shape. If the input is an ndarray, it will
             be transformed to a list containing itself.
-        gt_patch_size (int): GT patch size.
+        gt_patch_size (int | tuple[int, int]): GT patch size.
         scale (int): Scale factor.
         gt_path (str): Path to ground-truth. Default: None.
 
@@ -101,44 +110,46 @@ def paired_random_crop(
         assert isinstance(img_lq, np.ndarray)
         h_lq, w_lq = img_lq.shape[0:2]
         h_gt, w_gt = img_gt.shape[0:2]
-    lq_patch_size = gt_patch_size // scale
+    gt_patch_w, gt_patch_h = _to_patch_wh(gt_patch_size)
+    lq_patch_h = gt_patch_h // scale
+    lq_patch_w = gt_patch_w // scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
         raise ValueError(
-            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
-            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}",
+            f"Scale mismatches. GT ({w_gt}x{h_gt}) is not {scale}x ",
+            f"multiplication of LQ ({w_lq}x{h_lq}). {gt_path}",
         )
-    if h_lq < lq_patch_size or w_lq < lq_patch_size:
+    if h_lq < lq_patch_h or w_lq < lq_patch_w:
         raise ValueError(
-            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
-            f"({lq_patch_size}, {lq_patch_size}). "
-            f"Please remove {gt_path}."
+            f"LQ ({w_lq}x{h_lq}) is smaller than patch size "
+            f"({lq_patch_w}x{lq_patch_h}). "
+            f"Reduce the patch size or remove the file. {gt_path}."
         )
 
     # randomly choose top and left coordinates for lq patch
-    top = random.randint(0, h_lq - lq_patch_size)
-    left = random.randint(0, w_lq - lq_patch_size)
+    top = random.randint(0, h_lq - lq_patch_h)
+    left = random.randint(0, w_lq - lq_patch_w)
 
     # crop lq patch
     if isinstance(img_lq, Tensor):
-        img_lq = img_lq[:, :, top : top + lq_patch_size, left : left + lq_patch_size]
+        img_lq = img_lq[:, :, top : top + lq_patch_h, left : left + lq_patch_w]
 
     else:
-        img_lq = img_lq[top : top + lq_patch_size, left : left + lq_patch_size, ...]
+        img_lq = img_lq[top : top + lq_patch_h, left : left + lq_patch_w, ...]
 
     # crop corresponding gt patch
     top_gt, left_gt = int(top * scale), int(left * scale)
     if isinstance(img_gt, Tensor):
         assert isinstance(img_lq, Tensor)
         img_gt = img_gt[
-            :, :, top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size
+            :, :, top_gt : top_gt + gt_patch_h, left_gt : left_gt + gt_patch_w
         ]
 
         return img_gt, img_lq
     else:
         assert isinstance(img_lq, np.ndarray)
         img_gt = img_gt[
-            top_gt : top_gt + gt_patch_size, left_gt : left_gt + gt_patch_size, ...
+            top_gt : top_gt + gt_patch_h, left_gt : left_gt + gt_patch_w, ...
         ]
 
         return img_gt, img_lq
@@ -148,7 +159,7 @@ def paired_random_crop(
 def paired_random_crop_list(
     img_gts: list[np.ndarray],
     img_lqs: list[np.ndarray],
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     gt_path: str | None = None,
 ) -> tuple[list[np.ndarray], list[np.ndarray]]: ...
@@ -158,7 +169,7 @@ def paired_random_crop_list(
 def paired_random_crop_list(
     img_gts: list[Tensor],
     img_lqs: list[Tensor],
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     gt_path: str | None = None,
 ) -> tuple[list[Tensor], list[Tensor]]: ...
@@ -167,7 +178,7 @@ def paired_random_crop_list(
 def paired_random_crop_list(
     img_gts: list[np.ndarray] | list[Tensor],
     img_lqs: list[np.ndarray] | list[Tensor],
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     gt_path: str | None = None,
 ) -> tuple[list[np.ndarray] | list[Tensor], list[np.ndarray] | list[Tensor]]:
@@ -182,7 +193,7 @@ def paired_random_crop_list(
         img_lqs (list[ndarray] | ndarray): LQ images. Note that all images
             should have the same shape. If the input is an ndarray, it will
             be transformed to a list containing itself.
-        gt_patch_size (int): GT patch size.
+        gt_patch_size (int | tuple[int, int]): GT patch size.
         scale (int): Scale factor.
         gt_path (str): Path to ground-truth. Default: None.
 
@@ -213,24 +224,25 @@ def paired_random_crop_list(
 
 def single_crop_vips(
     img: pyvips.Image,
-    patch_size: int,
+    patch_size: int | tuple[int, int],
     x: int,
     y: int,
     path: str | None = None,
 ) -> np.ndarray:
+    patch_w, patch_h = _to_patch_wh(patch_size)
     h: int = img.height  # pyright: ignore[reportAssignmentType]
     w: int = img.width  # pyright: ignore[reportAssignmentType]
 
-    if h < patch_size or w < patch_size:
+    if h < patch_h or w < patch_w:
         raise ValueError(
-            f"Image ({h}, {w}) is smaller than patch size "
-            f"({patch_size}, {patch_size}). "
-            f"Please remove {path}."
+            f"Image ({w}x{h}) is smaller than patch size "
+            f"({patch_w}x{patch_h}). "
+            f"Reduce the patch size or remove the file. {path}."
         )
 
     region = pyvips.Region.new(img)
     try:
-        data = region.fetch(x, y, patch_size, patch_size)
+        data = region.fetch(x, y, patch_w, patch_h)
     except pyvips.error.Error as e:
         raise RuntimeError(f"Unable to read image {path}") from e
 
@@ -238,7 +250,7 @@ def single_crop_vips(
         np.ndarray(
             buffer=data,
             dtype=np.uint8,
-            shape=[patch_size, patch_size, img.bands],  # pyright: ignore[reportAssignmentType,reportArgumentType]
+            shape=[patch_h, patch_w, img.bands],  # pyright: ignore[reportAssignmentType,reportArgumentType]
         )
     )
 
@@ -246,7 +258,7 @@ def single_crop_vips(
 def paired_random_crop_vips(
     img_gt: pyvips.Image,
     img_lq: pyvips.Image,
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     lq_path: str | None = None,
     gt_path: str | None = None,
@@ -256,21 +268,23 @@ def paired_random_crop_vips(
     h_lq: int = img_lq.height  # pyright: ignore[reportAssignmentType]
     w_lq: int = img_lq.width  # pyright: ignore[reportAssignmentType]
     h_gt, w_gt = img_gt.height, img_gt.width
-    lq_patch_size = gt_patch_size // scale
+    gt_patch_w, gt_patch_h = _to_patch_wh(gt_patch_size)
+    lq_patch_h = gt_patch_h // scale
+    lq_patch_w = gt_patch_w // scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
         raise ValueError(
-            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
-            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}",
+            f"Scale mismatches. GT ({w_gt}x{h_gt}) is not {scale}x ",
+            f"multiplication of LQ ({w_lq}x{h_lq}). {gt_path}",
         )
 
     if y is None:
-        y = random.randint(0, h_lq - lq_patch_size)
+        y = random.randint(0, h_lq - lq_patch_h)
     if x is None:
-        x = random.randint(0, w_lq - lq_patch_size)
+        x = random.randint(0, w_lq - lq_patch_w)
 
-    img_lq_np = single_crop_vips(img_lq, lq_patch_size, x, y, lq_path)
-    img_gt_np = single_crop_vips(img_gt, gt_patch_size, x * scale, y * scale, gt_path)
+    img_lq_np = single_crop_vips(img_lq, (lq_patch_w, lq_patch_h), x, y, lq_path)
+    img_gt_np = single_crop_vips(img_gt, (gt_patch_w, gt_patch_h), x * scale, y * scale, gt_path)
 
     return img_gt_np, img_lq_np
 

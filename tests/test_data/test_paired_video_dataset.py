@@ -69,6 +69,40 @@ phase: train
         )
 
 
+def test_pairedvideodataset_rectangular_crop() -> None:
+    clip_size = 5
+    gt_size = (128, 96)
+    scale = 2
+
+    opt_str = rf"""
+name: TestRect
+type: PairedVideoDataset
+dataroot_gt: [datasets/train/video/hr]
+dataroot_lq: [datasets/train/video/lr]
+filename_tmpl: '{{}}'
+io_backend:
+    type: disk
+clip_size: {clip_size}
+scale: {scale}
+gt_size: [{gt_size[0]}, {gt_size[1]}]
+use_hflip: true
+use_rot: true
+
+phase: train
+"""
+    opt = msgspec.yaml.decode(opt_str, type=DatasetOptions, strict=True)
+    dataset = PairedVideoDataset(opt)
+
+    result = dataset.__getitem__(0)
+    assert result["gt"].shape == (3, gt_size[0], gt_size[1])
+    assert result["lq"].shape == (
+        clip_size,
+        3,
+        gt_size[0] // scale,
+        gt_size[1] // scale,
+    )
+
+
 # def test_getitem() -> None:
 #     opt = DatasetOptions(
 #         name="train",

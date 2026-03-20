@@ -67,6 +67,31 @@ phase: train
         osp.normpath(f"datasets/val/dataset1/hr/{x:04d}.png") for x in image_names
     }
 
+
+def test_pairedimagedataset_rectangular_crop() -> None:
+    opt_str = r"""
+name: TestRect
+type: PairedImageDataset
+dataroot_gt: [datasets/val/dataset1/hr]
+dataroot_lq: [datasets/val/dataset1/lr]
+filename_tmpl: '{}'
+io_backend:
+    type: disk
+
+scale: 4
+gt_size: [128, 96]
+use_hflip: true
+use_rot: true
+
+phase: train
+"""
+    opt = msgspec.yaml.decode(opt_str, type=DatasetOptions, strict=True)
+    dataset = PairedImageDataset(opt)
+
+    result = dataset.__getitem__(0)
+    assert result["gt"].shape == (3, 128, 96)
+    assert result["lq"].shape == (3, 32, 24)
+
     # ------------------ test lmdb backend and with y channel-------------------- #
     # TODO
     # opt["dataroot_gt"] = "tests/data/gt.lmdb"
