@@ -36,7 +36,7 @@ class PairedImageDataset(BaseDataset):
         io_backend (dict): IO backend type and other kwarg.
         filename_tmpl (str): Template for each filename. Note that the template excludes the file extension.
             Default: '{}'.
-        gt_size (int): Cropped patched size for gt patches.
+        gt_size (int | tuple[int, int]): Patch size for gt patches.
         use_hflip (bool): Use horizontal flips.
         use_rot (bool): Use rotation (use vertical flip and transposing h and w for implementation).
         scale (bool): Scale, which will be added automatically.

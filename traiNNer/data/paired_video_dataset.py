@@ -147,11 +147,14 @@ class PairedVideoDataset(BaseDataset):
         force_hflip = None
         force_vflip = None
         force_rot90 = None
-        lq_size = 0
+        lq_size = (0, 0)
 
         if self.opt.phase == "train":
             assert self.gt_size is not None
-            lq_size = self.gt_size // scale
+            if isinstance(self.gt_size, int):
+                lq_size = (self.gt_size // scale, self.gt_size // scale)
+            else:
+                lq_size = (self.gt_size[0] // scale, self.gt_size[1] // scale)
 
         # middle frame only
         vips_img_gt = vipsimfrompath(hr_path)
@@ -171,8 +174,8 @@ class PairedVideoDataset(BaseDataset):
                     w_lq: int = vips_img_lq.width  # pyright: ignore[reportAssignmentType]
                     if force_rot90:
                         h_lq, w_lq = w_lq, h_lq  # swap dimensions if rotating
-                    force_y = random.randint(0, h_lq - lq_size)
-                    force_x = random.randint(0, w_lq - lq_size)
+                    force_x = random.randint(0, w_lq - lq_size[0])
+                    force_y = random.randint(0, h_lq - lq_size[1])
 
                 if i == middle_idx:
                     vips_img_gt_aug, vips_img_lq = augment_vips_pair(

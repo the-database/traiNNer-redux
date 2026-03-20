@@ -49,11 +49,11 @@ class DatasetOptions(StrictStruct):
     use_rot: Annotated[bool, Meta(description="Randomly rotate the images.")] = True
     mean: list[float] | None = None
     std: list[float] | None = None
-    gt_size: int | None = None
+    gt_size: int | tuple[int, int] | None = None
     lq_size: Annotated[
-        int | None,
+        int | tuple[int, int] | None,
         Meta(
-            description="During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
+            description="During training, a patch of this size is cropped from LR images. Use a single int for square crops or [height, width] for rectangular crops. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiples of 8 for best performance with AMP."
         ),
     ] = None
     color: Literal["y"] | None = None
