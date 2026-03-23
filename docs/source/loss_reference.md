@@ -113,7 +113,6 @@ loss_weight: 1.0
 
 ```yaml
 type: fftloss
-loss_weight: 1.0
 reduction: mean
 loss_weight: 1.0
 ```
