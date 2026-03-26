@@ -121,7 +121,6 @@ loss_weight: 1.0
 
 ```yaml
 type: fliploss
-loss_weight: 1.0
 pixels_per_degree: 67.02064327658226
 loss_weight: 1.0
 ```
@@ -292,7 +291,6 @@ loss_weight: 1.0
 
 ```yaml
 type: ssimloss
-loss_weight: 1.0
 channels: 3
 downsample: false
 test_y_channel: true
