@@ -546,7 +546,7 @@ def train_pipeline(root_path: str) -> None:
 
             if skip_save:
                 logger.info(
-                    "A checkpoint in %s was written less than 60 seconds ago; won't save a new one.\n" \
+                    "A checkpoint in %s was written less than a minute ago; won't save a new one. " \
                     "Stopped at epoch: %d, iter: %d.",
                     clickable_file_path(model.opt.path.models, "experiments folder"),
                     epoch,
