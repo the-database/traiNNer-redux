@@ -149,9 +149,10 @@ class Conv3XC(nn.Module):
 
 
 class SPABV2(nn.Module):
-    """SPAB with learned 1x1 conv attention (from NTIRE 2026 SPANV2) and ReLU
-    activation. The 1x1 conv enables cross-channel gating with C² params per
-    block, replacing the parameter-free sigmoid attention."""
+    """SPAB with learned 1x1 conv attention and ReLU activation. The 1x1 conv
+    enables cross-channel gating with C² params per block, wrapped in tanh to
+    bound attention magnitude to [-1, 1] for training stability under aggressive
+    losses (GAN, perceptual)."""
 
     def __init__(
         self,
@@ -182,7 +183,7 @@ class SPABV2(nn.Module):
 
         out3 = self.c3_r(out2_act)
 
-        m = self.att_conv(out3)
+        m = torch.tanh(self.att_conv(out3))
         out = (x + out3) * m
 
         return out, out1, m
