@@ -95,3 +95,11 @@ class SingleImageDataset(BaseDataset):
     @property
     def label(self) -> str:
         return "images"
+
+
+@DATASET_REGISTRY.register()
+class SingleLqDataset(SingleImageDataset):
+    """Alias for SingleImageDataset. Loads LQ images only (no GT, no cropping,
+    no augmentation). Identical behavior; exists so config YAML can use the
+    more descriptive name alongside SingleGtDataset.
+    """

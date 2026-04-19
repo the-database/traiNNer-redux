@@ -26,6 +26,7 @@ from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
 from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
+from traiNNer.utils.eco import compute_alpha, eco_synthesize
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
@@ -89,6 +90,34 @@ class SRModel(BaseModel):
         self.gt: Tensor | None = None
         self.output: Tensor | None = None
         logger = get_root_logger()
+
+        # ECO (Empirical Centroid-oriented Optimization) setup
+        self._eco_enabled = opt.eco.enabled
+        self._eco_end_iter = 0
+        self._eco_alpha: float = 0.0
+        if self._eco_enabled:
+            assert self.net_g_teacher is not None, (
+                "ECO requires network_g_teacher and pretrain_network_g_teacher"
+            )
+            assert opt.network_d is None, (
+                "ECO is fidelity-only; remove network_d to enable"
+            )
+            assert isinstance(opt.scale, int) and opt.scale >= 2, (
+                f"ECO requires integer scale >= 2, got {opt.scale}"
+            )
+            assert 0.0 < opt.eco.end_ratio <= 1.0, (
+                f"eco.end_ratio must be in (0, 1], got {opt.eco.end_ratio}"
+            )
+            assert opt.train is not None
+            self._eco_end_iter = int(opt.train.total_iter * opt.eco.end_ratio)
+            logger.info(
+                "ECO enabled: alpha ramps linearly 0 -> 1 over iters [0, %d] "
+                "(%.2f of total_iter=%d). feed_data will synthesize LR via "
+                "antialiased bicubic on the fly.",
+                self._eco_end_iter,
+                opt.eco.end_ratio,
+                opt.train.total_iter,
+            )
 
         if self.use_amp:
             if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
@@ -428,23 +457,40 @@ class SRModel(BaseModel):
             )
 
     def feed_data(self, data: DataFeed) -> None:
-        assert "lq" in data
-        self.lq = data["lq"].to(
-            self.device,
-            memory_format=self.memory_format,
-            non_blocking=True,
-        )
-        if self.net_g_teacher is not None:
-            with torch.inference_mode():
-                self.gt = self.net_g_teacher(self.lq).to(
-                    memory_format=self.memory_format
-                )
-        elif "gt" in data:
-            self.gt = data["gt"].to(
+        if self.is_train and self._eco_enabled:
+            assert self.net_g_teacher is not None
+            assert "gt" in data, "ECO requires GT in batch; use SingleGtDataset"
+            hr = data["gt"].to(
                 self.device,
                 memory_format=self.memory_format,
                 non_blocking=True,
             )
+            self._eco_alpha = compute_alpha(self.current_iter, self._eco_end_iter)
+            with torch.inference_mode():
+                lq, gt = eco_synthesize(
+                    self.net_g_teacher, hr, self._eco_alpha, self.opt.scale
+                )
+            # Tensors from inference_mode cannot participate in autograd; clone defensively.
+            self.lq = lq.clone().to(memory_format=self.memory_format)
+            self.gt = gt.clone().to(memory_format=self.memory_format)
+        else:
+            assert "lq" in data
+            self.lq = data["lq"].to(
+                self.device,
+                memory_format=self.memory_format,
+                non_blocking=True,
+            )
+            if self.net_g_teacher is not None:
+                with torch.inference_mode():
+                    self.gt = self.net_g_teacher(self.lq).to(
+                        memory_format=self.memory_format
+                    )
+            elif "gt" in data:
+                self.gt = data["gt"].to(
+                    self.device,
+                    memory_format=self.memory_format,
+                    non_blocking=True,
+                )
 
         # moa
         if self.is_train and self.batch_augment and self.gt is not None:
@@ -578,6 +624,11 @@ class SRModel(BaseModel):
 
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total
+
+                if self._eco_enabled:
+                    loss_dict["eco_alpha"] = torch.tensor(
+                        self._eco_alpha, device=self.device
+                    )
 
                 self.scaler_g.scale(l_g_total).backward()
 

@@ -38,6 +38,10 @@ class RealESRGANModel(SRModel):
     """
 
     def __init__(self, opt: ReduxOptions) -> None:
+        assert not opt.eco.enabled, (
+            "ECO is fidelity-only and not supported under RealESRGANModel; "
+            "use SRModel with a GT-only dataset"
+        )
         super().__init__(opt)
 
         self.queue_lr: Tensor | None = None

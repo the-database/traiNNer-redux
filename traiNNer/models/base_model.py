@@ -85,6 +85,10 @@ class BaseModel:
         self.grad_clip: bool = False
         self.grad_clip_max_norm: float = 100.0
         self.nan_count = 0
+        self.current_iter: int = opt.start_iter
+
+    def set_current_iter(self, iter_: int) -> None:
+        self.current_iter = iter_
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:

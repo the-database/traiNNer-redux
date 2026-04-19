@@ -216,6 +216,21 @@ class OnnxOptions(StrictStruct):
     wrap_5d_to_4d: bool = True
 
 
+class EcoOptions(StrictStruct):
+    enabled: Annotated[
+        bool,
+        Meta(
+            description="Enable ECO (Empirical Centroid-oriented Optimization) training. Requires a teacher network (network_g_teacher) and a GT-only dataset. Fidelity-only; not compatible with GAN training."
+        ),
+    ] = False
+    end_ratio: Annotated[
+        float,
+        Meta(
+            description="Fraction of total_iter at which the mixup alpha reaches 1 (vanilla training). Before this, alpha ramps linearly from 0 (pure teacher-output targets) to 1."
+        ),
+    ] = 0.75
+
+
 class TrainOptions(StrictStruct):
     total_iter: Annotated[
         int, Meta(description="The total number of iterations to train.")
@@ -675,6 +690,7 @@ class ReduxOptions(StrictStruct):
         default_factory=lambda: {"backend": "nccl", "port": 29500}
     )
     onnx: OnnxOptions | None = None
+    eco: EcoOptions = field(default_factory=EcoOptions)
 
     find_unused_parameters: bool = False
     contents: str | None = None
