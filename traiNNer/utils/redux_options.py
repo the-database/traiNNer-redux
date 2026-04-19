@@ -354,6 +354,8 @@ class TrainOptions(StrictStruct):
         ),
     ] = 100
 
+    eco: EcoOptions = field(default_factory=EcoOptions)
+
 
 class ValOptions(StrictStruct):
     val_enabled: Annotated[
@@ -690,7 +692,6 @@ class ReduxOptions(StrictStruct):
         default_factory=lambda: {"backend": "nccl", "port": 29500}
     )
     onnx: OnnxOptions | None = None
-    eco: EcoOptions = field(default_factory=EcoOptions)
 
     find_unused_parameters: bool = False
     contents: str | None = None

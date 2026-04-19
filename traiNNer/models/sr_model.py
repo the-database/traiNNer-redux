@@ -92,10 +92,12 @@ class SRModel(BaseModel):
         logger = get_root_logger()
 
         # ECO (Empirical Centroid-oriented Optimization) setup
-        self._eco_enabled = opt.eco.enabled
+        self._eco_enabled = opt.train is not None and opt.train.eco.enabled
         self._eco_end_iter = 0
         self._eco_alpha: float = 0.0
         if self._eco_enabled:
+            assert opt.train is not None
+            eco_cfg = opt.train.eco
             assert self.net_g_teacher is not None, (
                 "ECO requires network_g_teacher and pretrain_network_g_teacher"
             )
@@ -105,17 +107,16 @@ class SRModel(BaseModel):
             assert isinstance(opt.scale, int) and opt.scale >= 2, (
                 f"ECO requires integer scale >= 2, got {opt.scale}"
             )
-            assert 0.0 < opt.eco.end_ratio <= 1.0, (
-                f"eco.end_ratio must be in (0, 1], got {opt.eco.end_ratio}"
+            assert 0.0 < eco_cfg.end_ratio <= 1.0, (
+                f"train.eco.end_ratio must be in (0, 1], got {eco_cfg.end_ratio}"
             )
-            assert opt.train is not None
-            self._eco_end_iter = int(opt.train.total_iter * opt.eco.end_ratio)
+            self._eco_end_iter = int(opt.train.total_iter * eco_cfg.end_ratio)
             logger.info(
                 "ECO enabled: alpha ramps linearly 0 -> 1 over iters [0, %d] "
                 "(%.2f of total_iter=%d). feed_data will synthesize LR via "
                 "antialiased bicubic on the fly.",
                 self._eco_end_iter,
-                opt.eco.end_ratio,
+                eco_cfg.end_ratio,
                 opt.train.total_iter,
             )
 
