@@ -64,7 +64,9 @@ class SingleGtDataset(BaseDataset):
         else:
             self.paths = []
             for folder in self.gt_folders:
-                self.paths.extend(sorted(scandir(folder, full_path=True)))
+                self.paths.extend(
+                    sorted(scandir(folder, recursive=True, full_path=True))
+                )
 
     def __getitem__(self, index: int) -> DataFeed:
         if self.file_client is None:
