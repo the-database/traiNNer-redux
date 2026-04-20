@@ -38,10 +38,6 @@ class RealESRGANModel(SRModel):
     """
 
     def __init__(self, opt: ReduxOptions) -> None:
-        assert opt.train is None or not opt.train.eco.enabled, (
-            "ECO is fidelity-only and not supported under RealESRGANModel; "
-            "use SRModel with a GT-only dataset"
-        )
         super().__init__(opt)
 
         self.queue_lr: Tensor | None = None
@@ -367,6 +363,9 @@ class RealESRGANModel(SRModel):
                     memory_format=self.memory_format,
                     non_blocking=True,
                 )
+
+        # ECO post-process (no-op if disabled). Must be the last step.
+        self._apply_eco()
 
 
 class ThickLines(nn.Module):

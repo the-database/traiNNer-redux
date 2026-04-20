@@ -57,6 +57,9 @@ class RealESRGANPairedModel(RealESRGANModel):
             if self.is_train and self.batch_augment and self.gt is not None:
                 self.gt, self.lq = self.batch_augment(self.gt, self.lq)  # pyright: ignore[reportArgumentType]
 
+            # ECO post-process on the paired branch. Must be the last step.
+            # (OTF branch below is covered by super().feed_data's own _apply_eco.)
+            self._apply_eco()
         else:
             # OTF feed data
             new_data = {
