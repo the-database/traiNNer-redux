@@ -117,3 +117,48 @@ def test_eco_synthesize_teacher_shape_mismatch_raises() -> None:
     lq = torch.rand(1, 3, 16, 16)
     with pytest.raises(AssertionError, match="teacher output shape"):
         eco_synthesize(WrongScaleTeacher(), lq, hr, alpha=0.5, scale=4)
+
+
+def test_eco_synthesize_hr_only_input_unchanged() -> None:
+    # mode="hr_only": input stays as real LR for all alpha; only target mixes.
+    hr = torch.rand(1, 3, 64, 64)
+    lq_real = torch.rand(1, 3, 16, 16)
+    teacher = IdentityUpTeacher(scale=4)
+    for alpha in (0.0, 0.25, 0.5, 0.75, 1.0):
+        lq_mix, _ = eco_synthesize(
+            teacher, lq_real, hr, alpha=alpha, scale=4, mode="hr_only"
+        )
+        assert torch.equal(lq_mix, lq_real), f"alpha={alpha}"
+
+
+def test_eco_synthesize_hr_only_target_mixes() -> None:
+    # Target lerps between teacher output and real HR across alpha.
+    hr = torch.rand(1, 3, 64, 64)
+    lq_real = torch.rand(1, 3, 16, 16)
+    teacher = IdentityUpTeacher(scale=4)
+
+    # alpha=0 -> target is pure teacher_sr.
+    _, gt0 = eco_synthesize(teacher, lq_real, hr, alpha=0.0, scale=4, mode="hr_only")
+    expected_t = teacher(lq_real).clamp_(0, 1)
+    assert torch.allclose(gt0, expected_t, atol=1e-6)
+
+    # alpha=1 -> vanilla fast path returns (lq_real, hr).
+    lq1, gt1 = eco_synthesize(teacher, lq_real, hr, alpha=1.0, scale=4, mode="hr_only")
+    assert torch.equal(lq1, lq_real)
+    assert torch.equal(gt1, hr)
+
+    # alpha=0.5 -> target is lerp(teacher_sr, hr, 0.5).
+    _, gt_mid = eco_synthesize(teacher, lq_real, hr, alpha=0.5, scale=4, mode="hr_only")
+    expected_mid = torch.lerp(expected_t, hr, 0.5)
+    assert torch.allclose(gt_mid, expected_mid, atol=1e-6)
+
+
+def test_eco_synthesize_hr_only_alpha_one_skips_teacher() -> None:
+    hr = torch.rand(1, 3, 64, 64)
+    lq_real = torch.rand(1, 3, 16, 16)
+    teacher = ExplodingTeacher()
+    lq_mix, gt_mix = eco_synthesize(
+        teacher, lq_real, hr, alpha=1.0, scale=4, mode="hr_only"
+    )
+    assert torch.equal(lq_mix, lq_real)
+    assert torch.equal(gt_mix, hr)

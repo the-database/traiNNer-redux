@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import torch
 from torch import Tensor, nn
 
@@ -16,23 +18,33 @@ def compute_alpha(current_iter: int, end_iter: int) -> float:
 
 
 def eco_synthesize(
-    teacher: nn.Module, lq_real: Tensor, hr: Tensor, alpha: float, scale: int
+    teacher: nn.Module,
+    lq_real: Tensor,
+    hr: Tensor,
+    alpha: float,
+    scale: int,
+    mode: Literal["full", "hr_only"] = "full",
 ) -> tuple[Tensor, Tensor]:
-    """ECO mixup (paper Eq. 14, two-lerp form).
+    """ECO mixup.
 
-    Returns ``(lq_mix, gt_mix)`` where::
+    Returns ``(lq_mix, gt_mix)``.
+
+    mode="full" (paper Eq. 14, two-lerp form)::
 
         teacher_sr = teacher(lq_real).clamp(0, 1)
         teacher_lq = bicubic(teacher_sr, 1/scale)
         gt_mix     = lerp(teacher_sr, hr,      alpha)
         lq_mix     = lerp(teacher_lq, lq_real, alpha)
 
-    Fast paths: ``alpha >= 1`` returns ``(lq_real, hr)`` (teacher skipped);
-    ``alpha <= 0`` returns ``(teacher_lq, teacher_sr)`` (saves one lerp).
+    mode="hr_only" (scheduled KD form — input stays as real LR)::
 
-    Works model-agnostically: ``lq_real`` may be a real LR from disk, a bicubic
-    downsample of HR, an OTF-degraded tensor, etc. The caller is responsible
-    for the upstream choice.
+        teacher_sr = teacher(lq_real).clamp(0, 1)
+        gt_mix     = lerp(teacher_sr, hr, alpha)
+        lq_mix     = lq_real
+
+    In both modes ``alpha >= 1`` returns ``(lq_real, hr)`` (teacher skipped).
+    In ``full`` ``alpha <= 0`` returns ``(teacher_lq, teacher_sr)``; in
+    ``hr_only`` ``alpha <= 0`` returns ``(lq_real, teacher_sr)``.
     """
     if alpha >= 1.0 - _ALPHA_EPS:
         return lq_real, hr
@@ -42,11 +54,16 @@ def eco_synthesize(
         f"ECO: teacher output shape {tuple(teacher_sr.shape)} != HR shape "
         f"{tuple(hr.shape)}; teacher scale/channels likely mismatched"
     )
-    teacher_lq = resize_pt(teacher_sr, mode="bicubic", scale_factor=1.0 / scale)
 
+    if mode == "hr_only":
+        if alpha <= _ALPHA_EPS:
+            return lq_real, teacher_sr
+        return lq_real, torch.lerp(teacher_sr, hr, alpha)
+
+    # mode == "full"
+    teacher_lq = resize_pt(teacher_sr, mode="bicubic", scale_factor=1.0 / scale)
     if alpha <= _ALPHA_EPS:
         return teacher_lq, teacher_sr
-
     gt_mix = torch.lerp(teacher_sr, hr, alpha)
     lq_mix = torch.lerp(teacher_lq, lq_real, alpha)
     return lq_mix, gt_mix

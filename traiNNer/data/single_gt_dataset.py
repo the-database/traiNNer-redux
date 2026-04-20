@@ -17,7 +17,7 @@ class SingleGtDataset(BaseDataset):
     """GT-only dataset for training workflows where LR is synthesized on the
     fly by the model (e.g. ECO). Loads HR images with flip/rotation
     augmentation and random cropping to gt_size. Returns {"gt", "gt_path",
-    "lq_path"} — lq_path is a harmless placeholder so downstream logging code
+    "lq_path"}. lq_path is a harmless placeholder so downstream logging code
     that assumes a paired API still works.
     """
 

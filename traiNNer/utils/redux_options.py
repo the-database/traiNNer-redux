@@ -226,7 +226,7 @@ class EcoOptions(StrictStruct):
     enabled: Annotated[
         bool,
         Meta(
-            description="Enable ECO (Empirical Centroid-oriented Optimization) training. Requires a teacher network (network_g_teacher) and a GT-only dataset. Fidelity-only; not compatible with GAN training."
+            description="Enable ECO (Empirical Centroid-oriented Optimization) training. Requires a teacher network (network_g_teacher)."
         ),
     ] = False
     end_ratio: Annotated[
@@ -235,6 +235,12 @@ class EcoOptions(StrictStruct):
             description="Fraction of total_iter at which the mixup alpha reaches 1 (vanilla training). Before this, alpha ramps linearly from 0 (pure teacher-output targets) to 1."
         ),
     ] = 0.75
+    mode: Annotated[
+        Literal["full", "hr_only"],
+        Meta(
+            description="ECO mixup mode. 'full' mixes both the student input (LR) and target (HR) with teacher-derived tensors, preferred for training bicubic from scratch. 'hr_only' keeps the student input as real LR throughout training and only blends the target between teacher output and real HR, closer to scheduled knowledge distillation, preferred for real-SR + GAN where you want teacher signal on fidelity losses but no curriculum on the input distribution."
+        ),
+    ] = "full"
 
 
 class TrainOptions(StrictStruct):

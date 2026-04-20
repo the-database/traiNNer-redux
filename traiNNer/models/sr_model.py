@@ -97,6 +97,7 @@ class SRModel(BaseModel):
         self._eco_enabled = opt.train is not None and opt.train.eco.enabled
         self._eco_end_iter = 0
         self._eco_alpha: float = 0.0
+        self._eco_mode: str = "full"
         if self._eco_enabled:
             assert opt.train is not None
             eco_cfg = opt.train.eco
@@ -110,10 +111,12 @@ class SRModel(BaseModel):
                 f"train.eco.end_ratio must be in (0, 1], got {eco_cfg.end_ratio}"
             )
             self._eco_end_iter = int(opt.train.total_iter * eco_cfg.end_ratio)
+            self._eco_mode = eco_cfg.mode
             logger.info(
-                "ECO enabled%s: alpha ramps linearly 0 -> 1 over iters [0, %d] "
-                "(%.2f of total_iter=%d).",
+                "ECO enabled%s (mode=%s): alpha ramps linearly 0 -> 1 over "
+                "iters [0, %d] (%.2f of total_iter=%d).",
                 " + GAN" if opt.network_d is not None else "",
+                self._eco_mode,
                 self._eco_end_iter,
                 eco_cfg.end_ratio,
                 opt.train.total_iter,
@@ -535,6 +538,7 @@ class SRModel(BaseModel):
                 self.gt,
                 self._eco_alpha,
                 self.opt.scale,
+                mode=self._eco_mode,  # type: ignore[arg-type]
             )
         # Tensors from inference_mode cannot participate in autograd; clone defensively.
         self.lq = lq_mix.clone().to(memory_format=self.memory_format)
