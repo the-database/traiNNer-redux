@@ -112,9 +112,7 @@ class SRModel(BaseModel):
             self._eco_end_iter = int(opt.train.total_iter * eco_cfg.end_ratio)
             logger.info(
                 "ECO enabled%s: alpha ramps linearly 0 -> 1 over iters [0, %d] "
-                "(%.2f of total_iter=%d). Applied as a post-process on (lq, gt) "
-                "after feed_data/MOA; discriminator (if any) remains anchored to "
-                "the pre-ECO HR via self._real_hr.",
+                "(%.2f of total_iter=%d).",
                 " + GAN" if opt.network_d is not None else "",
                 self._eco_end_iter,
                 eco_cfg.end_ratio,
