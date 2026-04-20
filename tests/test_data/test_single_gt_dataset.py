@@ -34,6 +34,27 @@ phase: train
     )
 
 
+def test_single_gt_dataset_emits_lq_resize_mode() -> None:
+    opt_str = r"""
+name: BicubicOtf
+type: SingleGtDataset
+dataroot_gt: [datasets/val/dataset1/hr]
+io_backend:
+    type: disk
+scale: 4
+gt_size: 128
+use_hflip: false
+use_rot: false
+phase: train
+lq_resize_mode: bicubic
+"""
+    opt = msgspec.yaml.decode(opt_str, type=DatasetOptions, strict=True)
+    dataset = SingleGtDataset(opt)
+    result = dataset[0]
+    assert set(result.keys()) == {"gt", "gt_path", "lq_path", "lq_resize_mode"}
+    assert result["lq_resize_mode"] == "bicubic"
+
+
 def test_single_gt_dataset_rejects_misaligned_gt_size() -> None:
     opt_str = r"""
 name: EcoTestBad

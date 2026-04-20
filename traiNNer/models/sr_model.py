@@ -21,6 +21,7 @@ from tqdm.rich import tqdm
 from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
+from traiNNer.data.degradations import resize_pt
 from traiNNer.losses import build_loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
@@ -474,8 +475,31 @@ class SRModel(BaseModel):
             # Tensors from inference_mode cannot participate in autograd; clone defensively.
             self.lq = lq.clone().to(memory_format=self.memory_format)
             self.gt = gt.clone().to(memory_format=self.memory_format)
+        elif "lq" not in data:
+            # GT-only dataset with per-batch GPU-side LQ synthesis.
+            assert "gt" in data and "lq_resize_mode" in data, (
+                "lq missing from batch and no `lq_resize_mode` was provided; "
+                "either supply LQ images or set `lq_resize_mode` on a GT-only dataset "
+                "such as `SingleGtDataset`."
+            )
+            gt = data["gt"].to(
+                self.device,
+                memory_format=self.memory_format,
+                non_blocking=True,
+            )
+            h, w = gt.shape[-2:]
+            assert h % self.opt.scale == 0 and w % self.opt.scale == 0, (
+                f"gt size ({h}x{w}) must be divisible by scale ({self.opt.scale})"
+            )
+            mode_field = data["lq_resize_mode"]
+            mode = mode_field[0] if isinstance(mode_field, list) else mode_field
+            self.gt = gt
+            self.lq = resize_pt(
+                gt,
+                size=(h // self.opt.scale, w // self.opt.scale),
+                mode=mode,
+            ).to(memory_format=self.memory_format)
         else:
-            assert "lq" in data
             self.lq = data["lq"].to(
                 self.device,
                 memory_format=self.memory_format,

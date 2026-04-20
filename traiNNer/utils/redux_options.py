@@ -90,6 +90,12 @@ class DatasetOptions(StrictStruct):
             description="Path to the LR (low res) images in your training dataset. Specify one or multiple folders, separated by commas."
         ),
     ] = None
+    lq_resize_mode: Annotated[
+        Literal["bilinear", "bicubic", "nearest-exact", "lanczos", "area"] | None,
+        Meta(
+            description="If set, synthesize LQ from GT on the GPU each batch using this resize mode. Intended for GT-only datasets such as `SingleGtDataset`. Skips all other degradations, so it runs faster and is simpler to configure than the full on-the-fly (`high_order_degradation`) pipeline when you only need a plain downsample."
+        ),
+    ] = None
     meta_info: str | None = None
     filename_tmpl: Annotated[
         str,

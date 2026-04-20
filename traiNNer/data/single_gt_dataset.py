@@ -100,11 +100,14 @@ class SingleGtDataset(BaseDataset):
 
         img_gt_tensor = img2tensor(img_gt, from_bgr=False, float32=True)
 
-        return {
+        out: DataFeed = {
             "gt": img_gt_tensor,
             "gt_path": gt_path,
             "lq_path": gt_path,
         }
+        if self.opt.lq_resize_mode is not None:
+            out["lq_resize_mode"] = self.opt.lq_resize_mode
+        return out
 
     def __len__(self) -> int:
         return len(self.paths)
