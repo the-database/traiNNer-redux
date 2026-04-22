@@ -133,10 +133,12 @@ class PerceptualFP16Loss(nn.Module):
         stride_fd: int = 1,
         clip_min: int = 0,
         antialiased: bool = False,
+        verbose_logging: bool = False,
     ) -> None:
         super().__init__()
 
         self.clip_min = clip_min
+        self.verbose_logging = verbose_logging
         use_conv_layers = False
         use_relu_layers = False
 
@@ -262,10 +264,11 @@ class PerceptualFP16Loss(nn.Module):
     def forward_once(self, x: Tensor) -> dict[str, Tensor]:
         return self.vgg(x)
 
-    def forward(self, x: Tensor, gt: Tensor) -> dict[str, Tensor]:
+    def forward(self, x: Tensor, gt: Tensor) -> Tensor | dict[str, Tensor]:
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
 
-        losses = {}
+        losses: dict[str, Tensor] = {}
+        total = torch.zeros((), device=x.device)
         criterion2_i = 0
         for i, k in enumerate(x_vgg):
             alpha = self.alpha[i]
@@ -287,9 +290,15 @@ class PerceptualFP16Loss(nn.Module):
                 criterion2_i += 1
 
             layer_loss = layer_loss * self.layer_weights[k]
-            losses[k] = layer_loss
 
-        return losses
+            if self.verbose_logging:
+                losses[k] = layer_loss
+            else:
+                total = total + layer_loss
+
+        if self.verbose_logging:
+            return losses
+        return torch.clamp(total, min=self.clip_min)
 
 
 class VGG(nn.Module):
