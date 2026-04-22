@@ -173,6 +173,8 @@ class SPABV2(nn.Module):
         self.c3_r = Conv3XC(mid_channels, out_channels, gain1=2, s=1)
         self.act1 = nn.ReLU(inplace=True)
         self.att_conv = nn.Conv2d(out_channels, out_channels, kernel_size=1, bias=True)
+        nn.init.zeros_(self.att_conv.weight)
+        nn.init.constant_(self.att_conv.bias, 3.0)  # pyright: ignore[reportArgumentType]
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         out1 = self.c1_r(x)
