@@ -519,24 +519,52 @@ def train_pipeline(root_path: str) -> None:
     if train_data is None:
         epoch += 1
 
+    consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
+
     if interrupt_received:
         # discard partially accumulated iters
         if not apply_gradient or crashed:
             current_iter -= 1
 
         if current_iter > 0:
-            logger.info(
-                "Saving models and training states to %s for epoch: %d, iter: %d.",
-                clickable_file_path(model.opt.path.models, "experiments folder"),
-                epoch,
-                current_iter,
-            )
-            model.save(epoch, current_iter)
+            # Skip redundantly saving another checkpoint on Ctrl+C if the latest
+            # scheduled checkpoint was written less than 60 seconds ago
+            skip_save = False
+            try:
+                models_dir = model.opt.path.models
+                latest_mtime = -1.0
+                for entry in os.scandir(models_dir):
+                    # Validate checkpoint extension and ensure it's not zero-byte
+                    if entry.is_file() and entry.name.rsplit(".", 1)[-1] in ("pth", "safetensors"):
+                        stat = entry.stat()
+                        if stat.st_size > 0 and stat.st_mtime > latest_mtime:
+                            latest_mtime = stat.st_mtime
+                if latest_mtime > 0 and (time.time() - latest_mtime) < 60:
+                    skip_save = True
+            except OSError:
+                skip_save = False
+
+            if skip_save:
+                logger.info(
+                    "A checkpoint in %s was written less than a minute ago; won't save a new one. " \
+                    "Stopped at epoch: %d, iter: %d.",
+                    clickable_file_path(model.opt.path.models, "experiments folder"),
+                    epoch,
+                    current_iter,
+                )
+            else:
+                logger.info(
+                    "Saving models and training states to %s for epoch: %d, iter: %d.",
+                    clickable_file_path(model.opt.path.models, "experiments folder"),
+                    epoch,
+                    current_iter,
+                )
+                model.save(epoch, current_iter)
         if model.opt.dist:
             destroy_process_group()
+        logger.info("Training stopped. Time consumed: %s", consumed_time)
         sys.exit(0)
 
-    consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
     logger.info("End of training. Time consumed: %s", consumed_time)
     logger.info("Save the latest model.")
     model.save(
