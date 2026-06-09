@@ -364,6 +364,9 @@ class RealESRGANModel(SRModel):
                     non_blocking=True,
                 )
 
+        # ECO post-process (no-op if disabled). Must be the last step.
+        self._apply_eco()
+
 
 class ThickLines(nn.Module):
     def __init__(self, kernel_size: int = 3) -> None:

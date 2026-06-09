@@ -22,6 +22,7 @@ traiNNer-redux is released under Apache License 2.0.
 |[DITN](https://github.com/yongliuy/DITN)| [Apache License 2.0](https://github.com/yongliuy/DITN/blob/main/LICENSE)|
 |[DRCT](https://github.com/ming053l/DRCT) | [MIT License](https://github.com/ming053l/DRCT/blob/main/LICENSE)|
 |[DUnet](https://github.com/umzi2/DUnet)| [MIT License](https://github.com/umzi2/DUnet/blob/master/LICENSE)|
+|[ECO](https://github.com/2minkyulee/ECO) | None (used algorithm only, code reimplemented from scratch)|
 |[DWT](https://github.com/soobin419/DWT)| [Apache License 2.0](https://github.com/soobin419/DWT/blob/main/LICENSE)|
 |[DySample](https://github.com/tiny-smart/dysample)| [MIT License](https://github.com/tiny-smart/dysample/blob/main/LICENSE)|
 |[EIMN](https://github.com/liux520/EIMN)|[MIT License](https://github.com/liux520/EIMN/blob/main/LICENSE)|

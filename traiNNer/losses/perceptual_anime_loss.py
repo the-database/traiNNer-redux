@@ -233,6 +233,7 @@ class PerceptualAnimeLoss(nn.Module):
         loss_weight: float,
         layer_weights: dict[str, float] | None = None,
         criterion: str = "l1",
+        verbose_logging: bool = False,
     ) -> None:
         super().__init__()
 
@@ -249,6 +250,7 @@ class PerceptualAnimeLoss(nn.Module):
         self.loss_weight = loss_weight
         self.layer_weights = layer_weights
         self.layer_labels = layer_weights.keys()
+        self.verbose_logging = verbose_logging
         self.resnet50 = ResNet50Extractor(model, list(self.layer_labels)).cuda()
 
         if criterion == "l1":
@@ -261,7 +263,7 @@ class PerceptualAnimeLoss(nn.Module):
             )
 
     @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
-    def forward(self, gen: Tensor, gt: Tensor) -> dict[str, Tensor]:
+    def forward(self, gen: Tensor, gt: Tensor) -> Tensor | dict[str, Tensor]:
         """Forward function.
 
         Args:
@@ -276,10 +278,16 @@ class PerceptualAnimeLoss(nn.Module):
         gt_features = self.resnet50(gt.detach())
 
         # calculate perceptual loss
-        losses = {}
-        for _idx, k in enumerate(gen_features.keys()):
+        losses: dict[str, Tensor] = {}
+        total = torch.zeros((), device=gen.device)
+        for k in gen_features:
             raw_comparison = self.criterion(gen_features[k], gt_features[k])
             layer_loss = raw_comparison * self.layer_weights[k]
-            losses[k] = layer_loss
+            if self.verbose_logging:
+                losses[k] = layer_loss
+            else:
+                total = total + layer_loss
 
-        return losses
+        if self.verbose_logging:
+            return losses
+        return total

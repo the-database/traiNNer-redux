@@ -21,11 +21,13 @@ from tqdm.rich import tqdm
 from traiNNer.archs import build_network
 from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
 from traiNNer.data.base_dataset import BaseDataset
+from traiNNer.data.degradations import resize_pt
 from traiNNer.losses import build_loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
 from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
+from traiNNer.utils.eco import compute_alpha, eco_synthesize
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
@@ -88,7 +90,37 @@ class SRModel(BaseModel):
         self.lq: Tensor | None = None
         self.gt: Tensor | None = None
         self.output: Tensor | None = None
+        self._real_hr: Tensor | None = None
         logger = get_root_logger()
+
+        # ECO (Empirical Centroid-oriented Optimization) setup
+        self._eco_enabled = opt.train is not None and opt.train.eco.enabled
+        self._eco_end_iter = 0
+        self._eco_alpha: float = 0.0
+        self._eco_mode: str = "full"
+        if self._eco_enabled:
+            assert opt.train is not None
+            eco_cfg = opt.train.eco
+            assert self.net_g_teacher is not None, (
+                "ECO requires network_g_teacher and pretrain_network_g_teacher"
+            )
+            assert isinstance(opt.scale, int) and opt.scale >= 2, (
+                f"ECO requires integer scale >= 2, got {opt.scale}"
+            )
+            assert 0.0 < eco_cfg.end_ratio <= 1.0, (
+                f"train.eco.end_ratio must be in (0, 1], got {eco_cfg.end_ratio}"
+            )
+            self._eco_end_iter = int(opt.train.total_iter * eco_cfg.end_ratio)
+            self._eco_mode = eco_cfg.mode
+            logger.info(
+                "ECO enabled%s (mode=%s): alpha ramps linearly 0 -> 1 over "
+                "iters [0, %d] (%.2f of total_iter=%d).",
+                " + GAN" if opt.network_d is not None else "",
+                self._eco_mode,
+                self._eco_end_iter,
+                eco_cfg.end_ratio,
+                opt.train.total_iter,
+            )
 
         if self.use_amp:
             if self.amp_dtype == torch.bfloat16 and not torch.cuda.is_bf16_supported():
@@ -428,27 +460,89 @@ class SRModel(BaseModel):
             )
 
     def feed_data(self, data: DataFeed) -> None:
-        assert "lq" in data
-        self.lq = data["lq"].to(
-            self.device,
-            memory_format=self.memory_format,
-            non_blocking=True,
-        )
-        if self.net_g_teacher is not None:
-            with torch.inference_mode():
-                self.gt = self.net_g_teacher(self.lq).to(
-                    memory_format=self.memory_format
-                )
-        elif "gt" in data:
-            self.gt = data["gt"].to(
+        if "lq" not in data:
+            # GT-only dataset with per-batch GPU-side LQ synthesis.
+            assert "gt" in data and "lq_resize_mode" in data, (
+                "lq missing from batch and no `lq_resize_mode` was provided; "
+                "either supply LQ images or set `lq_resize_mode` on a GT-only dataset "
+                "such as `SingleGtDataset`."
+            )
+            gt = data["gt"].to(
                 self.device,
                 memory_format=self.memory_format,
                 non_blocking=True,
             )
+            h, w = gt.shape[-2:]
+            assert h % self.opt.scale == 0 and w % self.opt.scale == 0, (
+                f"gt size ({h}x{w}) must be divisible by scale ({self.opt.scale})"
+            )
+            mode_field = data["lq_resize_mode"]
+            mode = mode_field[0] if isinstance(mode_field, list) else mode_field
+            self.gt = gt
+            self.lq = resize_pt(
+                gt,
+                size=(h // self.opt.scale, w // self.opt.scale),
+                mode=mode,
+            ).to(memory_format=self.memory_format)
+        else:
+            self.lq = data["lq"].to(
+                self.device,
+                memory_format=self.memory_format,
+                non_blocking=True,
+            )
+            if self.net_g_teacher is not None and not self._eco_enabled:
+                with torch.inference_mode():
+                    self.gt = self.net_g_teacher(self.lq).to(
+                        memory_format=self.memory_format
+                    )
+            elif "gt" in data:
+                self.gt = data["gt"].to(
+                    self.device,
+                    memory_format=self.memory_format,
+                    non_blocking=True,
+                )
 
         # moa
         if self.is_train and self.batch_augment and self.gt is not None:
             self.gt, self.lq = self.batch_augment(self.gt, self.lq)
+
+        # ECO post-process (no-op if disabled). Must be the last step.
+        self._apply_eco()
+
+    def _apply_eco(self) -> None:
+        """Apply ECO mixup as a post-process on (self.lq, self.gt).
+
+        When disabled or not in training, leaves self.lq/self.gt untouched and
+        resets self._real_hr to None (so no stale tensor leaks into D).
+
+        When enabled, captures the pre-ECO HR into self._real_hr (used as D's
+        "real" class by optimize_parameters) and overwrites self.lq/self.gt
+        with the teacher-centered mixup pair.
+        """
+        if not (self.is_train and self._eco_enabled):
+            self._real_hr = None
+            return
+
+        assert self.lq is not None and self.gt is not None, (
+            "ECO post-process requires feed_data to have populated lq and gt"
+        )
+        assert self.net_g_teacher is not None
+
+        self._eco_alpha = compute_alpha(self.current_iter, self._eco_end_iter)
+        self._real_hr = self.gt.clone()
+
+        with torch.inference_mode():
+            lq_mix, gt_mix = eco_synthesize(
+                self.net_g_teacher,
+                self.lq,
+                self.gt,
+                self._eco_alpha,
+                self.opt.scale,
+                mode=self._eco_mode,  # type: ignore[arg-type]
+            )
+        # Tensors from inference_mode cannot participate in autograd; clone defensively.
+        self.lq = lq_mix.clone().to(memory_format=self.memory_format)
+        self.gt = gt_mix.clone().to(memory_format=self.memory_format)
 
     def optimize_parameters(
         self, current_iter: int, current_accum_iter: int, apply_gradient: bool
@@ -579,6 +673,11 @@ class SRModel(BaseModel):
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total
 
+                if self._eco_enabled:
+                    loss_dict["eco_alpha"] = torch.tensor(
+                        self._eco_alpha, device=self.device
+                    )
+
                 self.scaler_g.scale(l_g_total).backward()
 
                 if apply_gradient:
@@ -630,7 +729,13 @@ class SRModel(BaseModel):
                 enabled=self.use_amp,
             ):
                 # real
-                real_d_pred = self.net_d(self.gt)
+                # When ECO is active, self.gt is the teacher/HR mixup target for
+                # fidelity losses; D must see the pre-ECO real HR to stay
+                # anchored to the true distribution. self._real_hr is None when
+                # ECO is off, falling back to self.gt (normal behavior).
+                real_d_pred = self.net_d(
+                    self._real_hr if self._real_hr is not None else self.gt
+                )
                 l_d_real = cri_gan(real_d_pred, True, is_disc=True)
                 loss_dict["l_d_real"] = l_d_real
                 loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())

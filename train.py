@@ -425,6 +425,7 @@ def train_pipeline(root_path: str) -> None:
                 if current_iter > total_iters:
                     break
                 # training
+                model.set_current_iter(current_iter)
                 model.feed_data(train_data)
                 try:
                     model.optimize_parameters(

@@ -75,7 +75,9 @@ class RealESRGANDataset(BaseDataset):
         else:
             self.paths = []
             for folder in self.gt_folders:
-                self.paths.extend(sorted(scandir(folder, full_path=True)))
+                self.paths.extend(
+                    sorted(scandir(folder, recursive=True, full_path=True))
+                )
 
         # blur settings for the first degradation
         self.blur_kernel_size = opt.blur_kernel_size

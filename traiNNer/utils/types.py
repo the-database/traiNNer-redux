@@ -15,6 +15,7 @@ class DataFeed(TypedDict):
     kernel1: NotRequired[Tensor]
     kernel2: NotRequired[Tensor]
     sinc_kernel: NotRequired[Tensor]
+    lq_resize_mode: NotRequired[str]
 
 
 class TrainingState(TypedDict):
