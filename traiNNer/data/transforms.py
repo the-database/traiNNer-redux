@@ -195,11 +195,7 @@ def paired_random_crop_list(
 
     cropped_gts, cropped_lqs = [], []
     for img_gt, img_lq in zip(img_gts, img_lqs, strict=False):
-        if isinstance(img_gt, Tensor) and isinstance(img_lq, Tensor):
-            cropped_gt, cropped_lq = paired_random_crop(
-                img_gt, img_lq, gt_patch_size, scale, gt_path
-            )
-        elif isinstance(img_gt, np.ndarray) and isinstance(img_lq, np.ndarray):
+        if (isinstance(img_gt, Tensor) and isinstance(img_lq, Tensor)) or (isinstance(img_gt, np.ndarray) and isinstance(img_lq, np.ndarray)):
             cropped_gt, cropped_lq = paired_random_crop(
                 img_gt, img_lq, gt_patch_size, scale, gt_path
             )

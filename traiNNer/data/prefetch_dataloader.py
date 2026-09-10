@@ -115,7 +115,7 @@ class CUDAPrefetcher:
             self.batch = next(self.loader)  # self.batch is a dict
         except StopIteration:
             self.batch = None
-            return None
+            return
         # put tensors to gpu
         with torch.cuda.stream(self.stream):  # type: ignore
             for k, v in self.batch.items():

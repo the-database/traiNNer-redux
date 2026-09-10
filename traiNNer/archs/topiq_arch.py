@@ -398,9 +398,8 @@ class CFANet(nn.Module):
 
     def forward_cross_attention(self, x: Tensor, y: Tensor | None = None) -> Tensor:
         # resize image when testing
-        if not self.training:
-            if self.test_img_size is not None:
-                x = TF.resize(x, self.test_img_size, antialias=True)
+        if not self.training and self.test_img_size is not None:
+            x = TF.resize(x, self.test_img_size, antialias=True)
 
         x = self.preprocess(x)
         if self.use_ref:

@@ -171,7 +171,7 @@ class RealPLKSR(nn.Module):
                 out_ch,
                 upscaling_factor,
                 groups=groups,
-                end_convolution=True if upscaling_factor != 1 else False,
+                end_convolution=upscaling_factor != 1,
             )
 
         elif upsampler == "pixelshuffle":

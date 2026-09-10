@@ -109,18 +109,17 @@ def batch_aug(
     else:
         raise ValueError(f"{aug} is not invalid.")
 
-    if debug:
-        if i <= debug_limit:
-            torchvision.utils.save_image(
-                img_lq,
-                os.path.join(MOA_DEBUG_PATH, f"{i:06d}_postaug_{aug}_lqfinal.png"),
-                padding=0,
-            )
-            torchvision.utils.save_image(
-                img_gt,
-                os.path.join(MOA_DEBUG_PATH, f"{i:06d}_postaug_{aug}_gtfinal.png"),
-                padding=0,
-            )
+    if debug and i <= debug_limit:
+        torchvision.utils.save_image(
+            img_lq,
+            os.path.join(MOA_DEBUG_PATH, f"{i:06d}_postaug_{aug}_lqfinal.png"),
+            padding=0,
+        )
+        torchvision.utils.save_image(
+            img_gt,
+            os.path.join(MOA_DEBUG_PATH, f"{i:06d}_postaug_{aug}_gtfinal.png"),
+            padding=0,
+        )
 
     return img_gt, img_lq
 

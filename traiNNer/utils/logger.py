@@ -116,7 +116,7 @@ class MessageLogger:
         message += ", ".join([f"{v:.3e}" for v in lrs]) + ")] "
 
         # performance, eta
-        if "time" in log_vars.keys():
+        if "time" in log_vars:
             iter_time = 1 / (log_vars.pop("time") * self.accum_iters)
             log_vars.pop("data_time")
 
