@@ -1,0 +1,193 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/the-database/traiNNer-redux/refs/heads/master/schemas/redux-config.schema.json
+#########################################################################################
+# General Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
+#########################################################################################
+name: 4x_NERVE_OTF_gan
+scale: 4  # 1, 2, 3, 4
+use_amp: true
+amp_bf16: true
+use_channels_last: true
+fast_matmul: false
+use_compile: false  # torch.compile errors on the discriminator step for this setup.
+compile_mode: default
+num_gpu: auto
+manual_seed: 1024
+
+########################################################################################################################
+# Degradation Settings (on-the-fly, Real-ESRGAN style)
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#degradation-options
+########################################################################################################################
+high_order_degradation: true
+
+lq_usm: true  # Unsharp mask on the LQ, models player sharpening halos.
+lq_usm_radius_range: [1, 25]
+
+blur_prob: 0.6
+resize_prob: [0.2, 0.7, 0.1]
+resize_mode_list: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']
+resize_mode_prob: [0.25, 0.25, 0.25, 0.25]
+resize_range: [0.4, 1.5]
+gaussian_noise_prob: 0.4
+noise_range: [1, 15]
+poisson_scale_range: [0.05, 2]
+gray_noise_prob: 0.1
+jpeg_prob: 0.4
+jpeg_range: [40, 95]
+
+blur_prob2: 0.3
+resize_prob2: [0.3, 0.4, 0.3]
+resize_mode_list2: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']
+resize_mode_prob2: [0.25, 0.25, 0.25, 0.25]
+resize_range2: [0.6, 1.2]
+gaussian_noise_prob2: 0.3
+noise_range2: [1, 10]
+poisson_scale_range2: [0.05, 1.5]
+gray_noise_prob2: 0.05
+jpeg_prob2: 0.3
+jpeg_range2: [40, 95]
+
+# Keep nearest-exact in the final resize-back: training on aliased (jagged) LR
+# is what teaches the model to de-alias. Do not replace it with anti-aliased-only.
+resize_mode_list3: ['bilinear', 'bicubic', 'nearest-exact', 'lanczos']
+resize_mode_prob3: [0.25, 0.25, 0.25, 0.25]
+
+queue_size: 120
+
+########################################################################################################################
+# Dataset and Dataloader Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#dataset-options-datasets-train-and-datasets-val
+########################################################################################################################
+datasets:
+  train:
+    name: Train Dataset
+    type: realesrgandataset
+    dataroot_gt: [
+      datasets/train/dataset1/hr
+    ]
+
+    blur_kernel_size: 12
+    kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    kernel_range: [5, 17]
+    blur_sigma: [0.2, 2]
+    betag_range: [0.5, 4]
+    betap_range: [1, 2]
+
+    blur_kernel_size2: 12
+    kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+    kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+    kernel_range2: [5, 17]
+    blur_sigma2: [0.2, 1]
+    betag_range2: [0.5, 4]
+    betap_range2: [1, 2]
+
+    final_kernel_range: [5, 17]
+
+    lq_size: 96
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 4
+    batch_size_per_gpu: 4
+    accum_iter: 1
+
+  val:
+    name: Val Dataset
+    type: pairedimagedataset
+    dataroot_gt: [
+      datasets/val/dataset1/hr
+    ]
+    dataroot_lq: [
+      datasets/val/dataset1/lr
+    ]
+
+#####################################################################
+# Network Settings
+# https://trainner-redux.readthedocs.io/en/latest/arch_reference.html
+#####################################################################
+network_g:
+  type: nerve
+
+network_d:
+  type: dunet
+
+#########################################################################################
+# Pretrain and Resume Paths
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#path-options-path
+#########################################################################################
+path:
+  # Start from an OTF fidelity model (train NERVE_fidelity.yml first, or use the
+  # released 4x OTF fidelity checkpoint).
+  # pretrain_network_g: experiments/4x_NERVE_OTF_fidelity/models/net_g_ema_latest.safetensors
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+###########################################################################################
+# Training Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#train-options-train
+###########################################################################################
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: false
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [75000, 120000]
+    gamma: 0.5
+
+  total_iter: 150000
+  warmup_iter: -1
+
+  losses:
+    - type: mssimloss
+      loss_weight: 0.5
+    - type: perceptualloss
+      criterion: charbonnier
+      loss_weight: 0.01
+    - type: hsluvloss
+      criterion: charbonnier
+      loss_weight: 1.0
+    - type: ganloss
+      gan_type: vanilla
+      loss_weight: 0.1
+
+##############################################################################################
+# Validation
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#validation-options-val
+##############################################################################################
+val:
+  val_enabled: true
+  val_freq: 5000
+  save_img: false
+  tile_size: 0
+  tile_overlap: 8
+  metrics_enabled: true
+  metrics:
+    topiq:
+      type: calculate_topiq
+    lpips:
+      type: calculate_lpips
+      better: lower
+
+##############################################################################################
+# Logging
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#logging-options-logger
+##############################################################################################
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 5000
+  save_checkpoint_format: safetensors
+  use_tb_logger: true
