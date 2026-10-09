@@ -218,6 +218,7 @@ class OnnxOptions(StrictStruct):
     verify: bool = True
     dtype: Literal["fp32", "fp16", "bf16"] = "fp16"
     bf16_exclude_depthwise: bool = True
+    io_dtype: Literal["auto", "fp32", "fp16"] = "auto"
     optimize: bool = True
     wrap_5d_to_4d: bool = True
 

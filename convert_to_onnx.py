@@ -33,6 +33,7 @@ INPUT_NAME = "input"
 OUTPUT_NAME = "output"
 
 DType = Literal["fp32", "fp16", "bf16"]
+IODType = Literal["auto", "fp32", "fp16"]
 
 DTYPE_MAP: dict[DType, torch.dtype] = {
     "fp32": torch.float32,
@@ -90,6 +91,7 @@ def get_out_path(
     dynamo: bool,
     shape: Sequence[int],
     dynamic_flags: Sequence[bool],
+    io_dtype: IODType = "auto",
 ) -> str:
     axis_labels = ["N", "C", "H", "W"]
     if len(shape) == 5:
@@ -113,6 +115,8 @@ def get_out_path(
     dtype_str = str(dtype)
     if dtype != "fp32":
         dtype_str = f"strong_{dtype}"
+    if io_dtype != "auto":
+        dtype_str += f"_io-{io_dtype}"
 
     filename = f"{name}_{shape_str}_{dtype_str}_op{opset}{'_onnxslim' if optimized else ''}{'_dynamo' if dynamo else ''}.onnx"
     return osp.normpath(osp.join(out_dir, filename))
@@ -154,12 +158,89 @@ def parse_input_shape(
     return tuple(dims), tuple(dynamic_flags)
 
 
+def wrap_bf16_io_as_fp16(model: ModelProto) -> ModelProto:
+    """Expose a bf16 graph's inputs and outputs as fp16, leaving the interior bf16.
+
+    Inference runtimes that feed fp16 buffers (RGBH clips, fp16 device tensors)
+    can then run a strongly typed bf16 engine directly.
+    """
+    graph = model.graph
+    bf16 = TensorProto.BFLOAT16
+    fp16 = TensorProto.FLOAT16
+    initializer_names = {t.name for t in graph.initializer}
+
+    def is_bf16(value_info: onnx.ValueInfoProto) -> bool:
+        return value_info.type.tensor_type.elem_type == bf16
+
+    head: list[onnx.NodeProto] = []
+    tail: list[onnx.NodeProto] = []
+
+    for graph_input in graph.input:
+        if graph_input.name in initializer_names or not is_bf16(graph_input):
+            continue
+        external = graph_input.name
+        internal = f"{external}_bf16"
+        for node in graph.node:
+            for i, name in enumerate(node.input):
+                if name == external:
+                    node.input[i] = internal
+        head.append(
+            onnx.helper.make_node(
+                "Cast", [external], [internal], name=f"{external}_to_bf16", to=bf16
+            )
+        )
+        graph_input.type.tensor_type.elem_type = fp16
+
+    for graph_output in graph.output:
+        if not is_bf16(graph_output):
+            continue
+        external = graph_output.name
+        internal = f"{external}_bf16"
+        for node in graph.node:
+            for i, name in enumerate(node.output):
+                if name == external:
+                    node.output[i] = internal
+            for i, name in enumerate(node.input):
+                if name == external:
+                    node.input[i] = internal
+        tail.append(
+            onnx.helper.make_node(
+                "Cast", [internal], [external], name=f"{external}_to_fp16", to=fp16
+            )
+        )
+        graph_output.type.tensor_type.elem_type = fp16
+
+    boundary = {vi.name for vi in graph.input} | {vi.name for vi in graph.output}
+    stale = [vi for vi in graph.value_info if vi.name in boundary]
+    for vi in stale:
+        graph.value_info.remove(vi)
+
+    nodes = head + list(graph.node) + tail
+    del graph.node[:]
+    graph.node.extend(nodes)
+    return model
+
+
 def convert_onnx_to_low_precision(
-    onnx_path: str, bf16_exclude_depthwise: bool, dtype: DType, opset: int
+    onnx_path: str,
+    bf16_exclude_depthwise: bool,
+    dtype: DType,
+    opset: int,
+    io_dtype: IODType = "auto",
 ) -> ModelProto:
     if dtype == "fp32":
+        if io_dtype == "fp16":
+            raise ValueError("io_dtype: fp16 requires dtype fp16 or bf16")
         return onnx.load(onnx_path)
-    elif dtype == "fp16":
+
+    # auto keeps the historical behavior: fp16 models get fp16 I/O, bf16 models
+    # keep fp32 I/O.
+    if io_dtype == "auto":
+        keep_io_types = dtype == "bf16"
+    else:
+        keep_io_types = io_dtype == "fp32"
+
+    if dtype == "fp16":
         torch_dtype = DTYPE_MAP[dtype]
         max_val = torch.finfo(torch_dtype).max
     else:
@@ -176,7 +257,7 @@ def convert_onnx_to_low_precision(
         model = convert_to_mixed_precision(
             onnx_path=onnx_path,
             low_precision_type=MODELOPT_PRECISION_MAP[dtype],
-            keep_io_types=dtype == "bf16",
+            keep_io_types=keep_io_types,
             data_max=max_val,
             init_max=max_val,
             custom_rule=custom_rule,
@@ -190,11 +271,15 @@ def convert_onnx_to_low_precision(
                 "Failed to convert to fp16 with NVIDIA Model Optimizer, falling back to legacy fp16 conversion."
             )
             model = onnx.load(onnx_path)
-            model = convert_float_to_float16(model)
+            model = convert_float_to_float16(model, keep_io_types=keep_io_types)
         else:
             raise
 
-    return model  # pyright: ignore[reportReturnType]
+    assert model is not None
+    if dtype == "bf16" and io_dtype == "fp16":
+        model = wrap_bf16_io_as_fp16(model)
+
+    return model
 
 
 def convert_and_save_onnx(
@@ -353,6 +438,7 @@ def convert_and_save_onnx(
         dynamo=is_dynamo,
         shape=export_shape,
         dynamic_flags=export_dynamic_flags,
+        io_dtype=opt.onnx.io_dtype,
     )
 
     with torch.inference_mode():
@@ -439,6 +525,7 @@ def convert_and_save_onnx(
             opt.onnx.bf16_exclude_depthwise,
             dtype,
             requested_opset,
+            opt.onnx.io_dtype,
         )
         onnx.save(model_proto, out_path)
 
@@ -501,13 +588,14 @@ def verify_onnx(
         )
         return
 
+    ort_input = ort_session.get_inputs()[0]
     input_np = (
         verify_input.cpu().numpy().astype(np.float16)
-        if dtype == "fp16"
+        if ort_input.type == "tensor(float16)"
         else verify_input.cpu().numpy()
     )
 
-    ort_inputs = {ort_session.get_inputs()[0].name: input_np}
+    ort_inputs = {ort_input.name: input_np}
 
     try:
         onnx_output = ort_session.run(None, ort_inputs)
@@ -623,6 +711,7 @@ def convert_pipeline(root_path: str) -> None:
             dynamo=opt.onnx.dynamo,
             shape=opt_shape,
             dynamic_flags=opt_dynamic_flags,
+            io_dtype=opt.onnx.io_dtype,
         )
 
         session_opt = ort.SessionOptions()
