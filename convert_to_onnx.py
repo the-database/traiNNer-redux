@@ -1,3 +1,4 @@
+import copy
 import os
 import time
 from collections.abc import Sequence
@@ -158,6 +159,53 @@ def parse_input_shape(
     return tuple(dims), tuple(dynamic_flags)
 
 
+class InvalidLowPrecisionGraphError(Exception):
+    """The fp32 -> low precision conversion produced a graph that fails strict
+    ONNX type checking (e.g. shape-derived scalars cast to fp32 next to fp16
+    tensors), which TensorRT and ONNX Runtime reject."""
+
+
+def validate_low_precision(model: ModelProto) -> None:
+    try:
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+    except Exception as e:
+        raise InvalidLowPrecisionGraphError(str(e)) from e
+
+
+def ort_basic_optimize(path: str, logger: Logger) -> None:
+    """Rewrite the ONNX at path with ONNX Runtime's basic graph optimizations."""
+    pre_nodes = len(onnx.load(path).graph.node)
+    logger.info(
+        "Legacy ONNX conversion complete. Nodes before ORT optimize: %d",
+        pre_nodes,
+    )
+
+    ort_optimized_path = path + ".ortopt"
+    so = ort.SessionOptions()
+    so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
+    so.optimized_model_filepath = ort_optimized_path
+
+    logger.info("Optimizing legacy ONNX with ONNX Runtime (ORT_ENABLE_BASIC)...")
+    ort.InferenceSession(
+        path,
+        sess_options=so,
+        providers=["CPUExecutionProvider"],
+    )
+
+    model_proto_post = onnx.load(ort_optimized_path)
+    logger.info(
+        "ORT optimization complete. Nodes after ORT optimize: %d",
+        len(model_proto_post.graph.node),
+    )
+    onnx.save(model_proto_post, path)
+
+    try:
+        if osp.exists(ort_optimized_path):
+            os.remove(ort_optimized_path)
+    except OSError:
+        pass
+
+
 def wrap_bf16_io_as_fp16(model: ModelProto) -> ModelProto:
     """Expose a bf16 graph's inputs and outputs as fp16, leaving the interior bf16.
 
@@ -264,6 +312,7 @@ def convert_onnx_to_low_precision(
             opset=opset,
             op_types_to_exclude=["ConvTranspose"],
         )
+        validate_low_precision(model)
     except:  # noqa: E722
         if dtype == "fp16":
             logger = get_root_logger()
@@ -272,6 +321,7 @@ def convert_onnx_to_low_precision(
             )
             model = onnx.load(onnx_path)
             model = convert_float_to_float16(model, keep_io_types=keep_io_types)
+            validate_low_precision(model)
         else:
             raise
 
@@ -471,40 +521,7 @@ def convert_and_save_onnx(
             logger.info("Dynamo export nodes after optimize(): %d", post_nodes)
 
         else:
-            model_proto_pre = onnx.load(temp_out_path)
-            pre_nodes = len(model_proto_pre.graph.node)
-            logger.info(
-                "Legacy ONNX conversion complete. Nodes before ORT optimize: %d",
-                pre_nodes,
-            )
-
-            ort_optimized_path = temp_out_path + ".ortopt"
-            so = ort.SessionOptions()
-            so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
-            so.optimized_model_filepath = ort_optimized_path
-
-            logger.info(
-                "Optimizing legacy ONNX with ONNX Runtime (ORT_ENABLE_BASIC)..."
-            )
-            ort.InferenceSession(
-                temp_out_path,
-                sess_options=so,
-                providers=["CPUExecutionProvider"],
-            )
-
-            model_proto_post = onnx.load(ort_optimized_path)
-            post_nodes = len(model_proto_post.graph.node)
-            logger.info(
-                "ORT optimization complete. Nodes after ORT optimize: %d", post_nodes
-            )
-
-            onnx.save(model_proto_post, temp_out_path)
-
-            try:
-                if osp.exists(ort_optimized_path):
-                    os.remove(ort_optimized_path)
-            except OSError:
-                pass
+            ort_basic_optimize(temp_out_path, logger)
 
     fp32_saved_path: str | None = None
 
@@ -520,13 +537,45 @@ def convert_and_save_onnx(
         logger.info(
             "Converting ONNX model to %s using NVIDIA Model Optimizer...", dtype
         )
-        model_proto = convert_onnx_to_low_precision(
-            temp_out_path,
-            opt.onnx.bf16_exclude_depthwise,
-            dtype,
-            requested_opset,
-            opt.onnx.io_dtype,
-        )
+        try:
+            model_proto = convert_onnx_to_low_precision(
+                temp_out_path,
+                opt.onnx.bf16_exclude_depthwise,
+                dtype,
+                requested_opset,
+                opt.onnx.io_dtype,
+            )
+        except InvalidLowPrecisionGraphError as e:
+            if dtype != "fp16" or is_dynamo or opt.onnx.io_dtype == "fp32":
+                raise
+            # Graph converters type shape-derived scalars (e.g. a token count
+            # that overflows fp16) inconsistently. Tracing the model in half
+            # precision instead keeps that scalar math in fp32 and casts at
+            # the point of use, as PyTorch itself does.
+            logger.warning(
+                "fp16 graph conversion produced an invalid graph (%s); "
+                "exporting the model directly in half precision instead.",
+                str(e).splitlines()[0],
+            )
+            half_model = copy.deepcopy(export_model).half()
+            with torch.inference_mode():
+                torch.onnx.export(
+                    half_model,
+                    (export_input.half(),),
+                    temp_out_path,
+                    dynamo=False,
+                    verbose=False,
+                    opset_version=opset,
+                    input_names=[INPUT_NAME],
+                    output_names=[OUTPUT_NAME],
+                    dynamic_axes=dynamic_axes,
+                )
+            del half_model
+            # No ORT optimize pass here: on the CPU EP it inserts fp32 casts
+            # around ops lacking fp16 kernels and bakes them into the graph
+            # (measured 23 -> 39 ms per frame for TFDAT under TensorRT).
+            model_proto = onnx.load(temp_out_path)
+            validate_low_precision(model_proto)
         onnx.save(model_proto, out_path)
 
         if osp.exists(temp_out_path):
