@@ -130,7 +130,7 @@ class Upsampler(nn.Sequential):
     ) -> None:
         m = []
         if (scale & (scale - 1)) == 0:  # Is scale = 2^n?
-            for _ in range(int(math.log(scale, 2))):
+            for _ in range(int(math.log2(scale))):
                 m.append(conv(n_feat, 4 * n_feat, 3, bias))
                 m.append(nn.PixelShuffle(2))
                 if bn:

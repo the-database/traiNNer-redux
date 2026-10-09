@@ -180,9 +180,7 @@ class PerceptualFP16Loss(nn.Module):
         self.criterion2 = None
 
         if any(x < 1 for x in self.alpha) and use_conv_layers:
-            if use_relu_layers:
-                self.criterion1 = nn.L1Loss()
-            elif criterion == "l1":
+            if use_relu_layers or criterion == "l1":
                 self.criterion1 = nn.L1Loss()
             elif criterion == "charbonnier":
                 self.criterion1 = charbonnier_loss
@@ -334,14 +332,14 @@ class VGG(nn.Module):
                 self.stages[layer_name].add_module(str(x), vgg_pretrained_features[x])
             prev_breakpoint = idx
 
-        for _layer_name, stage in self.stages.items():
+        for stage in self.stages.values():
             stage[0] = self._change_padding_mode(stage[0], "replicate")  # pyright: ignore[reportIndexIssue]
             break
 
         for param in self.parameters():
             param.requires_grad = False
 
-        for _, stage in self.stages.items():
+        for stage in self.stages.values():
             stage.eval()
 
         self.register_buffer(

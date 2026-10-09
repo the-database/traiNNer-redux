@@ -16,17 +16,16 @@ def esrgan(
     num_filters: int = 64,
     num_blocks: int = 23,
 ) -> ESRGAN:
-    if use_pixel_unshuffle:
-        if scale in pixel_unshuffle_scales:
-            in_nc *= 4 ** (3 - scale)
-            shuffle_factor = int(math.sqrt(in_nc / out_nc))
-            return ESRGAN(
-                scale=4,
-                in_nc=in_nc,
-                shuffle_factor=shuffle_factor,
-                num_blocks=num_blocks,
-                num_filters=num_filters,
-            )
+    if use_pixel_unshuffle and scale in pixel_unshuffle_scales:
+        in_nc *= 4 ** (3 - scale)
+        shuffle_factor = int(math.sqrt(in_nc / out_nc))
+        return ESRGAN(
+            scale=4,
+            in_nc=in_nc,
+            shuffle_factor=shuffle_factor,
+            num_blocks=num_blocks,
+            num_filters=num_filters,
+        )
 
     return ESRGAN(
         scale=scale,

@@ -417,8 +417,7 @@ class BaseModel:
 
         for full_key, param in state_dict.items():
             key = full_key
-            if key.startswith("module."):  # remove unnecessary 'module.'
-                key = key[7:]
+            key = key.removeprefix("module.")
             if key in ("step", "initted"):  # ema key, breaks compatibility
                 continue
             new_state_dict[key] = param.to("cpu", memory_format=torch.contiguous_format)
@@ -685,7 +684,7 @@ class BaseModel:
     ) -> StateDict:
         if len(state_dict) > 0:
             for prefix in prefixes:
-                if all(i.startswith(prefix) for i in state_dict.keys()):
+                if all(i.startswith(prefix) for i in state_dict):
                     state_dict = {k[len(prefix) :]: v for k, v in state_dict.items()}
         return state_dict
 

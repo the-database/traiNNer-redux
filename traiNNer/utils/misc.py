@@ -95,9 +95,7 @@ def scandir(
                         entry.name if not recursive else osp.relpath(entry.path, root)
                     )
 
-                if suffix is None:
-                    yield return_path
-                elif return_path.endswith(suffix):
+                if suffix is None or return_path.endswith(suffix):
                     yield return_path
             elif recursive:
                 yield from _scandir(entry.path, suffix=suffix, recursive=recursive)
@@ -183,20 +181,18 @@ def check_resume(opt: ReduxOptions, resume_iter: int) -> None:
             has_gan = False
             gan_opt = opt.train.gan_opt
 
-            if not gan_opt:
-                if opt.train.losses:
-                    gan_opts = list(
-                        filter(
-                            lambda x: x["type"].lower() == "ganloss",
-                            opt.train.losses,
-                        )
+            if not gan_opt and opt.train.losses:
+                gan_opts = list(
+                    filter(
+                        lambda x: x["type"].lower() == "ganloss",
+                        opt.train.losses,
                     )
-                    if gan_opts:
-                        gan_opt = gan_opts[0]
+                )
+                if gan_opts:
+                    gan_opt = gan_opts[0]
 
-            if gan_opt:
-                if gan_opt.get("loss_weight", 0) > 0:
-                    has_gan = True
+            if gan_opt and gan_opt.get("loss_weight", 0) > 0:
+                has_gan = True
 
             if has_gan:
                 model_exists = False

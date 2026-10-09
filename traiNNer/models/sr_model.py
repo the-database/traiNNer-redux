@@ -172,20 +172,18 @@ class SRModel(BaseModel):
             self.has_gan = False
             gan_opt = self.opt.train.gan_opt
 
-            if not gan_opt:
-                if self.opt.train.losses:
-                    gan_opts = list(
-                        filter(
-                            lambda x: x["type"].lower() == "ganloss",
-                            self.opt.train.losses,
-                        )
+            if not gan_opt and self.opt.train.losses:
+                gan_opts = list(
+                    filter(
+                        lambda x: x["type"].lower() == "ganloss",
+                        self.opt.train.losses,
                     )
-                    if gan_opts:
-                        gan_opt = gan_opts[0]
+                )
+                if gan_opts:
+                    gan_opt = gan_opts[0]
 
-            if gan_opt:
-                if gan_opt.get("loss_weight", 0) != 0:
-                    self.has_gan = True
+            if gan_opt and gan_opt.get("loss_weight", 0) != 0:
+                self.has_gan = True
 
             self.net_d = None
             if self.has_gan:
@@ -1052,7 +1050,7 @@ class SRModel(BaseModel):
             pbar.close()
 
         if run_metrics:
-            for metric in self.metric_results.keys():
+            for metric in self.metric_results:
                 self.metric_results[metric] /= len(dataloader)
                 # update the best metric result
                 self._update_best_metric_result(

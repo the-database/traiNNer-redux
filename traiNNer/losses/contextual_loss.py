@@ -102,7 +102,7 @@ class ContextualLoss(nn.Module):
             vgg_gt = self.vgg_model(gt)
             vgg_gt = {k: v.to(device) for k, v in vgg_gt.items()}
 
-            for key in self.layer_weights.keys():
+            for key in self.layer_weights:
                 if self.crop_quarter:
                     vgg_images[key] = self._crop_quarters(vgg_images[key])
                     vgg_gt[key] = self._crop_quarters(vgg_gt[key])

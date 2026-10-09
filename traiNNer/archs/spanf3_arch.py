@@ -26,6 +26,29 @@ def conv_layer(
     return nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, bias=bias)
 
 
+class PixelUnshuffle(nn.Module):
+    """Drop-in replacement for nn.PixelUnshuffle that exports correctly under
+    torch.onnx.export(dynamo=True).
+
+    nn.PixelUnshuffle is rewritten to ONNX SpaceToDepth by the dynamo exporter.
+    SpaceToDepth has no `mode` attribute (onnx#3739) and defaults to DCR
+    channel ordering, while PyTorch's PixelUnshuffle uses CRD ordering — so
+    output channels come out permuted. Expressing the op as reshape+permute
+    avoids the rewrite and keeps ordering correct on every opset.
+    """
+
+    def __init__(self, downscale_factor: int) -> None:
+        super().__init__()
+        self.downscale_factor = downscale_factor
+
+    def forward(self, x: Tensor) -> Tensor:
+        r = self.downscale_factor
+        b, c, h, w = x.shape
+        x = x.reshape(b, c, h // r, r, w // r, r)
+        x = x.permute(0, 1, 3, 5, 2, 4)
+        return x.reshape(b, c * r * r, h // r, w // r)
+
+
 class Conv3XC(nn.Module):
     def __init__(
         self,
@@ -131,9 +154,22 @@ class Conv3XC(nn.Module):
 
     def train(self, mode: bool = True) -> Self:
         super().train(mode)
-        if not mode:
+        # Skip re-fusion if switch_to_deploy already dropped the source
+        # branches — eval_conv is already fused and authoritative.
+        if not mode and hasattr(self, "conv"):
             self.update_params()
         return self
+
+    def switch_to_deploy(self) -> None:
+        # Fuse branches into eval_conv, then drop the reparam submodules so
+        # they don't appear as dead parameters in the exported graph — the
+        # dynamo ONNX exporter otherwise picks them up as initializers and
+        # the rewriter can conflate them with the fused eval_conv weights.
+        self.update_params()
+        del self.sk
+        del self.conv
+        self.weight_concat = None
+        self.bias_concat = None
 
     def forward(self, x: Tensor) -> Tensor:
         if self.training:
@@ -218,7 +254,7 @@ class SPANF3(nn.Module):
             unshuffle = 4 // upscale
             upscale = 4
             self.conv_1: nn.Module = nn.Sequential(
-                nn.PixelUnshuffle(unshuffle),
+                PixelUnshuffle(unshuffle),
                 Conv3XC(num_in_ch * unshuffle**2, feature_channels, gain1=2, s=1),
             )
             self.pad = unshuffle
@@ -235,6 +271,11 @@ class SPANF3(nn.Module):
         )
         self.to_pixel = Conv3XC(feature_channels, num_out_ch * upscale**2, gain1=2, s=1)
         self.upsampler = nn.PixelShuffle(upscale)
+
+    def switch_to_deploy(self) -> None:
+        for m in self.modules():
+            if isinstance(m, Conv3XC):
+                m.switch_to_deploy()
 
     def check_img_size(self, x: Tensor, h: int, w: int) -> Tensor:
         if self.pad == 0:
