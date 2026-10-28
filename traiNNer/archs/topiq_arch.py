@@ -16,9 +16,10 @@ from urllib.parse import urlparse
 import torch
 import torch.nn.functional as F  # noqa: N812
 import torchvision.transforms.functional as TF  # noqa: N812
-from timm.models import create_model  # pyright: ignore[reportPrivateImportUsage]
 from torch import Tensor, nn
 from torch.hub import download_url_to_file, get_dir
+from torchvision.models import ResNet50_Weights
+from torchvision.models.resnet import Bottleneck, ResNet
 
 from traiNNer.archs.arch_util import load_pretrained_network
 
@@ -226,6 +227,29 @@ class GatedConv(nn.Module):
         return x1 * weight
 
 
+class ResNet50Features(ResNet):
+    """ResNet-50 returning the stem and per-stage feature maps.
+
+    Matches timm's ``create_model("resnet50", features_only=True)`` in parameter
+    names and outputs, so TOPIQ checkpoints load unchanged.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(Bottleneck, [3, 4, 6, 3])
+        del self.fc, self.avgpool
+
+    def channels(self) -> list[int]:
+        return [64, 256, 512, 1024, 2048]
+
+    def forward(self, x: Tensor) -> list[Tensor]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        x0 = self.relu(self.bn1(self.conv1(x)))
+        x1 = self.layer1(self.maxpool(x0))
+        x2 = self.layer2(x1)
+        x3 = self.layer3(x2)
+        x4 = self.layer4(x3)
+        return [x0, x1, x2, x3, x4]
+
+
 class CFANet(nn.Module):
     def __init__(
         self,
@@ -258,10 +282,19 @@ class CFANet(nn.Module):
         # =============================================================
         # define semantic backbone network
         # =============================================================
-        self.semantic_model = create_model(
-            semantic_model_name, pretrained=backbone_pretrain, features_only=True
-        )
-        feature_dim_list = self.semantic_model.feature_info.channels()  # pyright: ignore[reportCallIssue,reportAttributeAccessIssue]
+        if semantic_model_name != "resnet50":
+            raise ValueError(
+                f"Unsupported semantic_model_name: {semantic_model_name}. Only resnet50 is supported."
+            )
+        self.semantic_model = ResNet50Features()
+        # The full TOPIQ checkpoint includes the backbone, so ImageNet weights
+        # are only needed when it isn't loaded.
+        if backbone_pretrain and not pretrained:
+            self.semantic_model.load_state_dict(
+                ResNet50_Weights.IMAGENET1K_V1.get_state_dict(progress=True),
+                strict=False,
+            )
+        feature_dim_list = self.semantic_model.channels()
         _feature_dim = feature_dim_list[self.semantic_level]
         _all_feature_dim = sum(feature_dim_list)
         self.fix_bn(self.semantic_model)

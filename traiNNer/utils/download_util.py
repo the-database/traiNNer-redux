@@ -1,9 +1,10 @@
 import math
 import os
-from urllib.parse import urlparse
+from http.client import HTTPResponse
+from http.cookiejar import CookieJar
+from urllib.parse import urlencode, urlparse
+from urllib.request import HTTPCookieProcessor, Request, build_opener
 
-import requests
-from requests import Response
 from torch.hub import download_url_to_file, get_dir
 from tqdm import tqdm
 
@@ -20,37 +21,38 @@ def download_file_from_google_drive(file_id: str, save_path: str) -> None:
         save_path (str): Save path.
     """
 
-    session = requests.Session()
+    cookies = CookieJar()
+    opener = build_opener(HTTPCookieProcessor(cookies))
     url = "https://docs.google.com/uc?export=download"
     params = {"id": file_id}
 
-    response = session.get(url, params=params, stream=True)
-    token = get_confirm_token(response)
+    response = opener.open(f"{url}&{urlencode(params)}")
+    token = get_confirm_token(cookies)
     if token:
         params["confirm"] = token
-        response = session.get(url, params=params, stream=True)
+        response.close()
+        response = opener.open(f"{url}&{urlencode(params)}")
 
     # get file size
-    response_file_size = session.get(
-        url, params=params, stream=True, headers={"Range": "bytes=0-2"}
-    )
-    if "Content-Range" in response_file_size.headers:
-        file_size = int(response_file_size.headers["Content-Range"].split("/")[1])
-    else:
-        file_size = None
+    with opener.open(
+        Request(f"{url}&{urlencode(params)}", headers={"Range": "bytes=0-2"})
+    ) as response_file_size:
+        content_range = response_file_size.headers.get("Content-Range")
+    file_size = int(content_range.split("/")[1]) if content_range else None
 
-    save_response_content(response, save_path, file_size)
+    with response:
+        save_response_content(response, save_path, file_size)
 
 
-def get_confirm_token(response: Response) -> str | None:
-    for key, value in response.cookies.items():
-        if key.startswith("download_warning"):
-            return value
+def get_confirm_token(cookies: CookieJar) -> str | None:
+    for cookie in cookies:
+        if cookie.name.startswith("download_warning"):
+            return cookie.value
     return None
 
 
 def save_response_content(
-    response: Response,
+    response: HTTPResponse,
     destination: str,
     file_size: int | None = None,
     chunk_size: int = 32768,
@@ -65,7 +67,7 @@ def save_response_content(
 
     with open(destination, "wb") as f:
         downloaded_size = 0
-        for chunk in response.iter_content(chunk_size):
+        while chunk := response.read(chunk_size):
             downloaded_size += chunk_size
             if pbar is not None and readable_file_size is not None:
                 pbar.update(1)

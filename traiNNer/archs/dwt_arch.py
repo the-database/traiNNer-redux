@@ -8,9 +8,7 @@ from collections.abc import Sequence
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from timm.layers.drop import DropPath
-from timm.layers.helpers import to_2tuple
-from timm.layers.weight_init import trunc_normal_
+from spandrel.util.timm import DropPath, to_2tuple, trunc_normal_
 from torch import nn
 from torch.utils import checkpoint
 
