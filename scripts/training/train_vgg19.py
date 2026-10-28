@@ -20,7 +20,7 @@ Usage:
 """
 
 import argparse
-import datetime
+import datetime as dt
 import os
 import sys
 import time
@@ -100,7 +100,6 @@ class TrainConfig:
     amp_dtype: str = "float16"  # float16 or bfloat16
     clip_grad_norm: float | None = None
     tf32: bool = True
-    matmul_precision: str = "high"  # highest, high, medium
 
     # torch.compile
     compile: bool = False
@@ -767,7 +766,7 @@ def train_one_epoch(
                 f"Acc@5: {metrics.avg('acc5'):.2f}  "
                 f"LR: {optimizer.param_groups[0]['lr']:.6f}  "
                 f"Img/s: {metrics.avg('img/s'):.1f}  "
-                f"ETA: {datetime.timedelta(seconds=int(eta))}"
+                f"ETA: {dt.timedelta(seconds=int(eta))}"
             )
 
     return metrics
@@ -930,10 +929,10 @@ def main(config: TrainConfig) -> None:
     else:
         torch.backends.cudnn.benchmark = True
 
-    # TF32 and matmul precision
-    torch.backends.cuda.matmul.allow_tf32 = config.tf32
-    torch.backends.cudnn.allow_tf32 = config.tf32
-    torch.set_float32_matmul_precision(config.matmul_precision)
+    # TF32
+    fp32_precision = "tf32" if config.tf32 else "ieee"
+    torch.backends.cuda.matmul.fp32_precision = fp32_precision
+    torch.backends.cudnn.fp32_precision = fp32_precision
 
     # Load data
     train_loader, val_loader, num_classes = load_data(config)
@@ -1131,7 +1130,7 @@ def main(config: TrainConfig) -> None:
             )
 
     total_time = time.time() - start_time
-    print(f"Training completed in {datetime.timedelta(seconds=int(total_time))}")
+    print(f"Training completed in {dt.timedelta(seconds=int(total_time))}")
     print(f"Best Acc@1: {best_acc1:.2f}")
 
 
@@ -1212,12 +1211,6 @@ def parse_args() -> TrainConfig:
     )
     parser.add_argument("--clip-grad-norm", type=float, default=None)
     parser.add_argument("--no-tf32", action="store_true", help="Disable TF32")
-    parser.add_argument(
-        "--matmul-precision",
-        type=str,
-        default="high",
-        choices=["highest", "high", "medium"],
-    )
 
     # torch.compile
     parser.add_argument("--compile", action="store_true", help="Use torch.compile")
@@ -1287,7 +1280,6 @@ def parse_args() -> TrainConfig:
         amp_dtype=args.amp_dtype,
         clip_grad_norm=args.clip_grad_norm,
         tf32=not args.no_tf32,
-        matmul_precision=args.matmul_precision,
         compile=args.compile,
         compile_mode=args.compile_mode,
         model_ema=args.model_ema,

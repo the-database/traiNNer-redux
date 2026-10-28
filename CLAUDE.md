@@ -2,63 +2,45 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+traiNNer-redux trains PyTorch models for image/video super-resolution and restoration (a BasicSR descendant). Trained models are run in chaiNNer, so Spandrel weight compatibility matters.
 
-traiNNer-redux is a PyTorch deep learning training framework for image super-resolution and restoration. Python 3.11+, PyTorch 2.10+.
+## Commands
 
-## Common Commands
+Activate the venv first: `source venv/Scripts/activate` (Git Bash on Windows).
 
 ```bash
-# Activate venv (always do this before running python)
-source venv/Scripts/activate    # Windows (Git Bash)
+pip install -e .[dev]          # add ,onnx for ONNX export deps
 
-# Install
-pip install -e .[dev]           # Dev tools (ruff, pyright, pytest)
-pip install -e .[dev,onnx]      # Dev + ONNX export support
-
-# Lint & type check
-ruff format --check
-ruff check
+ruff format && ruff check --fix
 pyright
+pytest tests/
+pytest tests/test_archs/test_archs.py -k "span"
 
-# Tests
-pytest ./tests                  # All tests
-pytest ./tests/test_archs       # Single test directory
-
-# Training & inference
-python train.py -opt options/train/<ARCH>/<config>.yml
-python test.py -opt options/test/<ARCH>/<config>.yml
-
-# ONNX export
-python convert_to_onnx.py -opt options/onnx/<ARCH>/<config>.yml
+python train.py -opt options/train/SPAN/SPAN_fidelity.yml
+python test.py -opt options/test/SPAN/SPAN_S.yml
+python convert_to_onnx.py -opt options/onnx/SPAN/SPAN_S.yml
 ```
+
+The checked-in sample dataset in `datasets/` lets shipped configs run without any data prep. Output is written to `experiments/<name>/` (train) or `results/<name>/` (test).
 
 ## Architecture
 
-### Registry System
+**Discovery by filename.** Every `*_arch.py`, `*_loss.py` and `*_dataset.py` is auto-imported and registers itself through a decorator from `traiNNer/utils/registry.py`. Registry keys are lowercased names, so `type: span_f64` resolves to the function `span_f64`.
 
-The codebase uses a registry/factory pattern. Components auto-register via decorators and are auto-discovered by filename convention:
+**Arch registries.** `build_network` checks `SPANDREL_REGISTRY` first (state dicts must stay Spandrel-loadable), then `ARCH_REGISTRY` (traiNNer-only), then `TESTARCH_REGISTRY` (experimental, undocumented). Arch files are self-contained: never import from another `*_arch.py`; copy the shared code instead.
 
-| Registry | Decorator | File pattern | Location |
-|---|---|---|---|
-| `ARCH_REGISTRY` | `@ARCH_REGISTRY.register()` | `*_arch.py` | `traiNNer/archs/` |
-| `SPANDREL_REGISTRY` | `@SPANDREL_REGISTRY.register()` | `*_arch.py` | `traiNNer/archs/` |
-| `LOSS_REGISTRY` | `@LOSS_REGISTRY.register()` | `*_loss.py` | `traiNNer/losses/` |
-| `DATASET_REGISTRY` | `@DATASET_REGISTRY.register()` | `*_dataset.py` | `traiNNer/data/` |
-| `MODEL_REGISTRY` | `@MODEL_REGISTRY.register()` | — | `traiNNer/models/` |
+**Config.** YAML is decoded into strict msgspec Structs (`traiNNer/utils/redux_options.py`, `forbid_unknown_fields`), so every new YAML key needs a Struct field. Derived values are filled in by `traiNNer/utils/options.py`. The parsed config is a global singleton (`traiNNer/utils/config.py`). Loading a config from `options/_templates/` is rejected.
 
-Architectures registered with `SPANDREL_REGISTRY` are weight-compatible with the [Spandrel](https://github.com/chaiNNer-org/spandrel) ecosystem. `ARCH_REGISTRY` is for variants not in Spandrel.
+**Model class.** `build_model` chooses it from config flags, not from a `type` key: `high_order_degradation` → `RealESRGANModel`/`RealESRGANPairedModel`, `network_ae` alone → `AEModel`, otherwise `SRModel`.
 
-### Config System
+**`traiNNer/archs/arch_info.py`** catalogs every arch: variants, scales, official training settings, and capability sets (`ARCHS_WITHOUT_FP16`, `ARCHS_WITHOUT_CHANNELS_LAST`, `REQUIRE_32_HW`/`REQUIRE_64_HW`, `TEMPORAL_ARCHS`). The options generator, tests and ONNX export all read it, so add an entry for each new arch. New archs are picked up by `tests/test_archs/test_archs.py` automatically; list exclusions and unsupported scales in that file.
 
-YAML configs in `options/` are parsed into typed `msgspec.Struct` classes defined in `traiNNer/utils/redux_options.py`. The `type` field in each config section selects the registered component by its function/class name (lowercase). Example: `type: span_f64` resolves to the `span_f64` function in `span_arch.py`.
+## Generated files
 
-### Training Flow
+Don't hand-edit these. Change the inputs and regenerate:
 
-`train.py` -> `Config.load_config_from_file()` -> `build_dataset()` / `build_network()` / `build_model()` -> training loop with `model.optimize_parameters()`.
-
-Model selection (`traiNNer/models/__init__.py`) is deterministic based on config flags: `SRModel` (default), `RealESRGANModel` (high-order degradation), `AEModel` (autoencoder).
-
-### Arch Constraints (`traiNNer/archs/arch_info.py`)
-
-This file tracks per-architecture constraints: FP16 incompatibility, channels-last performance, minimum HW size requirements, and temporal (video) architectures. Update it when adding architectures with special requirements.
+| Output | Generator | Inputs |
+|---|---|---|
+| `options/{train,test,onnx}/<ARCH>/*.yml` | `scripts/options/generate_default_options.py` | `options/_templates/**`, `arch_info.py` |
+| `schemas/redux-config.schema.json` | `scripts/options/generate_schema.py` | `redux_options.py` |
+| Reference docs in `docs/source/` | `scripts/options/generate_docs_from_{archs,losses,msgspec}.py` | registries, `redux_options.py` |

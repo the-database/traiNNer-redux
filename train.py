@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
 
 import argparse
-import datetime
+import datetime as dt
 import gc
 import logging
 import math
@@ -278,9 +278,8 @@ def train_pipeline(root_path: str) -> None:
     resume_state = load_resume_state(opt)
     make_exp_dirs(opt, resume_state is not None)
     # mkdir for experiments and logger
-    if resume_state is None:
-        if opt.logger.use_tb_logger and opt.rank == 0:
-            mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
+    if resume_state is None and opt.logger.use_tb_logger and opt.rank == 0:
+        mkdir_and_rename(osp.join(opt.root_path, "tb_logger", opt.name))
 
     # copy the yml file to the experiment root
     copy_opt_file(args.opt, opt.path.experiments_root)
@@ -325,7 +324,6 @@ def train_pipeline(root_path: str) -> None:
         )
 
     if opt.fast_matmul:
-        torch.set_float32_matmul_precision("high")
         torch.backends.cuda.matmul.fp32_precision = "tf32"
 
     # create model
@@ -534,7 +532,7 @@ def train_pipeline(root_path: str) -> None:
             destroy_process_group()
         sys.exit(0)
 
-    consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
+    consumed_time = str(dt.timedelta(seconds=int(time.time() - start_time)))
     logger.info("End of training. Time consumed: %s", consumed_time)
     logger.info("Save the latest model.")
     model.save(

@@ -723,11 +723,10 @@ def convert_pipeline(root_path: str) -> None:
         format_duration_min_sec(end_time - start_time),
     )
 
-    if not opt.onnx.dynamo:
-        if opt.onnx.verify:
-            verify_onnx(model, logger, torch_input, out_path, dtype, wrap_5d)
-            if fp32_path is not None:
-                verify_onnx(model, logger, torch_input, fp32_path, "fp32", wrap_5d)
+    if not opt.onnx.dynamo and opt.onnx.verify:
+        verify_onnx(model, logger, torch_input, out_path, dtype, wrap_5d)
+        if fp32_path is not None:
+            verify_onnx(model, logger, torch_input, fp32_path, "fp32", wrap_5d)
 
     if opt.onnx.optimize:
         logger.info("Optimizing ONNX with OnnxSlim...")

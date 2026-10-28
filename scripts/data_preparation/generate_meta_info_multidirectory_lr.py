@@ -25,8 +25,7 @@ def get_lr_hr_pair(hr_folder: str, lr_folder: str) -> list[tuple[str, str]]:
 
 def save_meta_info(meta_info_file: str, lr_hr_pairs: list[tuple[str, str]]) -> None:
     with open(meta_info_file, "w") as f:
-        for lr, hr in lr_hr_pairs:
-            f.write(f"{lr}, {hr}\n")
+        f.writelines(f"{lr}, {hr}\n" for lr, hr in lr_hr_pairs)
 
 
 if __name__ == "__main__":
