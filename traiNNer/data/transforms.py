@@ -202,7 +202,7 @@ def paired_random_crop_list(
                 img_gt, img_lq, gt_patch_size, scale, gt_path
             )
         else:
-            raise ValueError("img_gts and img_lqs must be all Tensor or all np.ndarray")
+            raise TypeError("img_gts and img_lqs must be all Tensor or all np.ndarray")
         cropped_gts.append(cropped_gt)
         cropped_lqs.append(cropped_lq)
 

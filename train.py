@@ -328,17 +328,16 @@ def train_pipeline(root_path: str) -> None:
 
     # create model
     model = build_model(opt)
-    if model.with_metrics:
-        if not any(
-            isinstance(
-                val_loader.dataset,
-                (PairedImageDataset | PairedVideoDataset),
-            )
-            for val_loader in val_loaders
-        ):
-            raise ValueError(
-                "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
-            )
+    if model.with_metrics and not any(
+        isinstance(
+            val_loader.dataset,
+            (PairedImageDataset | PairedVideoDataset),
+        )
+        for val_loader in val_loaders
+    ):
+        raise ValueError(
+            "Validation metrics are enabled, at least one validation dataset must have type PairedImageDataset or PairedVideoDataset."
+        )
 
     if torch.is_anomaly_enabled():
         logger.warning(
@@ -506,8 +505,8 @@ def train_pipeline(root_path: str) -> None:
             if interrupt_received:
                 break
         # end of epoch
-    except Exception as e:
-        logger.exception(e)
+    except Exception:
+        logger.exception("Training crashed")
         crashed = True
         interrupt_received = True
 

@@ -348,14 +348,14 @@ def log_git_status() -> str | None:
             behind_flag = " ([green]Up to date[/green])"
             if "Your branch is behind" in behind_output:
                 behind_flag = " ([yellow]updates available - please use [bold]git pull[/bold] to update[/yellow])"
-        except Exception:
+        except (subprocess.CalledProcessError, OSError):
             behind_flag = ""
 
         msg += f"\n\t\tGit commit: {commit_hash}{dirty_flag}{behind_flag}"
         msg += f"\n\t\tCommit date: {commit_date}"
         return msg
 
-    except Exception as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         logger.warning("Failed to get git information: %s", e)
 
 

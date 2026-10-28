@@ -45,7 +45,7 @@ def generate_registry_structs(registry: Registry | list) -> dict[str, type[Struc
 
             struct = defstruct(name=name, fields=fields, tag=True)
             structs[name] = struct
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - skip archs whose signature cannot be converted
             print("SKIP", name, e)
 
     return structs

@@ -117,12 +117,11 @@ class PairedVideoDataset(BaseDataset):
             total_scenes,
         )
 
-        if opt.phase == "train":
-            if total_scenes < 100:
-                logger.warning(
-                    "Number of scene pairs is low: %d, training quality may be impacted. Please use more scene pairs for best training results.",
-                    total_scenes,
-                )
+        if opt.phase == "train" and total_scenes < 100:
+            logger.warning(
+                "Number of scene pairs is low: %d, training quality may be impacted. Please use more scene pairs for best training results.",
+                total_scenes,
+            )
 
     def __len__(self) -> int:
         return len(self.clips)

@@ -1,43 +1,41 @@
 # docres_arch.py
-import numbers
-
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
 from einops import rearrange
-from torch import nn
+from torch import Tensor, nn
 
 from traiNNer.utils.registry import ARCH_REGISTRY, TESTARCH_REGISTRY
 
 
 ##########################################################################
 ## Helpers & Layers
-def to_3d(x):
+def to_3d(x: Tensor) -> Tensor:
     return rearrange(x, "b c h w -> b (h w) c")
 
 
-def to_4d(x, h, w):
+def to_4d(x: Tensor, h: int, w: int) -> Tensor:
     return rearrange(x, "b (h w) c -> b c h w", h=h, w=w)
 
 
-class BiasFree_LayerNorm(nn.Module):
-    def __init__(self, normalized_shape) -> None:
+class BiasFreeLayerNorm(nn.Module):
+    def __init__(self, normalized_shape: int | tuple[int, ...]) -> None:
         super().__init__()
-        if isinstance(normalized_shape, numbers.Integral):
+        if isinstance(normalized_shape, int):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
         assert len(normalized_shape) == 1
         self.weight = nn.Parameter(torch.ones(normalized_shape))
         self.normalized_shape = normalized_shape
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         sigma = x.var(-1, keepdim=True, unbiased=False)
         return x / torch.sqrt(sigma + 1e-5) * self.weight
 
 
-class WithBias_LayerNorm(nn.Module):
-    def __init__(self, normalized_shape) -> None:
+class WithBiasLayerNorm(nn.Module):
+    def __init__(self, normalized_shape: int | tuple[int, ...]) -> None:
         super().__init__()
-        if isinstance(normalized_shape, numbers.Integral):
+        if isinstance(normalized_shape, int):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
         assert len(normalized_shape) == 1
@@ -45,27 +43,27 @@ class WithBias_LayerNorm(nn.Module):
         self.bias = nn.Parameter(torch.zeros(normalized_shape))
         self.normalized_shape = normalized_shape
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         mu = x.mean(-1, keepdim=True)
         sigma = x.var(-1, keepdim=True, unbiased=False)
         return (x - mu) / torch.sqrt(sigma + 1e-5) * self.weight + self.bias
 
 
 class LayerNorm(nn.Module):
-    def __init__(self, dim, LayerNorm_type) -> None:
+    def __init__(self, dim: int, layernorm_type: str) -> None:
         super().__init__()
-        if LayerNorm_type == "BiasFree":
-            self.body = BiasFree_LayerNorm(dim)
+        if layernorm_type == "BiasFree":
+            self.body = BiasFreeLayerNorm(dim)
         else:
-            self.body = WithBias_LayerNorm(dim)
+            self.body = WithBiasLayerNorm(dim)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         h, w = x.shape[-2:]
         return to_4d(self.body(to_3d(x)), h, w)
 
 
 class FeedForward(nn.Module):
-    def __init__(self, dim, ffn_expansion_factor, bias) -> None:
+    def __init__(self, dim: int, ffn_expansion_factor: float, bias: bool) -> None:
         super().__init__()
         hidden_features = int(dim * ffn_expansion_factor)
         self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
@@ -80,7 +78,7 @@ class FeedForward(nn.Module):
         )
         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.project_in(x)
         x1, x2 = self.dwconv(x).chunk(2, dim=1)
         x = F.gelu(x1) * x2
@@ -89,7 +87,7 @@ class FeedForward(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, dim, num_heads, bias) -> None:
+    def __init__(self, dim: int, num_heads: int, bias: bool) -> None:
         super().__init__()
         self.num_heads = num_heads
         self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
@@ -105,7 +103,7 @@ class Attention(nn.Module):
         )
         self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         _b, _c, h, w = x.shape
         qkv = self.qkv_dwconv(self.qkv(x))
         q, k, v = qkv.chunk(3, dim=1)
@@ -126,34 +124,39 @@ class Attention(nn.Module):
 
 class TransformerBlock(nn.Module):
     def __init__(
-        self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type
+        self,
+        dim: int,
+        num_heads: int,
+        ffn_expansion_factor: float,
+        bias: bool,
+        layernorm_type: str,
     ) -> None:
         super().__init__()
-        self.norm1 = LayerNorm(dim, LayerNorm_type)
+        self.norm1 = LayerNorm(dim, layernorm_type)
         self.attn = Attention(dim, num_heads, bias)
-        self.norm2 = LayerNorm(dim, LayerNorm_type)
+        self.norm2 = LayerNorm(dim, layernorm_type)
         self.ffn = FeedForward(dim, ffn_expansion_factor, bias)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = x + self.attn(self.norm1(x))
         x = x + self.ffn(self.norm2(x))
         return x
 
 
 class OverlapPatchEmbed(nn.Module):
-    def __init__(self, in_c=3, embed_dim=48, bias=False) -> None:
+    def __init__(self, in_c: int = 3, embed_dim: int = 48, bias: bool = False) -> None:
         super().__init__()
         self.proj = nn.Conv2d(
             in_c, embed_dim, kernel_size=3, stride=1, padding=1, bias=bias
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.proj(x)
         return x
 
 
 class Downsample(nn.Module):
-    def __init__(self, n_feat) -> None:
+    def __init__(self, n_feat: int) -> None:
         super().__init__()
         self.body = nn.Sequential(
             nn.Conv2d(
@@ -162,12 +165,12 @@ class Downsample(nn.Module):
             nn.PixelUnshuffle(2),
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.body(x)
 
 
 class Upsample(nn.Module):
-    def __init__(self, n_feat) -> None:
+    def __init__(self, n_feat: int) -> None:
         super().__init__()
         self.body = nn.Sequential(
             nn.Conv2d(
@@ -176,7 +179,7 @@ class Upsample(nn.Module):
             nn.PixelShuffle(2),
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.body(x)
 
 
@@ -186,16 +189,16 @@ class Upsample(nn.Module):
 class DocRes(nn.Module):
     def __init__(
         self,
-        inp_channels=3,
-        out_channels=3,
-        dim=48,
-        num_blocks=None,
-        num_refinement_blocks=4,
-        heads=None,
-        ffn_expansion_factor=2.66,
-        bias=False,
-        LayerNorm_type="WithBias",
-        dual_pixel_task=True,
+        inp_channels: int = 3,
+        out_channels: int = 3,
+        dim: int = 48,
+        num_blocks: list[int] | None = None,
+        num_refinement_blocks: int = 4,
+        heads: list[int] | None = None,
+        ffn_expansion_factor: float = 2.66,
+        bias: bool = False,
+        LayerNorm_type: str = "WithBias",  # noqa: N803
+        dual_pixel_task: bool = True,
     ) -> None:
         if heads is None:
             heads = [1, 2, 4, 8]
@@ -223,7 +226,7 @@ class DocRes(nn.Module):
                     num_heads=heads[0],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_blocks[0])
             ]
@@ -237,7 +240,7 @@ class DocRes(nn.Module):
                     num_heads=heads[1],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_blocks[1])
             ]
@@ -251,7 +254,7 @@ class DocRes(nn.Module):
                     num_heads=heads[2],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_blocks[2])
             ]
@@ -265,7 +268,7 @@ class DocRes(nn.Module):
                     num_heads=heads[3],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_blocks[3])
             ]
@@ -282,7 +285,7 @@ class DocRes(nn.Module):
                     num_heads=heads[2],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_blocks[2])
             ]
@@ -299,7 +302,7 @@ class DocRes(nn.Module):
                     num_heads=heads[1],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_blocks[1])
             ]
@@ -316,7 +319,7 @@ class DocRes(nn.Module):
                     num_heads=heads[0],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_blocks[0])
             ]
@@ -329,7 +332,7 @@ class DocRes(nn.Module):
                     num_heads=heads[0],
                     ffn_expansion_factor=ffn_expansion_factor,
                     bias=bias,
-                    LayerNorm_type=LayerNorm_type,
+                    layernorm_type=LayerNorm_type,
                 )
                 for i in range(num_refinement_blocks)
             ]
@@ -339,18 +342,18 @@ class DocRes(nn.Module):
             int(dim), out_channels, kernel_size=3, stride=1, padding=1, bias=bias
         )
 
-    def forward(self, x, *args, **kwargs):
+    def forward(self, x: Tensor, *args: object, **kwargs: object) -> Tensor:
         # -----------------------------------------------------------
         # Handle Padding for odd-sized images (validation/inference)
         # -----------------------------------------------------------
         h, w = x.shape[2], x.shape[3]
         factor = 8  # The architecture has 3 downsample levels (2^3 = 8)
-        H, W = (
+        padded_h, padded_w = (
             ((h + factor - 1) // factor) * factor,
             ((w + factor - 1) // factor) * factor,
         )
-        pad_h = H - h
-        pad_w = W - w
+        pad_h = padded_h - h
+        pad_w = padded_w - w
 
         # Apply padding if necessary
         if pad_h > 0 or pad_w > 0:
@@ -423,9 +426,9 @@ def docres_base(
     heads: list[int] | None = None,
     ffn_expansion_factor: float = 2.66,
     bias: bool = False,
-    LayerNorm_type: str = "WithBias",
+    LayerNorm_type: str = "WithBias",  # noqa: N803
     dual_pixel_task: bool = True,
-    scale=None,
+    scale: int | None = None,
 ) -> DocRes:
     if heads is None:
         heads = [1, 2, 4, 8]
@@ -456,9 +459,9 @@ def docres_large(
     heads: list[int] | None = None,
     ffn_expansion_factor: float = 2.66,
     bias: bool = False,
-    LayerNorm_type: str = "WithBias",
+    LayerNorm_type: str = "WithBias",  # noqa: N803
     dual_pixel_task: bool = True,
-    scale=None,
+    scale: int | None = None,
 ) -> DocRes:
     if heads is None:
         heads = [2, 4, 8, 16]
@@ -489,8 +492,8 @@ def docres_discriminator(
     heads: list[int] | None = None,
     ffn_expansion_factor: float = 2.0,
     bias: bool = False,
-    LayerNorm_type: str = "WithBias",
-):
+    LayerNorm_type: str = "WithBias",  # noqa: N803
+) -> nn.Module:
     if heads is None:
         heads = [1, 2, 4, 8]
     if num_blocks is None:
@@ -510,7 +513,7 @@ def docres_discriminator(
             )
             self.model = nn.Sequential(*layers)
 
-        def forward(self, x):
+        def forward(self, x: Tensor) -> Tensor:
             return self.model(x)
 
     return Discriminator()

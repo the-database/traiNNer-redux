@@ -63,8 +63,7 @@ def sequential(*args: nn.Module) -> nn.Sequential | nn.Module:
     modules: list[nn.Module] = []
     for module in args:
         if isinstance(module, nn.Sequential):
-            for submodule in module.children():
-                modules.append(submodule)
+            modules.extend(module.children())
         else:
             modules.append(module)
     return nn.Sequential(*modules)

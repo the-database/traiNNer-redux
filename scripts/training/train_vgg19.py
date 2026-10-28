@@ -38,7 +38,6 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import (
     DataLoader,
     DistributedSampler,
-    RandomSampler,
     SequentialSampler,
 )
 from torchvision.transforms import InterpolationMode
@@ -710,13 +709,13 @@ def train_one_epoch(
     num_batches = len(data_loader)
     start_time = time.time()
 
-    for batch_idx, (images, targets) in enumerate(data_loader):
+    for batch_idx, (images_cpu, targets_cpu) in enumerate(data_loader):
         batch_start = time.time()
 
-        images = images.to(device, non_blocking=True).to(
+        images = images_cpu.to(device, non_blocking=True).to(
             memory_format=torch.channels_last
         )
-        targets = targets.to(device, non_blocking=True)
+        targets = targets_cpu.to(device, non_blocking=True)
 
         # Forward pass with optional AMP
         amp_dtype = torch.float16 if config.amp_dtype == "float16" else torch.bfloat16
@@ -785,11 +784,11 @@ def evaluate(
     model.eval()
     metrics = MetricTracker()
 
-    for images, targets in data_loader:
-        images = images.to(device, non_blocking=True).to(
+    for images_cpu, targets_cpu in data_loader:
+        images = images_cpu.to(device, non_blocking=True).to(
             memory_format=torch.channels_last
         )
-        targets = targets.to(device, non_blocking=True)
+        targets = targets_cpu.to(device, non_blocking=True)
 
         outputs = model(images)
         loss = criterion(outputs, targets)
@@ -890,7 +889,7 @@ def init_distributed(config: TrainConfig) -> None:
     if "RANK" in os.environ and "WORLD_SIZE" in os.environ:
         config.rank = int(os.environ["RANK"])
         config.world_size = int(os.environ["WORLD_SIZE"])
-        config.local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        config.local_rank = int(os.environ.get("LOCAL_RANK", "0"))
         config.distributed = True
     elif "SLURM_PROCID" in os.environ:
         config.rank = int(os.environ["SLURM_PROCID"])

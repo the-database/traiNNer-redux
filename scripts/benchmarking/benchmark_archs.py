@@ -409,24 +409,22 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
                             psnrdf2k = ssimdf2k = psnrdiv2k = ssimdiv2k = "-"
                             key = f"{row[0]} {format_extra_params(extra_arch_params)}".strip()
-                            if key in OFFICIAL_METRICS:
-                                if scale in OFFICIAL_METRICS[key]:
-                                    if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
-                                        psnrdf2k = OFFICIAL_METRICS[key][scale][
-                                            "df2k_psnr"
-                                        ]
-                                    if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
-                                        ssimdf2k = OFFICIAL_METRICS[key][scale][
-                                            "df2k_ssim"
-                                        ]
-                                    if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
-                                        psnrdiv2k = OFFICIAL_METRICS[key][scale][
-                                            "div2k_psnr"
-                                        ]
-                                    if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
-                                        ssimdiv2k = OFFICIAL_METRICS[key][scale][
-                                            "div2k_ssim"
-                                        ]
+                            if (
+                                key in OFFICIAL_METRICS
+                                and scale in OFFICIAL_METRICS[key]
+                            ):
+                                if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                                    psnrdf2k = OFFICIAL_METRICS[key][scale]["df2k_psnr"]
+                                if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                                    ssimdf2k = OFFICIAL_METRICS[key][scale]["df2k_ssim"]
+                                if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                                    psnrdiv2k = OFFICIAL_METRICS[key][scale][
+                                        "div2k_psnr"
+                                    ]
+                                if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                                    ssimdiv2k = OFFICIAL_METRICS[key][scale][
+                                        "div2k_ssim"
+                                    ]
 
                             csvwriter.writerow(
                                 [
@@ -451,7 +449,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                                     ssimdf2k,
                                 ]
                             )
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001 - keep benchmarking other archs
                             import traceback
 
                             traceback.print_exception(e)

@@ -450,7 +450,7 @@ class BaseModel:
                         )
                     else:
                         torch.save(new_state_dict, save_path)
-            except Exception as e:
+            except (OSError, RuntimeError) as e:
                 logger = get_root_logger()
                 logger.warning(
                     "Save model error: %s, remaining retry times: %d", e, retry - 1
@@ -753,7 +753,7 @@ class BaseModel:
             while retry > 0:
                 try:
                     torch.save(state, save_path)
-                except Exception as e:
+                except (OSError, RuntimeError) as e:
                     logger = get_root_logger()
                     logger.warning(
                         "Save training state error: %s, remaining retry times: %d",
@@ -801,7 +801,7 @@ class BaseModel:
             for scheduler in self.schedulers:
                 scheduler.last_epoch = current_iter - 1
                 if hasattr(scheduler, "_step_count"):
-                    scheduler._step_count = current_iter
+                    scheduler._step_count = current_iter  # noqa: SLF001
             logger = get_root_logger()
             logger.info("Restarted scheduler(s) at iter %d", current_iter)
         else:

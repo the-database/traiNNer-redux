@@ -70,10 +70,9 @@ def img2tensor(
     # standardize input to 3 channel RGB format
     if img.ndim == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    elif img.ndim == 3:
+    elif img.ndim == 3 and img.shape[2] == 4:
         # remove alpha channel if present
-        if img.shape[2] == 4:
-            img = img[:, :, :3]
+        img = img[:, :, :3]
 
     if from_bgr:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

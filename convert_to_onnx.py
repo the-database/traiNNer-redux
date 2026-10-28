@@ -629,7 +629,7 @@ def verify_onnx(
 
     try:
         ort_session = ort.InferenceSession(onnx_path, providers=providers)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - verification is best-effort
         logger.warning(
             "Could not create ONNX Runtime session for verification (dtype=%s): %s",
             dtype,
@@ -648,7 +648,7 @@ def verify_onnx(
 
     try:
         onnx_output = ort_session.run(None, ort_inputs)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - verification is best-effort
         logger.warning("ONNX Runtime inference failed during verification: %s", e)
         return
 
@@ -781,7 +781,7 @@ def convert_pipeline(root_path: str) -> None:
                     Path(optimized_path).absolute().parent, optimized_path
                 ),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - optimization is optional
             logger.warning("ONNX optimization failed: %s", e)
 
 
