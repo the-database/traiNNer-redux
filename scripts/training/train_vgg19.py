@@ -26,7 +26,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.distributed as dist
@@ -160,7 +160,7 @@ class BlurPool2d(nn.Module):
         # Create blur kernel
         kernel = self._get_blur_kernel(filter_size)
         kernel = kernel[None, None, :, :].repeat(channels, 1, 1, 1)
-        self.register_buffer("kernel", kernel)
+        self.kernel = nn.Buffer(kernel)
 
     @staticmethod
     def _get_blur_kernel(size: int) -> Tensor:
@@ -427,7 +427,7 @@ def get_val_transforms(config: TrainConfig) -> transforms.Compose:
 
 def get_mixup_cutmix(
     config: TrainConfig, num_classes: int
-) -> transforms.MixUp | transforms.CutMix | None:
+) -> transforms.Transform | None:
     """Get mixup/cutmix transform if configured."""
     mixup_transforms: list[Any] = []
 
@@ -449,7 +449,7 @@ def get_mixup_cutmix(
 
 def load_data(
     config: TrainConfig,
-) -> tuple[DataLoader, DataLoader, int]:
+) -> tuple[DataLoader | None, DataLoader, int]:
     """Load datasets and create data loaders."""
     # train_dir = Path(config.data_path)  # / "train"
     val_dir = Path(config.data_path)  # / "val"
@@ -580,11 +580,12 @@ class MetricTracker:
     """Tracks and averages metrics during training."""
 
     def __init__(self) -> None:
-        self.reset()
-
-    def reset(self) -> None:
         self.sum: dict[str, float] = {}
         self.count: dict[str, int] = {}
+
+    def reset(self) -> None:
+        self.sum = {}
+        self.count = {}
 
     def update(self, name: str, value: float, n: int = 1) -> None:
         if name not in self.sum:
@@ -826,7 +827,7 @@ def save_checkpoint(
         return
 
     # Get model without DDP wrapper
-    model_to_save = model.module if hasattr(model, "module") else model
+    model_to_save = cast(nn.Module, model.module) if hasattr(model, "module") else model
 
     checkpoint = {
         "model": model_to_save.state_dict(),
@@ -1025,7 +1026,7 @@ def main(config: TrainConfig) -> None:
     # torch.compile
     if config.compile:
         print(f"Compiling model with mode={config.compile_mode}")
-        model = torch.compile(model, mode=config.compile_mode)
+        model = cast(nn.Module, torch.compile(model, mode=config.compile_mode))
 
     # EMA
     model_ema: ExponentialMovingAverage | None = None
@@ -1078,8 +1079,10 @@ def main(config: TrainConfig) -> None:
     start_time = time.time()
     best_acc1 = 0.0
 
+    assert train_loader is not None, "training data loading is disabled in load_data"
     for epoch in range(config.start_epoch, config.epochs):
         if config.distributed:
+            assert isinstance(train_loader.sampler, DistributedSampler)
             train_loader.sampler.set_epoch(epoch)
 
         train_one_epoch(

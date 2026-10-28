@@ -1,3 +1,4 @@
+# pyright: reportPrivateImportUsage=false
 import math
 from collections.abc import Callable
 

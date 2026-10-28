@@ -652,10 +652,12 @@ def verify_onnx(
         logger.warning("ONNX Runtime inference failed during verification: %s", e)
         return
 
+    onnx_output_np = onnx_output[0]
+    assert isinstance(onnx_output_np, np.ndarray)
     onnx_output_fp32 = (
-        onnx_output[0].astype(np.float32)
-        if onnx_output[0].dtype != np.float32
-        else onnx_output[0]
+        onnx_output_np.astype(np.float32)
+        if onnx_output_np.dtype != np.float32
+        else onnx_output_np
     )
 
     if dtype == "fp16":

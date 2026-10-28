@@ -9,7 +9,7 @@ def test_single_gt_dataset() -> None:
     opt_str = r"""
 name: EcoTest
 type: SingleGtDataset
-dataroot_gt: [datasets/val/dataset1/hr]
+dataroot_gt: [datasets/val/dataset1/hr, datasets/val/dataset1/hr2]
 io_backend:
     type: disk
 scale: 4
@@ -26,6 +26,7 @@ phase: train
 
     result = dataset[0]
     assert set(result.keys()) == {"gt", "gt_path", "lq_path"}
+    assert "gt" in result and "gt_path" in result and "lq_path" in result
     assert result["gt"].shape == (3, 128, 128)
     # lq_path is a harmless placeholder (same as gt_path) so downstream logging works
     assert result["lq_path"] == result["gt_path"]
@@ -52,6 +53,7 @@ lq_resize_mode: bicubic
     dataset = SingleGtDataset(opt)
     result = dataset[0]
     assert set(result.keys()) == {"gt", "gt_path", "lq_path", "lq_resize_mode"}
+    assert "lq_resize_mode" in result
     assert result["lq_resize_mode"] == "bicubic"
 
 

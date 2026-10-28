@@ -4,7 +4,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from chainner_ext import ResizeFilter, resize
+from chainner_ext import ResizeFilter, resize  # pyright: ignore[reportAttributeAccessIssue]
 from cv2.typing import MatLike
 from PIL import Image
 from tqdm import tqdm

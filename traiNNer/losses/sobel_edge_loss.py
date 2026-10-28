@@ -11,19 +11,17 @@ class SobelEdgeLoss(nn.Module):
         super().__init__()
         self.loss_weight = loss_weight
 
-        self.register_buffer(
-            "sobel_x",
+        self.sobel_x = nn.Buffer(
             torch.tensor(
                 [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=torch.float32
             ).view(1, 1, 3, 3)
-            / 4.0,
+            / 4.0
         )
-        self.register_buffer(
-            "sobel_y",
+        self.sobel_y = nn.Buffer(
             torch.tensor(
                 [[-1, -2, -1], [0, 0, 0], [1, 2, 1]], dtype=torch.float32
             ).view(1, 1, 3, 3)
-            / 4.0,
+            / 4.0
         )
 
     def forward(self, pred: Tensor, gt: Tensor) -> Tensor:

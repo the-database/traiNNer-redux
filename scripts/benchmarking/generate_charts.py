@@ -1,4 +1,5 @@
 import csv
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,7 +23,7 @@ def plot_scatter(df: pd.DataFrame, scale: int, size: str) -> None:
     # Use a colormap for dot colors
     colors = plt.cm.tab10(np.linspace(0, 1, len(df)))  # type: ignore
 
-    for i, row in df.iterrows():
+    for i, (_, row) in enumerate(df.iterrows()):
         # Plot the shaded circle (background)
         plt.scatter(
             row["fps"],
@@ -78,8 +79,8 @@ def plot_single(df: pd.DataFrame, scale: int, key: str) -> None:
     plt.xticks(rotation=45, ha="right")
     plt.grid(True)
 
-    min_params = df[key].min()
-    max_params = df[key].max()
+    min_params = cast(float, df[key].min())
+    max_params = cast(float, df[key].max())
     plt.ylim(min_params - 1, max_params + 1)
 
     plt.tight_layout()

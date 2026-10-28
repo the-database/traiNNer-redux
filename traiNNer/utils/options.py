@@ -4,7 +4,6 @@ import platform
 import random
 import shlex
 import sys
-from collections import OrderedDict
 from os import path as osp
 from pathlib import Path
 from typing import Any
@@ -12,16 +11,9 @@ from typing import Any
 import msgspec
 import torch
 import yaml
-from yaml import MappingNode
 
 from traiNNer.utils.dist_util import get_dist_info, init_dist, master_only
 from traiNNer.utils.redux_options import ReduxOptions
-
-try:
-    from yaml import CDumper as Dumper
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Dumper, Loader
 
 
 def assert_not_using_template(opt_path: str) -> None:
@@ -52,26 +44,6 @@ def assert_not_using_template(opt_path: str) -> None:
             f"Then give your copy a unique filename. You can copy the template with the following command (change the custom filename of {custom_filename} to whatever you prefer):\n  {copy_cmd}\n\n"
             f"Then set up your options in your copied config file and re-run the command like this, for example:\n  python {new_cmd}"
         )
-
-
-def ordered_yaml() -> tuple[type[Loader], type[Dumper]]:
-    """Support OrderedDict for yaml.
-
-    Returns:
-        tuple: yaml Loader and Dumper.
-    """
-
-    _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
-    def dict_representer(dumper: Dumper, data: dict[str, Any]) -> MappingNode:
-        return dumper.represent_dict(data.items())
-
-    def dict_constructor(loader: Loader, node: MappingNode) -> OrderedDict:
-        return OrderedDict(loader.construct_pairs(node))
-
-    Dumper.add_representer(OrderedDict, dict_representer)
-    Loader.add_constructor(_mapping_tag, dict_constructor)
-    return Loader, Dumper
 
 
 def yaml_load(file_path: str) -> tuple[ReduxOptions, str]:
