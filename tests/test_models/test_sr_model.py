@@ -66,10 +66,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     # check returned keys
     expected_keys = [
         "l_g_mssim",
-        "l_g_cosim",
-        "l_g_perceptual_conv3_4",
-        "l_g_perceptual_conv4_4",
-        "l_g_perceptual_conv5_4",
+        "l_g_perceptual",
         "l_g_hsluv_hue",
         "l_g_hsluv_saturation",
         "l_g_hsluv_lightness",
@@ -81,6 +78,7 @@ def test_srmodel(monkeypatch: MonkeyPatch) -> None:
     # ----------------- test save -------------------- #
     with tempfile.TemporaryDirectory() as tmpdir:
         model.opt.path.models = tmpdir
+        model.opt.path.resume_models = tmpdir
         model.opt.path.training_states = tmpdir
         model.save(0, 1)
 

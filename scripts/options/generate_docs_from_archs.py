@@ -53,7 +53,7 @@ def function_to_markdown(func: Callable, header: str) -> str:
 
             md.append(f"{param_doc}")
         md.append("```")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - document what we can, skip the rest
         print(e)
         md.append("No parameter information available.")
 

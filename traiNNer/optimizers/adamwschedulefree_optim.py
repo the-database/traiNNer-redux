@@ -1,3 +1,4 @@
+# pyright: reportPrivateImportUsage=false
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
 #
@@ -112,7 +113,7 @@ class AdamWScheduleFree(torch.optim.Optimizer):
                 and returns the loss.
         """
         if not self.param_groups[0]["train_mode"]:
-            raise Exception(
+            raise RuntimeError(
                 "Optimizer was not in train mode when step is called. "
                 "Please insert .train() and .eval() calls on the "
                 "optimizer. See documentation for details."

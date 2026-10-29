@@ -327,9 +327,12 @@ class AEModel(BaseModel):
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
-        if self.net_ae_ema is not None and apply_gradient:
-            if not (self.use_amp and self.optimizers_skipped[0]):
-                self.net_ae_ema.update()
+        if (
+            self.net_ae_ema is not None
+            and apply_gradient
+            and not (self.use_amp and self.optimizers_skipped[0])
+        ):
+            self.net_ae_ema.update()
 
     def test(self) -> None:
         with torch.autocast(

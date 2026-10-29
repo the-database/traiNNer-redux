@@ -779,9 +779,12 @@ class SRModel(BaseModel):
 
         self.log_dict = self.reduce_loss_dict(self.log_dict)
 
-        if self.net_g_ema is not None and apply_gradient:
-            if not (self.use_amp and self.optimizers_skipped[0]):
-                self.net_g_ema.update()
+        if (
+            self.net_g_ema is not None
+            and apply_gradient
+            and not (self.use_amp and self.optimizers_skipped[0])
+        ):
+            self.net_g_ema.update()
 
     def infer_tiled(self, net: nn.Module, lq: torch.Tensor) -> torch.Tensor:
         assert self.opt.val is not None

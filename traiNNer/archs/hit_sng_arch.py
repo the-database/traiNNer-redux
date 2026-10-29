@@ -6,8 +6,7 @@ from collections.abc import Sequence
 import torch
 import torch.nn.functional as F
 from einops import rearrange
-from timm.models import register_notrace_function
-from timm.layers import DropPath, _assert, to_2tuple, trunc_normal_
+from spandrel.util.timm import DropPath, to_2tuple, trunc_normal_
 from torch import nn
 from torch.utils import checkpoint
 from torchvision.transforms import functional as TF
@@ -100,7 +99,6 @@ def window_partition(x, window_size):
     return windows, (wh, ww)
 
 
-@register_notrace_function  # reason: int argument is a Proxy
 def window_unpartition(windows, num_windows):
     """
     Args:
@@ -500,7 +498,7 @@ class NGramContext(nn.Module):
         self, dim, window_size, ngram, ngram_num_heads, padding_mode="seq_refl_win_pad"
     ) -> None:
         super().__init__()
-        _assert(
+        torch._assert(
             padding_mode in ["seq_refl_win_pad", "zero_pad"],
             "padding mode should be 'seq_refl_win_pad' or 'zero_pad'!!",
         )
@@ -643,7 +641,7 @@ class NGramWindowPartition(nn.Module):
             ph // self.window_size,
             pw // self.window_size,
         )  # number of windows (height, width)
-        _assert(
+        torch._assert(
             0 not in [wh, ww], "feature map size should be larger than window size!"
         )
 

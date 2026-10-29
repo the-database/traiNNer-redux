@@ -450,7 +450,7 @@ class BaseModel:
                         )
                     else:
                         torch.save(new_state_dict, save_path)
-            except Exception as e:
+            except (OSError, RuntimeError) as e:
                 logger = get_root_logger()
                 logger.warning(
                     "Save model error: %s, remaining retry times: %d", e, retry - 1
@@ -488,8 +488,9 @@ class BaseModel:
             strict (bool): Whether strictly loaded. Default: True.
         """
         crt_net = self.get_bare_model(crt_net)
-        if hasattr(crt_net, "map_state_dict"):
-            load_net = crt_net.map_state_dict(load_net)
+        map_state_dict = getattr(crt_net, "map_state_dict", None)
+        if map_state_dict is not None:
+            load_net = map_state_dict(load_net)
         crt_net_state_dict = crt_net.state_dict()
         crt_net_keys = set(crt_net_state_dict.keys())
         load_net_keys = set(load_net.keys())
@@ -753,7 +754,7 @@ class BaseModel:
             while retry > 0:
                 try:
                     torch.save(state, save_path)
-                except Exception as e:
+                except (OSError, RuntimeError) as e:
                     logger = get_root_logger()
                     logger.warning(
                         "Save training state error: %s, remaining retry times: %d",
@@ -801,7 +802,7 @@ class BaseModel:
             for scheduler in self.schedulers:
                 scheduler.last_epoch = current_iter - 1
                 if hasattr(scheduler, "_step_count"):
-                    scheduler._step_count = current_iter
+                    scheduler._step_count = current_iter  # noqa: SLF001
             logger = get_root_logger()
             logger.info("Restarted scheduler(s) at iter %d", current_iter)
         else:

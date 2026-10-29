@@ -115,19 +115,17 @@ class StructureTextureLoss(nn.Module):
         self.layer_weights = layer_weights
         self.vgg = VGG(list(layer_weights.keys())).to(memory_format=torch.channels_last)
 
-        self.register_buffer(
-            "sobel_x",
+        self.sobel_x = nn.Buffer(
             torch.tensor(
                 [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=torch.float32
             ).view(1, 1, 3, 3)
-            / 4.0,
+            / 4.0
         )
-        self.register_buffer(
-            "sobel_y",
+        self.sobel_y = nn.Buffer(
             torch.tensor(
                 [[-1, -2, -1], [0, 0, 0], [1, 2, 1]], dtype=torch.float32
             ).view(1, 1, 3, 3)
-            / 4.0,
+            / 4.0
         )
 
     def compute_weights(self, gt: Tensor) -> tuple[Tensor, Tensor]:

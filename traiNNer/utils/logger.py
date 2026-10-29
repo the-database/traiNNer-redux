@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 import shutil
 import subprocess
@@ -123,7 +123,7 @@ class MessageLogger:
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (current_iter - self.start_iter + 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
-            eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
+            eta_str = str(dt.timedelta(seconds=int(eta_sec)))
 
             message += f"[performance: {iter_time:.3f} it/s] [eta: {eta_str}] "
 
@@ -348,14 +348,14 @@ def log_git_status() -> str | None:
             behind_flag = " ([green]Up to date[/green])"
             if "Your branch is behind" in behind_output:
                 behind_flag = " ([yellow]updates available - please use [bold]git pull[/bold] to update[/yellow])"
-        except Exception:
+        except (subprocess.CalledProcessError, OSError):
             behind_flag = ""
 
         msg += f"\n\t\tGit commit: {commit_hash}{dirty_flag}{behind_flag}"
         msg += f"\n\t\tCommit date: {commit_date}"
         return msg
 
-    except Exception as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         logger.warning("Failed to get git information: %s", e)
 
 

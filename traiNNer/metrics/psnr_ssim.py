@@ -198,7 +198,7 @@ def calculate_ssim_pt(
     return ssim
 
 
-def _ssim(img: np.ndarray, img2: np.ndarray) -> np.ndarray:
+def _ssim(img: np.ndarray, img2: np.ndarray) -> float:
     """Calculate SSIM (structural similarity) for one channel images.
 
     It is called by func:`calculate_ssim`.

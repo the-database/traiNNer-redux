@@ -4,18 +4,12 @@ name: Lint
 
 # Controls when the workflow will run
 on:
+    # No path filters: these jobs are required checks on master, and a
+    # filtered-out workflow never reports, which would block the PR.
     pull_request:
         branches: ['*']
-        types:
-            - opened
-            - synchronize
-            - closed
-        paths:
-            - '**.py'
-            - '.github/workflows/**'
-            - 'pyproject.toml'
     push:
-        branches: [main]
+        branches: [master]
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
@@ -25,10 +19,10 @@ jobs:
     formatting:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
+            - uses: actions/checkout@v7
+            - uses: actions/setup-python@v7
               with:
-                  python-version: '3.12'
+                  python-version: '3.14'
                   cache: 'pip'
             - run: pip install .[dev]
             - run: ruff format --check
@@ -36,10 +30,10 @@ jobs:
     lint:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
+            - uses: actions/checkout@v7
+            - uses: actions/setup-python@v7
               with:
-                  python-version: '3.12'
+                  python-version: '3.14'
                   cache: 'pip'
             - run: pip install .[dev]
             - run: ruff check
@@ -47,10 +41,10 @@ jobs:
     pyright:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
+            - uses: actions/checkout@v7
+            - uses: actions/setup-python@v7
               with:
-                  python-version: '3.12'
+                  python-version: '3.14'
                   cache: 'pip'
             - run: pip install .[dev,onnx,scripts]
             - run: pyright

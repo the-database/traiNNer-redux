@@ -123,31 +123,30 @@ def make_lmdb_from_imgs(
     # write data to lmdb
     pbar = tqdm(total=len(img_path_list), unit="chunk")
     txn = env.begin(write=True)
-    txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w")
-    for idx, (path, key) in enumerate(zip(img_path_list, keys, strict=False)):
-        pbar.update(1)
-        pbar.set_description(f"Write {key}")
-        key_byte = key.encode("ascii")
-        if multiprocessing_read:
-            assert dataset is not None and shapes is not None
-            img_byte = dataset[key]
-            h, w, c = shapes[key]
-        else:
-            _, img_byte, img_shape = read_img_worker(
-                osp.join(data_path, path), key, compress_level
-            )
-            h, w, c = img_shape
+    with open(osp.join(lmdb_path, "meta_info.txt"), "w") as txt_file:
+        for idx, (path, key) in enumerate(zip(img_path_list, keys, strict=False)):
+            pbar.update(1)
+            pbar.set_description(f"Write {key}")
+            key_byte = key.encode("ascii")
+            if multiprocessing_read:
+                assert dataset is not None and shapes is not None
+                img_byte = dataset[key]
+                h, w, c = shapes[key]
+            else:
+                _, img_byte, img_shape = read_img_worker(
+                    osp.join(data_path, path), key, compress_level
+                )
+                h, w, c = img_shape
 
-        txn.put(key_byte, img_byte)
-        # write meta information
-        txt_file.write(f"{key}.png ({h},{w},{c}) {compress_level}\n")
-        if idx % batch == 0:
-            txn.commit()
-            txn = env.begin(write=True)
+            txn.put(key_byte, img_byte)
+            # write meta information
+            txt_file.write(f"{key}.png ({h},{w},{c}) {compress_level}\n")
+            if idx % batch == 0:
+                txn.commit()
+                txn = env.begin(write=True)
     pbar.close()
     txn.commit()
     env.close()
-    txt_file.close()
     print("\nFinish writing lmdb.")
 
 
@@ -209,7 +208,7 @@ class LmdbMaker:
         self.compress_level = compress_level
         self.env = lmdb.open(lmdb_path, map_size=map_size)
         self.txn = self.env.begin(write=True)
-        self.txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w")
+        self.txt_file = open(osp.join(lmdb_path, "meta_info.txt"), "w")  # noqa: SIM115 - closed in close()
         self.counter = 0
 
     def put(

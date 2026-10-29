@@ -132,16 +132,15 @@ def get_line(
     ssimdiv2k = format(unsupported_value, "<6s")
 
     key = f"{name} {format_extra_params(extra_arch_params)}".strip()
-    if key in OFFICIAL_METRICS:
-        if scale in OFFICIAL_METRICS[key]:
-            if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
-                psnrdf2k = format(OFFICIAL_METRICS[key][scale]["df2k_psnr"], ".2f")
-            if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
-                ssimdf2k = format(OFFICIAL_METRICS[key][scale]["df2k_ssim"], ".4f")
-            if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
-                psnrdiv2k = format(OFFICIAL_METRICS[key][scale]["div2k_psnr"], ".2f")
-            if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
-                ssimdiv2k = format(OFFICIAL_METRICS[key][scale]["div2k_ssim"], ".4f")
+    if key in OFFICIAL_METRICS and scale in OFFICIAL_METRICS[key]:
+        if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
+            psnrdf2k = format(OFFICIAL_METRICS[key][scale]["df2k_psnr"], ".2f")
+        if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
+            ssimdf2k = format(OFFICIAL_METRICS[key][scale]["df2k_ssim"], ".4f")
+        if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
+            psnrdiv2k = format(OFFICIAL_METRICS[key][scale]["div2k_psnr"], ".2f")
+        if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
+            ssimdiv2k = format(OFFICIAL_METRICS[key][scale]["div2k_ssim"], ".4f")
 
     if params != -1:
         return f"{edge_separator}{name_str:<35}{name_separator}{fps_label}{fps:>8.2f}{separator}{fps_cl_label}{fps_channels_last:>8.2f}{separator}{channels_last_vs_label}{channels_last_vs_baseline:>1.2f}x{separator}{sec_img_label}{avg_time:>8.4f}{separator}{vram_label}{vram_channels_last:>8.2f} GB{separator}{psnrdf2k_label}{psnrdf2k}{separator}{ssimdf2k_label}{ssimdf2k}{separator}{psnrdiv2k_label}{psnrdiv2k}{separator}{ssimdiv2k_label}{ssimdiv2k}{separator}{params_label}{params:>10,d}{edge_separator}"
@@ -397,9 +396,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                                 row_channels_last[4],  # vram (CL)
                                 channels_last_improvement,
                                 row[8],  # num runs
-                                row[3]
-                                if row[3] > row_channels_last[3]
-                                else row_channels_last[3],  # better fps
+                                max(row_channels_last[3], row[3]),  # better fps
                             )
                             results_by_scale[scale].append(new_row)
                             results_by_arch[arch_key][scale] = new_row
@@ -412,24 +409,22 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
 
                             psnrdf2k = ssimdf2k = psnrdiv2k = ssimdiv2k = "-"
                             key = f"{row[0]} {format_extra_params(extra_arch_params)}".strip()
-                            if key in OFFICIAL_METRICS:
-                                if scale in OFFICIAL_METRICS[key]:
-                                    if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
-                                        psnrdf2k = OFFICIAL_METRICS[key][scale][
-                                            "df2k_psnr"
-                                        ]
-                                    if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
-                                        ssimdf2k = OFFICIAL_METRICS[key][scale][
-                                            "df2k_ssim"
-                                        ]
-                                    if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
-                                        psnrdiv2k = OFFICIAL_METRICS[key][scale][
-                                            "div2k_psnr"
-                                        ]
-                                    if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
-                                        ssimdiv2k = OFFICIAL_METRICS[key][scale][
-                                            "div2k_ssim"
-                                        ]
+                            if (
+                                key in OFFICIAL_METRICS
+                                and scale in OFFICIAL_METRICS[key]
+                            ):
+                                if "df2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                                    psnrdf2k = OFFICIAL_METRICS[key][scale]["df2k_psnr"]
+                                if "df2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                                    ssimdf2k = OFFICIAL_METRICS[key][scale]["df2k_ssim"]
+                                if "div2k_psnr" in OFFICIAL_METRICS[key][scale]:
+                                    psnrdiv2k = OFFICIAL_METRICS[key][scale][
+                                        "div2k_psnr"
+                                    ]
+                                if "div2k_ssim" in OFFICIAL_METRICS[key][scale]:
+                                    ssimdiv2k = OFFICIAL_METRICS[key][scale][
+                                        "div2k_ssim"
+                                    ]
 
                             csvwriter.writerow(
                                 [
@@ -454,7 +449,7 @@ PSNR and SSIM scores are a rough measure of quality, higher is better. These sco
                                     ssimdf2k,
                                 ]
                             )
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001 - keep benchmarking other archs
                             import traceback
 
                             traceback.print_exception(e)

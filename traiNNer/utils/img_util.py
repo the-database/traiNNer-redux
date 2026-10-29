@@ -70,10 +70,9 @@ def img2tensor(
     # standardize input to 3 channel RGB format
     if img.ndim == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    elif img.ndim == 3:
+    elif img.ndim == 3 and img.shape[2] == 4:
         # remove alpha channel if present
-        if img.shape[2] == 4:
-            img = img[:, :, :3]
+        img = img[:, :, :3]
 
     if from_bgr:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -328,9 +327,7 @@ def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> M
 
 
 def vipsimfrompath(path: str) -> pyvips.Image:
-    img = pyvips.Image.new_from_file(
-        path, access="sequential", fail=True
-    )
+    img = pyvips.Image.new_from_file(path, access="sequential", fail=True)
     # This might be a bottleneck if training at 32+ bpc is attempted; icc_transform docs only mention 8/16 bit
     depth = 16 if img.format in ["ushort", "short"] else 8
     img = img.icc_transform("srgb", depth=depth)  # pyright: ignore[reportAttributeAccessIssue,reportOptionalMemberAccess]

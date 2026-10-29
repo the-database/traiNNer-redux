@@ -6,24 +6,21 @@ dependencies = [
 "antialiased_cnns",
 "einops",
 "ema-pytorch",
-"msgspec",
+"msgspec>=0.22.0",
 "numpy>=2",
 "opencv-python",
-"Pillow",
-"pytorch-optimizer>=3.4.2",
+"Pillow>=13",
+"pytorch-optimizer>=4.1.0",
 "pyvips>=3.2.0",
-"pyvips-binary>=8.18.6",
+"pyvips-binary>=8.18.7",
 "pyyaml",
-"requests",
 "rich",
 "safetensors",
 "scipy",
 "spandrel>=0.4.0",
-"spandrel-extra-arches>=0.2.0",
-"tb-nightly",
-"timm",
-"torch>=2.14.0",
-"torchvision",
+"tensorboard>=2.21.0",
+"torch>=2.15.0",
+"torchvision>=0.29.2",
 "tqdm",
 ]
 authors = [{name = "the-database"}]
@@ -38,13 +35,14 @@ onnx = [
     "lief",
     "ml_dtypes",
     "onnx-graphsurgeon>=0.6.1",
-    "onnx>=1.21.0",
+    # onnxruntime 1.31 cannot load IR version 14 models produced by onnx 1.23
+    "onnx>=1.22.0,<1.23",
     "onnxconverter-common~=1.16.0",
-    "onnxruntime-gpu>=1.24.4",
+    "onnxruntime-gpu>=1.31.1",
     "onnxscript>=0.6.2",
-    "onnxslim",
+    "onnxslim>=0.1.98",
     "polygraphy",
-    "nvidia-modelopt>=0.46.1",
+    "nvidia-modelopt>=0.47.0",
 ]
 docs = ["sphinx", "sphinx-rtd-theme"]
 scripts = ["chainner_ext", "matplotlib", "pandas"]
@@ -55,7 +53,7 @@ Repository = "https://github.com/the-database/traiNNer-redux.git"
 
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
-include = ["traiNNer"]  # package names should match these glob patterns (["*"] by default)
+include = ["traiNNer*"]  # package names should match these glob patterns (["*"] by default)
 exclude = []  # exclude packages matching these glob patterns (empty by default)
 namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
@@ -114,6 +112,7 @@ ignore = [
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments
     "PLR0915", # Too many statements,
+    "PLR0917", # Too many positional arguments (same rationale as PLR0913)
     "E741",    # Ambiguous variable name,
     "E712",    # true-false-comparison, has false positives because of numpy's operator overloading
     "F821",    # Undefined name -- this one is weird, it seems like it has false positives on closures and other context changes
@@ -142,4 +141,4 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.uv.pip]
-extra-index-url = ["https://download.pytorch.org/whl/cu121"]
+extra-index-url = ["https://download.pytorch.org/whl/cu132"]

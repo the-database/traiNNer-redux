@@ -1,11 +1,9 @@
 import os
-import random
 from multiprocessing import Pool
-from pathlib import Path
 
 import cv2
 import numpy as np
-from chainner_ext import ResizeFilter, resize
+from chainner_ext import ResizeFilter, resize  # pyright: ignore[reportAttributeAccessIssue]
 from cv2.typing import MatLike
 from PIL import Image
 from tqdm import tqdm
@@ -57,7 +55,7 @@ def _read_cv_from_path(path: str) -> MatLike:
     img = None
     try:
         img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
-    except Exception:
+    except (OSError, cv2.error):
         pass
     if img is None:
         img = cv2.imread(str(path), cv2.IMREAD_COLOR)

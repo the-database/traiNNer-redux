@@ -629,7 +629,7 @@ def verify_onnx(
 
     try:
         ort_session = ort.InferenceSession(onnx_path, providers=providers)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - verification is best-effort
         logger.warning(
             "Could not create ONNX Runtime session for verification (dtype=%s): %s",
             dtype,
@@ -648,14 +648,16 @@ def verify_onnx(
 
     try:
         onnx_output = ort_session.run(None, ort_inputs)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - verification is best-effort
         logger.warning("ONNX Runtime inference failed during verification: %s", e)
         return
 
+    onnx_output_np = onnx_output[0]
+    assert isinstance(onnx_output_np, np.ndarray)
     onnx_output_fp32 = (
-        onnx_output[0].astype(np.float32)
-        if onnx_output[0].dtype != np.float32
-        else onnx_output[0]
+        onnx_output_np.astype(np.float32)
+        if onnx_output_np.dtype != np.float32
+        else onnx_output_np
     )
 
     if dtype == "fp16":
@@ -723,11 +725,10 @@ def convert_pipeline(root_path: str) -> None:
         format_duration_min_sec(end_time - start_time),
     )
 
-    if not opt.onnx.dynamo:
-        if opt.onnx.verify:
-            verify_onnx(model, logger, torch_input, out_path, dtype, wrap_5d)
-            if fp32_path is not None:
-                verify_onnx(model, logger, torch_input, fp32_path, "fp32", wrap_5d)
+    if not opt.onnx.dynamo and opt.onnx.verify:
+        verify_onnx(model, logger, torch_input, out_path, dtype, wrap_5d)
+        if fp32_path is not None:
+            verify_onnx(model, logger, torch_input, fp32_path, "fp32", wrap_5d)
 
     if opt.onnx.optimize:
         logger.info("Optimizing ONNX with OnnxSlim...")
@@ -782,7 +783,7 @@ def convert_pipeline(root_path: str) -> None:
                     Path(optimized_path).absolute().parent, optimized_path
                 ),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - optimization is optional
             logger.warning("ONNX optimization failed: %s", e)
 
 

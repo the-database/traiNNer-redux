@@ -20,13 +20,13 @@ Usage:
 """
 
 import argparse
-import datetime
+import datetime as dt
 import os
 import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.distributed as dist
@@ -38,7 +38,6 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import (
     DataLoader,
     DistributedSampler,
-    RandomSampler,
     SequentialSampler,
 )
 from torchvision.transforms import InterpolationMode
@@ -100,7 +99,6 @@ class TrainConfig:
     amp_dtype: str = "float16"  # float16 or bfloat16
     clip_grad_norm: float | None = None
     tf32: bool = True
-    matmul_precision: str = "high"  # highest, high, medium
 
     # torch.compile
     compile: bool = False
@@ -162,7 +160,7 @@ class BlurPool2d(nn.Module):
         # Create blur kernel
         kernel = self._get_blur_kernel(filter_size)
         kernel = kernel[None, None, :, :].repeat(channels, 1, 1, 1)
-        self.register_buffer("kernel", kernel)
+        self.kernel = nn.Buffer(kernel)
 
     @staticmethod
     def _get_blur_kernel(size: int) -> Tensor:
@@ -429,7 +427,7 @@ def get_val_transforms(config: TrainConfig) -> transforms.Compose:
 
 def get_mixup_cutmix(
     config: TrainConfig, num_classes: int
-) -> transforms.MixUp | transforms.CutMix | None:
+) -> transforms.Transform | None:
     """Get mixup/cutmix transform if configured."""
     mixup_transforms: list[Any] = []
 
@@ -451,7 +449,7 @@ def get_mixup_cutmix(
 
 def load_data(
     config: TrainConfig,
-) -> tuple[DataLoader, DataLoader, int]:
+) -> tuple[DataLoader | None, DataLoader, int]:
     """Load datasets and create data loaders."""
     # train_dir = Path(config.data_path)  # / "train"
     val_dir = Path(config.data_path)  # / "val"
@@ -582,11 +580,12 @@ class MetricTracker:
     """Tracks and averages metrics during training."""
 
     def __init__(self) -> None:
-        self.reset()
-
-    def reset(self) -> None:
         self.sum: dict[str, float] = {}
         self.count: dict[str, int] = {}
+
+    def reset(self) -> None:
+        self.sum = {}
+        self.count = {}
 
     def update(self, name: str, value: float, n: int = 1) -> None:
         if name not in self.sum:
@@ -711,13 +710,13 @@ def train_one_epoch(
     num_batches = len(data_loader)
     start_time = time.time()
 
-    for batch_idx, (images, targets) in enumerate(data_loader):
+    for batch_idx, (images_cpu, targets_cpu) in enumerate(data_loader):
         batch_start = time.time()
 
-        images = images.to(device, non_blocking=True).to(
+        images = images_cpu.to(device, non_blocking=True).to(
             memory_format=torch.channels_last
         )
-        targets = targets.to(device, non_blocking=True)
+        targets = targets_cpu.to(device, non_blocking=True)
 
         # Forward pass with optional AMP
         amp_dtype = torch.float16 if config.amp_dtype == "float16" else torch.bfloat16
@@ -767,7 +766,7 @@ def train_one_epoch(
                 f"Acc@5: {metrics.avg('acc5'):.2f}  "
                 f"LR: {optimizer.param_groups[0]['lr']:.6f}  "
                 f"Img/s: {metrics.avg('img/s'):.1f}  "
-                f"ETA: {datetime.timedelta(seconds=int(eta))}"
+                f"ETA: {dt.timedelta(seconds=int(eta))}"
             )
 
     return metrics
@@ -786,11 +785,11 @@ def evaluate(
     model.eval()
     metrics = MetricTracker()
 
-    for images, targets in data_loader:
-        images = images.to(device, non_blocking=True).to(
+    for images_cpu, targets_cpu in data_loader:
+        images = images_cpu.to(device, non_blocking=True).to(
             memory_format=torch.channels_last
         )
-        targets = targets.to(device, non_blocking=True)
+        targets = targets_cpu.to(device, non_blocking=True)
 
         outputs = model(images)
         loss = criterion(outputs, targets)
@@ -828,7 +827,7 @@ def save_checkpoint(
         return
 
     # Get model without DDP wrapper
-    model_to_save = model.module if hasattr(model, "module") else model
+    model_to_save = cast(nn.Module, model.module) if hasattr(model, "module") else model
 
     checkpoint = {
         "model": model_to_save.state_dict(),
@@ -891,7 +890,7 @@ def init_distributed(config: TrainConfig) -> None:
     if "RANK" in os.environ and "WORLD_SIZE" in os.environ:
         config.rank = int(os.environ["RANK"])
         config.world_size = int(os.environ["WORLD_SIZE"])
-        config.local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        config.local_rank = int(os.environ.get("LOCAL_RANK", "0"))
         config.distributed = True
     elif "SLURM_PROCID" in os.environ:
         config.rank = int(os.environ["SLURM_PROCID"])
@@ -930,10 +929,10 @@ def main(config: TrainConfig) -> None:
     else:
         torch.backends.cudnn.benchmark = True
 
-    # TF32 and matmul precision
-    torch.backends.cuda.matmul.allow_tf32 = config.tf32
-    torch.backends.cudnn.allow_tf32 = config.tf32
-    torch.set_float32_matmul_precision(config.matmul_precision)
+    # TF32
+    fp32_precision = "tf32" if config.tf32 else "ieee"
+    torch.backends.cuda.matmul.fp32_precision = fp32_precision
+    torch.backends.cudnn.fp32_precision = fp32_precision
 
     # Load data
     train_loader, val_loader, num_classes = load_data(config)
@@ -1027,7 +1026,7 @@ def main(config: TrainConfig) -> None:
     # torch.compile
     if config.compile:
         print(f"Compiling model with mode={config.compile_mode}")
-        model = torch.compile(model, mode=config.compile_mode)
+        model = cast(nn.Module, torch.compile(model, mode=config.compile_mode))
 
     # EMA
     model_ema: ExponentialMovingAverage | None = None
@@ -1080,8 +1079,10 @@ def main(config: TrainConfig) -> None:
     start_time = time.time()
     best_acc1 = 0.0
 
+    assert train_loader is not None, "training data loading is disabled in load_data"
     for epoch in range(config.start_epoch, config.epochs):
         if config.distributed:
+            assert isinstance(train_loader.sampler, DistributedSampler)
             train_loader.sampler.set_epoch(epoch)
 
         train_one_epoch(
@@ -1131,7 +1132,7 @@ def main(config: TrainConfig) -> None:
             )
 
     total_time = time.time() - start_time
-    print(f"Training completed in {datetime.timedelta(seconds=int(total_time))}")
+    print(f"Training completed in {dt.timedelta(seconds=int(total_time))}")
     print(f"Best Acc@1: {best_acc1:.2f}")
 
 
@@ -1212,12 +1213,6 @@ def parse_args() -> TrainConfig:
     )
     parser.add_argument("--clip-grad-norm", type=float, default=None)
     parser.add_argument("--no-tf32", action="store_true", help="Disable TF32")
-    parser.add_argument(
-        "--matmul-precision",
-        type=str,
-        default="high",
-        choices=["highest", "high", "medium"],
-    )
 
     # torch.compile
     parser.add_argument("--compile", action="store_true", help="Use torch.compile")
@@ -1287,7 +1282,6 @@ def parse_args() -> TrainConfig:
         amp_dtype=args.amp_dtype,
         clip_grad_norm=args.clip_grad_norm,
         tf32=not args.no_tf32,
-        matmul_precision=args.matmul_precision,
         compile=args.compile,
         compile_mode=args.compile_mode,
         model_ema=args.model_ema,

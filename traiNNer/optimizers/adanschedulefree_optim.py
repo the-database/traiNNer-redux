@@ -1,3 +1,4 @@
+# pyright: reportPrivateImportUsage=false
 import math
 from collections.abc import Callable
 
@@ -95,7 +96,7 @@ class AdanScheduleFree(Optimizer):
     @torch.no_grad()
     def step(self, closure: Callable[[], float] | None = None) -> float | None:  # pyright: ignore[reportIncompatibleMethodOverride]
         if not self.param_groups[0]["train_mode"]:
-            raise Exception(
+            raise RuntimeError(
                 "Optimizer was not in train mode when step is called. "
                 "Please insert .train() and .eval() calls on the "
                 "optimizer. See documentation for details."

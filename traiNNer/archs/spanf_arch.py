@@ -171,8 +171,6 @@ class SPANF(nn.Module):
 
         self.depth_to_space = nn.PixelShuffle(upscale)
 
-        self.cuda()(torch.randn(1, 3, 256, 256).cuda())
-
     def forward(self, x):
         out_feature = self.conv_near(x)
         out_b1 = self.block_1(x)

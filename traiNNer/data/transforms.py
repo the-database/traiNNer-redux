@@ -3,13 +3,13 @@ from typing import overload
 
 import cv2
 import numpy as np
+import numpy.typing as npt
 import pyvips
 from torch import Tensor
 
 from traiNNer.utils.img_util import img2rgb
 
-
-VIPS_FORMAT_TO_DTYPE: dict[str, np.dtype] = {
+VIPS_FORMAT_TO_DTYPE: dict[str, npt.DTypeLike] = {
     "uchar": np.uint8,
     "char": np.int8,
     "ushort": np.uint16,
@@ -20,10 +20,14 @@ VIPS_FORMAT_TO_DTYPE: dict[str, np.dtype] = {
     "double": np.float64,
 }
 
-def get_vips_dtype(img: pyvips.Image) -> np.dtype:
-    if img.format not in VIPS_FORMAT_TO_DTYPE:
-        raise ValueError(f"Unsupported VIPS format: {img.format}. Supported formats: {list(VIPS_FORMAT_TO_DTYPE.keys())}")
-    return VIPS_FORMAT_TO_DTYPE[img.format]
+
+def get_vips_dtype(img: pyvips.Image) -> npt.DTypeLike:
+    fmt = str(img.format)
+    if fmt not in VIPS_FORMAT_TO_DTYPE:
+        raise ValueError(
+            f"Unsupported VIPS format: {fmt}. Supported formats: {list(VIPS_FORMAT_TO_DTYPE.keys())}"
+        )
+    return VIPS_FORMAT_TO_DTYPE[fmt]
 
 
 def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
@@ -212,12 +216,17 @@ def paired_random_crop_list(
 
     cropped_gts, cropped_lqs = [], []
     for img_gt, img_lq in zip(img_gts, img_lqs, strict=False):
-        if (isinstance(img_gt, Tensor) and isinstance(img_lq, Tensor)) or (isinstance(img_gt, np.ndarray) and isinstance(img_lq, np.ndarray)):
+        # separate branches so each call narrows to one paired_random_crop overload
+        if isinstance(img_gt, Tensor) and isinstance(img_lq, Tensor):  # noqa: SIM114
+            cropped_gt, cropped_lq = paired_random_crop(
+                img_gt, img_lq, gt_patch_size, scale, gt_path
+            )
+        elif isinstance(img_gt, np.ndarray) and isinstance(img_lq, np.ndarray):
             cropped_gt, cropped_lq = paired_random_crop(
                 img_gt, img_lq, gt_patch_size, scale, gt_path
             )
         else:
-            raise ValueError("img_gts and img_lqs must be all Tensor or all np.ndarray")
+            raise TypeError("img_gts and img_lqs must be all Tensor or all np.ndarray")
         cropped_gts.append(cropped_gt)
         cropped_lqs.append(cropped_lq)
 

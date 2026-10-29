@@ -556,6 +556,7 @@ class TFDAT(nn.Module):
 
 # --- Model Variants ---
 
+
 @ARCH_REGISTRY.register()
 def tfdat(
     num_in_ch: int = 3,

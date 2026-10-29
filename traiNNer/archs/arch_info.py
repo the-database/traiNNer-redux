@@ -6,8 +6,6 @@ ARCHS_WITHOUT_FP16 = {
     "atd",
     "dat_2",
     "dat_2_l",
-    "dat_2_l_aligned",
-    "dat_2_aligned",
     "dat_light",
     "dat_s",
     "dat",
@@ -32,9 +30,6 @@ ARCHS_WITHOUT_FP16 = {
     "hat_l_aligned",
     "hat_m",
     "hat_s",
-    "rhat_l",
-    "rhat_m",
-    "rhat_s",
     "hit_sir",
     "hit_sng",
     "hit_srf",
@@ -47,8 +42,6 @@ ARCHS_WITHOUT_FP16 = {
     "seemore_t",
     "srformer_light",
     "srformer",
-    "srhcnet",
-    "sst_large_plus",
     "swin2sr_l",
     "swin2sr_m",
     "swin2sr_s",
@@ -129,7 +122,6 @@ REQUIRE_64_HW = {
     "swin2sr_s",
     "sst_large",
 }
-REQUIRE_96_HW = {"sst_large_plus"}
 TEMPORAL_ARCHS = {"tscunet", "temporalspan", "temporalspanv2", "tfdat"}
 
 # Urban100
@@ -753,15 +745,6 @@ OFFICIAL_SETTINGS_FROMSCRATCH: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": 4,
         "accum_iter": "1  # paper: 8",
     },
-    "rhat_l": {
-        "milestones": [300000, 500000, 650000, 700000, 750000],
-        "total_iter": 800000,
-        "warmup_iter": -1,
-        "lr": "!!float 2e-4",
-        "lq_size": 64,
-        "batch_size_per_gpu": 4,
-        "accum_iter": "1",
-    },
     "rcan": {
         "milestones": [100000, 200000, 300000, 400000, 450000],
         "total_iter": 500000,
@@ -1098,15 +1081,6 @@ OFFICIAL_SETTINGS_FINETUNE: dict[str, dict[str, Any]] = {
         "batch_size_per_gpu": 4,
         "accum_iter": "1  # paper: 8",
     },
-    "rhat_l": {
-        "milestones": [125000, 200000, 225000, 237500],
-        "total_iter": 250000,
-        "warmup_iter": -1,
-        "lr": "!!float 1e-4",
-        "lq_size": 64,
-        "batch_size_per_gpu": 4,
-        "accum_iter": "1",
-    },
     "rcan": {
         "milestones": [125000, 200000, 225000, 237500],
         "total_iter": 250000,
@@ -1223,9 +1197,6 @@ def initialize_official_settings(settings: dict[str, dict[str, Any]]) -> None:
 
     settings["hat_m"] = settings["hat_l"]
 
-    settings["rhat_m"] = settings["rhat_l"]
-    settings["rhat_s"] = settings["rhat_l"]
-
     settings["hit_sng"] = settings["hit_srf"]
     settings["hit_sir"] = settings["hit_srf"]
 
@@ -1283,14 +1254,6 @@ ALL_ARCHS: list[ArchInfo] = [
     {
         "names": ["HAT_L", "HAT_M", "HAT_S"],
         "scales": ALL_SCALES,
-        "extras": {
-            "use_checkpoint": "true  # Use checkpointing to significantly reduce VRAM usage, slightly reduces training speed."
-        },
-    },
-    {
-        "names": ["RHAT_L", "RHAT_M", "RHAT_S"],
-        "scales": ALL_SCALES,
-        "folder_name_override": "RHAT",
         "extras": {
             "use_checkpoint": "true  # Use checkpointing to significantly reduce VRAM usage, slightly reduces training speed."
         },

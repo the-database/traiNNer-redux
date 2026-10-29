@@ -483,18 +483,20 @@ def circular_lowpass_kernel(
     """
     assert kernel_size % 2 == 1, "Kernel size must be an odd number."
     kernel = np.fromfunction(
-        lambda x, y: cutoff
-        * special.j1(
+        lambda x, y: (
             cutoff
-            * np.sqrt(
-                (x - (kernel_size - 1) / 2) ** 2 + (y - (kernel_size - 1) / 2) ** 2
+            * special.j1(
+                cutoff
+                * np.sqrt(
+                    (x - (kernel_size - 1) / 2) ** 2 + (y - (kernel_size - 1) / 2) ** 2
+                )
             )
-        )
-        / (
-            2
-            * np.pi
-            * np.sqrt(
-                (x - (kernel_size - 1) / 2) ** 2 + (y - (kernel_size - 1) / 2) ** 2
+            / (
+                2
+                * np.pi
+                * np.sqrt(
+                    (x - (kernel_size - 1) / 2) ** 2 + (y - (kernel_size - 1) / 2) ** 2
+                )
             )
         ),
         [kernel_size, kernel_size],
