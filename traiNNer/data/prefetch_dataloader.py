@@ -127,8 +127,16 @@ class CUDAPrefetcher:
                     )
 
     def next(self) -> Any:
-        torch.cuda.current_stream().wait_stream(self.stream)
+        current_stream = torch.cuda.current_stream()
+        current_stream.wait_stream(self.stream)
         batch = self.batch
+        if batch is not None:
+            # The batch was allocated on self.stream but is consumed on the current
+            # stream. Without record_stream, the caching allocator could hand its
+            # memory to the next preload while the current stream is still reading it.
+            for v in batch.values():
+                if torch.is_tensor(v) and v.is_cuda:
+                    v.record_stream(current_stream)
         self.preload()
         return batch
 
