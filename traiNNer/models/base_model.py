@@ -32,7 +32,7 @@ from traiNNer.schedulers.cosineannealingwarmuplr_scheduler import (
 )
 from traiNNer.schedulers.kneelr_scheduler import KneeLR
 from traiNNer.utils import get_root_logger
-from traiNNer.utils.dist_util import master_only
+from traiNNer.utils.dist_util import cpu_barrier, master_only
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import is_json_compatible, require_triton
 from traiNNer.utils.redux_options import ReduxOptions
@@ -132,6 +132,9 @@ class BaseModel:
             self.dist_validation(
                 dataloader, current_iter, tb_logger, save_img, multi_val_datasets
             )
+            # Validation runs on rank 0 only. The other ranks wait here instead of
+            # inside their next NCCL collective, which would time out.
+            cpu_barrier()
         else:
             self.nondist_validation(
                 dataloader, current_iter, tb_logger, save_img, multi_val_datasets

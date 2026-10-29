@@ -11,6 +11,7 @@ from ema_pytorch import EMA
 from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn import functional as F  # noqa: N812
+from torch.nn.parallel import DistributedDataParallel
 from torch.nn.utils import clip_grads_with_norm_, get_total_norm
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
@@ -872,6 +873,10 @@ class SRModel(BaseModel):
             )  # lq: input_pixel_format
 
             net = self.net_g_ema if self.net_g_ema is not None else self.net_g
+            # Validation runs on rank 0 only, so it must not go through the DDP
+            # wrapper, whose forward syncs buffers with the other ranks.
+            if isinstance(net, DistributedDataParallel):
+                net = net.module
             net.eval()
 
             assert self.opt.val is not None
