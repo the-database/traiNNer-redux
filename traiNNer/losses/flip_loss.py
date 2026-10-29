@@ -182,12 +182,12 @@ def compute_ldrflip(test, reference, pixels_per_degree, qc, qf, pc, pt, eps):
     # Feature metric
     deltaE_f = torch.max(
         torch.abs(
-            torch.norm(edges_reference, dim=1, keepdim=True)
-            - torch.norm(edges_test, dim=1, keepdim=True)
+            torch.linalg.vector_norm(edges_reference, dim=1, keepdim=True)
+            - torch.linalg.vector_norm(edges_test, dim=1, keepdim=True)
         ),
         torch.abs(
-            torch.norm(points_test, dim=1, keepdim=True)
-            - torch.norm(points_reference, dim=1, keepdim=True)
+            torch.linalg.vector_norm(points_test, dim=1, keepdim=True)
+            - torch.linalg.vector_norm(points_reference, dim=1, keepdim=True)
         ),
     )
     deltaE_f = torch.clamp(deltaE_f, min=eps)  # clamp to stabilize training

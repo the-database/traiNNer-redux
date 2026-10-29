@@ -218,11 +218,11 @@ def gradient_penalty_loss(
     """
 
     batch_size = real_data.size(0)
-    alpha = real_data.new_tensor(torch.rand(batch_size, 1, 1, 1))
+    alpha = torch.rand(batch_size, 1, 1, 1).to(real_data)
 
     # interpolate between real_data and fake_data
     interpolates = alpha * real_data + (1.0 - alpha) * fake_data
-    interpolates = autograd.Variable(interpolates, requires_grad=True)
+    interpolates = interpolates.detach().requires_grad_()
 
     disc_interpolates = discriminator(interpolates)
     gradients = autograd.grad(

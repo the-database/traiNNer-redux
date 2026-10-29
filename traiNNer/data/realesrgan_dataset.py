@@ -203,14 +203,14 @@ class RealESRGANDataset(BaseDataset):
             kernel_size = random.choice(self.final_kernel_range)
             omega_c = RNG.get_rng().uniform(np.pi / 3, np.pi)
             sinc_kernel = circular_lowpass_kernel(omega_c, kernel_size, pad_to=21)
-            sinc_kernel = torch.FloatTensor(sinc_kernel)
+            sinc_kernel = torch.tensor(sinc_kernel, dtype=torch.float32)
         else:
             sinc_kernel = self.pulse_tensor
 
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt = img2tensor(img_gt, from_bgr=False, float32=True)
-        kernel = torch.FloatTensor(kernel)
-        kernel2 = torch.FloatTensor(kernel2)
+        kernel = torch.tensor(kernel, dtype=torch.float32)
+        kernel2 = torch.tensor(kernel2, dtype=torch.float32)
 
         return {
             "gt": img_gt,

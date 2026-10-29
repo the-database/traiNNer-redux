@@ -39,7 +39,9 @@ class USMSharp(nn.Module):
             radius += 1
         self.radius = radius
         kernel = cv2.getGaussianKernel(radius, sigma)
-        kernel = torch.FloatTensor(np.dot(kernel, kernel.transpose())).unsqueeze_(0)
+        kernel = torch.tensor(
+            np.dot(kernel, kernel.transpose()), dtype=torch.float32
+        ).unsqueeze_(0)
         self.register_buffer("kernel", kernel)
 
     def forward(self, img: Tensor, weight: float = 0.5, threshold: int = 10) -> Tensor:

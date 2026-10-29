@@ -813,7 +813,7 @@ class SRModel(BaseModel):
         wx = torch.linspace(0, 1, hr_tile, device=lq.device)
         wy = 1 - torch.abs(wy - 0.5) * 2
         wx = 1 - torch.abs(wx - 0.5) * 2
-        weight = torch.ger(wy, wx).unsqueeze(0).unsqueeze(0)
+        weight = torch.outer(wy, wx).unsqueeze(0).unsqueeze(0)
 
         stride = tile_size - tile_overlap
         tiles_y = max(1, (h_pad - tile_overlap + stride - 1) // stride)

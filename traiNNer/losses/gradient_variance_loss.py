@@ -38,12 +38,12 @@ class GradientVarianceLoss(nn.Module):
         self.patch_size = patch_size
         # Sobel kernel for the gradient map calculation
         kernel_x = (
-            torch.FloatTensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+            torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=torch.float32)
             .unsqueeze(0)
             .unsqueeze(0)
         )
         kernel_y = (
-            torch.FloatTensor([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
+            torch.tensor([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=torch.float32)
             .unsqueeze(0)
             .unsqueeze(0)
         )
