@@ -884,7 +884,10 @@ class SRModel(BaseModel):
                     tmp_out, self.gt, self.opt.output_pixel_format
                 )
 
-            if self.net_g_ema is None and self.is_train:
+            # opt.is_train, not self.is_train: nondist_validation sets
+            # self.is_train = False while it runs, which would leave net_g in
+            # eval mode for the rest of training.
+            if self.net_g_ema is None and self.opt.is_train:
                 net.train()
 
             if self.optimizers_schedule_free and self.optimizers_schedule_free[0]:
