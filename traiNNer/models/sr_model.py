@@ -11,7 +11,7 @@ from ema_pytorch import EMA
 from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn import functional as F  # noqa: N812
-from torch.nn.utils import clip_grad_norm_
+from torch.nn.utils import clip_grads_with_norm_, get_total_norm
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -680,21 +680,20 @@ class SRModel(BaseModel):
 
                 if apply_gradient:
                     self.scaler_g.unscale_(self.optimizer_g)
-                    grad_norm_g = torch.linalg.vector_norm(
-                        torch.stack(
-                            [
-                                torch.linalg.vector_norm(p.grad, 2)
-                                for p in self.net_g.parameters()
-                                if p.grad is not None
-                            ]
-                        )
+                    # compute the norm once with foreach kernels and reuse it for clipping
+                    grad_norm_g = get_total_norm(
+                        [p.grad for p in self.net_g.parameters() if p.grad is not None],
+                        foreach=True,
                     ).detach()
 
                     loss_dict["grad_norm_g"] = grad_norm_g
 
                     if self.grad_clip:
-                        clip_grad_norm_(
-                            self.net_g.parameters(), self.grad_clip_max_norm
+                        clip_grads_with_norm_(
+                            self.net_g.parameters(),
+                            self.grad_clip_max_norm,
+                            grad_norm_g,
+                            foreach=True,
                         )
 
                     scale_before = self.scaler_g.get_scale()
@@ -747,20 +746,20 @@ class SRModel(BaseModel):
 
             if apply_gradient:
                 self.scaler_d.unscale_(self.optimizer_d)
-                grad_norm_d = torch.linalg.vector_norm(
-                    torch.stack(
-                        [
-                            torch.linalg.vector_norm(p.grad, 2)
-                            for p in self.net_d.parameters()
-                            if p.grad is not None
-                        ]
-                    )
+                grad_norm_d = get_total_norm(
+                    [p.grad for p in self.net_d.parameters() if p.grad is not None],
+                    foreach=True,
                 ).detach()
 
                 loss_dict["grad_norm_d"] = grad_norm_d
 
                 if self.grad_clip:
-                    clip_grad_norm_(self.net_d.parameters(), self.grad_clip_max_norm)
+                    clip_grads_with_norm_(
+                        self.net_d.parameters(),
+                        self.grad_clip_max_norm,
+                        grad_norm_d,
+                        foreach=True,
+                    )
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
