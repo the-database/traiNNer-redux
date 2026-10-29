@@ -777,8 +777,6 @@ class SRModel(BaseModel):
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
-        self.log_dict = self.reduce_loss_dict(self.log_dict)
-
         if (
             self.net_g_ema is not None
             and apply_gradient

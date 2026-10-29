@@ -189,7 +189,31 @@ class BaseModel:
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
     def get_current_log(self) -> dict[str, float | torch.Tensor]:
+        if self.opt.dist:
+            return self._get_current_log_dist()
         return {k: v / self.loss_samples for k, v in self.log_dict.items()}
+
+    def _get_current_log_dist(self) -> dict[str, float | torch.Tensor]:
+        """Average the accumulated log values over all ranks.
+
+        Must be called on every rank. Ranks can log different keys (for example
+        when the discriminator update is skipped), so each key is averaged over
+        the ranks that logged it.
+        """
+        local = {
+            k: v.item() if isinstance(v, Tensor) else float(v)
+            for k, v in self.log_dict.items()
+        }
+        gathered: list[Any] = [None] * torch.distributed.get_world_size()
+        torch.distributed.all_gather_object(gathered, (local, self.loss_samples))
+
+        totals: dict[str, float] = {}
+        samples: dict[str, int] = {}
+        for rank_log, rank_samples in gathered:
+            for k, v in rank_log.items():
+                totals[k] = totals.get(k, 0.0) + v
+                samples[k] = samples.get(k, 0) + rank_samples
+        return {k: totals[k] / samples[k] for k in totals}
 
     def reset_current_log(self) -> None:
         self.log_dict = {}
@@ -830,31 +854,6 @@ class BaseModel:
             elif self.net_ae_ema is not None:
                 self.net_ae_ema.register_buffer("step", resume_state["ema_step"])
                 self.net_ae_ema.register_buffer("initted", torch.tensor(True))
-
-    def reduce_loss_dict(self, loss_dict: dict[str, Any]) -> dict[str, Any]:
-        """reduce loss dict.
-
-        In distributed training, it averages the losses among different GPUs .
-
-        Args:
-            loss_dict (OrderedDict): Loss dict.
-        """
-        with torch.no_grad():
-            if self.opt.dist:
-                assert self.opt.world_size is not None
-                keys = []
-                losses = []
-                for name, value in loss_dict.items():
-                    if isinstance(value, Tensor):  # TODO
-                        keys.append(name)
-                        losses.append(value)
-                losses = torch.stack(losses, 0)
-                torch.distributed.reduce(losses, dst=0)  # type: ignore
-                if self.opt.rank == 0:
-                    losses /= self.opt.world_size
-                loss_dict = dict(zip(keys, losses, strict=False))
-
-            return loss_dict
 
     def setup_batchaug(self) -> None:
         assert self.opt.train is not None
