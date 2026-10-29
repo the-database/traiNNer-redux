@@ -327,9 +327,10 @@ def imfrombytes(content: bytes, flag: str = "color", float32: bool = False) -> M
 
 
 def vipsimfrompath(path: str) -> pyvips.Image:
-    img = pyvips.Image.new_from_file(
-        path, access="sequential", fail=True
-    ).icc_transform("srgb")  # pyright: ignore[reportAttributeAccessIssue,reportOptionalMemberAccess]
+    img = pyvips.Image.new_from_file(path, access="sequential", fail=True)
+    # This might be a bottleneck if training at 32+ bpc is attempted; icc_transform docs only mention 8/16 bit
+    depth = 16 if img.format in ["ushort", "short"] else 8
+    img = img.icc_transform("srgb", depth=depth)  # pyright: ignore[reportAttributeAccessIssue,reportOptionalMemberAccess]
     assert isinstance(img, pyvips.Image)
     return img
 

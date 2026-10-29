@@ -3,10 +3,31 @@ from typing import overload
 
 import cv2
 import numpy as np
+import numpy.typing as npt
 import pyvips
 from torch import Tensor
 
 from traiNNer.utils.img_util import img2rgb
+
+VIPS_FORMAT_TO_DTYPE: dict[str, npt.DTypeLike] = {
+    "uchar": np.uint8,
+    "char": np.int8,
+    "ushort": np.uint16,
+    "short": np.int16,
+    "uint": np.uint32,
+    "int": np.int32,
+    "float": np.float32,
+    "double": np.float64,
+}
+
+
+def get_vips_dtype(img: pyvips.Image) -> npt.DTypeLike:
+    fmt = str(img.format)
+    if fmt not in VIPS_FORMAT_TO_DTYPE:
+        raise ValueError(
+            f"Unsupported VIPS format: {fmt}. Supported formats: {list(VIPS_FORMAT_TO_DTYPE.keys())}"
+        )
+    return VIPS_FORMAT_TO_DTYPE[fmt]
 
 
 def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
@@ -40,7 +61,7 @@ def single_random_crop_vips(img: pyvips.Image, patch_size: int) -> np.ndarray:
     return img2rgb(
         np.ndarray(
             buffer=data_gt,
-            dtype=np.uint8,
+            dtype=get_vips_dtype(img),
             shape=[patch_size, patch_size, img.bands],  # pyright: ignore
         )
     )
@@ -238,7 +259,7 @@ def single_crop_vips(
     return img2rgb(
         np.ndarray(
             buffer=data,
-            dtype=np.uint8,
+            dtype=get_vips_dtype(img),
             shape=[patch_size, patch_size, img.bands],  # pyright: ignore[reportAssignmentType,reportArgumentType]
         )
     )

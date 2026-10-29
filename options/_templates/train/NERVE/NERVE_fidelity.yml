@@ -1,0 +1,127 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/the-database/traiNNer-redux/refs/heads/master/schemas/redux-config.schema.json
+#########################################################################################
+# General Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#top-level-options
+#########################################################################################
+name: 4x_NERVE
+scale: 4  # 1, 2, 3, 4
+use_amp: true  # Speed up training and reduce VRAM usage. NVIDIA only.
+amp_bf16: true  # Use bf16 instead of fp16 for AMP. NERVE is norm-free, so bf16 AMP is stable without extra care.
+use_channels_last: true  # Enable channels last memory format while using AMP.
+fast_matmul: false
+use_compile: true  # Enable torch.compile for generator.
+compile_mode: default
+num_gpu: auto
+manual_seed: 1024
+
+########################################################################################################################
+# Dataset and Dataloader Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#dataset-options-datasets-train-and-datasets-val
+########################################################################################################################
+datasets:
+  train:
+    name: Train Dataset
+    type: pairedimagedataset
+    # Path to the HR (high res) images in your training dataset.
+    dataroot_gt: [
+      datasets/train/dataset1/hr
+    ]
+    # Path to the LR (low res) images in your training dataset. Downscale the HR
+    # set with whatever cubic filter you like; NERVE learns the matching inverse.
+    dataroot_lq: [
+      datasets/train/dataset1/lr
+    ]
+
+    lq_size: 96  # During training, a square of this size is cropped from LR images.
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 8
+    accum_iter: 1
+
+  val:
+    name: Val Dataset
+    type: pairedimagedataset
+    dataroot_gt: [
+      datasets/val/dataset1/hr
+    ]
+    dataroot_lq: [
+      datasets/val/dataset1/lr
+    ]
+
+#####################################################################
+# Network Settings
+# https://trainner-redux.readthedocs.io/en/latest/arch_reference.html
+#####################################################################
+network_g:
+  type: nerve
+  # dim: 64      # Feature width. Default 64.
+  # n_blocks: 24 # Number of residual blocks. Default 24 (~1.8M params at 4x).
+
+#########################################################################################
+# Pretrain and Resume Paths
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#path-options-path
+#########################################################################################
+path:
+  # pretrain_network_g: experiments/pretrained_models/4x_NERVE.pth
+  param_key_g: ~
+  strict_load_g: true  # Disable to load a pretrain with a different scale (e.g. warm-start 4x from a 2x body; the head is reset).
+  resume_state: ~
+
+###########################################################################################
+# Training Settings
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#train-options-train
+###########################################################################################
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: false  # NERVE is norm-free and trains stably without gradient clipping.
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [200000, 350000, 450000]
+    gamma: 0.5
+
+  total_iter: 500000
+  warmup_iter: -1
+
+  losses:
+    - type: charbonnierloss
+      loss_weight: 1.0
+
+##############################################################################################
+# Validation
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#validation-options-val
+##############################################################################################
+val:
+  val_enabled: true
+  val_freq: 5000
+  save_img: false
+  tile_size: 0
+  tile_overlap: 8
+  metrics_enabled: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: true
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: true
+
+##############################################################################################
+# Logging
+# https://trainner-redux.readthedocs.io/en/latest/config_reference.html#logging-options-logger
+##############################################################################################
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 5000
+  save_checkpoint_format: safetensors
+  use_tb_logger: true
