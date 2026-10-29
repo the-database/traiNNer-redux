@@ -2,18 +2,12 @@ name: Tests
 
 # Controls when the workflow will run
 on:
+    # No path filters: Tests is a required check on master, and a filtered-out
+    # workflow never reports, which would block the PR.
     pull_request:
         branches: ['*']
-        types:
-            - opened
-            - synchronize
-            - closed
-        paths:
-            - '**.py'
-            - '.github/workflows/**'
-            - 'pyproject.toml'
     push:
-        branches: [main]
+        branches: [master]
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
