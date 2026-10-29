@@ -50,7 +50,11 @@ from traiNNer.utils.misc import (
     free_space_gb_str,
     set_random_seed,
 )
-from traiNNer.utils.options import copy_opt_file, diff_user_vs_template
+from traiNNer.utils.options import (
+    copy_opt_file,
+    create_config_from_args,
+    diff_user_vs_template,
+)
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import TrainingState
 
@@ -241,6 +245,10 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
 
 def train_pipeline(root_path: str) -> None:
     install()
+
+    # train.py --new creates a config and exits; it doesn't need a GPU
+    if create_config_from_args(root_path):
+        return
 
     if not torch.cuda.is_available():
         raise RuntimeError(

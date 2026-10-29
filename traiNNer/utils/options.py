@@ -1,7 +1,9 @@
 import argparse
+import difflib
 import os
 import platform
 import random
+import re
 import shlex
 import sys
 from os import path as osp
@@ -37,12 +39,29 @@ def assert_not_using_template(opt_path: str) -> None:
         ]
         new_cmd = " ".join(shlex.quote(arg) for arg in new_args)
 
+        # Training templates are named <variant>[_OTF]_<fidelity|gan>.yml
+        new_config_hint = ""
+        match = re.fullmatch(r"(.+?)(_OTF)?_(fidelity|gan)", abs_path.stem)
+        if rel_path.parts[0] == "train" and match is not None:
+            flags = (" --otf" if match.group(2) else "") + (
+                " --gan" if match.group(3) == "gan" else ""
+            )
+            new_config_hint = (
+                "To create your own config from this template, run this command "
+                "(change my_model to your model's name):\n"
+                f"  python train.py --new {match.group(1).lower()}{flags} --name my_model\n\n"
+                "Or copy the template yourself, "
+            )
+        else:
+            new_config_hint = "Copy the template to another folder first, "
+
         raise RuntimeError(
-            f"You are attempting to use a template config.\n\n"
-            f"Instead of modifying the template directly, please copy it to another folder first, "
-            f"such as:\n  {Path(suggested_path).parent}\n\n"
-            f"Then give your copy a unique filename. You can copy the template with the following command (change the custom filename of {custom_filename} to whatever you prefer):\n  {copy_cmd}\n\n"
-            f"Then set up your options in your copied config file and re-run the command like this, for example:\n  python {new_cmd}"
+            f"You are attempting to use a template config. Templates are updated by "
+            f"git, so don't edit or train from them directly.\n\n"
+            f"{new_config_hint}for example (change the file name of {custom_filename} "
+            f"to whatever you prefer):\n  {copy_cmd}\n\n"
+            f"Then set up your options in your copied config file and run it, "
+            f"for example:\n  python {new_cmd}"
         )
 
 
@@ -92,13 +111,10 @@ def dict2str(opt: dict[str, Any], indent_level: int = 1) -> str:
     return msg
 
 
-def parse_options(
-    root_path: str, is_train: bool = True
-) -> tuple[ReduxOptions, argparse.Namespace]:
+def build_arg_parser(is_train: bool) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-opt", type=str, required=True, help="Path to option YAML file."
-    )
+    # Not required=True: train.py --new runs without a config file.
+    parser.add_argument("-opt", type=str, help="Path to option YAML file.")
     parser.add_argument(
         "--launcher",
         choices=["none", "pytorch", "slurm"],
@@ -112,9 +128,53 @@ def parse_options(
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--local_rank", type=int, default=0)
     parser.add_argument("--manual_seed", type=int, default=None)
-    parser.add_argument("--name", type=str, default=None)
+    parser.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help="Experiment name, overriding name in the config. With --new, also "
+        "the file name of the new config.",
+    )
 
+    if is_train:
+        group = parser.add_argument_group("create a new training config")
+        group.add_argument(
+            "--new",
+            nargs="?",
+            const="",
+            metavar="VARIANT",
+            help="Create a training config for an architecture variant, such as "
+            "span_s, in options/train and exit. Run --new without a variant to "
+            "list all variants.",
+        )
+        group.add_argument(
+            "--scale",
+            type=int,
+            help="Scale for --new. Defaults to the template's scale.",
+        )
+        group.add_argument(
+            "--gan",
+            action="store_true",
+            help="With --new, use the GAN fine-tuning template instead of the "
+            "fidelity template for training from scratch.",
+        )
+        group.add_argument(
+            "--otf",
+            action="store_true",
+            help="With --new, use the template with on-the-fly degradations, "
+            "which only needs HR images, instead of a paired HR/LR dataset.",
+        )
+
+    return parser
+
+
+def parse_options(
+    root_path: str, is_train: bool = True
+) -> tuple[ReduxOptions, argparse.Namespace]:
+    parser = build_arg_parser(is_train)
     args = parser.parse_args()
+    if args.opt is None:
+        parser.error("the following arguments are required: -opt")
 
     # parse yml to dict
     assert_not_using_template(args.opt)
@@ -224,6 +284,138 @@ def find_arch_entry(variant: str) -> Any:
     raise ValueError(f"Unknown variant: {variant}")
 
 
+def list_train_variants() -> str:
+    from traiNNer.archs.arch_info import ALL_ARCHS, arch_folder_name
+
+    lines = [
+        f"  {arch_folder_name(arch)}: {', '.join(n.lower() for n in arch['names'])}"
+        for arch in ALL_ARCHS
+    ]
+    return "\n".join(sorted(lines, key=str.lower))
+
+
+def create_train_config(
+    root_path: Path,
+    variant: str,
+    scale: int | None = None,
+    name: str | None = None,
+    gan: bool = False,
+    otf: bool = False,
+) -> Path:
+    """Copy a training template to options/train/<ARCH>/<name>.yml.
+
+    Only the top-level name and scale lines are changed, so the copy keeps all
+    of the template's comments.
+    """
+    from traiNNer.archs.arch_info import (
+        ALL_ARCHS,
+        arch_folder_name,
+        template_filename,
+    )
+
+    variants = {n.lower(): n for arch in ALL_ARCHS for n in arch["names"]}
+    canonical = variants.get(variant.lower())
+    if canonical is None:
+        close = difflib.get_close_matches(variant.lower(), variants, n=5)
+        hint = f" Did you mean: {', '.join(close)}?" if close else ""
+        raise ValueError(
+            f"Unknown variant '{variant}'.{hint} "
+            "Run `python train.py --new` to list all variants."
+        )
+    arch = find_arch_entry(canonical.upper())
+    folder = arch_folder_name(arch)
+
+    template_rel = (
+        Path("options/_templates/train")
+        / folder
+        / template_filename(canonical, otf=otf, fromscratch=not gan)
+    )
+    text = (root_path / template_rel).read_text(encoding="utf-8")
+
+    scale_match = re.search(r"^scale: (\d+)", text, flags=re.MULTILINE)
+    name_match = re.search(r"^name: (.+)$", text, flags=re.MULTILINE)
+    assert scale_match is not None and name_match is not None, template_rel
+    template_scale = int(scale_match.group(1))
+
+    if scale is None:
+        scale = template_scale
+    elif scale not in arch["scales"]:
+        supported = ", ".join(str(s) for s in arch["scales"])
+        raise ValueError(
+            f"{canonical} does not support scale {scale}. Supported scales: {supported}."
+        )
+
+    if name is None:
+        # Template names start with the scale, such as 4x_SPAN_S.
+        name = re.sub(
+            rf"^{template_scale}x_", f"{scale}x_", name_match.group(1).strip()
+        )
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.+-]*", name):
+        raise ValueError(
+            f"Invalid name '{name}'. Use letters, digits and _ . + - only, "
+            "since it's also used as the file and experiment folder name."
+        )
+
+    out_path = root_path / "options" / "train" / folder / f"{name}.yml"
+    if out_path.exists():
+        raise FileExistsError(
+            f"{out_path.relative_to(root_path)} already exists. Choose a different "
+            "--name, or edit the existing config."
+        )
+
+    text = re.sub(r"^name: .+$", f"name: {name}", text, count=1, flags=re.MULTILINE)
+    text = re.sub(r"^scale: \d+", f"scale: {scale}", text, count=1, flags=re.MULTILINE)
+    header = f"# Created from {template_rel.as_posix()} by train.py --new\n"
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(header + text, encoding="utf-8")
+    return out_path
+
+
+def create_config_from_args(root_path: str) -> bool:
+    """Handle train.py --new. Returns True if the caller should exit."""
+    parser = build_arg_parser(is_train=True)
+    args = parser.parse_args()
+
+    if args.new is None:
+        if args.scale is not None or args.gan or args.otf:
+            parser.error("--scale, --gan and --otf are only used with --new")
+        return False
+    if args.opt is not None:
+        parser.error("--new creates a new config, so it can't be combined with -opt")
+
+    if args.new == "":
+        print("Variants available for --new, by architecture:")
+        print(list_train_variants())
+        return True
+
+    try:
+        out_path = create_train_config(
+            Path(root_path),
+            args.new,
+            scale=args.scale,
+            name=args.name,
+            gan=args.gan,
+            otf=args.otf,
+        )
+    except (ValueError, FileExistsError, FileNotFoundError) as e:
+        sys.exit(f"Error: {e}")
+
+    rel_path = out_path.relative_to(root_path)
+    to_set = ["dataroot_gt"] if args.otf else ["dataroot_gt", "dataroot_lq"]
+    if args.gan:
+        to_set.append("pretrain_network_g")
+    to_set_str = (
+        to_set[0] if len(to_set) == 1 else f"{', '.join(to_set[:-1])} and {to_set[-1]}"
+    )
+    print(
+        f"Created {rel_path}\n\n"
+        f"Open it and set {to_set_str}, then start training with:\n"
+        f"  python train.py --auto_resume -opt {rel_path}"
+    )
+    return True
+
+
 def infer_template_tag(cfg: ReduxOptions) -> str:
     # Use simple heuristics
     if cfg.onnx is not None:
@@ -242,7 +434,6 @@ def infer_template_tag(cfg: ReduxOptions) -> str:
 def regenerate_template_from_cfg(cfg: ReduxOptions) -> tuple[str, str]:
     from scripts.options.generate_default_options import (
         final_template,
-        template_filename,
         template_onnx,
         template_otf1,
         template_otf2,
@@ -254,6 +445,7 @@ def regenerate_template_from_cfg(cfg: ReduxOptions) -> tuple[str, str]:
     from traiNNer.archs.arch_info import (
         OFFICIAL_SETTINGS_FINETUNE,
         OFFICIAL_SETTINGS_FROMSCRATCH,
+        template_filename,
     )
 
     if cfg.network_g is not None:
