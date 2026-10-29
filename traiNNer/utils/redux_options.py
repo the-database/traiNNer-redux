@@ -696,7 +696,7 @@ class ReduxOptions(StrictStruct):
         Meta(
             description="Queue size for OTF processing, must be a multiple of `batch_size_per_gpu`."
         ),
-    ] = 120
+    ] = 128
     datasets: dict[str, DatasetOptions] = {}
     train: TrainOptions | None = None
     val: ValOptions | None = None
