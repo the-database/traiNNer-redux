@@ -1,7 +1,7 @@
 ## Getting Started
 
 ### Initial Setup
-1. Install [Python](https://www.python.org/) if it's not already installed. Python 3.13 is recommended, and Python 3.12 is also supported. **Python 3.14 is not supported yet**.
+1. Install [Python](https://www.python.org/) if it's not already installed. Python 3.14 is required. **Python 3.15 is not supported yet**.
 2. Clone the repository:
    - To use the git command line, navigate to where you want to install traiNNer-redux, and enter this command (install [git](https://git-scm.com/) first if it's not already installed):
       ```
