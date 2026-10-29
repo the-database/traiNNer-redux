@@ -16,7 +16,8 @@ pyright
 pytest tests/
 pytest tests/test_archs/test_archs.py -k "span"
 
-python train.py -opt options/train/SPAN/SPAN_fidelity.yml
+python train.py --new span_s --scale 2 --name 2x_test   # creates options/train/SPAN/2x_test.yml from a template
+python train.py -opt options/train/SPAN/2x_test.yml
 python test.py -opt options/test/SPAN/SPAN_S.yml
 python convert_to_onnx.py -opt options/onnx/SPAN/SPAN_S.yml
 ```
@@ -29,7 +30,7 @@ The checked-in sample dataset in `datasets/` lets shipped configs run without an
 
 **Arch registries.** `build_network` checks `SPANDREL_REGISTRY` first (state dicts must stay Spandrel-loadable), then `ARCH_REGISTRY` (traiNNer-only), then `TESTARCH_REGISTRY` (experimental, undocumented). Arch files are self-contained: never import from another `*_arch.py`; copy the shared code instead.
 
-**Config.** YAML is decoded into strict msgspec Structs (`traiNNer/utils/redux_options.py`, `forbid_unknown_fields`), so every new YAML key needs a Struct field. Derived values are filled in by `traiNNer/utils/options.py`. The parsed config is a global singleton (`traiNNer/utils/config.py`). Loading a config from `options/_templates/` is rejected.
+**Config.** YAML is decoded into strict msgspec Structs (`traiNNer/utils/redux_options.py`, `forbid_unknown_fields`), so every new YAML key needs a Struct field. Derived values are filled in by `traiNNer/utils/options.py`. The parsed config is a global singleton (`traiNNer/utils/config.py`). Loading a config from `options/_templates/` is rejected. User configs live in `options/train/<ARCH>/`, which is gitignored; `train.py --new` creates them from a template (`create_train_config` in `options.py`).
 
 **Model class.** `build_model` chooses it from config flags, not from a `type` key: `high_order_degradation` → `RealESRGANModel`/`RealESRGANPairedModel`, `network_ae` alone → `AEModel`, otherwise `SRModel`.
 
@@ -41,6 +42,6 @@ Don't hand-edit these. Change the inputs and regenerate:
 
 | Output | Generator | Inputs |
 |---|---|---|
-| `options/{train,test,onnx}/<ARCH>/*.yml` | `scripts/options/generate_default_options.py` | `options/_templates/**`, `arch_info.py` |
+| `options/_templates/{train,test,onnx}/<ARCH>/*.yml` | `scripts/options/generate_default_options.py` | `scripts/options/*_default_options*.yml`, `arch_info.py` |
 | `schemas/redux-config.schema.json` | `scripts/options/generate_schema.py` | `redux_options.py` |
 | Reference docs in `docs/source/` | `scripts/options/generate_docs_from_{archs,losses,msgspec}.py` | registries, `redux_options.py` |
