@@ -561,10 +561,13 @@ def train_pipeline(root_path: str) -> None:
                     current_iter,
                 )
                 model.save(epoch, current_iter)
-        if model.opt.dist:
+        # After a crash the other ranks may be blocked in a collective or barrier
+        # waiting for this rank, and destroy_process_group would wait on them.
+        # Skip it and exit non-zero so torchrun stops the other ranks.
+        if model.opt.dist and not crashed:
             destroy_process_group()
         logger.info("Training stopped. Time consumed: %s", consumed_time)
-        sys.exit(0)
+        sys.exit(1 if crashed else 0)
 
     logger.info("End of training. Time consumed: %s", consumed_time)
     logger.info("Save the latest model.")
