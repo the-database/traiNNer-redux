@@ -557,7 +557,9 @@ class LDA_AQU(nn.Module):
         device = offset.device
         row_indices = torch.arange(Hout, device=device)
         col_indices = torch.arange(Wout, device=device)
-        row_indices, col_indices = torch.meshgrid(row_indices, col_indices)
+        row_indices, col_indices = torch.meshgrid(
+            row_indices, col_indices, indexing="ij"
+        )
         index_tensor = torch.stack((row_indices, col_indices), dim=-1).view(
             1, Hout, Wout, 2
         )

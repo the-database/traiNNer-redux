@@ -846,7 +846,7 @@ class HAT_iLN(nn.Module):
     def calculate_rpi_sa(self):
         coords_h = torch.arange(self.window_size)
         coords_w = torch.arange(self.window_size)
-        coords = torch.stack(torch.meshgrid([coords_h, coords_w]))
+        coords = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))
         coords_flatten = torch.flatten(coords, 1)
         relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
         relative_coords = relative_coords.permute(1, 2, 0).contiguous()
@@ -862,12 +862,12 @@ class HAT_iLN(nn.Module):
 
         coords_h = torch.arange(window_size_ori)
         coords_w = torch.arange(window_size_ori)
-        coords_ori = torch.stack(torch.meshgrid([coords_h, coords_w]))
+        coords_ori = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))
         coords_ori_flatten = torch.flatten(coords_ori, 1)
 
         coords_h = torch.arange(window_size_ext)
         coords_w = torch.arange(window_size_ext)
-        coords_ext = torch.stack(torch.meshgrid([coords_h, coords_w]))
+        coords_ext = torch.stack(torch.meshgrid([coords_h, coords_w], indexing="ij"))
         coords_ext_flatten = torch.flatten(coords_ext, 1)
 
         relative_coords = (
