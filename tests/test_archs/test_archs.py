@@ -6,20 +6,22 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 from traiNNer.archs import ARCH_REGISTRY, SPANDREL_REGISTRY
-from traiNNer.archs.arch_info import REQUIRE_32_HW, REQUIRE_64_HW
+from traiNNer.archs.arch_info import REQUIRE_32_HW, REQUIRE_64_HW, TEMPORAL_ARCHS
 from traiNNer.losses.basic_loss import L1Loss
 
-# A list of archs which should be excluded from testing. dat, hat, and swinir
-# testing is covered via their preset variants such as dat_2 or swinir_m.
-# VGG and UNet are not applicable to the tests in this test suite and may
-# require their own test cases.
+# A list of archs which should be excluded from testing. dat, hat, docres and
+# swinir testing is covered via their preset variants such as dat_2 or swinir_m.
+# VGG, UNet and discriminators are not applicable to the tests in this test
+# suite and may require their own test cases.
 EXCLUDE_ARCHS = {
     "autoencoder",
+    "docres",
     "dunet",
     "eimn",
     "hat",
     "lmlt",
     "metagan2",
+    "metagan3",
     "multiscalepatchgandiscriminatorsn",
     "patchgandiscriminatorsn",
     "swin2sr",
@@ -111,11 +113,40 @@ EXCLUDE_ARCH_SCALES = {
     "fdat_large": [{"scale": 1, "extra_arch_params": {}}],
     "fdat_xl": [{"scale": 1, "extra_arch_params": {}}],
     "fdat": [{"scale": 1, "extra_arch_params": {}}],
+    "docres_base": [
+        {"scale": 2, "extra_arch_params": {}},
+        {"scale": 3, "extra_arch_params": {}},
+        {"scale": 4, "extra_arch_params": {}},
+    ],
+    "docres_large": [
+        {"scale": 2, "extra_arch_params": {}},
+        {"scale": 3, "extra_arch_params": {}},
+        {"scale": 4, "extra_arch_params": {}},
+    ],
+    "nafnet32": [
+        {"scale": 2, "extra_arch_params": {}},
+        {"scale": 3, "extra_arch_params": {}},
+        {"scale": 4, "extra_arch_params": {}},
+    ],
+    "nafnet64": [
+        {"scale": 2, "extra_arch_params": {}},
+        {"scale": 3, "extra_arch_params": {}},
+        {"scale": 4, "extra_arch_params": {}},
+    ],
 }
 
 # A set of arch names whose arch requires a minimum batch size of 2 in order to train.
-REQUIRE_BATCH_2 = {"dat_2", "dat", "dat_light", "dat_s"}
-ADD_VSR_DIM = {"tscunet", " temporalspan"}
+REQUIRE_BATCH_2 = {
+    "dat_2",
+    "dat_2_l",
+    "dat",
+    "dat_iln",
+    "dat_iln_2",
+    "dat_iln_light",
+    "dat_iln_s",
+    "dat_light",
+    "dat_s",
+}
 
 
 class TestArchData(TypedDict):
@@ -179,7 +210,7 @@ class TestArchs:
         elif name in REQUIRE_32_HW:
             lq = F.interpolate(lq, scale_factor=2)
 
-        if name in ADD_VSR_DIM:
+        if name in TEMPORAL_ARCHS:
             lq = lq.repeat(5, 1, 1, 1).unsqueeze(0)
             # assert False, lq.shape
 
@@ -234,7 +265,7 @@ class TestArchs:
         elif name in REQUIRE_32_HW:
             lq = F.interpolate(lq, scale_factor=2)
 
-        if name in ADD_VSR_DIM:
+        if name in TEMPORAL_ARCHS:
             lq = lq.repeat(5, 1, 1, 1).unsqueeze(0)
             # assert False, lq.shape
 
