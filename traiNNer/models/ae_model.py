@@ -346,12 +346,16 @@ class AEModel(BaseModel):
                     self.output_lq = self.net_ae_ema.ema_model.encode(self.gt)
                     self.output_gt = self.net_ae_ema.ema_model.decode(self.output_lq)
             else:
-                assert isinstance(self.net_ae, AutoEncoder)
-                self.net_ae.eval()
+                # Unwrap DDP and torch.compile: encode/decode live on the bare
+                # module, and validation runs on rank 0 only, so it must not go
+                # through the DDP wrapper, whose forward syncs buffers.
+                net = self.get_bare_model(self.net_ae)
+                assert isinstance(net, AutoEncoder)
+                net.eval()
                 with torch.inference_mode():
-                    self.output_lq = self.net_ae.encode(self.gt)
-                    self.output_gt = self.net_ae.decode(self.output_lq)
-                self.net_ae.train()
+                    self.output_lq = net.encode(self.gt)
+                    self.output_gt = net.decode(self.output_lq)
+                net.train()
 
     def dist_validation(
         self,
