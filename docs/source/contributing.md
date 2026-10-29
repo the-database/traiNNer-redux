@@ -14,7 +14,7 @@ To set up your environment, do the following:
 
 1. To start training, do one of the following:
    - In VS Code's Run and Debug tab, select the `Train ESRGAN` launch configuration and launch it to start debugging the training code.
-   - Run the command `python -opt ./options/train/ESRGAN/ESRGAN.yml` (modify the path to the yml file if you want to test a different architecture) to start training without debugging.
+   - Run the commands `python train.py --new esrgan --name test_ESRGAN` and then `python train.py -opt ./options/train/ESRGAN/test_ESRGAN.yml` (change `esrgan` to test a different architecture) to start training without debugging.
 2. Verify that you see the following output within a few minutes, depending on your GPU speed:
    ```
    ...

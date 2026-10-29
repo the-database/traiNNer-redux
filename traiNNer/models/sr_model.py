@@ -11,7 +11,8 @@ from ema_pytorch import EMA
 from torch import Tensor, nn
 from torch.amp.grad_scaler import GradScaler
 from torch.nn import functional as F  # noqa: N812
-from torch.nn.utils import clip_grad_norm_
+from torch.nn.parallel import DistributedDataParallel
+from torch.nn.utils import clip_grads_with_norm_, get_total_norm
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -680,21 +681,20 @@ class SRModel(BaseModel):
 
                 if apply_gradient:
                     self.scaler_g.unscale_(self.optimizer_g)
-                    grad_norm_g = torch.linalg.vector_norm(
-                        torch.stack(
-                            [
-                                torch.linalg.vector_norm(p.grad, 2)
-                                for p in self.net_g.parameters()
-                                if p.grad is not None
-                            ]
-                        )
+                    # compute the norm once with foreach kernels and reuse it for clipping
+                    grad_norm_g = get_total_norm(
+                        [p.grad for p in self.net_g.parameters() if p.grad is not None],
+                        foreach=True,
                     ).detach()
 
                     loss_dict["grad_norm_g"] = grad_norm_g
 
                     if self.grad_clip:
-                        clip_grad_norm_(
-                            self.net_g.parameters(), self.grad_clip_max_norm
+                        clip_grads_with_norm_(
+                            self.net_g.parameters(),
+                            self.grad_clip_max_norm,
+                            grad_norm_g,
+                            foreach=True,
                         )
 
                     scale_before = self.scaler_g.get_scale()
@@ -747,20 +747,20 @@ class SRModel(BaseModel):
 
             if apply_gradient:
                 self.scaler_d.unscale_(self.optimizer_d)
-                grad_norm_d = torch.linalg.vector_norm(
-                    torch.stack(
-                        [
-                            torch.linalg.vector_norm(p.grad, 2)
-                            for p in self.net_d.parameters()
-                            if p.grad is not None
-                        ]
-                    )
+                grad_norm_d = get_total_norm(
+                    [p.grad for p in self.net_d.parameters() if p.grad is not None],
+                    foreach=True,
                 ).detach()
 
                 loss_dict["grad_norm_d"] = grad_norm_d
 
                 if self.grad_clip:
-                    clip_grad_norm_(self.net_d.parameters(), self.grad_clip_max_norm)
+                    clip_grads_with_norm_(
+                        self.net_d.parameters(),
+                        self.grad_clip_max_norm,
+                        grad_norm_d,
+                        foreach=True,
+                    )
                 scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
                 self.scaler_d.update()
@@ -776,8 +776,6 @@ class SRModel(BaseModel):
                 else value.to(dtype=torch.float32).detach()  # pyright: ignore[reportAttributeAccessIssue]
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
-
-        self.log_dict = self.reduce_loss_dict(self.log_dict)
 
         if (
             self.net_g_ema is not None
@@ -815,7 +813,7 @@ class SRModel(BaseModel):
         wx = torch.linspace(0, 1, hr_tile, device=lq.device)
         wy = 1 - torch.abs(wy - 0.5) * 2
         wx = 1 - torch.abs(wx - 0.5) * 2
-        weight = torch.ger(wy, wx).unsqueeze(0).unsqueeze(0)
+        weight = torch.outer(wy, wx).unsqueeze(0).unsqueeze(0)
 
         stride = tile_size - tile_overlap
         tiles_y = max(1, (h_pad - tile_overlap + stride - 1) // stride)
@@ -873,6 +871,10 @@ class SRModel(BaseModel):
             )  # lq: input_pixel_format
 
             net = self.net_g_ema if self.net_g_ema is not None else self.net_g
+            # Validation runs on rank 0 only, so it must not go through the DDP
+            # wrapper, whose forward syncs buffers with the other ranks.
+            if isinstance(net, DistributedDataParallel):
+                net = net.module
             net.eval()
 
             assert self.opt.val is not None
@@ -885,7 +887,10 @@ class SRModel(BaseModel):
                     tmp_out, self.gt, self.opt.output_pixel_format
                 )
 
-            if self.net_g_ema is None and self.is_train:
+            # opt.is_train, not self.is_train: nondist_validation sets
+            # self.is_train = False while it runs, which would leave net_g in
+            # eval mode for the rest of training.
+            if self.net_g_ema is None and self.opt.is_train:
                 net.train()
 
             if self.optimizers_schedule_free and self.optimizers_schedule_free[0]:

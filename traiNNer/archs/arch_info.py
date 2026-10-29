@@ -1234,6 +1234,18 @@ class ArchInfo(TypedDict):
     overrides: NotRequired[dict[str, str]]
 
 
+def arch_folder_name(arch: ArchInfo) -> str:
+    """Folder for this arch under options/_templates and options/train."""
+    return arch.get("folder_name_override", arch["names"][0].split("_")[0])
+
+
+def template_filename(variant: str, otf: bool, fromscratch: bool) -> str:
+    """File name of a training template, such as SPAN_S_OTF_gan.yml."""
+    return (
+        f"{variant}{'_OTF' if otf else ''}_{'fidelity' if fromscratch else 'gan'}.yml"
+    )
+
+
 ALL_SCALES = [1, 2, 3, 4, 8]
 ALL_ARCHS: list[ArchInfo] = [
     {

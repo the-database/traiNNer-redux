@@ -199,7 +199,7 @@ def load_pretrained_network(net, model_path, strict=True, weight_keys=None) -> N
     if model_path.startswith(("https://", "http://")):
         model_path = load_file_from_url(model_path)
     state_dict = torch.load(
-        model_path, map_location=torch.device("cpu"), weights_only=False
+        model_path, map_location=torch.device("cpu"), weights_only=True
     )
     if weight_keys is not None:
         state_dict = state_dict[weight_keys]
@@ -557,7 +557,9 @@ class LDA_AQU(nn.Module):
         device = offset.device
         row_indices = torch.arange(Hout, device=device)
         col_indices = torch.arange(Wout, device=device)
-        row_indices, col_indices = torch.meshgrid(row_indices, col_indices)
+        row_indices, col_indices = torch.meshgrid(
+            row_indices, col_indices, indexing="ij"
+        )
         index_tensor = torch.stack((row_indices, col_indices), dim=-1).view(
             1, Hout, Wout, 2
         )

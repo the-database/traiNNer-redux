@@ -11,13 +11,9 @@ from traiNNer.archs.arch_info import (
     OFFICIAL_SETTINGS_FROMSCRATCH,
     TEMPORAL_ARCHS,
     ArchInfo,
+    arch_folder_name,
+    template_filename,
 )
-
-
-def template_filename(variant: str, otf: bool, fromscratch: bool) -> str:
-    return (
-        f"{variant}{'_OTF' if otf else ''}_{'fidelity' if fromscratch else 'gan'}.yml"
-    )
 
 
 def final_template(
@@ -223,10 +219,7 @@ with (
 if __name__ == "__main__":
     for arch in ALL_ARCHS:
         for variant in arch["names"]:
-            folder_name = arch["names"][0].split("_")[0]
-
-            if "folder_name_override" in arch:
-                folder_name = arch["folder_name_override"]
+            folder_name = arch_folder_name(arch)
 
             train_folder_path = osp.normpath(
                 osp.join(

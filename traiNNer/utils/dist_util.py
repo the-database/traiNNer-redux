@@ -3,14 +3,22 @@ import functools
 import os
 import subprocess
 from collections.abc import Callable
-from typing import Any, TypeVar
+from datetime import timedelta
+from typing import Any
 
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
+# Rank-0-only work such as validation can take much longer than the NCCL
+# collective timeout (10 minutes by default). Ranks waiting for it use a gloo
+# group with a long timeout so no NCCL collective is pending while they wait.
+CPU_BARRIER_TIMEOUT = timedelta(hours=12)
+_cpu_group: dist.ProcessGroup | None = None
+
 
 def init_dist(launcher: str, backend: str = "nccl", **kwargs) -> None:
+    global _cpu_group
     if mp.get_start_method(allow_none=True) is None:  # type: ignore
         mp.set_start_method("spawn")
     if launcher == "pytorch":
@@ -19,6 +27,15 @@ def init_dist(launcher: str, backend: str = "nccl", **kwargs) -> None:
         _init_dist_slurm(backend, **kwargs)
     else:
         raise ValueError(f"Invalid launcher type: {launcher}")
+    group = dist.new_group(backend="gloo", timeout=CPU_BARRIER_TIMEOUT)
+    assert isinstance(group, dist.ProcessGroup)  # every rank is a member
+    _cpu_group = group
+
+
+def cpu_barrier() -> None:
+    """Wait for all ranks on the gloo group. No-op when not distributed."""
+    if _cpu_group is not None:
+        dist.barrier(group=_cpu_group)
 
 
 def _init_dist_pytorch(backend: str, **kwargs) -> None:
@@ -74,10 +91,7 @@ def get_dist_info() -> tuple[int, int]:
     return rank, world_size
 
 
-F = TypeVar("F", bound=Callable[..., Any])
-
-
-def master_only(func: F) -> F:
+def master_only[F: Callable[..., Any]](func: F) -> F:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         rank, _ = get_dist_info()

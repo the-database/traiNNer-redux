@@ -448,7 +448,9 @@ def ms_ssim(
     if not x.shape == y.shape:
         raise ValueError("Input images must have the same dimensions.")
 
-    weights = torch.FloatTensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).to(x)
+    weights = torch.tensor(
+        [0.0448, 0.2856, 0.3001, 0.2363, 0.1333], dtype=torch.float32
+    ).to(x)
 
     levels = weights.shape[0]
     mcs = []

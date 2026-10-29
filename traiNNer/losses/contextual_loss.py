@@ -320,7 +320,7 @@ class ContextualLoss(nn.Module):
             rows = torch.arange(0, h, dtype=torch.float32) / (h + 1)
             cols = torch.arange(0, w, dtype=torch.float32) / (w + 1)
 
-            feature_grid = torch.meshgrid(rows, cols)
+            feature_grid = torch.meshgrid(rows, cols, indexing="ij")
             feature_grid = torch.stack(feature_grid).unsqueeze(0)
             feature_grid = torch.cat([feature_grid for _ in range(n)], dim=0)
 
