@@ -1,7 +1,11 @@
 from os import path as osp
+from pathlib import Path
 
+import cv2
 import msgspec
+import numpy as np
 from traiNNer.data.paired_image_dataset import PairedImageDataset
+from traiNNer.utils.options import derive_train_patch_size
 from traiNNer.utils.redux_options import DatasetOptions
 
 
@@ -120,3 +124,44 @@ phase: train
     # assert result["lq"].shape == (1, 120, 123)
     # assert result["lq_path"] == "baboon"
     # assert result["gt_path"] == "baboon"
+
+
+def make_rect_dataset(
+    tmp_path: Path, lq_size: tuple[int, int], use_rot: bool = True
+) -> PairedImageDataset:
+    """A 48x32 LR / 96x64 HR pair at scale 2, so 90 degree rotation changes the shape."""
+    rng = np.random.default_rng(0)
+    for folder, (w, h) in (("lr", (48, 32)), ("hr", (96, 64))):
+        (tmp_path / folder).mkdir()
+        img = rng.integers(0, 256, size=(h, w, 3), dtype=np.uint8)
+        cv2.imwrite(str(tmp_path / folder / "0001.png"), img)
+
+    opt = DatasetOptions(
+        name="Test",
+        type="PairedImageDataset",
+        dataroot_gt=[str(tmp_path / "hr")],
+        dataroot_lq=[str(tmp_path / "lr")],
+        scale=2,
+        lq_size=lq_size,
+        use_hflip=True,
+        use_rot=use_rot,
+        phase="train",
+    )
+    derive_train_patch_size(opt, 2, high_order_degradation=False)
+    return PairedImageDataset(opt)
+
+
+def test_rectangular_crop_is_width_by_height(tmp_path: Path) -> None:
+    dataset = make_rect_dataset(tmp_path, (16, 8))
+    for _ in range(20):
+        result = dataset[0]
+        assert result["lq"].shape == (3, 8, 16)
+        assert result["gt"].shape == (3, 16, 32)
+
+
+def test_full_frame_crop_skips_rotation(tmp_path: Path) -> None:
+    dataset = make_rect_dataset(tmp_path, (48, 32))
+    for _ in range(30):
+        result = dataset[0]
+        assert result["lq"].shape == (3, 32, 48)
+        assert result["gt"].shape == (3, 64, 96)

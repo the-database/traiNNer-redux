@@ -34,6 +34,9 @@ class SingleGtDataset(BaseDataset):
             f"dataroot_gt must be a list of folders for dataset {opt.name}"
         )
         assert opt.gt_size is not None, f"gt_size must be set for dataset {opt.name}"
+        assert isinstance(opt.gt_size, int), (
+            f"gt_size must be a single number (square crop) for dataset {opt.name}"
+        )
         assert opt.scale is not None
         assert opt.gt_size % opt.scale == 0, (
             f"gt_size ({opt.gt_size}) must be divisible by scale ({opt.scale}) "
@@ -78,7 +81,7 @@ class SingleGtDataset(BaseDataset):
 
         assert self.opt.use_hflip is not None
         assert self.opt.use_rot is not None
-        assert self.opt.gt_size is not None
+        assert isinstance(self.opt.gt_size, int)
 
         vips_img_gt = vipsimfrompath(gt_path)
         vips_img_gt = augment_vips(vips_img_gt, self.opt.use_hflip, self.opt.use_rot)

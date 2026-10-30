@@ -285,9 +285,9 @@
 
 ### lq_size
 
-  During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP.
+  During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. Paired image and video datasets also accept a [width, height] rectangle. To train on full frames, set it to the LR image size; 90 degree rotation is then skipped for images the rotated crop doesn't fit.
 
-  Type: int
+  Type: int, tuple
 
 
 

@@ -318,7 +318,9 @@ class RealESRGANModel(SRModel):
 
             # random crop
             gt_size = self.opt.datasets["train"].gt_size
-            assert gt_size is not None
+            assert isinstance(gt_size, int), (
+                "gt_size must be a single number (square crop) for OTF training"
+            )
             self.gt, self.lq = paired_random_crop(
                 self.gt, self.lq, gt_size, self.opt.scale
             )

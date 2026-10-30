@@ -15,7 +15,7 @@ import torch
 import yaml
 
 from traiNNer.utils.dist_util import get_dist_info, init_dist, master_only
-from traiNNer.utils.redux_options import ReduxOptions
+from traiNNer.utils.redux_options import DatasetOptions, ReduxOptions
 
 
 def assert_not_using_template(opt_path: str) -> None:
@@ -273,6 +273,49 @@ def copy_opt_file(opt_file: str, experiments_root: str) -> None:
         lines.insert(0, f"# GENERATE TIME: {time.asctime()}\n# CMD:\n# {cmd}\n\n")
         f.seek(0)
         f.writelines(lines)
+
+
+RECT_PATCH_DATASETS = ("pairedimagedataset", "pairedvideodataset")
+
+
+def scale_patch_size(
+    size: int | tuple[int, int], factor: int, down: bool = False
+) -> int | tuple[int, int]:
+    """Multiply (or floor-divide, if down) a patch size, keeping its int or (width, height) form."""
+    if isinstance(size, int):
+        return size // factor if down else size * factor
+    w, h = size
+    return (w // factor, h // factor) if down else (w * factor, h * factor)
+
+
+def format_patch_size(size: int | tuple[int, int] | None) -> str:
+    if isinstance(size, tuple):
+        return f"{size[0]}x{size[1]}"
+    return f"{size:,}" if size is not None else "None"
+
+
+def derive_train_patch_size(
+    dataset_opt: DatasetOptions, scale: int, high_order_degradation: bool
+) -> None:
+    """Fill in gt_size from lq_size or the other way around, and reject
+    [width, height] sizes for datasets that only crop squares."""
+    if dataset_opt.gt_size is None and dataset_opt.lq_size is not None:
+        dataset_opt.gt_size = scale_patch_size(dataset_opt.lq_size, scale)
+    elif dataset_opt.lq_size is None and dataset_opt.gt_size is not None:
+        dataset_opt.lq_size = scale_patch_size(dataset_opt.gt_size, scale, down=True)
+    else:
+        raise ValueError(
+            "Exactly one of gt_size or lq_size must be defined in the train dataset"
+        )
+
+    if isinstance(dataset_opt.lq_size, tuple) and (
+        high_order_degradation or dataset_opt.type.lower() not in RECT_PATCH_DATASETS
+    ):
+        raise ValueError(
+            f"lq_size {list(dataset_opt.lq_size)} is a [width, height] rectangle, "
+            f"which is only supported by {' and '.join(RECT_PATCH_DATASETS)} "
+            "without high_order_degradation. Use a single number for a square crop."
+        )
 
 
 def find_arch_entry(variant: str) -> Any:

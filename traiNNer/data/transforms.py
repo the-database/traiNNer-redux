@@ -50,6 +50,13 @@ def mod_crop(img: np.ndarray, scale: int) -> np.ndarray:
     return img
 
 
+def patch_wh(size: int | tuple[int, int]) -> tuple[int, int]:
+    """Return a patch size as (width, height). An int is a square."""
+    if isinstance(size, int):
+        return size, size
+    return size
+
+
 def single_random_crop_vips(img: pyvips.Image, patch_size: int) -> np.ndarray:
     h: int = img.height  # type: ignore
     w: int = img.width  # type: ignore
@@ -126,8 +133,8 @@ def paired_random_crop(
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
         raise ValueError(
-            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
-            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}",
+            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x "
+            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}"
         )
     if h_lq < lq_patch_size or w_lq < lq_patch_size:
         raise ValueError(
@@ -235,24 +242,25 @@ def paired_random_crop_list(
 
 def single_crop_vips(
     img: pyvips.Image,
-    patch_size: int,
+    patch_size: int | tuple[int, int],
     x: int,
     y: int,
     path: str | None = None,
 ) -> np.ndarray:
     h: int = img.height  # pyright: ignore[reportAssignmentType]
     w: int = img.width  # pyright: ignore[reportAssignmentType]
+    patch_w, patch_h = patch_wh(patch_size)
 
-    if h < patch_size or w < patch_size:
+    if h < patch_h or w < patch_w:
         raise ValueError(
             f"Image ({h}, {w}) is smaller than patch size "
-            f"({patch_size}, {patch_size}). "
+            f"({patch_h}, {patch_w}). "
             f"Please remove {path}."
         )
 
     region = pyvips.Region.new(img)
     try:
-        data = region.fetch(x, y, patch_size, patch_size)
+        data = region.fetch(x, y, patch_w, patch_h)
     except pyvips.error.Error as e:
         raise RuntimeError(f"Unable to read image {path}") from e
 
@@ -260,7 +268,7 @@ def single_crop_vips(
         np.ndarray(
             buffer=data,
             dtype=get_vips_dtype(img),
-            shape=[patch_size, patch_size, img.bands],  # pyright: ignore[reportAssignmentType,reportArgumentType]
+            shape=[patch_h, patch_w, img.bands],  # pyright: ignore[reportAssignmentType,reportArgumentType]
         )
     )
 
@@ -268,7 +276,7 @@ def single_crop_vips(
 def paired_random_crop_vips(
     img_gt: pyvips.Image,
     img_lq: pyvips.Image,
-    gt_patch_size: int,
+    gt_patch_size: int | tuple[int, int],
     scale: int,
     lq_path: str | None = None,
     gt_path: str | None = None,
@@ -278,21 +286,30 @@ def paired_random_crop_vips(
     h_lq: int = img_lq.height  # pyright: ignore[reportAssignmentType]
     w_lq: int = img_lq.width  # pyright: ignore[reportAssignmentType]
     h_gt, w_gt = img_gt.height, img_gt.width
-    lq_patch_size = gt_patch_size // scale
+    gt_patch_w, gt_patch_h = patch_wh(gt_patch_size)
+    lq_patch_w, lq_patch_h = gt_patch_w // scale, gt_patch_h // scale
 
     if h_gt != h_lq * scale or w_gt != w_lq * scale:
         raise ValueError(
-            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x ",
-            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}",
+            f"Scale mismatches. GT ({h_gt}, {w_gt}) is not {scale}x "
+            f"multiplication of LQ ({h_lq}, {w_lq}). {gt_path}"
+        )
+    if h_lq < lq_patch_h or w_lq < lq_patch_w:
+        raise ValueError(
+            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
+            f"({lq_patch_h}, {lq_patch_w}). "
+            f"Please remove {lq_path}."
         )
 
     if y is None:
-        y = random.randint(0, h_lq - lq_patch_size)
+        y = random.randint(0, h_lq - lq_patch_h)
     if x is None:
-        x = random.randint(0, w_lq - lq_patch_size)
+        x = random.randint(0, w_lq - lq_patch_w)
 
-    img_lq_np = single_crop_vips(img_lq, lq_patch_size, x, y, lq_path)
-    img_gt_np = single_crop_vips(img_gt, gt_patch_size, x * scale, y * scale, gt_path)
+    img_lq_np = single_crop_vips(img_lq, (lq_patch_w, lq_patch_h), x, y, lq_path)
+    img_gt_np = single_crop_vips(
+        img_gt, (gt_patch_w, gt_patch_h), x * scale, y * scale, gt_path
+    )
 
     return img_gt_np, img_lq_np
 
