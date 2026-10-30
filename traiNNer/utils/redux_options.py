@@ -49,11 +49,11 @@ class DatasetOptions(StrictStruct):
     use_rot: Annotated[bool, Meta(description="Randomly rotate the images.")] = True
     mean: list[float] | None = None
     std: list[float] | None = None
-    gt_size: int | None = None
+    gt_size: int | tuple[int, int] | None = None
     lq_size: Annotated[
-        int | None,
+        int | tuple[int, int] | None,
         Meta(
-            description="During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP."
+            description="During training, a square of this size is cropped from LR images. Larger is usually better but uses more VRAM. Previously gt_size, use lq_size = gt_size / scale to convert. Use multiple of 8 for best performance with AMP. Paired image and video datasets also accept a [width, height] rectangle. To train on full frames, set it to the LR image size; 90 degree rotation is then skipped for images the rotated crop doesn't fit."
         ),
     ] = None
     color: Literal["y"] | None = None

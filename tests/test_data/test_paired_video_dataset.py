@@ -1,7 +1,9 @@
 from os import path as osp
 
 import msgspec
+import pytest
 from traiNNer.data.paired_video_dataset import PairedVideoDataset
+from traiNNer.utils.options import derive_train_patch_size
 from traiNNer.utils.redux_options import DatasetOptions
 
 
@@ -106,3 +108,41 @@ phase: train
 #         result = dataset.__getitem__(i)
 #         assert "lq_path" in result
 #         print(i, result["lq_path"])
+
+
+@pytest.mark.parametrize(
+    ("lq_size", "expected_lq_hw"),
+    [
+        # rectangular crop, (width, height)
+        ((96, 64), (64, 96)),
+        # full frame: the sample video's LR frames are 960x540, so 90 degree
+        # rotation must be skipped or the crop doesn't fit
+        ((960, 540), (540, 960)),
+    ],
+)
+def test_pairedvideodataset_rectangular_crop(
+    lq_size: tuple[int, int], expected_lq_hw: tuple[int, int]
+) -> None:
+    clip_size = 5
+    scale = 2
+    opt = DatasetOptions(
+        name="Test",
+        type="PairedVideoDataset",
+        dataroot_gt=["datasets/train/video/hr"],
+        dataroot_lq=["datasets/train/video/lr"],
+        clip_size=clip_size,
+        scale=scale,
+        lq_size=lq_size,
+        use_hflip=True,
+        use_rot=True,
+        phase="train",
+    )
+    derive_train_patch_size(opt, scale, high_order_degradation=False)
+    dataset = PairedVideoDataset(opt)
+
+    h, w = expected_lq_hw
+    for i in range(6):
+        result = dataset[i % len(dataset)]
+        assert "lq" in result and "gt" in result
+        assert result["lq"].shape == (clip_size, 3, h, w)
+        assert result["gt"].shape == (3, h * scale, w * scale)

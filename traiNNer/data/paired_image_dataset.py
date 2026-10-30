@@ -7,7 +7,11 @@ from traiNNer.data.data_util import (
     paired_paths_from_lmdb,
     paired_paths_from_meta_info_file,
 )
-from traiNNer.data.transforms import augment_vips_pair, paired_random_crop_vips
+from traiNNer.data.transforms import (
+    augment_vips_pair,
+    paired_random_crop_vips,
+    patch_wh,
+)
 from traiNNer.utils import FileClient, img2tensor
 from traiNNer.utils.img_util import img2rgb, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
@@ -111,12 +115,18 @@ class PairedImageDataset(BaseDataset):
             assert self.opt.use_hflip is not None
             assert self.opt.use_rot is not None
 
-            # flip, rotation
+            # flip, rotation. Only rotate 90 degrees if the crop still fits the
+            # rotated image, which can fail for rectangular or full-frame crops.
+            gt_patch_w, gt_patch_h = patch_wh(self.opt.gt_size)
+            rot90_fits = (
+                vips_img_lq.height >= gt_patch_w // scale
+                and vips_img_lq.width >= gt_patch_h // scale
+            )
             vips_img_gt, vips_img_lq = augment_vips_pair(
                 (vips_img_gt, vips_img_lq),
                 self.opt.use_hflip,
                 self.opt.use_rot,
-                self.opt.use_rot,
+                self.opt.use_rot and rot90_fits,
             )
 
             # random crop

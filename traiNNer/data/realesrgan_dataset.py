@@ -134,7 +134,9 @@ class RealESRGANDataset(BaseDataset):
 
         h: int = vips_img_gt.height  # type: ignore
         w: int = vips_img_gt.width  # type: ignore
-        assert self.opt.gt_size is not None
+        assert isinstance(self.opt.gt_size, int), (
+            "gt_size must be a single number (square crop) for this dataset"
+        )
 
         crop_pad_size = self.opt.gt_size + 32
         # pad

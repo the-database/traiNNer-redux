@@ -9,6 +9,7 @@ from traiNNer.data.transforms import (
     augment_vips,
     augment_vips_pair,
     paired_random_crop_vips,
+    patch_wh,
     single_crop_vips,
 )
 from traiNNer.utils.file_client import FileClient
@@ -146,11 +147,12 @@ class PairedVideoDataset(BaseDataset):
         force_hflip = None
         force_vflip = None
         force_rot90 = None
-        lq_size = 0
+        lq_w, lq_h = 0, 0
 
         if self.opt.phase == "train":
             assert self.gt_size is not None
-            lq_size = self.gt_size // scale
+            gt_w, gt_h = patch_wh(self.gt_size)
+            lq_w, lq_h = gt_w // scale, gt_h // scale
 
         # middle frame only
         vips_img_gt = vipsimfrompath(hr_path)
@@ -163,15 +165,25 @@ class PairedVideoDataset(BaseDataset):
                 assert self.gt_size is not None
 
                 if force_x is None:
-                    force_rot90 = self.opt.use_rot and random.random() < 0.5
-                    force_hflip = self.opt.use_hflip and random.random() < 0.5
-                    force_vflip = self.opt.use_rot and random.random() < 0.5
                     h_lq: int = vips_img_lq.height  # pyright: ignore[reportAssignmentType]
                     w_lq: int = vips_img_lq.width  # pyright: ignore[reportAssignmentType]
+                    # only rotate 90 degrees if the crop still fits the rotated
+                    # frame, which can fail for rectangular or full-frame crops
+                    rot90_fits = h_lq >= lq_w and w_lq >= lq_h
+                    force_rot90 = (
+                        self.opt.use_rot and rot90_fits and random.random() < 0.5
+                    )
+                    force_hflip = self.opt.use_hflip and random.random() < 0.5
+                    force_vflip = self.opt.use_rot and random.random() < 0.5
                     if force_rot90:
                         h_lq, w_lq = w_lq, h_lq  # swap dimensions if rotating
-                    force_y = random.randint(0, h_lq - lq_size)
-                    force_x = random.randint(0, w_lq - lq_size)
+                    if h_lq < lq_h or w_lq < lq_w:
+                        raise ValueError(
+                            f"LQ ({h_lq}, {w_lq}) is smaller than patch size "
+                            f"({lq_h}, {lq_w}). Please remove {lq_path}."
+                        )
+                    force_y = random.randint(0, h_lq - lq_h)
+                    force_x = random.randint(0, w_lq - lq_w)
 
                 if i == middle_idx:
                     vips_img_gt_aug, vips_img_lq = augment_vips_pair(
@@ -208,7 +220,7 @@ class PairedVideoDataset(BaseDataset):
                     )
                     # Crop LR only
                     img_lq = single_crop_vips(
-                        vips_img_lq, lq_size, force_x, force_y, lq_path
+                        vips_img_lq, (lq_w, lq_h), force_x, force_y, lq_path
                     )
             else:
                 img_lq = img2rgb(vips_img_lq.numpy())
