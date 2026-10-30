@@ -143,5 +143,6 @@ def test_pairedvideodataset_rectangular_crop(
     h, w = expected_lq_hw
     for i in range(6):
         result = dataset[i % len(dataset)]
+        assert "lq" in result and "gt" in result
         assert result["lq"].shape == (clip_size, 3, h, w)
         assert result["gt"].shape == (3, h * scale, w * scale)

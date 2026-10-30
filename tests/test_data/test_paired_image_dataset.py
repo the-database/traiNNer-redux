@@ -155,6 +155,7 @@ def test_rectangular_crop_is_width_by_height(tmp_path: Path) -> None:
     dataset = make_rect_dataset(tmp_path, (16, 8))
     for _ in range(20):
         result = dataset[0]
+        assert "lq" in result and "gt" in result
         assert result["lq"].shape == (3, 8, 16)
         assert result["gt"].shape == (3, 16, 32)
 
@@ -163,5 +164,6 @@ def test_full_frame_crop_skips_rotation(tmp_path: Path) -> None:
     dataset = make_rect_dataset(tmp_path, (48, 32))
     for _ in range(30):
         result = dataset[0]
+        assert "lq" in result and "gt" in result
         assert result["lq"].shape == (3, 32, 48)
         assert result["gt"].shape == (3, 64, 96)
