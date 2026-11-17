@@ -1010,6 +1010,7 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
+attn_impl: auto
 ```
 #### hat_l_aligned
 
@@ -1040,6 +1041,7 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
+attn_impl: auto
 ```
 #### hat_m
 
@@ -1070,6 +1072,7 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
+attn_impl: auto
 ```
 #### hat_m_aligned
 
@@ -1100,6 +1103,7 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
+attn_impl: auto
 ```
 #### hat_s
 
@@ -1130,6 +1134,7 @@ img_range: 1.0
 upsampler: pixelshuffle
 resi_connection: 1conv
 num_feat: 64
+attn_impl: auto
 ```
 ### HAT_iLN
 #### hat_iln_l

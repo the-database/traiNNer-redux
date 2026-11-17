@@ -3,6 +3,7 @@
 # HAT from https://github.com/XPixelGroup/HAT/blob/main/hat/archs/hat_arch.py
 from __future__ import annotations
 
+import importlib.util
 import math
 from collections.abc import Sequence
 from typing import Literal
@@ -13,9 +14,81 @@ from spandrel.architectures.__arch_helpers.padding import pad_to_multiple
 from spandrel.util import store_hyperparameters
 from spandrel.util.timm import to_2tuple, trunc_normal_
 from torch import nn
+from torch.nn import functional as F
+from torch.nn.attention.flex_attention import flex_attention
 from torch.utils import checkpoint
 
 from traiNNer.utils.registry import ARCH_REGISTRY
+
+# attn_impl: "flex" runs the window attention and the OCA on FlexAttention: the same function as the
+# stock path, with the relative position bias and the shifted-window mask applied inside a fused
+# kernel, so the [windows, heads, n, n] scores and biases are never materialised (much less training
+# memory). "auto" (the default) uses it while training on a CUDA GPU (sm_80+) with triton installed,
+# no attention dropout and deterministic algorithms off; inference, validation and ONNX export always
+# use the stock path. "stock" never uses it. The weights are the same either way.
+AttnImpl = Literal["auto", "flex", "stock"]
+_HAS_TRITON = importlib.util.find_spec("triton") is not None
+
+
+# One compiled function per attention kind (window, shifted window, OCA), each with its own compile
+# cache: a compiled flex_attention called directly would share one cache, of 8 entries, with every
+# other flex_attention user in the process. The tensors are arguments with dynamic shapes, so any
+# batch, window count and window size reuses one kernel per head dim and dtype: q comes pre-scaled
+# (as in the stock path; no float to specialise on) and the bias table as a plain tensor (parameters
+# get static shapes). Only a different head dim or dtype compiles again.
+@torch.compile(dynamic=True)
+def _flex_window(q, k, v, table, rpi):
+    def score_mod(score, b, h, qi, ki):
+        return score + table[rpi[qi, ki], h]
+
+    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0)
+
+
+@torch.compile(dynamic=True)
+def _flex_window_shifted(q, k, v, table, rpi, region):
+    # plus the shifted-window mask: -100 between tokens of different regions, as the stock mask
+    def score_mod(score, b, h, qi, ki):
+        w = b % region.shape[0]
+        same = region[w, qi] == region[w, ki]
+        return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
+
+    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0)
+
+
+@torch.compile(dynamic=True)
+def _flex_oca(q, k, v, table, rpi):
+    def score_mod(score, b, h, qi, ki):
+        return score + table[rpi[qi, ki], h]
+
+    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0)
+
+
+def _flex_head_dim(d: int) -> int:
+    # FlexAttention wants a power-of-two head dim of at least 16; zero dims change neither q.k nor
+    # the outputs that are kept
+    return max(16, 1 << (d - 1).bit_length())
+
+
+def _flex_pad(t: torch.Tensor, d: int) -> torch.Tensor:
+    return F.pad(t, (0, d - t.shape[-1])) if d != t.shape[-1] else t
+
+
+def _flex_index(rpi: torch.Tensor, rows: int) -> torch.Tensor:
+    # A relative position index table for score_mod. The OCA table holds negative entries, which the
+    # stock path's table[rpi] wraps to the end of the table (trained models rely on it); the kernel's
+    # loads don't wrap, so wrap them here. score_mod also runs on the padding of the last 128-token
+    # block (masked afterwards): pad to whole blocks so those reads stay in bounds.
+    nq, nk = rpi.shape
+    rpi = torch.where(rpi < 0, rpi + rows, rpi)
+    return F.pad(rpi, (0, -nk % 128, 0, -nq % 128))
+
+
+def _with_attn_impl(net: HAT, attn_impl: AttnImpl) -> HAT:
+    # set after construction, so it stays out of the hyperparameters saved with checkpoints
+    if attn_impl not in ("auto", "flex", "stock"):
+        raise ValueError(f"attn_impl must be auto, flex or stock, not {attn_impl!r}")
+    net.attn_impl = attn_impl
+    return net
 
 
 def drop_path(x, drop_prob: float = 0.0, training: bool = False):
@@ -198,12 +271,15 @@ class WindowAttention(nn.Module):
         trunc_normal_(self.relative_position_bias_table, std=0.02)
         self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x, rpi, mask=None):
+    def forward(self, x, rpi, mask=None, flex=False):
         """
         Args:
             x: input features with shape of (num_windows*b, n, c)
             mask: (0/-inf) mask with shape of (num_windows, Wh*Ww, Wh*Ww) or None
+            flex: run on FlexAttention; rpi and mask are then HAT.forward_features' flex forms
         """
+        if flex:
+            return self.forward_flex(x, rpi, mask)
         b_, n, c = x.shape
         qkv = (
             self.qkv(x)
@@ -245,6 +321,25 @@ class WindowAttention(nn.Module):
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
+
+    def forward_flex(self, x, rpi, region):
+        """forward() on FlexAttention. rpi: the index table as _flex_index made it; region: the
+        shifted-window mask as a region id per window token (num_windows, n'), int32, or None."""
+        b_, n, c = x.shape
+        d = c // self.num_heads
+        qkv = self.qkv(x).reshape(b_, n, 3, self.num_heads, d).permute(2, 0, 3, 1, 4)
+        dp = _flex_head_dim(d)
+        q, k, v = (_flex_pad(t, dp) for t in (qkv[0] * self.scale, qkv[1], qkv[2]))
+        table = (
+            self.relative_position_bias_table * 1
+        )  # a plain tensor: dynamic shape (see _flex_window)
+        if region is None:
+            out = _flex_window(q, k, v, table, rpi)
+        else:
+            out = _flex_window_shifted(q, k, v, table, rpi, region)
+        out = out[..., :d]
+        x = out.transpose(1, 2).reshape(b_, n, c)
+        return self.proj_drop(self.proj(x))
 
 
 class HAB(nn.Module):
@@ -326,7 +421,7 @@ class HAB(nn.Module):
             drop=drop,
         )
 
-    def forward(self, x, x_size, rpi_sa, attn_mask):
+    def forward(self, x, x_size, rpi_sa, attn_mask, flex=False):
         h, w = x_size
         b, _, c = x.shape
         # assert seq_len == h * w, "input feature has wrong size"
@@ -358,7 +453,7 @@ class HAB(nn.Module):
         )  # nw*b, window_size*window_size, c
 
         # W-MSA/SW-MSA (to be compatible for testing on images whose shapes are the multiple of window size
-        attn_windows = self.attn(x_windows, rpi=rpi_sa, mask=attn_mask)
+        attn_windows = self.attn(x_windows, rpi=rpi_sa, mask=attn_mask, flex=flex)
 
         # merge windows
         attn_windows = attn_windows.view(-1, self.window_size, self.window_size, c)
@@ -432,7 +527,7 @@ class OCAB(nn.Module):
             in_features=dim, hidden_features=mlp_hidden_dim, act_layer=nn.GELU
         )
 
-    def forward(self, x, x_size, rpi):
+    def forward(self, x, x_size, rpi, flex=False):
         h, w = x_size
         b, _, c = x.shape
 
@@ -485,21 +580,35 @@ class OCAB(nn.Module):
             0, 2, 1, 3
         )  # nw*b, nH, n, d
 
-        q = q * self.scale
-        attn = q @ k.transpose(-2, -1)
+        if flex:  # rpi: the index table as _flex_index made it
+            dp = _flex_head_dim(d)
+            out = _flex_oca(
+                _flex_pad(q * self.scale, dp),
+                _flex_pad(k, dp),
+                _flex_pad(v, dp),
+                self.relative_position_bias_table
+                * 1,  # a plain tensor (see _flex_window)
+                rpi,
+            )
+            attn_windows = out[..., :d].transpose(1, 2).reshape(b_, nq, self.dim)
+        else:
+            q = q * self.scale
+            attn = q @ k.transpose(-2, -1)
 
-        relative_position_bias = self.relative_position_bias_table[rpi.view(-1)].view(
-            self.window_size * self.window_size,
-            self.overlap_win_size * self.overlap_win_size,
-            -1,
-        )  # ws*ws, wse*wse, nH
-        relative_position_bias = relative_position_bias.permute(
-            2, 0, 1
-        ).contiguous()  # nH, ws*ws, wse*wse
-        attn = attn + relative_position_bias.unsqueeze(0)
+            relative_position_bias = self.relative_position_bias_table[
+                rpi.view(-1)
+            ].view(
+                self.window_size * self.window_size,
+                self.overlap_win_size * self.overlap_win_size,
+                -1,
+            )  # ws*ws, wse*wse, nH
+            relative_position_bias = relative_position_bias.permute(
+                2, 0, 1
+            ).contiguous()  # nH, ws*ws, wse*wse
+            attn = attn + relative_position_bias.unsqueeze(0)
 
-        attn = self.softmax(attn)
-        attn_windows = (attn @ v).transpose(1, 2).reshape(b_, nq, self.dim)
+            attn = self.softmax(attn)
+            attn_windows = (attn @ v).transpose(1, 2).reshape(b_, nq, self.dim)
 
         # merge windows
         attn_windows = attn_windows.view(
@@ -619,6 +728,7 @@ class AttenBlocks(nn.Module):
                     x_size,
                     params["rpi_sa"],
                     params["attn_mask"],
+                    params["flex"],
                     use_reentrant=False,
                 )
             else:
@@ -627,6 +737,7 @@ class AttenBlocks(nn.Module):
                     x_size,
                     params["rpi_sa"],
                     params["attn_mask"],
+                    params["flex"],
                 )
 
         if use_chk:
@@ -635,10 +746,11 @@ class AttenBlocks(nn.Module):
                 x,
                 x_size,
                 params["rpi_oca"],
+                params["flex"],
                 use_reentrant=False,
             )
         else:
-            x = self.overlap_attn(x, x_size, params["rpi_oca"])
+            x = self.overlap_attn(x, x_size, params["rpi_oca"], params["flex"])
 
         if self.downsample is not None:
             x = self.downsample(x)
@@ -919,6 +1031,8 @@ class HAT(nn.Module):
         self.window_size = window_size
         self.shift_size = window_size // 2
         self.overlap_ratio = overlap_ratio
+        self.attn_impl: AttnImpl = "auto"  # see AttnImpl; the factories set it
+        self.attn_drop_rate = attn_drop_rate
 
         num_in_ch = in_chans
         num_out_ch = in_chans
@@ -1100,6 +1214,17 @@ class HAT(nn.Module):
 
     def calculate_mask(self, x_size, dtype):
         # calculate attention mask for SW-MSA
+        mask_windows = self.calculate_mask_windows(x_size, dtype)
+        attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
+        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
+            attn_mask == 0, 0.0
+        )
+
+        return attn_mask
+
+    def calculate_mask_windows(self, x_size, dtype):
+        # the region of each token of each shifted window (num_windows, window_size*window_size): the
+        # SW-MSA mask is -100 between tokens of different regions
         h, w = x_size
         img_mask = torch.zeros((1, h, w, 1), dtype=dtype)  # 1 h w 1
         h_slices = (
@@ -1121,28 +1246,61 @@ class HAT(nn.Module):
         mask_windows = window_partition(
             img_mask, self.window_size
         )  # nw, window_size, window_size, 1
-        mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
-        attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
-            attn_mask == 0, 0.0
-        )
-
-        return attn_mask
+        return mask_windows.view(-1, self.window_size * self.window_size)
 
     def check_image_size(self, x):
         return pad_to_multiple(x, self.window_size, mode="reflect")
+
+    def use_flex(self, x) -> bool:
+        """Whether this forward runs the attention on FlexAttention (see AttnImpl)."""
+        if self.attn_impl == "stock" or torch.onnx.is_in_onnx_export():
+            return False
+        if self.attn_impl == "flex":
+            if self.attn_drop_rate > 0:
+                raise ValueError(
+                    "attn_impl flex does not support attention dropout (attn_drop_rate > 0)"
+                )
+            return True
+        return (
+            self.training
+            and x.is_cuda
+            and _HAS_TRITON
+            and self.attn_drop_rate == 0
+            and not torch.are_deterministic_algorithms_enabled()
+            and torch.cuda.get_device_capability(x.device)[0] >= 8
+        )
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
 
         # Calculate attention mask and relative position index in advance to speed up inference.
         # The original code is very time-consuming for large window size.
-        attn_mask = self.calculate_mask(x_size, dtype=x.dtype).to(x.device)
-        params = {
-            "attn_mask": attn_mask,
-            "rpi_sa": self.relative_position_index_SA,
-            "rpi_oca": self.relative_position_index_OCA,
-        }
+        if self.use_flex(x):
+            # the same mask and indices in score_mod's terms: a region id per window token (padded to
+            # whole 128-token blocks), the index tables wrapped and padded (_flex_index)
+            ws = self.window_size
+            ows = ws + int(self.overlap_ratio * ws)
+            region = self.calculate_mask_windows(x_size, torch.float32).to(
+                device=x.device, dtype=torch.int32
+            )
+            params = {
+                "attn_mask": F.pad(region, (0, -region.shape[1] % 128)),
+                "rpi_sa": _flex_index(
+                    self.relative_position_index_SA, (2 * ws - 1) ** 2
+                ),
+                "rpi_oca": _flex_index(
+                    self.relative_position_index_OCA, (ws + ows - 1) ** 2
+                ),
+                "flex": True,
+            }
+        else:
+            attn_mask = self.calculate_mask(x_size, dtype=x.dtype).to(x.device)
+            params = {
+                "attn_mask": attn_mask,
+                "rpi_sa": self.relative_position_index_SA,
+                "rpi_oca": self.relative_position_index_OCA,
+                "flex": False,
+            }
 
         x = self.patch_embed(x)
         if self.ape:
@@ -1202,8 +1360,9 @@ def hat_l(
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
+    attn_impl: AttnImpl = "auto",
 ) -> HAT:
-    return HAT(
+    net = HAT(
         upscale=scale,
         img_size=img_size,
         patch_size=patch_size,
@@ -1230,6 +1389,7 @@ def hat_l(
         resi_connection=resi_connection,
         num_feat=num_feat,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @ARCH_REGISTRY.register()
@@ -1259,8 +1419,9 @@ def hat_m(
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
+    attn_impl: AttnImpl = "auto",
 ) -> HAT:
-    return HAT(
+    net = HAT(
         upscale=scale,
         img_size=img_size,
         patch_size=patch_size,
@@ -1287,6 +1448,7 @@ def hat_m(
         resi_connection=resi_connection,
         num_feat=num_feat,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @ARCH_REGISTRY.register()
@@ -1316,8 +1478,9 @@ def hat_s(
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
+    attn_impl: AttnImpl = "auto",
 ) -> HAT:
-    return HAT(
+    net = HAT(
         upscale=scale,
         img_size=img_size,
         patch_size=patch_size,
@@ -1344,6 +1507,7 @@ def hat_s(
         resi_connection=resi_connection,
         num_feat=num_feat,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @ARCH_REGISTRY.register()
@@ -1373,8 +1537,9 @@ def hat_l_aligned(
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
+    attn_impl: AttnImpl = "auto",
 ) -> HAT:
-    return HAT(
+    net = HAT(
         upscale=scale,
         img_size=img_size,
         patch_size=patch_size,
@@ -1401,6 +1566,7 @@ def hat_l_aligned(
         resi_connection=resi_connection,
         num_feat=num_feat,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @ARCH_REGISTRY.register()
@@ -1430,8 +1596,9 @@ def hat_m_aligned(
     upsampler: Literal["pixelshuffle"] = "pixelshuffle",
     resi_connection: str = "1conv",
     num_feat: int = 64,
+    attn_impl: AttnImpl = "auto",
 ) -> HAT:
-    return HAT(
+    net = HAT(
         upscale=scale,
         img_size=img_size,
         patch_size=patch_size,
@@ -1458,3 +1625,4 @@ def hat_m_aligned(
         resi_connection=resi_connection,
         num_feat=num_feat,
     )
+    return _with_attn_impl(net, attn_impl)

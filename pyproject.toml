@@ -22,6 +22,9 @@ dependencies = [
 "torch>=2.15.0",
 "torchvision>=0.29.2",
 "tqdm",
+# torch.compile and FlexAttention kernels on Windows (Linux torch brings triton itself); the minor
+# version must match torch's: torch 2.15 <-> triton 3.9, bump both together
+"triton-windows>=3.9,<3.10; sys_platform == 'win32'",
 ]
 authors = [{name = "the-database"}]
 description = "Deep learning training framework for image super resolution and restoration."
