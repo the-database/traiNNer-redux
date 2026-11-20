@@ -4,8 +4,17 @@ V = {
     "C1": ("hatx_l", {"channel": True}, "experiments/hatx_init/4x_hatx_C1.safetensors"),
     "E": ("hatx_l", {"big_blocks": [2, 5], "channel": True, "use_cab": False, "cab_fade": 10000}, "experiments/hatx_init/4x_hatx_E.safetensors"),
     "C1g": ("hatx_l", {"channel": True, "channel_gain": 100.0}, "experiments/hatx_init/4x_hatx_C1.safetensors"),
+    "C2": ("hatx_l", {"channel": True, "channel_gain": 100.0, "use_cab": False, "cab_fade": 20000}, "experiments/hatx_init/4x_hatx_C2.safetensors"),
 }
-T = """name: 4x_hatx_{v}_ft850k_b8lq64
+# protocol per variant: batch, lr, milestones, total iterations, validation interval. P1: the first
+# round (batch 8, 2e-5: loses ~0.1 dB on the 850k start). P2: the 850k run's batch (8 x 4 GPUs) and an
+# LR near its final 6.25e-6.
+P1 = dict(bs=8, lr="2e-5", m1=20000, m2=30000, total=40000, vf=2500)
+P2 = dict(bs=32, lr="1e-5", m1=10000, m2=15000, total=20000, vf=1250)
+P = {"A2": P2, "B2": P2}
+V["A2"] = V["A"]
+V["B2"] = V["B"]
+T = """name: 4x_hatx_{v}_ft850k_b{bs}lq64
 scale: 4
 use_amp: true
 amp_bf16: true
@@ -25,7 +34,7 @@ datasets:
     use_hflip: true
     use_rot: true
     num_worker_per_gpu: 10
-    batch_size_per_gpu: 8
+    batch_size_per_gpu: {bs}
     accum_iter: 1
   val:
     name: Urban100
@@ -49,14 +58,14 @@ train:
   grad_clip: false
   optim_g:
     type: AdamW
-    lr: !!float 2e-5
+    lr: !!float {lr}
     weight_decay: 0
     betas: [0.9, 0.99]
   scheduler:
     type: MultiStepLR
-    milestones: [20000, 30000]
+    milestones: [{m1}, {m2}]
     gamma: 0.5
-  total_iter: 40000
+  total_iter: {total}
   warmup_iter: -1
   losses:
     - type: charbonnierloss
@@ -64,7 +73,7 @@ train:
 
 val:
   val_enabled: true
-  val_freq: 2500
+  val_freq: {vf}
   save_img: false
   metrics_enabled: true
   metrics:
@@ -86,4 +95,6 @@ logger:
 import json
 for v, (arch, kw, init) in V.items():
     extra = "".join(f"  {k}: {json.dumps(x)}\n" for k, x in kw.items())
-    open(f"options/train/hatx/4x_hatx_{v}.yml", "w").write(T.format(v=v, arch=arch, extra=extra, init=init))
+    pr = P.get(v, P1)
+    name_v = v[:-1] if v in ("A2", "B2") else v
+    open(f"options/train/hatx/4x_hatx_{v}.yml", "w").write(T.format(v=name_v, arch=arch, extra=extra, init=init, **pr))
