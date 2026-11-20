@@ -9,7 +9,9 @@ Experimental, for the HAT-L successor study. Built on hat_l_aligned, with three 
   relative position bias table of their own.
 - channel: every HAB also runs DAT-style channel self-attention over the whole image on the same
   q, k and v (q and k L2-normalised along the tokens, a learned temperature per head), added to the
-  window attention's output before proj through a per-channel gate that starts at 0.
+  window attention's output before proj through a per-channel gate that starts at 0. With Adam a
+  zero-init gate barely moves at fine-tune learning rates (|g| ~1e-3 after 10k steps at 2e-5, which
+  also starves q/k/temperature of gradient), so channel_gain scales it (an export folds it in).
 - use_cab: False drops the HABs' conv channel-attention blocks (CAB). With cab_fade > 0 they are kept
   but their contribution fades from 1 to 0 over that many training steps (cutting them at once from a
   trained HAT-L costs ~3 dB); once it is 0 they are skipped and an export can leave them out.
@@ -66,9 +68,12 @@ class HybridAttention(nn.Module):
     DAT-style channel self-attention over the whole image on the same q, k and v, added through a
     per-channel gate that starts at 0 (so a converted HAT starts exactly where it was)."""
 
-    def __init__(self, dim: int, num_heads: int, window_size: int, channel: bool) -> None:
+    def __init__(
+        self, dim: int, num_heads: int, window_size: int, channel: bool, gain: float = 1.0
+    ) -> None:
         super().__init__()
         self.dim = dim
+        self.gain = gain  # the gate is used as gate * gain: a bigger step for the zero-init gate under Adam
         self.num_heads = num_heads
         self.window_size = window_size
         self.channel = channel
@@ -152,19 +157,21 @@ class HybridAttention(nn.Module):
         qkv = self.qkv(x)
         out = self._window(qkv, h, w, shift, flex)
         if self.channel:
-            out = out + self._channel(qkv, b, h, w) * self.channel_gate
+            out = out + self._channel(qkv, b, h, w) * (self.channel_gate * self.gain)
         return self.proj(out)
 
 
 class HABX(nn.Module):
     """A HAB with HybridAttention and an optional CAB; takes over the HAB's norms, MLP and CAB."""
 
-    def __init__(self, src: HAB, window_size: int, shift_size: int, channel: bool, use_cab: bool) -> None:
+    def __init__(
+        self, src: HAB, window_size: int, shift_size: int, channel: bool, use_cab: bool, gain: float = 1.0
+    ) -> None:
         super().__init__()
         self.window_size = window_size
         self.shift_size = shift_size
         self.norm1 = src.norm1
-        self.attn = HybridAttention(src.dim, src.num_heads, window_size, channel)
+        self.attn = HybridAttention(src.dim, src.num_heads, window_size, channel, gain)
         self.conv_scale = src.conv_scale
         self.conv_block = src.conv_block if use_cab else None
         self.cab_mult = 1.0  # set by HATX.forward while a CAB fades out
@@ -210,6 +217,7 @@ def hatx_l(
     big_blocks: tuple[int, ...] = (),
     big_window: int = 32,
     channel: bool = False,
+    channel_gain: float = 1.0,
     use_cab: bool = True,
     cab_fade: int = 0,
     drop_path_rate: float = 0.1,
@@ -231,7 +239,7 @@ def hatx_l(
                 continue
             ws = big_window if big else blk.window_size
             keep_cab = use_cab or cab_fade > 0
-            blocks[j] = HABX(blk, ws, ws // 2 if blk.shift_size > 0 else 0, channel, keep_cab)
+            blocks[j] = HABX(blk, ws, ws // 2 if blk.shift_size > 0 else 0, channel, keep_cab, channel_gain)
     net.pad_multiple = max(net.window_size, big_window if big_blocks else 0)
     if not use_cab and cab_fade > 0:
         net.cab_fade = cab_fade

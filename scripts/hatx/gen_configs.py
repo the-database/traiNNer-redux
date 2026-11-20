@@ -3,6 +3,7 @@ V = {
     "B": ("hatx_l", {"big_blocks": [2, 5]}, "experiments/hatx_init/4x_hatx_B.safetensors"),
     "C1": ("hatx_l", {"channel": True}, "experiments/hatx_init/4x_hatx_C1.safetensors"),
     "E": ("hatx_l", {"big_blocks": [2, 5], "channel": True, "use_cab": False, "cab_fade": 10000}, "experiments/hatx_init/4x_hatx_E.safetensors"),
+    "C1g": ("hatx_l", {"channel": True, "channel_gain": 100.0}, "experiments/hatx_init/4x_hatx_C1.safetensors"),
 }
 T = """name: 4x_hatx_{v}_ft850k_b8lq64
 scale: 4
