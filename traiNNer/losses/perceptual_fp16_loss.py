@@ -270,7 +270,7 @@ class PerceptualFP16Loss(nn.Module):
         criterion2_i = 0
         for i, k in enumerate(x_vgg):
             alpha = self.alpha[i]
-            layer_loss = torch.tensor(0.0, device=x.device)
+            layer_loss = torch.zeros((), device=x.device)
 
             if alpha < 1:
                 assert self.criterion1 is not None

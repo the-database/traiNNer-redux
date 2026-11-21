@@ -72,7 +72,13 @@ def weighted_ms_ssim(
         w = F.avg_pool2d(w, kernel_size=2, padding=pad)
 
     mcs = torch.stack(mcs_list, dim=0).clamp(min=1e-8)
-    return torch.prod(mcs ** scale_weights.view(-1, 1), dim=0)
+    # Multiply the levels one by one: torch.prod's backward reads a value back to the
+    # CPU to check for zeros, which syncs with the GPU.
+    weighted = mcs ** scale_weights.view(-1, 1)
+    out = weighted[0]
+    for level in weighted[1:]:
+        out = out * level
+    return out
 
 
 @LOSS_REGISTRY.register()
