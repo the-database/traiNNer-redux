@@ -87,6 +87,11 @@
   Trade precision for performance.
 
   Type: bool
+### use_cuda_graph
+
+  Record the training step (forward, backward and optimizer step) as a CUDA graph after a few warmup iterations, then replay it every iteration. This removes most of the per-kernel launch overhead, which is often the bottleneck for small archs or small batches, and unlike use_compile it only takes seconds on startup and leaves no cache. It uses somewhat more VRAM, and the speedup shrinks as the batch grows, so leave it off when VRAM limits the batch or crop size. Requires a fused optimizer (Adam or AdamW), a single GPU and fixed training patch sizes. If the step can't be recorded, training continues without it and the reason is logged.
+
+  Type: bool
 ### use_compile
 
   Enable torch.compile for the generator model and the losses, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it.
