@@ -9,7 +9,6 @@ import cv2
 import torch
 from ema_pytorch import EMA
 from torch import Tensor, nn
-from torch.amp.grad_scaler import GradScaler
 from torch.nn import functional as F  # noqa: N812
 from torch.nn.parallel import DistributedDataParallel
 from torch.nn.utils import clip_grads_with_norm_, get_total_norm
@@ -27,6 +26,12 @@ from traiNNer.losses import build_loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.utils.amp_util import (
+    grad_scaler_scale,
+    guard_nonfinite,
+    make_grad_scaler,
+    update_grad_scaler,
+)
 from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.eco import compute_alpha, eco_synthesize
 from traiNNer.utils.logger import clickable_file_path
@@ -53,6 +58,10 @@ class SRModel(BaseModel):
         )
         self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
         self.use_compile = self.opt.use_compile
+
+        # consecutive and total non-finite losses, read by check_nonfinite_losses
+        self.nonfinite_streak = torch.zeros((), dtype=torch.int32, device=self.device)
+        self.nonfinite_steps = torch.zeros((), dtype=torch.int32, device=self.device)
 
         # define network
         assert opt.network_g is not None, "network_g must be defined"
@@ -206,6 +215,8 @@ class SRModel(BaseModel):
                             self.opt.path.strict_load_d,
                             self.opt.path.param_key_d,
                         )
+                    # not compiled even with use_compile: for DUnet that costs VRAM
+                    # and gains no speed
                     self.net_d = self.model_to_device(self.net_d)
 
             self.losses = {}
@@ -228,10 +239,13 @@ class SRModel(BaseModel):
 
         logger = get_root_logger()
 
-        enable_gradscaler = self.use_amp and not self.opt.amp_bf16
-
-        self.scaler_g = GradScaler(enabled=enable_gradscaler, device="cuda")
-        self.scaler_d = GradScaler(enabled=enable_gradscaler, device="cuda")
+        # fp16 needs loss scaling. Every other dtype still goes through a GradScaler
+        # pinned at scale 1: its inf/NaN check lets the optimizer skip a non-finite
+        # step on the GPU (fused optimizers take found_inf directly), so the training
+        # step never has to read the loss back to the CPU to decide.
+        self.use_loss_scaling = self.use_amp and self.amp_dtype == torch.float16
+        self.scaler_g = make_grad_scaler(self.use_loss_scaling, self.device.type)
+        self.scaler_d = make_grad_scaler(self.use_loss_scaling, self.device.type)
 
         self.accum_iters = self.opt.datasets["train"].accum_iter
 
@@ -275,10 +289,15 @@ class SRModel(BaseModel):
                 update_every=1,
                 power=train_opt.ema_power,
                 update_model_with_ema_every=switch_iter,
+                use_foreach=True,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
             assert self.net_g_ema is not None
+            # EMA.update() reads these with .item() every step; on the GPU that syncs.
             self.net_g_ema.step = self.net_g_ema.step.to(device=torch.device("cpu"))
+            self.net_g_ema.initted = self.net_g_ema.initted.to(
+                device=torch.device("cpu")
+            )
 
         self.grad_clip = train_opt.grad_clip
         self.grad_clip_max_norm = train_opt.grad_clip_max_norm
@@ -331,12 +350,14 @@ class SRModel(BaseModel):
                     non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
-                # if self.use_compile:
-                #     logger.info(
-                #         "Loss %s will be compiled. The first iteration may take several minutes.",
-                #         label,
-                #     )
-                #     self.losses[label] = torch.compile(self.losses[label])
+                if self.use_compile:
+                    logger.info(
+                        "Loss %s will be compiled. The first iteration may take several minutes.",
+                        label,
+                    )
+                    self.losses[label] = torch.compile(
+                        self.losses[label], mode=self.opt.compile_mode
+                    )  # pyright: ignore[reportArgumentType]
 
         assert self.losses, "At least one loss must be defined."
 
@@ -543,6 +564,21 @@ class SRModel(BaseModel):
         self.lq = lq_mix.clone().to(memory_format=self.memory_format)
         self.gt = gt_mix.clone().to(memory_format=self.memory_format)
 
+    def check_nonfinite_losses(self) -> None:
+        skipped = int(self.nonfinite_steps.item())
+        if skipped == 0:
+            return
+        streak = int(self.nonfinite_streak.item())
+        self.nonfinite_steps.zero_()
+        if streak > 10:
+            raise RuntimeError(
+                "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
+            )
+        get_root_logger().warning(
+            "NaN/Inf in loss on %d iteration(s) since the last log, skipped those updates",
+            skipped,
+        )
+
     def optimize_parameters(
         self, current_iter: int, current_accum_iter: int, apply_gradient: bool
     ) -> None:
@@ -563,6 +599,7 @@ class SRModel(BaseModel):
         n_samples = self.gt.shape[0]
         self.loss_samples += n_samples
         loss_dict: dict[str, Tensor | float] = OrderedDict()
+        l_g_finite: Tensor | None = None
 
         lq = rgb2pixelformat_pt(
             self.lq, self.opt.input_pixel_format
@@ -578,7 +615,7 @@ class SRModel(BaseModel):
                 )  # self.output: rgb
 
                 assert isinstance(self.output, Tensor)
-                l_g_total = torch.tensor(0.0, device=self.output.device)
+                l_g_total = torch.zeros((), device=self.output.device)
 
                 lq_target = None
 
@@ -646,7 +683,8 @@ class SRModel(BaseModel):
 
                     if isinstance(l_g_loss, dict):
                         for sublabel, loss_val in l_g_loss.items():
-                            if loss_val > 0:
+                            # comparing a tensor here would sync with the GPU
+                            if isinstance(loss_val, Tensor) or loss_val > 0:
                                 weighted_loss_val = loss_val * abs(loss.loss_weight)
                                 l_g_total += weighted_loss_val / self.accum_iters
                                 loss_dict[f"{label}_{sublabel}"] = weighted_loss_val
@@ -655,19 +693,12 @@ class SRModel(BaseModel):
                         l_g_total += weighted_l_g_loss / self.accum_iters
                         loss_dict[label] = weighted_l_g_loss
 
-                if not l_g_total.isfinite():
-                    self.nan_count += 1
-                    if self.nan_count > 10:
-                        raise RuntimeError(
-                            "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
-                        )
-                    logger = get_root_logger()
-                    logger.warning(
-                        "NaN/Inf in loss (count: %d), skipping update", self.nan_count
-                    )
-                    return  # skip this iteration
-                else:
-                    self.nan_count = 0
+                # A non-finite loss makes the grads non-finite, and the GradScaler then
+                # skips the optimizer step on the GPU. check_nonfinite_losses()
+                # reads the streak back at the log interval.
+                l_g_backward, l_g_finite = guard_nonfinite(l_g_total)
+                self.nonfinite_streak = (self.nonfinite_streak + 1) * (~l_g_finite)
+                self.nonfinite_steps += ~l_g_finite
 
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total
@@ -677,7 +708,7 @@ class SRModel(BaseModel):
                         self._eco_alpha, device=self.device
                     )
 
-                self.scaler_g.scale(l_g_total).backward()
+                self.scaler_g.scale(l_g_backward).backward()
 
                 if apply_gradient:
                     self.scaler_g.unscale_(self.optimizer_g)
@@ -697,12 +728,9 @@ class SRModel(BaseModel):
                             foreach=True,
                         )
 
-                    scale_before = self.scaler_g.get_scale()
                     self.scaler_g.step(self.optimizer_g)
-                    self.scaler_g.update()
-                    scale_after = self.scaler_g.get_scale()
-                    loss_dict["scale_g"] = scale_after
-                    self.optimizers_skipped[0] = scale_after < scale_before
+                    update_grad_scaler(self.scaler_g, self.use_loss_scaling)
+                    loss_dict["scale_g"] = grad_scaler_scale(self.scaler_g)
                     self.optimizer_g.zero_grad()
             else:
                 with torch.inference_mode():
@@ -761,27 +789,25 @@ class SRModel(BaseModel):
                         grad_norm_d,
                         foreach=True,
                     )
-                scale_before = self.scaler_d.get_scale()
                 self.scaler_d.step(self.optimizer_d)
-                self.scaler_d.update()
-                scale_after = self.scaler_d.get_scale()
-                loss_dict["scale_d"] = scale_after
-                self.optimizers_skipped[-1] = scale_after < scale_before
+                update_grad_scaler(self.scaler_d, self.use_loss_scaling)
+                loss_dict["scale_d"] = grad_scaler_scale(self.scaler_d)
                 self.optimizer_d.zero_grad()
+                # adaptive_d may have skipped the previous D update
+                self.optimizers_skipped[-1] = False
 
         for key, value in loss_dict.items():
-            val = (
-                value
-                if isinstance(value, float)
-                else value.to(dtype=torch.float32).detach()  # pyright: ignore[reportAttributeAccessIssue]
-            )
+            val = value
+            if isinstance(value, Tensor):
+                val = value.detach().to(dtype=torch.float32)
+                if l_g_finite is not None:
+                    # leave a skipped non-finite step out of the logged averages
+                    val = torch.where(l_g_finite, val, 0.0)
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
-        if (
-            self.net_g_ema is not None
-            and apply_gradient
-            and not (self.use_amp and self.optimizers_skipped[0])
-        ):
+        # The EMA also updates after a step the GradScaler skipped. The weights didn't
+        # change, so that update only moves the EMA toward the same weights again.
+        if self.net_g_ema is not None and apply_gradient:
             self.net_g_ema.update()
 
     def infer_tiled(self, net: nn.Module, lq: torch.Tensor) -> torch.Tensor:

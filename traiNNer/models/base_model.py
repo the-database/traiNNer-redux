@@ -81,10 +81,11 @@ class BaseModel:
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
         self.scaler_ae: GradScaler | None = None
+        # True when the scalers do fp16 loss scaling; set by init_training_settings
+        self.use_loss_scaling = False
         self.accum_iters: int = 1
         self.grad_clip: bool = False
         self.grad_clip_max_norm: float = 100.0
-        self.nan_count = 0
         self.current_iter: int = opt.start_iter
 
     def set_current_iter(self, iter_: int) -> None:
@@ -188,7 +189,12 @@ class BaseModel:
             self.best_metric_results[dataset_name][metric]["val"] = val
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
+    def check_nonfinite_losses(self) -> None:
+        """Called at each log interval; models that skip non-finite steps on the GPU
+        read their counters back here."""
+
     def get_current_log(self) -> dict[str, float | torch.Tensor]:
+        self.check_nonfinite_losses()
         if self.opt.dist:
             return self._get_current_log_dist()
         return {k: v / self.loss_samples for k, v in self.log_dict.items()}
@@ -820,9 +826,23 @@ class BaseModel:
         )
 
         for i, o in enumerate(resume_optimizers):
-            self.optimizers[i].load_state_dict(o)
-            if hasattr(self.optimizers[i], "train"):
-                self.optimizers[i].train()  # pyright: ignore[reportAttributeAccessIssue]
+            optimizer = self.optimizers[i]
+            fused = [g.get("fused") for g in optimizer.param_groups]
+            optimizer.load_state_dict(o)
+            # A state saved by a non-fused optimizer would switch fused off again,
+            # since load_state_dict restores the saved group settings.
+            for group, was_fused in zip(optimizer.param_groups, fused, strict=True):
+                if was_fused and not group.get("fused"):
+                    group["fused"] = True
+                    group["foreach"] = None
+                    for p in group["params"]:
+                        state = optimizer.state.get(p)
+                        if state is not None and "step" in state:
+                            state["step"] = state["step"].to(
+                                device=p.device, dtype=torch.float32
+                            )
+            if hasattr(optimizer, "train"):
+                optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
 
         current_iter = resume_state["iter"]
         if self.opt.train.restart_scheduler:
@@ -836,15 +856,16 @@ class BaseModel:
             for i, s in enumerate(resume_schedulers):
                 self.schedulers[i].load_state_dict(s)
 
-        if "scaler_g" in resume_state:
-            assert self.scaler_g is not None
-            self.scaler_g.load_state_dict(resume_state["scaler_g"])
-        if "scaler_d" in resume_state:
-            assert self.scaler_d is not None
-            self.scaler_d.load_state_dict(resume_state["scaler_d"])
-        if "scaler_ae" in resume_state:
-            assert self.scaler_ae is not None
-            self.scaler_ae.load_state_dict(resume_state["scaler_ae"])
+        # Only a loss-scaling (fp16) scaler carries state worth restoring. The others
+        # stay at scale 1, and states saved from a disabled scaler are empty.
+        if self.use_loss_scaling:
+            for scaler, state in (
+                (self.scaler_g, resume_state.get("scaler_g")),
+                (self.scaler_d, resume_state.get("scaler_d")),
+                (self.scaler_ae, resume_state.get("scaler_ae")),
+            ):
+                if scaler is not None and state:
+                    scaler.load_state_dict(state)
 
         if "ema_step" in resume_state:
             if self.net_g_ema is not None:

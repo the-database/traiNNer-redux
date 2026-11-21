@@ -1,7 +1,7 @@
-from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import Tensor, nn
 from torch.nn.utils.parametrizations import spectral_norm
 
+from traiNNer.archs.arch_util import DySampleV1 as DySample
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 

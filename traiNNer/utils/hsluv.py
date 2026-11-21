@@ -7,6 +7,8 @@ from collections.abc import Mapping
 import torch
 from torch import Tensor
 
+from traiNNer.utils.tensor_cache import cached_constant
+
 _m = [
     [3.240969941904521, -1.537383177570093, -0.498610760293],
     [-0.96924363628087, 1.87596750150772, 0.041555057407175],
@@ -18,6 +20,17 @@ _m_inv = [
     [0.21263900587151, 0.71516867876775, 0.072192315360733],
     [0.019330818715591, 0.11919477979462, 0.95053215224966],
 ]
+
+
+@cached_constant
+def _m_tensor() -> Tensor:
+    return torch.tensor(_m)
+
+
+@cached_constant
+def _m_inv_tensor() -> Tensor:
+    return torch.tensor(_m_inv)
+
 
 _ref_y = 1.0
 _ref_u = 0.19783000664283
@@ -61,7 +74,7 @@ def _get_bounds(l: Tensor) -> list[Mapping[str, Tensor]]:
     result = []
     sub1 = ((l + 16) ** 3) / 1560896
     sub2 = torch.where(sub1 > _epsilon, sub1, l / _kappa)
-    mt = torch.tensor(_m, device=l.device, dtype=l.dtype)
+    mt = _m_tensor(like=l)
     for c in range(3):
         m1, m2, m3 = mt[c]
         for t in range(2):
@@ -95,7 +108,7 @@ def rgb_to_xyz(rgb: Tensor) -> Tensor:
     rgbl = torch.where(
         rgb <= 0.04045, rgb / 12.92, torch.pow((rgb + 0.055) / 1.055, 2.4)
     )
-    xyz = torch.matmul(rgbl, torch.tensor(_m_inv).to(rgbl).transpose(0, 1))
+    xyz = torch.matmul(rgbl, _m_inv_tensor(like=rgbl).transpose(0, 1))
     return xyz
 
 

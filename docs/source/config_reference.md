@@ -89,7 +89,7 @@
   Type: bool
 ### use_compile
 
-  Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it.
+  Enable torch.compile for the generator model and the losses, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it.
 
   Type: bool
 ### compile_mode

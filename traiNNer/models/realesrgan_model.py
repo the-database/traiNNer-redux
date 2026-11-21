@@ -17,6 +17,7 @@ from traiNNer.data.transforms import paired_random_crop
 from traiNNer.models.sr_model import SRModel
 from traiNNer.utils import RNG, DiffJPEG, get_root_logger
 from traiNNer.utils.img_process_util import USMSharp, filter2d
+from traiNNer.utils.misc import cudnn_benchmark_disabled
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.registry import MODEL_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -92,7 +93,7 @@ class RealESRGANModel(SRModel):
             # shuffle
             assert self.queue_lr is not None
             assert self.queue_gt is not None
-            idx = torch.randperm(self.queue_size)
+            idx = torch.randperm(self.queue_size, device=self.queue_lr.device)
             self.queue_lr = self.queue_lr[idx]
             self.queue_gt = self.queue_gt[idx]
             # get first b samples
@@ -146,172 +147,179 @@ class RealESRGANModel(SRModel):
                 non_blocking=True,
             )
 
-            ori_h, ori_w = self.gt.size()[2:4]
+            # The random resizes give the blur, sinc and lanczos convolutions a new
+            # shape almost every batch, and cudnn.benchmark would autotune each one.
+            with cudnn_benchmark_disabled():
+                ori_h, ori_w = self.gt.size()[2:4]
 
-            # ----------------------- The first degradation process ----------------------- #
-            if self.opt.lq_usm:
-                usm_sharpener = USMSharp(
-                    RNG.get_rng().integers(
-                        *self.opt.lq_usm_radius_range, dtype=int, endpoint=True
+                # ----------------------- The first degradation process ----------------------- #
+                if self.opt.lq_usm:
+                    usm_sharpener = USMSharp(
+                        RNG.get_rng().integers(
+                            *self.opt.lq_usm_radius_range, dtype=int, endpoint=True
+                        )
+                    ).to(
+                        self.device,
+                        memory_format=self.memory_format,
+                        non_blocking=True,
+                    )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+                    out = usm_sharpener(self.gt)
+                else:
+                    out = self.gt
+
+                # thick lines
+                if RNG.get_rng().uniform() < self.opt.thicklines_prob:
+                    assert self.thicklines is not None
+                    out = self.thicklines(out)
+
+                # blur
+                if RNG.get_rng().uniform() < self.opt.blur_prob:
+                    out = filter2d(out, self.kernel1)
+                # random resize
+                updown_type = random.choices(
+                    ["up", "down", "keep"], self.opt.resize_prob
+                )[0]
+                if updown_type == "up":
+                    scale = RNG.get_rng().uniform(1, self.opt.resize_range[1])
+                elif updown_type == "down":
+                    scale = RNG.get_rng().uniform(self.opt.resize_range[0], 1)
+                else:
+                    scale = 1
+
+                if scale != 1:
+                    assert len(self.opt.resize_mode_list) == len(
+                        self.opt.resize_mode_prob
+                    ), "resize_mode_list and resize_mode_prob must be the same length"
+                    mode = random.choices(
+                        self.opt.resize_mode_list, weights=self.opt.resize_mode_prob
+                    )[0]
+
+                    out = resize_pt(
+                        out,
+                        scale_factor=scale,
+                        mode=mode,
                     )
-                ).to(
-                    self.device,
-                    memory_format=self.memory_format,
-                    non_blocking=True,
-                )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
-                out = usm_sharpener(self.gt)
-            else:
-                out = self.gt
 
-            # thick lines
-            if RNG.get_rng().uniform() < self.opt.thicklines_prob:
-                assert self.thicklines is not None
-                out = self.thicklines(out)
-
-            # blur
-            if RNG.get_rng().uniform() < self.opt.blur_prob:
-                out = filter2d(out, self.kernel1)
-            # random resize
-            updown_type = random.choices(["up", "down", "keep"], self.opt.resize_prob)[
-                0
-            ]
-            if updown_type == "up":
-                scale = RNG.get_rng().uniform(1, self.opt.resize_range[1])
-            elif updown_type == "down":
-                scale = RNG.get_rng().uniform(self.opt.resize_range[0], 1)
-            else:
-                scale = 1
-
-            if scale != 1:
-                assert len(self.opt.resize_mode_list) == len(
-                    self.opt.resize_mode_prob
-                ), "resize_mode_list and resize_mode_prob must be the same length"
-                mode = random.choices(
-                    self.opt.resize_mode_list, weights=self.opt.resize_mode_prob
-                )[0]
-
-                out = resize_pt(
-                    out,
-                    scale_factor=scale,
-                    mode=mode,
-                )
-
-            # add noise
-            gray_noise_prob = self.opt.gray_noise_prob
-            if RNG.get_rng().uniform() < self.opt.gaussian_noise_prob:
-                out = random_add_gaussian_noise_pt(
-                    out,
-                    sigma_range=self.opt.noise_range,
-                    clip=True,
-                    rounds=False,
-                    gray_prob=gray_noise_prob,
-                )
-            else:
-                out = random_add_poisson_noise_pt(
-                    out,
-                    scale_range=self.opt.poisson_scale_range,
-                    gray_prob=gray_noise_prob,
-                    clip=True,
-                    rounds=False,
-                )
-            # JPEG compression
-            if RNG.get_rng().uniform() < self.opt.jpeg_prob:
-                jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt.jpeg_range)
-                out = torch.clamp(
-                    out, 0, 1
-                )  # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
-                out = self.jpeger(out, quality=jpeg_p)
-
-            # ----------------------- The second degradation process ----------------------- #
-            # blur
-            if RNG.get_rng().uniform() < self.opt.blur_prob2:
-                out = filter2d(out, self.kernel2)
-            # random resize
-            updown_type = random.choices(["up", "down", "keep"], self.opt.resize_prob2)[
-                0
-            ]
-            if updown_type == "up":
-                scale = RNG.get_rng().uniform(1, self.opt.resize_range2[1])
-            elif updown_type == "down":
-                scale = RNG.get_rng().uniform(self.opt.resize_range2[0], 1)
-            else:
-                scale = 1
-
-            if scale != 1:
-                assert len(self.opt.resize_mode_list2) == len(
-                    self.opt.resize_mode_prob2
-                ), "resize_mode_list2 and resize_mode_prob2 must be the same length"
-                mode = random.choices(
-                    self.opt.resize_mode_list2, weights=self.opt.resize_mode_prob2
-                )[0]
-                out = resize_pt(
-                    out,
-                    size=(
-                        int(ori_h / self.opt.scale * scale),
-                        int(ori_w / self.opt.scale * scale),
-                    ),
-                    mode=mode,
-                )
-            # add noise
-            gray_noise_prob = self.opt.gray_noise_prob2
-            if RNG.get_rng().uniform() < self.opt.gaussian_noise_prob2:
-                out = random_add_gaussian_noise_pt(
-                    out,
-                    sigma_range=self.opt.noise_range2,
-                    clip=True,
-                    rounds=False,
-                    gray_prob=gray_noise_prob,
-                )
-            else:
-                out = random_add_poisson_noise_pt(
-                    out,
-                    scale_range=self.opt.poisson_scale_range2,
-                    gray_prob=gray_noise_prob,
-                    clip=True,
-                    rounds=False,
-                )
-
-            # JPEG compression + the final sinc filter
-            # We also need to resize images to desired sizes. We group [resize back + sinc filter] together
-            # as one operation.
-            # We consider two orders:
-            #   1. [resize back + sinc filter] + JPEG compression
-            #   2. JPEG compression + [resize back + sinc filter]
-            # Empirically, we find other combinations (sinc + JPEG + Resize) will introduce twisted lines.
-
-            assert len(self.opt.resize_mode_list3) == len(self.opt.resize_mode_prob3), (
-                "resize_mode_list3 and resize_mode_prob3 must be the same length"
-            )
-
-            mode = random.choices(
-                self.opt.resize_mode_list3, weights=self.opt.resize_mode_prob3
-            )[0]
-            if RNG.get_rng().uniform() < 0.5:
-                # resize back + the final sinc filter
-                out = resize_pt(
-                    out,
-                    size=(ori_h // self.opt.scale, ori_w // self.opt.scale),
-                    mode=mode,
-                )
-                out = filter2d(out, self.sinc_kernel)
+                # add noise
+                gray_noise_prob = self.opt.gray_noise_prob
+                if RNG.get_rng().uniform() < self.opt.gaussian_noise_prob:
+                    out = random_add_gaussian_noise_pt(
+                        out,
+                        sigma_range=self.opt.noise_range,
+                        clip=True,
+                        rounds=False,
+                        gray_prob=gray_noise_prob,
+                    )
+                else:
+                    out = random_add_poisson_noise_pt(
+                        out,
+                        scale_range=self.opt.poisson_scale_range,
+                        gray_prob=gray_noise_prob,
+                        clip=True,
+                        rounds=False,
+                    )
                 # JPEG compression
-                if RNG.get_rng().uniform() < self.opt.jpeg_prob2:
-                    jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt.jpeg_range2)
-                    out = torch.clamp(out, 0, 1)
+                if RNG.get_rng().uniform() < self.opt.jpeg_prob:
+                    jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt.jpeg_range)
+                    out = torch.clamp(
+                        out, 0, 1
+                    )  # clamp to [0, 1], otherwise JPEGer will result in unpleasant artifacts
                     out = self.jpeger(out, quality=jpeg_p)
-            else:
-                # JPEG compression
-                if RNG.get_rng().uniform() < self.opt.jpeg_prob2:
-                    jpeg_p = out.new_zeros(out.size(0)).uniform_(*self.opt.jpeg_range2)
-                    out = torch.clamp(out, 0, 1)
-                    out = self.jpeger(out, quality=jpeg_p)
-                # resize back + the final sinc filter
-                out = resize_pt(
-                    out,
-                    size=(ori_h // self.opt.scale, ori_w // self.opt.scale),
-                    mode=mode,
-                )
-                out = filter2d(out, self.sinc_kernel)
+
+                # ----------------------- The second degradation process ----------------------- #
+                # blur
+                if RNG.get_rng().uniform() < self.opt.blur_prob2:
+                    out = filter2d(out, self.kernel2)
+                # random resize
+                updown_type = random.choices(
+                    ["up", "down", "keep"], self.opt.resize_prob2
+                )[0]
+                if updown_type == "up":
+                    scale = RNG.get_rng().uniform(1, self.opt.resize_range2[1])
+                elif updown_type == "down":
+                    scale = RNG.get_rng().uniform(self.opt.resize_range2[0], 1)
+                else:
+                    scale = 1
+
+                if scale != 1:
+                    assert len(self.opt.resize_mode_list2) == len(
+                        self.opt.resize_mode_prob2
+                    ), "resize_mode_list2 and resize_mode_prob2 must be the same length"
+                    mode = random.choices(
+                        self.opt.resize_mode_list2, weights=self.opt.resize_mode_prob2
+                    )[0]
+                    out = resize_pt(
+                        out,
+                        size=(
+                            int(ori_h / self.opt.scale * scale),
+                            int(ori_w / self.opt.scale * scale),
+                        ),
+                        mode=mode,
+                    )
+                # add noise
+                gray_noise_prob = self.opt.gray_noise_prob2
+                if RNG.get_rng().uniform() < self.opt.gaussian_noise_prob2:
+                    out = random_add_gaussian_noise_pt(
+                        out,
+                        sigma_range=self.opt.noise_range2,
+                        clip=True,
+                        rounds=False,
+                        gray_prob=gray_noise_prob,
+                    )
+                else:
+                    out = random_add_poisson_noise_pt(
+                        out,
+                        scale_range=self.opt.poisson_scale_range2,
+                        gray_prob=gray_noise_prob,
+                        clip=True,
+                        rounds=False,
+                    )
+
+                # JPEG compression + the final sinc filter
+                # We also need to resize images to desired sizes. We group [resize back + sinc filter] together
+                # as one operation.
+                # We consider two orders:
+                #   1. [resize back + sinc filter] + JPEG compression
+                #   2. JPEG compression + [resize back + sinc filter]
+                # Empirically, we find other combinations (sinc + JPEG + Resize) will introduce twisted lines.
+
+                assert len(self.opt.resize_mode_list3) == len(
+                    self.opt.resize_mode_prob3
+                ), "resize_mode_list3 and resize_mode_prob3 must be the same length"
+
+                mode = random.choices(
+                    self.opt.resize_mode_list3, weights=self.opt.resize_mode_prob3
+                )[0]
+                if RNG.get_rng().uniform() < 0.5:
+                    # resize back + the final sinc filter
+                    out = resize_pt(
+                        out,
+                        size=(ori_h // self.opt.scale, ori_w // self.opt.scale),
+                        mode=mode,
+                    )
+                    out = filter2d(out, self.sinc_kernel)
+                    # JPEG compression
+                    if RNG.get_rng().uniform() < self.opt.jpeg_prob2:
+                        jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                            *self.opt.jpeg_range2
+                        )
+                        out = torch.clamp(out, 0, 1)
+                        out = self.jpeger(out, quality=jpeg_p)
+                else:
+                    # JPEG compression
+                    if RNG.get_rng().uniform() < self.opt.jpeg_prob2:
+                        jpeg_p = out.new_zeros(out.size(0)).uniform_(
+                            *self.opt.jpeg_range2
+                        )
+                        out = torch.clamp(out, 0, 1)
+                        out = self.jpeger(out, quality=jpeg_p)
+                    # resize back + the final sinc filter
+                    out = resize_pt(
+                        out,
+                        size=(ori_h // self.opt.scale, ori_w // self.opt.scale),
+                        mode=mode,
+                    )
+                    out = filter2d(out, self.sinc_kernel)
 
             # clamp and round
             self.lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.0
@@ -327,7 +335,8 @@ class RealESRGANModel(SRModel):
 
             # training pair pool
             self._dequeue_and_enqueue()
-            self.lq = self.lq.contiguous()  # for the warning: grad and param do not obey the gradient layout contract
+            # for the warning: grad and param do not obey the gradient layout contract
+            self.lq = self.lq.contiguous(memory_format=self.memory_format)
 
             i = 1
             if self.otf_debug:
