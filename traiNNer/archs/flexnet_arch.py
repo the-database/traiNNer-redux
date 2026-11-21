@@ -5,9 +5,9 @@ from typing import Literal, Self, get_args
 import torch
 import torch.nn.functional as F  # noqa: N812
 from einops import rearrange
-from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import Tensor, nn
 
+from traiNNer.archs.arch_util import DySampleV1 as DySample
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 

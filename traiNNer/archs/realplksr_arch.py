@@ -5,10 +5,10 @@ from functools import partial
 from typing import Literal
 
 import torch
-from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import Tensor, nn
 from torch.nn.init import trunc_normal_
 
+from traiNNer.archs.arch_util import DySampleV1 as DySample
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
