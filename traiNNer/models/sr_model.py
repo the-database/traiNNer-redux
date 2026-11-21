@@ -215,6 +215,8 @@ class SRModel(BaseModel):
                             self.opt.path.strict_load_d,
                             self.opt.path.param_key_d,
                         )
+                    # not compiled even with use_compile: for DUnet that costs VRAM
+                    # and gains no speed
                     self.net_d = self.model_to_device(self.net_d)
 
             self.losses = {}
@@ -348,12 +350,14 @@ class SRModel(BaseModel):
                     non_blocking=True,
                 )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
 
-                # if self.use_compile:
-                #     logger.info(
-                #         "Loss %s will be compiled. The first iteration may take several minutes.",
-                #         label,
-                #     )
-                #     self.losses[label] = torch.compile(self.losses[label])
+                if self.use_compile:
+                    logger.info(
+                        "Loss %s will be compiled. The first iteration may take several minutes.",
+                        label,
+                    )
+                    self.losses[label] = torch.compile(
+                        self.losses[label], mode=self.opt.compile_mode
+                    )  # pyright: ignore[reportArgumentType]
 
         assert self.losses, "At least one loss must be defined."
 
