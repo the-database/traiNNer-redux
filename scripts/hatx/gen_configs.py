@@ -13,13 +13,17 @@ P1 = dict(bs=8, lr="2e-5", m1=20000, m2=30000, total=40000, vf=2500, wu=-1)
 P2 = dict(bs=32, lr="1e-5", m1=10000, m2=15000, total=20000, vf=1250, wu=-1)
 # P3: P2 at the 850k run's final LR, held constant, after a 1k warmup (P2 still loses ~0.07 dB)
 P3 = dict(bs=32, lr="6.25e-6", m1=1000000, m2=2000000, total=20000, vf=1250, wu=1000)
-P = {"A2": P2, "B2": P2, "C2b": P2, "A3": P3}
+# P4: P2 with a 96 LR patch (batch 16 x 2 accumulation = 32), so the 32x32 windows see content
+P4 = dict(P2, bs=16, ac=2, lq=96)
+P = {"A2": P2, "B2": P2, "C2b": P2, "A3": P3, "A4": P4, "B4": P4}
 V["A2"] = V["A"]
 V["B2"] = V["B"]
 V["C2b"] = (V["C2"][0], {**V["C2"][1], "cab_fade": 10000}, V["C2"][2])
 V["A3"] = V["A"]
-N = {"A2": "A", "B2": "B", "C2b": "C2", "A3": "A_lr6e-6c"}  # run names (batch is in the suffix)
-T = """name: 4x_hatx_{v}_ft850k_b{bs}lq64
+V["A4"] = V["A"]
+V["B4"] = V["B"]
+N = {"A2": "A", "B2": "B", "C2b": "C2", "A3": "A_lr6e-6c", "A4": "A", "B4": "B"}  # run names (batch is in the suffix)
+T = """name: 4x_hatx_{v}_ft850k_b{bsn}lq{lq}
 scale: 4
 use_amp: true
 amp_bf16: true
@@ -35,12 +39,12 @@ datasets:
     type: pairedimagedataset
     dataroot_gt: ../datasets/DiverSeg/HR_cropped iqa 0.5
     dataroot_lq: ../datasets/DiverSeg/LR_bicubic iqa 0.5/x4
-    lq_size: 64
+    lq_size: {lq}
     use_hflip: true
     use_rot: true
     num_worker_per_gpu: 10
     batch_size_per_gpu: {bs}
-    accum_iter: 1
+    accum_iter: {ac}
   val:
     name: Urban100
     type: pairedimagedataset
@@ -100,6 +104,7 @@ logger:
 import json
 for v, (arch, kw, init) in V.items():
     extra = "".join(f"  {k}: {json.dumps(x)}\n" for k, x in kw.items())
-    pr = P.get(v, P1)
+    pr = {"lq": 64, "ac": 1, **P.get(v, P1)}
+    pr["bsn"] = f"{pr['bs']}x{pr['ac']}" if pr["ac"] > 1 else pr["bs"]
     name_v = N.get(v, v)
     open(f"options/train/hatx/4x_hatx_{v}.yml", "w").write(T.format(v=name_v, arch=arch, extra=extra, init=init, **pr))
