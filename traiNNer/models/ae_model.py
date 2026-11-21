@@ -7,7 +7,6 @@ from os import path as osp
 import torch
 from ema_pytorch import EMA
 from torch import Tensor
-from torch.amp.grad_scaler import GradScaler
 from torch.nn.utils import clip_grad_norm_
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
@@ -22,6 +21,7 @@ from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.losses import build_loss
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
+from traiNNer.utils.amp_util import make_grad_scaler, update_grad_scaler
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
@@ -135,7 +135,8 @@ class AEModel(BaseModel):
 
         logger = get_root_logger()
 
-        self.scaler_ae = GradScaler(enabled=self.use_amp, device="cuda")
+        self.use_loss_scaling = self.use_amp and self.amp_dtype == torch.float16
+        self.scaler_ae = make_grad_scaler(self.use_loss_scaling, self.device.type)
 
         self.accum_iters = self.opt.datasets["train"].accum_iter
 
@@ -171,12 +172,17 @@ class AEModel(BaseModel):
                 allow_different_devices=True,
                 update_after_step=train_opt.ema_update_after_step,
                 update_every=1,
-                power=train_opt.ema_update_after_step,
+                power=train_opt.ema_power,
                 update_model_with_ema_every=self.ema_switch_iter,
+                use_foreach=True,
             ).to(device=self.device, memory_format=self.memory_format)  # pyright: ignore[reportCallIssue]
 
             assert self.net_ae_ema is not None
+            # EMA.update() reads these with .item() every step; on the GPU that syncs.
             self.net_ae_ema.step = self.net_ae_ema.step.to(device=torch.device("cpu"))
+            self.net_ae_ema.initted = self.net_ae_ema.initted.to(
+                device=torch.device("cpu")
+            )
 
         self.grad_clip = train_opt.grad_clip
         self.grad_clip_max_norm = train_opt.grad_clip_max_norm
@@ -288,7 +294,7 @@ class AEModel(BaseModel):
         ):
             self.output_gt = self.net_ae(self.gt)
             assert isinstance(self.output_gt, Tensor)
-            l_ae_total = torch.tensor(0.0, device=self.output_gt.device)
+            l_ae_total = torch.zeros((), device=self.output_gt.device)
             loss_dict = OrderedDict()
 
             for label, loss in self.losses.items():
@@ -313,10 +319,8 @@ class AEModel(BaseModel):
                 self.scaler_ae.unscale_(self.optimizer_ae)
                 clip_grad_norm_(self.net_ae.parameters(), self.grad_clip_max_norm)
 
-            scale_before = self.scaler_ae.get_scale()
             self.scaler_ae.step(self.optimizer_ae)
-            self.scaler_ae.update()
-            self.optimizers_skipped[0] = self.scaler_ae.get_scale() < scale_before
+            update_grad_scaler(self.scaler_ae, self.use_loss_scaling)
             self.optimizer_ae.zero_grad()
 
         for key, value in loss_dict.items():
@@ -327,11 +331,9 @@ class AEModel(BaseModel):
             )
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
-        if (
-            self.net_ae_ema is not None
-            and apply_gradient
-            and not (self.use_amp and self.optimizers_skipped[0])
-        ):
+        # The EMA also updates after a step the GradScaler skipped. The weights didn't
+        # change, so that update only moves the EMA toward the same weights again.
+        if self.net_ae_ema is not None and apply_gradient:
             self.net_ae_ema.update()
 
     def test(self) -> None:

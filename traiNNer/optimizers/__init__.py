@@ -4,6 +4,7 @@ from os import path as osp
 from typing import Any
 
 from pytorch_optimizer import ADOPT, SOAP, StableAdamW
+from torch import Tensor
 from torch.optim import Adam, AdamW, NAdam, Optimizer
 from torch.optim.optimizer import ParamsT
 
@@ -31,12 +32,32 @@ for o in [Adam, AdamW, NAdam, StableAdamW, SOAP, ADOPT]:
     OPTIMIZER_REGISTRY.register(o)
 
 
+# Optimizers with a fused CUDA step, used unless the config sets fused or foreach. The
+# fused step is one kernel per parameter group instead of several per tensor, and
+# GradScaler passes it found_inf so skipping a non-finite step needs no GPU sync.
+FUSED_BY_DEFAULT = (Adam, AdamW)
+
+
 def build_optimizer(params: ParamsT, opt: dict[str, Any]) -> Optimizer:
     opt = deepcopy(opt)
     optimizer_type = opt.pop("type")
     logger = get_root_logger()
 
-    optimizer = OPTIMIZER_REGISTRY.get(optimizer_type)(params, **opt)
+    optimizer_cls = OPTIMIZER_REGISTRY.get(optimizer_type)
+    if (
+        optimizer_cls in FUSED_BY_DEFAULT
+        and "fused" not in opt
+        and "foreach" not in opt
+    ):
+        param_list: list[Any] = list(params)
+        params = param_list
+        if param_list and all(
+            isinstance(p, Tensor) and p.is_cuda and p.is_floating_point()
+            for p in param_list
+        ):
+            opt["fused"] = True
+
+    optimizer = optimizer_cls(params, **opt)
     logger.info(
         "Optimizer [bold]%s[/bold](%s) is created.",
         optimizer.__class__.__name__,
