@@ -13,16 +13,15 @@ P1 = dict(bs=8, lr="2e-5", m1=20000, m2=30000, total=40000, vf=2500, wu=-1)
 P2 = dict(bs=32, lr="1e-5", m1=10000, m2=15000, total=20000, vf=1250, wu=-1)
 # P3: P2 at the 850k run's final LR, held constant, after a 1k warmup (P2 still loses ~0.07 dB)
 P3 = dict(bs=32, lr="6.25e-6", m1=1000000, m2=2000000, total=20000, vf=1250, wu=1000)
-# P4: P2 with a 96 LR patch (batch 16 x 2 accumulation = 32), so the 32x32 windows see content
-P4 = dict(P2, bs=16, ac=2, lq=96)
-P = {"A2": P2, "B2": P2, "C2b": P2, "A3": P3, "A4": P4, "B4": P4}
+# (a 96 LR patch doesn't fit DiverSeg: 88% of its LR crops are under 96 on a side; the smallest is 64)
+P = {"A2": P2, "B2": P2, "C2b": P2, "A3": P3, "Bq": P2, "Ball": P2}
 V["A2"] = V["A"]
 V["B2"] = V["B"]
 V["C2b"] = (V["C2"][0], {**V["C2"][1], "cab_fade": 10000}, V["C2"][2])
 V["A3"] = V["A"]
-V["A4"] = V["A"]
-V["B4"] = V["B"]
-N = {"A2": "A", "B2": "B", "C2b": "C2", "A3": "A_lr6e-6c", "A4": "A", "B4": "B"}  # run names (batch is in the suffix)
+V["Bq"] = ("hatx_l", {"big_blocks": [1, 2, 4, 5]}, "experiments/hatx_init/4x_hatx_Bq.safetensors")
+V["Ball"] = ("hatx_l", {"big_blocks": [0, 1, 2, 3, 4, 5]}, "experiments/hatx_init/4x_hatx_Ball.safetensors")
+N = {"A2": "A", "B2": "B", "C2b": "C2", "A3": "A_lr6e-6c"}  # run names (batch is in the suffix)
 T = """name: 4x_hatx_{v}_ft850k_b{bsn}lq{lq}
 scale: 4
 use_amp: true
