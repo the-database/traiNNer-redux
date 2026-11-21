@@ -120,9 +120,13 @@ class CUDAPrefetcher:
         with torch.cuda.stream(self.stream):  # type: ignore
             for k, v in self.batch.items():
                 if torch.is_tensor(v):
-                    self.batch[k] = self.batch[k].to(
+                    # channels_last only applies to 4D image batches, not to e.g.
+                    # the 3D blur kernels of OTF datasets or 5D video clips
+                    self.batch[k] = v.to(
                         device=self.device,
-                        memory_format=self.memory_format,
+                        memory_format=self.memory_format
+                        if v.dim() == 4
+                        else torch.preserve_format,
                         non_blocking=True,
                     )
 
