@@ -33,11 +33,15 @@ from traiNNer.utils.amp_util import (
     update_grad_scaler,
 )
 from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
+from traiNNer.utils.cuda_graph import CudaGraphStep, supports_cuda_graph
 from traiNNer.utils.eco import compute_alpha, eco_synthesize
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
+
+# (loss_dict, l_g_finite, output) of one training step
+TrainStepOutputs = tuple[dict[str, Tensor | float], Tensor | None, Tensor]
 
 
 class SRModel(BaseModel):
@@ -58,6 +62,7 @@ class SRModel(BaseModel):
         )
         self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
         self.use_compile = self.opt.use_compile
+        self.cuda_graph_step: CudaGraphStep | None = None
 
         # consecutive and total non-finite losses, read by check_nonfinite_losses
         self.nonfinite_streak = torch.zeros((), dtype=torch.int32, device=self.device)
@@ -380,8 +385,41 @@ class SRModel(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
+        if self.opt.use_cuda_graph:
+            reason = self._cuda_graph_unsupported_reason()
+            if reason is None:
+                self.cuda_graph_step = CudaGraphStep(
+                    self.optimizers, [self.scaler_g, self.scaler_d]
+                )
+                logger.info(
+                    "CUDA graph enabled: the training step is recorded after %d warmup iterations.",
+                    self.cuda_graph_step.warmup_steps,
+                )
+            else:
+                logger.warning("use_cuda_graph is ignored: %s.", reason)
+
         # logging features
         # self._setup_feature_hooks()
+
+    def _cuda_graph_unsupported_reason(self) -> str | None:
+        if self.device.type != "cuda":
+            return "it needs a CUDA device"
+        if self.opt.dist or (
+            isinstance(self.opt.num_gpu, int) and self.opt.num_gpu > 1
+        ):
+            return "it supports only a single GPU"
+        if self.use_compile and self.opt.compile_mode in (
+            "reduce-overhead",
+            "max-autotune",
+        ):
+            return f"compile_mode {self.opt.compile_mode} already uses CUDA graphs"
+        if self.has_gan and self.adaptive_d:
+            return "adaptive_d decides on the CPU whether to update the discriminator"
+        for optimizer in self.optimizers:
+            reason = supports_cuda_graph(optimizer)
+            if reason is not None:
+                return reason
+        return None
 
     def _setup_feature_hooks(self) -> None:
         self._feature_entropy = None  # pyright: ignore[reportUninitializedInstanceVariable]
@@ -582,12 +620,68 @@ class SRModel(BaseModel):
     def optimize_parameters(
         self, current_iter: int, current_accum_iter: int, apply_gradient: bool
     ) -> None:
-        # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
-        # assert self.optimizer_g is not None
         assert self.lq is not None
         assert self.gt is not None
+
+        n_samples = self.gt.shape[0]
+        self.loss_samples += n_samples
+
+        inputs = {"lq": self.lq, "gt": self.gt}
+        if self._real_hr is not None:
+            inputs["real_hr"] = self._real_hr
+
+        def step(inp: dict[str, Tensor]) -> TrainStepOutputs:
+            return self._train_step(inp, apply_gradient)
+
+        if self.cuda_graph_step is not None:
+            loss_dict, l_g_finite, self.output = self.cuda_graph_step(
+                apply_gradient, inputs, step
+            )
+        else:
+            loss_dict, l_g_finite, self.output = step(inputs)
+
+        # Log entropy if hook captured it
+        if hasattr(self, "_feature_entropy") and self._feature_entropy is not None:
+            loss_dict = {
+                **loss_dict,
+                "entropy": torch.tensor(self._feature_entropy, device=self.device),
+            }
+        if self._eco_enabled:
+            loss_dict = {
+                **loss_dict,
+                "eco_alpha": torch.tensor(self._eco_alpha, device=self.device),
+            }
+
+        for key, value in loss_dict.items():
+            val = value
+            if isinstance(value, Tensor):
+                val = value.detach().to(dtype=torch.float32)
+                if l_g_finite is not None:
+                    # leave a skipped non-finite step out of the logged averages
+                    val = torch.where(l_g_finite, val, 0.0)
+            self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
+
+        # The EMA also updates after a step the GradScaler skipped. The weights didn't
+        # change, so that update only moves the EMA toward the same weights again.
+        # It stays out of the CUDA graph, since its decay changes with the step count.
+        if self.net_g_ema is not None and apply_gradient:
+            self.net_g_ema.update()
+
+    def _train_step(
+        self, inputs: dict[str, Tensor], apply_gradient: bool
+    ) -> TrainStepOutputs:
+        """Forward, backward and, with ``apply_gradient``, the optimizer step for one
+        batch. It does only GPU work so that it can be recorded as a CUDA graph: state
+        kept between steps is updated in place and the losses stay on the GPU.
+        """
+        # https://github.com/Corpsecreate/neosr/blob/2ee3e7fe5ce485e070744158d4e31b8419103db0/neosr/models/default.py#L328
         assert self.scaler_d is not None
         assert self.scaler_g is not None
+        lq_rgb = inputs["lq"]
+        gt = inputs["gt"]
+        real_hr = inputs.get("real_hr")
+        # replaying a CUDA graph needs the gradient tensors to stay allocated
+        set_to_none = self.cuda_graph_step is None
 
         skip_d_update = False
 
@@ -596,13 +690,11 @@ class SRModel(BaseModel):
             for p in self.net_d.parameters():
                 p.requires_grad = False
 
-        n_samples = self.gt.shape[0]
-        self.loss_samples += n_samples
         loss_dict: dict[str, Tensor | float] = OrderedDict()
         l_g_finite: Tensor | None = None
 
         lq = rgb2pixelformat_pt(
-            self.lq, self.opt.input_pixel_format
+            lq_rgb, self.opt.input_pixel_format
         )  # lq: input_pixel_format
 
         with torch.autocast(
@@ -610,33 +702,24 @@ class SRModel(BaseModel):
         ):
             if self.optimizer_g is not None:
                 output = self.net_g(lq)  # output: output_pixel_format
-                self.output = pixelformat2rgb_pt(
-                    output, self.gt, self.opt.output_pixel_format
-                )  # self.output: rgb
+                output = pixelformat2rgb_pt(
+                    output, gt, self.opt.output_pixel_format
+                )  # output: rgb
 
-                assert isinstance(self.output, Tensor)
-                l_g_total = torch.zeros((), device=self.output.device)
+                assert isinstance(output, Tensor)
+                l_g_total = torch.zeros((), device=output.device)
 
                 lq_target = None
 
-                # Log entropy if hook captured it
-                if (
-                    hasattr(self, "_feature_entropy")
-                    and self._feature_entropy is not None
-                ):
-                    loss_dict["entropy"] = torch.tensor(
-                        self._feature_entropy, device=self.device
-                    )
-
                 for label, loss in self.losses.items():
-                    target = self.gt
+                    target = gt
 
                     if loss.loss_weight < 0:
                         if lq_target is None:
                             with torch.inference_mode():
                                 lq_target = torch.clamp(
                                     F.interpolate(
-                                        self.lq,
+                                        lq_rgb,
                                         scale_factor=self.opt.scale,
                                         mode="bicubic",
                                         antialias=True,
@@ -648,7 +731,7 @@ class SRModel(BaseModel):
 
                     if label == "l_g_gan":
                         assert self.net_d is not None
-                        fake_g_pred = self.net_d(self.output)
+                        fake_g_pred = self.net_d(output)
                         l_g_loss = loss(fake_g_pred, True, is_disc=False)
 
                         if self.adaptive_d:
@@ -674,12 +757,12 @@ class SRModel(BaseModel):
                         with torch.inference_mode():
                             output_ema = pixelformat2rgb_pt(
                                 self.net_g_ema(lq),
-                                self.gt,
+                                gt,
                                 self.opt.output_pixel_format,
                             )
-                        l_g_loss = loss(self.output, output_ema, target)
+                        l_g_loss = loss(output, output_ema, target)
                     else:
-                        l_g_loss = loss(self.output, target)
+                        l_g_loss = loss(output, target)
 
                     if isinstance(l_g_loss, dict):
                         for sublabel, loss_val in l_g_loss.items():
@@ -697,16 +780,11 @@ class SRModel(BaseModel):
                 # skips the optimizer step on the GPU. check_nonfinite_losses()
                 # reads the streak back at the log interval.
                 l_g_backward, l_g_finite = guard_nonfinite(l_g_total)
-                self.nonfinite_streak = (self.nonfinite_streak + 1) * (~l_g_finite)
-                self.nonfinite_steps += ~l_g_finite
+                self.nonfinite_streak.add_(1).mul_(~l_g_finite)
+                self.nonfinite_steps.add_(~l_g_finite)
 
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total
-
-                if self._eco_enabled:
-                    loss_dict["eco_alpha"] = torch.tensor(
-                        self._eco_alpha, device=self.device
-                    )
 
                 self.scaler_g.scale(l_g_backward).backward()
 
@@ -731,11 +809,11 @@ class SRModel(BaseModel):
                     self.scaler_g.step(self.optimizer_g)
                     update_grad_scaler(self.scaler_g, self.use_loss_scaling)
                     loss_dict["scale_g"] = grad_scaler_scale(self.scaler_g)
-                    self.optimizer_g.zero_grad()
+                    self.optimizer_g.zero_grad(set_to_none=set_to_none)
             else:
                 with torch.inference_mode():
-                    self.output = self.net_g(self.lq)
-                    assert isinstance(self.output, Tensor)
+                    output = self.net_g(lq_rgb)
+                    assert isinstance(output, Tensor)
 
         cri_gan = self.losses.get("l_g_gan")
 
@@ -755,18 +833,16 @@ class SRModel(BaseModel):
                 enabled=self.use_amp,
             ):
                 # real
-                # When ECO is active, self.gt is the teacher/HR mixup target for
+                # When ECO is active, gt is the teacher/HR mixup target for
                 # fidelity losses; D must see the pre-ECO real HR to stay
-                # anchored to the true distribution. self._real_hr is None when
-                # ECO is off, falling back to self.gt (normal behavior).
-                real_d_pred = self.net_d(
-                    self._real_hr if self._real_hr is not None else self.gt
-                )
+                # anchored to the true distribution. real_hr is None when
+                # ECO is off, falling back to gt (normal behavior).
+                real_d_pred = self.net_d(real_hr if real_hr is not None else gt)
                 l_d_real = cri_gan(real_d_pred, True, is_disc=True)
                 loss_dict["l_d_real"] = l_d_real
                 loss_dict["out_d_real"] = torch.mean(real_d_pred.detach())
                 # fake
-                fake_d_pred = self.net_d(self.output.detach())
+                fake_d_pred = self.net_d(output.detach())
                 l_d_fake = cri_gan(fake_d_pred, False, is_disc=True)
                 loss_dict["l_d_fake"] = l_d_fake
                 loss_dict["out_d_fake"] = torch.mean(fake_d_pred.detach())
@@ -792,23 +868,15 @@ class SRModel(BaseModel):
                 self.scaler_d.step(self.optimizer_d)
                 update_grad_scaler(self.scaler_d, self.use_loss_scaling)
                 loss_dict["scale_d"] = grad_scaler_scale(self.scaler_d)
-                self.optimizer_d.zero_grad()
+                self.optimizer_d.zero_grad(set_to_none=set_to_none)
                 # adaptive_d may have skipped the previous D update
                 self.optimizers_skipped[-1] = False
 
-        for key, value in loss_dict.items():
-            val = value
-            if isinstance(value, Tensor):
-                val = value.detach().to(dtype=torch.float32)
-                if l_g_finite is not None:
-                    # leave a skipped non-finite step out of the logged averages
-                    val = torch.where(l_g_finite, val, 0.0)
-            self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
-
-        # The EMA also updates after a step the GradScaler skipped. The weights didn't
-        # change, so that update only moves the EMA toward the same weights again.
-        if self.net_g_ema is not None and apply_gradient:
-            self.net_g_ema.update()
+        # detached, so the autograd graph of this step is freed now
+        loss_dict = {
+            k: v.detach() if isinstance(v, Tensor) else v for k, v in loss_dict.items()
+        }
+        return loss_dict, l_g_finite, output.detach()
 
     def infer_tiled(self, net: nn.Module, lq: torch.Tensor) -> torch.Tensor:
         assert self.opt.val is not None

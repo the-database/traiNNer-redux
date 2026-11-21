@@ -333,6 +333,8 @@ class Adaptive_Spatial_Attention(nn.Module):
         self.b_idx = b_idx
         self.rg_idx = rg_idx
         self.patches_resolution = reso
+        # shift masks for training sizes other than reso, built once per size
+        self._train_masks: dict[tuple, tuple[torch.Tensor, torch.Tensor]] = {}
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
 
         assert 0 <= self.shift_size[0] < self.split_size[0], (
@@ -523,9 +525,17 @@ class Adaptive_Spatial_Attention(nn.Module):
             qkv_1 = qkv_1.view(3, B, _L, C // 2)
 
             if self.patches_resolution != _H or self.patches_resolution != _W:
-                mask_tmp = self.calculate_mask(_H, _W, dtype=x.dtype)
-                x1_shift = self.attns[0](qkv_0, _H, _W, mask=mask_tmp[0].to(x.device))
-                x2_shift = self.attns[1](qkv_1, _H, _W, mask=mask_tmp[1].to(x.device))
+                key = (_H, _W, x.dtype, x.device)
+                masks = self._train_masks.get(key)
+                if masks is None:
+                    mask_tmp = self.calculate_mask(_H, _W, dtype=x.dtype)
+                    masks = (mask_tmp[0].to(x.device), mask_tmp[1].to(x.device))
+                    # Training uses a few fixed sizes. Inference sizes vary, and
+                    # their masks can be large, so they aren't kept.
+                    if self.training and len(self._train_masks) < 4:
+                        self._train_masks[key] = masks
+                x1_shift = self.attns[0](qkv_0, _H, _W, mask=masks[0])
+                x2_shift = self.attns[1](qkv_1, _H, _W, mask=masks[1])
             else:
                 x1_shift = self.attns[0](qkv_0, _H, _W, mask=self.attn_mask_0)
                 x2_shift = self.attns[1](qkv_1, _H, _W, mask=self.attn_mask_1)
