@@ -1,12 +1,11 @@
 from os import path as osp
 
 from torch import Tensor
-from torchvision.transforms.functional import normalize
 
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_util import paths_from_lmdb
 from traiNNer.utils import FileClient, img2tensor, rgb2ycbcr, scandir
-from traiNNer.utils.img_util import img2rgb, vipsimfrompath
+from traiNNer.utils.img_util import img2rgb, normalize_, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -85,7 +84,7 @@ class SingleImageDataset(BaseDataset):
         assert isinstance(img_lq, Tensor)
         # normalize
         if self.mean is not None and self.std is not None:
-            normalize(img_lq, self.mean, self.std, inplace=True)
+            normalize_(img_lq, self.mean, self.std)
 
         return {"lq": img_lq, "lq_path": lq_path}
 

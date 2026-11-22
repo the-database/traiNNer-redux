@@ -1,5 +1,4 @@
 import numpy as np
-from torchvision.transforms.functional import normalize
 
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_util import (
@@ -13,7 +12,7 @@ from traiNNer.data.transforms import (
     patch_wh,
 )
 from traiNNer.utils import FileClient, img2tensor
-from traiNNer.utils.img_util import img2rgb, vipsimfrompath
+from traiNNer.utils.img_util import img2rgb, normalize_, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -151,8 +150,8 @@ class PairedImageDataset(BaseDataset):
 
         # normalize
         if self.mean is not None and self.std is not None:
-            normalize(img_lq_tensor, self.mean, self.std, inplace=True)
-            normalize(img_gt_tensor, self.mean, self.std, inplace=True)
+            normalize_(img_lq_tensor, self.mean, self.std)
+            normalize_(img_gt_tensor, self.mean, self.std)
 
         return {
             "lq": img_lq_tensor,

@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from torch import Tensor
 from torch.optim.optimizer import StateDict
@@ -44,6 +44,7 @@ class DataLoaderArgs(TypedDict):
     prefetch_factor: NotRequired[int | None]
     persistent_workers: NotRequired[bool]
     pin_memory_device: NotRequired[str]
+    multiprocessing_context: NotRequired[Any]
 
 
 PixelFormat = Literal["rgb", "y", "uv", "yuv444"]
