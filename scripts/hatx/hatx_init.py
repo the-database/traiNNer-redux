@@ -23,6 +23,7 @@ VARIANTS = {
     "B": dict(big_blocks=(2, 5)),
     "Bq": dict(big_blocks=(1, 2, 4, 5)),  # 4 of 6 per group at 32x32
     "Ball": dict(big_blocks=(0, 1, 2, 3, 4, 5)),  # every HAB at 32x32
+    "Ballc": dict(big_blocks=(0, 1, 2, 3, 4, 5), channel=True),  # Ball + the channel path
     "C1": dict(channel=True),
     "C2": dict(channel=True, use_cab=False, cab_fade=10000),
     "D": dict(big_blocks=(2, 5), channel=True),
