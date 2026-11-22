@@ -92,9 +92,9 @@
   Record the training step (forward, backward and optimizer step) as a CUDA graph after a few warmup iterations, then replay it every iteration. This removes most of the per-kernel launch overhead, which is often the bottleneck for small archs or small batches, and unlike use_compile it only takes seconds on startup and leaves no cache. It uses somewhat more VRAM, and the speedup shrinks as the batch grows, so leave it off when VRAM limits the batch or crop size. Requires a fused optimizer (Adam or AdamW), a single GPU and fixed training patch sizes. If the step can't be recorded, training continues without it and the reason is logged.
 
   Type: bool
-### compile_perceptual_loss
+### compile_losses
 
-  Compile the perceptual loss with torch.compile even when use_compile is off. This fuses the work between VGG's convolutions at the same precision, which makes the loss about 25% faster. The first iteration takes about 30 seconds longer, and since VGG never changes, later runs with the same batch and patch size reuse the compile cache. Needs triton; skipped without it.
+  Compile the perceptual and HSLuv losses with torch.compile even when use_compile is off. This fuses their elementwise work without making their gradients less accurate: on a SPAN GAN template the perceptual loss goes from 48 to 35 ms and HSLuv from 11 to 3 ms. The first run compiles for about 40 seconds and adds about 65 MB to the compile cache. These losses don't change, so later runs with the same batch and patch size reuse it, even after changing the arch. Needs triton; skipped without it.
 
   Type: bool
 ### use_compile
