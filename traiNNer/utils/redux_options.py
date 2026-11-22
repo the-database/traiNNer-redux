@@ -520,6 +520,12 @@ class ReduxOptions(StrictStruct):
             description="Record the training step (forward, backward and optimizer step) as a CUDA graph after a few warmup iterations, then replay it every iteration. This removes most of the per-kernel launch overhead, which is often the bottleneck for small archs or small batches, and unlike use_compile it only takes seconds on startup and leaves no cache. It uses somewhat more VRAM, and the speedup shrinks as the batch grows, so leave it off when VRAM limits the batch or crop size. Requires a fused optimizer (Adam or AdamW), a single GPU and fixed training patch sizes. If the step can't be recorded, training continues without it and the reason is logged."
         ),
     ] = False
+    compile_perceptual_loss: Annotated[
+        bool,
+        Meta(
+            description="Compile the perceptual loss with torch.compile even when use_compile is off. This fuses the work between VGG's convolutions at the same precision, which makes the loss about 25% faster. The first iteration takes about 30 seconds longer, and since VGG never changes, later runs with the same batch and patch size reuse the compile cache. Needs triton; skipped without it."
+        ),
+    ] = True
     use_compile: Annotated[
         bool,
         Meta(

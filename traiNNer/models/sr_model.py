@@ -26,6 +26,7 @@ from traiNNer.archs.arch_info import (
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.degradations import resize_pt
 from traiNNer.losses import build_loss
+from traiNNer.losses.perceptual_fp16_loss import PerceptualFP16Loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -39,7 +40,7 @@ from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.cuda_graph import CudaGraphStep, supports_cuda_graph
 from traiNNer.utils.eco import compute_alpha, eco_synthesize
 from traiNNer.utils.logger import clickable_file_path
-from traiNNer.utils.misc import loss_type_to_label
+from traiNNer.utils.misc import loss_type_to_label, triton_available
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
@@ -378,6 +379,20 @@ class SRModel(BaseModel):
                     self.losses[label] = torch.compile(
                         self.losses[label], mode=self.opt.compile_mode
                     )  # pyright: ignore[reportArgumentType]
+                elif (
+                    self.opt.compile_perceptual_loss
+                    and isinstance(self.losses[label], PerceptualFP16Loss)
+                    and self.device.type == "cuda"
+                    and triton_available()
+                ):
+                    # Fuses the elementwise work between VGG's convolutions, at the
+                    # same precision. VGG19 never changes, so later runs with the same
+                    # batch and patch size reuse the compile cache.
+                    logger.info(
+                        "Loss %s will be compiled (compile_perceptual_loss). The first iteration takes about 30 seconds longer.",
+                        label,
+                    )
+                    self.losses[label] = torch.compile(self.losses[label])  # pyright: ignore[reportArgumentType]
 
         assert self.losses, "At least one loss must be defined."
 
