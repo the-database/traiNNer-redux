@@ -6,7 +6,9 @@ This page includes a summary of suggested guidelines to follow for training, and
 
 On SPAN and SPANF3, `network_g.fused_training: true` composes the three convolution kernels and the skip connection on each forward pass. Only one convolution operates on the image. Autograd still updates the original branch weights, and existing checkpoints load with the same keys. Composition changes floating-point rounding. The option defaults to false.
 
-For repeated paired images, `datasets.train.decoded_cache_mib` retains color-converted images in RAM. Crops, rotations, flips and normalization still run for each sample. The budget applies per worker and per rank. An image larger than the budget follows the regular streaming path. Use persistent workers to retain cached images across epochs.
+For paired disk images, `datasets.train.decoded_cache_mib` retains color-converted images in RAM. Crops, rotations, flips and normalization still run for each sample. A cache miss decodes the whole cacheable image. The default of zero lets libvips decode what the crop needs. Each worker on each rank has its own cache. With shuffled data, compare each worker's budget to the decoded working set and multiply the budget by the total worker count when estimating RAM. Persistent workers retain their cache across epochs. An individual image larger than the budget follows the streaming path.
+
+The maintainer tested 2,000 image pairs with a decoded footprint of 1,594 MiB, eight workers and batch 16. With caching off, the loader delivered about 52 batches/s. At 64 MiB per worker it fell to 41.8, and at 256 MiB it delivered 38–44. Budgets of 1,024 and 2,048 MiB reached about 72 batches/s. On a larger shuffled corpus, start with caching off and compare on the real data before reserving the RAM. [Maintainer's cache measurements](https://github.com/the-database/traiNNer-redux/pull/339#pullrequestreview-6012332521)
 
 This excerpt shows the settings for the eight-block, 64-feature SPANF3 model in an existing 2x paired-image training config.
 
@@ -48,13 +50,29 @@ python -m scripts.benchmarking.benchmark_paired_training
 python -m scripts.benchmarking.benchmark_span_training --preset balanced --batch-size 16 --lr-size 96 --cuda-graph
 ```
 
-The training log reports completed accumulation windows per second and samples per second. DDP reduces gradients across ranks on the final microbatch of each window. Numbered checkpoints record the consumed sampler position, including at the final update. Older checkpoints resume at the start of their saved epoch. Workers reseed random augmentation when a run resumes.
+The training log reports completed accumulation windows per second and samples per second. Dataloader setup reports microbatches per epoch. Timing includes checkpointing and validation that took place between log entries. ETA estimation starts after the first log window to exclude worker startup, compilation and graph capture during that window. With accumulation enabled, loss and gradient statistics use the sample counts for the specific metric. Existing TensorBoard series for total loss, gradient norm and scaler can change level on resume.
+
+A numbered checkpoint records the last completed window and the per-rank sampler position, including at the final update. On Ctrl+C, a single-GPU trainer finishes its window and saves any progress since the previous checkpoint. DDP ranks agree on stopping at the next log, numbered-save, or final-update boundary. A numbered write failure stops training. If a final `*_latest` file remains locked, the trainer warns and proceeds to final validation using the completed run. A single-process failure at a clean update boundary attempts a recovery save. Failures partway through a window leave the previous numbered checkpoint as the resume point.
+
+Older states resume at the start of their saved epoch. With a fixed manual seed, new sessions restart their augmentation RNG streams. The saved sampler position restores image order, while exact continuation of stochastic crops, flips and degradations would also require their RNG state.
 
 ### Training speed across image SR architectures
 
-These runs used the full registry presets on one RTX 5090, with 2× upscaling, batch 2, 64×64 LR crops, BF16, channels-last tensors, AdamW and Charbonnier loss. Both columns include loading, augmentation, GPU transfer, backward and the optimizer. The reference used commit `285b24f` in eager mode. The updated trainer used CUDA graph replay and 32 MiB of decoded-image cache in each of four workers. Compact and SuperUltraCompact also used `network_g.fused_training: true`. SPAN-S used its original training branches in both columns.
+#### Controlled measurements of the code changes
 
-| Generator | Reference LR crops/s | Updated LR crops/s | Speedup |
+| Comparison on one RTX 5090 | Reference | Updated | Conditions held fixed |
+| --- | ---: | ---: | --- |
+| DAT2 window packing, LR crops/s | 31.02 | 34.50 | CUDA graphs, cache, batch 2, LR crop 64 |
+| Compact PReLU fusion, LR crops/s | 1,527 | 2,237 | CUDA graphs, cache, batch 2, LR crop 64 |
+| Compact PReLU fusion, LR crops/s | 3,663 | 4,786 | CUDA graphs, cache, batch 8, LR crop 64 |
+| HAT-L eager, LR crops/s | 7.15 | 7.30 | Graphs off, cache off, batch 2, LR crop 64 |
+| HAT-L overlap block, forward and backward ms | 1.84 | 1.48 | Same block, batch 2, LR crop 64 |
+
+#### Combined effect of trainer and settings
+
+These runs used the full registry presets on one RTX 5090, with 2× upscaling, batch 2, 64×64 LR crops, BF16, channels-last tensors, AdamW and Charbonnier loss. Both columns include loading, augmentation, GPU transfer, backward and the optimizer. The reference used commit `285b24f` in eager mode with caching off. The updated configuration enabled CUDA graph replay, already available on master, and a 32 MiB cache in each of four workers. Compact and SuperUltraCompact also enabled `network_g.fused_training`. SPAN-S used its original branches in both columns. The gains for unmodified generators include the effect of enabling those settings.
+
+| Generator | Eager, cache off, LR crops/s | Replay and cache, LR crops/s | Ratio |
 | --- | ---: | ---: | ---: |
 | HAT-L | 7.15 | 16.47 | 2.30× |
 | DAT2 | 9.25 | 34.50 | 3.73× |
@@ -73,7 +91,7 @@ Each rate is total samples divided by elapsed time across four equal-length wind
 
 - **HAT.** HAT-L already selects FlexAttention on this GPU. Building the shifted-window mask on the GPU allows the trainer to record the step. The earlier version fell back to eager at capture. Directly gathering overlapping keys and values reduced one HAT-L overlap block's forward plus backward time from 1.84 to 1.48 ms at the same batch and crop. With graph replay off, the updated full model measured 7.30 crops/s.
 - **DAT and DAT-iLN.** The spatial branches pack queries, keys and values together. The convolution branches consume channels-last views. With graphs and caching on in both runs, full DAT2 rose from 31.02 to 34.50 crops/s. The iLN variant also passed the reference output and gradient check.
-- **Compact, UltraCompact and SuperUltraCompact.** The CUDA training option fuses convolution bias with the per-channel PReLU and its backward reductions. The first use requires a working PyTorch Inductor GPU backend. Existing checkpoints retain their convolution and slope parameters. With graphs and caching held fixed, Compact rose from 1,527 to 2,237 crops/s at batch 2, and from 3,663 to 4,786 at batch 8. The option defaults to false.
+- **Compact, UltraCompact and SuperUltraCompact.** The CUDA training option fuses convolution bias with the per-channel PReLU and its backward reductions. It uses native PReLU when Triton is absent. With BF16, the fused path adds bias after the convolution output has been rounded. Early-layer bias and slope gradients can be more sensitive to that rounding. Existing checkpoints retain their convolution and slope parameters. The option defaults to false.
 - **SwinIR and ATD.** SwinIR now creates its shifted-window masks on the GPU during capture even when the crop differs from the preset's image size. ATD caches its training mask and restores category-sorted pixels in one batched scatter. Both models passed a replay check with changed input pixels.
 
 Spandrel loaded the saved HAT-L, DAT2 and Compact checkpoints. Mean RGB PSNR on three held-out bicubic image pairs, cropped by two border pixels, was 9.93 → 9.92 dB for HAT-L and 11.32 → 11.22 dB for DAT2 after 25 updates. Compact scored 22.7283 → 22.7288 dB after 150 updates. Measuring time to a target PSNR requires training to that target on the intended dataset.

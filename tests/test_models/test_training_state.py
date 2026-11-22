@@ -1,3 +1,5 @@
+import os
+import stat
 from pathlib import Path
 
 import pytest
@@ -20,8 +22,25 @@ def test_failed_write_preserves_the_previous_checkpoint(
 
     with pytest.raises(OSError, match="disk full"):
         base_model._write_checkpoint(path, fail)  # noqa: SLF001
+    base_model._write_checkpoint(path, fail, optional=True)  # noqa: SLF001
     assert path.read_bytes() == b"complete"
     assert list(tmp_path.iterdir()) == [path]
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX checkpoint permissions")
+def test_checkpoint_respects_umask_and_existing_permissions(tmp_path: Path) -> None:
+    ordinary = tmp_path / "ordinary"
+    ordinary.touch(mode=0o666)
+    path = tmp_path / "3.state"
+
+    def write(name: str) -> None:
+        Path(name).write_bytes(b"weights")
+
+    base_model._write_checkpoint(path, write)  # noqa: SLF001
+    assert stat.S_IMODE(path.stat().st_mode) == stat.S_IMODE(ordinary.stat().st_mode)
+    path.chmod(0o600)
+    base_model._write_checkpoint(path, write)  # noqa: SLF001
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
 
 
 def test_log_averages_count_valid_samples_for_each_metric() -> None:

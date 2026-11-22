@@ -6,6 +6,7 @@ from pathlib import Path
 import cv2
 import msgspec
 import numpy as np
+import pytest
 import torch
 from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.utils.options import derive_train_patch_size
@@ -205,3 +206,24 @@ def test_decoded_cache_preserves_random_crops_and_worker_budget() -> None:
     worker = pickle.loads(pickle.dumps(cached))
     assert not worker._decoded  # noqa: SLF001
     assert worker[0]["lq"].shape == (3, 16, 32)
+
+
+def test_corrupt_cached_image_names_its_file(tmp_path: Path) -> None:
+    dataset = PairedImageDataset(
+        DatasetOptions(
+            name="broken",
+            type="PairedImageDataset",
+            phase="train",
+            scale=4,
+            gt_size=64,
+            dataroot_gt=["datasets/train/dataset1/hr"],
+            dataroot_lq=["datasets/train/dataset1/lr"],
+            decoded_cache_mib=32,
+        )
+    )
+    path = tmp_path / "truncated.png"
+    data = Path(dataset.paths[0]["gt_path"]).read_bytes()
+    path.write_bytes(data[: len(data) // 2])
+    dataset.paths[0]["gt_path"] = str(path)
+    with pytest.raises(OSError, match=r"truncated\.png"):
+        dataset[0]

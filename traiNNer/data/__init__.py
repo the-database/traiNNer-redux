@@ -1,5 +1,6 @@
 import importlib
 import random
+import signal
 from functools import partial
 from os import path as osp
 
@@ -170,6 +171,8 @@ def worker_init_fn(
     rank: int,
     seed: int | None,
 ) -> None:
+    # The trainer handles console interrupts and finishes its accumulation window.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     limit_worker_threads()
     if seed is None:
         return

@@ -111,7 +111,7 @@ class CPUPrefetcher:
 
 
 class CUDAPrefetcher(CPUPrefetcher):
-    """Queue the next transfer while the previous batch executes on the GPU."""
+    """Transfer each batch on a CUDA stream and hand it to the consumer in order."""
 
     def __init__(self, loader: TorchDataLoader, opt: ReduxOptions) -> None:
         super().__init__(loader)

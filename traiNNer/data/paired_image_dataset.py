@@ -107,7 +107,11 @@ class PairedImageDataset(BaseDataset):
 
         image = vipsimfrompath(path)
         limit = self.opt.decoded_cache_mib * 2**20
-        if limit and self.opt.phase == "train":
+        if (
+            limit
+            and self.opt.phase == "train"
+            and self.io_backend_opt["type"] == "disk"
+        ):
             size = (
                 int(image.width)
                 * int(image.height)
@@ -118,7 +122,12 @@ class PairedImageDataset(BaseDataset):
                 while self._decoded_bytes + size > limit:
                     _, (_, evicted) = self._decoded.popitem(last=False)
                     self._decoded_bytes -= evicted
-                image = image.copy_memory()
+                try:
+                    image = image.copy_memory()
+                except pyvips.Error as exc:
+                    raise OSError(
+                        f"Could not decode {path} into the image cache: {exc}"
+                    ) from exc
                 self._decoded[path] = (image, size)
                 self._decoded_bytes += size
         return image

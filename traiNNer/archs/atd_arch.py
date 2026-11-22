@@ -4,7 +4,6 @@ from typing import Any
 
 import torch
 from spandrel.architectures.ATD import ATD as SpandrelATD  # noqa: N811
-from spandrel.architectures.ATD.__arch.atd_arch import AC_MSA, ATDTransformerLayer
 from torch import Tensor, nn
 
 from traiNNer.utils.registry import SPANDREL_REGISTRY
@@ -13,12 +12,18 @@ from traiNNer.utils.registry import SPANDREL_REGISTRY
 class _CategoryAttention(nn.Module):
     """ATD category attention with a batched scatter back into image order."""
 
-    def __init__(self, original: AC_MSA) -> None:
+    def __init__(
+        self,
+        num_heads: int,
+        category_size: int,
+        logit_scale: nn.Parameter,
+        proj: nn.Module,
+    ) -> None:
         super().__init__()
-        self.num_heads = original.num_heads
-        self.category_size = original.category_size
-        self.logit_scale = original.logit_scale
-        self.proj = original.proj
+        self.num_heads = num_heads
+        self.category_size = category_size
+        self.logit_scale = logit_scale
+        self.proj = proj
 
     def forward(self, qkv: Tensor, sim: Tensor, x_size: tuple[int, int]) -> Tensor:
         b, n, c3 = qkv.shape
@@ -45,8 +50,17 @@ class ATD(SpandrelATD):
         super().__init__(**kwargs)
         self._training_mask = None
         for layer in self.modules():
-            if isinstance(layer, ATDTransformerLayer):
-                layer.add_module("attn_aca", _CategoryAttention(layer.attn_aca))
+            attention = getattr(layer, "attn_aca", None)
+            if attention is not None:
+                layer.add_module(
+                    "attn_aca",
+                    _CategoryAttention(
+                        attention.num_heads,
+                        attention.category_size,
+                        attention.logit_scale,
+                        attention.proj,
+                    ),
+                )
 
     def calculate_mask(self, x_size: Sequence[int]) -> Tensor:
         if not self.training or torch.compiler.is_compiling():

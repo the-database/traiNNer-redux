@@ -38,6 +38,7 @@ from traiNNer.utils import (
     scandir,
 )
 from traiNNer.utils.config import Config
+from traiNNer.utils.dist_util import any_rank
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import (
     free_space_gb_str,
@@ -407,13 +408,30 @@ def train_pipeline(root_path: str) -> None:
     epoch = start_epoch
     last_saved = current_iter
     last_validated = None
+    can_recover = False
+    stop_requested = False
     interrupted = False
 
     def request_stop(signum: int, frame: FrameType | None) -> None:
-        nonlocal interrupted
-        if not interrupted:
-            logger.info("Finishing the current optimizer update before saving.")
-            interrupted = True
+        nonlocal stop_requested
+        if not stop_requested:
+            stop_requested = True
+            if opt.dist:
+                logger.info("Stopping together at the next log or checkpoint boundary.")
+            else:
+                logger.info("Finishing the current optimizer update before saving.")
+
+    def save(step: int) -> None:
+        try:
+            model.save(epoch if step != -1 else -1, step)
+        except Exception:
+            if opt.dist:
+                any_rank(True)
+            raise
+        if opt.dist and any_rank(False):
+            raise RuntimeError(
+                f"A checkpoint write failed on another rank at update {step}."
+            )
 
     def validate(step: int) -> None:
         if opt.val is not None:
@@ -427,11 +445,15 @@ def train_pipeline(root_path: str) -> None:
     try:
         with closing(batches):
             for update in range(current_iter + 1, total_iters + 1):
-                if interrupted:
+                if stop_requested and not opt.dist:
+                    interrupted = True
                     break
                 model.set_current_iter(update)
+                next_epoch, consumed = epoch, model.samples_in_epoch
                 for microbatch in range(1, model.accum_iters + 1):
-                    epoch, model.samples_in_epoch, train_data = next(batches)
+                    next_epoch, consumed, train_data = next(batches)
+                    # A forward can mutate buffers even before the optimizer step.
+                    can_recover = False
                     model.feed_data(train_data)
                     apply_gradient = microbatch == model.accum_iters
                     with (
@@ -445,6 +467,16 @@ def train_pipeline(root_path: str) -> None:
 
                 model.update_learning_rate(update, warmup_iter=opt.train.warmup_iter)
                 current_iter = update
+                epoch, model.samples_in_epoch = next_epoch, consumed
+                can_recover = True
+                if not opt.dist:
+                    interrupted = stop_requested
+                elif (
+                    update % opt.logger.print_freq == 0
+                    or update % opt.logger.save_checkpoint_freq == 0
+                    or update == total_iters
+                ):
+                    interrupted = any_rank(stop_requested)
                 if update % opt.logger.print_freq == 0:
                     log_vars = {
                         "epoch": epoch,
@@ -465,7 +497,8 @@ def train_pipeline(root_path: str) -> None:
                         ),
                         free_space_gb_str(),
                     )
-                    model.save(epoch, update)
+                    can_recover = False
+                    save(update)
                     last_saved = update
                 if interrupted:
                     break
@@ -479,25 +512,29 @@ def train_pipeline(root_path: str) -> None:
                     last_validated = update
 
         if current_iter != last_saved:
-            model.save(epoch, current_iter)
+            can_recover = False
+            save(current_iter)
         if not interrupted:
-            model.save(epoch=-1, current_iter=-1)
+            save(-1)
             if val_loaders and last_validated != current_iter:
                 validate(current_iter)
-    except torch.OutOfMemoryError as exc:
-        raise RuntimeError(
-            "Ran out of VRAM during training. Reduce lq_size or batch_size_per_gpu."
-        ) from exc
     except Exception:
+        if can_recover and not opt.dist:
+            try:
+                model.save(epoch, current_iter)
+                logger.info("Recovered completed update %d.", current_iter)
+            except Exception:
+                logger.exception(
+                    "Recovery checkpoint for update %d failed.", current_iter
+                )
         logger.exception("Training failed after completed update %d.", current_iter)
         raise
     finally:
         signal.signal(signal.SIGINT, previous_handler)
         if tb_logger:
             tb_logger.close()
-
-    if model.opt.dist:
-        destroy_process_group()
+        if model.opt.dist:
+            destroy_process_group()
     elapsed = dt.timedelta(seconds=int(time.monotonic() - start_time))
     logger.info(
         "Training stopped at update %d. Time consumed: %s", current_iter, elapsed

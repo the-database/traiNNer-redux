@@ -2,11 +2,14 @@
 torchvision-free image helpers the workers use."""
 
 import os
+import signal
 import sys
+from functools import partial
 
 import pytest
 import torch
 from torch.utils.data import Dataset
+from traiNNer.data import worker_init_fn
 from traiNNer.data.parallel_spawn import parallel_spawn_context
 from traiNNer.data.prefetch_dataloader import (
     WORKER_THREAD_ENV,
@@ -28,6 +31,7 @@ class IndexDataset(Dataset):
             "i": torch.tensor(i),
             "omp": os.environ.get("OMP_NUM_THREADS", ""),
             "threads": torch.tensor(torch.get_num_threads()),
+            "ignores_interrupt": signal.getsignal(signal.SIGINT) == signal.SIG_IGN,
         }
 
 
@@ -76,18 +80,15 @@ def test_workers_get_one_thread_and_all_batches(
         batch_size=4,
         num_workers=4,
         multiprocessing_context=parallel_spawn_context(),
-        worker_init_fn=_init,
+        worker_init_fn=partial(worker_init_fn, num_workers=4, rank=0, seed=None),
     )
     batches = list(loader)
     assert torch.cat([b["i"] for b in batches]).tolist() == list(range(64))
     assert all(o == "1" for b in batches for o in b["omp"])
     assert all(int(t) == 1 for b in batches for t in b["threads"])
+    assert all(b["ignores_interrupt"].all() for b in batches)
     # the parent keeps its own environment
     assert "OMP_NUM_THREADS" not in os.environ
-
-
-def _init(worker_id: int) -> None:
-    torch.set_num_threads(1)
 
 
 def test_parallel_spawn_only_on_windows() -> None:

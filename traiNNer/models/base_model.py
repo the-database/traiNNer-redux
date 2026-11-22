@@ -1,13 +1,15 @@
 import functools
 import json
+import os
+import stat
 import time
 from abc import abstractmethod
 from collections import OrderedDict
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Any
+from uuid import uuid4
 
 import torch
 from ema_pytorch import EMA
@@ -41,15 +43,19 @@ from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
 
-def _write_checkpoint(path: Path, writer: Callable[[str], None]) -> None:
+def _write_checkpoint(
+    path: Path, writer: Callable[[str], None], *, optional: bool = False
+) -> None:
     """Publish a complete file so an interrupted save cannot become a resume point."""
     for attempt in range(1, 4):
         try:
-            with NamedTemporaryFile(
-                dir=path.parent, suffix=".tmp", delete=False
-            ) as file:
-                temporary = Path(file.name)
+            temporary = path.parent / f".{uuid4().hex}.tmp"
+            # Exclusive creation uses the process umask just like a normal checkpoint.
+            with temporary.open("xb"):
+                pass
             try:
+                if os.name == "posix" and path.exists():
+                    temporary.chmod(stat.S_IMODE(path.stat().st_mode))
                 writer(str(temporary))
                 temporary.replace(path)
             finally:
@@ -57,6 +63,13 @@ def _write_checkpoint(path: Path, writer: Callable[[str], None]) -> None:
             return
         except (OSError, RuntimeError) as exc:
             if attempt == 3:
+                if optional:
+                    get_root_logger().warning(
+                        "Could not update %s. The numbered checkpoint is available: %s",
+                        path,
+                        exc,
+                    )
+                    return
                 raise
             get_root_logger().warning("Retrying checkpoint %s after %s", path, exc)
             time.sleep(1)
@@ -530,13 +543,19 @@ class BaseModel:
             if checkpoint_format == "safetensors":
                 header = {"metadata": json.dumps(metadata)} if metadata else None
                 _write_checkpoint(
-                    path, lambda tmp: save_file(weights, tmp, metadata=header)
+                    path,
+                    lambda tmp: save_file(weights, tmp, metadata=header),
+                    optional=current_iter == -1,
                 )
             else:
                 payload = (
                     {"metadata": metadata, param_key: weights} if metadata else weights
                 )
-                _write_checkpoint(path, lambda tmp: torch.save(payload, tmp))
+                _write_checkpoint(
+                    path,
+                    lambda tmp: torch.save(payload, tmp),
+                    optional=current_iter == -1,
+                )
 
     def _print_different_keys_loading(
         self,

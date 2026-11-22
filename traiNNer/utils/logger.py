@@ -87,7 +87,8 @@ class MessageLogger:
         self.use_tb_logger = opt.logger.use_tb_logger
         self.tb_logger = tb_logger
 
-        self.start_time = self.last_time = time.monotonic()
+        self.start_time: float | None = None
+        self.last_time = time.monotonic()
         self.last_iter = start_iter
         self.logger = get_root_logger()
 
@@ -118,9 +119,15 @@ class MessageLogger:
             rate = (current_iter - self.last_iter) / (now - self.last_time)
             samples_per_sec = rate * log_vars.pop("samples_per_update")
             self.last_time, self.last_iter = now, current_iter
-            time_sec_avg = (now - self.start_time) / (current_iter - self.start_iter)
-            eta_sec = time_sec_avg * (self.max_iters - current_iter)
-            eta_str = str(dt.timedelta(seconds=int(eta_sec)))
+            if self.start_time is None:
+                self.start_time, self.start_iter = now, current_iter
+                eta_str = "warming up" if current_iter < self.max_iters else "0:00:00"
+            else:
+                time_sec_avg = (now - self.start_time) / (
+                    current_iter - self.start_iter
+                )
+                eta_sec = time_sec_avg * (self.max_iters - current_iter)
+                eta_str = str(dt.timedelta(seconds=int(eta_sec)))
             message += f"[performance: {rate:.3f} it/s, {samples_per_sec:.1f} samples/s] [eta: {eta_str}] "
 
         # peak VRAM
