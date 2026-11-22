@@ -27,6 +27,10 @@ def _model(tmp_path: Path, monkeypatch: MonkeyPatch) -> SRModel:
     cfg_path = tmp_path / "nonfinite.yml"
     cfg_path.write_text(yaml.safe_dump(cfg))
     monkeypatch.setattr(sys, "argv", ["", "-opt", str(cfg_path)])
+    # Config caches the first config it loads; start fresh, and let monkeypatch put
+    # the previous one back afterwards so other tests get their own
+    monkeypatch.setattr(Config, "_config", None)
+    monkeypatch.setattr(Config, "_args", None)
     opt, _ = Config.load_config_from_file(ROOT, is_train=True)
     opt.num_gpu = 0
     opt.path.pretrain_network_g = None
@@ -46,8 +50,8 @@ def _window(model: SRModel, update: int) -> None:
 def test_skipped_updates_are_counted_and_abort(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
-    # one test: the parsed config is a process-wide singleton, and building a second
-    # model from it in the same process fails in setup_schedulers
+    # one model for both checks: setup_schedulers pops "type" out of the config it
+    # was given, so a second model from the same config fails
     model = _model(tmp_path, monkeypatch)
     weights = [p.detach().clone() for p in model.net_g.parameters()]
     for update in range(1, 4):
