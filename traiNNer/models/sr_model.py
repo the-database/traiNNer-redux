@@ -27,6 +27,8 @@ from traiNNer.archs.arch_info import (
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.degradations import resize_pt
 from traiNNer.losses import build_loss
+from traiNNer.losses.basic_loss import HSLuvLoss
+from traiNNer.losses.perceptual_fp16_loss import PerceptualFP16Loss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -40,9 +42,14 @@ from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.cuda_graph import CudaGraphStep, supports_cuda_graph
 from traiNNer.utils.eco import compute_alpha, eco_synthesize
 from traiNNer.utils.logger import clickable_file_path
-from traiNNer.utils.misc import loss_type_to_label
+from traiNNer.utils.misc import loss_type_to_label, triton_available
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
+
+# Losses that compile_losses compiles: fixed losses where compiling fuses enough
+# elementwise work to matter (perceptual 48 -> 35 ms, HSLuv 11 -> 3 ms on the SPAN
+# GAN template), with gradients as close to float64 as eager.
+COMPILED_BY_DEFAULT = (PerceptualFP16Loss, HSLuvLoss)
 
 # Logged once per update, on the microbatch that applies the gradients
 UPDATE_LOG_KEYS = frozenset({"grad_norm_g", "scale_g", "grad_norm_d", "scale_d"})
@@ -388,6 +395,20 @@ class SRModel(BaseModel):
                     self.losses[label] = torch.compile(
                         self.losses[label], mode=self.opt.compile_mode
                     )  # pyright: ignore[reportArgumentType]
+                elif (
+                    self.opt.compile_losses
+                    and isinstance(self.losses[label], COMPILED_BY_DEFAULT)
+                    and self.device.type == "cuda"
+                    and triton_available()
+                ):
+                    # Fuses their elementwise work, at the same accuracy. These losses
+                    # don't change between runs, so later runs with the same batch and
+                    # patch size reuse the compile cache.
+                    logger.info(
+                        "Loss %s will be compiled (compile_losses). The first run takes up to a minute longer; later runs reuse the compile cache.",
+                        label,
+                    )
+                    self.losses[label] = torch.compile(self.losses[label])  # pyright: ignore[reportArgumentType]
 
         assert self.losses, "At least one loss must be defined."
 

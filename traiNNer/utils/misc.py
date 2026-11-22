@@ -297,6 +297,14 @@ def is_json_compatible(value: Any) -> bool:
     return False
 
 
+def triton_available() -> bool:
+    try:
+        import triton  # type: ignore # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def require_triton(message: str) -> None:
     try:
         import triton  # type: ignore # noqa: F401
