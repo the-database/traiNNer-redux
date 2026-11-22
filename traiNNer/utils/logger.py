@@ -83,16 +83,13 @@ class MessageLogger:
         self.exp_name = opt.name
         self.interval = opt.logger.print_freq
         self.start_iter = start_iter
-        self.accum_iters = opt.datasets["train"].accum_iter
         self.max_iters = opt.train.total_iter
         self.use_tb_logger = opt.logger.use_tb_logger
         self.tb_logger = tb_logger
 
-        self.start_time = time.time()
+        self.start_time = self.last_time = time.monotonic()
+        self.last_iter = start_iter
         self.logger = get_root_logger()
-
-    def reset_start_time(self) -> None:
-        self.start_time = time.time()
 
     @master_only
     def __call__(self, log_vars: dict[str, Any]) -> None:
@@ -103,8 +100,7 @@ class MessageLogger:
                 epoch (int): Epoch number.
                 iter (int): Current iteration.
                 lrs (list): List of learning rates.
-                time (float): Iteration time.
-                data_time (float): Data loading time for each iteration.
+                samples_per_update (int): Global effective batch size.
         """
         # epoch, current iteration, and learning rates
         epoch = log_vars.pop("epoch")
@@ -116,16 +112,16 @@ class MessageLogger:
         message += ", ".join([f"{v:.3e}" for v in lrs]) + ")] "
 
         # performance, eta
-        if "time" in log_vars:
-            iter_time = 1 / (log_vars.pop("time") * self.accum_iters)
-            log_vars.pop("data_time")
-
-            total_time = time.time() - self.start_time
-            time_sec_avg = total_time / (current_iter - self.start_iter + 1)
-            eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
+        if "samples_per_update" in log_vars:
+            torch.cuda.current_stream().synchronize()
+            now = time.monotonic()
+            rate = (current_iter - self.last_iter) / (now - self.last_time)
+            samples_per_sec = rate * log_vars.pop("samples_per_update")
+            self.last_time, self.last_iter = now, current_iter
+            time_sec_avg = (now - self.start_time) / (current_iter - self.start_iter)
+            eta_sec = time_sec_avg * (self.max_iters - current_iter)
             eta_str = str(dt.timedelta(seconds=int(eta_sec)))
-
-            message += f"[performance: {iter_time:.3f} it/s] [eta: {eta_str}] "
+            message += f"[performance: {rate:.3f} it/s, {samples_per_sec:.1f} samples/s] [eta: {eta_str}] "
 
         # peak VRAM
         message += (
@@ -237,7 +233,7 @@ def get_root_logger(
         logger.setLevel(log_level_file)
         if log_file is not None:
             # add file handler
-            file_handler = logging.FileHandler(log_file, "w")
+            file_handler = logging.FileHandler(log_file, "w", encoding="utf-8")
             file_handler.setFormatter(logging.Formatter(format_str))
             file_handler.setLevel(log_level_file)
             logger.addHandler(file_handler)
@@ -256,7 +252,7 @@ def get_env_info() -> str:
     device_info = torch.cuda.get_device_properties(torch.cuda.current_device())
 
     # from traiNNer.version import __version__
-    msg = r"[italic red]:rocket:  traiNNer-redux: good luck! :rocket:[/]"
+    msg = "[bold]traiNNer-redux[/]"
     msg += (
         "\nSystem Information: "
         f"\n\tCurrent GPU: "

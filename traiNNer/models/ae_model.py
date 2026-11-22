@@ -287,7 +287,6 @@ class AEModel(BaseModel):
         assert self.net_ae is not None
 
         n_samples = self.gt.shape[0]
-        self.loss_samples += n_samples
 
         with torch.autocast(
             device_type=self.device.type, dtype=self.amp_dtype, enabled=self.use_amp
@@ -307,13 +306,13 @@ class AEModel(BaseModel):
                         )
                         * loss.loss_weight
                     )
-                    l_ae_total += l_ae_loss / self.accum_iters
+                    l_ae_total += l_ae_loss
                     loss_dict[f"{label}_{output_type}"] = l_ae_loss
 
             # add total generator loss for tensorboard tracking
             loss_dict["l_ae_total"] = l_ae_total
 
-        self.scaler_ae.scale(l_ae_total).backward()
+        self.scaler_ae.scale(l_ae_total / self.accum_iters).backward()
         if apply_gradient:
             if self.grad_clip:
                 self.scaler_ae.unscale_(self.optimizer_ae)
@@ -323,13 +322,7 @@ class AEModel(BaseModel):
             update_grad_scaler(self.scaler_ae, self.use_loss_scaling)
             self.optimizer_ae.zero_grad()
 
-        for key, value in loss_dict.items():
-            val = (
-                value
-                if isinstance(value, float)
-                else value.to(dtype=torch.float32).detach()
-            )
-            self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
+        self.accumulate_log(loss_dict, n_samples)
 
         # The EMA also updates after a step the GradScaler skipped. The weights didn't
         # change, so that update only moves the EMA toward the same weights again.

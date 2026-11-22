@@ -1,9 +1,12 @@
+import pickle
+import random
 from os import path as osp
 from pathlib import Path
 
 import cv2
 import msgspec
 import numpy as np
+import torch
 from traiNNer.data.paired_image_dataset import PairedImageDataset
 from traiNNer.utils.options import derive_train_patch_size
 from traiNNer.utils.redux_options import DatasetOptions
@@ -167,3 +170,38 @@ def test_full_frame_crop_skips_rotation(tmp_path: Path) -> None:
         assert "lq" in result and "gt" in result
         assert result["lq"].shape == (3, 32, 48)
         assert result["gt"].shape == (3, 64, 96)
+
+
+def test_decoded_cache_preserves_random_crops_and_worker_budget() -> None:
+    opt = DatasetOptions(
+        name="cache",
+        type="PairedImageDataset",
+        dataroot_gt=["datasets/train/dataset1/hr"],
+        dataroot_lq=["datasets/train/dataset1/lr"],
+        scale=4,
+        gt_size=(128, 64),
+        phase="train",
+    )
+    reference = PairedImageDataset(opt)
+    cached = PairedImageDataset(msgspec.structs.replace(opt, decoded_cache_mib=1))
+    previous = random.getstate()
+    try:
+        for seed, index in enumerate([0, 0, 1, 0]):
+            random.seed(seed)
+            expected = reference[index]
+            random.seed(seed)
+            actual = cached[index]
+            assert (
+                "lq" in actual
+                and "lq" in expected
+                and "gt" in actual
+                and "gt" in expected
+            )
+            torch.testing.assert_close(actual["lq"], expected["lq"], atol=0, rtol=0)
+            torch.testing.assert_close(actual["gt"], expected["gt"], atol=0, rtol=0)
+            assert 0 < cached._decoded_bytes <= 2**20  # noqa: SLF001
+    finally:
+        random.setstate(previous)
+    worker = pickle.loads(pickle.dumps(cached))
+    assert not worker._decoded  # noqa: SLF001
+    assert worker[0]["lq"].shape == (3, 16, 32)

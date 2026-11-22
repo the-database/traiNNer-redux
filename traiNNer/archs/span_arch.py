@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Any, Literal, Self
+from typing import Any
 
 import torch
-import torch.nn.functional as F  # noqa: N812
 from spandrel.util import store_hyperparameters
 from torch import Tensor, nn
 
+from traiNNer.archs.conv3xc import Conv3XC
 from traiNNer.utils.registry import ARCH_REGISTRY, SPANDREL_REGISTRY
 
 
@@ -64,128 +64,6 @@ def pixelshuffle_block(
     return sequential(conv, pixel_shuffle)
 
 
-class Conv3XC(nn.Module):
-    def __init__(
-        self,
-        c_in: int,
-        c_out: int,
-        gain1: int = 1,
-        gain2: int = 0,
-        s: int = 1,
-        bias: Literal[True] = True,
-        relu: bool = False,
-    ) -> None:
-        super().__init__()
-        self.weight_concat = None
-        self.bias_concat = None
-        self.update_params_flag = False
-        self.stride = s
-        self.has_relu = relu
-        gain = gain1
-
-        self.sk = nn.Conv2d(
-            in_channels=c_in,
-            out_channels=c_out,
-            kernel_size=1,
-            padding=0,
-            stride=s,
-            bias=bias,
-        )
-        self.conv = nn.Sequential(
-            nn.Conv2d(
-                in_channels=c_in,
-                out_channels=c_in * gain,
-                kernel_size=1,
-                padding=0,
-                bias=bias,
-            ),
-            nn.Conv2d(
-                in_channels=c_in * gain,
-                out_channels=c_out * gain,
-                kernel_size=3,
-                stride=s,
-                padding=0,
-                bias=bias,
-            ),
-            nn.Conv2d(
-                in_channels=c_out * gain,
-                out_channels=c_out,
-                kernel_size=1,
-                padding=0,
-                bias=bias,
-            ),
-        )
-
-        self.eval_conv = nn.Conv2d(
-            in_channels=c_in,
-            out_channels=c_out,
-            kernel_size=3,
-            padding=1,
-            stride=s,
-            bias=bias,
-        )
-
-        self.eval_conv.weight.requires_grad = False
-        self.eval_conv.bias.requires_grad = False  # pyright: ignore[reportOptionalMemberAccess]
-        self.update_params()
-
-    def update_params(self) -> None:
-        w1 = self.conv[0].weight.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        b1 = self.conv[0].bias.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        w2 = self.conv[1].weight.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        b2 = self.conv[1].bias.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        w3 = self.conv[2].weight.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        b3 = self.conv[2].bias.data.clone().detach()  # pyright: ignore[reportCallIssue]
-
-        w = (
-            F.conv2d(w1.flip(2, 3).permute(1, 0, 2, 3), w2, padding=2, stride=1)
-            .flip(2, 3)
-            .permute(1, 0, 2, 3)
-        )
-        b = (w2 * b1.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b2
-
-        self.weight_concat = (
-            F.conv2d(w.flip(2, 3).permute(1, 0, 2, 3), w3, padding=0, stride=1)
-            .flip(2, 3)
-            .permute(1, 0, 2, 3)
-        )
-        self.bias_concat = (w3 * b.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b3
-
-        sk_w = self.sk.weight.data.clone().detach()
-        sk_b = self.sk.bias.data.clone().detach()  # pyright: ignore[reportOptionalMemberAccess]
-        target_kernel_size = 3
-
-        h_pixels_to_pad = (target_kernel_size - 1) // 2
-        w_pixels_to_pad = (target_kernel_size - 1) // 2
-        sk_w = F.pad(
-            sk_w, [h_pixels_to_pad, h_pixels_to_pad, w_pixels_to_pad, w_pixels_to_pad]
-        )
-
-        self.weight_concat = self.weight_concat + sk_w
-        self.bias_concat = self.bias_concat + sk_b
-
-        self.eval_conv.weight.data = self.weight_concat.contiguous()
-        self.eval_conv.bias.data = self.bias_concat.contiguous()  # pyright: ignore[reportOptionalMemberAccess]
-
-    def train(self, mode: bool = True) -> Self:
-        super().train(mode)
-        if not mode:
-            self.update_params()
-        return self
-
-    def forward(self, x: Tensor) -> Tensor:
-        if self.training:
-            pad = 1
-            x_pad = F.pad(x, (pad, pad, pad, pad), "constant", 0)
-            out = self.conv(x_pad) + self.sk(x)
-        else:
-            out = self.eval_conv(x)
-
-        if self.has_relu:
-            out = F.leaky_relu(out, negative_slope=0.05)
-        return out
-
-
 class SPAB(nn.Module):
     def __init__(
         self,
@@ -193,6 +71,7 @@ class SPAB(nn.Module):
         mid_channels: int | None = None,
         out_channels: int | None = None,
         bias: bool = False,
+        fused_training: bool = False,
     ) -> None:
         super().__init__()
         if mid_channels is None:
@@ -201,9 +80,15 @@ class SPAB(nn.Module):
             out_channels = in_channels
 
         self.in_channels = in_channels
-        self.c1_r = Conv3XC(in_channels, mid_channels, gain1=2, s=1)
-        self.c2_r = Conv3XC(mid_channels, mid_channels, gain1=2, s=1)
-        self.c3_r = Conv3XC(mid_channels, out_channels, gain1=2, s=1)
+        self.c1_r = Conv3XC(
+            in_channels, mid_channels, gain1=2, s=1, fused_training=fused_training
+        )
+        self.c2_r = Conv3XC(
+            mid_channels, mid_channels, gain1=2, s=1, fused_training=fused_training
+        )
+        self.c3_r = Conv3XC(
+            mid_channels, out_channels, gain1=2, s=1, fused_training=fused_training
+        )
         self.act1 = torch.nn.SiLU(inplace=True)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
@@ -241,9 +126,11 @@ class SPAN(nn.Module):
         norm: bool = True,
         img_range: float = 255.0,
         rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
+        fused_training: bool = False,
     ) -> None:
         super().__init__()
 
+        self.hyperparameters.pop("fused_training", None)
         self.in_channels = num_in_ch
         self.out_channels = num_out_ch
         self.img_range = img_range
@@ -260,14 +147,30 @@ class SPAN(nn.Module):
         else:
             self.no_norm = None
 
-        self.conv_1 = Conv3XC(self.in_channels, feature_channels, gain1=2, s=1)
+        self.conv_1 = Conv3XC(
+            self.in_channels,
+            feature_channels,
+            gain1=2,
+            s=1,
+            fused_training=fused_training,
+        )
         for i in range(1, num_blocks + 1):
-            setattr(self, f"block_{i}", SPAB(feature_channels, bias=bias))
+            setattr(
+                self,
+                f"block_{i}",
+                SPAB(feature_channels, bias=bias, fused_training=fused_training),
+            )
 
         self.conv_cat = conv_layer(
             feature_channels * 4, feature_channels, kernel_size=1, bias=True
         )
-        self.conv_2 = Conv3XC(feature_channels, feature_channels, gain1=2, s=1)
+        self.conv_2 = Conv3XC(
+            feature_channels,
+            feature_channels,
+            gain1=2,
+            s=1,
+            fused_training=fused_training,
+        )
 
         self.upsampler = pixelshuffle_block(
             feature_channels, self.out_channels, upscale_factor=upscale
@@ -310,6 +213,7 @@ def span(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
+    fused_training: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -321,6 +225,7 @@ def span(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
+        fused_training=fused_training,
     )
 
 
@@ -335,6 +240,7 @@ def span_s(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
+    fused_training: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -346,6 +252,7 @@ def span_s(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
+        fused_training=fused_training,
     )
 
 
@@ -360,6 +267,7 @@ def span_f32(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
+    fused_training: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -371,6 +279,7 @@ def span_f32(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
+        fused_training=fused_training,
     )
 
 
@@ -385,6 +294,7 @@ def span_f64(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
+    fused_training: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -396,6 +306,7 @@ def span_f64(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
+        fused_training=fused_training,
     )
 
 
@@ -410,6 +321,7 @@ def span_f96(
     norm: bool = False,
     img_range: float = 255.0,
     rgb_mean: tuple[float, float, float] = (0.4488, 0.4371, 0.4040),
+    fused_training: bool = False,
 ) -> SPAN:
     return SPAN(
         upscale=scale,
@@ -421,4 +333,5 @@ def span_f96(
         norm=norm,
         img_range=img_range,
         rgb_mean=rgb_mean,
+        fused_training=fused_training,
     )

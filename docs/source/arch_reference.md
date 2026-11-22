@@ -1843,6 +1843,7 @@ bias: true
 norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
+fused_training: false
 ```
 #### span_f32
 
@@ -1857,6 +1858,7 @@ bias: true
 norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
+fused_training: false
 ```
 #### span_f64
 
@@ -1871,6 +1873,7 @@ bias: true
 norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
+fused_training: false
 ```
 #### span_f96
 
@@ -1885,6 +1888,7 @@ bias: true
 norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
+fused_training: false
 ```
 #### span_s
 
@@ -1899,6 +1903,7 @@ bias: true
 norm: false
 img_range: 255.0
 rgb_mean: [0.4488, 0.4371, 0.404]
+fused_training: false
 ```
 ### SPANF
 #### spanf
@@ -1910,6 +1915,20 @@ num_in_ch: 3
 num_out_ch: 3
 feature_channels: 32
 bias: true
+```
+### SPANF3
+#### spanf3
+
+
+```yaml
+type: spanf3
+num_in_ch: 3
+num_out_ch: 3
+feature_channels: 48
+num_blocks: 6
+bias: true
+unshuffle_mod: true
+fused_training: false
 ```
 ### SRFormer
 #### srformer

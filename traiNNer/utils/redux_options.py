@@ -23,6 +23,13 @@ class DatasetOptions(StrictStruct):
     ]
     type: str
     io_backend: dict[str, Any] = field(default_factory=lambda: {"type": "disk"})
+    decoded_cache_mib: Annotated[
+        int,
+        Meta(
+            ge=0,
+            description="MiB per data-loader worker for decoded PairedImageDataset images. Random crops and augmentation run on every visit. Zero disables the cache.",
+        ),
+    ] = 0
 
     num_worker_per_gpu: Annotated[
         int | None,

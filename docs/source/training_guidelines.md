@@ -2,6 +2,54 @@
 This page includes a summary of suggested guidelines to follow for training, and best practices based on research and community testing. Note these guidelines may not be optimal for every single architecture, where each may have their own individual quirks.
 
 
+## Training throughput
+
+On SPAN and SPANF3, `network_g.fused_training: true` composes the three convolution kernels and the skip connection on each forward pass. Only one convolution operates on the image. Autograd still updates the original branch weights, and existing checkpoints load with the same keys. Composition changes floating-point rounding. The option defaults to false.
+
+For repeated paired images, `datasets.train.decoded_cache_mib` retains color-converted images in RAM. Crops, rotations, flips and normalization still run for each sample. The budget applies per worker and per rank. An image larger than the budget follows the regular streaming path. Use persistent workers to retain cached images across epochs.
+
+This excerpt shows the settings for the eight-block, 64-feature SPANF3 model in an existing 2x paired-image training config.
+
+```yaml
+use_amp: true
+amp_bf16: true
+use_channels_last: true
+use_cuda_graph: true
+network_g:
+  type: spanf3
+  feature_channels: 64
+  num_blocks: 8
+  unshuffle_mod: true
+  fused_training: true
+datasets:
+  train:
+    decoded_cache_mib: 32
+```
+
+### RTX 5090 measurements
+
+The following runs used Windows, PyTorch 2.15.0+cu132, BF16, batch 16, 96×96 LR crops, AdamW, Charbonnier loss and CUDA graphs. Each ran through `train.py` for 100 updates, including PNG loading, augmentation, transfers, backward and optimizer updates. Rates cover updates 21–100. All five image pairs fit within 32 MiB per worker. Validation and EMA were disabled.
+
+| SPANF3 training | Decoded cache per worker | First run, LR crops/s | Final build, LR crops/s |
+| --- | ---: | ---: | ---: |
+| Original branches | Off | 589 | 584 |
+| Fused convolution | Off | 593 | 594 |
+| Original branches | 32 MiB | 1,309 | 1,336 |
+| Fused convolution | 32 MiB | 3,056 | 3,096 |
+
+With data already on the GPU, the same model and crop shape reached 1,356 crops/s with the branches and 3,385 with fusion using L1 loss and CUDA graphs. Shape and execution mode matter. In eager BF16 at batch 8, 64×64 LR crops, five blocks and 48 features, fusion reduced the rate from 514 to 457 crops/s. Cache gains also depend on how often a worker sees the same source image.
+
+As a short quality check, the 100-update checkpoints scored 20.05 dB with the original branches and 20.52 dB with fusion and caching. These are mean RGB PSNR values across three held-out images with bicubic 2x inputs and a two-pixel border crop. Time to a production quality target requires a longer run on the intended corpus.
+
+Run from the repository root in the training environment. The paired benchmark accepts a directory containing matching 2x `hr/` and `lr/` images via `--paired-root`. The GPU-resident benchmark checks that AdamW applied every timed update.
+
+```shell
+python -m scripts.benchmarking.benchmark_paired_training
+python -m scripts.benchmarking.benchmark_span_training --preset balanced --batch-size 16 --lr-size 96 --cuda-graph
+```
+
+The training log reports completed accumulation windows per second and samples per second. DDP reduces gradients across ranks on the final microbatch of each window. Numbered checkpoints record the consumed sampler position, including at the final update. Older checkpoints resume at the start of their saved epoch. Workers reseed random augmentation when a run resumes.
+
 ## Background
 Super resolution methods generally fall into two categories: fidelity oriented and perceptual oriented.
 

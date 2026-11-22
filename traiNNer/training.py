@@ -2,13 +2,13 @@
 
 import argparse
 import datetime as dt
-import gc
 import logging
 import math
 import os
 import signal
-import sys
 import time
+from collections.abc import Generator, Iterable
+from contextlib import closing, nullcontext
 from os import path as osp
 from types import FrameType
 from typing import Any
@@ -26,7 +26,6 @@ from traiNNer.data.paired_video_dataset import PairedVideoDataset
 from traiNNer.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
 from traiNNer.models import build_model
 from traiNNer.utils import (
-    AvgTimer,
     MessageLogger,
     check_resume,
     get_env_info,
@@ -52,7 +51,7 @@ from traiNNer.utils.options import (
     format_patch_size,
 )
 from traiNNer.utils.redux_options import ReduxOptions
-from traiNNer.utils.types import TrainingState
+from traiNNer.utils.types import DataFeed, TrainingState
 from traiNNer.utils.win_qos import disable_power_throttling
 
 
@@ -98,6 +97,8 @@ def create_train_val_dataloader(
             derive_train_patch_size(dataset_opt, opt.scale, opt.high_order_degradation)
 
             train_set = build_dataset(dataset_opt)
+            if not len(train_set):
+                raise ValueError("The training dataset is empty.")
             dataset_enlarge_ratio = dataset_opt.dataset_enlarge_ratio
             if dataset_enlarge_ratio == "auto":
                 dataset_enlarge_ratio = max(
@@ -115,22 +116,19 @@ def create_train_val_dataloader(
                 seed=opt.manual_seed,
             )
 
-            iter_per_epoch = (
-                len(train_set)
-                * dataset_enlarge_ratio
-                // (
-                    dataset_opt.batch_size_per_gpu
-                    * dataset_opt.accum_iter
-                    * opt.world_size
-                )
-            )
-
+            batches_per_epoch = len(train_loader)
+            if batches_per_epoch == 0:
+                raise ValueError("Training needs at least one full batch per rank.")
+            if dataset_opt.accum_iter < 1:
+                raise ValueError("accum_iter must be positive.")
+            assert train_loader.batch_size is not None
             opt.switch_iter_per_epoch = len(train_set) // (
-                dataset_opt.batch_size_per_gpu * dataset_opt.accum_iter * opt.world_size
+                train_loader.batch_size * dataset_opt.accum_iter * opt.world_size
             )
-
             total_iters = int(opt.train.total_iter)
-            total_epochs = math.ceil(total_iters / (iter_per_epoch))
+            total_epochs = math.ceil(
+                total_iters * dataset_opt.accum_iter / batches_per_epoch
+            )
             assert dataset_opt.gt_size is not None, "gt_size is required for train set"
             logger.info(
                 "Training statistics for [b]%s[/b]:\n"
@@ -154,8 +152,8 @@ def create_train_val_dataloader(
                 format_patch_size(dataset_opt.lq_size),
                 "World size (gpu number):",
                 f"{opt.world_size:,}",
-                "Require iter per epoch:",
-                f"{iter_per_epoch:,}",
+                "Microbatches per epoch:",
+                f"{batches_per_epoch:,}",
                 "Total epochs:",
                 f"{total_epochs:,}",
                 "Total iters:",
@@ -194,6 +192,26 @@ def create_train_val_dataloader(
             raise ValueError(f"Dataset phase {phase} is not recognized.")
 
     return train_loader, train_sampler, val_loaders, total_epochs, total_iters
+
+
+def training_batches(
+    loader: Iterable[DataFeed],
+    sampler: EnlargedSampler,
+    batch_size: int,
+    epoch: int,
+    samples_in_epoch: int,
+) -> Generator[tuple[int, int, DataFeed], None, None]:
+    """Stream sampler epochs, resuming before decoding the next unconsumed image."""
+    if samples_in_epoch + batch_size > sampler.num_samples:
+        epoch += 1
+        samples_in_epoch = 0
+    while True:
+        sampler.set_epoch(epoch, start_index=samples_in_epoch)
+        for batch in loader:
+            samples_in_epoch += batch_size
+            yield epoch, samples_in_epoch, batch
+        epoch += 1
+        samples_in_epoch = 0
 
 
 def load_resume_state(opt: ReduxOptions) -> Any | None:
@@ -313,7 +331,7 @@ def train_pipeline(root_path: str) -> None:
     if opt.val:
         val_enabled = opt.val.val_enabled
 
-    train_loader, train_sampler, val_loaders, total_epochs, total_iters = (
+    train_loader, train_sampler, val_loaders, _, total_iters = (
         create_train_val_dataloader(opt, args, val_enabled, logger)
     )
 
@@ -353,231 +371,134 @@ def train_pipeline(root_path: str) -> None:
         start_epoch = resume_state["epoch"]
         current_iter = resume_state["iter"]
 
+        model.samples_in_epoch = resume_state.get("samples_in_epoch", 0)
         del resume_state
     else:
         start_epoch = 0
         current_iter = 0
 
-    current_accum_iter = 0
-
-    # create message logger (formatted outputs)
     msg_logger = MessageLogger(opt, current_iter, tb_logger)
-
-    # dataloader prefetcher
-    prefetch_mode = opt.datasets["train"].prefetch_mode
-    if prefetch_mode is None or prefetch_mode == "cpu":
-        prefetcher = CPUPrefetcher(train_loader)
-    elif prefetch_mode == "cuda":
-        prefetcher = CUDAPrefetcher(train_loader, opt)
-        logger.info("Use %s prefetch dataloader", prefetch_mode)
-        if not opt.datasets["train"].pin_memory:
+    train_opt = opt.datasets["train"]
+    if train_opt.prefetch_mode == "cuda":
+        if not train_opt.pin_memory:
             raise ValueError("Please set pin_memory=True for CUDAPrefetcher.")
+        prefetcher = CUDAPrefetcher(train_loader, opt)
+    elif train_opt.prefetch_mode in (None, "cpu"):
+        prefetcher = CPUPrefetcher(train_loader)
     else:
-        raise ValueError(
-            f"Wrong prefetch_mode {prefetch_mode}. Supported ones are: None, 'cuda', 'cpu'."
-        )
+        raise ValueError(f"Unknown training prefetch mode: {train_opt.prefetch_mode}")
 
-    # training
-    gc.collect()
-    torch.cuda.empty_cache()
-
-    logger.info("Start training from epoch: %d, iter: %d.", start_epoch, current_iter)
-    data_timer, iter_timer = AvgTimer(), AvgTimer()
-    start_time = time.time()
-
-    interrupt_received = False
-
-    def handle_keyboard_interrupt(signum: int, frame: FrameType | None) -> None:
-        nonlocal interrupt_received
-        if not interrupt_received:
-            logger.info("User interrupted. Preparing to save state...")
-            interrupt_received = True
-
-    signal.signal(signal.SIGINT, handle_keyboard_interrupt)
-    epoch = start_epoch
-    apply_gradient = False
-    crashed = False
-    train_data = None
+    if val_loaders and (
+        opt.val is None or not opt.val.val_freq or opt.val.val_freq < 1
+    ):
+        raise ValueError("Enabled validation needs a positive val_freq.")
+    assert train_loader.batch_size is not None
+    assert opt.world_size is not None
     assert model.opt.path.models is not None
+    batches = training_batches(
+        prefetcher,
+        train_sampler,
+        train_loader.batch_size,
+        start_epoch,
+        model.samples_in_epoch,
+    )
+    samples_per_update = train_loader.batch_size * model.accum_iters * opt.world_size
+    start_time = time.monotonic()
+    epoch = start_epoch
+    last_saved = current_iter
+    last_validated = None
+    interrupted = False
 
+    def request_stop(signum: int, frame: FrameType | None) -> None:
+        nonlocal interrupted
+        if not interrupted:
+            logger.info("Finishing the current optimizer update before saving.")
+            interrupted = True
+
+    def validate(step: int) -> None:
+        if opt.val is not None:
+            for val_loader in val_loaders:
+                model.validation(
+                    val_loader, step, tb_logger, opt.val.save_img, len(val_loaders) > 1
+                )
+
+    previous_handler = signal.signal(signal.SIGINT, request_stop)
+    logger.info("Start training from epoch: %d, iter: %d.", epoch, current_iter)
     try:
-        for epoch in range(start_epoch, total_epochs + 1):
-            train_sampler.set_epoch(epoch)
-            prefetcher.reset()
-            train_data = prefetcher.next()
-
-            while train_data is not None:
-                data_timer.record()
-
-                current_accum_iter += 1
-
-                if current_accum_iter >= model.accum_iters:
-                    current_accum_iter = 0
-                    current_iter += 1
-                    apply_gradient = True
-                else:
-                    apply_gradient = False
-
-                if current_iter > total_iters:
+        with closing(batches):
+            for update in range(current_iter + 1, total_iters + 1):
+                if interrupted:
                     break
-                # training
-                model.set_current_iter(current_iter)
-                model.feed_data(train_data)
-                try:
-                    model.optimize_parameters(
-                        current_iter, current_accum_iter, apply_gradient
-                    )
-                except RuntimeError as e:
-                    str_e = str(e).lower()
-                    # Check to see if its actually the CUDA out of memory error
-                    if "cuda out of memory" in str_e:
-                        # Collect garbage (clear VRAM)
-                        gc.collect()
-                        torch.cuda.empty_cache()
-                        raise RuntimeError(
-                            "Ran out of VRAM during training. Reduce lq_size or batch_size_per_gpu and try again. Ensure that no other VRAM-intensive programs are running."
-                        ) from None
-                    else:
-                        # Re-raise the exception if not an OOM error
-                        raise
-                # update learning rate
-                if apply_gradient:
-                    model.update_learning_rate(
-                        current_iter, warmup_iter=opt.train.warmup_iter
-                    )
-                iter_timer.record()
-                if current_iter == msg_logger.start_iter + 1:
-                    # reset start time in msg_logger for more accurate eta_time
-                    msg_logger.reset_start_time()
-                # log
-                if current_iter % opt.logger.print_freq == 0 and apply_gradient:
-                    log_vars = {"epoch": epoch, "iter": current_iter}
-                    log_vars.update({"lrs": model.get_current_learning_rate()})
-                    log_vars.update(
-                        {
-                            "time": iter_timer.get_avg_time(),
-                            "data_time": data_timer.get_avg_time(),
-                        }
-                    )
-                    log_vars.update(model.get_current_log())
+                model.set_current_iter(update)
+                for microbatch in range(1, model.accum_iters + 1):
+                    epoch, model.samples_in_epoch, train_data = next(batches)
+                    model.feed_data(train_data)
+                    apply_gradient = microbatch == model.accum_iters
+                    with (
+                        model.no_sync()
+                        if opt.dist and not apply_gradient
+                        else nullcontext()
+                    ):
+                        model.optimize_parameters(
+                            update, microbatch % model.accum_iters, apply_gradient
+                        )
+
+                model.update_learning_rate(update, warmup_iter=opt.train.warmup_iter)
+                current_iter = update
+                if update % opt.logger.print_freq == 0:
+                    log_vars = {
+                        "epoch": epoch,
+                        "iter": update,
+                        "lrs": model.get_current_learning_rate(),
+                        "samples_per_update": samples_per_update,
+                        **model.get_current_log(),
+                    }
                     model.reset_current_log()
                     msg_logger(log_vars)
 
-                # save models and training states
-                if (
-                    current_iter % opt.logger.save_checkpoint_freq == 0
-                    and apply_gradient
-                ):
+                if update % opt.logger.save_checkpoint_freq == 0 or interrupted:
                     logger.info(
-                        "Saving models and training states to %s. Free space: %s",
+                        "Saving update %d to %s. Free space: %s",
+                        update,
                         clickable_file_path(
                             model.opt.path.models, "experiments folder"
                         ),
                         free_space_gb_str(),
                     )
-                    model.save(
-                        epoch,
-                        current_iter,
-                    )
-
-                # validation
-                if opt.val is not None:
-                    assert opt.val.val_freq is not None, (
-                        "val_freq must be defined under the val section"
-                    )
-                    if current_iter % opt.val.val_freq == 0 and apply_gradient:
-                        multi_val_datasets = len(val_loaders) > 1
-                        for val_loader in val_loaders:
-                            model.validation(
-                                val_loader,
-                                current_iter,
-                                tb_logger,
-                                opt.val.save_img,
-                                multi_val_datasets,
-                            )
-
-                data_timer.start()
-                iter_timer.start()
-                train_data = prefetcher.next()
-
-                if interrupt_received:
+                    model.save(epoch, update)
+                    last_saved = update
+                if interrupted:
                     break
+                if (
+                    val_loaders
+                    and opt.val
+                    and opt.val.val_freq
+                    and update % opt.val.val_freq == 0
+                ):
+                    validate(update)
+                    last_validated = update
 
-            # end of iter
-            if interrupt_received:
-                break
-        # end of epoch
+        if current_iter != last_saved:
+            model.save(epoch, current_iter)
+        if not interrupted:
+            model.save(epoch=-1, current_iter=-1)
+            if val_loaders and last_validated != current_iter:
+                validate(current_iter)
+    except torch.OutOfMemoryError as exc:
+        raise RuntimeError(
+            "Ran out of VRAM during training. Reduce lq_size or batch_size_per_gpu."
+        ) from exc
     except Exception:
-        logger.exception("Training crashed")
-        crashed = True
-        interrupt_received = True
+        logger.exception("Training failed after completed update %d.", current_iter)
+        raise
+    finally:
+        signal.signal(signal.SIGINT, previous_handler)
+        if tb_logger:
+            tb_logger.close()
 
-    # epoch was completed, increment it to set the correct epoch count when interrupted
-    if train_data is None:
-        epoch += 1
-
-    consumed_time = str(dt.timedelta(seconds=int(time.time() - start_time)))
-
-    if interrupt_received:
-        # discard partially accumulated iters
-        if not apply_gradient or crashed:
-            current_iter -= 1
-
-        if current_iter > 0:
-            # Skip redundantly saving another checkpoint on Ctrl+C if the latest
-            # scheduled checkpoint was written less than 60 seconds ago
-            skip_save = False
-            try:
-                models_dir = model.opt.path.models
-                latest_mtime = -1.0
-                for entry in os.scandir(models_dir):
-                    # Validate checkpoint extension and ensure it's not zero-byte
-                    if entry.is_file() and entry.name.rsplit(".", 1)[-1] in (
-                        "pth",
-                        "safetensors",
-                    ):
-                        stat = entry.stat()
-                        if stat.st_size > 0 and stat.st_mtime > latest_mtime:
-                            latest_mtime = stat.st_mtime
-                if latest_mtime > 0 and (time.time() - latest_mtime) < 60:
-                    skip_save = True
-            except OSError:
-                skip_save = False
-
-            if skip_save:
-                logger.info(
-                    "A checkpoint in %s was written less than a minute ago; won't save a new one. "
-                    "Stopped at epoch: %d, iter: %d.",
-                    clickable_file_path(model.opt.path.models, "experiments folder"),
-                    epoch,
-                    current_iter,
-                )
-            else:
-                logger.info(
-                    "Saving models and training states to %s for epoch: %d, iter: %d.",
-                    clickable_file_path(model.opt.path.models, "experiments folder"),
-                    epoch,
-                    current_iter,
-                )
-                model.save(epoch, current_iter)
-        # After a crash the other ranks may be blocked in a collective or barrier
-        # waiting for this rank, and destroy_process_group would wait on them.
-        # Skip it and exit non-zero so torchrun stops the other ranks.
-        if model.opt.dist and not crashed:
-            destroy_process_group()
-        logger.info("Training stopped. Time consumed: %s", consumed_time)
-        sys.exit(1 if crashed else 0)
-
-    logger.info("End of training. Time consumed: %s", consumed_time)
-    logger.info("Save the latest model.")
-    model.save(
-        epoch=-1,
-        current_iter=-1,
-    )  # -1 stands for the latest
-    if opt.val is not None:
-        for val_loader in val_loaders:
-            model.validation(val_loader, current_iter, tb_logger, opt.val.save_img)
-    if tb_logger:
-        tb_logger.close()
     if model.opt.dist:
         destroy_process_group()
+    elapsed = dt.timedelta(seconds=int(time.monotonic() - start_time))
+    logger.info(
+        "Training stopped at update %d. Time consumed: %s", current_iter, elapsed
+    )

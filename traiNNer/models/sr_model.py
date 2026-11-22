@@ -639,7 +639,6 @@ class SRModel(BaseModel):
         assert self.gt is not None
 
         n_samples = self.gt.shape[0]
-        self.loss_samples += n_samples
 
         inputs = {"lq": self.lq, "gt": self.gt}
         if self._real_hr is not None:
@@ -667,14 +666,7 @@ class SRModel(BaseModel):
                 "eco_alpha": torch.tensor(self._eco_alpha, device=self.device),
             }
 
-        for key, value in loss_dict.items():
-            val = value
-            if isinstance(value, Tensor):
-                val = value.detach().to(dtype=torch.float32)
-                if l_g_finite is not None:
-                    # leave a skipped non-finite step out of the logged averages
-                    val = torch.where(l_g_finite, val, 0.0)
-            self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
+        self.accumulate_log(loss_dict, n_samples, l_g_finite)
 
         # The EMA also updates after a step the GradScaler skipped. The weights didn't
         # change, so that update only moves the EMA toward the same weights again.
@@ -784,17 +776,17 @@ class SRModel(BaseModel):
                             # comparing a tensor here would sync with the GPU
                             if isinstance(loss_val, Tensor) or loss_val > 0:
                                 weighted_loss_val = loss_val * abs(loss.loss_weight)
-                                l_g_total += weighted_loss_val / self.accum_iters
+                                l_g_total += weighted_loss_val
                                 loss_dict[f"{label}_{sublabel}"] = weighted_loss_val
                     else:
                         weighted_l_g_loss = l_g_loss * abs(loss.loss_weight)
-                        l_g_total += weighted_l_g_loss / self.accum_iters
+                        l_g_total += weighted_l_g_loss
                         loss_dict[label] = weighted_l_g_loss
 
                 # A non-finite loss makes the grads non-finite, and the GradScaler then
                 # skips the optimizer step on the GPU. check_nonfinite_losses()
                 # reads the streak back at the log interval.
-                l_g_backward, l_g_finite = guard_nonfinite(l_g_total)
+                l_g_backward, l_g_finite = guard_nonfinite(l_g_total / self.accum_iters)
                 self.nonfinite_streak.add_(1).mul_(~l_g_finite)
                 self.nonfinite_steps.add_(~l_g_finite)
 

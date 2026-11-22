@@ -46,141 +46,97 @@ class DataLoader(TorchDataLoader):
             return super()._get_iterator()
 
 
-class PrefetchGenerator(threading.Thread):
-    """A general prefetch generator.
+def _prefetch(source: Iterator, depth: int) -> Iterator:
+    """Read ahead in order and surface decoding errors on the consumer thread."""
+    pending = queue.Queue(depth)
+    stopped = threading.Event()
+    end = object()
+    error = None
 
-    Reference: https://stackoverflow.com/questions/7323664/python-generator-pre-fetch
+    def produce() -> None:
+        nonlocal error
+        try:
+            while not stopped.is_set():
+                pending.put(next(source))
+        except StopIteration:
+            pass
+        except BaseException as exc:  # noqa: BLE001 - re-raised on the consumer thread
+            error = exc
+        finally:
+            if not stopped.is_set():
+                pending.put(end)
 
-    Args:
-        generator: Python generator.
-        num_prefetch_queue (int): Number of prefetch queue.
-    """
-
-    def __init__(self, generator: TorchDataLoader, num_prefetch_queue: int) -> None:
-        threading.Thread.__init__(self)
-        self.queue = queue.Queue(num_prefetch_queue)
-        self.generator = generator
-        self.daemon = True
-        self.start()
-
-    def run(self) -> None:
-        for item in self.generator:
-            self.queue.put(item)
-        self.queue.put(None)
-
-    def __next__(self) -> Any:
-        next_item = self.queue.get()
-        if next_item is None:
-            raise StopIteration
-        return next_item
-
-    def __iter__(self) -> Iterator:
-        return self
+    worker = threading.Thread(target=produce, daemon=True)
+    worker.start()
+    try:
+        while (item := pending.get()) is not end:
+            yield item
+        if error is not None:
+            raise error
+    finally:
+        stopped.set()
+        # Release a producer blocked on a full queue when training ends mid-epoch.
+        try:
+            pending.get_nowait()
+        except queue.Empty:
+            pass
+        worker.join()
 
 
 class PrefetchDataLoader(DataLoader):
-    """Prefetch version of dataloader.
-
-    Reference: https://github.com/IgorSusmelj/pytorch-styleguide/issues/5#
-
-    TODO:
-    Need to test on single gpu and ddp (multi-gpu). There is a known issue in
-    ddp.
-
-    Args:
-        num_prefetch_queue (int): Number of prefetch queue.
-        kwargs (dict): Other arguments for dataloader.
-    """
-
     def __init__(self, num_prefetch_queue: int, **kwargs) -> None:
-        self.num_prefetch_queue = num_prefetch_queue
         super().__init__(**kwargs)
+        self.num_prefetch_queue = num_prefetch_queue
 
-    def __iter__(self) -> PrefetchGenerator:  # type: ignore
-        return PrefetchGenerator(super().__iter__(), self.num_prefetch_queue)  # type: ignore
+    def __iter__(self) -> Iterator:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return _prefetch(super().__iter__(), self.num_prefetch_queue)
 
 
 class CPUPrefetcher:
-    """CPU prefetcher.
-
-    Args:
-        loader: Dataloader.
-    """
-
     def __init__(self, loader: TorchDataLoader) -> None:
         self.ori_loader = loader
-        self.loader = iter(loader)
+        self.loader: Iterator | None = None
+
+    def __iter__(self) -> Iterator:
+        return iter(self.ori_loader)
 
     def next(self) -> Any:
-        try:
-            return next(self.loader)
-        except StopIteration:
-            return None
+        if self.loader is None:
+            self.reset()
+        assert self.loader is not None
+        return next(self.loader, None)
 
     def reset(self) -> None:
-        self.loader = iter(self.ori_loader)
+        self.loader = iter(self)
 
 
-class CUDAPrefetcher:
-    """CUDA prefetcher.
-
-    Reference: https://github.com/NVIDIA/apex/issues/304#
-
-    It may consume more GPU memory.
-
-    Args:
-        loader: Dataloader.
-        opt (dict): Options.
-    """
+class CUDAPrefetcher(CPUPrefetcher):
+    """Queue the next transfer while the previous batch executes on the GPU."""
 
     def __init__(self, loader: TorchDataLoader, opt: ReduxOptions) -> None:
-        self.ori_loader = loader
-        self.loader = iter(loader)
-        self.opt = opt
+        super().__init__(loader)
         self.stream = torch.cuda.Stream()
-        self.device = torch.device("cuda" if opt.num_gpu != 0 else "cpu")
-        self.batch = None
         self.memory_format = (
             torch.channels_last
             if opt.use_amp and opt.use_channels_last
             else torch.preserve_format
         )
-        self.preload()
 
-    def preload(self) -> None:
-        try:
-            self.batch = next(self.loader)  # self.batch is a dict
-        except StopIteration:
-            self.batch = None
-            return
-        # put tensors to gpu
-        with torch.cuda.stream(self.stream):  # type: ignore
-            for k, v in self.batch.items():
-                if torch.is_tensor(v):
-                    # channels_last only applies to 4D image batches, not to e.g.
-                    # the 3D blur kernels of OTF datasets or 5D video clips
-                    self.batch[k] = v.to(
-                        device=self.device,
-                        memory_format=self.memory_format
-                        if v.dim() == 4
-                        else torch.preserve_format,
-                        non_blocking=True,
-                    )
-
-    def next(self) -> Any:
-        current_stream = torch.cuda.current_stream()
-        current_stream.wait_stream(self.stream)
-        batch = self.batch
-        if batch is not None:
-            # The batch was allocated on self.stream but is consumed on the current
-            # stream. Without record_stream, the caching allocator could hand its
-            # memory to the next preload while the current stream is still reading it.
-            for v in batch.values():
-                if torch.is_tensor(v) and v.is_cuda:
-                    v.record_stream(current_stream)
-        self.preload()
-        return batch
-
-    def reset(self) -> None:
-        self.loader = iter(self.ori_loader)
-        self.preload()
+    def __iter__(self) -> Iterator:
+        for batch in self.ori_loader:
+            with torch.cuda.stream(self.stream):
+                for key, value in batch.items():
+                    if isinstance(value, torch.Tensor):
+                        batch[key] = value.to(
+                            device=self.stream.device,
+                            memory_format=self.memory_format
+                            if value.ndim == 4
+                            else torch.preserve_format,
+                            non_blocking=True,
+                        )
+            consumer = torch.cuda.current_stream(self.stream.device)
+            consumer.wait_stream(self.stream)
+            for value in batch.values():
+                if isinstance(value, torch.Tensor):
+                    value.record_stream(consumer)
+            yield batch

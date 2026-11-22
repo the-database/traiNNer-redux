@@ -101,7 +101,6 @@ def build_dataloader(
             "num_workers": num_workers,
             "sampler": sampler,
             "drop_last": True,
-            "prefetch_factor": dataset_opt.prefetch_factor,
         }
         if sampler is None:
             dataloader_args["shuffle"] = True
@@ -112,8 +111,9 @@ def build_dataloader(
             seed=seed,
         )
 
-        dataloader_args["persistent_workers"] = dataset_opt.persistent_workers
         if num_workers > 0:
+            dataloader_args["prefetch_factor"] = dataset_opt.prefetch_factor
+            dataloader_args["persistent_workers"] = dataset_opt.persistent_workers
             mp_context = parallel_spawn_context()
             if mp_context is not None:
                 dataloader_args["multiprocessing_context"] = mp_context
