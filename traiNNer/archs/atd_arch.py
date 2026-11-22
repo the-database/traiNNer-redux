@@ -1,8 +1,65 @@
+import math
 from collections.abc import Sequence
+from typing import Any
 
-from spandrel.architectures.ATD import ATD
+import torch
+from spandrel.architectures.ATD import ATD as SpandrelATD  # noqa: N811
+from spandrel.architectures.ATD.__arch.atd_arch import AC_MSA, ATDTransformerLayer
+from torch import Tensor, nn
 
 from traiNNer.utils.registry import SPANDREL_REGISTRY
+
+
+class _CategoryAttention(nn.Module):
+    """ATD category attention with a batched scatter back into image order."""
+
+    def __init__(self, original: AC_MSA) -> None:
+        super().__init__()
+        self.num_heads = original.num_heads
+        self.category_size = original.category_size
+        self.logit_scale = original.logit_scale
+        self.proj = original.proj
+
+    def forward(self, qkv: Tensor, sim: Tensor, x_size: tuple[int, int]) -> Tensor:
+        b, n, c3 = qkv.shape
+        c = c3 // 3
+        size = min(n, self.category_size)
+        order = sim.argmax(dim=-1).argsort(dim=-1, stable=False).unsqueeze(-1)
+        grouped = qkv.gather(1, order.expand_as(qkv))
+        pad = -n % size
+        if not self.training or pad:
+            grouped = torch.cat((grouped, grouped[:, n - pad :].flip((1,))), dim=1)
+        q, k, v = (
+            grouped.reshape(b, -1, size, 3, self.num_heads, c // self.num_heads)
+            .permute(3, 0, 1, 4, 2, 5)
+            .unbind(0)
+        )
+        scale = self.logit_scale.clamp(max=math.log(100.0)).exp()
+        weights = ((q @ k.transpose(-1, -2)) * scale).softmax(dim=-1)
+        y = (weights @ v).permute(0, 1, 3, 2, 4).reshape(b, n + pad, c)[:, :n]
+        return self.proj(torch.empty_like(y).scatter_(1, order.expand_as(y), y))
+
+
+class ATD(SpandrelATD):
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._training_mask = None
+        for layer in self.modules():
+            if isinstance(layer, ATDTransformerLayer):
+                layer.add_module("attn_aca", _CategoryAttention(layer.attn_aca))
+
+    def calculate_mask(self, x_size: Sequence[int]) -> Tensor:
+        if not self.training or torch.compiler.is_compiling():
+            return super().calculate_mask(x_size)
+        device = self.get_buffer("relative_position_index_SA").device
+        key = (tuple(x_size), device, torch.get_default_dtype())
+        if self._training_mask is not None and self._training_mask[0] == key:
+            return self._training_mask[1]
+        with device:
+            mask = super().calculate_mask(x_size)
+        if not torch.is_inference_mode_enabled():
+            self._training_mask = (key, mask)
+        return mask
 
 
 @SPANDREL_REGISTRY.register()

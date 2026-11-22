@@ -50,6 +50,41 @@ python -m scripts.benchmarking.benchmark_span_training --preset balanced --batch
 
 The training log reports completed accumulation windows per second and samples per second. DDP reduces gradients across ranks on the final microbatch of each window. Numbered checkpoints record the consumed sampler position, including at the final update. Older checkpoints resume at the start of their saved epoch. Workers reseed random augmentation when a run resumes.
 
+### Training speed across image SR architectures
+
+These runs used the full registry presets on one RTX 5090, with 2× upscaling, batch 2, 64×64 LR crops, BF16, channels-last tensors, AdamW and Charbonnier loss. Both columns include loading, augmentation, GPU transfer, backward and the optimizer. The reference used commit `285b24f` in eager mode. The updated trainer used CUDA graph replay and 32 MiB of decoded-image cache in each of four workers. Compact and SuperUltraCompact also used `network_g.fused_training: true`. SPAN-S used its original training branches in both columns.
+
+| Generator | Reference LR crops/s | Updated LR crops/s | Speedup |
+| --- | ---: | ---: | ---: |
+| HAT-L | 7.15 | 16.47 | 2.30× |
+| DAT2 | 9.25 | 34.50 | 3.73× |
+| Compact | 339.73 | 2,237.14 | 6.59× |
+| SuperUltraCompact | 485.68 | 3,672.69 | 7.56× |
+| SwinIR-M | 13.80 | 73.04 | 5.29× |
+| ATD | 6.99 | 18.47 | 2.64× |
+| DRCT-L | 14.07 | 28.77 | 2.04× |
+| ESRGAN | 26.15 | 126.79 | 4.85× |
+| RealPLKSR | 44.25 | 143.01 | 3.23× |
+| MoSR | 58.98 | 185.10 | 3.14× |
+| ArtCNN R8F64 | 284.77 | 1,377.00 | 4.84× |
+| SPAN-S | 114.94 | 533.28 | 4.64× |
+
+Each rate is total samples divided by elapsed time across four equal-length windows after warmup. Windows contained 5–30 updates. All five repeatedly sampled PNG pairs fit in each worker's cache. Cache hit rate and batch size matter most for the lightweight models. A fresh compile, validation, checkpoints and EMA are outside the timed windows.
+
+- **HAT.** HAT-L already selects FlexAttention on this GPU. Building the shifted-window mask on the GPU allows the trainer to record the step. The earlier version fell back to eager at capture. Directly gathering overlapping keys and values reduced one HAT-L overlap block's forward plus backward time from 1.84 to 1.48 ms at the same batch and crop. With graph replay off, the updated full model measured 7.30 crops/s.
+- **DAT and DAT-iLN.** The spatial branches pack queries, keys and values together. The convolution branches consume channels-last views. With graphs and caching on in both runs, full DAT2 rose from 31.02 to 34.50 crops/s. The iLN variant also passed the reference output and gradient check.
+- **Compact, UltraCompact and SuperUltraCompact.** The CUDA training option fuses convolution bias with the per-channel PReLU and its backward reductions. The first use requires a working PyTorch Inductor GPU backend. Existing checkpoints retain their convolution and slope parameters. With graphs and caching held fixed, Compact rose from 1,527 to 2,237 crops/s at batch 2, and from 3,663 to 4,786 at batch 8. The option defaults to false.
+- **SwinIR and ATD.** SwinIR now creates its shifted-window masks on the GPU during capture even when the crop differs from the preset's image size. ATD caches its training mask and restores category-sorted pixels in one batched scatter. Both models passed a replay check with changed input pixels.
+
+Spandrel loaded the saved HAT-L, DAT2 and Compact checkpoints. Mean RGB PSNR on three held-out bicubic image pairs, cropped by two border pixels, was 9.93 → 9.92 dB for HAT-L and 11.32 → 11.22 dB for DAT2 after 25 updates. Compact scored 22.7283 → 22.7288 dB after 150 updates. Measuring time to a target PSNR requires training to that target on the intended dataset.
+
+Run the comparison from the repository root. For a working dataset, pass `--paired-root` with matching `hr/` and `lr/` directories and set `--scale`, `--batch-size` and `--lr-size` to match the training job. The runner checks the training log for successful graph capture and skipped non-finite updates.
+
+```shell
+python -m scripts.benchmarking.benchmark_training --arch hat_l dat_2 swinir_m atd --cuda-graph --cache-mib 32
+python -m scripts.benchmarking.benchmark_training --arch compact superultracompact --cuda-graph --cache-mib 32 --network-options '{"fused_training":true}' --interval 30
+```
+
 ## Background
 Super resolution methods generally fall into two categories: fidelity oriented and perceptual oriented.
 

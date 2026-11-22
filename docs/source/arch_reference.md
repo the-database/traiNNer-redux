@@ -2012,6 +2012,7 @@ num_feat: 64
 num_conv: 16
 act_type: prelu
 learn_residual: true
+fused_training: false
 ```
 #### superultracompact
 
@@ -2024,6 +2025,7 @@ num_feat: 24
 num_conv: 8
 act_type: prelu
 learn_residual: true
+fused_training: false
 ```
 #### ultracompact
 
@@ -2036,6 +2038,7 @@ num_feat: 64
 num_conv: 8
 act_type: prelu
 learn_residual: true
+fused_training: false
 ```
 ### Sebica
 #### sebica

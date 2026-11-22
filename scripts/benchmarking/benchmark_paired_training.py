@@ -12,12 +12,14 @@ import yaml
 from PIL import Image
 
 
-def prepare_pairs(work: Path) -> None:
+def prepare_pairs(work: Path, scale: int = 2) -> None:
     for directory in ("hr", "lr"):
         (work / directory).mkdir()
     for source in sorted(Path("datasets/train/dataset1/hr").glob("*.png")):
         with Image.open(source) as image:
-            hr = image.convert("RGB").resize((512, 512), Image.Resampling.BICUBIC)
+            hr = image.convert("RGB").resize(
+                (256 * scale, 256 * scale), Image.Resampling.BICUBIC
+            )
             hr.save(work / "hr" / source.name)
             hr.resize((256, 256), Image.Resampling.BICUBIC).save(
                 work / "lr" / source.name
