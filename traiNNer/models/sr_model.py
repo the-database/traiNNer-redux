@@ -19,7 +19,10 @@ from tqdm import TqdmExperimentalWarning
 from tqdm.rich import tqdm
 
 from traiNNer.archs import build_network
-from traiNNer.archs.arch_info import ARCHS_WITHOUT_FP16
+from traiNNer.archs.arch_info import (
+    ARCHS_UNSTABLE_WITH_COMPILE_AND_CHK,
+    ARCHS_WITHOUT_FP16,
+)
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.degradations import resize_pt
 from traiNNer.losses import build_loss
@@ -82,6 +85,18 @@ class SRModel(BaseModel):
             )
 
         self.net_g = self.model_to_device(self.net_g, compile=self.opt.use_compile)
+        if (
+            self.opt.use_compile
+            and opt.network_g["type"].lower() in ARCHS_UNSTABLE_WITH_COMPILE_AND_CHK
+            and opt.network_g.get("use_chk")
+        ):
+            get_root_logger().warning(
+                "use_compile with %s and use_chk has given NaN losses on recent PyTorch "
+                "versions (an intermittent compiler bug). If training stops with NaN "
+                "losses, turn off use_compile and use use_cuda_graph, which gives a "
+                "similar speedup without compiling.",
+                opt.network_g["type"],
+            )
 
         # define teacher network
         if opt.network_g_teacher is not None:
