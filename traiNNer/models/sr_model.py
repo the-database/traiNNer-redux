@@ -681,7 +681,6 @@ class SRModel(BaseModel):
         assert self.gt is not None
 
         n_samples = self.gt.shape[0]
-        self.loss_samples += n_samples
 
         inputs = {"lq": self.lq, "gt": self.gt}
         if self._real_hr is not None:
@@ -709,19 +708,18 @@ class SRModel(BaseModel):
                 "eco_alpha": torch.tensor(self._eco_alpha, device=self.device),
             }
 
-        for key, value in loss_dict.items():
-            val = value
-            if isinstance(value, Tensor):
-                val = value.detach().to(dtype=torch.float32)
-                if l_g_finite is not None:
-                    # Leave skipped values out of the logged averages: a microbatch's
-                    # losses when they're non-finite, and an update's gradient norm
-                    # and loss scale when any microbatch of that update was.
-                    finite = (
-                        self.update_finite if key in UPDATE_LOG_KEYS else l_g_finite
-                    )
-                    val = torch.where(finite, val, 0.0)
-            self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
+        # Leave skipped values out of the logged averages: a microbatch's losses
+        # when they're non-finite, and an update's gradient norm and loss scale
+        # when any microbatch of that update was.
+        update_log = {k: v for k, v in loss_dict.items() if k in UPDATE_LOG_KEYS}
+        step_log = {k: v for k, v in loss_dict.items() if k not in UPDATE_LOG_KEYS}
+        self.accumulate_log(step_log, n_samples, l_g_finite)
+        if update_log:
+            self.accumulate_log(
+                update_log,
+                n_samples,
+                self.update_finite if l_g_finite is not None else None,
+            )
 
         # The EMA also updates after a step the GradScaler skipped. The weights didn't
         # change, so that update only moves the EMA toward the same weights again.
@@ -831,17 +829,17 @@ class SRModel(BaseModel):
                             # comparing a tensor here would sync with the GPU
                             if isinstance(loss_val, Tensor) or loss_val > 0:
                                 weighted_loss_val = loss_val * abs(loss.loss_weight)
-                                l_g_total += weighted_loss_val / self.accum_iters
+                                l_g_total += weighted_loss_val
                                 loss_dict[f"{label}_{sublabel}"] = weighted_loss_val
                     else:
                         weighted_l_g_loss = l_g_loss * abs(loss.loss_weight)
-                        l_g_total += weighted_l_g_loss / self.accum_iters
+                        l_g_total += weighted_l_g_loss
                         loss_dict[label] = weighted_l_g_loss
 
                 # A non-finite loss makes the grads non-finite, and the GradScaler then
                 # skips the optimizer step on the GPU. check_nonfinite_losses()
                 # reads the streak back at the log interval.
-                l_g_backward, l_g_finite = guard_nonfinite(l_g_total)
+                l_g_backward, l_g_finite = guard_nonfinite(l_g_total / self.accum_iters)
                 self.window_finite.logical_and_(l_g_finite)
                 if apply_gradient:
                     self.update_finite.copy_(self.window_finite)

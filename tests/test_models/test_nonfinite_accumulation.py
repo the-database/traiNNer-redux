@@ -60,9 +60,11 @@ def test_skipped_updates_are_counted_and_abort(
     assert int(model.nonfinite_steps) == 3
     for before, after in zip(weights, model.net_g.parameters(), strict=True):
         assert torch.equal(before, after)
-    # the skipped updates' gradient norm stays out of the average
+    # every update was skipped, so no gradient norm reaches the log, while the
+    # finite microbatches' losses still do
     log = model.get_current_log()
-    assert torch.isfinite(torch.as_tensor(log["grad_norm_g"]))
+    assert "grad_norm_g" not in log
+    assert torch.isfinite(torch.as_tensor(log["l_g_total"]))
     model.reset_current_log()
     # every update keeps being skipped, so the streak passes 10 and training stops
     for update in range(4, 13):

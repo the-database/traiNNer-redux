@@ -21,6 +21,7 @@ class DataFeed(TypedDict):
 class TrainingState(TypedDict):
     epoch: int
     iter: int
+    samples_in_epoch: NotRequired[int]
     optimizers: list[StateDict]
     schedulers: list[StateDict]
     scaler_g: NotRequired[StateDict]

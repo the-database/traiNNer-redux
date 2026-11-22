@@ -265,6 +265,11 @@
   Type: str
 
 
+### decoded_cache_mib
+
+  MiB per data-loader worker for decoded PairedImageDataset images. Random crops and augmentation run on every visit. Zero disables the cache.
+
+  Type: int
 ### num_worker_per_gpu
 
   Number of subprocesses to use for data loading with PyTorch dataloader.
