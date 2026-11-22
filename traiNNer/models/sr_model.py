@@ -1,3 +1,4 @@
+import importlib.util
 import os
 import shutil
 import warnings
@@ -410,6 +411,17 @@ class SRModel(BaseModel):
                     "CUDA graph enabled: the training step is recorded after %d warmup iterations.",
                     self.cuda_graph_step.warmup_steps,
                 )
+                # With the launches recorded once, LayerNorm's Triton kernels pay off;
+                # torch.compile fuses LayerNorm itself.
+                if not self.use_compile and importlib.util.find_spec("triton"):
+                    from traiNNer.ops.layer_norm import use_triton_layer_norm
+
+                    n_ln = use_triton_layer_norm(self.get_bare_model(self.net_g))
+                    if n_ln:
+                        logger.info(
+                            "CUDA graph: %d LayerNorm layers run on Triton kernels.",
+                            n_ln,
+                        )
             else:
                 logger.warning("use_cuda_graph is ignored: %s.", reason)
 
