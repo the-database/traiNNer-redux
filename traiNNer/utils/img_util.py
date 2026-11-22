@@ -9,7 +9,6 @@ import pyvips
 import torch
 from cv2.typing import MatLike
 from torch import Tensor
-from torchvision.utils import make_grid
 
 
 def img2batchedtensor(
@@ -252,6 +251,10 @@ def tensor2img(
 
     n_dim = _tensor.dim()
     if n_dim == 4:
+        # imported here: torchvision takes 1.5 s to import, which every DataLoader
+        # worker would pay on Windows
+        from torchvision.utils import make_grid
+
         img_np = make_grid(
             _tensor, nrow=int(math.sqrt(_tensor.size(0))), normalize=False
         ).numpy()
@@ -443,3 +446,27 @@ def img2rgb(image: np.ndarray) -> np.ndarray:
         raise ValueError(
             "Unsupported image shape: expected (H, W), (H, W, 1), (H, W, 3), or (H, W, 4+)"
         )
+
+
+# torchvision.transforms.functional's versions of these two, without importing
+# torchvision (1.5 s, paid by every DataLoader worker on Windows)
+
+
+def normalize_(tensor: Tensor, mean: list[float], std: list[float]) -> Tensor:
+    """In-place ``(tensor - mean) / std`` per channel of a (..., C, H, W) tensor."""
+    m = torch.as_tensor(mean, dtype=tensor.dtype, device=tensor.device).view(-1, 1, 1)
+    s = torch.as_tensor(std, dtype=tensor.dtype, device=tensor.device).view(-1, 1, 1)
+    return tensor.sub_(m).div_(s)
+
+
+def rgb_to_grayscale(img: Tensor, num_output_channels: int = 1) -> Tensor:
+    """ITU-R 601-2 luma of a (..., 3, H, W) tensor, as (..., 1, H, W) or repeated to
+    3 channels. A 1-channel input is returned as a copy."""
+    if img.shape[-3] == 3:
+        r, g, b = img.unbind(dim=-3)
+        gray = (0.2989 * r + 0.587 * g + 0.114 * b).to(img.dtype).unsqueeze(dim=-3)
+    else:
+        gray = img.clone()
+    if num_output_channels == 3:
+        return gray.expand(img.shape)
+    return gray

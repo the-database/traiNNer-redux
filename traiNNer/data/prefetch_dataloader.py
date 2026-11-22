@@ -1,12 +1,49 @@
+import os
 import queue
 import threading
 from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader as TorchDataLoader
 
 from traiNNer.utils.redux_options import ReduxOptions
+
+# Read by the libraries in each worker process when they load. The workers already
+# run in parallel, so one thread each is enough, and OpenBLAS also reserves memory for
+# every thread: on Windows, where workers are fresh processes and memory isn't
+# overcommitted, that took a worker from 1.1 GB to 2.5 GB of committed memory.
+WORKER_THREAD_ENV = {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "VIPS_CONCURRENCY": "1",
+}
+
+
+@contextmanager
+def worker_thread_env() -> Iterator[None]:
+    """Set WORKER_THREAD_ENV while worker processes start, leaving values the user
+    set alone, so this process keeps its own thread pools."""
+    added = [k for k in WORKER_THREAD_ENV if k not in os.environ]
+    for k in added:
+        os.environ[k] = WORKER_THREAD_ENV[k]
+    try:
+        yield
+    finally:
+        for k in added:
+            os.environ.pop(k, None)
+
+
+class DataLoader(TorchDataLoader):
+    """DataLoader whose worker processes start with one thread per library."""
+
+    def _get_iterator(self) -> Any:
+        if self.num_workers == 0:
+            return super()._get_iterator()
+        with worker_thread_env():
+            return super()._get_iterator()
 
 
 class PrefetchGenerator(threading.Thread):
@@ -19,7 +56,7 @@ class PrefetchGenerator(threading.Thread):
         num_prefetch_queue (int): Number of prefetch queue.
     """
 
-    def __init__(self, generator: DataLoader, num_prefetch_queue: int) -> None:
+    def __init__(self, generator: TorchDataLoader, num_prefetch_queue: int) -> None:
         threading.Thread.__init__(self)
         self.queue = queue.Queue(num_prefetch_queue)
         self.generator = generator
@@ -70,7 +107,7 @@ class CPUPrefetcher:
         loader: Dataloader.
     """
 
-    def __init__(self, loader: DataLoader) -> None:
+    def __init__(self, loader: TorchDataLoader) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
 
@@ -96,7 +133,7 @@ class CUDAPrefetcher:
         opt (dict): Options.
     """
 
-    def __init__(self, loader: DataLoader, opt: ReduxOptions) -> None:
+    def __init__(self, loader: TorchDataLoader, opt: ReduxOptions) -> None:
         self.ori_loader = loader
         self.loader = iter(loader)
         self.opt = opt
