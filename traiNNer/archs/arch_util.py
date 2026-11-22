@@ -1,5 +1,6 @@
 # ruff: noqa
 # type: ignore
+import importlib.util
 import collections.abc
 import math
 from collections import OrderedDict
@@ -388,6 +389,23 @@ def _dysample_normalizer(h: int, w: int) -> Tensor:
     return torch.tensor([w, h]).view(1, 2, 1, 1, 1)
 
 
+_HAS_TRITON = importlib.util.find_spec("triton") is not None
+
+
+def _use_dysample_kernel(x: Tensor) -> bool:
+    """The Triton sampling kernel runs on CUDA tensors, outside tracing and export,
+    which can't capture it."""
+    return (
+        _HAS_TRITON
+        and x.is_cuda
+        and x.dtype in (torch.float16, torch.bfloat16, torch.float32)
+        and not torch.compiler.is_compiling()
+        and not torch.jit.is_tracing()
+        and not torch.jit.is_scripting()
+        and not torch.onnx.is_in_onnx_export()
+    )
+
+
 def _dysample_forward(m: nn.Module, x: Tensor) -> Tensor:
     """DySample forward shared by DySample and DySampleV1.
 
@@ -427,38 +445,50 @@ def _dysample_forward(m: nn.Module, x: Tensor) -> Tensor:
         .contiguous()
         .flatten(0, 1)
     )
-    # grid_sample needs the groups split out of the channels, which a channels_last
-    # tensor can't do as a view, and autocast runs it in float32. Convert dtype and
-    # layout in one copy here, instead of a layout copy followed by autocast's cast.
     sample_dtype = (
         torch.float32
         if torch.is_autocast_enabled(x.device.type)
         and x.dtype in (torch.float16, torch.bfloat16)
         else x.dtype
     )
-    x_groups = x.to(dtype=sample_dtype, memory_format=torch.contiguous_format)
-    output = F.grid_sample(
-        x_groups.view(B * m.groups, -1, H, W),
-        coords.to(sample_dtype),
-        mode="bilinear",
-        align_corners=False,
-        padding_mode="border",
-    ).view(B, -1, m.scale * H, m.scale * W)
-
-    if sample_dtype != x.dtype and (
+    x_layout = (
+        torch.channels_last
+        if x.is_contiguous(memory_format=torch.channels_last) and not x.is_contiguous()
+        else torch.contiguous_format
+    )
+    # A convolution comes next, and autocast would cast a float32 result back to x's
+    # dtype for it: produce that directly, in x's layout, which saves a layout copy
+    # before the convolution and two copies in backward. The values are the same.
+    conv_next = sample_dtype != x.dtype and (
         m.end_convolution or getattr(m, "followed_by_conv", False)
-    ):
-        # A convolution comes next, and autocast would cast this float32 output
-        # back to x's dtype for it. Doing that here, together with the change back to
-        # x's layout, saves a layout copy before the convolution and two copies in
-        # backward. The values are the same.
-        layout = (
-            torch.channels_last
-            if x.is_contiguous(memory_format=torch.channels_last)
-            and not x.is_contiguous()
-            else torch.contiguous_format
+    )
+    out_dtype, out_layout = (
+        (x.dtype, x_layout) if conv_next else (sample_dtype, torch.contiguous_format)
+    )
+
+    if _use_dysample_kernel(x):
+        # reads x in its dtype and layout and computes in float32, like grid_sample
+        # under autocast, without the copies around it
+        from traiNNer.ops.dysample_sample import dysample_sample
+
+        output = dysample_sample(
+            x, coords.to(torch.float32), m.groups, out_dtype, out_layout
         )
-        output = output.to(dtype=x.dtype, memory_format=layout)
+    else:
+        # grid_sample needs the groups split out of the channels, which a
+        # channels_last tensor can't do as a view, and autocast runs it in float32.
+        # Convert dtype and layout in one copy, instead of a layout copy followed by
+        # autocast's cast.
+        x_groups = x.to(dtype=sample_dtype, memory_format=torch.contiguous_format)
+        output = F.grid_sample(
+            x_groups.view(B * m.groups, -1, H, W),
+            coords.to(sample_dtype),
+            mode="bilinear",
+            align_corners=False,
+            padding_mode="border",
+        ).view(B, -1, m.scale * H, m.scale * W)
+        if conv_next:
+            output = output.to(dtype=out_dtype, memory_format=out_layout)
 
     if m.end_convolution:
         output = m.end_conv(output)
