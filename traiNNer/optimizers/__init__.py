@@ -1,3 +1,4 @@
+import inspect
 from copy import deepcopy
 from importlib import import_module
 from os import path as osp
@@ -38,12 +39,22 @@ for o in [Adam, AdamW, NAdam, StableAdamW, SOAP, ADOPT]:
 FUSED_BY_DEFAULT = (Adam, AdamW)
 
 
-def build_optimizer(params: ParamsT, opt: dict[str, Any]) -> Optimizer:
+def build_optimizer(
+    params: ParamsT, opt: dict[str, Any], capturable: bool = False
+) -> Optimizer:
+    """Build the optimizer named by ``opt["type"]``. With ``capturable``, its step can
+    be recorded in a CUDA graph, when the optimizer supports that."""
     opt = deepcopy(opt)
     optimizer_type = opt.pop("type")
     logger = get_root_logger()
 
     optimizer_cls = OPTIMIZER_REGISTRY.get(optimizer_type)
+    if (
+        capturable
+        and "capturable" not in opt
+        and "capturable" in inspect.signature(optimizer_cls).parameters
+    ):
+        opt["capturable"] = True
     if (
         optimizer_cls in FUSED_BY_DEFAULT
         and "fused" not in opt

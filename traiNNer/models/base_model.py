@@ -32,6 +32,7 @@ from traiNNer.schedulers.cosineannealingwarmuplr_scheduler import (
 )
 from traiNNer.schedulers.kneelr_scheduler import KneeLR
 from traiNNer.utils import get_root_logger
+from traiNNer.utils.cuda_graph import move_tensor_attributes
 from traiNNer.utils.dist_util import cpu_barrier, master_only
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import is_json_compatible, require_triton
@@ -238,6 +239,9 @@ class BaseModel:
             memory_format=self.memory_format,
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+        # constants kept as plain tensors would otherwise be copied to the GPU on every
+        # forward, which also can't be recorded in a CUDA graph
+        move_tensor_attributes(net, self.device)
 
         net_name = net.__class__.__name__
 
@@ -268,7 +272,7 @@ class BaseModel:
         params: ParamsT,
         opts: dict[str, Any],
     ) -> Optimizer:
-        optimizer = build_optimizer(params, opts)
+        optimizer = build_optimizer(params, opts, capturable=self.opt.use_cuda_graph)
 
         if hasattr(optimizer, "train"):
             optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
@@ -828,7 +832,14 @@ class BaseModel:
         for i, o in enumerate(resume_optimizers):
             optimizer = self.optimizers[i]
             fused = [g.get("fused") for g in optimizer.param_groups]
+            capturable = [g.get("capturable") for g in optimizer.param_groups]
             optimizer.load_state_dict(o)
+            # load_state_dict restores capturable too, which use_cuda_graph needs on
+            for group, was_capturable in zip(
+                optimizer.param_groups, capturable, strict=True
+            ):
+                if was_capturable:
+                    group["capturable"] = True
             # A state saved by a non-fused optimizer would switch fused off again,
             # since load_state_dict restores the saved group settings.
             for group, was_fused in zip(optimizer.param_groups, fused, strict=True):
