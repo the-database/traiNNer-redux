@@ -263,19 +263,13 @@ class WindowAttention(nn.Module):
     def create_table_idxs(window_size: int, heads: int) -> Tensor:
         # Transposed idxs of original Swin Transformer
         # But much easier to implement and the same relative position distance anyway
-        idxs_window = []
-        for head in range(heads):
-            for h in range(window_size**2):
-                for w in range(window_size**2):
-                    q_h = h // window_size
-                    q_w = h % window_size
-                    k_h = w // window_size
-                    k_w = w % window_size
-                    rel_h = k_h - q_h + window_size - 1
-                    rel_w = k_w - q_w + window_size - 1
-                    rel_idx = rel_h * (2 * window_size - 1) + rel_w
-                    idxs_window.append((head, rel_idx))
-        idxs = torch.tensor(idxs_window, dtype=torch.long, requires_grad=False)
+        q = torch.arange(window_size**2)
+        q_h, q_w = q // window_size, q % window_size
+        rel_h = q_h[None, :] - q_h[:, None] + window_size - 1
+        rel_w = q_w[None, :] - q_w[:, None] + window_size - 1
+        rel_idx = (rel_h * (2 * window_size - 1) + rel_w).flatten()
+        head_idx = torch.arange(heads).repeat_interleave(rel_idx.numel())
+        idxs = torch.stack((head_idx, rel_idx.repeat(heads)), dim=1)
         return idxs
 
     def pad_to_win(self, x: Tensor, h: int, w: int) -> Tensor:
