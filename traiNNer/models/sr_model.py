@@ -1,3 +1,4 @@
+import importlib.util
 import os
 import shutil
 import warnings
@@ -50,6 +51,9 @@ from traiNNer.utils.types import DataFeed
 # GAN template), with gradients as close to float64 as eager.
 COMPILED_BY_DEFAULT = (PerceptualFP16Loss, HSLuvLoss)
 
+# Logged once per update, on the microbatch that applies the gradients
+UPDATE_LOG_KEYS = frozenset({"grad_norm_g", "scale_g", "grad_norm_d", "scale_d"})
+
 # (loss_dict, l_g_finite, output) of one training step
 TrainStepOutputs = tuple[dict[str, Tensor | float], Tensor | None, Tensor]
 
@@ -77,6 +81,12 @@ class SRModel(BaseModel):
         # consecutive and total non-finite losses, read by check_nonfinite_losses
         self.nonfinite_streak = torch.zeros((), dtype=torch.int32, device=self.device)
         self.nonfinite_steps = torch.zeros((), dtype=torch.int32, device=self.device)
+        # whether every microbatch of the current update so far had a finite loss, and
+        # the same for the last completed update. With gradient accumulation one bad
+        # microbatch makes the whole update's gradients non-finite, so the update is
+        # skipped, and the counters above count updates.
+        self.window_finite = torch.ones((), dtype=torch.bool, device=self.device)
+        self.update_finite = torch.ones((), dtype=torch.bool, device=self.device)
 
         # define network
         assert opt.network_g is not None, "network_g must be defined"
@@ -431,6 +441,17 @@ class SRModel(BaseModel):
                     "CUDA graph enabled: the training step is recorded after %d warmup iterations.",
                     self.cuda_graph_step.warmup_steps,
                 )
+                # With the launches recorded once, LayerNorm's Triton kernels pay off;
+                # torch.compile fuses LayerNorm itself.
+                if not self.use_compile and importlib.util.find_spec("triton"):
+                    from traiNNer.ops.layer_norm import use_triton_layer_norm
+
+                    n_ln = use_triton_layer_norm(self.get_bare_model(self.net_g))
+                    if n_ln:
+                        logger.info(
+                            "CUDA graph: %d LayerNorm layers run on Triton kernels.",
+                            n_ln,
+                        )
             else:
                 logger.warning("use_cuda_graph is ignored: %s.", reason)
 
@@ -649,7 +670,7 @@ class SRModel(BaseModel):
                 "Training failed: NaN/Inf found in loss. Try reducing the learning rate. If training still fails, please file an issue: https://github.com/the-database/traiNNer-redux/issues"
             )
         get_root_logger().warning(
-            "NaN/Inf in loss on %d iteration(s) since the last log, skipped those updates",
+            "NaN/Inf in loss on %d update(s) since the last log, skipped those updates",
             skipped,
         )
 
@@ -693,8 +714,13 @@ class SRModel(BaseModel):
             if isinstance(value, Tensor):
                 val = value.detach().to(dtype=torch.float32)
                 if l_g_finite is not None:
-                    # leave a skipped non-finite step out of the logged averages
-                    val = torch.where(l_g_finite, val, 0.0)
+                    # Leave skipped values out of the logged averages: a microbatch's
+                    # losses when they're non-finite, and an update's gradient norm
+                    # and loss scale when any microbatch of that update was.
+                    finite = (
+                        self.update_finite if key in UPDATE_LOG_KEYS else l_g_finite
+                    )
+                    val = torch.where(finite, val, 0.0)
             self.log_dict[key] = self.log_dict.get(key, 0) + val * n_samples
 
         # The EMA also updates after a step the GradScaler skipped. The weights didn't
@@ -816,8 +842,12 @@ class SRModel(BaseModel):
                 # skips the optimizer step on the GPU. check_nonfinite_losses()
                 # reads the streak back at the log interval.
                 l_g_backward, l_g_finite = guard_nonfinite(l_g_total)
-                self.nonfinite_streak.add_(1).mul_(~l_g_finite)
-                self.nonfinite_steps.add_(~l_g_finite)
+                self.window_finite.logical_and_(l_g_finite)
+                if apply_gradient:
+                    self.update_finite.copy_(self.window_finite)
+                    self.nonfinite_streak.add_(1).mul_(~self.update_finite)
+                    self.nonfinite_steps.add_(~self.update_finite)
+                    self.window_finite.fill_(True)
 
                 # add total generator loss for tensorboard tracking
                 loss_dict["l_g_total"] = l_g_total
