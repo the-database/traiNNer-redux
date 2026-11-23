@@ -3,7 +3,7 @@
 import pytest
 import torch
 from torch import Tensor
-from torch.nn.attention.flex_attention import flex_attention
+from torch.nn.attention.flex_attention import AuxRequest, flex_attention
 
 pytestmark = pytest.mark.skipif(
     not torch.cuda.is_available() or torch.cuda.get_device_capability()[0] < 8,
@@ -20,7 +20,11 @@ def _flex(
         same = region[w, qi] == region[w, ki]
         return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
 
-    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0, return_lse=True)
+    out, aux = flex_attention(
+        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+    )
+    assert aux.lse is not None
+    return out, aux.lse
 
 
 def rel(a: Tensor, b: Tensor) -> float:
