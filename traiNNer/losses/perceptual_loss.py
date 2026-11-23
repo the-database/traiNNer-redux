@@ -166,7 +166,7 @@ def _conv_fp16(
 
 
 @LOSS_REGISTRY.register()
-class PerceptualFP16Loss(nn.Module):
+class PerceptualLoss(nn.Module):
     def __init__(
         self,
         loss_weight: float,
@@ -360,6 +360,8 @@ class PerceptualFP16Loss(nn.Module):
             taps = _ScaleTapGrads.apply(token, *taps)
         return dict(zip(vgg.stages.keys(), taps, strict=True))  # pyright: ignore[reportArgumentType]
 
+    # pd and fd run VGG on x and gt separately, in fp32
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")  # pyright: ignore[reportPrivateImportUsage] # https://github.com/pytorch/pytorch/issues/131765
     def forward(self, x: Tensor, gt: Tensor) -> Tensor | dict[str, Tensor]:
         if self.criterion2 is None and self.criterion1 is not None:
             return self._reduce_delta(self.forward_delta(x, gt))
@@ -398,6 +400,14 @@ class PerceptualFP16Loss(nn.Module):
         if self.verbose_logging:
             return losses
         return torch.clamp(total, min=self.clip_min)
+
+
+@LOSS_REGISTRY.register()
+class PerceptualFP16Loss(PerceptualLoss):
+    """Deprecated: the same as perceptualloss, which now runs in fp16 where that's
+    as accurate."""
+
+    deprecated = "the same as perceptualloss now, which runs in fp16 where that's as accurate. Use type: perceptualloss."
 
 
 class VGG(nn.Module):
