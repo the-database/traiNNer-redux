@@ -37,30 +37,55 @@ _HAS_TRITON = importlib.util.find_spec("triton") is not None
 # (as in the stock path; no float to specialise on) and the bias table as a plain tensor (parameters
 # get static shapes). Only a different head dim or dtype compiles again.
 @torch.compile(dynamic=True)
-def _flex_window(q, k, v, table, rpi):
+def _flex_window_lse(q, k, v, table, rpi):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
-    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0)
+    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0, return_lse=True)
 
 
 @torch.compile(dynamic=True)
-def _flex_window_shifted(q, k, v, table, rpi, region):
+def _flex_window_shifted_lse(q, k, v, table, rpi, region):
     # plus the shifted-window mask: -100 between tokens of different regions, as the stock mask
     def score_mod(score, b, h, qi, ki):
         w = b % region.shape[0]
         same = region[w, qi] == region[w, ki]
         return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
 
-    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0)
+    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0, return_lse=True)
 
 
 @torch.compile(dynamic=True)
-def _flex_oca(q, k, v, table, rpi):
+def _flex_oca_lse(q, k, v, table, rpi):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
-    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0)
+    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0, return_lse=True)
+
+
+def _flex_bias_grad(fn, q, k, v, table, rpi, region=None):
+    # FlexAttention would add each score's gradient into the small bias table with an atomic add,
+    # which took more than half of the attention backward; FlexBiasGrad sums them without atomics
+    # and FlexAttention runs on the detached table. The same gradients.
+    args = (rpi,) if region is None else (rpi, region)
+    if not (table.requires_grad and torch.is_grad_enabled()):
+        return fn(q, k, v, table, *args)[0]
+    from traiNNer.ops.flex_bias_grad import FlexBiasGrad
+
+    out, lse = fn(q, k, v, table.detach(), *args)
+    return FlexBiasGrad.apply(out, table, q, k, v, lse.detach(), rpi, region)
+
+
+def _flex_window(q, k, v, table, rpi):
+    return _flex_bias_grad(_flex_window_lse, q, k, v, table, rpi)
+
+
+def _flex_window_shifted(q, k, v, table, rpi, region):
+    return _flex_bias_grad(_flex_window_shifted_lse, q, k, v, table, rpi, region)
+
+
+def _flex_oca(q, k, v, table, rpi):
+    return _flex_bias_grad(_flex_oca_lse, q, k, v, table, rpi)
 
 
 def _flex_head_dim(d: int) -> int:
