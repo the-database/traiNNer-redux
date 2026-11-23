@@ -47,7 +47,7 @@ from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
 # Losses that compile_losses compiles: fixed losses where compiling fuses enough
-# elementwise work to matter (perceptual 48 -> 35 ms, HSLuv 11 -> 3 ms on the SPAN
+# elementwise work to matter (perceptual 43 -> 19 ms, HSLuv 11 -> 3 ms on the SPAN
 # GAN template), with gradients as close to float64 as eager.
 COMPILED_BY_DEFAULT = (PerceptualFP16Loss, HSLuvLoss)
 
