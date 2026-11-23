@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import antialiased_cnns
 import torch
@@ -115,6 +115,54 @@ VGG19_CONV_CRITERION = {"l1", "charbonnier", "pd+l1", "fd+l1"}
 VGG19_RELU_CRITERION = {"pd", "fd", "pd+l1", "fd+l1"}
 
 VGG19_CHANNELS = [64, 128, 256, 512, 512]
+
+# Largest tap gradient after _ScaleTapGrads. The fp16 backward through VGG is equally
+# accurate for anything from about 2^-15 to 2^3; it underflows below and overflows
+# above.
+TAP_GRAD_PEAK_LOG2 = -7
+
+
+class _UnscaleInputGrad(torch.autograd.Function):
+    """Identity on x. Also returns a token for _ScaleTapGrads, whose backward sends
+    the scale it applied back as the token's gradient; this divides it out."""
+
+    @staticmethod
+    def forward(ctx: Any, x: Tensor) -> tuple[Tensor, Tensor]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return x.view_as(x), x.new_zeros(())
+
+    @staticmethod
+    def backward(ctx: Any, grad: Tensor, scale: Tensor) -> Tensor:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return grad.float() / scale
+
+
+class _ScaleTapGrads(torch.autograd.Function):
+    """Identity on the tap features. Backward multiplies their gradients by the power
+    of 2 that puts the largest at 2^TAP_GRAD_PEAK_LOG2, so the fp16 backward through
+    VGG neither underflows nor overflows. Chosen on the GPU, with no sync."""
+
+    @staticmethod
+    def forward(ctx: Any, token: Tensor, *feats: Tensor) -> tuple[Tensor, ...]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return tuple(f.view_as(f) for f in feats)
+
+    @staticmethod
+    def backward(ctx: Any, *grads: Tensor) -> tuple[Tensor, ...]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        amax = torch.stack([g.abs().amax() for g in grads]).amax()
+        scale = torch.exp2(
+            TAP_GRAD_PEAK_LOG2 - torch.ceil(torch.log2(amax.float().clamp_min(1e-30)))
+        )
+        return (scale, *(g * scale for g in grads))
+
+
+def _conv_fp16(
+    conv: nn.Conv2d, x: Tensor, weight: Tensor, bias: Tensor | None
+) -> Tensor:
+    x = x.half()
+    padding = conv.padding
+    if conv.padding_mode != "zeros":
+        ph, pw = int(conv.padding[0]), int(conv.padding[1])
+        x = F.pad(x, (pw, pw, ph, ph), mode=conv.padding_mode)
+        padding = 0
+    return F.conv2d(x, weight, bias, conv.stride, padding).float()  # pyright: ignore[reportArgumentType]
 
 
 @LOSS_REGISTRY.register()
@@ -259,10 +307,63 @@ class PerceptualFP16Loss(nn.Module):
 
         return cdf_loss
 
+    def _reduce_delta(self, diffs: dict[str, Tensor]) -> Tensor | dict[str, Tensor]:
+        losses: dict[str, Tensor] = {}
+        total = torch.zeros((), device=next(iter(diffs.values())).device)
+        for i, (k, d) in enumerate(diffs.items()):
+            if self.criterion1 is charbonnier_loss:
+                layer_loss = torch.sqrt(d * d + 1e-12).mean()
+            else:
+                layer_loss = d.abs().mean()
+            layer_loss = layer_loss * (1 - self.alpha[i]) * self.layer_weights[k]
+            if self.verbose_logging:
+                losses[k] = layer_loss
+            else:
+                total = total + layer_loss
+        if self.verbose_logging:
+            return losses
+        return torch.clamp(total, min=self.clip_min)
+
     def forward_once(self, x: Tensor) -> dict[str, Tensor]:
         return self.vgg(x)
 
+    def forward_delta(self, x: Tensor, gt: Tensor) -> dict[str, Tensor]:
+        """Differences VGG(x) - VGG(gt) at the taps, for L1 and Charbonnier.
+
+        Carries a = VGG(gt) and d = VGG(x) - VGG(gt) instead of the two features: a
+        conv maps d to W*d (replicate padding is linear too), and the other layers
+        to op(a + d) - op(a), in fp32. Exactly the same loss, but rounding lands on
+        the small d rather than on two large features that nearly cancel, which
+        matters more the closer x gets to gt. That lets the convs run in fp16 and
+        still be more accurate than separate fp32 (TF32) passes."""
+        vgg = self.vgg
+        with torch.autocast(x.device.type, enabled=False):
+            x, gt = x.float(), gt.detach().float()
+            d, token = _UnscaleInputGrad.apply((x - gt) / vgg.std)  # pyright: ignore[reportGeneralTypeIssues,reportOperatorIssue]
+            with torch.no_grad():
+                a = (gt - vgg.mean) / vgg.std  # pyright: ignore[reportOperatorIssue]
+            taps = []
+            for stage in vgg.stages.values():
+                for m in stage.children():
+                    if isinstance(m, nn.Conv2d):
+                        assert m.bias is not None
+                        weight = m.weight.half()
+                        with torch.no_grad():
+                            a = _conv_fp16(m, a, weight, m.bias.half())
+                        d = _conv_fp16(m, d, weight, None)
+                    else:
+                        with torch.no_grad():
+                            a_next = m(a)
+                        d = m(a + d) - a_next
+                        a = a_next
+                taps.append(d)
+            taps = _ScaleTapGrads.apply(token, *taps)
+        return dict(zip(vgg.stages.keys(), taps, strict=True))  # pyright: ignore[reportArgumentType]
+
     def forward(self, x: Tensor, gt: Tensor) -> Tensor | dict[str, Tensor]:
+        if self.criterion2 is None and self.criterion1 is not None:
+            return self._reduce_delta(self.forward_delta(x, gt))
+
         x_vgg, gt_vgg = self.forward_once(x), self.forward_once(gt.detach())
 
         losses: dict[str, Tensor] = {}
