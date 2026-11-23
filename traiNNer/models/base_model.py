@@ -141,6 +141,9 @@ class BaseModel:
                     stack.enter_context(network.no_sync())
             yield
 
+    def release_cuda_graphs(self) -> None:
+        """Release recorded CUDA graphs, before the process group shuts down."""
+
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
         pass
