@@ -78,7 +78,7 @@ class SpatialGate(nn.Module):
         x1, x2 = x.chunk(2, dim=-1)
         B, _N, C = x.shape
         x2 = (
-            self.conv(self.norm(x2).transpose(1, 2).contiguous().view(B, C // 2, H, W))
+            self.conv(self.norm(x2).reshape(B, H, W, C // 2).permute(0, 3, 1, 2))
             .flatten(2)
             .transpose(-1, -2)
             .contiguous()
@@ -262,15 +262,17 @@ class Spatial_Attention(nn.Module):
         Input: qkv: (B, 3*L, C), H, W, mask: (B, N, N), N is the window size
         Output: x (B, H, W, C)
         """
-        q, k, v = qkv[0], qkv[1], qkv[2]
-
-        B, L, C = q.shape
+        _, B, L, C = qkv.shape
         assert L == H * W, "flatten img_tokens has wrong size"
 
-        # partition the q,k,v, image to window
-        q = self.im2win(q, H, W)
-        k = self.im2win(k, H, W)
-        v = self.im2win(v, H, W)
+        # Pack all three projections directly into [window, head, token, channel].
+        wh, ww, heads = self.H_sp, self.W_sp, self.num_heads
+        q, k, v = (
+            qkv.reshape(3, B, H // wh, wh, W // ww, ww, heads, C // heads)
+            .permute(0, 1, 2, 4, 6, 3, 5, 7)
+            .reshape(3, -1, heads, wh * ww, C // heads)
+            .unbind(0)
+        )
 
         q = q * self.scale
         attn = q @ k.transpose(-2, -1)  # B head N C @ B head C N --> B head N N
@@ -499,25 +501,20 @@ class Adaptive_Spatial_Attention(nn.Module):
         B, L, C = x.shape
         assert L == H * W, "flatten img_tokens has wrong size"
 
-        qkv = self.qkv(x).reshape(B, -1, 3, C).permute(2, 0, 1, 3)  # 3, B, HW, C
-        # V without partition
-        v = qkv[2].transpose(-2, -1).contiguous().view(B, C, H, W)
+        qkv = self.qkv(x).reshape(B, H, W, 3, C).permute(3, 0, 1, 2, 4)
+        v = qkv[2].permute(0, 3, 1, 2)
 
         # image padding
         max_split_size = max(self.split_size[0], self.split_size[1])
-        pad_l = pad_t = 0
         pad_r = (max_split_size - W % max_split_size) % max_split_size
         pad_b = (max_split_size - H % max_split_size) % max_split_size
 
-        qkv = qkv.reshape(3 * B, H, W, C).permute(0, 3, 1, 2)  # 3B C H W
-        qkv = (
-            F.pad(qkv, (pad_l, pad_r, pad_t, pad_b))
-            .reshape(3, B, C, -1)
-            .transpose(-2, -1)
-        )  # l r t b
+        if not self.training or pad_r or pad_b:
+            qkv = F.pad(qkv, (0, 0, 0, pad_r, 0, pad_b))
         _H = pad_b + H
         _W = pad_r + W
         _L = _H * _W
+        qkv = qkv.reshape(3, B, _L, C)
 
         # window-0 and window-1 on split channels [C/2, C/2]; for square windows (e.g., 8x8), window-0 and window-1 can be merged
         # shift in block: (0, 4, 8, ...), (2, 6, 10, ...), (0, 4, 8, ...), (2, 6, 10, ...), ...
@@ -579,7 +576,7 @@ class Adaptive_Spatial_Attention(nn.Module):
             .view(B, 1, C)
         )
         # S-Map (before sigmoid)
-        attention_reshape = attened_x.transpose(-2, -1).contiguous().view(B, C, H, W)
+        attention_reshape = attened_x.reshape(B, H, W, C).permute(0, 3, 1, 2)
         spatial_map = self.spatial_interaction(attention_reshape)
 
         # C-I
@@ -659,7 +656,7 @@ class Adaptive_Channel_Attention(nn.Module):
         k = k.transpose(-2, -1)
         v = v.transpose(-2, -1)
 
-        v_ = v.reshape(B, C, N).contiguous().view(B, C, H, W)
+        v_ = v.reshape(B, C, H, W)
 
         q = torch.nn.functional.normalize(q, dim=-1)
         k = torch.nn.functional.normalize(k, dim=-1)
@@ -676,7 +673,7 @@ class Adaptive_Channel_Attention(nn.Module):
 
         # Adaptive Interaction Module (AIM)
         # C-Map (before sigmoid)
-        attention_reshape = attened_x.transpose(-2, -1).contiguous().view(B, C, H, W)
+        attention_reshape = attened_x.reshape(B, H, W, C).permute(0, 3, 1, 2)
         channel_map = self.channel_interaction(attention_reshape)
         # S-Map (before sigmoid)
         spatial_map = (

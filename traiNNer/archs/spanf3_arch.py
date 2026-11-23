@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Self
+from typing import Any
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 
+from traiNNer.archs.conv3xc import Conv3XC
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
@@ -49,141 +50,6 @@ class PixelUnshuffle(nn.Module):
         return x.reshape(b, c * r * r, h // r, w // r)
 
 
-class Conv3XC(nn.Module):
-    def __init__(
-        self,
-        c_in: int,
-        c_out: int,
-        gain1: int = 1,
-        gain2: int = 0,
-        s: int = 1,
-        bias: Literal[True] = True,
-        relu: bool = False,
-    ) -> None:
-        super().__init__()
-        self.weight_concat = None
-        self.bias_concat = None
-        self.update_params_flag = False
-        self.stride = s
-        self.has_relu = relu
-        gain = gain1
-
-        self.sk = nn.Conv2d(
-            in_channels=c_in,
-            out_channels=c_out,
-            kernel_size=1,
-            padding=0,
-            stride=s,
-            bias=bias,
-        )
-        self.conv = nn.Sequential(
-            nn.Conv2d(
-                in_channels=c_in,
-                out_channels=c_in * gain,
-                kernel_size=1,
-                padding=0,
-                bias=bias,
-            ),
-            nn.Conv2d(
-                in_channels=c_in * gain,
-                out_channels=c_out * gain,
-                kernel_size=3,
-                stride=s,
-                padding=0,
-                bias=bias,
-            ),
-            nn.Conv2d(
-                in_channels=c_out * gain,
-                out_channels=c_out,
-                kernel_size=1,
-                padding=0,
-                bias=bias,
-            ),
-        )
-
-        self.eval_conv = nn.Conv2d(
-            in_channels=c_in,
-            out_channels=c_out,
-            kernel_size=3,
-            padding=1,
-            stride=s,
-            bias=bias,
-        )
-
-        self.eval_conv.weight.requires_grad = False
-        self.eval_conv.bias.requires_grad = False  # pyright: ignore[reportOptionalMemberAccess]
-        self.update_params()
-
-    def update_params(self) -> None:
-        w1 = self.conv[0].weight.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        b1 = self.conv[0].bias.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        w2 = self.conv[1].weight.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        b2 = self.conv[1].bias.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        w3 = self.conv[2].weight.data.clone().detach()  # pyright: ignore[reportCallIssue]
-        b3 = self.conv[2].bias.data.clone().detach()  # pyright: ignore[reportCallIssue]
-
-        w = (
-            F.conv2d(w1.flip(2, 3).permute(1, 0, 2, 3), w2, padding=2, stride=1)
-            .flip(2, 3)
-            .permute(1, 0, 2, 3)
-        )
-        b = (w2 * b1.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b2
-
-        self.weight_concat = (
-            F.conv2d(w.flip(2, 3).permute(1, 0, 2, 3), w3, padding=0, stride=1)
-            .flip(2, 3)
-            .permute(1, 0, 2, 3)
-        )
-        self.bias_concat = (w3 * b.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b3
-
-        sk_w = self.sk.weight.data.clone().detach()
-        sk_b = self.sk.bias.data.clone().detach()  # pyright: ignore[reportOptionalMemberAccess]
-        target_kernel_size = 3
-
-        h_pixels_to_pad = (target_kernel_size - 1) // 2
-        w_pixels_to_pad = (target_kernel_size - 1) // 2
-        sk_w = F.pad(
-            sk_w, [h_pixels_to_pad, h_pixels_to_pad, w_pixels_to_pad, w_pixels_to_pad]
-        )
-
-        self.weight_concat = self.weight_concat + sk_w
-        self.bias_concat = self.bias_concat + sk_b
-
-        self.eval_conv.weight.data = self.weight_concat.contiguous()
-        self.eval_conv.bias.data = self.bias_concat.contiguous()  # pyright: ignore[reportOptionalMemberAccess]
-
-    def train(self, mode: bool = True) -> Self:
-        super().train(mode)
-        # Skip re-fusion if switch_to_deploy already dropped the source
-        # branches — eval_conv is already fused and authoritative.
-        if not mode and hasattr(self, "conv"):
-            self.update_params()
-        return self
-
-    def switch_to_deploy(self) -> None:
-        # Fuse branches into eval_conv, then drop the reparam submodules so
-        # they don't appear as dead parameters in the exported graph — the
-        # dynamo ONNX exporter otherwise picks them up as initializers and
-        # the rewriter can conflate them with the fused eval_conv weights.
-        self.update_params()
-        del self.sk
-        del self.conv
-        self.weight_concat = None
-        self.bias_concat = None
-
-    def forward(self, x: Tensor) -> Tensor:
-        if self.training:
-            pad = 1
-            x_pad = F.pad(x, (pad, pad, pad, pad), "constant", 0)
-            out = self.conv(x_pad) + self.sk(x)
-        else:
-            out = self.eval_conv(x)
-
-        if self.has_relu:
-            out = F.leaky_relu(out, negative_slope=0.05)
-        return out
-
-
 class SPABV2(nn.Module):
     """SPAB with learned 1x1 conv attention and ReLU activation. The 1x1 conv
     enables cross-channel gating with C² params per block, wrapped in tanh to
@@ -196,6 +62,7 @@ class SPABV2(nn.Module):
         mid_channels: int | None = None,
         out_channels: int | None = None,
         bias: bool = False,
+        fused_training: bool = False,
     ) -> None:
         super().__init__()
         if mid_channels is None:
@@ -204,9 +71,15 @@ class SPABV2(nn.Module):
             out_channels = in_channels
 
         self.in_channels = in_channels
-        self.c1_r = Conv3XC(in_channels, mid_channels, gain1=2, s=1)
-        self.c2_r = Conv3XC(mid_channels, mid_channels, gain1=2, s=1)
-        self.c3_r = Conv3XC(mid_channels, out_channels, gain1=2, s=1)
+        self.c1_r = Conv3XC(
+            in_channels, mid_channels, gain1=2, s=1, fused_training=fused_training
+        )
+        self.c2_r = Conv3XC(
+            mid_channels, mid_channels, gain1=2, s=1, fused_training=fused_training
+        )
+        self.c3_r = Conv3XC(
+            mid_channels, out_channels, gain1=2, s=1, fused_training=fused_training
+        )
         self.act1 = nn.ReLU(inplace=True)
         self.att_conv = nn.Conv2d(out_channels, out_channels, kernel_size=1, bias=True)
         nn.init.zeros_(self.att_conv.weight)
@@ -242,6 +115,7 @@ class SPANF3(nn.Module):
         upscale: int = 4,
         bias: bool = True,
         unshuffle_mod: bool = False,
+        fused_training: bool = False,
     ) -> None:
         super().__init__()
 
@@ -255,21 +129,39 @@ class SPANF3(nn.Module):
             upscale = 4
             self.conv_1: nn.Module = nn.Sequential(
                 PixelUnshuffle(unshuffle),
-                Conv3XC(num_in_ch * unshuffle**2, feature_channels, gain1=2, s=1),
+                Conv3XC(
+                    num_in_ch * unshuffle**2,
+                    feature_channels,
+                    gain1=2,
+                    s=1,
+                    fused_training=fused_training,
+                ),
             )
             self.pad = unshuffle
         else:
-            self.conv_1 = Conv3XC(num_in_ch, feature_channels, gain1=2, s=1)
+            self.conv_1 = Conv3XC(
+                num_in_ch, feature_channels, gain1=2, s=1, fused_training=fused_training
+            )
 
         # Body
         for i in range(1, num_blocks + 1):
-            setattr(self, f"block_{i}", SPABV2(feature_channels, bias=bias))
+            setattr(
+                self,
+                f"block_{i}",
+                SPABV2(feature_channels, bias=bias, fused_training=fused_training),
+            )
 
         # Tail (2 convs instead of SPAN's 3)
         self.conv_cat = conv_layer(
             feature_channels * 4, feature_channels, kernel_size=1, bias=True
         )
-        self.to_pixel = Conv3XC(feature_channels, num_out_ch * upscale**2, gain1=2, s=1)
+        self.to_pixel = Conv3XC(
+            feature_channels,
+            num_out_ch * upscale**2,
+            gain1=2,
+            s=1,
+            fused_training=fused_training,
+        )
         self.upsampler = nn.PixelShuffle(upscale)
 
     def switch_to_deploy(self) -> None:
@@ -316,6 +208,7 @@ def spanf3(
     scale: int = 4,
     bias: bool = True,
     unshuffle_mod: bool = True,
+    fused_training: bool = False,
 ) -> SPANF3:
     return SPANF3(
         num_in_ch=num_in_ch,
@@ -325,4 +218,5 @@ def spanf3(
         upscale=scale,
         bias=bias,
         unshuffle_mod=unshuffle_mod,
+        fused_training=fused_training,
     )

@@ -1,5 +1,6 @@
 # ruff: noqa
 # type: ignore
+import importlib.util
 import collections.abc
 import math
 from collections import OrderedDict
@@ -9,13 +10,13 @@ from typing import Literal
 import numpy as np
 import torch
 from einops import rearrange
-from spandrel.architectures.__arch_helpers.dysample import DySample as DySampleV1
 from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 from torch.nn import init
 from torch.nn.modules.batchnorm import _BatchNorm
 
 from traiNNer.utils.download_util import load_file_from_url
+from traiNNer.utils.tensor_cache import cached_constant
 
 
 class iLN(nn.Module):
@@ -371,6 +372,181 @@ class UniUpsample(nn.Sequential):
 SampleMods3 = Literal[SampleMods, "transpose+conv", "lda", "pa_up"]
 
 
+@cached_constant
+def _dysample_coords(h: int, w: int) -> Tensor:
+    coords_h = torch.arange(h) + 0.5
+    coords_w = torch.arange(w) + 0.5
+    return (
+        torch.stack(torch.meshgrid([coords_w, coords_h], indexing="ij"))
+        .transpose(1, 2)
+        .unsqueeze(1)
+        .unsqueeze(0)
+    )
+
+
+@cached_constant
+def _dysample_normalizer(h: int, w: int) -> Tensor:
+    return torch.tensor([w, h]).view(1, 2, 1, 1, 1)
+
+
+_HAS_TRITON = importlib.util.find_spec("triton") is not None
+
+
+def _use_dysample_kernel(x: Tensor) -> bool:
+    """The Triton sampling kernel runs on CUDA tensors, outside tracing and export,
+    which can't capture it."""
+    return (
+        _HAS_TRITON
+        and x.is_cuda
+        and x.dtype in (torch.float16, torch.bfloat16, torch.float32)
+        and not torch.compiler.is_compiling()
+        and not torch.jit.is_tracing()
+        and not torch.jit.is_scripting()
+        and not torch.onnx.is_in_onnx_export()
+    )
+
+
+def _dysample_forward(m: nn.Module, x: Tensor) -> Tensor:
+    """DySample forward shared by DySample and DySampleV1.
+
+    Same math as the reference implementation, but the sampling grid and its
+    normalizer are cached on the device instead of being built on the CPU and
+    copied to the GPU on every call, which blocks until the GPU catches up.
+    """
+    offset = m.offset(x) * m.scope(x).sigmoid() * 0.5 + m.init_pos
+    B, _, H, W = offset.shape  # noqa: N806
+    offset = offset.view(B, 2, -1, H, W)
+    if torch.compiler.is_compiling():
+        # device-side construction, so torch.compile needs no CPU kernels
+        coords_h = torch.arange(H, device=x.device) + 0.5
+        coords_w = torch.arange(W, device=x.device) + 0.5
+        coords = (
+            torch.stack(torch.meshgrid([coords_w, coords_h], indexing="ij"))
+            .transpose(1, 2)
+            .unsqueeze(1)
+            .unsqueeze(0)
+            .to(x.dtype)
+        )
+        # [W, H] without a host-to-device copy
+        normalizer = (
+            (W + (H - W) * torch.arange(2, device=x.device))
+            .to(x.dtype)
+            .view(1, 2, 1, 1, 1)
+        )
+    else:
+        coords = _dysample_coords(H, W, device=x.device, dtype=x.dtype)
+        normalizer = _dysample_normalizer(H, W, device=x.device, dtype=x.dtype)
+    coords = 2 * (coords + offset) / normalizer - 1
+
+    coords = (
+        F.pixel_shuffle(coords.reshape(B, -1, H, W), m.scale)
+        .view(B, 2, -1, m.scale * H, m.scale * W)
+        .permute(0, 2, 3, 4, 1)
+        .contiguous()
+        .flatten(0, 1)
+    )
+    sample_dtype = (
+        torch.float32
+        if torch.is_autocast_enabled(x.device.type)
+        and x.dtype in (torch.float16, torch.bfloat16)
+        else x.dtype
+    )
+    x_layout = (
+        torch.channels_last
+        if x.is_contiguous(memory_format=torch.channels_last) and not x.is_contiguous()
+        else torch.contiguous_format
+    )
+    # A convolution comes next, and autocast would cast a float32 result back to x's
+    # dtype for it: produce that directly, in x's layout, which saves a layout copy
+    # before the convolution and two copies in backward. The values are the same.
+    conv_next = sample_dtype != x.dtype and (
+        m.end_convolution or getattr(m, "followed_by_conv", False)
+    )
+    out_dtype, out_layout = (
+        (x.dtype, x_layout) if conv_next else (sample_dtype, torch.contiguous_format)
+    )
+
+    if _use_dysample_kernel(x):
+        # reads x in its dtype and layout and computes in float32, like grid_sample
+        # under autocast, without the copies around it
+        from traiNNer.ops.dysample_sample import dysample_sample
+
+        output = dysample_sample(
+            x, coords.to(torch.float32), m.groups, out_dtype, out_layout
+        )
+    else:
+        # grid_sample needs the groups split out of the channels, which a
+        # channels_last tensor can't do as a view, and autocast runs it in float32.
+        # Convert dtype and layout in one copy, instead of a layout copy followed by
+        # autocast's cast.
+        x_groups = x.to(dtype=sample_dtype, memory_format=torch.contiguous_format)
+        output = F.grid_sample(
+            x_groups.view(B * m.groups, -1, H, W),
+            coords.to(sample_dtype),
+            mode="bilinear",
+            align_corners=False,
+            padding_mode="border",
+        ).view(B, -1, m.scale * H, m.scale * W)
+        if conv_next:
+            output = output.to(dtype=out_dtype, memory_format=out_layout)
+
+    if m.end_convolution:
+        output = m.end_conv(output)
+
+    return output
+
+
+class DySampleV1(nn.Module):
+    """Spandrel's DySample (same constructor and state dict), with the sampling grid
+    cached on the device. See ``spandrel.architectures.__arch_helpers.dysample``.
+    """
+
+    # Set when a convolution directly follows and end_convolution is off: the output
+    # is then returned in x's dtype and layout, ready for it.
+    followed_by_conv: bool = False
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_ch: int,
+        scale: int = 2,
+        groups: int = 4,
+        end_convolution: bool = True,
+    ) -> None:
+        super().__init__()
+
+        if in_channels < groups or in_channels % groups != 0:
+            msg = "Incorrect in_channels and groups values."
+            raise ValueError(msg)
+
+        out_channels = 2 * groups * scale**2
+        self.scale = scale
+        self.groups = groups
+        self.end_convolution = end_convolution
+        if end_convolution:
+            self.end_conv = nn.Conv2d(in_channels, out_ch, kernel_size=1)
+
+        self.offset = nn.Conv2d(in_channels, out_channels, 1)
+        self.scope = nn.Conv2d(in_channels, out_channels, 1, bias=False)
+        if self.training:
+            nn.init.trunc_normal_(self.offset.weight, std=0.02)
+            nn.init.constant_(self.scope.weight, val=0)
+
+        self.register_buffer("init_pos", self._init_pos())
+
+    def _init_pos(self) -> Tensor:
+        h = torch.arange((-self.scale + 1) / 2, (self.scale - 1) / 2 + 1) / self.scale
+        return (
+            torch.stack(torch.meshgrid([h, h], indexing="ij"))
+            .transpose(1, 2)
+            .repeat(1, self.groups, 1)
+            .reshape(1, -1, 1, 1)
+        )
+
+    def forward(self, x: Tensor) -> Tensor:
+        return _dysample_forward(self, x)
+
+
 class DySample(nn.Module):
     """Adapted from 'Learning to Upsample by Learning to Sample':
     https://arxiv.org/abs/2308.15085
@@ -418,44 +594,7 @@ class DySample(nn.Module):
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        offset = self.offset(x) * self.scope(x).sigmoid() * 0.5 + self.init_pos
-        B, _, H, W = offset.shape
-        offset = offset.view(B, 2, -1, H, W)
-        coords_h = torch.arange(H) + 0.5
-        coords_w = torch.arange(W) + 0.5
-
-        coords = (
-            torch.stack(torch.meshgrid([coords_w, coords_h], indexing="ij"))
-            .transpose(1, 2)
-            .unsqueeze(1)
-            .unsqueeze(0)
-            .type(x.dtype)
-            .to(x.device, non_blocking=True)
-        )
-        normalizer = torch.tensor(
-            [W, H], dtype=x.dtype, device=x.device, pin_memory=True
-        ).view(1, 2, 1, 1, 1)
-        coords = 2 * (coords + offset) / normalizer - 1
-
-        coords = (
-            F.pixel_shuffle(coords.reshape(B, -1, H, W), self.scale)
-            .view(B, 2, -1, self.scale * H, self.scale * W)
-            .permute(0, 2, 3, 4, 1)
-            .contiguous()
-            .flatten(0, 1)
-        )
-        output = F.grid_sample(
-            x.reshape(B * self.groups, -1, H, W),
-            coords,
-            mode="bilinear",
-            align_corners=False,
-            padding_mode="border",
-        ).view(B, -1, self.scale * H, self.scale * W)
-
-        if self.end_convolution:
-            output = self.end_conv(output)
-
-        return output
+        return _dysample_forward(self, x)
 
 
 class LayerNorm(nn.Module):

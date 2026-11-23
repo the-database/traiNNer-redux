@@ -9,9 +9,9 @@ from scipy import special
 from scipy.stats import multivariate_normal
 from torch import Tensor
 from torch.nn import functional as F  # noqa: N812
-from torchvision.transforms.functional import rgb_to_grayscale
 
 from traiNNer.utils import RNG
+from traiNNer.utils.img_util import rgb_to_grayscale
 
 # -------------------------------------------------------------------- #
 # --------------------------- blur kernels --------------------------- #
@@ -588,7 +588,9 @@ def generate_gaussian_noise_pt(
         cal_gray_noise = gray_noise > 0
     else:
         gray_noise = gray_noise.view(b, 1, 1, 1)
-        cal_gray_noise = torch.sum(gray_noise) > 0
+        # Always take the gray path for a per-sample mask: samples whose mask is 0
+        # blend it out, and testing the mask on the host would sync with the GPU.
+        cal_gray_noise = True
 
     noise_gray = None
     if cal_gray_noise:
@@ -761,6 +763,22 @@ def add_poisson_noise(
     return out
 
 
+def _poisson_levels_pt(img: Tensor) -> Tensor:
+    """Per-sample Poisson level count: the number of distinct 8-bit values in each
+    sample, rounded up to a power of two. Returns shape (b, 1, 1, 1).
+
+    ``img`` must already be quantized to the 8-bit grid. Counted for the whole batch
+    at once instead of a ``torch.unique`` per sample, which syncs with the host.
+    """
+    b = img.size(0)
+    codes = (img * 255.0).round().to(torch.int64).reshape(b, -1)
+    # mark which of the 256 values occur (bincount would sync to size its output)
+    present = torch.zeros(b, 256, dtype=torch.bool, device=img.device)
+    present.scatter_(1, codes, True)
+    levels = present.sum(dim=1).to(img.dtype)
+    return torch.exp2(torch.ceil(torch.log2(levels))).view(b, 1, 1, 1)
+
+
 def generate_poisson_noise_pt(
     img: Tensor, scale: float | Tensor = 1.0, gray_noise: float | Tensor = 0
 ) -> Tensor:
@@ -782,17 +800,16 @@ def generate_poisson_noise_pt(
         cal_gray_noise = gray_noise > 0
     else:
         gray_noise = gray_noise.view(b, 1, 1, 1)
-        cal_gray_noise = torch.sum(gray_noise) > 0
+        # Always take the gray path for a per-sample mask: samples whose mask is 0
+        # blend it out, and testing the mask on the host would sync with the GPU.
+        cal_gray_noise = True
 
     noise_gray = None
     if cal_gray_noise:
         img_gray = rgb_to_grayscale(img, num_output_channels=1)
         # round and clip image for counting vals correctly
         img_gray = torch.clamp((img_gray * 255.0).round(), 0, 255) / 255.0
-        # use for-loop to get the unique values for each sample
-        vals_list = [len(torch.unique(img_gray[i, :, :, :])) for i in range(b)]
-        vals_list = [2 ** np.ceil(np.log2(vals)) for vals in vals_list]
-        vals = img_gray.new_tensor(vals_list).view(b, 1, 1, 1)
+        vals = _poisson_levels_pt(img_gray)
         out = torch.poisson(img_gray * vals) / vals
         noise_gray = out - img_gray
         noise_gray = noise_gray.expand(b, 3, h, w)
@@ -800,10 +817,7 @@ def generate_poisson_noise_pt(
     # always calculate color noise
     # round and clip image for counting vals correctly
     img = torch.clamp((img * 255.0).round(), 0, 255) / 255.0
-    # use for-loop to get the unique values for each sample
-    vals_list = [len(torch.unique(img[i, :, :, :])) for i in range(b)]
-    vals_list = [2 ** np.ceil(np.log2(vals)) for vals in vals_list]
-    vals = img.new_tensor(vals_list).view(b, 1, 1, 1)
+    vals = _poisson_levels_pt(img)
     out = torch.poisson(img * vals) / vals
     noise = out - img
     if cal_gray_noise and noise_gray is not None:
@@ -970,13 +984,10 @@ def _lanczos(x: Tensor, a: int) -> Tensor:
     return out / out.sum()
 
 
-def _ramp(ratio: float, width: int) -> Tensor:
+def _ramp(ratio: float, width: int, device: torch.device | None = None) -> Tensor:
+    # Built on the target device: a CPU kernel would need a blocking copy per resize.
     n = math.ceil(width / ratio + 1)
-    out = torch.empty([n])
-    cur = 0
-    for i in range(out.shape[0]):
-        out[i] = cur
-        cur += ratio
+    out = (torch.arange(n, dtype=torch.float64, device=device) * ratio).float()
     return torch.cat([-out[1:].flip([0]), out])[1:-1]
 
 
@@ -988,13 +999,13 @@ def _resample(input: Tensor, size: tuple[int, int], a: int = 3) -> Tensor:
     input = input.reshape([n * c, 1, h, w])
 
     if dh < h:
-        kernel_h = _lanczos(_ramp(dh / h, a), a).to(input.device, input.dtype)
+        kernel_h = _lanczos(_ramp(dh / h, a, input.device), a).to(input.dtype)
         pad_h = (kernel_h.shape[0] - 1) // 2
         input = F.pad(input, (0, 0, pad_h, pad_h), "reflect")
         input = F.conv2d(input, kernel_h[None, None, :, None], padding=0)
 
     if dw < w:
-        kernel_w = _lanczos(_ramp(dw / w, a), a).to(input.device, input.dtype)
+        kernel_w = _lanczos(_ramp(dw / w, a, input.device), a).to(input.dtype)
         pad_w = (kernel_w.shape[0] - 1) // 2
         input = F.pad(input, (pad_w, pad_w, 0, 0), "reflect")
         input = F.conv2d(input, kernel_w[None, None, None, :], padding=0)

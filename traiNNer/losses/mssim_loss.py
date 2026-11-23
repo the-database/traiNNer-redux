@@ -26,6 +26,46 @@ from torch import Tensor, nn
 
 from traiNNer.archs.arch_util import to_2tuple
 from traiNNer.utils.registry import LOSS_REGISTRY
+from traiNNer.utils.tensor_cache import cached_constant
+
+
+@cached_constant
+def _lhm_weights() -> Tensor:
+    return torch.tensor(
+        [[0.2989, 0.587, 0.114], [0.3, 0.04, -0.35], [0.34, -0.6, 0.17]]
+    ).t()
+
+
+@cached_constant
+def _yiq_weights() -> Tensor:
+    return torch.tensor(
+        [
+            [0.299, 0.587, 0.114],
+            [0.5959, -0.2746, -0.3213],
+            [0.2115, -0.5227, 0.3112],
+        ]
+    ).t()
+
+
+@cached_constant
+def _ycbcr_weights() -> Tensor:
+    return torch.tensor(
+        [
+            [65.481, -37.797, 112.0],
+            [128.553, -74.203, -93.786],
+            [24.966, 112.0, -18.214],
+        ]
+    )
+
+
+@cached_constant
+def _ycbcr_bias() -> Tensor:
+    return torch.tensor([16, 128, 128]).view(1, 3, 1, 1)
+
+
+@cached_constant
+def _msssim_weights() -> Tensor:
+    return torch.tensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333], dtype=torch.float32)
 
 
 def rgb2yiq(x: Tensor) -> Tensor:
@@ -37,17 +77,7 @@ def rgb2yiq(x: Tensor) -> Tensor:
     Returns:
         Batch of images with shape (N, 3, H, W). YIQ colour space.
     """
-    yiq_weights = (
-        torch.tensor(
-            [
-                [0.299, 0.587, 0.114],
-                [0.5959, -0.2746, -0.3213],
-                [0.2115, -0.5227, 0.3112],
-            ]
-        )
-        .t()
-        .to(x)
-    )
+    yiq_weights = _yiq_weights(like=x)
     x_yiq = torch.matmul(x.permute(0, 2, 3, 1), yiq_weights).permute(0, 3, 1, 2)
     return x_yiq
 
@@ -64,11 +94,7 @@ def rgb2lhm(x: Tensor) -> Tensor:
     Reference:
         https://arxiv.org/pdf/1608.07433.pdf
     """
-    lhm_weights = (
-        torch.tensor([[0.2989, 0.587, 0.114], [0.3, 0.04, -0.35], [0.34, -0.6, 0.17]])
-        .t()
-        .to(x)
-    )
+    lhm_weights = _lhm_weights(like=x)
     x_lhm = torch.matmul(x.permute(0, 2, 3, 1), lhm_weights).permute(0, 3, 1, 2)
     return x_lhm
 
@@ -86,14 +112,8 @@ def rgb2ycbcr(x: Tensor) -> Tensor:
     Returns:
         Batch of images with shape (N, 3, H, W). YCbCr color space.
     """
-    weights_rgb_to_ycbcr = torch.tensor(
-        [
-            [65.481, -37.797, 112.0],
-            [128.553, -74.203, -93.786],
-            [24.966, 112.0, -18.214],
-        ]
-    ).to(x)
-    bias_rgb_to_ycbcr = torch.tensor([16, 128, 128]).view(1, 3, 1, 1).to(x)
+    weights_rgb_to_ycbcr = _ycbcr_weights(like=x)
+    bias_rgb_to_ycbcr = _ycbcr_bias(like=x)
     x_ycbcr = (
         torch.matmul(x.permute(0, 2, 3, 1), weights_rgb_to_ycbcr).permute(0, 3, 1, 2)
         + bias_rgb_to_ycbcr
@@ -121,7 +141,7 @@ def to_y_channel(
         img = rgb2ycbcr(img)
     elif color_space == "lhm":
         img = rgb2lhm(img)
-    out_img = img[:, [0], :, :] * out_data_range
+    out_img = img[:, 0:1, :, :] * out_data_range
     if out_data_range >= 255:
         # differentiable round with pytorch
         out_img = out_img - out_img.detach() + out_img.round()
@@ -318,6 +338,9 @@ def fspecial(
         )
 
 
+_fspecial_cached = cached_constant(fspecial)
+
+
 def ssim(
     x: Tensor,
     y: Tensor,
@@ -330,7 +353,7 @@ def ssim(
     include_luminance: bool = True,
 ) -> Tensor | tuple[Tensor, Tensor]:
     if win is None:
-        win = fspecial(11, 1.5, x.shape[1]).to(x)
+        win = _fspecial_cached(11, 1.5, x.shape[1], like=x)
 
     filter_shape = "valid"
     if x.shape[-1] < win.shape[-1]:
@@ -448,9 +471,7 @@ def ms_ssim(
     if not x.shape == y.shape:
         raise ValueError("Input images must have the same dimensions.")
 
-    weights = torch.tensor(
-        [0.0448, 0.2856, 0.3001, 0.2363, 0.1333], dtype=torch.float32
-    ).to(x)
+    weights = _msssim_weights(like=x)
 
     levels = weights.shape[0]
     mcs = []
@@ -474,7 +495,13 @@ def ms_ssim(
     mcs = torch.stack(mcs, dim=0)
 
     if is_prod:
-        msssim_val = torch.prod((mcs[:-1] ** weights[:-1].unsqueeze(1)), dim=0) * (
+        # Multiply the levels one by one: torch.prod's backward reads a value back
+        # to the CPU to check for zeros, which syncs with the GPU.
+        weighted = mcs[:-1] ** weights[:-1].unsqueeze(1)
+        msssim_val = weighted[0]
+        for level in weighted[1:]:
+            msssim_val = msssim_val * level
+        msssim_val = msssim_val * (
             ssim_val ** weights[-1]  # pyright: ignore[reportPossiblyUnboundVariable]
         )
     else:

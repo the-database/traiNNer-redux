@@ -23,6 +23,13 @@ class DatasetOptions(StrictStruct):
     ]
     type: str
     io_backend: dict[str, Any] = field(default_factory=lambda: {"type": "disk"})
+    decoded_cache_mib: Annotated[
+        int,
+        Meta(
+            ge=0,
+            description="MiB per data-loader worker for decoded PairedImageDataset images. Random crops and augmentation run on every visit. Zero disables the cache.",
+        ),
+    ] = 0
 
     num_worker_per_gpu: Annotated[
         int | None,
@@ -514,10 +521,22 @@ class ReduxOptions(StrictStruct):
     fast_matmul: Annotated[
         bool, Meta(description="Trade precision for performance.")
     ] = False
+    use_cuda_graph: Annotated[
+        bool,
+        Meta(
+            description="Record the training step (forward, backward and optimizer step) as a CUDA graph after a few warmup iterations, then replay it every iteration. This removes most of the per-kernel launch overhead, which is often the bottleneck for small archs or small batches, and unlike use_compile it only takes seconds on startup and leaves no cache. It uses somewhat more VRAM, and the speedup shrinks as the batch grows, so leave it off when VRAM limits the batch or crop size. Requires a fused optimizer (Adam or AdamW), a single GPU and fixed training patch sizes. If the step can't be recorded, training continues without it and the reason is logged."
+        ),
+    ] = False
+    compile_losses: Annotated[
+        bool,
+        Meta(
+            description="Compile the perceptual and HSLuv losses with torch.compile even when use_compile is off. This fuses their elementwise work without making their gradients less accurate: on a SPAN GAN template the perceptual loss goes from 48 to 35 ms and HSLuv from 11 to 3 ms. The first run compiles for about 40 seconds and adds about 65 MB to the compile cache. These losses don't change, so later runs with the same batch and patch size reuse it, even after changing the arch. Needs triton; skipped without it."
+        ),
+    ] = True
     use_compile: Annotated[
         bool,
         Meta(
-            description="Enable torch.compile for the generator model, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it."
+            description="Enable torch.compile for the generator model and the losses, which takes time on startup to compile the model, but can speed up training after the model is compiled. However, compilation must be redone when starting training each time, as the compiled model is not saved, so for models that take too long to compile it may not worth it."
         ),
     ] = False
     compile_mode: Annotated[

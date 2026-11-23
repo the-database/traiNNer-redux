@@ -51,6 +51,16 @@ ARCHS_WITHOUT_FP16 = {
     "tscunet",
 }
 
+# torch.compile of these with use_chk has given NaN losses (an intermittent
+# miscompile seen with DAT_2 on torch 2.15), so use_compile warns about it
+ARCHS_UNSTABLE_WITH_COMPILE_AND_CHK = {
+    "dat",
+    "dat_2",
+    "dat_2_l",
+    "dat_light",
+    "dat_s",
+}
+
 # These archs perform slower when using channels last
 ARCHS_WITHOUT_CHANNELS_LAST = {
     "cascadedgaze",

@@ -1,7 +1,7 @@
-from spandrel.architectures.__arch_helpers.dysample import DySample
 from torch import Tensor, nn
 from torch.nn.utils.parametrizations import spectral_norm
 
+from traiNNer.archs.arch_util import DySampleV1 as DySample
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 
@@ -12,8 +12,12 @@ class Down(nn.Sequential):
 
 class Up(nn.Sequential):
     def __init__(self, dim: int) -> None:
+        upsample = DySample(dim, dim, 2, 4, False)
+        # lets DySample hand the convolution its input in the convolution's dtype
+        # and layout, saving copies (not stored in the state dict)
+        upsample.followed_by_conv = True
         super().__init__(
-            DySample(dim, dim, 2, 4, False),
+            upsample,
             spectral_norm(nn.Conv2d(dim, dim // 2, 3, 1, 1)),
         )
 

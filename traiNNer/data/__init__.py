@@ -1,5 +1,6 @@
 import importlib
 import random
+import signal
 from functools import partial
 from os import path as osp
 
@@ -10,13 +11,15 @@ from torch.utils.data.dataset import Dataset
 
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_sampler import EnlargedSampler
-from traiNNer.data.prefetch_dataloader import PrefetchDataLoader
+from traiNNer.data.parallel_spawn import parallel_spawn_context
+from traiNNer.data.prefetch_dataloader import DataLoader, PrefetchDataLoader
 from traiNNer.utils import get_root_logger, scandir
 from traiNNer.utils.dist_util import get_dist_info
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.rng import RNG
 from traiNNer.utils.types import DataLoaderArgs
+from traiNNer.utils.win_qos import disable_power_throttling
 
 __all__ = ["build_dataloader", "build_dataset"]
 
@@ -99,22 +102,22 @@ def build_dataloader(
             "num_workers": num_workers,
             "sampler": sampler,
             "drop_last": True,
-            "prefetch_factor": dataset_opt.prefetch_factor,
         }
         if sampler is None:
             dataloader_args["shuffle"] = True
-        dataloader_args["worker_init_fn"] = (
-            partial(
-                worker_init_fn,
-                num_workers=num_workers,
-                rank=rank,
-                seed=seed,
-            )
-            if seed is not None
-            else None
+        dataloader_args["worker_init_fn"] = partial(
+            worker_init_fn,
+            num_workers=num_workers,
+            rank=rank,
+            seed=seed,
         )
 
-        dataloader_args["persistent_workers"] = dataset_opt.persistent_workers
+        if num_workers > 0:
+            dataloader_args["prefetch_factor"] = dataset_opt.prefetch_factor
+            dataloader_args["persistent_workers"] = dataset_opt.persistent_workers
+            mp_context = parallel_spawn_context()
+            if mp_context is not None:
+                dataloader_args["multiprocessing_context"] = mp_context
     elif dataset_opt.phase in ["val", "test"]:  # validation
         dataloader_args = {
             "dataset": dataset,
@@ -143,15 +146,36 @@ def build_dataloader(
     else:
         # prefetch_mode=None: Normal dataloader
         # prefetch_mode='cuda': dataloader for CUDAPrefetcher
-        return torch.utils.data.DataLoader(**dataloader_args)
+        return DataLoader(**dataloader_args)
+
+
+def limit_worker_threads() -> None:
+    """Run one thread per library in a DataLoader worker.
+
+    Each worker is its own process, and OpenCV and torch each start a thread pool
+    sized to every core in it, so N workers would oversubscribe the CPU N times over.
+    The workers already run in parallel with each other. pyvips and the BLAS
+    libraries are limited through WORKER_THREAD_ENV, since they size their pools when
+    they load.
+    """
+    import cv2
+
+    torch.set_num_threads(1)
+    cv2.setNumThreads(1)
+    disable_power_throttling()
 
 
 def worker_init_fn(
     worker_id: int,
     num_workers: int,
     rank: int,
-    seed: int,
+    seed: int | None,
 ) -> None:
+    # The trainer handles console interrupts and finishes its accumulation window.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    limit_worker_threads()
+    if seed is None:
+        return
     # Set the worker seed to num_workers * rank + worker_id + seed
     worker_seed = num_workers * rank + worker_id + seed
     np.random.seed(worker_seed)  # noqa: NPY002

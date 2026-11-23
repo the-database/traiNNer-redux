@@ -535,9 +535,8 @@ class OCAB(nn.Module):
         x = self.norm1(x)
         x = x.view(b, h, w, c)
 
-        qkv = self.qkv(x).reshape(b, h, w, 3, c).permute(3, 0, 4, 1, 2)  # 3, b, c, h, w
-        q = qkv[0].permute(0, 2, 3, 1)  # b, h, w, c
-        kv = torch.cat((qkv[1], qkv[2]), dim=1)  # b, 2*c, h, w
+        qkv = self.qkv(x).reshape(b, h, w, 3, c)
+        q = qkv[..., 0, :]
 
         # partition windows
         q_windows = window_partition(
@@ -547,23 +546,26 @@ class OCAB(nn.Module):
             -1, self.window_size * self.window_size, c
         )  # nw*b, window_size*window_size, c
 
-        kv_windows = self.unfold(kv)  # b, c*w*w, nw
-        kv_windows = rearrange(
-            kv_windows,
-            "b (nc ch owh oww) nw -> nc (b nw) (owh oww) ch",
-            nc=2,
-            ch=c,
-            owh=self.overlap_win_size,
-            oww=self.overlap_win_size,
-        ).contiguous()  # 2, nw*b, ow*ow, c
-        # Do the above rearrangement without the rearrange function
-        # kv_windows = kv_windows.view(
-        #     2, b, self.overlap_win_size, self.overlap_win_size, c, -1
-        # )
-        # kv_windows = kv_windows.permute(0, 5, 1, 2, 3, 4).contiguous()
-        # kv_windows = kv_windows.view(
-        #     2, -1, self.overlap_win_size * self.overlap_win_size, c
-        # )
+        ow, stride = self.overlap_win_size, self.window_size
+        if self.training:
+            pad = (ow - stride) // 2
+            kv = F.pad(qkv[..., 1:, :], (0, 0, 0, 0, pad, pad, pad, pad))
+            kv_windows = (
+                kv.unfold(1, ow, stride)
+                .unfold(2, ow, stride)
+                .permute(3, 0, 1, 2, 5, 6, 4)
+                .reshape(2, -1, ow * ow, c)
+            )
+        else:
+            kv = qkv[..., 1:, :].permute(0, 3, 4, 1, 2).reshape(b, 2 * c, h, w)
+            kv_windows = rearrange(
+                self.unfold(kv),
+                "b (nc ch oh ow) nw -> nc (b nw) (oh ow) ch",
+                nc=2,
+                ch=c,
+                oh=ow,
+                ow=ow,
+            ).contiguous()
 
         k_windows, v_windows = kv_windows[0], kv_windows[1]  # nw*b, ow*ow, c
 
@@ -1032,6 +1034,7 @@ class HAT(nn.Module):
         self.shift_size = window_size // 2
         self.overlap_ratio = overlap_ratio
         self.attn_impl: AttnImpl = "auto"  # see AttnImpl; the factories set it
+        self._training_mask = None
         self.attn_drop_rate = attn_drop_rate
 
         num_in_ch = in_chans
@@ -1212,9 +1215,9 @@ class HAT(nn.Module):
         relative_position_index = relative_coords.sum(-1)
         return relative_position_index
 
-    def calculate_mask(self, x_size, dtype):
+    def calculate_mask(self, x_size, dtype, device=None):
         # calculate attention mask for SW-MSA
-        mask_windows = self.calculate_mask_windows(x_size, dtype)
+        mask_windows = self.calculate_mask_windows(x_size, dtype, device)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
         attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
             attn_mask == 0, 0.0
@@ -1222,11 +1225,11 @@ class HAT(nn.Module):
 
         return attn_mask
 
-    def calculate_mask_windows(self, x_size, dtype):
+    def calculate_mask_windows(self, x_size, dtype, device=None):
         # the region of each token of each shifted window (num_windows, window_size*window_size): the
         # SW-MSA mask is -100 between tokens of different regions
         h, w = x_size
-        img_mask = torch.zeros((1, h, w, 1), dtype=dtype)  # 1 h w 1
+        img_mask = torch.zeros((1, h, w, 1), dtype=dtype, device=device)  # 1 h w 1
         h_slices = (
             slice(0, -self.window_size),
             slice(-self.window_size, -self.shift_size),
@@ -1270,6 +1273,24 @@ class HAT(nn.Module):
             and torch.cuda.get_device_capability(x.device)[0] >= 8
         )
 
+    def _shift_mask(self, x, x_size, flex):
+        key = (x_size, x.device, x.dtype, flex)
+        cache = (
+            self.training
+            and torch.is_grad_enabled()
+            and not torch.compiler.is_compiling()
+        )
+        if cache and self._training_mask is not None and self._training_mask[0] == key:
+            return self._training_mask[1]
+        if flex:
+            region = self.calculate_mask_windows(x_size, torch.int32, x.device)
+            mask = F.pad(region, (0, -region.shape[1] % 128))
+        else:
+            mask = self.calculate_mask(x_size, x.dtype, x.device)
+        if cache:
+            self._training_mask = (key, mask)
+        return mask
+
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
 
@@ -1280,11 +1301,8 @@ class HAT(nn.Module):
             # whole 128-token blocks), the index tables wrapped and padded (_flex_index)
             ws = self.window_size
             ows = ws + int(self.overlap_ratio * ws)
-            region = self.calculate_mask_windows(x_size, torch.float32).to(
-                device=x.device, dtype=torch.int32
-            )
             params = {
-                "attn_mask": F.pad(region, (0, -region.shape[1] % 128)),
+                "attn_mask": self._shift_mask(x, x_size, True),
                 "rpi_sa": _flex_index(
                     self.relative_position_index_SA, (2 * ws - 1) ** 2
                 ),
@@ -1294,9 +1312,8 @@ class HAT(nn.Module):
                 "flex": True,
             }
         else:
-            attn_mask = self.calculate_mask(x_size, dtype=x.dtype).to(x.device)
             params = {
-                "attn_mask": attn_mask,
+                "attn_mask": self._shift_mask(x, x_size, False),
                 "rpi_sa": self.relative_position_index_SA,
                 "rpi_oca": self.relative_position_index_OCA,
                 "flex": False,

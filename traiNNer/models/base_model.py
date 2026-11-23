@@ -1,12 +1,15 @@
 import functools
 import json
 import os
+import stat
 import time
 from abc import abstractmethod
 from collections import OrderedDict
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import torch
 from ema_pytorch import EMA
@@ -32,11 +35,44 @@ from traiNNer.schedulers.cosineannealingwarmuplr_scheduler import (
 )
 from traiNNer.schedulers.kneelr_scheduler import KneeLR
 from traiNNer.utils import get_root_logger
+from traiNNer.utils.cuda_graph import move_tensor_attributes
 from traiNNer.utils.dist_util import cpu_barrier, master_only
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import is_json_compatible, require_triton
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
+
+
+def _write_checkpoint(
+    path: Path, writer: Callable[[str], None], *, optional: bool = False
+) -> None:
+    """Publish a complete file so an interrupted save cannot become a resume point."""
+    for attempt in range(1, 4):
+        try:
+            temporary = path.parent / f".{uuid4().hex}.tmp"
+            # Exclusive creation uses the process umask just like a normal checkpoint.
+            with temporary.open("xb"):
+                pass
+            try:
+                if os.name == "posix" and path.exists():
+                    temporary.chmod(stat.S_IMODE(path.stat().st_mode))
+                writer(str(temporary))
+                temporary.replace(path)
+            finally:
+                temporary.unlink(missing_ok=True)
+            return
+        except (OSError, RuntimeError) as exc:
+            if attempt == 3:
+                if optional:
+                    get_root_logger().warning(
+                        "Could not update %s. The numbered checkpoint is available: %s",
+                        path,
+                        exc,
+                    )
+                    return
+                raise
+            get_root_logger().warning("Retrying checkpoint %s after %s", path, exc)
+            time.sleep(1)
 
 
 class BaseModel:
@@ -51,12 +87,12 @@ class BaseModel:
         self.optimizers_skipped: list[bool] = []
         self.optimizers_schedule_free: list[bool] = []
         self.batch_augment = None
-        self.log_dict = {}
+        self.log_dict: dict[str, float | Tensor] = {}
         self.l_g_gan_ema = torch.tensor(0.0, device=self.device)
         self.adaptive_d = False
         self.adaptive_d_ema_decay = 0
         self.adaptive_d_threshold = 1
-        self.loss_samples = 0
+        self.log_counts: dict[tuple[str, ...], int | Tensor] = {}
         self.with_metrics = (
             opt.val is not None
             and opt.val.val_enabled
@@ -81,14 +117,26 @@ class BaseModel:
         self.scaler_g: GradScaler | None = None
         self.scaler_d: GradScaler | None = None
         self.scaler_ae: GradScaler | None = None
+        # True when the scalers do fp16 loss scaling; set by init_training_settings
+        self.use_loss_scaling = False
         self.accum_iters: int = 1
         self.grad_clip: bool = False
         self.grad_clip_max_norm: float = 100.0
-        self.nan_count = 0
         self.current_iter: int = opt.start_iter
+        self.samples_in_epoch = 0
 
     def set_current_iter(self, iter_: int) -> None:
         self.current_iter = iter_
+
+    @contextmanager
+    def no_sync(self) -> Iterator[None]:
+        """Accumulate local gradients until the final DDP forward and backward."""
+        networks: list[nn.Module | None] = [self.net_g, self.net_d, self.net_ae]
+        with ExitStack() as stack:
+            for network in networks:
+                if isinstance(network, DistributedDataParallel):
+                    stack.enter_context(network.no_sync())
+            yield
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
@@ -188,36 +236,66 @@ class BaseModel:
             self.best_metric_results[dataset_name][metric]["val"] = val
             self.best_metric_results[dataset_name][metric]["iter"] = current_iter
 
-    def get_current_log(self) -> dict[str, float | torch.Tensor]:
-        if self.opt.dist:
-            return self._get_current_log_dist()
-        return {k: v / self.loss_samples for k, v in self.log_dict.items()}
+    def check_nonfinite_losses(self) -> None:
+        """Called at each log interval; models that skip non-finite steps on the GPU
+        read their counters back here."""
 
-    def _get_current_log_dist(self) -> dict[str, float | torch.Tensor]:
-        """Average the accumulated log values over all ranks.
+    def accumulate_log(
+        self,
+        values: dict[str, Tensor | float],
+        samples: int,
+        finite: Tensor | None = None,
+    ) -> None:
+        # Metrics emitted together share one denominator. Grad norms, for example,
+        # only exist on optimizer boundaries. Keep the finite count on-device.
+        keys = tuple(values)
+        count = self.log_counts.get(keys, 0)
+        if finite is None:
+            self.log_counts[keys] = count + samples
+        else:
+            if isinstance(count, int):
+                count = torch.full_like(finite, count, dtype=torch.int64)
+                self.log_counts[keys] = count
+            count.add_(finite, alpha=samples)
+        for key, value in values.items():
+            val = value.detach().float() if isinstance(value, Tensor) else value
+            if finite is not None:
+                val = torch.where(finite, val, 0.0)
+            total = self.log_dict.get(key)
+            if isinstance(total, Tensor):
+                total.add_(val, alpha=samples)
+            else:
+                self.log_dict[key] = (total or 0) + val * samples
 
-        Must be called on every rank. Ranks can log different keys (for example
-        when the discriminator update is skipped), so each key is averaged over
-        the ranks that logged it.
-        """
-        local = {
-            k: v.item() if isinstance(v, Tensor) else float(v)
-            for k, v in self.log_dict.items()
-        }
-        gathered: list[Any] = [None] * torch.distributed.get_world_size()
-        torch.distributed.all_gather_object(gathered, (local, self.loss_samples))
-
-        totals: dict[str, float] = {}
+    def get_current_log(self) -> dict[str, float | Tensor]:
+        self.check_nonfinite_losses()
         samples: dict[str, int] = {}
-        for rank_log, rank_samples in gathered:
+        for keys, count in self.log_counts.items():
+            n = int(count)
+            for k in keys:
+                samples[k] = samples.get(k, 0) + n
+        if self.opt.dist:
+            return self._get_current_log_dist(samples)
+        return {k: v / samples[k] for k, v in self.log_dict.items() if samples[k]}
+
+    def _get_current_log_dist(
+        self, samples: dict[str, int]
+    ) -> dict[str, float | Tensor]:
+        """Combine raw sums and per-metric sample counts across ranks."""
+        local = {k: float(v) for k, v in self.log_dict.items()}
+        gathered: list[Any] = [None] * torch.distributed.get_world_size()
+        torch.distributed.all_gather_object(gathered, (local, samples))
+        totals: dict[str, float] = {}
+        counts: dict[str, int] = {}
+        for rank_log, rank_counts in gathered:
             for k, v in rank_log.items():
                 totals[k] = totals.get(k, 0.0) + v
-                samples[k] = samples.get(k, 0) + rank_samples
-        return {k: totals[k] / samples[k] for k in totals}
+                counts[k] = counts.get(k, 0) + rank_counts[k]
+        return {k: totals[k] / counts[k] for k in totals if counts[k]}
 
     def reset_current_log(self) -> None:
-        self.log_dict = {}
-        self.loss_samples = 0
+        self.log_dict.clear()
+        self.log_counts.clear()
 
     def model_to_device(self, net: nn.Module, compile: bool = False) -> nn.Module:
         """Model to device. It also warps models with DistributedDataParallel
@@ -232,6 +310,9 @@ class BaseModel:
             memory_format=self.memory_format,
             non_blocking=True,
         )  # pyright: ignore[reportCallIssue] # https://github.com/pytorch/pytorch/issues/131765
+        # constants kept as plain tensors would otherwise be copied to the GPU on every
+        # forward, which also can't be recorded in a CUDA graph
+        move_tensor_attributes(net, self.device)
 
         net_name = net.__class__.__name__
 
@@ -262,7 +343,7 @@ class BaseModel:
         params: ParamsT,
         opts: dict[str, Any],
     ) -> Optimizer:
-        optimizer = build_optimizer(params, opts)
+        optimizer = build_optimizer(params, opts, capturable=self.opt.use_cuda_graph)
 
         if hasattr(optimizer, "train"):
             optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
@@ -408,6 +489,19 @@ class BaseModel:
     def get_current_learning_rate(self) -> list[float]:
         return [param_group["lr"] for param_group in self.optimizers[0].param_groups]
 
+    @contextmanager
+    def _checkpoint_weights(self) -> Iterator[None]:
+        # Schedule-free optimizers expose their inference weights in eval mode.
+        try:
+            for optimizer in self.optimizers:
+                if hasattr(optimizer, "eval"):
+                    optimizer.eval()  # pyright: ignore[reportAttributeAccessIssue]
+            yield
+        finally:
+            for optimizer in self.optimizers:
+                if hasattr(optimizer, "train"):
+                    optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
+
     @master_only
     def save_network(
         self,
@@ -429,72 +523,39 @@ class BaseModel:
         current_iter_str = "latest" if current_iter == -1 else str(current_iter)
         assert self.opt.logger is not None
 
-        for o in self.optimizers:
-            if hasattr(o, "eval"):
-                o.eval()  # pyright: ignore[reportAttributeAccessIssue]
-
-        save_filename = (
-            f"{net_label}_{current_iter_str}.{self.opt.logger.save_checkpoint_format}"
-        )
-        save_path = os.path.join(save_dir, save_filename)
-
-        bare_net_ = self.get_bare_model(net)
-        state_dict = bare_net_.state_dict()
-        new_state_dict = OrderedDict()
-
-        for full_key, param in state_dict.items():
-            key = full_key
-            key = key.removeprefix("module.")
-            if key in ("step", "initted"):  # ema key, breaks compatibility
-                continue
-            new_state_dict[key] = param.to("cpu", memory_format=torch.contiguous_format)
-
-        metadata: dict[str, Any] | None = None
-        if hasattr(net, "hyperparameters"):
-            assert isinstance(net.hyperparameters, dict)
-            metadata = {
-                k: v for k, v in net.hyperparameters.items() if is_json_compatible(v)
-            }
-
-        # avoid occasional writing errors
-        retry = 3
-        logger = None
-        while retry > 0:
-            try:
-                if self.opt.logger.save_checkpoint_format == "safetensors":
-                    if metadata:
-                        save_file(
-                            new_state_dict,
-                            save_path,
-                            metadata={"metadata": json.dumps(metadata)},
-                        )
-                    else:
-                        save_file(new_state_dict, save_path)
-                else:  # noqa: PLR5501
-                    if metadata:
-                        torch.save(
-                            {"metadata": metadata, param_key: new_state_dict}, save_path
-                        )
-                    else:
-                        torch.save(new_state_dict, save_path)
-            except (OSError, RuntimeError) as e:
-                logger = get_root_logger()
-                logger.warning(
-                    "Save model error: %s, remaining retry times: %d", e, retry - 1
+        checkpoint_format = self.opt.logger.save_checkpoint_format
+        path = Path(save_dir) / f"{net_label}_{current_iter_str}.{checkpoint_format}"
+        with self._checkpoint_weights():
+            bare_net = self.get_bare_model(net)
+            weights = OrderedDict(
+                (
+                    key.removeprefix("module."),
+                    param.to("cpu", memory_format=torch.contiguous_format),
                 )
-                time.sleep(1)
+                for key, param in bare_net.state_dict().items()
+                if key.removeprefix("module.") not in ("step", "initted")
+            )
+            metadata = {
+                k: v
+                for k, v in getattr(bare_net, "hyperparameters", {}).items()
+                if is_json_compatible(v)
+            }
+            if checkpoint_format == "safetensors":
+                header = {"metadata": json.dumps(metadata)} if metadata else None
+                _write_checkpoint(
+                    path,
+                    lambda tmp: save_file(weights, tmp, metadata=header),
+                    optional=current_iter == -1,
+                )
             else:
-                break
-            finally:
-                retry -= 1
-        if retry == 0:
-            assert logger is not None
-            logger.warning("Still cannot save %s. Just ignore it.", save_path)
-            # raise IOError(f'Cannot save {save_path}.')
-
-        for o in self.optimizers:
-            if hasattr(o, "train"):
-                o.train()  # pyright: ignore[reportAttributeAccessIssue]
+                payload = (
+                    {"metadata": metadata, param_key: weights} if metadata else weights
+                )
+                _write_checkpoint(
+                    path,
+                    lambda tmp: torch.save(payload, tmp),
+                    optional=current_iter == -1,
+                )
 
     def _print_different_keys_loading(
         self,
@@ -744,11 +805,10 @@ class BaseModel:
         assert self.opt.path.training_states is not None
 
         if current_iter != -1:
-            # assert self.scaler_g is not None
-            # assert self.scaler_d is not None
             state: TrainingState = {
                 "epoch": epoch,
                 "iter": current_iter,
+                "samples_in_epoch": self.samples_in_epoch,
                 "optimizers": [],
                 "schedulers": [],
             }
@@ -761,46 +821,15 @@ class BaseModel:
                 if self.scaler_ae is not None:
                     state["scaler_ae"] = self.scaler_ae.state_dict()
 
-            for o in self.optimizers:
-                if hasattr(o, "eval"):
-                    o.eval()  # pyright: ignore[reportAttributeAccessIssue]
-                state["optimizers"].append(o.state_dict())
-            for s in self.schedulers:
-                state["schedulers"].append(s.state_dict())
-            if self.net_g_ema is not None:
-                state["ema_step"] = self.net_g_ema.step
-            elif self.net_ae_ema is not None:
-                state["ema_step"] = self.net_ae_ema.step
-
-            save_filename = f"{current_iter}.state"
-            save_path = os.path.join(self.opt.path.training_states, save_filename)
-
-            logger = None
-            # avoid occasional writing errors
-            retry = 3
-            while retry > 0:
-                try:
-                    torch.save(state, save_path)
-                except (OSError, RuntimeError) as e:
-                    logger = get_root_logger()
-                    logger.warning(
-                        "Save training state error: %s, remaining retry times: %d",
-                        e,
-                        retry - 1,
-                    )
-                    time.sleep(1)
-                else:
-                    break
-                finally:
-                    retry -= 1
-            if retry == 0:
-                assert logger is not None
-                logger.warning("Still cannot save %s. Just ignore it.", save_path)
-                # raise IOError(f'Cannot save {save_path}.')
-
-            for o in self.optimizers:
-                if hasattr(o, "train"):
-                    o.train()  # pyright: ignore[reportAttributeAccessIssue]
+            with self._checkpoint_weights():
+                state["optimizers"] = [o.state_dict() for o in self.optimizers]
+                state["schedulers"] = [s.state_dict() for s in self.schedulers]
+                if self.net_g_ema is not None:
+                    state["ema_step"] = self.net_g_ema.step
+                elif self.net_ae_ema is not None:
+                    state["ema_step"] = self.net_ae_ema.step
+                path = Path(self.opt.path.training_states) / f"{current_iter}.state"
+                _write_checkpoint(path, lambda tmp: torch.save(state, tmp))
 
     def resume_training(self, resume_state: TrainingState) -> None:
         """Reload the optimizers and schedulers for resumed training.
@@ -820,9 +849,30 @@ class BaseModel:
         )
 
         for i, o in enumerate(resume_optimizers):
-            self.optimizers[i].load_state_dict(o)
-            if hasattr(self.optimizers[i], "train"):
-                self.optimizers[i].train()  # pyright: ignore[reportAttributeAccessIssue]
+            optimizer = self.optimizers[i]
+            fused = [g.get("fused") for g in optimizer.param_groups]
+            capturable = [g.get("capturable") for g in optimizer.param_groups]
+            optimizer.load_state_dict(o)
+            # load_state_dict restores capturable too, which use_cuda_graph needs on
+            for group, was_capturable in zip(
+                optimizer.param_groups, capturable, strict=True
+            ):
+                if was_capturable:
+                    group["capturable"] = True
+            # A state saved by a non-fused optimizer would switch fused off again,
+            # since load_state_dict restores the saved group settings.
+            for group, was_fused in zip(optimizer.param_groups, fused, strict=True):
+                if was_fused and not group.get("fused"):
+                    group["fused"] = True
+                    group["foreach"] = None
+                    for p in group["params"]:
+                        state = optimizer.state.get(p)
+                        if state is not None and "step" in state:
+                            state["step"] = state["step"].to(
+                                device=p.device, dtype=torch.float32
+                            )
+            if hasattr(optimizer, "train"):
+                optimizer.train()  # pyright: ignore[reportAttributeAccessIssue]
 
         current_iter = resume_state["iter"]
         if self.opt.train.restart_scheduler:
@@ -836,15 +886,16 @@ class BaseModel:
             for i, s in enumerate(resume_schedulers):
                 self.schedulers[i].load_state_dict(s)
 
-        if "scaler_g" in resume_state:
-            assert self.scaler_g is not None
-            self.scaler_g.load_state_dict(resume_state["scaler_g"])
-        if "scaler_d" in resume_state:
-            assert self.scaler_d is not None
-            self.scaler_d.load_state_dict(resume_state["scaler_d"])
-        if "scaler_ae" in resume_state:
-            assert self.scaler_ae is not None
-            self.scaler_ae.load_state_dict(resume_state["scaler_ae"])
+        # Only a loss-scaling (fp16) scaler carries state worth restoring. The others
+        # stay at scale 1, and states saved from a disabled scaler are empty.
+        if self.use_loss_scaling:
+            for scaler, state in (
+                (self.scaler_g, resume_state.get("scaler_g")),
+                (self.scaler_d, resume_state.get("scaler_d")),
+                (self.scaler_ae, resume_state.get("scaler_ae")),
+            ):
+                if scaler is not None and state:
+                    scaler.load_state_dict(state)
 
         if "ema_step" in resume_state:
             if self.net_g_ema is not None:

@@ -1,5 +1,8 @@
+from collections import OrderedDict
+from typing import Any
+
 import numpy as np
-from torchvision.transforms.functional import normalize
+import pyvips
 
 from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.data_util import (
@@ -9,11 +12,12 @@ from traiNNer.data.data_util import (
 )
 from traiNNer.data.transforms import (
     augment_vips_pair,
+    get_vips_dtype,
     paired_random_crop_vips,
     patch_wh,
 )
 from traiNNer.utils import FileClient, img2tensor
-from traiNNer.utils.img_util import img2rgb, vipsimfrompath
+from traiNNer.utils.img_util import img2rgb, normalize_, vipsimfrompath
 from traiNNer.utils.redux_options import DatasetOptions
 from traiNNer.utils.registry import DATASET_REGISTRY
 from traiNNer.utils.types import DataFeed
@@ -51,7 +55,9 @@ class PairedImageDataset(BaseDataset):
         super().__init__(opt)
         # file client (io backend)
         self.file_client = None
-        self.io_backend_opt = opt.io_backend
+        self.io_backend_opt = opt.io_backend.copy()
+        self._decoded: OrderedDict[str, tuple[pyvips.Image, int]] = OrderedDict()
+        self._decoded_bytes = 0
         self.mean = opt.mean
         self.std = opt.std
         self.color = opt.color != "y"
@@ -84,30 +90,58 @@ class PairedImageDataset(BaseDataset):
                 (self.lq_folder, self.gt_folder), ("lq", "gt"), self.filename_tmpl
             )
 
+    def __getstate__(self) -> dict[str, Any]:
+        # Spawned workers open their own handles and fill their own cache.
+        return {
+            **vars(self),
+            "file_client": None,
+            "_decoded": OrderedDict(),
+            "_decoded_bytes": 0,
+        }
+
+    def _read_image(self, path: str) -> pyvips.Image:
+        cached = self._decoded.get(path)
+        if cached is not None:
+            self._decoded.move_to_end(path)
+            return cached[0]
+
+        image = vipsimfrompath(path)
+        limit = self.opt.decoded_cache_mib * 2**20
+        if (
+            limit
+            and self.opt.phase == "train"
+            and self.io_backend_opt["type"] == "disk"
+        ):
+            size = (
+                int(image.width)
+                * int(image.height)
+                * int(image.bands)
+                * np.dtype(get_vips_dtype(image)).itemsize
+            )
+            if size <= limit:
+                while self._decoded_bytes + size > limit:
+                    _, (_, evicted) = self._decoded.popitem(last=False)
+                    self._decoded_bytes -= evicted
+                try:
+                    image = image.copy_memory()
+                except pyvips.Error as exc:
+                    raise OSError(
+                        f"Could not decode {path} into the image cache: {exc}"
+                    ) from exc
+                self._decoded[path] = (image, size)
+                self._decoded_bytes += size
+        return image
+
     def __getitem__(self, index: int) -> DataFeed:
         if self.file_client is None:
-            self.file_client = FileClient(
-                self.io_backend_opt.pop("type"), **self.io_backend_opt
-            )
-
+            settings = self.io_backend_opt.copy()
+            self.file_client = FileClient(settings.pop("type"), **settings)
         scale = self.opt.scale
         assert scale is not None
-
-        # Load gt and lq images. Dimension order: HWC; channel order: BGR;
-        # image range: [0, 1], float32.
         gt_path = self.paths[index]["gt_path"]
-
-        try:
-            vips_img_gt = vipsimfrompath(gt_path)
-        except AttributeError as err:
-            raise AttributeError(gt_path) from err
-
         lq_path = self.paths[index]["lq_path"]
-
-        try:
-            vips_img_lq = vipsimfrompath(lq_path)
-        except AttributeError as err:
-            raise AttributeError(lq_path) from err
+        vips_img_gt = self._read_image(gt_path)
+        vips_img_lq = self._read_image(lq_path)
 
         # augmentation for training
         if self.opt.phase == "train":
@@ -151,8 +185,8 @@ class PairedImageDataset(BaseDataset):
 
         # normalize
         if self.mean is not None and self.std is not None:
-            normalize(img_lq_tensor, self.mean, self.std, inplace=True)
-            normalize(img_gt_tensor, self.mean, self.std, inplace=True)
+            normalize_(img_lq_tensor, self.mean, self.std)
+            normalize_(img_gt_tensor, self.mean, self.std)
 
         return {
             "lq": img_lq_tensor,

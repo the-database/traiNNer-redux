@@ -5,6 +5,7 @@ import shutil
 import sys
 import time
 from collections.abc import Generator, Sequence
+from contextlib import contextmanager
 from os import path as osp
 from typing import Any
 
@@ -14,6 +15,18 @@ from rich import print
 from traiNNer.utils.dist_util import master_only
 from traiNNer.utils.options import struct2dict
 from traiNNer.utils.redux_options import ReduxOptions
+
+
+@contextmanager
+def cudnn_benchmark_disabled() -> Generator[None]:
+    """Turn off cudnn.benchmark for code whose conv shapes change every call, where
+    autotuning each new shape costs far more than it saves."""
+    prev = torch.backends.cudnn.benchmark
+    torch.backends.cudnn.benchmark = False
+    try:
+        yield
+    finally:
+        torch.backends.cudnn.benchmark = prev
 
 
 def set_random_seed(seed: int) -> None:
@@ -282,6 +295,14 @@ def is_json_compatible(value: Any) -> bool:
             isinstance(k, str) and is_json_compatible(v) for k, v in value.items()
         )
     return False
+
+
+def triton_available() -> bool:
+    try:
+        import triton  # type: ignore # noqa: F401
+    except ImportError:
+        return False
+    return True
 
 
 def require_triton(message: str) -> None:

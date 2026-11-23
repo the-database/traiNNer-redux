@@ -506,8 +506,11 @@ class DiffJPEG(nn.Module):
         if isinstance(factor, int | float):
             factor = quality_to_factor(factor)
         else:
-            for i in range(factor.size(0)):
-                factor[i] = quality_to_factor(factor[i])
+            # Vectorized quality_to_factor: a per-sample Python branch on a CUDA
+            # tensor would sync with the host once per sample.
+            factor = (
+                torch.where(factor < 50, 5000.0 / factor, 200.0 - factor * 2) / 100.0
+            )
         h, w = x.size()[-2:]
         h_pad, w_pad = 0, 0
         # why should use 16

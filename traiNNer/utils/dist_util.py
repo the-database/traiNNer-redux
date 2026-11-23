@@ -38,6 +38,13 @@ def cpu_barrier() -> None:
         dist.barrier(group=_cpu_group)
 
 
+def any_rank(flag: bool) -> bool:
+    """Agree on a host-side control flag at a shared training boundary."""
+    value = torch.tensor(int(flag), dtype=torch.int32, device="cpu")
+    dist.all_reduce(value, op=dist.ReduceOp.MAX, group=_cpu_group)
+    return bool(value.item())
+
+
 def _init_dist_pytorch(backend: str, **kwargs) -> None:
     rank = int(os.environ["RANK"])
     num_gpus = torch.cuda.device_count()

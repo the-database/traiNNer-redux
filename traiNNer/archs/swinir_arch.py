@@ -1,9 +1,24 @@
 from collections.abc import Sequence
 from typing import Literal
 
-from spandrel.architectures.SwinIR import SwinIR
+import torch
+from spandrel.architectures.SwinIR import SwinIR as SpandrelSwinIR
+from torch import Tensor
 
 from traiNNer.utils.registry import SPANDREL_REGISTRY
+
+
+class SwinIR(SpandrelSwinIR):
+    def forward(self, x: Tensor) -> Tensor:
+        # Spandrel creates off-size shift masks with CPU tensor factories.
+        if (
+            x.is_cuda
+            and not torch.compiler.is_compiling()
+            and torch.cuda.is_current_stream_capturing()
+        ):
+            with x.device:
+                return super().forward(x)
+        return super().forward(x)
 
 
 def swinir(scale: int = 4, **kwargs) -> SwinIR:

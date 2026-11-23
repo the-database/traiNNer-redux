@@ -1,8 +1,21 @@
+import importlib.util
+from typing import cast
+
+import torch
 import torch.nn.functional as F  # noqa: N812
 from spandrel.util import store_hyperparameters
 from torch import Tensor, nn
 
 from traiNNer.utils.registry import ARCH_REGISTRY
+
+_HAS_TRITON = importlib.util.find_spec("triton") is not None
+
+
+@torch.compile(fullgraph=True)
+def _bias_prelu(x: Tensor, bias: Tensor, slope: Tensor) -> Tensor:
+    z = x + bias.to(x.dtype).view(1, -1, 1, 1)
+    slope = slope.to(x.dtype).view(1, -1, 1, 1)
+    return torch.where(z > 0, z, z * slope)
 
 
 @store_hyperparameters()
@@ -33,8 +46,11 @@ class SRVGGNetCompact(nn.Module):
         upscale: int = 4,
         act_type: str = "prelu",
         learn_residual: bool = True,
+        fused_training: bool = False,
     ) -> None:
         super().__init__()
+        self.hyperparameters.pop("fused_training", None)
+        self.fused_training = fused_training
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch
         self.num_feat = num_feat
@@ -74,8 +90,27 @@ class SRVGGNetCompact(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         out = x
-        for i in range(len(self.body)):
-            out = self.body[i](out)
+        if (
+            self.fused_training
+            and _HAS_TRITON
+            and self.training
+            and x.is_cuda
+            and self.act_type == "prelu"
+        ):
+            for i in range(0, len(self.body) - 1, 2):
+                conv = cast(nn.Conv2d, self.body[i])
+                activation = cast(nn.PReLU, self.body[i + 1])
+                out = F.conv2d(out, conv.weight, padding=1)
+                out = _bias_prelu(out, cast(Tensor, conv.bias), activation.weight)
+            out = self.body[-1](out)
+        else:
+            for layer in self.body:
+                out = layer(out)
+
+        if self.training and self.learn_residual:
+            # Each LR channel is broadcast over its r*r PixelShuffle phases.
+            out.unflatten(1, (self.num_out_ch, self.upscale**2)).add_(x.unsqueeze(2))
+            return self.upsampler(out)
 
         out = self.upsampler(out)
 
@@ -96,6 +131,7 @@ def compact(
     scale: int = 4,
     act_type: str = "prelu",
     learn_residual: bool = True,
+    fused_training: bool = False,
 ) -> SRVGGNetCompact:
     return SRVGGNetCompact(
         upscale=scale,
@@ -105,6 +141,7 @@ def compact(
         num_conv=num_conv,
         act_type=act_type,
         learn_residual=learn_residual,
+        fused_training=fused_training,
     )
 
 
@@ -117,6 +154,7 @@ def ultracompact(
     scale: int = 4,
     act_type: str = "prelu",
     learn_residual: bool = True,
+    fused_training: bool = False,
 ) -> SRVGGNetCompact:
     return SRVGGNetCompact(
         upscale=scale,
@@ -126,6 +164,7 @@ def ultracompact(
         num_conv=num_conv,
         act_type=act_type,
         learn_residual=learn_residual,
+        fused_training=fused_training,
     )
 
 
@@ -138,6 +177,7 @@ def superultracompact(
     scale: int = 4,
     act_type: str = "prelu",
     learn_residual: bool = True,
+    fused_training: bool = False,
 ) -> SRVGGNetCompact:
     return SRVGGNetCompact(
         upscale=scale,
@@ -147,4 +187,5 @@ def superultracompact(
         num_conv=num_conv,
         act_type=act_type,
         learn_residual=learn_residual,
+        fused_training=fused_training,
     )
