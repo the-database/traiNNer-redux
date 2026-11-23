@@ -1,4 +1,3 @@
-import importlib.util
 import os
 import shutil
 import warnings
@@ -42,7 +41,7 @@ from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.cuda_graph import CudaGraphStep, supports_cuda_graph
 from traiNNer.utils.eco import compute_alpha, eco_synthesize
 from traiNNer.utils.logger import clickable_file_path
-from traiNNer.utils.misc import loss_type_to_label, triton_available
+from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
@@ -399,7 +398,6 @@ class SRModel(BaseModel):
                     self.opt.compile_losses
                     and isinstance(self.losses[label], COMPILED_BY_DEFAULT)
                     and self.device.type == "cuda"
-                    and triton_available()
                 ):
                     # Fuses their elementwise work, at the same accuracy. These losses
                     # don't change between runs, so later runs with the same batch and
@@ -443,7 +441,7 @@ class SRModel(BaseModel):
                 )
                 # With the launches recorded once, LayerNorm's Triton kernels pay off;
                 # torch.compile fuses LayerNorm itself.
-                if not self.use_compile and importlib.util.find_spec("triton"):
+                if not self.use_compile:
                     from traiNNer.ops.layer_norm import use_triton_layer_norm
 
                     n_ln = use_triton_layer_norm(self.get_bare_model(self.net_g))

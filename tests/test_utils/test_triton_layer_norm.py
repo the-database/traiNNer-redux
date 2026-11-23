@@ -1,6 +1,5 @@
 """The Triton LayerNorm must match nn.LayerNorm in values, dtypes and autograd."""
 
-import importlib.util
 from collections.abc import Callable
 
 import pytest
@@ -9,8 +8,8 @@ import torch.nn.functional as F  # noqa: N812
 from torch import nn
 
 pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available() or importlib.util.find_spec("triton") is None,
-    reason="needs CUDA and triton",
+    not torch.cuda.is_available(),
+    reason="needs CUDA",
 )
 
 CASES = [

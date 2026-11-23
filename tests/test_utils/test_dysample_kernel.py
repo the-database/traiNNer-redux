@@ -1,15 +1,13 @@
 """DySample's Triton sampling kernel must match F.grid_sample(bilinear, border,
 align_corners=False) on channel groups, forward and backward."""
 
-import importlib.util
-
 import pytest
 import torch
 import torch.nn.functional as F  # noqa: N812
 
 pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available() or importlib.util.find_spec("triton") is None,
-    reason="needs CUDA and triton",
+    not torch.cuda.is_available(),
+    reason="needs CUDA",
 )
 
 
