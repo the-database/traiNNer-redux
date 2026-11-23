@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import torch
@@ -13,10 +14,57 @@ from spandrel.util import store_hyperparameters
 from spandrel.util.timm import DropPath, trunc_normal_
 from torch import nn
 from torch.nn import functional as F
+from torch.nn.attention.flex_attention import AuxRequest, flex_attention
 from torch.utils import checkpoint
 
 # from spandrel.architectures.DAT import DAT
+from traiNNer.ops.flex_bias_grad import FlexBiasGrad
 from traiNNer.utils.registry import SPANDREL_REGISTRY
+
+# attn_impl: "flex" runs the spatial window attention on FlexAttention: the same function as the
+# stock path, with the dynamic position bias and the shifted-window mask applied inside a fused
+# kernel, so the [windows, heads, n, n] scores are never materialised, and the bias table's
+# gradient summed by FlexBiasGrad. "auto" (the default) uses it while training on a CUDA GPU
+# (sm_80+) with no attention dropout and deterministic algorithms off; inference, validation and
+# ONNX export always use the stock path. "stock" never uses it. The weights are the same either way.
+AttnImpl = Literal["auto", "flex", "stock"]
+
+
+# One compiled function per attention kind, each with its own compile cache (see hat_arch): q comes
+# pre-scaled and the bias table as a plain tensor, with dynamic shapes, so one kernel serves every
+# batch and window count per head dim and dtype.
+@torch.compile(dynamic=True)
+def _flex_window(q, k, v, table, rpi):
+    def score_mod(score, b, h, qi, ki):
+        return score + table[rpi[qi, ki], h]
+
+    out, aux = flex_attention(
+        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+    )
+    return out, aux.lse
+
+
+@torch.compile(dynamic=True)
+def _flex_window_shifted(q, k, v, table, rpi, region):
+    # plus the shifted-window mask: -100 between tokens of different regions, as the stock mask
+    def score_mod(score, b, h, qi, ki):
+        w = b % region.shape[0]
+        same = region[w, qi] == region[w, ki]
+        return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
+
+    out, aux = flex_attention(
+        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+    )
+    return out, aux.lse
+
+
+def _flex_pad_tokens(t: torch.Tensor, *dims: int) -> torch.Tensor:
+    # score_mod also runs on the padding of the last 128-token block (masked afterwards): pad the
+    # index tables to whole blocks so those reads stay in bounds
+    pad = []
+    for n in reversed(dims):
+        pad += [0, -n % 128]
+    return F.pad(t, pad)
 
 
 def img2windows(img, H_sp, W_sp):
@@ -227,6 +275,13 @@ class Spatial_Attention(nn.Module):
             relative_coords[:, :, 0] *= 2 * self.W_sp - 1
             relative_position_index = relative_coords.sum(-1)
             self.register_buffer("relative_position_index", relative_position_index)
+            n = self.H_sp * self.W_sp
+            self.register_buffer(
+                "flex_rpi",
+                _flex_pad_tokens(relative_position_index.to(torch.int32), n, n),
+                persistent=False,
+            )
+        self.flex = False  # set by DAT.forward
 
         self.attn_drop = nn.Dropout(attn_drop)
 
@@ -241,9 +296,10 @@ class Spatial_Attention(nn.Module):
         )
         return x
 
-    def forward(self, qkv, H, W, mask=None):
+    def forward(self, qkv, H, W, mask=None, region=None):
         """
-        Input: qkv: (B, 3*L, C), H, W, mask: (B, N, N), N is the window size
+        Input: qkv: (B, 3*L, C), H, W, mask: (B, N, N), N is the window size; on FlexAttention
+        the shifted-window mask comes as region, a region id per window token
         Output: x (B, H, W, C)
         """
         _, B, L, C = qkv.shape
@@ -257,6 +313,9 @@ class Spatial_Attention(nn.Module):
             .reshape(3, -1, heads, wh * ww, C // heads)
             .unbind(0)
         )
+
+        if self.flex and self.position_bias:
+            return self.forward_flex(q, k, v, H, W, region)
 
         q = q * self.scale
         attn = q @ k.transpose(-2, -1)  # B head N C @ B head C N --> B head N N
@@ -295,6 +354,33 @@ class Spatial_Attention(nn.Module):
         x = windows2img(x, self.H_sp, self.W_sp, H, W)  # B H' W' C
 
         return x
+
+    def forward_flex(self, q, k, v, H, W, region):
+        """forward() from q, k, v on FlexAttention. region: the shifted-window mask as a region
+        id per window token (num_windows, n'), int32, or None."""
+        n, d = q.shape[2], q.shape[3]
+        dp = max(
+            16, 1 << (d - 1).bit_length()
+        )  # a power-of-two head dim; zero dims change nothing
+        q, k, v = (
+            F.pad(t, (0, dp - d)) if dp != d else t for t in (q * self.scale, k, v)
+        )
+        table = self.pos(self.rpe_biases)  # (2Gh-1) * (2Gw-1), heads
+        if table.requires_grad and torch.is_grad_enabled():
+            fn_table = table.detach()
+        else:
+            fn_table = table
+        if region is None:
+            out, lse = _flex_window(q, k, v, fn_table, self.flex_rpi)
+        else:
+            out, lse = _flex_window_shifted(q, k, v, fn_table, self.flex_rpi, region)
+        if fn_table is not table:
+            # FlexAttention would add each score's gradient into the table with an atomic add
+            out = FlexBiasGrad.apply(
+                out, table, q, k, v, lse.detach(), self.flex_rpi, region
+            )
+        x = out[..., :d].transpose(1, 2).reshape(-1, n, d * self.num_heads)
+        return windows2img(x, self.H_sp, self.W_sp, H, W)
 
 
 class Adaptive_Spatial_Attention(nn.Module):
@@ -337,6 +423,8 @@ class Adaptive_Spatial_Attention(nn.Module):
         self.patches_resolution = reso
         # shift masks for training sizes other than reso, built once per size
         self._train_masks: dict[tuple, tuple[torch.Tensor, torch.Tensor]] = {}
+        # the same as region ids per window token, for FlexAttention
+        self._flex_regions: dict[tuple, tuple[torch.Tensor, torch.Tensor]] = {}
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
 
         assert 0 <= self.shift_size[0] < self.split_size[0], (
@@ -399,6 +487,39 @@ class Adaptive_Spatial_Attention(nn.Module):
             nn.GELU(),
             nn.Conv2d(dim // 16, 1, kernel_size=1),
         )
+
+    def calculate_regions(self, H, W, device):
+        """calculate_mask's masks as the region id of each token of each window, (nW, n'),
+        int32 (-100 between tokens of different regions), padded to whole 128-token blocks."""
+        key = (H, W, device)
+        regions = self._flex_regions.get(key)
+        if regions is None:
+            regions = []
+            (s0, s1), (t0, t1) = self.split_size, self.shift_size
+            # window-0 is s0 x s1 shifted by (t0, t1); window-1 the transpose (calculate_mask)
+            for sh, sw, shift_h, shift_w in ((s0, s1, t0, t1), (s1, s0, t1, t0)):
+                img = torch.zeros((1, H, W, 1))
+                cnt = 0
+                for h in (slice(0, -sh), slice(-sh, -shift_h), slice(-shift_h, None)):
+                    for w in (
+                        slice(0, -sw),
+                        slice(-sw, -shift_w),
+                        slice(-shift_w, None),
+                    ):
+                        img[:, h, w, :] = cnt
+                        cnt += 1
+                win = (
+                    img.view(1, H // sh, sh, W // sw, sw, 1)
+                    .permute(0, 1, 3, 2, 4, 5)
+                    .reshape(-1, sh * sw)
+                )
+                regions.append(
+                    _flex_pad_tokens(win.to(device=device, dtype=torch.int32), sh * sw)
+                )
+            regions = tuple(regions)
+            if self.training and len(self._flex_regions) < 4:
+                self._flex_regions[key] = regions
+        return regions
 
     def calculate_mask(self, H, W, dtype=None):
         # The implementation builds on Swin Transformer code https://github.com/microsoft/Swin-Transformer/blob/main/models/swin_transformer.py
@@ -521,7 +642,11 @@ class Adaptive_Spatial_Attention(nn.Module):
             )
             qkv_1 = qkv_1.view(3, B, _L, C // 2)
 
-            if self.patches_resolution != _H or self.patches_resolution != _W:
+            if self.attns[0].flex:
+                regions = self.calculate_regions(_H, _W, x.device)
+                x1_shift = self.attns[0](qkv_0, _H, _W, region=regions[0])
+                x2_shift = self.attns[1](qkv_1, _H, _W, region=regions[1])
+            elif self.patches_resolution != _H or self.patches_resolution != _W:
                 key = (_H, _W, x.dtype, x.device)
                 masks = self._train_masks.get(key)
                 if masks is None:
@@ -906,6 +1031,14 @@ class UpsampleOneStep(nn.Sequential):
         return flops
 
 
+def _with_attn_impl(net: DAT, attn_impl: AttnImpl) -> DAT:
+    # set after construction, so it stays out of the hyperparameters saved with checkpoints
+    if attn_impl not in ("auto", "flex", "stock"):
+        raise ValueError(f"attn_impl must be auto, flex or stock, not {attn_impl!r}")
+    net.attn_impl = attn_impl
+    return net
+
+
 @store_hyperparameters()
 class DAT(nn.Module):
     """Dual Aggregation Transformer
@@ -970,6 +1103,8 @@ class DAT(nn.Module):
         self.pad = 0
         self.upscale = upscale
         self.upsampler = upsampler
+        self.attn_drop_rate = attn_drop_rate
+        self.attn_impl: AttnImpl = "auto"  # see AttnImpl; the factories set it
 
         if unshuffle_mod and upscale < 3:
             unshuffle = 4 // upscale
@@ -1074,6 +1209,24 @@ class DAT(nn.Module):
 
         return x
 
+    def use_flex(self, x) -> bool:
+        """Whether this forward runs the spatial attention on FlexAttention (see AttnImpl)."""
+        if self.attn_impl == "stock" or torch.onnx.is_in_onnx_export():
+            return False
+        if self.attn_impl == "flex":
+            if self.attn_drop_rate > 0:
+                raise ValueError(
+                    "attn_impl flex does not support attention dropout (attn_drop_rate > 0)"
+                )
+            return True
+        return (
+            self.training
+            and x.is_cuda
+            and self.attn_drop_rate == 0
+            and not torch.are_deterministic_algorithms_enabled()
+            and torch.cuda.get_device_capability(x.device)[0] >= 8
+        )
+
     def check_img_size(self, x: Tensor, h: int, w: int) -> Tensor:
         if self.pad == 0:
             return x
@@ -1086,6 +1239,12 @@ class DAT(nn.Module):
         Input: x: (B, C, H, W)
         """
         _b, _c, h, w = x.shape
+        flex = self.use_flex(x)
+        if getattr(self, "_flex_on", None) is not flex:
+            for m in self.modules():
+                if isinstance(m, Spatial_Attention):
+                    m.flex = flex
+            self._flex_on = flex
         x = self.check_img_size(x, h, w)
         mean = self.mean.to(dtype=x.dtype, device=x.device)
         x = (x - mean) * self.img_range
@@ -1126,8 +1285,9 @@ def dat(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
+    attn_impl: AttnImpl = "auto",
 ) -> DAT:
-    return DAT(
+    net = DAT(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
@@ -1147,6 +1307,7 @@ def dat(
         upsampler=upsampler,
         unshuffle_mod=unshuffle_mod,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @SPANDREL_REGISTRY.register()
@@ -1169,8 +1330,9 @@ def dat_s(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
+    attn_impl: AttnImpl = "auto",
 ) -> DAT:
-    return DAT(
+    net = DAT(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
@@ -1190,6 +1352,7 @@ def dat_s(
         upsampler=upsampler,
         unshuffle_mod=unshuffle_mod,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @SPANDREL_REGISTRY.register()
@@ -1212,8 +1375,9 @@ def dat_2(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
+    attn_impl: AttnImpl = "auto",
 ) -> DAT:
-    return DAT(
+    net = DAT(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
@@ -1233,6 +1397,7 @@ def dat_2(
         upsampler=upsampler,
         unshuffle_mod=unshuffle_mod,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @SPANDREL_REGISTRY.register()
@@ -1255,8 +1420,9 @@ def dat_2_l(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
+    attn_impl: AttnImpl = "auto",
 ) -> DAT:
-    return DAT(
+    net = DAT(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
@@ -1276,6 +1442,7 @@ def dat_2_l(
         upsampler=upsampler,
         unshuffle_mod=unshuffle_mod,
     )
+    return _with_attn_impl(net, attn_impl)
 
 
 @SPANDREL_REGISTRY.register()
@@ -1298,8 +1465,9 @@ def dat_light(
     use_chk: bool = False,
     upsampler: str = "pixelshuffle",
     unshuffle_mod: bool = False,
+    attn_impl: AttnImpl = "auto",
 ) -> DAT:
-    return DAT(
+    net = DAT(
         upscale=scale,
         in_chans=in_chans,
         img_size=img_size,
@@ -1319,3 +1487,4 @@ def dat_light(
         upsampler=upsampler,
         unshuffle_mod=unshuffle_mod,
     )
+    return _with_attn_impl(net, attn_impl)

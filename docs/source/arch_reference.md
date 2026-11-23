@@ -165,6 +165,7 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 unshuffle_mod: false
+attn_impl: auto
 ```
 #### dat_2
 
@@ -188,6 +189,7 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 unshuffle_mod: false
+attn_impl: auto
 ```
 #### dat_2_l
 
@@ -211,6 +213,7 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 unshuffle_mod: false
+attn_impl: auto
 ```
 #### dat_light
 
@@ -234,6 +237,7 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 unshuffle_mod: false
+attn_impl: auto
 ```
 #### dat_s
 
@@ -257,6 +261,7 @@ drop_path_rate: 0.1
 use_chk: false
 upsampler: pixelshuffle
 unshuffle_mod: false
+attn_impl: auto
 ```
 ### DAT_iLN
 #### dat_iln
