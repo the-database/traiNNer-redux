@@ -89,7 +89,7 @@
   Type: bool
 ### use_cuda_graph
 
-  Record the training step (forward, backward and optimizer step) as a CUDA graph after a few warmup iterations, then replay it every iteration. This removes most of the per-kernel launch overhead, which is often the bottleneck for small archs or small batches, and unlike use_compile it only takes seconds on startup and leaves no cache. It uses somewhat more VRAM, and the speedup shrinks as the batch grows, so leave it off when VRAM limits the batch or crop size. Requires a fused optimizer (Adam or AdamW), a single GPU and fixed training patch sizes. If the step can't be recorded, training continues without it and the reason is logged.
+  Record the training step (forward, backward and optimizer step) as a CUDA graph after a few warmup iterations, then replay it every iteration. This removes most of the per-kernel launch overhead, which is often the bottleneck for small archs or small batches, and unlike use_compile it only takes seconds on startup and leaves no cache. It uses somewhat more VRAM, and the speedup shrinks as the batch grows, so leave it off when VRAM limits the batch or crop size. Requires a fused optimizer (Adam or AdamW) and fixed training patch sizes. On several GPUs it needs distributed training (torchrun), and the recorded step averages the gradients itself instead of DistributedDataParallel. If the step can't be recorded, training continues without it and the reason is logged.
 
   Type: bool
 ### compile_losses

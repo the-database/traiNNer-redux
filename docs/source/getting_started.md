@@ -82,6 +82,8 @@ venv\Scripts\activate
 torchrun --nproc-per-node 4 train.py --launcher pytorch --auto_resume -opt ./options/train/arch/config.yml
 ```
 
+`use_cuda_graph: true` works with multiple GPUs too, and at small batches per GPU it's often much faster, since launching kernels is then the bottleneck on each GPU.
+
 #### Test models
 
 Models are saved in the `safetensors` format to `traiNNer-redux/experiments/<name>/models`, where `name` is whatever was used in the config file. [chaiNNer](https://github.com/chaiNNer-org/chaiNNer) can be used to run most models. If you want to run the model on images during training to monitor the progress of the model, set up validation in the config file, and find the validation results in `traiNNer-redux/experiments/<name>/visualization`.
