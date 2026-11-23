@@ -5,7 +5,7 @@ from torch import Tensor, nn
 from torch.nn import functional as F  # noqa: N812
 
 from traiNNer.losses.mssim_loss import filter2, fspecial, preprocess_rgb
-from traiNNer.losses.perceptual_fp16_loss import VGG
+from traiNNer.losses.perceptual_loss import VGG
 from traiNNer.utils.registry import LOSS_REGISTRY
 
 

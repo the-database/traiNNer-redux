@@ -41,6 +41,9 @@ def build_loss(loss_opt: dict[str, Any]) -> nn.Module:
     loss_type = opt.pop("type")
     loss = LOSS_REGISTRY.get(loss_type)(**opt)
     logger = get_root_logger()
+    deprecated = getattr(loss, "deprecated", None)
+    if deprecated:
+        logger.warning("Loss %s is deprecated: %s", loss_type, deprecated)
     logger.info(
         "Loss [bold]%s[/bold](%s) is created.",
         loss.__class__.__name__,

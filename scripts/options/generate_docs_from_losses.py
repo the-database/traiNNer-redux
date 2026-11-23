@@ -88,6 +88,8 @@ if __name__ == "__main__":
     output_path = "docs/source/loss_reference.md"
 
     for _, arch in LOSS_REGISTRY:
+        if getattr(arch, "deprecated", False):
+            continue
         # print("arch", arch)
         if inspect.isfunction(arch):
             net = arch(scale=4)

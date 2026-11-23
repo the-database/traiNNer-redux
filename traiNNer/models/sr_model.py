@@ -28,7 +28,7 @@ from traiNNer.data.base_dataset import BaseDataset
 from traiNNer.data.degradations import resize_pt
 from traiNNer.losses import build_loss
 from traiNNer.losses.basic_loss import HSLuvLoss
-from traiNNer.losses.perceptual_fp16_loss import PerceptualFP16Loss
+from traiNNer.losses.perceptual_loss import PerceptualLoss
 from traiNNer.metrics import calculate_metric
 from traiNNer.models.base_model import BaseModel
 from traiNNer.utils import get_root_logger, imwrite, tensor2img
@@ -47,9 +47,9 @@ from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed
 
 # Losses that compile_losses compiles: fixed losses where compiling fuses enough
-# elementwise work to matter (perceptual 48 -> 35 ms, HSLuv 11 -> 3 ms on the SPAN
+# elementwise work to matter (perceptual 43 -> 19 ms, HSLuv 11 -> 3 ms on the SPAN
 # GAN template), with gradients as close to float64 as eager.
-COMPILED_BY_DEFAULT = (PerceptualFP16Loss, HSLuvLoss)
+COMPILED_BY_DEFAULT = (PerceptualLoss, HSLuvLoss)
 
 # Logged once per update, on the microbatch that applies the gradients
 UPDATE_LOG_KEYS = frozenset({"grad_norm_g", "scale_g", "grad_norm_d", "scale_d"})
