@@ -255,22 +255,7 @@ loss_weight: 1.0
 type: perceptualanimeloss
 layer_weights: ~
 criterion: l1
-loss_weight: 1.0
-```
-## perceptualfp16loss
-
-
-```yaml
-type: perceptualfp16loss
-layer_weights: ~
-w_lambda: 0.01
-alpha: ~
-criterion: charbonnier
-num_proj_fd: 256
-phase_weight_fd: 1.0
-stride_fd: 1
-clip_min: 0
-antialiased: false
+verbose_logging: false
 loss_weight: 1.0
 ```
 ## perceptualloss
@@ -287,6 +272,7 @@ phase_weight_fd: 1.0
 stride_fd: 1
 clip_min: 0
 antialiased: false
+verbose_logging: false
 loss_weight: 1.0
 ```
 ## ssimloss
@@ -306,5 +292,22 @@ loss_weight: 1.0
 
 ```yaml
 type: sobeledgeloss
+loss_weight: 1.0
+```
+## structuretextureloss
+
+
+```yaml
+type: structuretextureloss
+pixel_weight: 1.0
+perceptual_weight: 1.0
+layer_weights: ~
+structure_k: 10.0
+structure_t: 0.1
+texture_k: 10.0
+texture_t: 0.1
+test_y_channel: true
+color_space: yiq
+include_luminance: false
 loss_weight: 1.0
 ```

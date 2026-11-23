@@ -4,6 +4,7 @@ from collections.abc import Callable
 import pytest
 import torch
 from torch import Tensor
+from traiNNer.losses import build_loss
 from traiNNer.losses.perceptual_loss import PerceptualLoss
 
 
@@ -87,3 +88,13 @@ def test_same_under_autocast(
         loss_amp = loss_fn(*images)
     assert loss_amp.dtype == torch.float32
     assert torch.allclose(loss_amp.double(), loss)
+
+
+def test_fp16_alias_is_perceptual_loss(
+    loss_fn: PerceptualLoss,
+    images: tuple[Tensor, Tensor],
+    base: tuple[Tensor, Tensor],
+) -> None:
+    alias = build_loss({"type": "perceptualfp16loss", "loss_weight": 1.0})
+    assert isinstance(alias, PerceptualLoss)
+    assert torch.equal(alias(*images).double(), base[0])
