@@ -530,7 +530,7 @@ class ReduxOptions(StrictStruct):
     compile_losses: Annotated[
         bool,
         Meta(
-            description="Compile the perceptual and HSLuv losses with torch.compile even when use_compile is off. This fuses their elementwise work without making their gradients less accurate: on a SPAN GAN template the perceptual loss goes from 43 to 19 ms and HSLuv from 11 to 3 ms. The first run compiles for about 45 seconds and adds about 70 MB to the compile cache. These losses don't change, so later runs with the same batch and patch size reuse it, even after changing the arch. Needs triton; skipped without it."
+            description="Compile the perceptual and HSLuv losses with torch.compile even when use_compile is off. This fuses their elementwise work without making their gradients less accurate: on a SPAN GAN template the perceptual loss goes from 43 to 19 ms and HSLuv from 11 to 3 ms. The first run compiles for about 45 seconds and adds about 70 MB to the compile cache. These losses don't change, so later runs with the same batch and patch size reuse it, even after changing the arch."
         ),
     ] = True
     use_compile: Annotated[

@@ -38,7 +38,7 @@ from traiNNer.utils import get_root_logger
 from traiNNer.utils.cuda_graph import move_tensor_attributes
 from traiNNer.utils.dist_util import cpu_barrier, master_only
 from traiNNer.utils.logger import clickable_file_path
-from traiNNer.utils.misc import is_json_compatible, require_triton
+from traiNNer.utils.misc import is_json_compatible
 from traiNNer.utils.redux_options import ReduxOptions
 from traiNNer.utils.types import DataFeed, TrainingState
 
@@ -317,7 +317,6 @@ class BaseModel:
         net_name = net.__class__.__name__
 
         if compile:
-            require_triton("torch.compile requires triton.")
             logger = get_root_logger()
             logger.info(
                 "Network %s will be compiled with mode %s. The first iteration may take several minutes.",

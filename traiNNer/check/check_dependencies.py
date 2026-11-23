@@ -1,4 +1,5 @@
 import importlib.metadata
+import importlib.util
 import sys
 import tomllib
 
@@ -44,3 +45,9 @@ def check_dependencies() -> None:
             raise RuntimeError(
                 f"{req.name} version {installed_version} does not satisfy {req.specifier}. Please run this command to update dependencies: {cmd}"
             )
+
+    # Linux torch brings triton (ROCm torch its ROCm build); Windows gets triton-windows above
+    if importlib.util.find_spec("triton") is None:
+        raise RuntimeError(
+            f"triton is not installed. Please run this command to install: {cmd}"
+        )
