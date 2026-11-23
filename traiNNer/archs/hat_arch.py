@@ -14,7 +14,7 @@ from spandrel.util import store_hyperparameters
 from spandrel.util.timm import to_2tuple, trunc_normal_
 from torch import nn
 from torch.nn import functional as F
-from torch.nn.attention.flex_attention import flex_attention
+from torch.nn.attention.flex_attention import AuxRequest, flex_attention
 from torch.utils import checkpoint
 
 from traiNNer.utils.registry import ARCH_REGISTRY
@@ -39,7 +39,10 @@ def _flex_window_lse(q, k, v, table, rpi):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
-    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0, return_lse=True)
+    out, aux = flex_attention(
+        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+    )
+    return out, aux.lse
 
 
 @torch.compile(dynamic=True)
@@ -50,7 +53,10 @@ def _flex_window_shifted_lse(q, k, v, table, rpi, region):
         same = region[w, qi] == region[w, ki]
         return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
 
-    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0, return_lse=True)
+    out, aux = flex_attention(
+        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+    )
+    return out, aux.lse
 
 
 @torch.compile(dynamic=True)
@@ -58,7 +64,10 @@ def _flex_oca_lse(q, k, v, table, rpi):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
-    return flex_attention(q, k, v, score_mod=score_mod, scale=1.0, return_lse=True)
+    out, aux = flex_attention(
+        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+    )
+    return out, aux.lse
 
 
 def _flex_bias_grad(fn, q, k, v, table, rpi, region=None):
