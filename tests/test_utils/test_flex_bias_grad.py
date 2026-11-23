@@ -1,17 +1,13 @@
 """FlexBiasGrad must give FlexAttention's own bias table gradient, and leave q, k and v's alone."""
 
-import importlib.util
-
 import pytest
 import torch
 from torch import Tensor
 from torch.nn.attention.flex_attention import flex_attention
 
 pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available()
-    or importlib.util.find_spec("triton") is None
-    or torch.cuda.get_device_capability()[0] < 8,
-    reason="needs a CUDA GPU (sm_80+) and triton",
+    not torch.cuda.is_available() or torch.cuda.get_device_capability()[0] < 8,
+    reason="needs a CUDA GPU (sm_80+)",
 )
 
 

@@ -11,7 +11,6 @@ from torch.nn.attention.flex_attention import flex_attention
 from torch.nn.modules.module import _IncompatibleKeys
 
 from traiNNer.archs.arch_util import SampleMods3, UniUpsampleV3
-from traiNNer.utils.misc import require_triton
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 ATTN_TYPE = Literal["Naive", "SDPA", "Flex"]
@@ -442,9 +441,6 @@ class ESCRealM(nn.Module):
         elif attn_type == "SDPA":
             attn_func = F.scaled_dot_product_attention
         elif attn_type == "Flex":
-            require_triton(
-                "The `ESCRealM` architecture requires triton when using Flex attention. "
-            )
             attn_func = torch.compile(flex_attention, dynamic=True)
         else:
             raise NotImplementedError(f"Attention type {attn_type} is not supported.")

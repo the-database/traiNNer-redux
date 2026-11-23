@@ -1,16 +1,11 @@
 import copy
-import importlib.util
 
 import pytest
 import torch
 from torch import Tensor
 from traiNNer.archs.hat_arch import HAT, hat_s
 
-HAS_FLEX = (
-    torch.cuda.is_available()
-    and importlib.util.find_spec("triton") is not None
-    and torch.cuda.get_device_capability()[0] >= 8
-)
+HAS_FLEX = torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8
 
 
 def small_hat(window_size: int) -> HAT:
@@ -36,7 +31,7 @@ def rel(a: Tensor, b: Tensor) -> float:
     return float((a - b).norm() / b.norm())
 
 
-@pytest.mark.skipif(not HAS_FLEX, reason="needs a CUDA GPU (sm_80+) and triton")
+@pytest.mark.skipif(not HAS_FLEX, reason="needs a CUDA GPU (sm_80+)")
 @pytest.mark.parametrize(
     ("window_size", "size"), [(8, 24), (16, 32), (16, 48), (32, 64)]
 )

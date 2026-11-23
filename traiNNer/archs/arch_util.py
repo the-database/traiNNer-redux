@@ -1,6 +1,5 @@
 # ruff: noqa
 # type: ignore
-import importlib.util
 import collections.abc
 import math
 from collections import OrderedDict
@@ -389,15 +388,11 @@ def _dysample_normalizer(h: int, w: int) -> Tensor:
     return torch.tensor([w, h]).view(1, 2, 1, 1, 1)
 
 
-_HAS_TRITON = importlib.util.find_spec("triton") is not None
-
-
 def _use_dysample_kernel(x: Tensor) -> bool:
     """The Triton sampling kernel runs on CUDA tensors, outside tracing and export,
     which can't capture it."""
     return (
-        _HAS_TRITON
-        and x.is_cuda
+        x.is_cuda
         and x.dtype in (torch.float16, torch.bfloat16, torch.float32)
         and not torch.compiler.is_compiling()
         and not torch.jit.is_tracing()

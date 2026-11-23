@@ -3,7 +3,6 @@
 # HAT from https://github.com/XPixelGroup/HAT/blob/main/hat/archs/hat_arch.py
 from __future__ import annotations
 
-import importlib.util
 import math
 from collections.abc import Sequence
 from typing import Literal
@@ -23,11 +22,10 @@ from traiNNer.utils.registry import ARCH_REGISTRY
 # attn_impl: "flex" runs the window attention and the OCA on FlexAttention: the same function as the
 # stock path, with the relative position bias and the shifted-window mask applied inside a fused
 # kernel, so the [windows, heads, n, n] scores and biases are never materialised (much less training
-# memory). "auto" (the default) uses it while training on a CUDA GPU (sm_80+) with triton installed,
+# memory). "auto" (the default) uses it while training on a CUDA GPU (sm_80+),
 # no attention dropout and deterministic algorithms off; inference, validation and ONNX export always
 # use the stock path. "stock" never uses it. The weights are the same either way.
 AttnImpl = Literal["auto", "flex", "stock"]
-_HAS_TRITON = importlib.util.find_spec("triton") is not None
 
 
 # One compiled function per attention kind (window, shifted window, OCA), each with its own compile
@@ -1292,7 +1290,6 @@ class HAT(nn.Module):
         return (
             self.training
             and x.is_cuda
-            and _HAS_TRITON
             and self.attn_drop_rate == 0
             and not torch.are_deterministic_algorithms_enabled()
             and torch.cuda.get_device_capability(x.device)[0] >= 8

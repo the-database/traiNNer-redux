@@ -1,4 +1,3 @@
-import importlib.util
 from typing import cast
 
 import torch
@@ -7,8 +6,6 @@ from spandrel.util import store_hyperparameters
 from torch import Tensor, nn
 
 from traiNNer.utils.registry import ARCH_REGISTRY
-
-_HAS_TRITON = importlib.util.find_spec("triton") is not None
 
 
 @torch.compile(fullgraph=True)
@@ -92,7 +89,6 @@ class SRVGGNetCompact(nn.Module):
         out = x
         if (
             self.fused_training
-            and _HAS_TRITON
             and self.training
             and x.is_cuda
             and self.act_type == "prelu"
