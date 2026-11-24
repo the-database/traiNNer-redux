@@ -17,6 +17,7 @@ from torch.nn import functional as F
 from torch.nn.attention.flex_attention import AuxRequest, flex_attention
 from torch.utils import checkpoint
 
+from traiNNer.ops.flex_options import flex_kernel_options
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 # attn_impl: "flex" runs the window attention and the OCA on FlexAttention: the same function as the
@@ -35,18 +36,24 @@ AttnImpl = Literal["auto", "flex", "stock"]
 # (as in the stock path; no float to specialise on) and the bias table as a plain tensor (parameters
 # get static shapes). Only a different head dim or dtype compiles again.
 @torch.compile(dynamic=True)
-def _flex_window_lse(q, k, v, table, rpi):
+def _flex_window_lse(q, k, v, table, rpi, kernel_options):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
 
 @torch.compile(dynamic=True)
-def _flex_window_shifted_lse(q, k, v, table, rpi, region):
+def _flex_window_shifted_lse(q, k, v, table, rpi, region, kernel_options):
     # plus the shifted-window mask: -100 between tokens of different regions, as the stock mask
     def score_mod(score, b, h, qi, ki):
         w = b % region.shape[0]
@@ -54,18 +61,30 @@ def _flex_window_shifted_lse(q, k, v, table, rpi, region):
         return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
 
 @torch.compile(dynamic=True)
-def _flex_oca_lse(q, k, v, table, rpi):
+def _flex_oca_lse(q, k, v, table, rpi, kernel_options):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
@@ -75,6 +94,7 @@ def _flex_bias_grad(fn, q, k, v, table, rpi, region=None):
     # which took more than half of the attention backward; FlexBiasGrad sums them without atomics
     # and FlexAttention runs on the detached table. The same gradients.
     args = (rpi,) if region is None else (rpi, region)
+    args += (flex_kernel_options(q.device),)
     if not (table.requires_grad and torch.is_grad_enabled()):
         return fn(q, k, v, table, *args)[0]
     from traiNNer.ops.flex_bias_grad import FlexBiasGrad
