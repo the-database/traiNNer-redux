@@ -63,6 +63,41 @@ def _regions(h: int, w: int, ws: int, s: int) -> torch.Tensor:
     return window_partition(m, ws).view(-1, ws * ws)
 
 
+class _Permute(torch.autograd.Function):
+    """x[:, perm] along the tokens; the gradient is the inverse gather (no scatter-add)."""
+
+    @staticmethod
+    def forward(ctx, x, perm, inv):
+        ctx.save_for_backward(inv)
+        return x.index_select(1, perm)
+
+    @staticmethod
+    def backward(ctx, g):
+        (inv,) = ctx.saved_tensors
+        return g.index_select(1, inv), None, None
+
+
+class _GramF32(torch.autograd.Function):
+    """q @ k for bf16 / fp16 q, k with a float32 result (fp32 accumulation, no fp32 copies of q
+    and k). The float32 gradient goes back as two half-precision GEMMs (its high and low
+    halves), so it keeps float32 precision; the inner dim is only the head dim."""
+
+    @staticmethod
+    def forward(ctx, q, k):
+        ctx.save_for_backward(q, k)
+        return torch.bmm(q, k, out_dtype=torch.float32)
+
+    @staticmethod
+    def backward(ctx, dg):
+        q, k = ctx.saved_tensors
+        hi = dg.to(q.dtype)
+        lo = (dg - hi.float()).to(q.dtype)
+        kt, qt = k.transpose(1, 2), q.transpose(1, 2)
+        dq = torch.bmm(hi, kt, out_dtype=torch.float32) + torch.bmm(lo, kt, out_dtype=torch.float32)
+        dk = torch.bmm(qt, hi, out_dtype=torch.float32) + torch.bmm(qt, lo, out_dtype=torch.float32)
+        return dq.to(q.dtype), dk.to(k.dtype)
+
+
 class HybridAttention(nn.Module):
     """HAT's window attention (relative position bias, optional shift), plus, with channel=True, a
     DAT-style channel self-attention over the whole image on the same q, k and v, added through a
@@ -142,6 +177,49 @@ class HybridAttention(nn.Module):
             out = torch.roll(out, shifts=(shift, shift), dims=(1, 2))
         return out
 
+    def _perms(self, h, w, shift, device):
+        # the image tokens in window order (rolled by -shift, then window-partitioned), and back
+        key = ("perm", h, w, shift, str(device))
+        if key not in self._cache:
+            idx = torch.arange(h * w).view(1, h, w, 1)
+            if shift:
+                idx = torch.roll(idx, shifts=(-shift, -shift), dims=(1, 2))
+            perm = window_partition(idx, self.window_size).reshape(-1).to(device)
+            self._cache[key] = (perm, torch.argsort(perm))
+        return self._cache[key]
+
+    def _window_tokens(self, qkv, b, h, w, shift):
+        """_window on FlexAttention for qkv already in window order: (b, h*w, 3c) -> (b, h*w, c)."""
+        ws, nh = self.window_size, self.num_heads
+        d = self.dim // nh
+        t = qkv.view(-1, ws * ws, 3, nh, d).permute(2, 0, 3, 1, 4)
+        q, k, v = t[0] * self.scale, t[1], t[2]
+        dp = _flex_head_dim(d)
+        q, k, v = (_flex_pad(z, dp) for z in (q, k, v))
+        table = self.relative_position_bias_table * 1
+        rpi = _flex_index(self.rpi, table.shape[0])
+        if shift:
+            out = _flex_window_shifted(q, k, v, table, rpi, self._region(h, w, shift, q.device, True))
+        else:
+            out = _flex_window(q, k, v, table, rpi)
+        return out[..., :d].transpose(1, 2).reshape(b, h * w, nh * d)
+
+    def _channel_tokens(self, qkv, b, n):
+        """_channel for (b, n, 3c) half-precision qkv -> (b, n, c): (q / |q|) . (k / |k|) as
+        (q . k) / (|q| |k|), with the norms and q . k accumulated in float32 straight from qkv."""
+        nh = self.num_heads
+        d = self.dim // nh
+        t = qkv.view(b, n, 3, nh, d)
+        q = t[:, :, 0].permute(0, 2, 3, 1).reshape(b * nh, d, n)
+        k = t[:, :, 1].permute(0, 2, 1, 3).reshape(b * nh, n, d)
+        qn = torch.linalg.vector_norm(q, dim=-1, dtype=torch.float32).clamp_min(1e-12)
+        kn = torch.linalg.vector_norm(k, dim=1, dtype=torch.float32).clamp_min(1e-12)
+        g = _GramF32.apply(q, k) / (qn[:, :, None] * kn[:, None, :])
+        attn = (g.view(b, nh, d, d) * self.temperature).softmax(dim=-1).view(b * nh, d, d)
+        v = t[:, :, 2].permute(0, 2, 1, 3).reshape(b * nh, n, d)
+        out = torch.bmm(v, attn.to(qkv.dtype).transpose(1, 2))  # b * nh, n, d
+        return out.view(b, nh, n, d).permute(0, 2, 1, 3).reshape(b, n, self.dim)
+
     def _channel(self, qkv, b, h, w):
         nh = self.num_heads
         d = self.dim // nh
@@ -154,6 +232,20 @@ class HybridAttention(nn.Module):
 
     def forward(self, x, shift, flex):
         b, h, w, c = x.shape
+        if flex:
+            # the qkv projection and the channel attention don't depend on the token order, so
+            # the tokens go into window order once, before them, and back once after proj
+            perm, inv = self._perms(h, w, shift, x.device)
+            xw = _Permute.apply(x.reshape(b, h * w, c), perm, inv)
+            qkv = self.qkv(xw)
+            out = self._window_tokens(qkv, b, h, w, shift)
+            if self.channel:
+                if qkv.dtype in (torch.float16, torch.bfloat16):
+                    ch = self._channel_tokens(qkv, b, h * w)
+                else:
+                    ch = self._channel(qkv, b, h * w, 1).reshape(b, h * w, c)
+                out = out + ch * (self.channel_gate * self.gain)
+            return _Permute.apply(self.proj(out), inv, perm).view(b, h, w, c)
         qkv = self.qkv(x)
         out = self._window(qkv, h, w, shift, flex)
         if self.channel:
