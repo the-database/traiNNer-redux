@@ -19,6 +19,7 @@ from torch.utils import checkpoint
 
 # from spandrel.architectures.DAT import DAT
 from traiNNer.ops.flex_bias_grad import FlexBiasGrad
+from traiNNer.ops.flex_options import flex_kernel_options
 from traiNNer.utils.registry import SPANDREL_REGISTRY
 
 # attn_impl: "flex" runs the spatial window attention on FlexAttention: the same function as the
@@ -34,18 +35,24 @@ AttnImpl = Literal["auto", "flex", "stock"]
 # pre-scaled and the bias table as a plain tensor, with dynamic shapes, so one kernel serves every
 # batch and window count per head dim and dtype.
 @torch.compile(dynamic=True)
-def _flex_window(q, k, v, table, rpi):
+def _flex_window(q, k, v, table, rpi, kernel_options):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
 
 @torch.compile(dynamic=True)
-def _flex_window_shifted(q, k, v, table, rpi, region):
+def _flex_window_shifted(q, k, v, table, rpi, region, kernel_options):
     # plus the shifted-window mask: -100 between tokens of different regions, as the stock mask
     def score_mod(score, b, h, qi, ki):
         w = b % region.shape[0]
@@ -53,7 +60,13 @@ def _flex_window_shifted(q, k, v, table, rpi, region):
         return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
@@ -371,9 +384,13 @@ class Spatial_Attention(nn.Module):
         else:
             fn_table = table
         if region is None:
-            out, lse = _flex_window(q, k, v, fn_table, self.flex_rpi)
+            out, lse = _flex_window(
+                q, k, v, fn_table, self.flex_rpi, flex_kernel_options(q.device)
+            )
         else:
-            out, lse = _flex_window_shifted(q, k, v, fn_table, self.flex_rpi, region)
+            out, lse = _flex_window_shifted(
+                q, k, v, fn_table, self.flex_rpi, region, flex_kernel_options(q.device)
+            )
         if fn_table is not table:
             # FlexAttention would add each score's gradient into the table with an atomic add
             out = FlexBiasGrad.apply(
