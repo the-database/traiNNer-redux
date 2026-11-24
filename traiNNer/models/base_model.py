@@ -104,6 +104,9 @@ class BaseModel:
         self.best_metric_results: dict[str, Any] = {}
         self.first_val_completed = False
         self.model_loader = ModelLoader()
+        # set by models that average gradients themselves inside the training step
+        # (GradSync), instead of wrapping networks with DistributedDataParallel
+        self.sync_grads_in_step = False
         self.net_g = None
         self.net_g_teacher: nn.Module | None = None
         self.net_g_ema: EMA | None = None
@@ -137,6 +140,9 @@ class BaseModel:
                 if isinstance(network, DistributedDataParallel):
                     stack.enter_context(network.no_sync())
             yield
+
+    def release_cuda_graphs(self) -> None:
+        """Release recorded CUDA graphs, before the process group shuts down."""
 
     @abstractmethod
     def feed_data(self, data: DataFeed) -> None:
@@ -326,12 +332,13 @@ class BaseModel:
             net = torch.compile(net, mode=self.opt.compile_mode)  # pyright: ignore[reportAssignmentType]
 
         if self.opt.dist:
-            find_unused_parameters = self.opt.find_unused_parameters
-            net = DistributedDataParallel(
-                net,
-                device_ids=[torch.cuda.current_device()],
-                find_unused_parameters=find_unused_parameters,
-            )
+            if not self.sync_grads_in_step:
+                find_unused_parameters = self.opt.find_unused_parameters
+                net = DistributedDataParallel(
+                    net,
+                    device_ids=[torch.cuda.current_device()],
+                    find_unused_parameters=find_unused_parameters,
+                )
         elif self.opt.num_gpu > 1:
             net = DataParallel(net)
 

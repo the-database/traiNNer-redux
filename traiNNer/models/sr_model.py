@@ -40,6 +40,7 @@ from traiNNer.utils.amp_util import (
 from traiNNer.utils.color_util import pixelformat2rgb_pt, rgb2pixelformat_pt
 from traiNNer.utils.cuda_graph import CudaGraphStep, supports_cuda_graph
 from traiNNer.utils.eco import compute_alpha, eco_synthesize
+from traiNNer.utils.grad_sync import GradSync
 from traiNNer.utils.logger import clickable_file_path
 from traiNNer.utils.misc import loss_type_to_label
 from traiNNer.utils.redux_options import ReduxOptions
@@ -76,6 +77,10 @@ class SRModel(BaseModel):
         self.amp_dtype = torch.bfloat16 if self.opt.amp_bf16 else torch.float16
         self.use_compile = self.opt.use_compile
         self.cuda_graph_step: CudaGraphStep | None = None
+        # with use_cuda_graph on several GPUs, the step averages the gradients itself
+        # (GradSync) so the collectives can be recorded with it; see grad_sync.py
+        self.sync_grads_in_step = self.opt.dist and self.opt.use_cuda_graph
+        self.grad_sync: GradSync | None = None
 
         # consecutive and total non-finite losses, read by check_nonfinite_losses
         self.nonfinite_streak = torch.zeros((), dtype=torch.int32, device=self.device)
@@ -270,6 +275,16 @@ class SRModel(BaseModel):
         if self.net_d is not None:
             self.net_d.train()
 
+        if self.sync_grads_in_step:
+            # before the EMA copies net_g: every rank starts from rank 0's weights
+            self.grad_sync = GradSync(
+                [
+                    self.get_bare_model(net)
+                    for net in (self.net_g, self.net_d)
+                    if net is not None
+                ]
+            )
+
         train_opt = self.opt.train
         assert train_opt is not None
 
@@ -439,6 +454,11 @@ class SRModel(BaseModel):
                     "CUDA graph enabled: the training step is recorded after %d warmup iterations.",
                     self.cuda_graph_step.warmup_steps,
                 )
+                if self.grad_sync is not None:
+                    logger.info(
+                        "CUDA graph: gradients are averaged across %d GPUs inside the recorded step.",
+                        self.grad_sync.world_size,
+                    )
                 # With the launches recorded once, LayerNorm's Triton kernels pay off;
                 # torch.compile fuses LayerNorm itself.
                 if not self.use_compile:
@@ -452,17 +472,27 @@ class SRModel(BaseModel):
                         )
             else:
                 logger.warning("use_cuda_graph is ignored: %s.", reason)
+                if self.grad_sync is not None:
+                    logger.warning(
+                        "Gradients are averaged after the backward, without "
+                        "DistributedDataParallel's overlap with it. Turn off "
+                        "use_cuda_graph to train with DistributedDataParallel."
+                    )
 
         # logging features
         # self._setup_feature_hooks()
 
+    def release_cuda_graphs(self) -> None:
+        if self.cuda_graph_step is not None:
+            self.cuda_graph_step.close()
+
     def _cuda_graph_unsupported_reason(self) -> str | None:
         if self.device.type != "cuda":
             return "it needs a CUDA device"
-        if self.opt.dist or (
+        if not self.opt.dist and (
             isinstance(self.opt.num_gpu, int) and self.opt.num_gpu > 1
         ):
-            return "it supports only a single GPU"
+            return "it needs one GPU, or several with distributed training (torchrun)"
         if self.use_compile and self.opt.compile_mode in (
             "reduce-overhead",
             "max-autotune",
@@ -738,8 +768,13 @@ class SRModel(BaseModel):
         lq_rgb = inputs["lq"]
         gt = inputs["gt"]
         real_hr = inputs.get("real_hr")
-        # replaying a CUDA graph needs the gradient tensors to stay allocated
-        set_to_none = self.cuda_graph_step is None
+        # replaying a CUDA graph needs the gradient tensors to stay allocated, and
+        # GradSync keeps them as views into its flat buffers
+        set_to_none = self.cuda_graph_step is None and self.grad_sync is None
+        if self.grad_sync is not None:
+            self.grad_sync.sync_buffers(self.get_bare_model(self.net_g))
+            if self.net_d is not None:
+                self.grad_sync.sync_buffers(self.get_bare_model(self.net_d))
 
         skip_d_update = False
 
@@ -851,6 +886,8 @@ class SRModel(BaseModel):
                 self.scaler_g.scale(l_g_backward).backward()
 
                 if apply_gradient:
+                    if self.grad_sync is not None:
+                        self.grad_sync.all_reduce_grads(self.get_bare_model(self.net_g))
                     self.scaler_g.unscale_(self.optimizer_g)
                     # compute the norm once with foreach kernels and reuse it for clipping
                     grad_norm_g = get_total_norm(
@@ -912,6 +949,8 @@ class SRModel(BaseModel):
             self.scaler_d.scale((l_d_real + l_d_fake) / self.accum_iters).backward()
 
             if apply_gradient:
+                if self.grad_sync is not None:
+                    self.grad_sync.all_reduce_grads(self.get_bare_model(self.net_d))
                 self.scaler_d.unscale_(self.optimizer_d)
                 grad_norm_d = get_total_norm(
                     [p.grad for p in self.net_d.parameters() if p.grad is not None],

@@ -17,6 +17,7 @@ from torch.nn import functional as F
 from torch.nn.attention.flex_attention import AuxRequest, flex_attention
 from torch.utils import checkpoint
 
+from traiNNer.ops.flex_options import flex_kernel_options
 from traiNNer.utils.registry import ARCH_REGISTRY
 
 # attn_impl: "flex" runs the window attention and the OCA on FlexAttention: the same function as the
@@ -35,18 +36,24 @@ AttnImpl = Literal["auto", "flex", "stock"]
 # (as in the stock path; no float to specialise on) and the bias table as a plain tensor (parameters
 # get static shapes). Only a different head dim or dtype compiles again.
 @torch.compile(dynamic=True)
-def _flex_window_lse(q, k, v, table, rpi):
+def _flex_window_lse(q, k, v, table, rpi, kernel_options):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
 
 @torch.compile(dynamic=True)
-def _flex_window_shifted_lse(q, k, v, table, rpi, region):
+def _flex_window_shifted_lse(q, k, v, table, rpi, region, kernel_options):
     # plus the shifted-window mask: -100 between tokens of different regions, as the stock mask
     def score_mod(score, b, h, qi, ki):
         w = b % region.shape[0]
@@ -54,18 +61,30 @@ def _flex_window_shifted_lse(q, k, v, table, rpi, region):
         return score + table[rpi[qi, ki], h] + torch.where(same, 0.0, -100.0)
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
 
 @torch.compile(dynamic=True)
-def _flex_oca_lse(q, k, v, table, rpi):
+def _flex_oca_lse(q, k, v, table, rpi, kernel_options):
     def score_mod(score, b, h, qi, ki):
         return score + table[rpi[qi, ki], h]
 
     out, aux = flex_attention(
-        q, k, v, score_mod=score_mod, scale=1.0, return_aux=AuxRequest(lse=True)
+        q,
+        k,
+        v,
+        score_mod=score_mod,
+        scale=1.0,
+        return_aux=AuxRequest(lse=True),
+        kernel_options=kernel_options,
     )
     return out, aux.lse
 
@@ -75,6 +94,7 @@ def _flex_bias_grad(fn, q, k, v, table, rpi, region=None):
     # which took more than half of the attention backward; FlexBiasGrad sums them without atomics
     # and FlexAttention runs on the detached table. The same gradients.
     args = (rpi,) if region is None else (rpi, region)
+    args += (flex_kernel_options(q.device),)
     if not (table.requires_grad and torch.is_grad_enabled()):
         return fn(q, k, v, table, *args)[0]
     from traiNNer.ops.flex_bias_grad import FlexBiasGrad
@@ -220,6 +240,20 @@ class Mlp(nn.Module):
         x = self.fc2(x)
         x = self.drop(x)
         return x
+
+
+class _Permute(torch.autograd.Function):
+    """x[:, perm] along the tokens. The gradient is the inverse gather, so no scatter-add."""
+
+    @staticmethod
+    def forward(ctx, x, perm, inv):  # pyright: ignore[reportIncompatibleMethodOverride]
+        ctx.save_for_backward(inv)
+        return x.index_select(1, perm)
+
+    @staticmethod
+    def backward(ctx, grad):  # pyright: ignore[reportIncompatibleMethodOverride]
+        (inv,) = ctx.saved_tensors
+        return grad.index_select(1, inv), None, None
 
 
 def window_partition(x, window_size):
@@ -426,6 +460,8 @@ class HAB(nn.Module):
         assert 0 <= self.shift_size < self.window_size, (
             "shift_size must in 0-window_size"
         )
+        # FlexAttention path: the token order of the shifted, window-partitioned image
+        self._perms: dict = {}
 
         self.norm1 = norm_layer(dim)
         self.attn = WindowAttention(
@@ -466,6 +502,21 @@ class HAB(nn.Module):
         conv_x = self.conv_block(x.permute(0, 3, 1, 2))
         conv_x = conv_x.permute(0, 2, 3, 1).contiguous().view(b, h * w, c)
 
+        if flex:
+            # The cyclic shift and the window partition are one permutation of the tokens:
+            # one gather each way instead of a roll and a copy. The same values.
+            perm, inv = self._window_perms(h, w, x.device)
+            x_windows = _Permute.apply(x.view(b, h * w, c), perm, inv)
+            attn_windows = self.attn(
+                x_windows.view(-1, self.window_size * self.window_size, c),
+                rpi=rpi_sa,
+                mask=attn_mask if self.shift_size > 0 else None,
+                flex=True,
+            )
+            attn_x = _Permute.apply(attn_windows.reshape(b, h * w, c), inv, perm)
+            x = shortcut + self.drop_path(attn_x) + conv_x * self.conv_scale
+            return x + self.drop_path(self.mlp(self.norm2(x)))
+
         # cyclic shift
         if self.shift_size > 0:
             shifted_x = torch.roll(
@@ -505,6 +556,18 @@ class HAB(nn.Module):
         x = x + self.drop_path(self.mlp(self.norm2(x)))
 
         return x
+
+    def _window_perms(self, h, w, device):
+        key = (h, w, device)
+        if key not in self._perms:
+            if len(self._perms) >= 4:
+                self._perms.clear()
+            idx = torch.arange(h * w, device=device).view(1, h, w, 1)
+            if self.shift_size > 0:
+                idx = torch.roll(idx, (-self.shift_size, -self.shift_size), dims=(1, 2))
+            perm = window_partition(idx, self.window_size).reshape(-1)
+            self._perms[key] = (perm, torch.argsort(perm))
+        return self._perms[key]
 
 
 class OCAB(nn.Module):
