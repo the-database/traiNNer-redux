@@ -482,6 +482,10 @@ class SRModel(BaseModel):
         # logging features
         # self._setup_feature_hooks()
 
+    def release_cuda_graphs(self) -> None:
+        if self.cuda_graph_step is not None:
+            self.cuda_graph_step.close()
+
     def _cuda_graph_unsupported_reason(self) -> str | None:
         if self.device.type != "cuda":
             return "it needs a CUDA device"

@@ -111,6 +111,17 @@ def test_failed_recording_falls_back_to_eager() -> None:
     torch.testing.assert_close(graph_params, eager_params, rtol=0, atol=0)
 
 
+def test_close_releases_the_graphs() -> None:
+    """Training on several GPUs releases the graphs before NCCL shuts down, which would
+    otherwise wait forever on the collectives they hold."""
+    _, _, runner = train(True, 1, torch.bfloat16)
+    assert runner is not None
+    assert runner._graphs  # noqa: SLF001
+    runner.close()
+    assert not runner._graphs  # noqa: SLF001
+    assert not runner.enabled
+
+
 def test_optimizer_support() -> None:
     param = nn.Parameter(torch.zeros(4, device="cuda"))
     opt = build_optimizer([param], {"type": "AdamW", "lr": 1e-3}, capturable=True)

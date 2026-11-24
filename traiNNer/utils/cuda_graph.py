@@ -13,6 +13,7 @@ when recording, and training carries on without graphs.
 
 from __future__ import annotations
 
+import gc
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Hashable
@@ -230,6 +231,16 @@ class CudaGraphStep:
         self._load_lrs()
         graph.replay()
         return outputs
+
+    def close(self) -> None:
+        """Release the recorded graphs. NCCL can't shut down while a graph holds
+        collectives recorded from it: destroy_process_group() waits forever."""
+        self.enabled = False
+        self._graphs.clear()
+        self._inputs.clear()
+        self._pool = None
+        gc.collect()
+        torch.cuda.synchronize()
 
     def _disable(self, reason: str) -> None:
         get_root_logger().warning(

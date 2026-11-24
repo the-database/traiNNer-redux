@@ -534,6 +534,8 @@ def train_pipeline(root_path: str) -> None:
         if tb_logger:
             tb_logger.close()
         if model.opt.dist:
+            # a CUDA graph holding NCCL collectives would make this wait forever
+            model.release_cuda_graphs()
             destroy_process_group()
     elapsed = dt.timedelta(seconds=int(time.monotonic() - start_time))
     logger.info(
