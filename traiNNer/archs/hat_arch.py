@@ -222,6 +222,20 @@ class Mlp(nn.Module):
         return x
 
 
+class _Permute(torch.autograd.Function):
+    """x[:, perm] along the tokens. The gradient is the inverse gather, so no scatter-add."""
+
+    @staticmethod
+    def forward(ctx, x, perm, inv):  # pyright: ignore[reportIncompatibleMethodOverride]
+        ctx.save_for_backward(inv)
+        return x.index_select(1, perm)
+
+    @staticmethod
+    def backward(ctx, grad):  # pyright: ignore[reportIncompatibleMethodOverride]
+        (inv,) = ctx.saved_tensors
+        return grad.index_select(1, inv), None, None
+
+
 def window_partition(x, window_size):
     """
     Args:
@@ -426,6 +440,8 @@ class HAB(nn.Module):
         assert 0 <= self.shift_size < self.window_size, (
             "shift_size must in 0-window_size"
         )
+        # FlexAttention path: the token order of the shifted, window-partitioned image
+        self._perms: dict = {}
 
         self.norm1 = norm_layer(dim)
         self.attn = WindowAttention(
@@ -466,6 +482,21 @@ class HAB(nn.Module):
         conv_x = self.conv_block(x.permute(0, 3, 1, 2))
         conv_x = conv_x.permute(0, 2, 3, 1).contiguous().view(b, h * w, c)
 
+        if flex:
+            # The cyclic shift and the window partition are one permutation of the tokens:
+            # one gather each way instead of a roll and a copy. The same values.
+            perm, inv = self._window_perms(h, w, x.device)
+            x_windows = _Permute.apply(x.view(b, h * w, c), perm, inv)
+            attn_windows = self.attn(
+                x_windows.view(-1, self.window_size * self.window_size, c),
+                rpi=rpi_sa,
+                mask=attn_mask if self.shift_size > 0 else None,
+                flex=True,
+            )
+            attn_x = _Permute.apply(attn_windows.reshape(b, h * w, c), inv, perm)
+            x = shortcut + self.drop_path(attn_x) + conv_x * self.conv_scale
+            return x + self.drop_path(self.mlp(self.norm2(x)))
+
         # cyclic shift
         if self.shift_size > 0:
             shifted_x = torch.roll(
@@ -505,6 +536,18 @@ class HAB(nn.Module):
         x = x + self.drop_path(self.mlp(self.norm2(x)))
 
         return x
+
+    def _window_perms(self, h, w, device):
+        key = (h, w, device)
+        if key not in self._perms:
+            if len(self._perms) >= 4:
+                self._perms.clear()
+            idx = torch.arange(h * w, device=device).view(1, h, w, 1)
+            if self.shift_size > 0:
+                idx = torch.roll(idx, (-self.shift_size, -self.shift_size), dims=(1, 2))
+            perm = window_partition(idx, self.window_size).reshape(-1)
+            self._perms[key] = (perm, torch.argsort(perm))
+        return self._perms[key]
 
 
 class OCAB(nn.Module):
